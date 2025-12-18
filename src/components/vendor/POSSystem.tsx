@@ -517,52 +517,42 @@ export function POSSystem() {
     }
 
     try {
-      // Pour Mobile Money, appeler l'Edge Function Moneroo
+      // Pour Mobile Money, appeler l'Edge Function FedaPay
       if (paymentMethod === 'mobile_money') {
-        toast.loading('Initialisation du paiement Mobile Money...');
+        toast.loading('Initialisation du paiement FedaPay...');
         
-        const monerooMethod = mobileMoneyProvider === 'orange' ? 'orange_gn' : 'mtn_gn';
-        
-        const { data: monerooResult, error: monerooError } = await supabase.functions.invoke('moneroo-initialize-payment', {
+        const { data: fedapayResult, error: fedapayError } = await supabase.functions.invoke('fedapay-initialize-payment', {
           body: {
             amount: total,
             currency: 'GNF',
             description: `Vente POS - ${cart.length} article(s)`,
-            customer: {
-              email: user?.email || 'client@224solutions.com',
-              first_name: selectedCustomer?.name?.split(' ')[0] || 'Client',
-              last_name: selectedCustomer?.name?.split(' ')[1] || 'POS'
-            },
+            customer_email: user?.email || 'client@224solutions.com',
+            customer_phone: mobileMoneyPhone,
+            customer_name: selectedCustomer?.name || 'Client POS',
             return_url: `${window.location.origin}/vendeur/pos`,
-            methods: [monerooMethod],
-            metadata: {
-              vendor_id: vendorId,
-              cart_items: cart.length,
-              source: 'pos',
-              phone: mobileMoneyPhone,
-              provider: mobileMoneyProvider
-            }
+            callback_url: `${window.location.origin}/api/fedapay-webhook`,
+            order_id: `POS-${Date.now()}`,
           }
         });
 
         toast.dismiss();
 
-        if (monerooError || !monerooResult?.success) {
-          console.error('Moneroo error:', monerooError || monerooResult);
-          const detailsMessage = await getEdgeFunctionErrorMessage(monerooError);
+        if (fedapayError || !fedapayResult?.success) {
+          console.error('FedaPay error:', fedapayError || fedapayResult);
+          const detailsMessage = await getEdgeFunctionErrorMessage(fedapayError);
 
           toast.error('Erreur lors de l\'initialisation du paiement', {
-            description: monerooResult?.error || detailsMessage || monerooError?.message || 'Veuillez réessayer',
+            description: fedapayResult?.error || detailsMessage || fedapayError?.message || 'Veuillez réessayer',
           });
           return;
         }
 
-        if (monerooResult.checkout_url) {
-          toast.info('Redirection vers Moneroo...', {
+        if (fedapayResult.payment_url) {
+          toast.info('Redirection vers FedaPay...', {
             description: `Complétez le paiement ${mobileMoneyProvider === 'orange' ? 'Orange Money' : 'MTN MoMo'}.`
           });
           
-          window.open(monerooResult.checkout_url, '_blank', 'width=500,height=700');
+          window.open(fedapayResult.payment_url, '_blank', 'width=500,height=700');
           
           const customerId = await getOrCreateCustomerId();
           if (!customerId) return;
@@ -580,7 +570,7 @@ export function POSSystem() {
               status: 'pending',
               payment_method: paymentMethod,
               shipping_address: { address: 'Point de vente' },
-              notes: `Paiement Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange' : 'MTN'}) - ${mobileMoneyPhone} - Transaction: ${monerooResult.payment_id}`,
+              notes: `Paiement Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange' : 'MTN'}) - ${mobileMoneyPhone} - Transaction FedaPay: ${fedapayResult.transaction_id}`,
               source: 'pos'
             })
             .select('id, order_number')
@@ -610,49 +600,41 @@ export function POSSystem() {
         }
       }
 
-      // Pour le paiement par carte/Moneroo, utiliser les méthodes mobile money disponibles en Guinée
+      // Pour le paiement par carte, utiliser FedaPay
       if (paymentMethod === 'card') {
-        toast.loading('Initialisation du paiement Moneroo...');
+        toast.loading('Initialisation du paiement FedaPay...');
         
-        const { data: monerooResult, error: monerooError } = await supabase.functions.invoke('moneroo-initialize-payment', {
+        const { data: fedapayResult, error: fedapayError } = await supabase.functions.invoke('fedapay-initialize-payment', {
           body: {
             amount: total,
             currency: 'GNF',
             description: `Vente POS - ${cart.length} article(s)`,
-            customer: {
-              email: user?.email || 'client@224solutions.com',
-              first_name: selectedCustomer?.name?.split(' ')[0] || 'Client',
-              last_name: selectedCustomer?.name?.split(' ')[1] || 'POS'
-            },
+            customer_email: user?.email || 'client@224solutions.com',
+            customer_name: selectedCustomer?.name || 'Client POS',
             return_url: `${window.location.origin}/vendeur/pos`,
-            // Moneroo Guinée supporte uniquement: orange_gn, mtn_gn (pas de carte)
-            methods: ['orange_gn', 'mtn_gn'],
-            metadata: {
-              vendor_id: vendorId,
-              cart_items: cart.length,
-              source: 'pos',
-            }
+            callback_url: `${window.location.origin}/api/fedapay-webhook`,
+            order_id: `POS-${Date.now()}`,
           }
         });
 
         toast.dismiss();
 
-        if (monerooError || !monerooResult?.success) {
-          console.error('Moneroo error:', monerooError || monerooResult);
-          const detailsMessage = await getEdgeFunctionErrorMessage(monerooError);
+        if (fedapayError || !fedapayResult?.success) {
+          console.error('FedaPay error:', fedapayError || fedapayResult);
+          const detailsMessage = await getEdgeFunctionErrorMessage(fedapayError);
 
-          toast.error('Erreur lors de l\'initialisation du paiement Moneroo', {
-            description: monerooResult?.error || detailsMessage || monerooError?.message || 'Veuillez réessayer',
+          toast.error('Erreur lors de l\'initialisation du paiement FedaPay', {
+            description: fedapayResult?.error || detailsMessage || fedapayError?.message || 'Veuillez réessayer',
           });
           return;
         }
 
-        if (monerooResult.checkout_url) {
-          toast.info('Redirection vers Moneroo...', {
-            description: 'Choisissez Orange Money ou MTN puis complétez le paiement.'
+        if (fedapayResult.payment_url) {
+          toast.info('Redirection vers FedaPay...', {
+            description: 'Complétez le paiement sur la page FedaPay.'
           });
           
-          window.open(monerooResult.checkout_url, '_blank', 'width=500,height=700');
+          window.open(fedapayResult.payment_url, '_blank', 'width=500,height=700');
           
           const customerId = await getOrCreateCustomerId();
           if (!customerId) return;
@@ -670,7 +652,7 @@ export function POSSystem() {
               status: 'pending',
               payment_method: 'card',
               shipping_address: { address: 'Point de vente' },
-              notes: `Paiement Carte - Transaction: ${monerooResult.payment_id}`,
+              notes: `Paiement FedaPay - Transaction: ${fedapayResult.transaction_id}`,
               source: 'pos'
             })
             .select('id, order_number')

@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
-import { MonerooPaymentDialog } from "@/components/payment/MonerooPaymentDialog";
+import { FedaPayPaymentDialog } from "@/components/payment/FedaPayPaymentDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,7 +42,7 @@ export default function WalletDashboard() {
   const [busy, setBusy] = useState(false);
   const [showTransferPreview, setShowTransferPreview] = useState(false);
   const [transferPreview, setTransferPreview] = useState<any>(null);
-  const [showMonerooDialog, setShowMonerooDialog] = useState(false);
+  const [showFedaPayDialog, setShowFedaPayDialog] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -359,18 +359,18 @@ export default function WalletDashboard() {
 
           <TabsContent value="deposit" className="space-y-4">
             <div className="space-y-4">
-              {/* Moneroo - Orange Money, MTN */}
-              <div className="p-4 border rounded-lg bg-gradient-to-r from-orange-50 to-yellow-50">
+              {/* FedaPay - Orange Money, MTN */}
+              <div className="p-4 border rounded-lg bg-gradient-to-r from-green-50 to-emerald-50">
                 <div className="flex items-center gap-2 mb-3">
-                  <Smartphone className="w-5 h-5 text-orange-500" />
+                  <Smartphone className="w-5 h-5 text-green-600" />
                   <h4 className="font-semibold">Recharger via Mobile Money</h4>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Orange Money ou MTN Mobile Money via Moneroo
+                  Orange Money ou MTN Mobile Money via FedaPay
                 </p>
                 <Button 
-                  onClick={() => setShowMonerooDialog(true)} 
-                  className="w-full bg-orange-500 hover:bg-orange-600"
+                  onClick={() => setShowFedaPayDialog(true)} 
+                  className="w-full bg-green-600 hover:bg-green-700"
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
                   Recharger (Orange/MTN)
@@ -388,7 +388,7 @@ export default function WalletDashboard() {
                       size="sm"
                       onClick={() => {
                         setDepositAmount(amount.toString());
-                        setShowMonerooDialog(true);
+                        setShowFedaPayDialog(true);
                       }}
                     >
                       {amount.toLocaleString('fr-FR')} GNF
@@ -514,16 +514,16 @@ export default function WalletDashboard() {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Moneroo Payment Dialog */}
-        <MonerooPaymentDialog
-          open={showMonerooDialog}
-          onOpenChange={setShowMonerooDialog}
+        {/* FedaPay Payment Dialog */}
+        <FedaPayPaymentDialog
+          open={showFedaPayDialog}
+          onOpenChange={setShowFedaPayDialog}
           defaultAmount={depositAmount ? parseInt(depositAmount) : 10000}
-          description="Rechargez votre wallet vendeur via Orange Money ou MTN"
+          description="Rechargez votre wallet vendeur via FedaPay"
           metadata={{ wallet_recharge: true, user_type: 'vendor' }}
-          onSuccess={(paymentId) => {
-            console.log('Paiement Moneroo initié:', paymentId);
-            toast.success('Paiement initié. Complétez dans la fenêtre Moneroo.');
+          onSuccess={(transactionId) => {
+            console.log('Paiement FedaPay initié:', transactionId);
+            toast.success('Paiement initié. Complétez dans la fenêtre FedaPay.');
             setDepositAmount("");
             // Rafraîchir le solde après quelques secondes
             setTimeout(() => loadWalletData(), 5000);
