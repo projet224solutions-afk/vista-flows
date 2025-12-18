@@ -141,6 +141,17 @@ export function MarketplaceProductCard({
           </div>
         )}
 
+        {/* Stock Badge - Rupture de stock */}
+        {stock !== undefined && stock === 0 && (
+          <Badge 
+            variant="destructive" 
+            className="absolute bottom-2 left-2 text-[9px] font-semibold shadow-md"
+          >
+            <Package className="w-2.5 h-2.5 mr-1" />
+            Rupture de stock
+          </Badge>
+        )}
+
         {/* Stock Badge (si faible) */}
         {stock !== undefined && stock > 0 && stock <= 5 && (
           <Badge 
