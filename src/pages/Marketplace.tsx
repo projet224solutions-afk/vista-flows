@@ -364,7 +364,7 @@ export default function Marketplace() {
                 vendorRatingCount={product.vendor_rating_count}
                 rating={product.rating || 0}
                 reviewCount={product.reviews_count || 0}
-                stock={product.stock}
+                stock={product.stock_quantity}
                 category={product.category_name}
                 deliveryTime={product.delivery_time}
                 onBuy={() => handleProductClick(product.id)}
