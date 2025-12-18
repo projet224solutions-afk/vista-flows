@@ -206,3 +206,9 @@ verify_jwt = false
 
 [functions.test-gemini-api]
 verify_jwt = false
+
+[functions.fedapay-initialize-payment]
+verify_jwt = true
+
+[functions.fedapay-webhook]
+verify_jwt = false
