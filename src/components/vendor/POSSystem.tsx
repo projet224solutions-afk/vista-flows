@@ -375,7 +375,7 @@ export function POSSystem() {
   };
 
   // Mise à jour de quantité avec recalcul automatique
-  const updateQuantity = (productId: string, newQuantity: number) => {
+  const updateQuantity = (productId: string, newQuantity: number, saleType?: 'unit' | 'carton') => {
     if (newQuantity <= 0) {
       removeFromCart(productId);
       return;
@@ -388,11 +388,24 @@ export function POSSystem() {
     }
 
     setCart(prev =>
-      prev.map(item =>
-        item.id === productId
-          ? { ...item, quantity: newQuantity, total: newQuantity * item.price }
-          : item
-      )
+      prev.map(item => {
+        if (item.id !== productId) return item;
+        
+        // Pour les ventes carton, calculer le total correctement
+        if (item.saleType === 'carton' && product?.units_per_carton) {
+          const cartonCount = Math.floor(newQuantity / product.units_per_carton);
+          const pricePerCarton = product.price_carton || (product.price * product.units_per_carton);
+          return { 
+            ...item, 
+            quantity: newQuantity, 
+            total: cartonCount * pricePerCarton,
+            displayQuantity: `${cartonCount} carton(s) (${newQuantity} unités)`
+          };
+        }
+        
+        // Vente unitaire standard
+        return { ...item, quantity: newQuantity, total: newQuantity * item.price };
+      })
     );
   };
 
@@ -1393,12 +1406,22 @@ export function POSSystem() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            onClick={() => {
+                              // Pour carton, décrémenter par unités de carton entier
+                              const decrementBy = item.saleType === 'carton' && item.units_per_carton 
+                                ? item.units_per_carton 
+                                : 1;
+                              updateQuantity(item.id, item.quantity - decrementBy);
+                            }}
                             className="h-6 w-6 p-0 hover:bg-destructive/20"
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
-                          <span className="font-mono font-bold text-xs w-5 text-center">{item.quantity}</span>
+                          <span className="font-mono font-bold text-xs w-5 text-center">
+                            {item.saleType === 'carton' && item.units_per_carton 
+                              ? Math.floor(item.quantity / item.units_per_carton)
+                              : item.quantity}
+                          </span>
                           <Button
                             variant="ghost"
                             size="sm"
