@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
 import { ProfessionalVirtualCard } from "@/components/virtual-card";
-import { MonerooPaymentDialog } from "@/components/payment/MonerooPaymentDialog";
+import { FedaPayPaymentDialog } from "@/components/payment/FedaPayPaymentDialog";
 import WalletMonthlyStats from "@/components/WalletMonthlyStats";
 import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 import { PaymentMethodsManager } from "@/components/payment/PaymentMethodsManager";
@@ -47,7 +47,7 @@ export default function Payment() {
     balance_after: number;
     receiver_id?: string;
   } | null>(null);
-  const [showMonerooDialog, setShowMonerooDialog] = useState(false);
+  const [showFedaPayDialog, setShowFedaPayDialog] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -647,7 +647,7 @@ export default function Payment() {
               <div className="flex flex-wrap gap-2">
                 <Button 
                   className="gap-2 bg-orange-500 hover:bg-orange-600 text-white"
-                  onClick={() => setShowMonerooDialog(true)}
+                  onClick={() => setShowFedaPayDialog(true)}
                 >
                   <Smartphone className="h-4 w-4" />
                   Recharger (Orange/MTN)
@@ -893,15 +893,15 @@ export default function Payment() {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Dialog de recharge Moneroo */}
-        <MonerooPaymentDialog
-          open={showMonerooDialog}
-          onOpenChange={setShowMonerooDialog}
+        {/* Dialog de recharge FedaPay */}
+        <FedaPayPaymentDialog
+          open={showFedaPayDialog}
+          onOpenChange={setShowFedaPayDialog}
           defaultAmount={10000}
-          description="Rechargez votre wallet via Orange Money, MTN ou Moov"
+          description="Rechargez votre wallet via Orange Money ou MTN"
           metadata={{ wallet_recharge: true }}
           onSuccess={(paymentId) => {
-            console.log('Paiement Moneroo initié:', paymentId);
+            console.log('Paiement FedaPay initié:', paymentId);
             toast({
               title: 'Paiement en cours',
               description: 'Complétez le paiement sur la page qui s\'est ouverte',
