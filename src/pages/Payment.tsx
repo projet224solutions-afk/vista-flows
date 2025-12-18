@@ -13,7 +13,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
-import VirtualCardButton from "@/components/VirtualCardButton";
+import { ProfessionalVirtualCard } from "@/components/virtual-card";
 import { MonerooPaymentDialog } from "@/components/payment/MonerooPaymentDialog";
 import { CinetPayPaymentDialog } from "@/components/payment/CinetPayPaymentDialog";
 import WalletMonthlyStats from "@/components/WalletMonthlyStats";
@@ -687,7 +687,7 @@ export default function Payment() {
                     });
                   }}
                 />
-                <VirtualCardButton />
+                <ProfessionalVirtualCard />
                 <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
                   <DialogTrigger asChild>
                     <Button className="gap-2">
@@ -868,7 +868,7 @@ export default function Payment() {
                   <p className="text-sm text-muted-foreground mb-4">
                     Gérez votre carte virtuelle pour les paiements en ligne
                   </p>
-                  <VirtualCardButton />
+                  <ProfessionalVirtualCard />
                 </div>
               </CardContent>
             </Card>
