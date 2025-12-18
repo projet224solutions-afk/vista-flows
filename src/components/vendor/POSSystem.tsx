@@ -48,7 +48,6 @@ import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
 import { useAuth } from '@/hooks/useAuth';
 import { useAgent } from '@/contexts/AgentContext';
-// Edge Function utilisée pour CinetPay (cinetpay-initialize-payment)
 import { supabase } from '@/integrations/supabase/client';
 import { NumericKeypadPopup } from './pos/NumericKeypadPopup';
 import { QuantityKeypadPopup } from './pos/QuantityKeypadPopup';
@@ -495,7 +494,7 @@ export function POSSystem() {
         return;
       }
 
-      // Validation provider (évite erreurs CinetPay côté opérateur)
+      // Validation provider pour Mobile Money
       const starts = mobileMoneyPhone;
       if (mobileMoneyProvider === 'orange') {
         const ok = starts.startsWith('610') || starts.startsWith('611') || starts.startsWith('62');
@@ -517,51 +516,52 @@ export function POSSystem() {
     }
 
     try {
-      // Pour Mobile Money, appeler l'Edge Function CinetPay
+      // Pour Mobile Money, appeler l'Edge Function Moneroo
       if (paymentMethod === 'mobile_money') {
         toast.loading('Initialisation du paiement Mobile Money...');
         
-        // Appeler l'Edge Function cinetpay-initialize-payment
-        const { data: cinetpayResult, error: cinetpayError } = await supabase.functions.invoke('cinetpay-initialize-payment', {
+        const monerooMethod = mobileMoneyProvider === 'orange' ? 'orange_gn' : 'mtn_gn';
+        
+        const { data: monerooResult, error: monerooError } = await supabase.functions.invoke('moneroo-initialize-payment', {
           body: {
             amount: total,
             currency: 'GNF',
             description: `Vente POS - ${cart.length} article(s)`,
-            customer_name: selectedCustomer?.name || 'Client POS',
-            customer_email: user?.email || 'client@224solutions.com',
-            customer_phone: mobileMoneyPhone,
+            customer: {
+              email: user?.email || 'client@224solutions.com',
+              first_name: selectedCustomer?.name?.split(' ')[0] || 'Client',
+              last_name: selectedCustomer?.name?.split(' ')[1] || 'POS'
+            },
             return_url: `${window.location.origin}/vendeur/pos`,
-            payment_type: 'mobile_money',
-            mobile_operator: mobileMoneyProvider === 'orange' ? 'OM' : 'MOMO',
+            methods: [monerooMethod],
             metadata: {
               vendor_id: vendorId,
               cart_items: cart.length,
               source: 'pos',
+              phone: mobileMoneyPhone,
+              provider: mobileMoneyProvider
             }
           }
         });
 
         toast.dismiss();
 
-        if (cinetpayError || !cinetpayResult?.success) {
-          console.error('CinetPay error:', cinetpayError || cinetpayResult);
+        if (monerooError || !monerooResult?.success) {
+          console.error('Moneroo error:', monerooError || monerooResult);
           
           toast.error('Erreur lors de l\'initialisation du paiement', {
-            description: cinetpayResult?.error || cinetpayError?.message || 'Veuillez réessayer',
+            description: monerooResult?.error || monerooError?.message || 'Veuillez réessayer',
           });
           return;
         }
 
-        // Ouvrir la page de paiement CinetPay
-        if (cinetpayResult.payment_url) {
-          toast.info('Redirection vers CinetPay...', {
-            description: 'Complétez le paiement sur la page CinetPay puis revenez ici.'
+        if (monerooResult.checkout_url) {
+          toast.info('Redirection vers Moneroo...', {
+            description: `Complétez le paiement ${mobileMoneyProvider === 'orange' ? 'Orange Money' : 'MTN MoMo'}.`
           });
           
-          // Ouvrir dans une nouvelle fenêtre
-          window.open(cinetpayResult.payment_url, '_blank', 'width=500,height=700');
+          window.open(monerooResult.checkout_url, '_blank', 'width=500,height=700');
           
-          // Créer la commande en attente
           const customerId = await getOrCreateCustomerId();
           if (!customerId) return;
 
@@ -578,7 +578,7 @@ export function POSSystem() {
               status: 'pending',
               payment_method: paymentMethod,
               shipping_address: { address: 'Point de vente' },
-              notes: `Paiement Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange' : 'MTN'}) - ${mobileMoneyPhone} - Transaction: ${cinetpayResult.transaction_id}`,
+              notes: `Paiement Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange' : 'MTN'}) - ${mobileMoneyPhone} - Transaction: ${monerooResult.payment_id}`,
               source: 'pos'
             })
             .select('id, order_number')
@@ -586,7 +586,6 @@ export function POSSystem() {
 
           if (orderError) throw orderError;
 
-          // Créer les items de commande
           const orderItems = cart.map(item => ({
             order_id: order.id,
             product_id: item.id,
@@ -604,7 +603,6 @@ export function POSSystem() {
             description: `Numéro: ${order.order_number || order.id.substring(0, 8).toUpperCase()}`
           });
           
-          // Réinitialiser le panier
           setCart([]);
           return;
         }
