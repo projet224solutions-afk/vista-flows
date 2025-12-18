@@ -62,40 +62,28 @@ export default function InventoryManagement() {
 
   const fetchWarehouses = useCallback(async () => {
     try {
-      const { data: vendor } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user?.id)
-        .maybeSingle();
-
-      if (!vendor) return;
+      if (!vendorId) return;
 
       const { data: warehousesData, error } = await supabase
         .from('warehouses')
         .select('*')
-        .eq('vendor_id', vendor.id);
+        .eq('vendor_id', vendorId);
 
       if (error) throw error;
       setWarehouses(warehousesData || []);
     } catch (error) {
       console.error('Error fetching warehouses:', error);
     }
-  }, [user?.id]);
+  }, [vendorId]);
 
   const fetchProducts = useCallback(async () => {
     try {
-      const { data: vendor } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user?.id)
-        .maybeSingle();
-
-      if (!vendor) return;
+      if (!vendorId) return;
 
       const { data: productsData, error } = await supabase
         .from('products')
         .select('id, name, sku, price')
-        .eq('vendor_id', vendor.id)
+        .eq('vendor_id', vendorId)
         .eq('is_active', true)
         .order('name');
 
@@ -106,20 +94,20 @@ export default function InventoryManagement() {
       console.error('Error fetching products:', error);
       toast({ title: 'Erreur', description: 'Impossible de charger les produits', variant: 'destructive' });
     }
-  }, [user?.id, toast]);
+  }, [vendorId, toast]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!vendorId) return;
 
     console.log('🔄 Chargement initial InventoryManagement');
     fetchWarehouses();
     fetchProducts();
     refresh(); // Forcer le rechargement de l'inventaire
-  }, [user, fetchWarehouses, fetchProducts, refresh]);
+  }, [vendorId, fetchWarehouses, fetchProducts, refresh]);
 
   // Recharger automatiquement quand on revient sur l'onglet (focus) ou qu'il redevient visible
   useEffect(() => {
-    if (!user) return;
+    if (!vendorId) return;
 
     const reload = () => {
       fetchProducts();
@@ -137,33 +125,9 @@ export default function InventoryManagement() {
       window.removeEventListener('focus', reload);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [user, fetchProducts, refresh]);
-
-  // Synchroniser les modifications produits (nom/prix/sku) dans l'Inventaire
-  useEffect(() => {
-    if (!vendorId) return;
-
-    const channel = supabase
-      .channel(`products-changes-${vendorId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'products',
-          filter: `vendor_id=eq.${vendorId}`,
-        },
-        () => {
-          fetchProducts();
-          refresh();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [vendorId, fetchProducts, refresh]);
+
+  // Synchronisation produits gérée dans useInventoryService (centralisée)
 
   // Combiner les produits avec leur stock (même sans entrée inventory)
   const allProductsWithStock = products.map(product => {

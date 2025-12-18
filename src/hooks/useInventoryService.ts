@@ -216,7 +216,7 @@ export const useInventoryService = () => {
 
     // Channel pour l'inventaire - écouter TOUS les événements
     const inventoryChannel = supabase
-      .channel('inventory-changes')
+      .channel(`inventory-changes-${vendorId}`)
       .on(
         'postgres_changes',
         {
@@ -234,9 +234,29 @@ export const useInventoryService = () => {
         console.log('📡 Statut channel inventaire:', status);
       });
 
+    // Channel pour les produits (nom/prix/SKU) → refléter instantanément dans l'inventaire
+    const productsChannel = supabase
+      .channel(`products-changes-${vendorId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'products',
+          filter: `vendor_id=eq.${vendorId}`
+        },
+        (payload) => {
+          console.log('🧾 Changement produit détecté:', payload.eventType, payload);
+          loadData();
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Statut channel produits:', status);
+      });
+
     // Channel pour les alertes
     const alertsChannel = supabase
-      .channel('alerts-changes')
+      .channel(`alerts-changes-${vendorId}`)
       .on(
         'postgres_changes',
         {
@@ -263,7 +283,7 @@ export const useInventoryService = () => {
 
     // Channel pour l'historique
     const historyChannel = supabase
-      .channel('history-changes')
+      .channel(`history-changes-${vendorId}`)
       .on(
         'postgres_changes',
         {
@@ -281,6 +301,7 @@ export const useInventoryService = () => {
 
     return () => {
       supabase.removeChannel(inventoryChannel);
+      supabase.removeChannel(productsChannel);
       supabase.removeChannel(alertsChannel);
       supabase.removeChannel(historyChannel);
     };
