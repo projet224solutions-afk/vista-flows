@@ -1232,6 +1232,14 @@ export function POSSystem() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-3 p-1 md:p-2">
                     {sortedProducts.map(product => {
                       const isRecent = recentlySelected.includes(product.id);
+                      const canSellCarton = !!product.sell_by_carton && !!product.units_per_carton && product.units_per_carton > 1;
+                      const cartonsAvailable = canSellCarton ? Math.floor(product.stock / product.units_per_carton) : 0;
+                      const cartonPrice = canSellCarton
+                        ? (product.price_carton && product.price_carton > 0
+                          ? product.price_carton
+                          : product.price * product.units_per_carton)
+                        : 0;
+
                       return (
                         <Card 
                           key={product.id} 
@@ -1292,28 +1300,43 @@ export function POSSystem() {
                               <span className="text-[10px] text-muted-foreground">GNF/unité</span>
                             </div>
 
-                            {/* Prix carton si disponible */}
-                            {product.sell_by_carton && product.units_per_carton && product.units_per_carton > 1 && (
-                              <div className="flex items-baseline gap-1 bg-green-50 dark:bg-green-950/30 px-1 py-0.5 rounded">
-                                <span className="text-xs font-bold text-green-600 dark:text-green-400">
-                                  📦 {(product.price_carton && product.price_carton > 0 
-                                    ? product.price_carton 
-                                    : product.price * product.units_per_carton
-                                  ).toLocaleString()}
+                            {/* Prix carton */}
+                            {canSellCarton && (
+                              <div
+                                className={`flex items-baseline gap-1 px-1 py-0.5 rounded ${
+                                  cartonsAvailable > 0
+                                    ? 'bg-green-50 dark:bg-green-950/30'
+                                    : 'bg-muted/40'
+                                }`}
+                              >
+                                <span
+                                  className={`text-xs font-bold ${
+                                    cartonsAvailable > 0
+                                      ? 'text-green-600 dark:text-green-400'
+                                      : 'text-muted-foreground'
+                                  }`}
+                                >
+                                  📦 {(cartonsAvailable > 0 ? cartonPrice : 0).toLocaleString()}
                                 </span>
-                                <span className="text-[9px] text-green-600/70 dark:text-green-400/70">
-                                  GNF/{product.units_per_carton}u
+                                <span
+                                  className={`text-[9px] ${
+                                    cartonsAvailable > 0
+                                      ? 'text-green-600/70 dark:text-green-400/70'
+                                      : 'text-muted-foreground'
+                                  }`}
+                                >
+                                  GNF/{cartonsAvailable > 0 ? product.units_per_carton : 0}u
                                 </span>
                               </div>
                             )}
 
                             {/* Stock disponible (unités + cartons) */}
-                            {product.sell_by_carton && product.units_per_carton && (
+                            {canSellCarton && (
                               <div className="text-[9px] text-muted-foreground">
-                                {Math.floor(product.stock / product.units_per_carton)} cartons dispo
+                                {cartonsAvailable} cartons dispo
                               </div>
                             )}
-                            
+
                             {/* Boutons d'action - Compact */}
                             <div className="flex flex-col gap-1 pt-1">
                               {/* Ligne 1: Quantité + Unité */}
