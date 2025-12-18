@@ -1418,18 +1418,19 @@ export function POSSystem() {
                                 </Button>
                               </div>
 
-                              {/* Ligne 2: Bouton Carton si disponible */}
-                              {product.sell_by_carton && product.units_per_carton && product.units_per_carton > 1 && product.stock >= product.units_per_carton && (
+                              {/* Ligne 2: Bouton Carton (visible même si stock insuffisant) */}
+                              {canSellCarton && (
                                 <Button
                                   variant="secondary"
                                   size="sm"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    addToCartByCarton(product);
+                                    if (cartonsAvailable > 0) addToCartByCarton(product);
                                   }}
-                                  className="w-full h-7 text-[10px] md:text-xs font-semibold bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:text-green-400"
+                                  disabled={cartonsAvailable <= 0}
+                                  className="w-full h-7 text-[10px] md:text-xs font-semibold bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:text-green-400 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                  📦 +1 Carton ({product.units_per_carton}u)
+                                  📦 +1 Carton ({cartonsAvailable > 0 ? product.units_per_carton : 0}u)
                                 </Button>
                               )}
                             </div>
