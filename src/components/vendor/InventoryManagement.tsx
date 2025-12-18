@@ -57,7 +57,7 @@ export default function InventoryManagement() {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>('all');
-  const [products, setProducts] = useState<Array<{ id: string; name: string; sku?: string }>>([]);
+  const [products, setProducts] = useState<Array<{ id: string; name: string; sku?: string; price: number }>>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -102,7 +102,7 @@ export default function InventoryManagement() {
 
       const { data: productsData, error } = await supabase
         .from('products')
-        .select('id, name, sku')
+        .select('id, name, sku, price')
         .eq('vendor_id', vendor.id)
         .eq('is_active', true)
         .order('name');
@@ -130,7 +130,7 @@ export default function InventoryManagement() {
       expiry_date: inventoryItem?.expiry_date,
       product: {
         name: product.name,
-        price: 0,
+        price: product.price || 0,
         sku: product.sku
       },
       hasInventoryRecord: !!inventoryItem
@@ -154,11 +154,19 @@ export default function InventoryManagement() {
   const lowStockItems = allProductsWithStock.filter(item => item.quantity <= item.minimum_stock && item.quantity > 0);
   const outOfStockItems = allProductsWithStock.filter(item => item.quantity === 0);
   const totalProducts = products.length; // Total des produits du vendeur
-  const totalValue = stats?.total_value || allProductsWithStock.reduce((acc, item) => acc + (item.quantity * (item.product?.price || 0)), 0);
+  
+  // Calcul intelligent de la valeur totale du stock
+  const calculatedTotalValue = allProductsWithStock.reduce((acc, item) => {
+    const price = item.product?.price || 0;
+    const quantity = item.quantity || 0;
+    return acc + (price * quantity);
+  }, 0);
+  
+  const totalValue = calculatedTotalValue;
   const totalCost = stats?.total_cost || 0;
-  const potentialProfit = stats?.potential_profit || 0;
+  const potentialProfit = stats?.potential_profit || (totalValue - totalCost);
 
-  console.log('📊 Stats inventaire - Total produits:', totalProducts, 'Stock faible:', lowStockItems.length, 'Rupture:', outOfStockItems.length);
+  console.log('📊 Stats inventaire - Total produits:', totalProducts, 'Valeur totale:', totalValue, 'Stock faible:', lowStockItems.length, 'Rupture:', outOfStockItems.length);
 
 
   const [addOpen, setAddOpen] = useState(false);
@@ -663,8 +671,8 @@ export default function InventoryManagement() {
             <div className="flex items-center gap-2">
               <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-green-600 flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-[10px] md:text-sm text-muted-foreground truncate">Valeur</p>
-                <p className="text-sm md:text-xl font-bold truncate">{totalValue.toLocaleString()}</p>
+                <p className="text-[10px] md:text-sm text-muted-foreground truncate">Valeur Stock</p>
+                <p className="text-sm md:text-xl font-bold truncate text-green-600">{totalValue.toLocaleString()} GNF</p>
               </div>
             </div>
           </CardContent>
