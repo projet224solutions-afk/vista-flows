@@ -37,7 +37,14 @@ export function VendorSidebar() {
   const collapsed = state === "collapsed" && !isMobile;
   const { badges, loading } = useVendorBadges();
 
-  const isActive = (path: string) => currentPath === path;
+  // Produits et Inventaire fonctionnent ensemble
+  const linkedPaths = ['products', 'inventory'];
+  const isActive = (path: string) => {
+    if (linkedPaths.includes(path) && linkedPaths.includes(currentPath)) {
+      return true;
+    }
+    return currentPath === path;
+  };
 
   const getBadgeValue = (path: string): string | null => {
     if (loading) return null;
