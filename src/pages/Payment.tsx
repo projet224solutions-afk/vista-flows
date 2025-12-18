@@ -15,11 +15,9 @@ import { useToast } from "@/hooks/use-toast";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
 import { ProfessionalVirtualCard } from "@/components/virtual-card";
 import { MonerooPaymentDialog } from "@/components/payment/MonerooPaymentDialog";
-import { CinetPayPaymentDialog } from "@/components/payment/CinetPayPaymentDialog";
 import WalletMonthlyStats from "@/components/WalletMonthlyStats";
 import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 import { PaymentMethodsManager } from "@/components/payment/PaymentMethodsManager";
-import { CinetPayOrangeMoneyButton } from "@/components/payment/CinetPayOrangeMoneyButton";
 
 export default function Payment() {
   const navigate = useNavigate();
@@ -50,7 +48,6 @@ export default function Payment() {
     receiver_id?: string;
   } | null>(null);
   const [showMonerooDialog, setShowMonerooDialog] = useState(false);
-  const [showCinetPayDialog, setShowCinetPayDialog] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -649,44 +646,12 @@ export default function Payment() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button 
-                  variant="outline"
-                  className="gap-2"
+                  className="gap-2 bg-orange-500 hover:bg-orange-600 text-white"
                   onClick={() => setShowMonerooDialog(true)}
                 >
-                  <Wallet className="h-4 w-4" />
-                  Moneroo
-                </Button>
-                <Button 
-                  variant="outline"
-                  className="gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                  onClick={() => setShowCinetPayDialog(true)}
-                >
                   <Smartphone className="h-4 w-4" />
-                  CinetPay
+                  Recharger (Orange/MTN)
                 </Button>
-                <CinetPayOrangeMoneyButton
-                  amount={50000}
-                  currency="GNF"
-                  description="Recharge portefeuille 224Solutions"
-                  onSuccess={(transactionId) => {
-                    console.log('✅ Paiement CinetPay réussi:', transactionId);
-                    toast({
-                      title: "Paiement réussi",
-                      description: "Votre portefeuille sera crédité sous peu.",
-                    });
-                    setTimeout(() => {
-                      loadWalletData();
-                    }, 3000);
-                  }}
-                  onError={(error) => {
-                    console.error('❌ Erreur paiement CinetPay:', error);
-                    toast({
-                      title: "Erreur de paiement",
-                      description: error,
-                      variant: "destructive",
-                    });
-                  }}
-                />
                 <ProfessionalVirtualCard />
                 <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
                   <DialogTrigger asChild>
@@ -941,26 +906,6 @@ export default function Payment() {
               title: 'Paiement en cours',
               description: 'Complétez le paiement sur la page qui s\'est ouverte',
             });
-          }}
-        />
-
-        {/* Dialog de recharge CinetPay */}
-        <CinetPayPaymentDialog
-          open={showCinetPayDialog}
-          onOpenChange={setShowCinetPayDialog}
-          defaultAmount={10000}
-          description="Rechargez votre wallet via CinetPay (Mobile Money & Cartes)"
-          onSuccess={(transactionId, paymentUrl) => {
-            console.log('Paiement CinetPay initié:', transactionId);
-            toast({
-              title: 'Paiement CinetPay en cours',
-              description: 'Complétez le paiement dans la fenêtre ouverte',
-            });
-            // Recharger les données après un délai
-            setTimeout(() => {
-              loadWalletData();
-              loadRecentTransactions();
-            }, 5000);
           }}
         />
       </div>
