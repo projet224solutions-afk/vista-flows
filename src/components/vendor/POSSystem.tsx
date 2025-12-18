@@ -726,7 +726,7 @@ export function POSSystem() {
 
       if (itemsError) throw itemsError;
 
-      // 4. Mettre à jour le stock pour chaque produit
+      // 4. Mettre à jour le stock via inventory (le trigger sync automatiquement vers products.stock_quantity)
       for (const item of cart) {
         const { data: inventoryItem } = await supabase
           .from('inventory')
@@ -735,28 +735,30 @@ export function POSSystem() {
           .maybeSingle();
 
         if (inventoryItem) {
+          // Mise à jour inventory - le trigger synchronise automatiquement products.stock_quantity
           const newQuantity = Math.max(0, inventoryItem.quantity - item.quantity);
           await supabase
             .from('inventory')
             .update({ quantity: newQuantity })
             .eq('id', inventoryItem.id);
-        }
-
-        const { data: product } = await supabase
-          .from('products')
-          .select('stock_quantity')
-          .eq('id', item.id)
-          .maybeSingle();
-
-        if (product) {
-          const newStock = Math.max(0, (product.stock_quantity || 0) - item.quantity);
-          await supabase
+        } else {
+          // Pas d'entrée inventory - obtenir le stock actuel et créer l'entrée
+          const { data: product } = await supabase
             .from('products')
-            .update({ 
-              stock_quantity: newStock,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', item.id);
+            .select('stock_quantity')
+            .eq('id', item.id)
+            .maybeSingle();
+            
+          if (product) {
+            const newStock = Math.max(0, (product.stock_quantity || 0) - item.quantity);
+            // Créer l'entrée inventory - le trigger synchronise automatiquement products.stock_quantity
+            await supabase
+              .from('inventory')
+              .insert({
+                product_id: item.id,
+                quantity: newStock
+              });
+          }
         }
       }
 
