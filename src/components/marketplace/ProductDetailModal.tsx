@@ -366,8 +366,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
       <TabsContent value="reviews">
         <ProductReviewsSection 
-          vendorId={product.vendor_id}
-          vendorName={product.vendors?.business_name || 'Vendeur'}
+          productId={product.id}
+          productName={product.name}
         />
       </TabsContent>
         </Tabs>

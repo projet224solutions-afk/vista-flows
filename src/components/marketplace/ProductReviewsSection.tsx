@@ -1,21 +1,23 @@
 /**
- * Section d'affichage des avis clients sur un produit
- * Permet aux clients de voir les avis avec les réponses des vendeurs
+ * Section d'affichage des avis clients sur un produit spécifique
+ * Chaque produit a ses propres avis indépendants
  */
 
 import { useState, useEffect } from 'react';
 import { Star, User, Calendar, MessageSquare } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/lib/supabaseClient';
 
 interface Review {
   id: string;
   rating: number;
-  comment: string | null;
+  title: string | null;
+  content: string | null;
   vendor_response: string | null;
   vendor_response_at: string | null;
+  verified_purchase: boolean;
+  helpful_count: number;
   created_at: string;
   profiles?: {
     first_name: string;
@@ -30,11 +32,11 @@ interface ReviewStats {
 }
 
 interface ProductReviewsSectionProps {
-  vendorId: string;
-  vendorName: string;
+  productId: string;
+  productName?: string;
 }
 
-export default function ProductReviewsSection({ vendorId, vendorName }: ProductReviewsSectionProps) {
+export default function ProductReviewsSection({ productId, productName }: ProductReviewsSectionProps) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [stats, setStats] = useState<ReviewStats>({
     averageRating: 0,
@@ -44,20 +46,21 @@ export default function ProductReviewsSection({ vendorId, vendorName }: ProductR
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (vendorId) {
+    if (productId) {
       loadReviews();
     }
-  }, [vendorId]);
+  }, [productId]);
 
   const loadReviews = async () => {
     try {
       setLoading(true);
 
-      // Récupérer tous les avis du vendeur
+      // Récupérer les avis spécifiques à CE produit uniquement
       const { data, error } = await supabase
-        .from('vendor_ratings')
+        .from('product_reviews')
         .select('*')
-        .eq('vendor_id', vendorId)
+        .eq('product_id', productId)
+        .eq('is_approved', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -67,20 +70,18 @@ export default function ProductReviewsSection({ vendorId, vendorName }: ProductR
         const { data: profile } = await supabase
           .from('profiles')
           .select('first_name, last_name')
-          .eq('id', review.customer_id)
+          .eq('id', review.user_id)
           .maybeSingle();
         
         return {
           ...review,
-          vendor_response: review.vendor_response || null,
-          vendor_response_at: review.vendor_response_at || null,
           profiles: profile || { first_name: 'Client', last_name: '' }
         };
       }));
 
       setReviews(reviewsWithProfiles);
 
-      // Calculer les statistiques
+      // Calculer les statistiques pour ce produit
       if (reviewsWithProfiles && reviewsWithProfiles.length > 0) {
         const total = reviewsWithProfiles.length;
         const sum = reviewsWithProfiles.reduce((acc, r) => acc + r.rating, 0);
@@ -96,9 +97,15 @@ export default function ProductReviewsSection({ vendorId, vendorName }: ProductR
           totalReviews: total,
           distribution: dist
         });
+      } else {
+        setStats({
+          averageRating: 0,
+          totalReviews: 0,
+          distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+        });
       }
     } catch (error) {
-      console.error('Error loading reviews:', error);
+      console.error('Error loading product reviews:', error);
     } finally {
       setLoading(false);
     }
@@ -134,9 +141,9 @@ export default function ProductReviewsSection({ vendorId, vendorName }: ProductR
     return (
       <div className="py-6 text-center">
         <Star className="w-12 h-12 mx-auto text-muted-foreground mb-2 opacity-50" />
-        <p className="text-muted-foreground">Aucun avis pour le moment</p>
+        <p className="text-muted-foreground">Aucun avis pour ce produit</p>
         <p className="text-sm text-muted-foreground mt-2">
-          Soyez le premier à donner votre avis sur ce vendeur
+          Soyez le premier à donner votre avis sur ce produit
         </p>
       </div>
     );
@@ -147,7 +154,7 @@ export default function ProductReviewsSection({ vendorId, vendorName }: ProductR
       {/* En-tête avec statistiques */}
       <div>
         <h3 className="text-lg font-semibold mb-4">
-          Avis clients sur {vendorName}
+          Avis clients {productName ? `sur ${productName}` : ''}
         </h3>
         
         <div className="flex items-start gap-6 mb-6">
@@ -171,7 +178,9 @@ export default function ProductReviewsSection({ vendorId, vendorName }: ProductR
                   <div
                     className="h-full bg-yellow-400"
                     style={{
-                      width: `${(stats.distribution[stars] / stats.totalReviews) * 100}%`
+                      width: stats.totalReviews > 0 
+                        ? `${(stats.distribution[stars] / stats.totalReviews) * 100}%`
+                        : '0%'
                     }}
                   />
                 </div>
@@ -211,17 +220,32 @@ export default function ProductReviewsSection({ vendorId, vendorName }: ProductR
                         month: 'long',
                         year: 'numeric'
                       })}
+                      {review.verified_purchase && (
+                        <span className="text-green-600 font-medium">• Achat vérifié</span>
+                      )}
                     </div>
                   </div>
                 </div>
                 {renderStars(review.rating)}
               </div>
 
+              {/* Titre de l'avis */}
+              {review.title && (
+                <h5 className="font-medium mb-2">{review.title}</h5>
+              )}
+
               {/* Commentaire du client */}
-              {review.comment && (
+              {review.content && (
                 <div className="mb-3">
-                  <p className="text-sm text-foreground">{review.comment}</p>
+                  <p className="text-sm text-foreground">{review.content}</p>
                 </div>
+              )}
+
+              {/* Compteur utile */}
+              {review.helpful_count > 0 && (
+                <p className="text-xs text-muted-foreground mb-2">
+                  {review.helpful_count} personne(s) ont trouvé cet avis utile
+                </p>
               )}
 
               {/* Réponse du vendeur */}
