@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,30 +51,22 @@ export default function InventoryManagement() {
     updateStock,
     markAlertAsRead,
     resolveAlert,
-    refresh
+    refresh,
+    vendorId,
   } = useInventoryService();
-  
+
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>('all');
   const [products, setProducts] = useState<Array<{ id: string; name: string; sku?: string; price: number }>>([]);
 
-  useEffect(() => {
-    if (!user) return;
-    
-    console.log('🔄 Chargement initial InventoryManagement');
-    fetchWarehouses();
-    fetchProducts();
-    refresh(); // Forcer le rechargement de l'inventaire
-  }, [user, refresh]);
-
-  const fetchWarehouses = async () => {
+  const fetchWarehouses = useCallback(async () => {
     try {
       const { data: vendor } = await supabase
         .from('vendors')
         .select('id')
         .eq('user_id', user?.id)
-        .single();
+        .maybeSingle();
 
       if (!vendor) return;
 
@@ -88,15 +80,15 @@ export default function InventoryManagement() {
     } catch (error) {
       console.error('Error fetching warehouses:', error);
     }
-  };
+  }, [user?.id]);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       const { data: vendor } = await supabase
         .from('vendors')
         .select('id')
         .eq('user_id', user?.id)
-        .single();
+        .maybeSingle();
 
       if (!vendor) return;
 
@@ -114,7 +106,64 @@ export default function InventoryManagement() {
       console.error('Error fetching products:', error);
       toast({ title: 'Erreur', description: 'Impossible de charger les produits', variant: 'destructive' });
     }
-  };
+  }, [user?.id, toast]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    console.log('🔄 Chargement initial InventoryManagement');
+    fetchWarehouses();
+    fetchProducts();
+    refresh(); // Forcer le rechargement de l'inventaire
+  }, [user, fetchWarehouses, fetchProducts, refresh]);
+
+  // Recharger automatiquement quand on revient sur l'onglet (focus) ou qu'il redevient visible
+  useEffect(() => {
+    if (!user) return;
+
+    const reload = () => {
+      fetchProducts();
+      refresh();
+    };
+
+    const onVisibilityChange = () => {
+      if (!document.hidden) reload();
+    };
+
+    window.addEventListener('focus', reload);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', reload);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [user, fetchProducts, refresh]);
+
+  // Synchroniser les modifications produits (nom/prix/sku) dans l'Inventaire
+  useEffect(() => {
+    if (!vendorId) return;
+
+    const channel = supabase
+      .channel(`products-changes-${vendorId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'products',
+          filter: `vendor_id=eq.${vendorId}`,
+        },
+        () => {
+          fetchProducts();
+          refresh();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [vendorId, fetchProducts, refresh]);
 
   // Combiner les produits avec leur stock (même sans entrée inventory)
   const allProductsWithStock = products.map(product => {
