@@ -599,40 +599,46 @@ export function POSSystem() {
         }
       }
 
-      // Pour le paiement par carte, utiliser FedaPay
+      // Pour le paiement par carte, utiliser Stripe
       if (paymentMethod === 'card') {
-        toast.loading('Initialisation du paiement FedaPay...');
+        toast.loading('Initialisation du paiement Stripe...');
         
-        const { data: fedapayResult, error: fedapayError } = await supabase.functions.invoke('fedapay-initialize-payment', {
+        const { data: stripeResult, error: stripeError } = await supabase.functions.invoke('stripe-card-payment', {
           body: {
             amount: total,
-            currency: 'GNF',
+            currency: 'gnf',
             description: `Vente POS - ${cart.length} article(s)`,
             customer_email: user?.email || 'client@224solutions.com',
             customer_name: selectedCustomer?.name || 'Client POS',
-            return_url: `${window.location.origin}/vendeur/pos`,
-            order_id: `POS-${Date.now()}`,
+            success_url: `${window.location.origin}/vendeur/pos?payment=success`,
+            cancel_url: `${window.location.origin}/vendeur/pos?payment=canceled`,
+            payment_type: 'checkout',
+            metadata: {
+              source: 'pos',
+              vendor_id: vendorId,
+              items_count: cart.length
+            }
           }
         });
 
         toast.dismiss();
 
-        if (fedapayError || !fedapayResult?.success) {
-          console.error('FedaPay error:', fedapayError || fedapayResult);
-          const detailsMessage = await getEdgeFunctionErrorMessage(fedapayError);
+        if (stripeError || !stripeResult?.success) {
+          console.error('Stripe error:', stripeError || stripeResult);
+          const detailsMessage = await getEdgeFunctionErrorMessage(stripeError);
 
-          toast.error('Erreur lors de l\'initialisation du paiement FedaPay', {
-            description: fedapayResult?.error || detailsMessage || fedapayError?.message || 'Veuillez réessayer',
+          toast.error('Erreur lors de l\'initialisation du paiement Stripe', {
+            description: stripeResult?.error || detailsMessage || stripeError?.message || 'Veuillez réessayer',
           });
           return;
         }
 
-        if (fedapayResult.payment_url) {
-          toast.info('Redirection vers FedaPay...', {
-            description: 'Complétez le paiement sur la page FedaPay.'
+        if (stripeResult.payment_url) {
+          toast.info('Redirection vers Stripe...', {
+            description: 'Complétez le paiement sur la page Stripe.'
           });
           
-          window.open(fedapayResult.payment_url, '_blank', 'width=500,height=700');
+          window.open(stripeResult.payment_url, '_blank', 'width=500,height=700');
           
           const customerId = await getOrCreateCustomerId();
           if (!customerId) return;
@@ -650,7 +656,7 @@ export function POSSystem() {
               status: 'pending',
               payment_method: 'card',
               shipping_address: { address: 'Point de vente' },
-              notes: `Paiement FedaPay - Transaction: ${fedapayResult.transaction_id}`,
+              notes: `Paiement Stripe - Session: ${stripeResult.session_id}`,
               source: 'pos'
             })
             .select('id, order_number')
