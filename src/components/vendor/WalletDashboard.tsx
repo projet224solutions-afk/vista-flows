@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
-import { CinetPayPaymentDialog } from "@/components/payment/CinetPayPaymentDialog";
+import { MonerooPaymentDialog } from "@/components/payment/MonerooPaymentDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,7 +42,7 @@ export default function WalletDashboard() {
   const [busy, setBusy] = useState(false);
   const [showTransferPreview, setShowTransferPreview] = useState(false);
   const [transferPreview, setTransferPreview] = useState<any>(null);
-  const [showCinetPayDialog, setShowCinetPayDialog] = useState(false);
+  const [showMonerooDialog, setShowMonerooDialog] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -359,21 +359,21 @@ export default function WalletDashboard() {
 
           <TabsContent value="deposit" className="space-y-4">
             <div className="space-y-4">
-              {/* CinetPay - Orange Money, MTN, Moov, Cartes */}
+              {/* Moneroo - Orange Money, MTN */}
               <div className="p-4 border rounded-lg bg-gradient-to-r from-orange-50 to-yellow-50">
                 <div className="flex items-center gap-2 mb-3">
                   <Smartphone className="w-5 h-5 text-orange-500" />
                   <h4 className="font-semibold">Recharger via Mobile Money</h4>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Orange Money, MTN Money, Moov Money ou Carte bancaire via CinetPay
+                  Orange Money ou MTN Mobile Money via Moneroo
                 </p>
                 <Button 
-                  onClick={() => setShowCinetPayDialog(true)} 
+                  onClick={() => setShowMonerooDialog(true)} 
                   className="w-full bg-orange-500 hover:bg-orange-600"
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
-                  Recharger via CinetPay
+                  Recharger (Orange/MTN)
                 </Button>
               </div>
 
@@ -388,7 +388,7 @@ export default function WalletDashboard() {
                       size="sm"
                       onClick={() => {
                         setDepositAmount(amount.toString());
-                        setShowCinetPayDialog(true);
+                        setShowMonerooDialog(true);
                       }}
                     >
                       {amount.toLocaleString('fr-FR')} GNF
@@ -514,15 +514,16 @@ export default function WalletDashboard() {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* CinetPay Payment Dialog */}
-        <CinetPayPaymentDialog
-          open={showCinetPayDialog}
-          onOpenChange={setShowCinetPayDialog}
+        {/* Moneroo Payment Dialog */}
+        <MonerooPaymentDialog
+          open={showMonerooDialog}
+          onOpenChange={setShowMonerooDialog}
           defaultAmount={depositAmount ? parseInt(depositAmount) : 10000}
-          description="Rechargez votre wallet vendeur via CinetPay"
-          onSuccess={(transactionId, paymentUrl) => {
-            console.log('Paiement CinetPay initié:', transactionId);
-            toast.success('Paiement initié. Complétez dans la fenêtre CinetPay.');
+          description="Rechargez votre wallet vendeur via Orange Money ou MTN"
+          metadata={{ wallet_recharge: true, user_type: 'vendor' }}
+          onSuccess={(paymentId) => {
+            console.log('Paiement Moneroo initié:', paymentId);
+            toast.success('Paiement initié. Complétez dans la fenêtre Moneroo.');
             setDepositAmount("");
             // Rafraîchir le solde après quelques secondes
             setTimeout(() => loadWalletData(), 5000);
