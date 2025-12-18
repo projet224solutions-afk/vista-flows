@@ -49,6 +49,7 @@ import { usePOSSettings } from '@/hooks/usePOSSettings';
 import { useAuth } from '@/hooks/useAuth';
 import { useAgent } from '@/contexts/AgentContext';
 import { supabase } from '@/integrations/supabase/client';
+import { getEdgeFunctionErrorMessage } from '@/utils/supabaseFunctionsError';
 import { NumericKeypadPopup } from './pos/NumericKeypadPopup';
 import { QuantityKeypadPopup } from './pos/QuantityKeypadPopup';
 import { POSReceipt } from './pos/POSReceipt';
@@ -548,9 +549,10 @@ export function POSSystem() {
 
         if (monerooError || !monerooResult?.success) {
           console.error('Moneroo error:', monerooError || monerooResult);
-          
+          const detailsMessage = await getEdgeFunctionErrorMessage(monerooError);
+
           toast.error('Erreur lors de l\'initialisation du paiement', {
-            description: monerooResult?.error || monerooError?.message || 'Veuillez réessayer',
+            description: monerooResult?.error || detailsMessage || monerooError?.message || 'Veuillez réessayer',
           });
           return;
         }
@@ -637,9 +639,10 @@ export function POSSystem() {
 
         if (monerooError || !monerooResult?.success) {
           console.error('Moneroo error:', monerooError || monerooResult);
-          
+          const detailsMessage = await getEdgeFunctionErrorMessage(monerooError);
+
           toast.error('Erreur lors de l\'initialisation du paiement Moneroo', {
-            description: monerooResult?.error || monerooError?.message || 'Veuillez réessayer',
+            description: monerooResult?.error || detailsMessage || monerooError?.message || 'Veuillez réessayer',
           });
           return;
         }

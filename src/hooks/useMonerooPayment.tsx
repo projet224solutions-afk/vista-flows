@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { getEdgeFunctionErrorMessage } from '@/utils/supabaseFunctionsError';
 
 interface PaymentData {
   amount: number;
@@ -41,22 +42,26 @@ export const useMonerooPayment = () => {
 
       if (error) {
         console.error('Error initializing payment:', error);
-        
-        // Analyser le message d'erreur
-        const errorMessage = error.message || '';
-        let displayMessage = 'Impossible d\'initialiser le paiement';
-        
-        // Détecter l'erreur de configuration Moneroo
-        if (errorMessage.includes('No payment methods enabled') || 
-            errorMessage.includes('payment methods enabled for this currency')) {
-          displayMessage = '⚠️ Configuration requise: Veuillez activer Orange Money et MTN MoMo pour la Guinée (GNF) dans votre tableau de bord Moneroo sur app.moneroo.io';
+
+        const detailsMessage = await getEdgeFunctionErrorMessage(error);
+
+        // Message par défaut
+        let displayMessage = detailsMessage || error.message || 'Impossible d\'initialiser le paiement';
+
+        // Détecter l'erreur de configuration Moneroo (donnée par Moneroo)
+        if (
+          displayMessage.includes('No payment methods enabled') ||
+          displayMessage.includes('payment methods enabled for this currency')
+        ) {
+          displayMessage =
+            '⚠️ Configuration requise: activez les méthodes (Orange/MTN) pour la devise GNF dans Moneroo (dans le même environnement que votre clé: Live/Test).';
         }
-        
+
         toast({
-          title: 'Erreur de configuration',
+          title: 'Erreur de paiement',
           description: displayMessage,
           variant: 'destructive',
-          duration: 10000, // Afficher plus longtemps pour ce message important
+          duration: 10000,
         });
         return null;
       }
@@ -85,9 +90,11 @@ export const useMonerooPayment = () => {
 
       if (error) {
         console.error('Error verifying payment:', error);
+        const detailsMessage = await getEdgeFunctionErrorMessage(error);
+
         toast({
           title: 'Erreur',
-          description: 'Impossible de vérifier le paiement',
+          description: detailsMessage || 'Impossible de vérifier le paiement',
           variant: 'destructive',
         });
         return null;
