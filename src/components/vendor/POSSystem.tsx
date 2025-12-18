@@ -232,6 +232,7 @@ export function POSSystem() {
   const [discountMode, setDiscountMode] = useState<'percent' | 'amount'>('percent');
   const [numericInput, setNumericInput] = useState('');
   const [showOrderSummary, setShowOrderSummary] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [showKeypad, setShowKeypad] = useState(false);
   const [showQuantityKeypad, setShowQuantityKeypad] = useState(false);
   const [selectedProductForQuantity, setSelectedProductForQuantity] = useState<Product | null>(null);
@@ -478,13 +479,18 @@ export function POSSystem() {
   const processPayment = async () => {
     // Note: Le montant reçu n'est plus obligatoire pour valider
 
+    if (isProcessingPayment) return;
+    setIsProcessingPayment(true);
+
     if (!vendorId) {
       toast.error('Vendeur non identifié');
+      setIsProcessingPayment(false);
       return;
     }
 
     if (!user?.id) {
       toast.error('Utilisateur non connecté');
+      setIsProcessingPayment(false);
       return;
     }
 
@@ -492,6 +498,7 @@ export function POSSystem() {
     if (paymentMethod === 'mobile_money') {
       if (!mobileMoneyPhone || mobileMoneyPhone.length !== 9) {
         toast.error('Veuillez entrer un numéro de téléphone valide (9 chiffres)');
+        setIsProcessingPayment(false);
         return;
       }
 
@@ -503,6 +510,7 @@ export function POSSystem() {
           toast.error('Numéro non compatible Orange Money', {
             description: 'Orange Money (GN) commence généralement par 610, 611 ou 62.',
           });
+          setIsProcessingPayment(false);
           return;
         }
       }
@@ -511,6 +519,7 @@ export function POSSystem() {
           toast.error('Numéro non compatible MTN MoMo', {
             description: 'MTN MoMo (GN) commence généralement par 66.',
           });
+          setIsProcessingPayment(false);
           return;
         }
       }
@@ -726,41 +735,15 @@ export function POSSystem() {
 
       if (itemsError) throw itemsError;
 
-      // 4. Mettre à jour le stock via inventory (le trigger sync automatiquement vers products.stock_quantity)
-      for (const item of cart) {
-        const { data: inventoryItem } = await supabase
-          .from('inventory')
-          .select('id, quantity')
-          .eq('product_id', item.id)
-          .maybeSingle();
+      // IMPORTANT: laisser la BDD faire le décrément du stock exactement 1 fois.
+      // Le trigger update_inventory_on_order_completion (orders.status -> processing/completed)
+      // met à jour inventory.quantity, puis sync_inventory_to_products_trigger synchronise products.stock_quantity.
+      await supabase.from('orders').update({ status: 'processing' }).eq('id', order.id);
 
-        if (inventoryItem) {
-          // Mise à jour inventory - le trigger synchronise automatiquement products.stock_quantity
-          const newQuantity = Math.max(0, inventoryItem.quantity - item.quantity);
-          await supabase
-            .from('inventory')
-            .update({ quantity: newQuantity })
-            .eq('id', inventoryItem.id);
-        } else {
-          // Pas d'entrée inventory - obtenir le stock actuel et créer l'entrée
-          const { data: product } = await supabase
-            .from('products')
-            .select('stock_quantity')
-            .eq('id', item.id)
-            .maybeSingle();
-            
-          if (product) {
-            const newStock = Math.max(0, (product.stock_quantity || 0) - item.quantity);
-            // Créer l'entrée inventory - le trigger synchronise automatiquement products.stock_quantity
-            await supabase
-              .from('inventory')
-              .insert({
-                product_id: item.id,
-                quantity: newStock
-              });
-          }
-        }
-      }
+      // 4. Stock: mis à jour automatiquement par la BDD
+      // - Trigger `update_inventory_on_order_trigger` (AFTER INSERT ON order_items) décrémente inventory
+      // - Trigger `sync_inventory_to_products_trigger` synchronise products.stock_quantity
+
 
       setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
       
@@ -775,6 +758,8 @@ export function POSSystem() {
       toast.error('Erreur lors du paiement', {
         description: error.message || 'Une erreur est survenue'
       });
+    } finally {
+      setIsProcessingPayment(false);
     }
   };
 
@@ -1680,9 +1665,9 @@ export function POSSystem() {
               <Button variant="outline" onClick={() => setShowOrderSummary(false)} className="flex-1">
                 Annuler
               </Button>
-              <Button onClick={processPayment} className="flex-1">
+              <Button onClick={processPayment} className="flex-1" disabled={isProcessingPayment}>
                 <CheckSquare className="h-4 w-4 mr-2" />
-                Confirmer
+                {isProcessingPayment ? 'Traitement...' : 'Confirmer'}
               </Button>
             </div>
           </div>
