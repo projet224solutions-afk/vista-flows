@@ -530,7 +530,6 @@ export function POSSystem() {
             customer_phone: mobileMoneyPhone,
             customer_name: selectedCustomer?.name || 'Client POS',
             return_url: `${window.location.origin}/vendeur/pos`,
-            callback_url: `${window.location.origin}/api/fedapay-webhook`,
             order_id: `POS-${Date.now()}`,
           }
         });
@@ -612,7 +611,6 @@ export function POSSystem() {
             customer_email: user?.email || 'client@224solutions.com',
             customer_name: selectedCustomer?.name || 'Client POS',
             return_url: `${window.location.origin}/vendeur/pos`,
-            callback_url: `${window.location.origin}/api/fedapay-webhook`,
             order_id: `POS-${Date.now()}`,
           }
         });
