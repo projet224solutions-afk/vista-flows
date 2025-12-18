@@ -26,12 +26,21 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('Missing Authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Non authentifié', details: 'Authorization header manquant' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
+          headers: { Authorization: authHeader },
         },
       }
     );
@@ -102,11 +111,17 @@ Deno.serve(async (req) => {
     console.log('Moneroo API response status:', monerooResponse.status);
 
     if (!monerooResponse.ok) {
+      const monerooMessage =
+        monerooData && typeof monerooData === 'object' && 'message' in monerooData
+          ? (monerooData as any).message
+          : undefined;
+
       console.error('Moneroo API error:', monerooData);
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: 'Erreur lors de l\'initialisation du paiement',
-          details: monerooData 
+          details: monerooData,
+          moneroo_message: monerooMessage,
         }),
         { status: monerooResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
