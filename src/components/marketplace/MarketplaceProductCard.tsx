@@ -141,27 +141,6 @@ export function MarketplaceProductCard({
           </div>
         )}
 
-        {/* Stock Badge - Rupture de stock */}
-        {stock !== undefined && stock === 0 && (
-          <Badge 
-            variant="destructive" 
-            className="absolute bottom-2 left-2 text-[9px] font-semibold shadow-md"
-          >
-            <Package className="w-2.5 h-2.5 mr-1" />
-            Rupture de stock
-          </Badge>
-        )}
-
-        {/* Stock Badge (si faible) */}
-        {stock !== undefined && stock > 0 && stock <= 5 && (
-          <Badge 
-            variant="secondary" 
-            className="absolute bottom-2 left-2 text-[9px] bg-background/90 backdrop-blur-sm"
-          >
-            <Package className="w-2.5 h-2.5 mr-1" />
-            Plus que {stock}
-          </Badge>
-        )}
       </div>
       
       {/* Content */}
@@ -204,14 +183,24 @@ export function MarketplaceProductCard({
           </div>
         )}
         
-        {/* Price - Bien visible */}
-        <div className="flex items-baseline gap-1.5 mb-2">
-          <span className="marketplace-card-price">
-            {formatPrice(price)} GNF
-          </span>
-          {originalPrice && originalPrice > price && (
-            <span className="text-[11px] text-muted-foreground line-through">
-              {formatPrice(originalPrice)}
+        {/* Price + Stock Status */}
+        <div className="flex items-center justify-between gap-1.5 mb-2">
+          <div className="flex items-baseline gap-1.5">
+            <span className="marketplace-card-price">
+              {formatPrice(price)} GNF
+            </span>
+            {originalPrice && originalPrice > price && (
+              <span className="text-[11px] text-muted-foreground line-through">
+                {formatPrice(originalPrice)}
+              </span>
+            )}
+          </div>
+          {stock !== undefined && (
+            <span className={cn(
+              "text-[10px] font-semibold",
+              stock === 0 ? "text-destructive" : "text-green-600"
+            )}>
+              {stock === 0 ? "Rupture de stock" : "En stock"}
             </span>
           )}
         </div>
