@@ -336,37 +336,39 @@ export function POSSystem() {
     });
 
     setCart(prev => {
+      const totalUnitsInCart = prev
+        .filter(i => i.id === product.id)
+        .reduce((sum, i) => sum + (i.quantity || 0), 0);
+
+      if (totalUnitsInCart + quantity > product.stock) {
+        toast.error('Stock insuffisant');
+        return prev;
+      }
+
       const existingItem = prev.find(item => item.id === product.id && item.saleType !== 'carton');
       if (existingItem) {
         const newQuantity = existingItem.quantity + quantity;
-        if (newQuantity > product.stock) {
-          toast.error('Stock insuffisant');
-          return prev;
-        }
         return prev.map(item =>
           item.id === product.id && item.saleType !== 'carton'
             ? { ...item, quantity: newQuantity, total: newQuantity * item.price }
             : item
         );
       }
+
       return [...prev, { ...product, quantity, total: product.price * quantity, saleType: 'unit' as const }];
     });
-    
+
     toast.success(`${product.name} ajouté au panier`);
   };
 
   // Fonction d'ajout au panier par carton
   const addToCartByCarton = (product: Product, cartonCount: number = 1) => {
-    if (!product.sell_by_carton || !product.units_per_carton) {
+    if (!product.sell_by_carton || !product.units_per_carton || product.units_per_carton <= 1) {
       toast.error('Ce produit ne peut pas être vendu par carton');
       return;
     }
 
     const unitsNeeded = cartonCount * product.units_per_carton;
-    if (product.stock < unitsNeeded) {
-      toast.error(`Stock insuffisant pour ${cartonCount} carton(s). Stock disponible: ${product.stock} unités (${Math.floor(product.stock / product.units_per_carton)} cartons)`);
-      return;
-    }
 
     // Mettre à jour les produits récemment sélectionnés (max 3)
     setRecentlySelected(prev => {
@@ -374,38 +376,57 @@ export function POSSystem() {
       return [product.id, ...filtered].slice(0, 3);
     });
 
-    const pricePerCarton = product.price_carton || (product.price * product.units_per_carton);
+    const pricePerCarton = (product.price_carton && product.price_carton > 0)
+      ? product.price_carton
+      : (product.price * product.units_per_carton);
 
     setCart(prev => {
+      const unitUnits = prev
+        .filter(i => i.id === product.id && i.saleType !== 'carton')
+        .reduce((sum, i) => sum + (i.quantity || 0), 0);
+
       const existingCartonItem = prev.find(item => item.id === product.id && item.saleType === 'carton');
+
       if (existingCartonItem) {
-        const newCartonCount = (existingCartonItem.quantity / product.units_per_carton) + cartonCount;
+        const existingCartons = existingCartonItem.quantity / product.units_per_carton;
+        const newCartonCount = existingCartons + cartonCount;
         const newUnitsQuantity = newCartonCount * product.units_per_carton;
-        if (newUnitsQuantity > product.stock) {
+
+        if (unitUnits + newUnitsQuantity > product.stock) {
           toast.error('Stock insuffisant');
           return prev;
         }
+
         return prev.map(item =>
           item.id === product.id && item.saleType === 'carton'
-            ? { 
-                ...item, 
-                quantity: newUnitsQuantity, 
+            ? {
+                ...item,
+                quantity: newUnitsQuantity,
                 total: newCartonCount * pricePerCarton,
-                displayQuantity: `${newCartonCount} carton(s) (${newUnitsQuantity} unités)`
+                displayQuantity: `${newCartonCount} carton(s) (${newUnitsQuantity} unités)`,
               }
             : item
         );
       }
-      return [...prev, { 
-        ...product, 
-        quantity: unitsNeeded, 
-        total: cartonCount * pricePerCarton, 
-        saleType: 'carton' as const,
-        price: pricePerCarton, // Prix affiché = prix carton
-        displayQuantity: `${cartonCount} carton(s) (${unitsNeeded} unités)`
-      }];
+
+      if (unitUnits + unitsNeeded > product.stock) {
+        toast.error(`Stock insuffisant pour ${cartonCount} carton(s).`);
+        return prev;
+      }
+
+      return [
+        ...prev,
+        {
+          ...product,
+          quantity: unitsNeeded,
+          total: cartonCount * pricePerCarton,
+          saleType: 'carton' as const,
+          price: pricePerCarton, // Prix affiché = prix carton
+          displayQuantity: `${cartonCount} carton(s) (${unitsNeeded} unités)`,
+        },
+      ];
     });
-    
+
     toast.success(`📦 ${cartonCount} carton(s) de ${product.name} ajouté(s)`);
   };
 
@@ -417,7 +438,13 @@ export function POSSystem() {
     }
 
     const product = products.find(p => p.id === productId);
-    if (product && newQuantity > product.stock) {
+
+    // Empêcher de dépasser le stock en tenant compte des autres lignes (unité/carton)
+    const otherUnitsInCart = cart
+      .filter(i => i.id === productId && i !== selectedCartItemForQuantity)
+      .reduce((sum, i) => sum + (i.quantity || 0), 0);
+
+    if (product && otherUnitsInCart + newQuantity > product.stock) {
       toast.error('Stock insuffisant');
       return;
     }
@@ -1232,8 +1259,15 @@ export function POSSystem() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-3 p-1 md:p-2">
                     {sortedProducts.map(product => {
                       const isRecent = recentlySelected.includes(product.id);
+
+                      // Stock restant affiché = stock DB - unités déjà dans le panier (unité + carton)
+                      const unitsInCart = cart
+                        .filter((i) => i.id === product.id)
+                        .reduce((sum, i) => sum + (i.quantity || 0), 0);
+                      const remainingStock = Math.max(0, product.stock - unitsInCart);
+
                       const canSellCarton = !!product.sell_by_carton && !!product.units_per_carton && product.units_per_carton > 1;
-                      const cartonsAvailable = canSellCarton ? Math.floor(product.stock / product.units_per_carton) : 0;
+                      const cartonsAvailable = canSellCarton ? Math.floor(remainingStock / product.units_per_carton) : 0;
                       const cartonPrice = canSellCarton
                         ? (product.price_carton && product.price_carton > 0
                           ? product.price_carton
@@ -1253,21 +1287,21 @@ export function POSSystem() {
                         <CardContent className="p-0 flex flex-col">
                           {/* Image produit - Hauteur fixe pour éviter les débordements */}
                           <div className="relative w-full h-20 md:h-28 bg-gradient-to-br from-muted/50 to-muted/30 overflow-hidden flex-shrink-0">
-                            {/* Badge stock */}
+                            {/* Badge stock (restant) */}
                             <div className="absolute top-1 right-1 z-10">
                               <Badge 
-                                variant={product.stock > 10 ? 'default' : product.stock > 0 ? 'secondary' : 'destructive'} 
+                                variant={remainingStock > 10 ? 'default' : remainingStock > 0 ? 'secondary' : 'destructive'} 
                                 className="shadow-md font-bold text-[10px] px-1.5 py-0.5"
                               >
-                                {product.stock}
+                                {remainingStock}
                               </Badge>
                             </div>
 
-                            {/* Badge quantité panier */}
-                            {cart.find(item => item.id === product.id) && (
+                            {/* Badge quantité panier (unités) */}
+                            {unitsInCart > 0 && (
                               <div className="absolute top-1 left-1 z-10">
                                 <Badge variant="default" className="font-mono font-bold text-[10px] px-1.5 py-0.5 bg-primary">
-                                  ×{cart.find(item => item.id === product.id)?.quantity}
+                                  ×{unitsInCart}
                                 </Badge>
                               </div>
                             )}
