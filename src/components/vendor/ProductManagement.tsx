@@ -36,6 +36,7 @@ interface Product {
   cost_price?: number;
   sku?: string;
   barcode?: string;
+  // Stock affiché côté produit (peut être synchronisé depuis inventory)
   stock_quantity: number;
   low_stock_threshold: number;
   is_active: boolean;
@@ -45,6 +46,8 @@ interface Product {
   tags?: string[];
   weight?: number;
   created_at?: string;
+  // Jointure inventory pour valeur/stock exacts
+  inventory?: { quantity: number | null } | Array<{ quantity: number | null }> | null;
   // Champs carton
   sell_by_carton?: boolean;
   units_per_carton?: number;
@@ -148,7 +151,7 @@ export default function ProductManagement() {
     if (!vendorId) return;
     const { data, error } = await supabase
       .from('products')
-      .select('*, category:categories(id, name)')
+      .select('*, category:categories(id, name), inventory:inventory(quantity)')
       .eq('vendor_id', vendorId)
       .order('created_at', { ascending: false });
 
@@ -424,6 +427,13 @@ export default function ProductManagement() {
     toast.success('Code-barres EAN-13 généré');
   };
 
+  // Helpers (stock exact basé sur inventory si disponible)
+  const getEffectiveStock = (product: Product) => {
+    const inv = product.inventory as any;
+    const invQty = Array.isArray(inv) ? inv?.[0]?.quantity : inv?.quantity;
+    return (typeof invQty === 'number' ? invQty : product.stock_quantity) || 0;
+  };
+
   // Filtering
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
@@ -435,8 +445,9 @@ export default function ProductManagement() {
                            (statusFilter === 'active' && product.is_active) ||
                            (statusFilter === 'inactive' && !product.is_active);
       
+      const effectiveStock = getEffectiveStock(product);
       const matchesLowStock = !lowStockFilter || 
-                             product.stock_quantity <= product.low_stock_threshold;
+                             effectiveStock <= product.low_stock_threshold;
 
       const matchesCategory = categoryFilter === 'all' || 
                              product.category_id === categoryFilter;
@@ -446,12 +457,17 @@ export default function ProductManagement() {
   }, [products, searchTerm, statusFilter, lowStockFilter, categoryFilter]);
 
   // Stats
-  const stats = useMemo(() => ({
-    total: products.length,
-    active: products.filter(p => p.is_active).length,
-    lowStock: products.filter(p => p.stock_quantity <= p.low_stock_threshold).length,
-    totalValue: products.reduce((sum, p) => sum + (p.price * p.stock_quantity), 0)
-  }), [products]);
+  const stats = useMemo(() => {
+    const totalValue = products.reduce((sum, p) => sum + (p.price * getEffectiveStock(p)), 0);
+    const lowStock = products.filter(p => getEffectiveStock(p) <= p.low_stock_threshold).length;
+
+    return {
+      total: products.length,
+      active: products.filter(p => p.is_active).length,
+      lowStock,
+      totalValue,
+    };
+  }, [products]);
 
   // Get unique categories used in products
   const usedCategories = useMemo(() => {
@@ -639,7 +655,7 @@ export default function ProductManagement() {
                   Inactif
                 </Badge>
               )}
-              {product.stock_quantity <= product.low_stock_threshold && (
+              {getEffectiveStock(product) <= product.low_stock_threshold && (
                 <Badge className="absolute bottom-1 right-1 md:bottom-2 md:right-2 bg-orange-500 text-white text-[10px] md:text-xs px-1 md:px-2" variant="outline">
                   Stock bas
                 </Badge>
@@ -686,8 +702,8 @@ export default function ProductManagement() {
               {/* Stock */}
               <div className="flex items-center justify-between text-[10px] md:text-sm">
                 <span className="text-muted-foreground">Stock:</span>
-                <span className={`font-medium ${product.stock_quantity <= product.low_stock_threshold ? 'text-orange-500' : ''}`}>
-                  {product.stock_quantity} unités
+                <span className={`font-medium ${getEffectiveStock(product) <= product.low_stock_threshold ? 'text-orange-500' : ''}`}>
+                  {getEffectiveStock(product)} unités
                 </span>
               </div>
 
