@@ -49,7 +49,6 @@ export function FedaPayPaymentDialog({
       customerPhone: phone || undefined,
       customerName: (profile as any)?.full_name || user.email?.split('@')[0] || 'Client',
       returnUrl: window.location.href,
-      callbackUrl: `${window.location.origin}/api/fedapay-webhook`,
     });
 
     if (result.success && result.paymentUrl) {
