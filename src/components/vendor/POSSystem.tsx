@@ -216,8 +216,43 @@ export function POSSystem() {
       loadVendorProducts();
     }
   }, [vendorId]);
-  
+
   const [cart, setCart] = useState<CartItem[]>([]);
+  
+  // Synchroniser le panier avec les données produits mises à jour
+  useEffect(() => {
+    if (products.length === 0 || cart.length === 0) return;
+    
+    setCart(prevCart => prevCart.map(cartItem => {
+      const updatedProduct = products.find(p => p.id === cartItem.id);
+      if (!updatedProduct) return cartItem;
+      
+      // Mettre à jour les données du produit dans le panier
+      const newPrice = cartItem.saleType === 'carton' 
+        ? (updatedProduct.price_carton || updatedProduct.price * (updatedProduct.units_per_carton || 1))
+        : updatedProduct.price;
+      
+      // Recalculer le total
+      let newTotal: number;
+      if (cartItem.saleType === 'carton' && updatedProduct.units_per_carton) {
+        const cartonCount = Math.floor(cartItem.quantity / (cartItem.units_per_carton || updatedProduct.units_per_carton));
+        newTotal = cartonCount * newPrice;
+      } else {
+        newTotal = cartItem.quantity * newPrice;
+      }
+      
+      return {
+        ...cartItem,
+        name: updatedProduct.name,
+        price: newPrice,
+        stock: updatedProduct.stock,
+        sell_by_carton: updatedProduct.sell_by_carton,
+        units_per_carton: updatedProduct.units_per_carton,
+        price_carton: updatedProduct.price_carton,
+        total: newTotal
+      };
+    }));
+  }, [products]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
