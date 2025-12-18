@@ -388,9 +388,7 @@ export default function VendeurDashboard() {
                       <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
                       <span className="truncate max-w-[60px] md:max-w-none">{profile?.first_name || user?.email?.split('@')[0]}</span>
                     </p>
-                    <div className="hidden sm:block">
-                      <VendorIdDisplay showName={false} />
-                    </div>
+                    <VendorIdDisplay showName={false} />
                   </div>
                 </div>
               </div>
