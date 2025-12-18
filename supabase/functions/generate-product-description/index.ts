@@ -1,9 +1,10 @@
 /**
- * 🤖 EDGE FUNCTION: GÉNÉRATION DESCRIPTION PROFESSIONNELLE IA
+ * 🤖 EDGE FUNCTION: GÉNÉRATION DESCRIPTION PROFESSIONNELLE IA (OpenAI GPT-4o)
  * 
- * Utilise Lovable AI Gateway (Gemini) pour créer des descriptions professionnelles
+ * Utilise OpenAI GPT-4o pour créer des descriptions professionnelles
  */
 
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const corsHeaders = {
@@ -18,7 +19,6 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    // Support both 'name' and 'productName' for backwards compatibility
     const name = body.name || body.productName;
     const category = body.category || '';
     const price = body.price || '';
@@ -31,12 +31,11 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY n'est pas configurée");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY n'est pas configurée");
     }
 
-    // Construire le prompt IA enrichi
     const prompt = `Tu es un expert en rédaction e-commerce. Génère une description professionnelle et vendeuse pour ce produit:
 
 NOM: ${name}
@@ -52,16 +51,16 @@ CONSIGNES:
 
 Réponds uniquement avec le texte de la description, sans introduction ni conclusion.`;
 
-    console.log('🔄 Génération description IA pour:', name);
+    console.log('🔄 Génération description OpenAI pour:', name);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
@@ -79,7 +78,7 @@ Réponds uniquement avec le texte de la description, sans introduction ni conclu
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Lovable AI error:', response.status, errorText);
+      console.error('OpenAI error:', response.status, errorText);
       
       if (response.status === 429) {
         return new Response(
@@ -88,14 +87,14 @@ Réponds uniquement avec le texte de la description, sans introduction ni conclu
         );
       }
       
-      if (response.status === 402) {
+      if (response.status === 401) {
         return new Response(
-          JSON.stringify({ error: 'Crédits IA insuffisants. Veuillez recharger votre compte.' }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: 'Clé API OpenAI invalide ou expirée.' }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       
-      throw new Error(`AI gateway error: ${response.status} ${errorText}`);
+      throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
@@ -105,10 +104,14 @@ Réponds uniquement avec le texte de la description, sans introduction ni conclu
       throw new Error('Aucune description générée');
     }
 
-    console.log('✅ Description générée avec succès');
+    console.log('✅ Description OpenAI générée avec succès');
 
     return new Response(
-      JSON.stringify({ description: generatedText.trim() }),
+      JSON.stringify({ 
+        description: generatedText.trim(),
+        provider: 'openai',
+        model: 'gpt-4o-mini'
+      }),
       { 
         status: 200, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -116,7 +119,7 @@ Réponds uniquement avec le texte de la description, sans introduction ni conclu
     );
 
   } catch (error: unknown) {
-    console.error("❌ Erreur génération description:", error);
+    console.error("❌ Erreur génération description OpenAI:", error);
     const errorMessage = error instanceof Error ? error.message : "Erreur lors de la génération de la description";
     
     return new Response(

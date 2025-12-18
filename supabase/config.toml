@@ -212,3 +212,6 @@ verify_jwt = false
 
 [functions.generate-product-image-openai]
 verify_jwt = false
+
+[functions.test-gemini-api]
+verify_jwt = false
