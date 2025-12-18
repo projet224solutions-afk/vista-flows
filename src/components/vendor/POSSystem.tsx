@@ -1293,10 +1293,13 @@ export function POSSystem() {
                             </div>
 
                             {/* Prix carton si disponible */}
-                            {product.sell_by_carton && product.price_carton && product.units_per_carton && (
+                            {product.sell_by_carton && product.units_per_carton && product.units_per_carton > 1 && (
                               <div className="flex items-baseline gap-1 bg-green-50 dark:bg-green-950/30 px-1 py-0.5 rounded">
                                 <span className="text-xs font-bold text-green-600 dark:text-green-400">
-                                  📦 {product.price_carton.toLocaleString()}
+                                  📦 {(product.price_carton && product.price_carton > 0 
+                                    ? product.price_carton 
+                                    : product.price * product.units_per_carton
+                                  ).toLocaleString()}
                                 </span>
                                 <span className="text-[9px] text-green-600/70 dark:text-green-400/70">
                                   GNF/{product.units_per_carton}u
@@ -1359,7 +1362,7 @@ export function POSSystem() {
                               </div>
 
                               {/* Ligne 2: Bouton Carton si disponible */}
-                              {product.sell_by_carton && product.units_per_carton && product.stock >= product.units_per_carton && (
+                              {product.sell_by_carton && product.units_per_carton && product.units_per_carton > 1 && product.stock >= product.units_per_carton && (
                                 <Button
                                   variant="secondary"
                                   size="sm"
