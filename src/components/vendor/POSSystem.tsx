@@ -586,11 +586,12 @@ export function POSSystem() {
 
           if (orderError) throw orderError;
 
+          // Calcul du vrai prix unitaire (important pour ventes carton)
           const orderItems = cart.map(item => ({
             order_id: order.id,
             product_id: item.id,
             quantity: item.quantity,
-            unit_price: item.price,
+            unit_price: item.quantity > 0 ? item.total / item.quantity : item.price,
             total_price: item.total
           }));
 
@@ -673,11 +674,12 @@ export function POSSystem() {
 
           if (orderError) throw orderError;
 
+          // Calcul du vrai prix unitaire (important pour ventes carton)
           const orderItems = cart.map(item => ({
             order_id: order.id,
             product_id: item.id,
             quantity: item.quantity,
-            unit_price: item.price,
+            unit_price: item.quantity > 0 ? item.total / item.quantity : item.price,
             total_price: item.total
           }));
 
@@ -721,11 +723,12 @@ export function POSSystem() {
       if (orderError) throw orderError;
 
       // 3. Créer les items de commande
+      // Calcul du vrai prix unitaire (important pour ventes carton: total/quantity)
       const orderItems = cart.map(item => ({
         order_id: order.id,
         product_id: item.id,
         quantity: item.quantity,
-        unit_price: item.price,
+        unit_price: item.quantity > 0 ? item.total / item.quantity : item.price,
         total_price: item.total
       }));
 
