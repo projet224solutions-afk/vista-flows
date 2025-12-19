@@ -74,6 +74,11 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     if (stored && supportedLanguages.some(l => l.code === stored)) {
       return stored;
     }
+    // Vérifier si un pays a été détecté avec sa langue
+    const detectedLang = localStorage.getItem('app_language');
+    if (detectedLang && supportedLanguages.some(l => l.code === detectedLang)) {
+      return detectedLang;
+    }
     return detectBrowserLanguage();
   });
   
