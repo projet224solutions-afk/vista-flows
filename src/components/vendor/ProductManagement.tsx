@@ -125,7 +125,8 @@ export default function ProductManagement() {
     sell_by_carton: false,
     units_per_carton: '',
     price_carton: '',
-    carton_sku: ''
+    carton_sku: '',
+    carton_stock: '' // Nombre de cartons en stock
   });
 
   // Load initial data
@@ -243,7 +244,10 @@ export default function ProductManagement() {
       sell_by_carton: product.sell_by_carton || false,
       units_per_carton: product.units_per_carton?.toString() || '',
       price_carton: product.price_carton?.toString() || '',
-      carton_sku: product.carton_sku || ''
+      carton_sku: product.carton_sku || '',
+      carton_stock: product.units_per_carton && product.stock_quantity 
+        ? Math.floor(product.stock_quantity / product.units_per_carton).toString() 
+        : ''
     });
     setCategoryMode(product.category_id ? 'existing' : 'new');
     setShowDialog(true);
@@ -291,7 +295,8 @@ export default function ProductManagement() {
       sell_by_carton: false,
       units_per_carton: '',
       price_carton: '',
-      carton_sku: ''
+      carton_sku: '',
+      carton_stock: ''
     });
     setEditingProduct(null);
     setSelectedImages([]);
@@ -1057,14 +1062,41 @@ export default function ProductManagement() {
                         )}
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="carton_sku">Code SKU Carton (optionnel)</Label>
-                      <Input
-                        id="carton_sku"
-                        value={formData.carton_sku}
-                        onChange={(e) => setFormData({ ...formData, carton_sku: e.target.value })}
-                        placeholder="Ex: CART-001"
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="carton_stock">Nombre de cartons en stock</Label>
+                        <Input
+                          id="carton_stock"
+                          type="number"
+                          min="0"
+                          value={formData.carton_stock}
+                          onChange={(e) => {
+                            const cartons = parseInt(e.target.value || '0', 10);
+                            const unitsPerCarton = parseInt(formData.units_per_carton || '0', 10);
+                            setFormData({ 
+                              ...formData, 
+                              carton_stock: e.target.value,
+                              // Mettre à jour le stock total en unités automatiquement
+                              stock_quantity: unitsPerCarton > 0 ? (cartons * unitsPerCarton).toString() : formData.stock_quantity
+                            });
+                          }}
+                          placeholder="Ex: 10"
+                        />
+                        {formData.units_per_carton && formData.carton_stock && (
+                          <p className="text-xs text-blue-600">
+                            = {(parseInt(formData.carton_stock || '0') * parseInt(formData.units_per_carton || '1')).toLocaleString()} unités au total
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="carton_sku">Code SKU Carton (optionnel)</Label>
+                        <Input
+                          id="carton_sku"
+                          value={formData.carton_sku}
+                          onChange={(e) => setFormData({ ...formData, carton_sku: e.target.value })}
+                          placeholder="Ex: CART-001"
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
