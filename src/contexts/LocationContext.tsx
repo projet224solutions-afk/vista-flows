@@ -126,10 +126,13 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
       
       if (cachedCode && lastDetection) {
         const hoursSince = (Date.now() - parseInt(lastDetection, 10)) / (1000 * 60 * 60);
-        if (hoursSince < 24) {
+        // Cache valide seulement si détection manuelle, sinon re-détecter
+        if (hoursSince < 24 && cachedMethod === 'manual') {
           const cached = getCountryByCode(cachedCode);
           if (cached) {
+            const cachedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY) || getDefaultLanguageForCountry(cachedCode);
             setCountryState(cached);
+            setLanguageState(cachedLang);
             setDetectionMethod(cachedMethod as any);
             setIsDetecting(false);
             return;
@@ -145,12 +148,16 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
       if (gpsCode) {
         const c = getCountryByCode(gpsCode);
         if (c) {
+          const detectedLang = getDefaultLanguageForCountry(gpsCode);
+          console.log('🌍 Pays:', c.nameFr, '| Langue détectée:', detectedLang);
           setCountryState(c);
           setDetectionMethod('gps');
-          setLanguageState(getDefaultLanguageForCountry(gpsCode));
+          setLanguageState(detectedLang);
           localStorage.setItem(COUNTRY_STORAGE_KEY, gpsCode);
           localStorage.setItem(DETECTION_METHOD_KEY, 'gps');
           localStorage.setItem(LAST_DETECTION_KEY, Date.now().toString());
+          localStorage.setItem(LANGUAGE_STORAGE_KEY, detectedLang);
+          document.documentElement.lang = detectedLang;
           setIsDetecting(false);
           return;
         }
