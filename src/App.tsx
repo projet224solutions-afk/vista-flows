@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/contexts/CartContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
+import { LocationProvider } from "@/contexts/LocationContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Import EAGER - Page d'accueil critique pour performance initiale
@@ -138,10 +139,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <LanguageProvider>
-          <AuthProvider>
-            <CartProvider>
-              <TooltipProvider>
+        <LocationProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <CartProvider>
+                <TooltipProvider>
                 <Toaster />
                 <Sonner />
                 <ErrorBoundary>
@@ -412,6 +414,7 @@ function App() {
       </CartProvider>
     </AuthProvider>
   </LanguageProvider>
+  </LocationProvider>
   </BrowserRouter>
 </QueryClientProvider>
   );
