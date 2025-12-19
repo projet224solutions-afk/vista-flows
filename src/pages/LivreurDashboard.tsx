@@ -410,24 +410,24 @@ export default function LivreurDashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className={`grid bg-card/80 backdrop-blur mb-6 ${isMobile ? 'grid-cols-2' : 'grid-cols-4'} border border-orange-500/20`}>
             <TabsTrigger value="missions" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
-              📦 {isMobile ? 'Missions' : 'Missions disponibles'}
+              📦 {isMobile ? t('delivery.availableMissions') : t('delivery.availableMissions')}
               {nearbyDeliveries.length > 0 && (
                 <Badge variant="secondary" className="ml-2 text-xs bg-white text-orange-600">{nearbyDeliveries.length}</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="active" disabled={!currentDelivery && !currentRide} className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-700 data-[state=active]:text-white">
-              🚚 {isMobile ? 'Active' : 'En cours'}
+              🚚 {isMobile ? t('delivery.activeMission') : t('delivery.activeMission')}
               {(currentDelivery || currentRide) && <Badge variant="default" className="ml-2 text-xs bg-white text-green-600">1</Badge>}
             </TabsTrigger>
             {!isMobile && (
               <>
                 <TabsTrigger value="history" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white">
-                  📋 Historique
+                  📋 {t('delivery.history')}
                   {(deliveryHistory.length + rideHistory.length) > 0 && (
                     <Badge variant="outline" className="ml-2 text-xs">{deliveryHistory.length + rideHistory.length}</Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="wallet" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-700 data-[state=active]:text-white">💰 Solde</TabsTrigger>
+                <TabsTrigger value="wallet" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-700 data-[state=active]:text-white">💰 {t('delivery.balance')}</TabsTrigger>
               </>
             )}
           </TabsList>
@@ -443,9 +443,9 @@ export default function LivreurDashboard() {
                 <div className="flex items-center gap-3">
                   <AlertTriangle className="h-5 w-5 text-yellow-600" />
                   <div>
-                    <p className="font-medium text-yellow-700">GPS désactivé</p>
+                    <p className="font-medium text-yellow-700">{t('taxi.gpsDisabled')}</p>
                     <p className="text-sm text-yellow-600">
-                      Activez le GPS pour voir les missions à proximité et filtrer par distance
+                      {t('taxi.enableGps')}
                     </p>
                   </div>
                 </div>
@@ -466,7 +466,7 @@ export default function LivreurDashboard() {
                           variant="default"
                           style={{ background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))' }}
                         >
-                          ⚡ Livraison en cours
+                          ⚡ {t('delivery.inProgressDelivery')}
                         </Badge>
                         <Badge variant="outline" className="border-orange-500">{currentDelivery.status}</Badge>
                       </div>
@@ -477,7 +477,7 @@ export default function LivreurDashboard() {
                         <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
                           <MapPin className="h-5 w-5 flex-shrink-0 text-primary mt-0.5" />
                           <div className="flex-1">
-                            <p className="font-medium">Point de collecte</p>
+                            <p className="font-medium">{t('delivery.pickupAddress')}</p>
                             <p className="text-sm text-muted-foreground mt-1">
                               {typeof currentDelivery.pickup_address === 'string' 
                                 ? currentDelivery.pickup_address 
@@ -488,7 +488,7 @@ export default function LivreurDashboard() {
                         <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
                           <MapPin className="h-5 w-5 flex-shrink-0 text-green-500 mt-0.5" />
                           <div className="flex-1">
-                            <p className="font-medium">Destination</p>
+                            <p className="font-medium">{t('delivery.deliveryAddress')}</p>
                             <p className="text-sm text-muted-foreground mt-1">
                               {typeof currentDelivery.delivery_address === 'string' 
                                 ? currentDelivery.delivery_address 

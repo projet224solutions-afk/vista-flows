@@ -305,45 +305,45 @@ export default function ClientDashboard() {
                 className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
               >
                 <Home className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
-                <span className={responsive.isMobile ? 'hidden' : ''}>Vue d'ensemble</span>
-                <span className={responsive.isMobile ? '' : 'hidden'}>Vue</span>
+                <span className={responsive.isMobile ? 'hidden' : ''}>{t('client.overview')}</span>
+                <span className={responsive.isMobile ? '' : 'hidden'}>{t('client.overview').substring(0, 3)}</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="products" 
                 className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
               >
                 <Grid3X3 className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
-                Produits
+                {t('client.products')}
               </TabsTrigger>
               <TabsTrigger 
                 value="cart" 
                 className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
               >
                 <ShoppingCart className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
-                Panier
+                {t('client.cart')}
               </TabsTrigger>
               <TabsTrigger 
                 value="orders" 
                 className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
               >
                 <Package className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
-                <span className={responsive.isMobile ? 'hidden' : ''}>Commandes</span>
-                <span className={responsive.isMobile ? '' : 'hidden'}>Cmd</span>
+                <span className={responsive.isMobile ? 'hidden' : ''}>{t('client.orders')}</span>
+                <span className={responsive.isMobile ? '' : 'hidden'}>{t('client.orders').substring(0, 3)}</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="communication" 
                 className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
               >
                 <MessageSquare className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
-                <span className={responsive.isMobile ? 'hidden' : ''}>Messages</span>
-                <span className={responsive.isMobile ? '' : 'hidden'}>Msg</span>
+                <span className={responsive.isMobile ? 'hidden' : ''}>{t('client.messages')}</span>
+                <span className={responsive.isMobile ? '' : 'hidden'}>{t('client.messages').substring(0, 3)}</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="copilot" 
                 className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
               >
                 <Bot className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
-                <span className={responsive.isMobile ? 'hidden' : ''}>Assistant IA</span>
+                <span className={responsive.isMobile ? 'hidden' : ''}>{t('client.aiAssistant')}</span>
                 <span className={responsive.isMobile ? '' : 'hidden'}>IA</span>
               </TabsTrigger>
             </TabsList>
@@ -371,12 +371,12 @@ export default function ClientDashboard() {
               {/* Statistiques rapides - SQL optimisées */}
               <Card className="shadow-elegant">
                 <CardHeader>
-                  <CardTitle className={responsive.isMobile ? 'text-base' : 'text-lg'}>Statistiques</CardTitle>
-                  <CardDescription className="text-xs md:text-sm">Votre activité</CardDescription>
+                  <CardTitle className={responsive.isMobile ? 'text-base' : 'text-lg'}>{t('client.statistics')}</CardTitle>
+                  <CardDescription className="text-xs md:text-sm">{t('client.yourActivity')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 md:space-y-4">
                   {statsLoading ? (
-                    <div className="text-center py-4 text-muted-foreground">Chargement...</div>
+                    <div className="text-center py-4 text-muted-foreground">{t('common.loading')}</div>
                   ) : (
                     <>
                       <div className="flex items-center justify-between p-3 bg-client-accent rounded-lg">
@@ -385,7 +385,7 @@ export default function ClientDashboard() {
                             <Package className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-client-primary`} />
                           </div>
                           <div>
-                            <p className="text-xs md:text-sm text-muted-foreground">Commandes</p>
+                            <p className="text-xs md:text-sm text-muted-foreground">{t('client.totalOrders')}</p>
                             <p className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>
                               {clientStats?.total_orders || 0}
                             </p>
@@ -399,7 +399,7 @@ export default function ClientDashboard() {
                             <TrendingUp className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-orange-600`} />
                           </div>
                           <div>
-                            <p className="text-xs md:text-sm text-muted-foreground">En cours</p>
+                            <p className="text-xs md:text-sm text-muted-foreground">{t('client.activeOrders')}</p>
                             <p className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>
                               {clientStats?.active_orders || 0}
                             </p>

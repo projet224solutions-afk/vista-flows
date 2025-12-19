@@ -1351,7 +1351,7 @@ const watchId = navigator.geolocation.watchPosition(
     const handleSignOut = async () => {
         setIsOnline(false);
         await signOut();
-        toast.success('Déconnexion réussie');
+        toast.success(t('common.signOutSuccess'));
     };
 
     const navigate = useNavigate();
@@ -1419,30 +1419,30 @@ const watchId = navigator.geolocation.watchPosition(
                                         .from('taxi_trips')
                                         .update({ status, updated_at: new Date().toISOString() })
                                         .eq('id', activeRide.id);
-                                    toast.success('Statut mis à jour');
+                                    toast.success(t('common.success'));
                                     // Recharger la course active
                                     loadActiveRide();
                                 } catch (err) {
-                                    toast.error('Erreur de mise à jour');
+                                    toast.error(t('common.error'));
                                 }
                             }}
                             onCancelRide={async () => {
-                                const confirmed = window.confirm('Annuler cette course ?');
+                                const confirmed = window.confirm(t('taxi.rideCancelled') + '?');
                                 if (!confirmed) return;
                                 try {
                                     await supabase
                                         .from('taxi_trips')
                                         .update({ 
                                             status: 'cancelled', 
-                                            cancel_reason: 'Annulée par le conducteur',
+                                            cancel_reason: t('taxi.rideCancelled'),
                                             cancelled_at: new Date().toISOString()
                                         })
                                         .eq('id', activeRide.id);
-                                    toast.success('Course annulée');
+                                    toast.success(t('common.success'));
                                     setActiveRide(null);
                                     setActiveTab('dashboard');
                                 } catch (err) {
-                                    toast.error('Erreur lors de l\'annulation');
+                                    toast.error(t('common.error'));
                                 }
                             }}
                         />
