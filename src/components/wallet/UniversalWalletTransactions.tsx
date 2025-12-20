@@ -46,6 +46,8 @@ interface Transaction {
   receiver_id: string;
   sender_custom_id?: string;
   receiver_custom_id?: string;
+  sender_name?: string;
+  receiver_name?: string;
   amount: number;
   method: string;
   status: string;
@@ -232,22 +234,20 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       // Ajouter les enhanced_transactions
       if (enhancedData) {
         for (const tx of enhancedData) {
-          const { data: senderData } = await supabase
-            .from('user_ids')
-            .select('custom_id')
-            .eq('user_id', tx.sender_id)
-            .maybeSingle();
-
-          const { data: receiverData } = await supabase
-            .from('user_ids')
-            .select('custom_id')
-            .eq('user_id', tx.receiver_id)
-            .maybeSingle();
+          // Charger custom_id ET nom en parallèle
+          const [senderIdData, receiverIdData, senderProfile, receiverProfile] = await Promise.all([
+            supabase.from('user_ids').select('custom_id').eq('user_id', tx.sender_id).maybeSingle(),
+            supabase.from('user_ids').select('custom_id').eq('user_id', tx.receiver_id).maybeSingle(),
+            supabase.from('profiles').select('full_name').eq('id', tx.sender_id).maybeSingle(),
+            supabase.from('profiles').select('full_name').eq('id', tx.receiver_id).maybeSingle()
+          ]);
 
           allTransactions.push({
             ...tx,
-            sender_custom_id: senderData?.custom_id || tx.sender_id,
-            receiver_custom_id: receiverData?.custom_id || tx.receiver_id,
+            sender_custom_id: senderIdData.data?.custom_id || tx.sender_id?.slice(0, 8),
+            receiver_custom_id: receiverIdData.data?.custom_id || tx.receiver_id?.slice(0, 8),
+            sender_name: senderProfile.data?.full_name || 'Utilisateur',
+            receiver_name: receiverProfile.data?.full_name || 'Utilisateur',
             source: 'enhanced'
           });
         }
@@ -1171,9 +1171,17 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                     <p className="font-medium text-sm">
                       {getTransactionType(tx)}{' '}
                       {(tx.sender_id !== effectiveUserId || tx.receiver_id !== effectiveUserId) && (
-                        <span className="font-mono text-primary text-xs">
-                          ({tx.sender_id === effectiveUserId ? tx.receiver_custom_id : tx.sender_custom_id})
-                        </span>
+                        <>
+                          <span className="text-foreground">
+                            {tx.sender_id === effectiveUserId 
+                              ? (tx.receiver_name || 'Utilisateur')
+                              : (tx.sender_name || 'Utilisateur')}
+                          </span>
+                          {' '}
+                          <span className="font-mono text-primary text-xs">
+                            ({tx.sender_id === effectiveUserId ? tx.receiver_custom_id : tx.sender_custom_id})
+                          </span>
+                        </>
                       )}
                     </p>
                     <p className="text-xs text-muted-foreground">
