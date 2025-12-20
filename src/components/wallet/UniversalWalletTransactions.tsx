@@ -195,6 +195,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   const loadTransactions = async () => {
     if (!effectiveUserId) return;
 
+    console.info('[WalletTx] loadTransactions v3', { effectiveUserId });
+
     try {
       // Charger depuis enhanced_transactions
       const { data: enhancedData, error: enhancedError } = await supabase
@@ -365,7 +367,22 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
       // Trier par date décroissante et limiter
       allTransactions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      setTransactions(allTransactions.slice(0, 15));
+
+      const visible = allTransactions.slice(0, 15);
+      setTransactions(visible);
+
+      const unresolved = visible
+        .filter((t) => t.sender_name === 'Utilisateur' || t.receiver_name === 'Utilisateur')
+        .slice(0, 3);
+
+      console.info('[WalletTx] loaded', {
+        enhancedCount: enhancedData?.length ?? 0,
+        walletTxCount: walletTxData.length,
+        resolvedUserIds: idsArray.length,
+        profilesRows: profilesRows.length,
+        userIdsRows: userIdsRows.length,
+        sampleUnresolved: unresolved,
+      });
     } catch (error) {
       console.error('Erreur chargement transactions:', error);
     }
