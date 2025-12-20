@@ -1350,7 +1350,7 @@ export function POSSystem() {
                                       : 'text-muted-foreground'
                                   }`}
                                 >
-                                  📦 {(cartonsAvailable > 0 ? cartonPrice : 0).toLocaleString()}
+                                  📦 {cartonPrice.toLocaleString()}
                                 </span>
                                 <span
                                   className={`text-[9px] ${
@@ -1359,7 +1359,7 @@ export function POSSystem() {
                                       : 'text-muted-foreground'
                                   }`}
                                 >
-                                  GNF/{cartonsAvailable > 0 ? product.units_per_carton : 0}u
+                                  GNF/{product.units_per_carton}u
                                 </span>
                               </div>
                             )}
@@ -1430,7 +1430,7 @@ export function POSSystem() {
                                   disabled={cartonsAvailable <= 0}
                                   className="w-full h-7 text-[10px] md:text-xs font-semibold bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:text-green-400 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                  📦 +1 Carton ({cartonsAvailable > 0 ? product.units_per_carton : 0}u)
+                                  📦 +1 Carton ({product.units_per_carton}u)
                                 </Button>
                               )}
                             </div>
