@@ -128,37 +128,49 @@ export default function OrderManagement() {
   const [showOrderDialog, setShowOrderDialog] = useState(false);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [activeView, setActiveView] = useState<'pos' | 'online'>('pos');
+  const [activeView, setActiveView] = useState<'pos' | 'online'>('online');
   const [onlineStatusFilter, setOnlineStatusFilter] = useState<'all' | 'pending' | 'processing' | 'delivered'>('all');
 
   useEffect(() => {
     if (!vendorId || vendorLoading) return;
+    
+    console.log('📡 Initialisation OrderManagement pour vendorId:', vendorId);
     fetchOrders();
 
-    // Mise à jour en temps réel des commandes (online ET pos)
+    // Mise à jour en temps réel des commandes (online ET pos) filtrée par vendor_id
     const channel = supabase
-      .channel('vendor-orders-realtime')
+      .channel(`vendor-orders-${vendorId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'orders'
+          table: 'orders',
+          filter: `vendor_id=eq.${vendorId}`
         },
         (payload) => {
-          console.log('🔔 Changement commande (realtime):', payload);
+          console.log('🔔 Changement commande (realtime) pour vendor:', vendorId, payload);
           fetchOrders(); // Recharger toutes les commandes
           
           if (payload.eventType === 'INSERT') {
             const source = (payload.new as any).source;
+            const isOnline = source === 'online';
+            
             toast({
-              title: source === 'pos' ? "🛒 Nouvelle vente POS!" : "🎉 Nouvelle commande!",
+              title: isOnline ? "🎉 Nouvelle commande en ligne!" : "🛒 Nouvelle vente POS!",
               description: `Commande ${(payload.new as any).order_number} reçue`
             });
+            
+            // Basculer automatiquement vers la vue appropriée
+            if (isOnline) {
+              setActiveView('online');
+            }
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Realtime subscription status:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
