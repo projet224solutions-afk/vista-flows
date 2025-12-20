@@ -55,6 +55,7 @@ const SimpleDiagnostic = lazy(() => import("./pages/SimpleDiagnostic"));
 const BureauDashboard = lazy(() => import("./pages/BureauDashboard"));
 const WorkerDashboard = lazy(() => import("./pages/WorkerDashboard"));
 const Payment = lazy(() => import("./pages/Payment"));
+const Orders = lazy(() => import("./pages/Orders"));
 const ContactUserById = lazy(() => import("./components/communication/ContactUserById"));
 const DirectConversation = lazy(() => import("./pages/DirectConversation"));
 const Devis = lazy(() => import("./pages/Devis"));
@@ -261,6 +262,7 @@ function App() {
                 path="/payment"
                 element={<Payment />}
               />
+              <Route path="/orders" element={<Orders />} />
               <Route
                 path="/wallet"
                 element={
