@@ -51,6 +51,7 @@ import { VendorIdDisplay } from "@/components/vendor/VendorIdDisplay";
 import { VendorNotificationsPanel } from "@/components/vendor/VendorNotificationsPanel";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 import { VendorDeliveriesPanel } from "@/components/vendor/VendorDeliveriesPanel";
+import VendorRatingsPanel from "@/components/vendor/VendorRatingsPanel";
 import { ProtectedRoute } from "@/components/subscription/ProtectedRoute";
 import { VendorSubscriptionButton } from "@/components/vendor/VendorSubscriptionButton";
 import { VendorSubscriptionBanner } from "@/components/vendor/VendorSubscriptionBanner";
@@ -469,6 +470,7 @@ export default function VendeurDashboard() {
               
               {/* Support & Outils */}
               <Route path="delivery" element={<VendorDeliveriesPanel />} />
+              <Route path="ratings" element={<VendorRatingsPanel />} />
               <Route path="support" element={<SupportTickets />} />
               <Route path="communication" element={<UniversalCommunicationHub />} />
               <Route path="reports" element={<Card><CardContent className="p-6">Module Rapports - En développement</CardContent></Card>} />
