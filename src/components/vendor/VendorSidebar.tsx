@@ -10,7 +10,7 @@ import {
   Wallet, Receipt, Truck, Megaphone, FileText, Settings,
   Target, TrendingUp, Box, MessageSquare, HeadphonesIcon,
   Store, DollarSign, Boxes, AlertTriangle, Link, Building2,
-  LayoutDashboard, ChevronRight
+  LayoutDashboard, ChevronRight, Star
 } from "lucide-react";
 
 import {
@@ -123,6 +123,7 @@ export function VendorSidebar() {
       icon: Truck,
       items: [
         { title: "Livraisons", icon: Truck, path: "delivery" },
+        { title: "Avis Clients", icon: Star, path: "ratings" },
         { title: "Support", icon: HeadphonesIcon, path: "support" },
         { title: "Messages", icon: MessageSquare, path: "communication" },
         { title: "Rapports", icon: FileText, path: "reports" },
