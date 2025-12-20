@@ -213,77 +213,158 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         .eq('user_id', effectiveUserId)
         .maybeSingle();
 
-      let walletData: any[] = [];
-      
+      const userWalletId = userWallet?.id ?? null;
+
       // Charger les wallet_transactions seulement si on a un wallet_id
-      if (userWallet?.id) {
+      let walletTxData: any[] = [];
+      if (userWalletId) {
         const { data: wtData, error: walletError } = await supabase
           .from('wallet_transactions')
           .select('*')
-          .or(`sender_wallet_id.eq.${userWallet.id},receiver_wallet_id.eq.${userWallet.id}`)
+          .or(`sender_wallet_id.eq.${userWalletId},receiver_wallet_id.eq.${userWalletId}`)
           .order('created_at', { ascending: false })
           .limit(10);
 
         if (walletError) console.error('Erreur wallet_transactions:', walletError);
-        if (wtData) walletData = wtData;
+        if (wtData) walletTxData = wtData;
       }
 
-      // Combiner les deux sources de données
+      // -------- Résolution des identités (nom + ID standardisé) --------
+      // 1) Pour wallet_transactions: convertir wallet_id -> user_id (contrepartie)
+      const otherWalletIds = userWalletId
+        ? Array.from(
+            new Set(
+              walletTxData
+                .map((tx) => (tx.sender_wallet_id === userWalletId ? tx.receiver_wallet_id : tx.sender_wallet_id))
+                .filter(Boolean)
+            )
+          )
+        : [];
+
+      let otherWalletRows: Array<{ id: string; user_id: string }> = [];
+      if (otherWalletIds.length > 0) {
+        const { data } = await supabase
+          .from('wallets')
+          .select('id, user_id')
+          .in('id', otherWalletIds);
+        otherWalletRows = (data ?? []) as any;
+      }
+
+      const walletIdToUserId = new Map(otherWalletRows.map((w) => [w.id, w.user_id]));
+
+      // 2) Collecter tous les user_id à résoudre (enhanced + wallet_transactions)
+      const userIdsToResolve = new Set<string>();
+
+      if (enhancedData) {
+        for (const tx of enhancedData as any[]) {
+          if (tx.sender_id) userIdsToResolve.add(tx.sender_id);
+          if (tx.receiver_id) userIdsToResolve.add(tx.receiver_id);
+        }
+      }
+
+      for (const w of otherWalletRows) {
+        if (w.user_id) userIdsToResolve.add(w.user_id);
+      }
+
+      // 3) Charger en batch: user_ids + profiles
+      const idsArray = Array.from(userIdsToResolve);
+      let userIdsRows: Array<{ user_id: string; custom_id: string | null }> = [];
+      let profilesRows: Array<{ id: string; full_name: string | null }> = [];
+
+      if (idsArray.length > 0) {
+        const [userIdsRes, profilesRes] = await Promise.all([
+          supabase.from('user_ids').select('user_id, custom_id').in('user_id', idsArray),
+          supabase.from('profiles').select('id, full_name').in('id', idsArray),
+        ]);
+
+        userIdsRows = (userIdsRes.data ?? []) as any;
+        profilesRows = (profilesRes.data ?? []) as any;
+      }
+
+      const userIdToCustomId = new Map(userIdsRows.map((r) => [r.user_id, r.custom_id]));
+      const userIdToName = new Map(profilesRows.map((r) => [r.id, r.full_name]));
+
+      const getUserDisplay = (uid?: string | null) => {
+        if (!uid) {
+          return { name: 'Système', customId: 'SYS' };
+        }
+        return {
+          name: userIdToName.get(uid) || 'Utilisateur',
+          customId: userIdToCustomId.get(uid) || uid.slice(0, 8),
+        };
+      };
+
+      // -------- Construction liste finale --------
       const allTransactions: any[] = [];
-      
+
       // Ajouter les enhanced_transactions
       if (enhancedData) {
-        for (const tx of enhancedData) {
-          // Charger custom_id ET nom en parallèle
-          const [senderIdData, receiverIdData, senderProfile, receiverProfile] = await Promise.all([
-            supabase.from('user_ids').select('custom_id').eq('user_id', tx.sender_id).maybeSingle(),
-            supabase.from('user_ids').select('custom_id').eq('user_id', tx.receiver_id).maybeSingle(),
-            supabase.from('profiles').select('full_name').eq('id', tx.sender_id).maybeSingle(),
-            supabase.from('profiles').select('full_name').eq('id', tx.receiver_id).maybeSingle()
-          ]);
+        for (const tx of enhancedData as any[]) {
+          const sender = getUserDisplay(tx.sender_id);
+          const receiver = getUserDisplay(tx.receiver_id);
 
           allTransactions.push({
             ...tx,
-            sender_custom_id: senderIdData.data?.custom_id || tx.sender_id?.slice(0, 8),
-            receiver_custom_id: receiverIdData.data?.custom_id || tx.receiver_id?.slice(0, 8),
-            sender_name: senderProfile.data?.full_name || 'Utilisateur',
-            receiver_name: receiverProfile.data?.full_name || 'Utilisateur',
-            source: 'enhanced'
+            sender_custom_id: sender.customId,
+            receiver_custom_id: receiver.customId,
+            sender_name: sender.name,
+            receiver_name: receiver.name,
+            source: 'enhanced',
           });
         }
       }
 
-      // Ajouter les wallet_transactions (transferts bureau)
-      if (walletData.length > 0) {
-        for (const tx of walletData) {
-          // Vérifier si c'est un transfert bureau via les metadata
-          const metadata = tx.metadata as any;
-          const isBureauTransfer = metadata?.recipient_type === 'bureau';
-          
+      // Ajouter les wallet_transactions
+      if (walletTxData.length > 0) {
+        for (const tx of walletTxData as any[]) {
+          const metadata = (tx.metadata ?? {}) as any;
+          const isBureauTransfer = metadata?.recipient_type === 'bureau' || !!metadata?.bureau_id;
+
+          const isOutgoing = userWalletId ? tx.sender_wallet_id === userWalletId : false;
+          const otherWalletId = isOutgoing ? tx.receiver_wallet_id : tx.sender_wallet_id;
+          const otherUserId = otherWalletId ? walletIdToUserId.get(otherWalletId) : null;
+
+          const counterparty = isBureauTransfer
+            ? {
+                id: metadata?.bureau_id ?? null,
+                name: metadata?.bureau_name || metadata?.bureau_code || 'Bureau',
+                customId: metadata?.bureau_code || 'Bureau',
+              }
+            : {
+                id: otherUserId,
+                ...getUserDisplay(otherUserId),
+              };
+
+          const sender_id = isOutgoing ? effectiveUserId : counterparty.id || 'system';
+          const receiver_id = isOutgoing ? counterparty.id || 'system' : effectiveUserId;
+
           allTransactions.push({
             id: tx.id,
-            sender_id: effectiveUserId,
-            receiver_id: metadata?.bureau_id || null,
+            sender_id,
+            receiver_id,
             amount: tx.amount,
-            fee: tx.fee,
-            net_amount: tx.net_amount,
-            status: tx.status,
-            description: tx.description,
-            created_at: tx.created_at,
             method: tx.transaction_type,
-            sender_custom_id: 'Vous',
-            receiver_custom_id: isBureauTransfer ? metadata?.bureau_code : 'Inconnu',
+            status: tx.status,
+            currency: tx.currency ?? 'GNF',
+            created_at: tx.created_at,
+            metadata: {
+              ...metadata,
+              description: tx.description ?? metadata?.description,
+              fee_amount: tx.fee ?? metadata?.fee_amount,
+              net_amount: tx.net_amount ?? metadata?.net_amount,
+            },
+            sender_custom_id: isOutgoing ? 'Vous' : (counterparty.customId || 'SYS'),
+            receiver_custom_id: isOutgoing ? (counterparty.customId || 'SYS') : 'Vous',
+            sender_name: isOutgoing ? 'Vous' : (counterparty.name || 'Système'),
+            receiver_name: isOutgoing ? (counterparty.name || 'Système') : 'Vous',
             source: 'wallet',
-            is_bureau_transfer: isBureauTransfer
+            is_bureau_transfer: isBureauTransfer,
           });
         }
       }
 
       // Trier par date décroissante et limiter
-      allTransactions.sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-      
+      allTransactions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       setTransactions(allTransactions.slice(0, 15));
     } catch (error) {
       console.error('Erreur chargement transactions:', error);
