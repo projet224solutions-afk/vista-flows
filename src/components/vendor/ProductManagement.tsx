@@ -757,537 +757,419 @@ export default function ProductManagement() {
         </Card>
       )}
 
-      {/* Product Dialog - Professional Design */}
+      {/* Product Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-3xl max-h-[95vh] overflow-hidden flex flex-col p-0">
-          {/* Header with gradient */}
-          <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 border-b">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-3 text-xl">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Package className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <span className="font-bold">
-                    {editingProduct ? 'Modifier le produit' : 'Nouveau produit'}
-                  </span>
-                  <p className="text-sm font-normal text-muted-foreground mt-0.5">
-                    {editingProduct ? 'Mettez à jour les informations' : 'Ajoutez un nouveau produit à votre catalogue'}
-                  </p>
-                </div>
-              </DialogTitle>
-            </DialogHeader>
-          </div>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              {editingProduct ? 'Modifier le produit' : 'Nouveau produit'}
+            </DialogTitle>
+          </DialogHeader>
 
-          {/* Scrollable content */}
-          <div className="flex-1 overflow-y-auto p-6">
-            <Tabs defaultValue="info" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 h-12 p-1 bg-muted/50 rounded-xl">
-                <TabsTrigger value="info" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm flex items-center gap-2">
-                  <Package className="h-4 w-4" />
-                  <span className="hidden sm:inline">Informations</span>
-                  <span className="sm:hidden">Info</span>
-                </TabsTrigger>
-                <TabsTrigger value="pricing" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  <span className="hidden sm:inline">Prix & Stock</span>
-                  <span className="sm:hidden">Prix</span>
-                </TabsTrigger>
-                <TabsTrigger value="media" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm flex items-center gap-2">
-                  <Camera className="h-4 w-4" />
-                  <span>Images</span>
-                </TabsTrigger>
-              </TabsList>
+          <Tabs defaultValue="info" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="info">Informations</TabsTrigger>
+              <TabsTrigger value="pricing">Prix & Stock</TabsTrigger>
+              <TabsTrigger value="media">Images</TabsTrigger>
+            </TabsList>
 
-              {/* Tab 1: Basic Info */}
-              <TabsContent value="info" className="space-y-5 mt-6">
-                {/* Product Name */}
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm font-semibold flex items-center gap-2">
-                    <span className="text-destructive">*</span> Nom du produit
-                  </Label>
+            {/* Tab 1: Basic Info */}
+            <TabsContent value="info" className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nom du produit *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Ex: T-shirt en coton premium"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="description">Description</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGenerateDescription}
+                    disabled={generatingDescription || !formData.name}
+                  >
+                    {generatingDescription ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4 mr-2" />
+                    )}
+                    Générer avec IA
+                  </Button>
+                </div>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Description détaillée du produit..."
+                  rows={4}
+                />
+              </div>
+
+              {/* Category Selection - Unified */}
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <FolderOpen className="h-4 w-4" />
+                  Catégorie
+                </Label>
+                
+                <div className="flex gap-2 mb-2">
+                  <Button
+                    type="button"
+                    variant={categoryMode === 'existing' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setCategoryMode('existing');
+                      setFormData(prev => ({ ...prev, category_name: '' }));
+                    }}
+                  >
+                    Existante
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={categoryMode === 'new' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setCategoryMode('new');
+                      setFormData(prev => ({ ...prev, category_id: '' }));
+                    }}
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Nouvelle
+                  </Button>
+                </div>
+
+                {categoryMode === 'existing' ? (
+                  <Select
+                    value={formData.category_id}
+                    onValueChange={(v) => setFormData({ ...formData, category_id: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner une catégorie..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
                   <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Ex: T-shirt en coton premium"
-                    className="h-11"
+                    value={formData.category_name}
+                    onChange={(e) => setFormData({ ...formData, category_name: e.target.value })}
+                    placeholder="Nom de la nouvelle catégorie..."
+                  />
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tags" className="flex items-center gap-2">
+                  <Tags className="h-4 w-4" />
+                  Tags (séparés par virgules)
+                </Label>
+                <Input
+                  id="tags"
+                  value={formData.tags}
+                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                  placeholder="été, promo, nouveauté"
+                />
+              </div>
+            </TabsContent>
+
+            {/* Tab 2: Pricing & Stock */}
+            <TabsContent value="pricing" className="space-y-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="price">Prix de vente * (GNF)</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    placeholder="50000"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="compare_price">Prix barré (GNF)</Label>
+                  <Input
+                    id="compare_price"
+                    type="number"
+                    value={formData.compare_price}
+                    onChange={(e) => setFormData({ ...formData, compare_price: e.target.value })}
+                    placeholder="70000"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cost_price">Prix de revient (GNF)</Label>
+                  <Input
+                    id="cost_price"
+                    type="number"
+                    value={formData.cost_price}
+                    onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
+                    placeholder="30000"
+                  />
+                </div>
+              </div>
 
-                {/* Description with AI */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="stock">Quantité en stock *</Label>
+                  <Input
+                    id="stock"
+                    type="number"
+                    value={formData.stock_quantity}
+                    onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
+                    placeholder="100"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="threshold">Seuil stock bas</Label>
+                  <Input
+                    id="threshold"
+                    type="number"
+                    value={formData.low_stock_threshold}
+                    onChange={(e) => setFormData({ ...formData, low_stock_threshold: e.target.value })}
+                    placeholder="10"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="description" className="text-sm font-semibold">Description</Label>
+                    <Label htmlFor="sku">Code SKU</Label>
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      onClick={handleGenerateDescription}
-                      disabled={generatingDescription || !formData.name}
-                      className="h-8 gap-2 border-primary/30 hover:border-primary hover:bg-primary/5"
+                      onClick={handleGenerateSKU}
+                      className="h-6 px-2 text-xs"
                     >
-                      {generatingDescription ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Sparkles className="h-3.5 w-3.5 text-primary" />
-                      )}
-                      <span className="text-xs font-medium">Générer avec IA</span>
-                    </Button>
-                  </div>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Description détaillée du produit..."
-                    rows={4}
-                    className="resize-none"
-                  />
-                </div>
-
-                {/* Category Selection */}
-                <div className="space-y-3 p-4 bg-muted/30 rounded-xl border border-border/50">
-                  <Label className="flex items-center gap-2 text-sm font-semibold">
-                    <FolderOpen className="h-4 w-4 text-primary" />
-                    Catégorie
-                  </Label>
-                  
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant={categoryMode === 'existing' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => {
-                        setCategoryMode('existing');
-                        setFormData(prev => ({ ...prev, category_name: '' }));
-                      }}
-                      className="flex-1"
-                    >
-                      Existante
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={categoryMode === 'new' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => {
-                        setCategoryMode('new');
-                        setFormData(prev => ({ ...prev, category_id: '' }));
-                      }}
-                      className="flex-1"
-                    >
-                      <Plus className="h-3 w-3 mr-1" />
-                      Nouvelle
-                    </Button>
-                  </div>
-
-                  {categoryMode === 'existing' ? (
-                    <Select
-                      value={formData.category_id}
-                      onValueChange={(v) => setFormData({ ...formData, category_id: v })}
-                    >
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Sélectionner une catégorie..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((cat) => (
-                          <SelectItem key={cat.id} value={cat.id}>
-                            {cat.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Input
-                      value={formData.category_name}
-                      onChange={(e) => setFormData({ ...formData, category_name: e.target.value })}
-                      placeholder="Nom de la nouvelle catégorie..."
-                      className="h-11"
-                    />
-                  )}
-                </div>
-
-                {/* Tags */}
-                <div className="space-y-2">
-                  <Label htmlFor="tags" className="flex items-center gap-2 text-sm font-semibold">
-                    <Tags className="h-4 w-4 text-primary" />
-                    Tags (séparés par virgules)
-                  </Label>
-                  <Input
-                    id="tags"
-                    value={formData.tags}
-                    onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                    placeholder="été, promo, nouveauté"
-                    className="h-11"
-                  />
-                </div>
-              </TabsContent>
-
-              {/* Tab 2: Pricing & Stock */}
-              <TabsContent value="pricing" className="space-y-5 mt-6">
-                {/* Pricing Section */}
-                <div className="p-4 bg-gradient-to-br from-green-500/5 to-emerald-500/10 rounded-xl border border-green-500/20">
-                  <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
-                    <span className="p-1.5 bg-green-500/10 rounded-lg">💰</span>
-                    Tarification
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="price" className="text-xs font-medium">
-                        <span className="text-destructive">*</span> Prix de vente (GNF)
-                      </Label>
-                      <Input
-                        id="price"
-                        type="number"
-                        value={formData.price}
-                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                        placeholder="50000"
-                        className="h-10 font-mono"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="compare_price" className="text-xs font-medium">Prix barré (GNF)</Label>
-                      <Input
-                        id="compare_price"
-                        type="number"
-                        value={formData.compare_price}
-                        onChange={(e) => setFormData({ ...formData, compare_price: e.target.value })}
-                        placeholder="70000"
-                        className="h-10 font-mono"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cost_price" className="text-xs font-medium">Prix de revient (GNF)</Label>
-                      <Input
-                        id="cost_price"
-                        type="number"
-                        value={formData.cost_price}
-                        onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
-                        placeholder="30000"
-                        className="h-10 font-mono"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Stock Section */}
-                <div className="p-4 bg-gradient-to-br from-blue-500/5 to-cyan-500/10 rounded-xl border border-blue-500/20">
-                  <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
-                    <span className="p-1.5 bg-blue-500/10 rounded-lg">📦</span>
-                    Gestion du stock
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="stock" className="text-xs font-medium">
-                        <span className="text-destructive">*</span> Quantité en stock
-                      </Label>
-                      <Input
-                        id="stock"
-                        type="number"
-                        value={formData.stock_quantity}
-                        onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
-                        placeholder="100"
-                        className="h-10 font-mono"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="threshold" className="text-xs font-medium">Seuil stock bas</Label>
-                      <Input
-                        id="threshold"
-                        type="number"
-                        value={formData.low_stock_threshold}
-                        onChange={(e) => setFormData({ ...formData, low_stock_threshold: e.target.value })}
-                        placeholder="10"
-                        className="h-10 font-mono"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* SKU & Barcode with AI Generation */}
-                <div className="p-4 bg-gradient-to-br from-purple-500/5 to-violet-500/10 rounded-xl border border-purple-500/20">
-                  <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
-                    <span className="p-1.5 bg-purple-500/10 rounded-lg">🏷️</span>
-                    Codes produit
-                    <Badge variant="secondary" className="ml-auto text-[10px] bg-purple-500/10 text-purple-700 dark:text-purple-300">
                       <Sparkles className="h-3 w-3 mr-1" />
-                      Génération IA
-                    </Badge>
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="sku" className="text-xs font-medium flex items-center gap-1">
-                          <Barcode className="h-3 w-3" />
-                          Code SKU
-                        </Label>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleGenerateSKU}
-                          className="h-7 px-2 text-xs hover:bg-purple-500/10 hover:text-purple-700 dark:hover:text-purple-300"
-                        >
-                          <Sparkles className="h-3 w-3 mr-1 text-purple-500" />
-                          Générer
-                        </Button>
-                      </div>
-                      <Input
-                        id="sku"
-                        value={formData.sku}
-                        onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                        placeholder="SKU-001"
-                        className="h-10 font-mono text-sm"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="barcode" className="text-xs font-medium flex items-center gap-1">
-                          <Barcode className="h-3 w-3" />
-                          Code-barres EAN-13
-                        </Label>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleGenerateBarcode}
-                          className="h-7 px-2 text-xs hover:bg-purple-500/10 hover:text-purple-700 dark:hover:text-purple-300"
-                        >
-                          <Sparkles className="h-3 w-3 mr-1 text-purple-500" />
-                          Générer
-                        </Button>
-                      </div>
-                      <Input
-                        id="barcode"
-                        value={formData.barcode}
-                        onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                        placeholder="224123456789X"
-                        className="h-10 font-mono text-sm"
-                      />
-                    </div>
+                      Générer
+                    </Button>
                   </div>
-                </div>
-
-                {/* Product Status */}
-                <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-xl border border-border/50">
-                  <input
-                    type="checkbox"
-                    id="is_active"
-                    checked={formData.is_active}
-                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                    className="h-5 w-5 rounded border-2 accent-primary"
+                  <Input
+                    id="sku"
+                    value={formData.sku}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                    placeholder="SKU-001"
                   />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="barcode">Code-barres</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleGenerateBarcode}
+                      className="h-6 px-2 text-xs"
+                    >
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      Générer
+                    </Button>
+                  </div>
+                  <Input
+                    id="barcode"
+                    value={formData.barcode}
+                    onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
+                    placeholder="123456789"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                <input
+                  type="checkbox"
+                  id="is_active"
+                  checked={formData.is_active}
+                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                  className="h-4 w-4"
+                />
+                <Label htmlFor="is_active" className="cursor-pointer">
+                  Produit actif et visible
+                </Label>
+              </div>
+
+              {/* Section Vente par Carton */}
+              <div className="border border-border/50 rounded-lg p-4 space-y-4">
+                <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="is_active" className="cursor-pointer font-medium">
-                      Produit actif et visible
+                    <Label htmlFor="sell_by_carton" className="text-base font-semibold cursor-pointer">
+                      📦 Vente par carton
                     </Label>
-                    <p className="text-xs text-muted-foreground">
-                      Le produit sera affiché dans votre boutique
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Permet de vendre ce produit en gros par carton
                     </p>
                   </div>
-                </div>
-
-                {/* Section Vente par Carton - Professional */}
-                <div className={`p-4 rounded-xl border-2 transition-all ${
-                  formData.sell_by_carton 
-                    ? 'bg-gradient-to-br from-orange-500/10 to-amber-500/15 border-orange-500/40' 
-                    : 'bg-muted/20 border-dashed border-border/50 hover:border-orange-500/30'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2.5 rounded-xl ${formData.sell_by_carton ? 'bg-orange-500/20' : 'bg-muted'}`}>
-                        <Package className={`h-5 w-5 ${formData.sell_by_carton ? 'text-orange-600' : 'text-muted-foreground'}`} />
-                      </div>
-                      <div>
-                        <Label htmlFor="sell_by_carton" className="text-base font-bold cursor-pointer flex items-center gap-2">
-                          📦 Vente par carton
-                          {formData.sell_by_carton && (
-                            <Badge className="bg-orange-500/20 text-orange-700 dark:text-orange-300 text-[10px]">
-                              Activé
-                            </Badge>
-                          )}
-                        </Label>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Vendez ce produit en gros avec un prix avantageux
-                        </p>
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      id="sell_by_carton"
-                      checked={formData.sell_by_carton}
-                      onChange={(e) => setFormData({ ...formData, sell_by_carton: e.target.checked })}
-                      className="h-6 w-6 rounded-lg accent-orange-500"
-                    />
-                  </div>
-
-                  {formData.sell_by_carton && (
-                    <div className="space-y-4 mt-4 pt-4 border-t border-orange-500/20">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="units_per_carton" className="text-xs font-medium flex items-center gap-1">
-                            <span className="text-destructive">*</span> Unités par carton
-                          </Label>
-                          <Input
-                            id="units_per_carton"
-                            type="number"
-                            min="1"
-                            value={formData.units_per_carton}
-                            onChange={(e) => setFormData({ ...formData, units_per_carton: e.target.value })}
-                            placeholder="Ex: 12, 24, 50"
-                            className="h-10 font-mono"
-                          />
-                          <p className="text-[10px] text-muted-foreground">
-                            Nombre d'unités contenues dans un carton
-                          </p>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="price_carton" className="text-xs font-medium flex items-center gap-1">
-                            <span className="text-destructive">*</span> Prix du carton (GNF)
-                          </Label>
-                          <Input
-                            id="price_carton"
-                            type="number"
-                            value={formData.price_carton}
-                            onChange={(e) => setFormData({ ...formData, price_carton: e.target.value })}
-                            placeholder="Ex: 230000"
-                            className="h-10 font-mono"
-                          />
-                          {formData.units_per_carton && formData.price && formData.price_carton && (
-                            <div className="flex items-center gap-1.5 text-[10px]">
-                              <Badge className="bg-green-500/20 text-green-700 dark:text-green-300">
-                                💰 Économie: {(
-                                  (parseFloat(formData.price) * parseInt(formData.units_per_carton || '1')) - 
-                                  parseFloat(formData.price_carton || '0')
-                                ).toLocaleString()} GNF
-                              </Badge>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="carton_sku" className="text-xs font-medium">Code SKU Carton</Label>
-                          <span className="text-[10px] text-muted-foreground">Optionnel</span>
-                        </div>
-                        <Input
-                          id="carton_sku"
-                          value={formData.carton_sku}
-                          onChange={(e) => setFormData({ ...formData, carton_sku: e.target.value })}
-                          placeholder="Ex: CART-001"
-                          className="h-10 font-mono"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-
-              {/* Tab 3: Media */}
-              <TabsContent value="media" className="space-y-5 mt-6">
-                <div className="space-y-3">
-                  <Label className="text-sm font-semibold">Images du produit</Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="h-24 flex-col gap-2 border-2 border-dashed hover:border-primary/50 hover:bg-primary/5"
-                    >
-                      <div className="p-2 bg-muted rounded-full">
-                        <Camera className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <span className="text-xs font-medium">Importer images</span>
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleGenerateImage}
-                      disabled={generatingImage || !formData.name}
-                      className="h-24 flex-col gap-2 border-2 border-dashed border-primary/30 hover:border-primary hover:bg-primary/5"
-                    >
-                      {generatingImage ? (
-                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                      ) : (
-                        <div className="p-2 bg-primary/10 rounded-full">
-                          <Sparkles className="h-5 w-5 text-primary" />
-                        </div>
-                      )}
-                      <span className="text-xs font-medium">
-                        {generatingImage ? 'Génération IA...' : 'Générer avec IA'}
-                      </span>
-                    </Button>
-                  </div>
                   <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImageSelect}
-                    className="hidden"
+                    type="checkbox"
+                    id="sell_by_carton"
+                    checked={formData.sell_by_carton}
+                    onChange={(e) => setFormData({ ...formData, sell_by_carton: e.target.checked })}
+                    className="h-5 w-5"
                   />
                 </div>
 
-                {/* Image Previews */}
-                {(selectedImages.length > 0 || (editingProduct?.images?.length || 0) > 0) && (
-                  <div className="space-y-3 p-4 bg-muted/30 rounded-xl border border-border/50">
-                    <Label className="text-sm font-semibold">
-                      Aperçu ({selectedImages.length} nouvelle(s))
-                    </Label>
-                    <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-                      {/* Existing Images */}
-                      {editingProduct?.images?.map((url, index) => (
-                        <div key={`existing-${index}`} className="relative aspect-square rounded-lg overflow-hidden border-2 border-border/50">
-                          <img
-                            src={url}
-                            alt={`Existing ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                          <Badge className="absolute top-1 left-1 text-[8px]" variant="secondary">
-                            Existante
-                          </Badge>
-                        </div>
-                      ))}
-                      {/* New Images */}
-                      {selectedImages.map((file, index) => (
-                        <div key={`new-${index}`} className="relative aspect-square rounded-lg overflow-hidden border-2 border-primary/30">
-                          <img
-                            src={URL.createObjectURL(file)}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            className="absolute top-1 right-1 h-5 w-5 p-0"
-                            onClick={() => removeImage(index)}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                          <Badge className="absolute bottom-1 left-1 text-[8px] bg-primary">
-                            Nouvelle
-                          </Badge>
-                        </div>
-                      ))}
+                {formData.sell_by_carton && (
+                  <div className="space-y-4 pt-3 border-t border-border/30">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="units_per_carton">Unités par carton *</Label>
+                        <Input
+                          id="units_per_carton"
+                          type="number"
+                          min="1"
+                          value={formData.units_per_carton}
+                          onChange={(e) => setFormData({ ...formData, units_per_carton: e.target.value })}
+                          placeholder="Ex: 12, 24, 50"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Nombre d'unités dans un carton
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="price_carton">Prix du carton (GNF) *</Label>
+                        <Input
+                          id="price_carton"
+                          type="number"
+                          value={formData.price_carton}
+                          onChange={(e) => setFormData({ ...formData, price_carton: e.target.value })}
+                          placeholder="Ex: 230000"
+                        />
+                        {formData.units_per_carton && formData.price && (
+                          <p className="text-xs text-green-600">
+                            Économie: {(
+                              (parseFloat(formData.price) * parseInt(formData.units_per_carton || '1')) - 
+                              parseFloat(formData.price_carton || '0')
+                            ).toLocaleString()} GNF vs unités
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="carton_sku">Code SKU Carton (optionnel)</Label>
+                      <Input
+                        id="carton_sku"
+                        value={formData.carton_sku}
+                        onChange={(e) => setFormData({ ...formData, carton_sku: e.target.value })}
+                        placeholder="Ex: CART-001"
+                      />
                     </div>
                   </div>
                 )}
-              </TabsContent>
-            </Tabs>
-          </div>
+              </div>
+            </TabsContent>
 
-          {/* Footer Actions - Fixed at bottom */}
-          <div className="flex gap-3 p-6 border-t bg-muted/30">
+            {/* Tab 3: Media */}
+            <TabsContent value="media" className="space-y-4 mt-4">
+              <div className="space-y-3">
+                <Label>Images du produit</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-20 flex-col gap-2"
+                  >
+                    <Camera className="h-6 w-6" />
+                    <span className="text-xs">Importer images</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleGenerateImage}
+                    disabled={generatingImage || !formData.name}
+                    className="h-20 flex-col gap-2"
+                  >
+                    {generatingImage ? (
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    ) : (
+                      <ImagePlus className="h-6 w-6" />
+                    )}
+                    <span className="text-xs">
+                      {generatingImage ? 'Génération...' : 'Générer avec IA'}
+                    </span>
+                  </Button>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageSelect}
+                  className="hidden"
+                />
+              </div>
+
+              {/* Image Previews */}
+              {(selectedImages.length > 0 || (editingProduct?.images?.length || 0) > 0) && (
+                <div className="space-y-2">
+                  <Label>Aperçu ({selectedImages.length} nouvelle(s))</Label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {/* Existing Images */}
+                    {editingProduct?.images?.map((url, index) => (
+                      <div key={`existing-${index}`} className="relative aspect-square rounded-lg overflow-hidden border">
+                        <img
+                          src={url}
+                          alt={`Existing ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <Badge className="absolute top-1 left-1 text-[8px]" variant="secondary">
+                          Existante
+                        </Badge>
+                      </div>
+                    ))}
+                    {/* New Images */}
+                    {selectedImages.map((file, index) => (
+                      <div key={`new-${index}`} className="relative aspect-square rounded-lg overflow-hidden border">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute top-1 right-1 h-5 w-5 p-0"
+                          onClick={() => removeImage(index)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                        <Badge className="absolute bottom-1 left-1 text-[8px]" variant="default">
+                          Nouvelle
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+
+          {/* Footer Actions */}
+          <div className="flex gap-2 pt-4 border-t">
             <Button
               variant="outline"
               onClick={() => {
                 setShowDialog(false);
                 resetForm();
               }}
-              className="flex-1 h-11"
+              className="flex-1"
             >
               Annuler
             </Button>
-            <Button onClick={handleSave} className="flex-1 h-11" disabled={saving}>
+            <Button onClick={handleSave} className="flex-1" disabled={saving}>
               {saving ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
