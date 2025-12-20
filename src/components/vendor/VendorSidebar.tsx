@@ -25,12 +25,10 @@ import {
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { useVendorBadges } from "@/hooks/useVendorBadges";
-import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function VendorSidebar() {
-  const { t } = useTranslation();
   const { state, setOpen, isMobile } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
@@ -77,64 +75,64 @@ export function VendorSidebar() {
 
   const menuSections = [
     {
-      label: t("vendor.sidebar.main"),
+      label: "Principal",
       icon: LayoutDashboard,
       items: [
-        { title: t("vendor.menu.dashboard"), icon: BarChart3, path: "dashboard" },
-        { title: t("vendor.menu.analytics"), icon: TrendingUp, path: "analytics" },
-        { title: t("vendor.menu.pos"), icon: Store, path: "pos", isPOS: true },
+        { title: "Dashboard", icon: BarChart3, path: "dashboard" },
+        { title: "Analytiques", icon: TrendingUp, path: "analytics" },
+        { title: "Point de vente", icon: Store, path: "pos", isPOS: true },
       ]
     },
     {
-      label: t("vendor.sidebar.commerce"),
+      label: "Commerce",
       icon: Package,
       items: [
-        { title: t("vendor.menu.products"), icon: Package, path: "products" },
-        { title: t("vendor.menu.orders"), icon: ShoppingCart, path: "orders" },
-        { title: t("vendor.menu.inventory"), icon: Box, path: "inventory" },
-        { title: t("vendor.menu.warehouses"), icon: Boxes, path: "warehouse" },
-        { title: t("vendor.menu.suppliers"), icon: Building2, path: "suppliers" },
+        { title: "Produits", icon: Package, path: "products" },
+        { title: "Commandes", icon: ShoppingCart, path: "orders" },
+        { title: "Inventaire", icon: Box, path: "inventory" },
+        { title: "Entrepôts", icon: Boxes, path: "warehouse" },
+        { title: "Fournisseurs", icon: Building2, path: "suppliers" },
       ]
     },
     {
-      label: t("vendor.sidebar.crm"),
+      label: "CRM",
       icon: Users,
       items: [
-        { title: t("vendor.menu.clients"), icon: Users, path: "clients" },
-        { title: t("vendor.menu.agents"), icon: Users, path: "agents" },
-        { title: t("vendor.menu.prospects"), icon: Target, path: "prospects" },
-        { title: t("vendor.menu.marketing"), icon: Megaphone, path: "marketing" },
+        { title: "Clients", icon: Users, path: "clients" },
+        { title: "Agents", icon: Users, path: "agents" },
+        { title: "Prospects", icon: Target, path: "prospects" },
+        { title: "Marketing", icon: Megaphone, path: "marketing" },
       ]
     },
     {
-      label: t("vendor.sidebar.finance"),
+      label: "Finance",
       icon: Wallet,
       items: [
-        { title: t("vendor.menu.wallet"), icon: Wallet, path: "wallet" },
-        { title: t("vendor.menu.quotesInvoices"), icon: FileText, path: "quotes-invoices" },
-        { title: t("vendor.menu.payments"), icon: CreditCard, path: "payments" },
-        { title: t("vendor.menu.paymentLinks"), icon: DollarSign, path: "payment-links" },
-        { title: t("vendor.menu.expenses"), icon: Receipt, path: "expenses" },
-        { title: t("vendor.menu.debts"), icon: AlertTriangle, path: "debts" },
-        { title: t("vendor.menu.contracts"), icon: FileText, path: "contracts" },
-        { title: t("vendor.menu.affiliate"), icon: Link, path: "affiliate" },
+        { title: "Wallet", icon: Wallet, path: "wallet" },
+        { title: "Devis & Factures", icon: FileText, path: "quotes-invoices" },
+        { title: "Paiements", icon: CreditCard, path: "payments" },
+        { title: "Liens paiement", icon: DollarSign, path: "payment-links" },
+        { title: "Dépenses", icon: Receipt, path: "expenses" },
+        { title: "Dettes", icon: AlertTriangle, path: "debts" },
+        { title: "Contrats", icon: FileText, path: "contracts" },
+        { title: "Affiliation", icon: Link, path: "affiliate" },
       ]
     },
     {
-      label: t("vendor.sidebar.services"),
+      label: "Services",
       icon: Truck,
       items: [
-        { title: t("vendor.menu.delivery"), icon: Truck, path: "delivery" },
-        { title: t("vendor.menu.support"), icon: HeadphonesIcon, path: "support" },
-        { title: t("vendor.menu.messages"), icon: MessageSquare, path: "communication" },
-        { title: t("vendor.menu.reports"), icon: FileText, path: "reports" },
+        { title: "Livraisons", icon: Truck, path: "delivery" },
+        { title: "Support", icon: HeadphonesIcon, path: "support" },
+        { title: "Messages", icon: MessageSquare, path: "communication" },
+        { title: "Rapports", icon: FileText, path: "reports" },
       ]
     },
     {
-      label: t("vendor.sidebar.system"),
+      label: "Système",
       icon: Settings,
       items: [
-        { title: t("vendor.menu.settings"), icon: Settings, path: "settings" },
+        { title: "Paramètres", icon: Settings, path: "settings" },
       ]
     }
   ];
