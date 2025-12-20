@@ -166,9 +166,10 @@ serve(async (req) => {
 
     console.log(`✅ Delivery confirmed for order: ${order_id}`);
 
-    // Send notification to vendor
+    // Send notification to vendor using receiver_id from escrow (which is the vendor's user_id)
+    // NOTE: order.vendor_id is the ID in the vendors table, NOT the user_id
     await supabase.from("communication_notifications").insert({
-      user_id: order.vendor_id,
+      user_id: escrow.receiver_id, // This is the vendor's user_id
       type: "delivery_confirmed",
       title: "Livraison confirmée",
       body: `Le client a confirmé la réception de la commande #${order.order_number}. Les fonds ont été libérés.`,
@@ -180,7 +181,7 @@ serve(async (req) => {
       },
     });
 
-    console.log("📧 Notification sent to vendor");
+    console.log("📧 Notification sent to vendor (user_id:", escrow.receiver_id, ")");
 
     return new Response(
       JSON.stringify({
