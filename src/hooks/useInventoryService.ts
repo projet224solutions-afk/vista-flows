@@ -134,37 +134,16 @@ export const useInventoryService = () => {
       setLoading(true);
       console.log('🔄 Chargement inventaire pour vendorId:', vendorId);
 
-      // D'abord récupérer les IDs des produits du vendeur
-      const { data: vendorProducts, error: productsError } = await supabase
-        .from('products')
-        .select('id')
-        .eq('vendor_id', vendorId)
-        .eq('is_active', true);
-
-      if (productsError) {
-        console.error('❌ Erreur chargement produits vendeur:', productsError);
-        throw productsError;
-      }
-
-      const productIds = (vendorProducts || []).map(p => p.id);
-      console.log('📦 Produits vendeur:', productIds.length);
-
-      if (productIds.length === 0) {
-        setInventory([]);
-        setLoading(false);
-        return;
-      }
-
-      // Charger l'inventaire filtré par les product_ids du vendeur
+      // Charger l'inventaire avec jointure interne pour filtrer par vendor
       const { data: inventoryData, error: invError } = await supabase
         .from('inventory')
         .select(`
           *,
-          product:products(id, name, price, sku, vendor_id),
+          product:products!inner(id, name, price, sku, vendor_id),
           warehouse:warehouses(id, name),
           supplier:suppliers(id, name)
         `)
-        .in('product_id', productIds)
+        .eq('product.vendor_id', vendorId)
         .order('last_updated', { ascending: false });
 
       if (invError) {
@@ -173,6 +152,7 @@ export const useInventoryService = () => {
       }
 
       console.log('📦 Inventaire chargé:', inventoryData?.length, 'items pour vendorId:', vendorId);
+      console.log('📦 Détail inventaire:', JSON.stringify(inventoryData, null, 2));
 
       // Charger les alertes
       const { data: alertsData, error: alertError } = await supabase
