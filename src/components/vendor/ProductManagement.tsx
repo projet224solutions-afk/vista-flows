@@ -125,7 +125,8 @@ export default function ProductManagement() {
     sell_by_carton: false,
     units_per_carton: '',
     price_carton: '',
-    carton_sku: ''
+    carton_sku: '',
+    cartons_in_stock: ''
   });
 
   // Load initial data
@@ -182,7 +183,26 @@ export default function ProductManagement() {
 
   // Handlers
   const handleSave = async () => {
-    if (!formData.name || !formData.price || !formData.stock_quantity) {
+    const payload: typeof formData = { ...formData };
+
+    if (payload.sell_by_carton) {
+      const unitsPerCarton = parseInt(payload.units_per_carton || '', 10);
+      if (!unitsPerCarton || Number.isNaN(unitsPerCarton) || unitsPerCarton < 1) {
+        toast.error("Veuillez renseigner 'Unités par carton'");
+        return;
+      }
+
+      if (payload.cartons_in_stock && payload.cartons_in_stock.trim() !== '') {
+        const cartons = parseInt(payload.cartons_in_stock, 10);
+        if (Number.isNaN(cartons) || cartons < 0) {
+          toast.error('Nombre de cartons invalide');
+          return;
+        }
+        payload.stock_quantity = String(cartons * unitsPerCarton);
+      }
+    }
+
+    if (!payload.name || !payload.price || !payload.stock_quantity) {
       toast.error('Veuillez remplir tous les champs obligatoires');
       return;
     }
@@ -191,23 +211,23 @@ export default function ProductManagement() {
     setSaving(true);
 
     try {
-      console.log('[ProductSave] Starting save...', { 
-        isEditing: !!editingProduct, 
-        formData,
+      console.log('[ProductSave] Starting save...', {
+        isEditing: !!editingProduct,
+        formData: payload,
         categoryMode,
-        categoriesLoaded: categories.length
+        categoriesLoaded: categories.length,
       });
-      
+
       if (editingProduct) {
         const result = await updateProduct(
           editingProduct.id,
-          formData,
+          payload,
           selectedImages,
           editingProduct.images || []
         );
         console.log('[ProductSave] Update result:', result);
       } else {
-        const result = await createProduct(formData, selectedImages);
+        const result = await createProduct(payload, selectedImages);
         console.log('[ProductSave] Create result:', result);
         if (!result.success) {
           console.error('[ProductSave] Creation failed');
@@ -223,6 +243,17 @@ export default function ProductManagement() {
   };
 
   const handleEdit = (product: Product) => {
+    // Stock exact basé sur inventory si disponible
+    const inv = product.inventory as any;
+    const invQty = Array.isArray(inv) ? inv?.[0]?.quantity : inv?.quantity;
+    const effectiveStock = (typeof invQty === 'number' ? invQty : product.stock_quantity) || 0;
+
+    const unitsPerCarton = Number(product.units_per_carton || 0);
+    const cartonsInStock =
+      product.sell_by_carton && unitsPerCarton > 1
+        ? String(Math.floor(effectiveStock / unitsPerCarton))
+        : '';
+
     setEditingProduct(product);
     setFormData({
       name: product.name,
@@ -232,7 +263,7 @@ export default function ProductManagement() {
       cost_price: product.cost_price?.toString() || '',
       sku: product.sku || '',
       barcode: product.barcode || '',
-      stock_quantity: product.stock_quantity.toString(),
+      stock_quantity: String(effectiveStock),
       low_stock_threshold: product.low_stock_threshold.toString(),
       category_id: product.category_id || '',
       category_name: '',
@@ -243,7 +274,8 @@ export default function ProductManagement() {
       sell_by_carton: product.sell_by_carton || false,
       units_per_carton: product.units_per_carton?.toString() || '',
       price_carton: product.price_carton?.toString() || '',
-      carton_sku: product.carton_sku || ''
+      carton_sku: product.carton_sku || '',
+      cartons_in_stock: cartonsInStock,
     });
     setCategoryMode(product.category_id ? 'existing' : 'new');
     setShowDialog(true);
@@ -251,7 +283,7 @@ export default function ProductManagement() {
 
   const handleDelete = async (productId: string) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) return;
-    
+
     try {
       await deleteProduct(productId);
     } catch (error: any) {
@@ -261,7 +293,7 @@ export default function ProductManagement() {
 
   const handleDuplicate = async (productId: string) => {
     if (!confirm('Voulez-vous créer une copie de ce produit ?')) return;
-    
+
     try {
       await duplicateProduct(productId);
       toast.success('Produit dupliqué avec succès');
@@ -291,7 +323,8 @@ export default function ProductManagement() {
       sell_by_carton: false,
       units_per_carton: '',
       price_carton: '',
-      carton_sku: ''
+      carton_sku: '',
+      cartons_in_stock: '',
     });
     setEditingProduct(null);
     setSelectedImages([]);
@@ -922,7 +955,7 @@ export default function ProductManagement() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="stock">Quantité en stock *</Label>
+                  <Label htmlFor="stock">Quantité en stock (unités) *</Label>
                   <Input
                     id="stock"
                     type="number"
@@ -1031,7 +1064,26 @@ export default function ProductManagement() {
                           type="number"
                           min="1"
                           value={formData.units_per_carton}
-                          onChange={(e) => setFormData({ ...formData, units_per_carton: e.target.value })}
+                          onChange={(e) =>
+                            setFormData((prev) => {
+                              const unitsStr = e.target.value;
+                              const unitsPerCarton = parseInt(unitsStr || '0', 10);
+                              const cartons = parseInt(prev.cartons_in_stock || '0', 10);
+
+                              const canCompute =
+                                !!prev.cartons_in_stock &&
+                                !Number.isNaN(cartons) &&
+                                cartons >= 0 &&
+                                !Number.isNaN(unitsPerCarton) &&
+                                unitsPerCarton > 0;
+
+                              return {
+                                ...prev,
+                                units_per_carton: unitsStr,
+                                stock_quantity: canCompute ? String(cartons * unitsPerCarton) : prev.stock_quantity,
+                              };
+                            })
+                          }
                           placeholder="Ex: 12, 24, 50"
                         />
                         <p className="text-xs text-muted-foreground">
@@ -1050,13 +1102,62 @@ export default function ProductManagement() {
                         {formData.units_per_carton && formData.price && (
                           <p className="text-xs text-green-600">
                             Économie: {(
-                              (parseFloat(formData.price) * parseInt(formData.units_per_carton || '1')) - 
+                              (parseFloat(formData.price) * parseInt(formData.units_per_carton || '1')) -
                               parseFloat(formData.price_carton || '0')
                             ).toLocaleString()} GNF vs unités
                           </p>
                         )}
                       </div>
                     </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="cartons_in_stock">Nombre de cartons en stock</Label>
+                        <Input
+                          id="cartons_in_stock"
+                          type="number"
+                          min="0"
+                          value={formData.cartons_in_stock}
+                          onChange={(e) =>
+                            setFormData((prev) => {
+                              const cartonsStr = e.target.value;
+                              const cartons = parseInt(cartonsStr || '0', 10);
+                              const unitsPerCarton = parseInt(prev.units_per_carton || '0', 10);
+
+                              const canCompute =
+                                !Number.isNaN(cartons) &&
+                                cartons >= 0 &&
+                                !Number.isNaN(unitsPerCarton) &&
+                                unitsPerCarton > 0;
+
+                              return {
+                                ...prev,
+                                cartons_in_stock: cartonsStr,
+                                stock_quantity: canCompute ? String(cartons * unitsPerCarton) : prev.stock_quantity,
+                              };
+                            })
+                          }
+                          placeholder="Ex: 15"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Remplit automatiquement la quantité en stock (unités)
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Stock calculé (unités)</Label>
+                        <Input
+                          value={(() => {
+                            const cartons = parseInt(formData.cartons_in_stock || '0', 10);
+                            const unitsPerCarton = parseInt(formData.units_per_carton || '0', 10);
+                            if (Number.isNaN(cartons) || Number.isNaN(unitsPerCarton) || cartons < 0 || unitsPerCarton <= 0) return '';
+                            return String(cartons * unitsPerCarton);
+                          })()}
+                          readOnly
+                        />
+                      </div>
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="carton_sku">Code SKU Carton (optionnel)</Label>
                       <Input

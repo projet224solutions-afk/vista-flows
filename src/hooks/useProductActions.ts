@@ -52,19 +52,19 @@ export function useProductActions({
     if (!vendorId || files.length === 0) return [];
 
     const imageUrls: string[] = [];
-    
+
     toast.info(`Upload de ${files.length} image(s)...`);
 
     for (const file of files) {
       try {
         const fileExt = file.name.split('.').pop();
         const fileName = `${vendorId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-        
+
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('product-images')
           .upload(fileName, file, {
             cacheControl: '3600',
-            upsert: false
+            upsert: false,
           });
 
         if (uploadError) {
@@ -73,9 +73,9 @@ export function useProductActions({
           continue;
         }
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('product-images')
-          .getPublicUrl(fileName);
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from('product-images').getPublicUrl(fileName);
 
         imageUrls.push(publicUrl);
       } catch (error) {
@@ -91,17 +91,38 @@ export function useProductActions({
   }, [vendorId]);
 
   /**
+   * Synchroniser le stock dans la table inventory (stock réel utilisé en POS)
+   */
+  const syncInventoryQuantity = useCallback(async (productId: string, quantity: number) => {
+    const { error } = await supabase
+      .from('inventory')
+      .upsert(
+        [{
+          product_id: productId,
+          quantity,
+          last_updated: new Date().toISOString(),
+        }],
+        { onConflict: 'product_id' }
+      );
+
+    if (error) {
+      console.error('[InventorySync] Error:', error);
+      throw error;
+    }
+  }, []);
+
+  /**
    * Gérer la catégorie (créer si n'existe pas)
    */
   const handleCategory = useCallback(async (categoryName?: string, categoryId?: string): Promise<string | null> => {
     console.log('[Category] handleCategory called:', { categoryName, categoryId });
-    
+
     // Si un ID de catégorie est fourni, l'utiliser directement
     if (categoryId && categoryId.trim() !== '') {
       console.log('[Category] Using existing category_id:', categoryId);
       return categoryId;
     }
-    
+
     // Si pas de nom de catégorie, retourner null
     if (!categoryName || categoryName.trim() === '') {
       console.log('[Category] No category name provided');
@@ -129,10 +150,12 @@ export function useProductActions({
       console.log('[Category] Creating new category:', categoryName.trim());
       const { data: newCategory, error: categoryError } = await supabase
         .from('categories')
-        .insert([{ 
-          name: categoryName.trim(), 
-          is_active: true 
-        }])
+        .insert([
+          {
+            name: categoryName.trim(),
+            is_active: true,
+          },
+        ])
         .select('id')
         .single();
 
@@ -175,9 +198,9 @@ export function useProductActions({
       const imageUrls = await uploadImages(images);
 
       // Gérer catégorie - log pour debug
-      console.log('[ProductCreate] Category data received:', { 
-        category_id: formData.category_id, 
-        category_name: formData.category_name 
+      console.log('[ProductCreate] Category data received:', {
+        category_id: formData.category_id,
+        category_name: formData.category_name,
       });
       const categoryId = await handleCategory(formData.category_name, formData.category_id);
       console.log('[ProductCreate] Category ID resolved:', categoryId);
@@ -185,12 +208,12 @@ export function useProductActions({
       // Générer public_id
       const public_id = await generatePublicId('products', false);
       if (!public_id) {
-        toast.error('Impossible de générer l\'ID du produit');
+        toast.error("Impossible de générer l'ID du produit");
         return { success: false };
       }
 
       // Générer SKU unique si non fourni
-      const sku = formData.sku?.trim() || await generateUniqueSKU();
+      const sku = formData.sku?.trim() || (await generateUniqueSKU());
 
       // Préparer données produit
       const productData = {
@@ -206,7 +229,7 @@ export function useProductActions({
         low_stock_threshold: parseInt(formData.low_stock_threshold),
         category_id: categoryId,
         weight: formData.weight ? parseFloat(formData.weight) : null,
-        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : null,
+        tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()) : null,
         is_active: formData.is_active,
         vendor_id: vendorId,
         images: imageUrls.length > 0 ? imageUrls : null,
@@ -214,19 +237,18 @@ export function useProductActions({
         sell_by_carton: formData.sell_by_carton || false,
         units_per_carton: formData.units_per_carton ? parseInt(formData.units_per_carton) : 1,
         price_carton: formData.price_carton ? parseFloat(formData.price_carton) : 0,
-        carton_sku: formData.carton_sku || null
+        carton_sku: formData.carton_sku || null,
       };
 
       console.log('[ProductCreate] Data:', productData);
 
       // Insérer produit
-      const { data, error } = await supabase
-        .from('products')
-        .insert([productData])
-        .select()
-        .single();
+      const { data, error } = await supabase.from('products').insert([productData]).select().single();
 
       if (error) throw error;
+
+      // Sync stock (inventory)
+      await syncInventoryQuantity(data.id, productData.stock_quantity);
 
       toast.success('✅ Produit créé avec succès');
       onProductCreated?.();
@@ -237,7 +259,7 @@ export function useProductActions({
       toast.error(`Erreur création: ${error.message}`);
       return { success: false };
     }
-  }, [vendorId, uploadImages, handleCategory, generatePublicId, onProductCreated]);
+  }, [vendorId, uploadImages, handleCategory, generatePublicId, onProductCreated, generateUniqueSKU, syncInventoryQuantity]);
 
   /**
    * Mettre à jour un produit
@@ -258,9 +280,7 @@ export function useProductActions({
       const newImageUrls = await uploadImages(newImages);
 
       // Combiner anciennes et nouvelles images
-      const allImages = newImageUrls.length > 0 
-        ? [...existingImages, ...newImageUrls] 
-        : existingImages;
+      const allImages = newImageUrls.length > 0 ? [...existingImages, ...newImageUrls] : existingImages;
 
       // Gérer catégorie
       const categoryId = await handleCategory(formData.category_name, formData.category_id);
@@ -278,27 +298,25 @@ export function useProductActions({
         low_stock_threshold: parseInt(formData.low_stock_threshold),
         category_id: categoryId,
         weight: formData.weight ? parseFloat(formData.weight) : null,
-        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : null,
+        tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()) : null,
         is_active: formData.is_active,
         images: allImages.length > 0 ? allImages : null,
         // Champs carton
         sell_by_carton: formData.sell_by_carton || false,
         units_per_carton: formData.units_per_carton ? parseInt(formData.units_per_carton) : 1,
         price_carton: formData.price_carton ? parseFloat(formData.price_carton) : 0,
-        carton_sku: formData.carton_sku || null
+        carton_sku: formData.carton_sku || null,
       };
 
       console.log('[ProductUpdate] Data:', updateData);
 
       // Mettre à jour produit
-      const { data, error } = await supabase
-        .from('products')
-        .update(updateData)
-        .eq('id', productId)
-        .select()
-        .single();
+      const { data, error } = await supabase.from('products').update(updateData).eq('id', productId).select().single();
 
       if (error) throw error;
+
+      // Sync stock (inventory)
+      await syncInventoryQuantity(productId, updateData.stock_quantity);
 
       toast.success('✅ Produit mis à jour');
       onProductUpdated?.();
@@ -309,7 +327,7 @@ export function useProductActions({
       toast.error(`Erreur mise à jour: ${error.message}`);
       return { success: false };
     }
-  }, [vendorId, uploadImages, handleCategory, onProductUpdated]);
+  }, [vendorId, uploadImages, handleCategory, onProductUpdated, syncInventoryQuantity]);
 
   /**
    * Supprimer un produit
@@ -322,11 +340,7 @@ export function useProductActions({
 
     try {
       // Vérifier si produit a des commandes
-      const { data: orders, error: ordersError } = await supabase
-        .from('order_items')
-        .select('id')
-        .eq('product_id', productId)
-        .limit(1);
+      const { data: orders, error: ordersError } = await supabase.from('order_items').select('id').eq('product_id', productId).limit(1);
 
       if (ordersError) throw ordersError;
 
@@ -336,10 +350,7 @@ export function useProductActions({
       }
 
       // Supprimer produit
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', productId);
+      const { error } = await supabase.from('products').delete().eq('id', productId);
 
       if (error) throw error;
 
@@ -365,18 +376,14 @@ export function useProductActions({
 
     try {
       // Récupérer produit original
-      const { data: original, error: fetchError } = await supabase
-        .from('products')
-        .select('*')
-        .eq('id', productId)
-        .single();
+      const { data: original, error: fetchError } = await supabase.from('products').select('*').eq('id', productId).single();
 
       if (fetchError) throw fetchError;
 
       // Générer nouveau public_id
       const public_id = await generatePublicId('products', false);
       if (!public_id) {
-        toast.error('Impossible de générer l\'ID du produit');
+        toast.error("Impossible de générer l'ID du produit");
         return { success: false };
       }
 
@@ -392,14 +399,10 @@ export function useProductActions({
         sku: newSKU,
         barcode: null, // Ne pas dupliquer barcode
         created_at: undefined,
-        updated_at: undefined
+        updated_at: undefined,
       };
 
-      const { data, error } = await supabase
-        .from('products')
-        .insert([duplicateData])
-        .select()
-        .single();
+      const { data, error } = await supabase.from('products').insert([duplicateData]).select().single();
 
       if (error) throw error;
 
@@ -412,7 +415,7 @@ export function useProductActions({
       toast.error(`Erreur duplication: ${error.message}`);
       return { success: false };
     }
-  }, [vendorId, generatePublicId, onProductCreated]);
+  }, [vendorId, generatePublicId, onProductCreated, generateUniqueSKU]);
 
   /**
    * Mise à jour en masse du stock
