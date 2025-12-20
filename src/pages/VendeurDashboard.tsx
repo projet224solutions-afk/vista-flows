@@ -1,6 +1,7 @@
 /**
  * DASHBOARD VENDEUR PROFESSIONNEL - 224SOLUTIONS
  * Interface complète avec sidebar et tous les modules
+ * @updated 2025-12-20 - Ajout du panneau Avis Clients
  */
 
 import { useState, useEffect, useMemo, useCallback } from "react";
