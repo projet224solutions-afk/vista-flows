@@ -30,11 +30,6 @@ export function FeatureGuard({
   const [showDialog, setShowDialog] = useState(false);
   const navigate = useNavigate();
 
-  // 🔓 DÉBLOCAGE TOTAL : Toutes les fonctionnalités sont accessibles
-  // Plus de restrictions d'abonnement
-  return <>{children}</>;
-
-  /* ANCIEN CODE AVEC RESTRICTIONS
   if (loading) {
     return <div className="animate-pulse bg-muted h-10 rounded" />;
   }
@@ -92,7 +87,7 @@ export function FeatureGuard({
               </Button>
               <Button onClick={() => {
                 setShowDialog(false);
-                navigate('/subscriptions');
+                navigate('/vendeur/subscription');
               }}>
                 Voir les plans
               </Button>
@@ -104,7 +99,6 @@ export function FeatureGuard({
   }
 
   return null;
-  */
 }
 
 // Composant pour les boutons de fonctionnalité
@@ -127,26 +121,64 @@ export function FeatureButton({
   size = 'default',
   disabled = false
 }: FeatureButtonProps) {
-  const { canAccessFeature, loading } = useSubscriptionFeatures();
+  const { canAccessFeature, loading, getPlanName } = useSubscriptionFeatures();
   const [showDialog, setShowDialog] = useState(false);
   const navigate = useNavigate();
 
-  // 🔓 DÉBLOCAGE TOTAL : Tous les boutons sont accessibles
+  const hasAccess = canAccessFeature(feature);
+
   const handleClick = () => {
-    if (!disabled) {
+    if (hasAccess && !disabled) {
       onClick();
+    } else if (!hasAccess) {
+      setShowDialog(true);
     }
   };
 
   return (
-    <Button
-      variant={variant}
-      size={size}
-      className={className}
-      onClick={handleClick}
-      disabled={loading || disabled}
-    >
-      {children}
-    </Button>
+    <>
+      <Button
+        variant={variant}
+        size={size}
+        className={className}
+        onClick={handleClick}
+        disabled={loading || disabled}
+      >
+        {!hasAccess && <Lock className="w-3 h-3 mr-1" />}
+        {children}
+      </Button>
+
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Crown className="w-5 h-5 text-yellow-500" />
+              Fonctionnalité Premium
+            </DialogTitle>
+            <DialogDescription>
+              Cette fonctionnalité n'est pas disponible avec votre plan actuel: <strong>{getPlanName()}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">
+              Passez à un plan supérieur pour accéder à cette fonctionnalité.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDialog(false)}>
+              Fermer
+            </Button>
+            <Button onClick={() => {
+              setShowDialog(false);
+              navigate('/vendeur/subscription');
+            }}>
+              Voir les plans
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
