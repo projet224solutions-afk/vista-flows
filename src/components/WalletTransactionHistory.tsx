@@ -86,25 +86,19 @@ export const WalletTransactionHistory = ({
           console.error('Erreur récupération transactions:', transactionsError);
           setError(`Impossible de charger l'historique: ${transactionsError.message}`);
         } else if (transactionsData) {
-          // Enrichir les transactions avec les custom_id ET les noms
+          // Enrichir les transactions avec les public_id ET les noms depuis profiles
           const enrichedTransactions = await Promise.all(
             transactionsData.map(async (tx) => {
-              // Récupérer le custom_id et nom de l'expéditeur
-              const [senderIdResult, senderProfileResult] = await Promise.all([
-                supabase.from('user_ids').select('custom_id').eq('user_id', tx.sender_id).maybeSingle(),
-                supabase.from('profiles').select('full_name').eq('id', tx.sender_id).maybeSingle()
-              ]);
-
-              // Récupérer le custom_id et nom du destinataire
-              const [receiverIdResult, receiverProfileResult] = await Promise.all([
-                supabase.from('user_ids').select('custom_id').eq('user_id', tx.receiver_id).maybeSingle(),
-                supabase.from('profiles').select('full_name').eq('id', tx.receiver_id).maybeSingle()
+              // Récupérer le public_id et nom de l'expéditeur et destinataire depuis profiles
+              const [senderProfileResult, receiverProfileResult] = await Promise.all([
+                supabase.from('profiles').select('public_id, full_name').eq('id', tx.sender_id).maybeSingle(),
+                supabase.from('profiles').select('public_id, full_name').eq('id', tx.receiver_id).maybeSingle()
               ]);
 
               return {
                 ...tx,
-                sender_custom_id: senderIdResult.data?.custom_id || tx.sender_id?.slice(0, 8),
-                receiver_custom_id: receiverIdResult.data?.custom_id || tx.receiver_id?.slice(0, 8),
+                sender_custom_id: senderProfileResult.data?.public_id || tx.sender_id?.slice(0, 8),
+                receiver_custom_id: receiverProfileResult.data?.public_id || tx.receiver_id?.slice(0, 8),
                 sender_name: senderProfileResult.data?.full_name || 'Utilisateur',
                 receiver_name: receiverProfileResult.data?.full_name || 'Utilisateur'
               };
