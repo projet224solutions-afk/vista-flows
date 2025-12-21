@@ -12792,6 +12792,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_security_status: {
+        Args: never
+        Returns: {
+          secured_functions: number
+          security_score: number
+          tables_with_rls: number
+          tables_without_rls: number
+        }[]
+      }
       clean_old_errors: { Args: never; Returns: undefined }
       cleanup_expired_tokens: { Args: never; Returns: undefined }
       cleanup_old_errors: { Args: never; Returns: undefined }
@@ -13461,6 +13470,7 @@ export type Database = {
         Args: { _pdg_id: string; _user_id: string }
         Returns: boolean
       }
+      is_authenticated: { Args: never; Returns: boolean }
       is_conversation_creator: {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
@@ -13491,6 +13501,15 @@ export type Database = {
           p_metadata?: Json
           p_note?: string
           p_performed_by: string
+        }
+        Returns: string
+      }
+      log_security_event: {
+        Args: {
+          p_action: string
+          p_data?: Json
+          p_target_id?: string
+          p_target_type?: string
         }
         Returns: string
       }
