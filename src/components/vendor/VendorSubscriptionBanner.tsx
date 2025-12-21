@@ -64,49 +64,53 @@ export function VendorSubscriptionBanner() {
 
       if (error) {
         console.error('[VendorSubscriptionBanner] Erreur:', error);
-        // Créer un abonnement par défaut
+        // Aucun abonnement = expiré
         setSubscription({
           id: null,
-          plan_name: 'Premium',
-          status: 'active',
-          end_date: '2026-01-01',
-          days_remaining: Math.floor((new Date('2026-01-01').getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+          plan_name: 'Aucun',
+          status: 'expired',
+          end_date: null,
+          days_remaining: 0
         });
         return;
       }
 
       if (data) {
         const endDate = data.current_period_end ? new Date(data.current_period_end) : null;
+        const now = new Date();
         const daysRemaining = endDate 
-          ? Math.floor((endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+          ? Math.floor((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
           : 0;
+        
+        // Vérifier si l'abonnement est vraiment actif (date de fin dans le futur)
+        const isReallyActive = data.status === 'active' && endDate && endDate > now;
 
         setSubscription({
           id: data.id,
-          plan_name: data.plans?.display_name || data.plans?.name || 'Premium',
-          status: data.status || 'active',
+          plan_name: data.plans?.display_name || data.plans?.name || 'Inconnu',
+          status: isReallyActive ? 'active' : 'expired',
           end_date: data.current_period_end,
           days_remaining: Math.max(0, daysRemaining)
         });
       } else {
-        // Par défaut - Premium actif
+        // Aucun abonnement trouvé = expiré/non souscrit
         setSubscription({
           id: null,
-          plan_name: 'Premium',
-          status: 'active',
-          end_date: '2026-01-01',
-          days_remaining: Math.floor((new Date('2026-01-01').getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+          plan_name: 'Aucun',
+          status: 'expired',
+          end_date: null,
+          days_remaining: 0
         });
       }
     } catch (error) {
       console.error('[VendorSubscriptionBanner] Exception:', error);
-      // Par défaut
+      // En cas d'erreur, considérer comme expiré
       setSubscription({
         id: null,
-        plan_name: 'Premium',
-        status: 'active',
-        end_date: '2026-01-01',
-        days_remaining: Math.floor((new Date('2026-01-01').getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+        plan_name: 'Aucun',
+        status: 'expired',
+        end_date: null,
+        days_remaining: 0
       });
     } finally {
       setLoading(false);

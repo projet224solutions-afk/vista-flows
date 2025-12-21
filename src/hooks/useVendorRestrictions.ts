@@ -21,13 +21,13 @@ const GRACE_PERIOD_DAYS = 7;
 export function useVendorRestrictions() {
   const { user } = useAuth();
   const [restrictions, setRestrictions] = useState<VendorRestrictions>({
-    isRestricted: false,
-    canCreateProducts: true,
-    canSendMessages: true,
-    canMakeCalls: true,
-    canTransfer: true,
-    canUseVirtualCard: true,
-    canReceivePayments: true,
+    isRestricted: true, // Par défaut restreint jusqu'à vérification
+    canCreateProducts: false,
+    canSendMessages: false,
+    canMakeCalls: false,
+    canTransfer: false,
+    canUseVirtualCard: false,
+    canReceivePayments: false,
     subscriptionStatus: null,
     daysUntilExpiry: null,
     isInGracePeriod: false,
@@ -64,17 +64,17 @@ export function useVendorRestrictions() {
         console.error('Error loading subscription:', subError);
       }
 
-      // Default to no restrictions if no subscription or if free plan
-      if (!subscription || subscription.plans?.name === 'free') {
+      // Pas d'abonnement = RESTREINT
+      if (!subscription) {
         setRestrictions({
-          isRestricted: false,
-          canCreateProducts: true,
-          canSendMessages: true,
-          canMakeCalls: true,
-          canTransfer: true,
-          canUseVirtualCard: true,
-          canReceivePayments: true,
-          subscriptionStatus: (subscription?.status as 'active' | 'expired' | 'past_due' | 'cancelled') || null,
+          isRestricted: true,
+          canCreateProducts: false,
+          canSendMessages: false,
+          canMakeCalls: false,
+          canTransfer: false,
+          canUseVirtualCard: false,
+          canReceivePayments: false,
+          subscriptionStatus: null,
           daysUntilExpiry: null,
           isInGracePeriod: false,
           gracePeriodDaysRemaining: null,
@@ -83,10 +83,12 @@ export function useVendorRestrictions() {
       }
 
       const now = new Date();
-      const periodEnd = new Date(subscription.current_period_end);
+      const periodEnd = subscription.current_period_end ? new Date(subscription.current_period_end) : new Date(0);
       const daysDiff = Math.ceil((periodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
       
-      const isExpired = subscription.status === 'expired' || subscription.status === 'past_due';
+      // Vérifier si vraiment actif (status + date de fin dans le futur)
+      const isReallyActive = subscription.status === 'active' && periodEnd > now;
+      const isExpired = !isReallyActive || subscription.status === 'expired' || subscription.status === 'past_due' || subscription.status === 'cancelled';
       const isInGracePeriod = isExpired && daysDiff > -GRACE_PERIOD_DAYS;
       const gracePeriodDaysRemaining = isInGracePeriod ? GRACE_PERIOD_DAYS + daysDiff : null;
 

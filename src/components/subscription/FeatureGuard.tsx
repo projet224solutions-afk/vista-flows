@@ -26,20 +26,17 @@ export function FeatureGuard({
   fallback,
   showUpgradePrompt = true 
 }: FeatureGuardProps) {
-  const { canAccessFeature, loading, getPlanName } = useSubscriptionFeatures();
+  const { canAccessFeature, loading, getPlanName, isActive } = useSubscriptionFeatures();
   const [showDialog, setShowDialog] = useState(false);
   const navigate = useNavigate();
 
-  // 🔓 DÉBLOCAGE TOTAL : Toutes les fonctionnalités sont accessibles
-  // Plus de restrictions d'abonnement
-  return <>{children}</>;
-
-  /* ANCIEN CODE AVEC RESTRICTIONS
+  // En cours de chargement
   if (loading) {
     return <div className="animate-pulse bg-muted h-10 rounded" />;
   }
 
-  const hasAccess = canAccessFeature(feature);
+  // Vérifier l'accès à la fonctionnalité ET que l'abonnement est actif
+  const hasAccess = isActive() && canAccessFeature(feature);
 
   if (hasAccess) {
     return <>{children}</>;
@@ -76,7 +73,10 @@ export function FeatureGuard({
                 Fonctionnalité Premium
               </DialogTitle>
               <DialogDescription>
-                Cette fonctionnalité n'est pas disponible avec votre plan actuel: <strong>{getPlanName()}</strong>
+                {!isActive() 
+                  ? "Votre abonnement est expiré ou inactif. Veuillez le renouveler pour accéder à cette fonctionnalité."
+                  : `Cette fonctionnalité n'est pas disponible avec votre plan actuel: ${getPlanName()}`
+                }
               </DialogDescription>
             </DialogHeader>
             
@@ -92,7 +92,7 @@ export function FeatureGuard({
               </Button>
               <Button onClick={() => {
                 setShowDialog(false);
-                navigate('/subscriptions');
+                navigate('/vendeur/subscription');
               }}>
                 Voir les plans
               </Button>
@@ -104,7 +104,6 @@ export function FeatureGuard({
   }
 
   return null;
-  */
 }
 
 // Composant pour les boutons de fonctionnalité
@@ -127,26 +126,68 @@ export function FeatureButton({
   size = 'default',
   disabled = false
 }: FeatureButtonProps) {
-  const { canAccessFeature, loading } = useSubscriptionFeatures();
+  const { canAccessFeature, loading, isActive, getPlanName } = useSubscriptionFeatures();
   const [showDialog, setShowDialog] = useState(false);
   const navigate = useNavigate();
 
-  // 🔓 DÉBLOCAGE TOTAL : Tous les boutons sont accessibles
+  // Vérifier l'accès à la fonctionnalité ET que l'abonnement est actif
+  const hasAccess = isActive() && canAccessFeature(feature);
+
   const handleClick = () => {
-    if (!disabled) {
+    if (hasAccess && !disabled) {
       onClick();
+    } else if (!hasAccess) {
+      setShowDialog(true);
     }
   };
 
   return (
-    <Button
-      variant={variant}
-      size={size}
-      className={className}
-      onClick={handleClick}
-      disabled={loading || disabled}
-    >
-      {children}
-    </Button>
+    <>
+      <Button
+        variant={variant}
+        size={size}
+        className={className}
+        onClick={handleClick}
+        disabled={loading || disabled}
+      >
+        {!hasAccess && <Lock className="w-3 h-3 mr-1" />}
+        {children}
+      </Button>
+
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Crown className="w-5 h-5 text-yellow-500" />
+              Fonctionnalité Premium
+            </DialogTitle>
+            <DialogDescription>
+              {!isActive() 
+                ? "Votre abonnement est expiré ou inactif. Veuillez le renouveler pour accéder à cette fonctionnalité."
+                : `Cette fonctionnalité n'est pas disponible avec votre plan actuel: ${getPlanName()}`
+              }
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">
+              Passez à un plan supérieur pour accéder à cette fonctionnalité et bien d'autres avantages.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDialog(false)}>
+              Fermer
+            </Button>
+            <Button onClick={() => {
+              setShowDialog(false);
+              navigate('/vendeur/subscription');
+            }}>
+              Voir les plans
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

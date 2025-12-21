@@ -3,6 +3,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useVendorSubscription } from "@/hooks/useVendorSubscription";
 
 interface RestrictedFeatureWrapperProps {
   children: ReactNode;
@@ -16,11 +17,19 @@ export function RestrictedFeatureWrapper({
   fallbackMessage 
 }: RestrictedFeatureWrapperProps) {
   const navigate = useNavigate();
+  const { hasAccess, isExpired, loading } = useVendorSubscription();
   
-  // 🔓 DÉBLOCAGE TOTAL : Toutes les fonctionnalités sont accessibles
-  return <>{children}</>;
+  // En cours de chargement
+  if (loading) {
+    return <div className="animate-pulse bg-muted h-20 rounded" />;
+  }
+  
+  // ✅ Accès autorisé si abonnement actif
+  if (hasAccess && !isExpired) {
+    return <>{children}</>;
+  }
 
-  // Show restriction message
+  // ❌ Accès refusé - Afficher le message de restriction
   const defaultMessages = {
     products: 'Création de produits désactivée',
     messages: 'Messagerie désactivée',
@@ -39,7 +48,7 @@ export function RestrictedFeatureWrapper({
             {fallbackMessage || defaultMessages[feature]}
           </p>
           <p className="text-orange-800 mb-4">
-            Cette fonctionnalité est temporairement désactivée car votre abonnement a expiré.
+            Cette fonctionnalité est temporairement désactivée car votre abonnement a expiré ou est inactif.
             Renouvelez votre abonnement pour retrouver un accès complet.
           </p>
           <Button 
