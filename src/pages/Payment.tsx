@@ -881,38 +881,32 @@ export default function Payment() {
                         </DialogFooter>
                       </>
                     ) : (
-                      <>
-                        <DialogHeader>
-                          <DialogTitle>Mode de paiement</DialogTitle>
-                          <DialogDescription>
-                            Choisissez comment vous souhaitez payer
-                          </DialogDescription>
-                        </DialogHeader>
-                        <PaymentMethodSelection
-                          walletBalance={walletBalance}
-                          amount={parseFloat(paymentAmount) || 0}
-                          processing={processing}
-                          onMethodSelected={(method, phone) => {
-                            setSelectedPaymentMethod(method);
-                            if (phone) setMobileMoneyPhone(phone);
-                            
-                            // Si wallet, on procède à la prévisualisation normale
-                            if (method === 'wallet') {
-                              handlePreviewPayment();
-                            } else if (method === 'cash_on_delivery') {
-                              // Paiement à la livraison - créer commande en attente
-                              handleCashOnDeliveryPayment();
-                            } else if (method === 'orange_money' || method === 'mtn_money') {
-                              // Mobile money - à implémenter
-                              handleMobileMoneyPayment(method, phone || '');
-                            } else if (method === 'card') {
-                              // Carte - à implémenter
-                              handleCardPayment();
-                            }
-                          }}
-                          onCancel={() => setPaymentStep('form')}
-                        />
-                      </>
+                      <PaymentMethodSelection
+                        walletBalance={walletBalance}
+                        amount={parseFloat(paymentAmount) || 0}
+                        recipientId={recipientId}
+                        processing={processing}
+                        isEscrow={!!(productPaymentInfo || cartPaymentInfo)}
+                        onMethodSelected={(method, phone) => {
+                          setSelectedPaymentMethod(method);
+                          if (phone) setMobileMoneyPhone(phone);
+                          
+                          // Si wallet, on procède à la prévisualisation normale
+                          if (method === 'wallet') {
+                            handlePreviewPayment();
+                          } else if (method === 'cash_on_delivery') {
+                            // Paiement à la livraison - créer commande en attente
+                            handleCashOnDeliveryPayment();
+                          } else if (method === 'orange_money' || method === 'mtn_money') {
+                            // Mobile money - à implémenter
+                            handleMobileMoneyPayment(method, phone || '');
+                          } else if (method === 'card') {
+                            // Carte - à implémenter
+                            handleCardPayment();
+                          }
+                        }}
+                        onCancel={() => setPaymentStep('form')}
+                      />
                     )}
                   </DialogContent>
                 </Dialog>
