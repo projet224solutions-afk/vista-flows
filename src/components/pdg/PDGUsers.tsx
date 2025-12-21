@@ -44,10 +44,10 @@ export default function PDGUsers() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      // Charger directement depuis Supabase
+      // Charger les profils avec leur public_id standardisé
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, first_name, last_name, email, role, is_active, status, public_id, created_at')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -64,10 +64,12 @@ export default function PDGUsers() {
     let filtered = users;
 
     if (searchTerm) {
+      const search = searchTerm.toLowerCase();
       filtered = filtered.filter(u => 
-        u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        u.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        u.last_name?.toLowerCase().includes(searchTerm.toLowerCase())
+        u.email?.toLowerCase().includes(search) ||
+        u.first_name?.toLowerCase().includes(search) ||
+        u.last_name?.toLowerCase().includes(search) ||
+        u.public_id?.toLowerCase().includes(search)
       );
     }
 
@@ -265,7 +267,12 @@ export default function PDGUsers() {
                       {user.first_name} {user.last_name}
                     </h3>
                     <p className="text-sm text-muted-foreground">{user.email}</p>
-                    <div className="flex gap-2 mt-2">
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {user.public_id && (
+                        <Badge variant="outline" className="font-mono bg-primary/10 text-primary border-primary/30">
+                          {user.public_id}
+                        </Badge>
+                      )}
                       <Badge variant="outline" className={getRoleBadge(user.role)}>
                         {user.role}
                       </Badge>

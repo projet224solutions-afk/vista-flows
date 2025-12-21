@@ -1,21 +1,21 @@
+/**
+ * HOOK POUR LE NOM D'AFFICHAGE UTILISATEUR
+ * Source de vérité unique: profiles.public_id
+ */
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { usePublicId } from '@/hooks/usePublicId';
 
 interface UserDisplayInfo {
-    customId: string | null;
-    publicId: string | null; // Nouvel ID unique LLLDDDD
+    standardId: string | null; // ID standardisé profiles.public_id
     displayName: string;
-    fullDisplayName: string; // Format: "ABC1234 - Jean Dupont"
+    fullDisplayName: string; // Format: "CLI0001 - Jean Dupont"
 }
 
 export const useUserDisplayName = () => {
     const { user, profile } = useAuth();
-    const { generatePublicId } = usePublicId();
     const [userDisplay, setUserDisplay] = useState<UserDisplayInfo>({
-        customId: null,
-        publicId: null,
+        standardId: null,
         displayName: 'Utilisateur',
         fullDisplayName: 'Utilisateur'
     });
@@ -29,40 +29,8 @@ export const useUserDisplayName = () => {
             }
 
             try {
-                // Récupérer l'ID personnalisé et le public_id
-                const { data: userIdData, error: userIdError } = await supabase
-                    .from('user_ids')
-                    .select('custom_id')
-                    .eq('user_id', user.id)
-                    .single();
-
-                let customId = null;
-                if (!userIdError && userIdData) {
-                    customId = userIdData.custom_id;
-                }
-
-                // Récupérer le public_id depuis le profil
-                let publicId = (profile as any)?.public_id || null;
-
-                // Si pas de public_id, en générer un
-                if (!publicId) {
-                    console.log('🔄 Génération public_id pour utilisateur');
-                    publicId = await generatePublicId('users', false);
-                    
-                    if (publicId && user.id) {
-                        // Mettre à jour le profil avec le nouveau public_id
-                        const { error: updateError } = await supabase
-                            .from('profiles')
-                            .update({ public_id: publicId })
-                            .eq('id', user.id);
-
-                        if (updateError) {
-                            console.error('Erreur mise à jour public_id:', updateError);
-                        } else {
-                            console.log('✅ Public_id créé:', publicId);
-                        }
-                    }
-                }
+                // Source unique: profiles.public_id
+                const standardId = (profile as any)?.public_id || null;
 
                 // Construire le nom d'affichage
                 let displayName = 'Utilisateur';
@@ -76,15 +44,13 @@ export const useUserDisplayName = () => {
                     displayName = user.email.split('@')[0];
                 }
 
-                // Format complet avec public_id (prioritaire) ou customId
-                const idToDisplay = publicId || customId;
-                const fullDisplayName = idToDisplay
-                    ? `${idToDisplay} - ${displayName}`
+                // Format complet avec public_id
+                const fullDisplayName = standardId
+                    ? `${standardId} - ${displayName}`
                     : displayName;
 
                 setUserDisplay({
-                    customId,
-                    publicId,
+                    standardId,
                     displayName,
                     fullDisplayName
                 });
@@ -99,62 +65,13 @@ export const useUserDisplayName = () => {
         fetchUserDisplayInfo();
     }, [user, profile]);
 
-    // Fonction pour créer un ID si manquant
-    const ensureUserId = async (): Promise<string | null> => {
-        if (!user || userDisplay.customId) {
-            return userDisplay.customId;
-        }
-
-        try {
-            // Générer un ID au format 3 lettres + 4 chiffres
-            let letters = '';
-            for (let i = 0; i < 3; i++) {
-                letters += String.fromCharCode(65 + Math.floor(Math.random() * 26));
-            }
-
-            let numbers = '';
-            for (let i = 0; i < 4; i++) {
-                numbers += Math.floor(Math.random() * 10).toString();
-            }
-
-            const newId = letters + numbers;
-
-            // Vérifier l'unicité et créer l'ID
-            const { error } = await supabase
-                .from('user_ids')
-                .upsert({
-                    user_id: user.id,
-                    custom_id: newId
-                });
-
-            if (error) {
-                console.error('Erreur création ID:', error);
-                return null;
-            }
-
-            // Mettre à jour l'état local
-            setUserDisplay(prev => ({
-                ...prev,
-                customId: newId,
-                fullDisplayName: `${newId} - ${prev.displayName}`
-            }));
-
-            console.log('✅ ID utilisateur créé:', newId);
-            return newId;
-
-        } catch (error) {
-            console.error('Erreur lors de la création de l\'ID utilisateur:', error);
-            return null;
-        }
-    };
-
     return {
         userDisplay,
         loading,
-        ensureUserId,
-        // Helpers pour l'affichage
-        customId: userDisplay.customId,
-        publicId: userDisplay.publicId, // Nouvel ID LLLDDDD
+        // Helpers pour l'affichage - rétrocompatibilité
+        customId: userDisplay.standardId, // Alias pour compatibilité
+        publicId: userDisplay.standardId, // Alias pour compatibilité
+        standardId: userDisplay.standardId, // Nom préféré
         displayName: userDisplay.displayName,
         fullDisplayName: userDisplay.fullDisplayName
     };

@@ -21,17 +21,17 @@ export const UserCustomIdDisplay = () => {
     if (!user?.id) return;
 
     try {
-      // Récupérer le custom_id depuis la table user_ids (nouveau format avec préfixe)
+      // Source unique: profiles.public_id (ID standardisé)
       const { data, error } = await supabase
-        .from('user_ids')
-        .select('custom_id')
-        .eq('user_id', user.id)
+        .from('profiles')
+        .select('public_id')
+        .eq('id', user.id)
         .single();
 
       if (error) throw error;
-      setStandardId(data?.custom_id || null);
+      setStandardId(data?.public_id || null);
     } catch (error) {
-      console.error('❌ Erreur chargement custom_id:', error);
+      console.error('❌ Erreur chargement public_id:', error);
     } finally {
       setLoading(false);
     }

@@ -117,17 +117,17 @@ export default function Payment() {
           vendorUserId: vendorInfo.user_id
         });
 
-        // Récupérer l'ID custom du vendeur
-        const { data: vendorData } = await supabase
-          .from('user_ids')
-          .select('custom_id')
-          .eq('user_id', vendorInfo.user_id)
+        // Récupérer le public_id du vendeur depuis profiles
+        const { data: vendorProfile } = await supabase
+          .from('profiles')
+          .select('public_id')
+          .eq('id', vendorInfo.user_id)
           .single();
 
         // Pré-remplir les champs
         setPaymentAmount(totalAmount.toString());
-        if (vendorData?.custom_id) {
-          setRecipientId(vendorData.custom_id);
+        if (vendorProfile?.public_id) {
+          setRecipientId(vendorProfile.public_id);
         }
         
         const itemNames = cartItems.map((item: any) => `${item.name} (x${item.quantity})`).join(', ');
@@ -180,17 +180,17 @@ export default function Payment() {
             vendorUserId: product.vendors.user_id
           });
           
-          // Récupérer l'ID custom du vendeur
-          const { data: vendorData } = await supabase
-            .from('user_ids')
-            .select('custom_id')
-            .eq('user_id', product.vendors.user_id)
+          // Récupérer le public_id du vendeur depuis profiles
+          const { data: vendorProfile } = await supabase
+            .from('profiles')
+            .select('public_id')
+            .eq('id', product.vendors.user_id)
             .single();
 
           // Pré-remplir les champs
           setPaymentAmount(totalAmount.toString());
-          if (vendorData?.custom_id) {
-            setRecipientId(vendorData.custom_id);
+          if (vendorProfile?.public_id) {
+            setRecipientId(vendorProfile.public_id);
           }
           setPaymentDescription(`Achat: ${product.name} (x${qty})`);
           
@@ -258,19 +258,24 @@ export default function Payment() {
     return 'text-success';
   };
 
-  // Fonction pour rechercher un utilisateur
+  // Fonction pour rechercher un utilisateur par public_id
   const searchRecipient = async (searchTerm: string) => {
     if (!searchTerm || searchTerm.length < 3) return null;
 
     try {
       const { data, error } = await supabase
-        .from('user_ids')
-        .select('user_id, custom_id, profiles(full_name, phone)')
-        .ilike('custom_id', `%${searchTerm}%`)
+        .from('profiles')
+        .select('id, public_id, full_name, phone')
+        .ilike('public_id', `%${searchTerm}%`)
         .limit(5);
 
       if (error) throw error;
-      return data;
+      // Transformer le format pour compatibilité
+      return data?.map(p => ({
+        user_id: p.id,
+        custom_id: p.public_id,
+        profiles: { full_name: p.full_name, phone: p.phone }
+      })) || null;
     } catch (error) {
       console.error('Erreur recherche utilisateur:', error);
       return null;
@@ -300,11 +305,11 @@ export default function Payment() {
 
     setProcessing(true);
     try {
-      // Convertir le custom_id en user_id
+      // Convertir le public_id en user_id
       const { data: userData, error: userError } = await supabase
-        .from('user_ids')
-        .select('user_id')
-        .eq('custom_id', recipientId.toUpperCase())
+        .from('profiles')
+        .select('id')
+        .eq('public_id', recipientId.toUpperCase())
         .single();
 
       if (userError || !userData) {
@@ -316,10 +321,12 @@ export default function Payment() {
         setProcessing(false);
         return;
       }
+      
+      const receiverId = userData.id;
 
       const { data, error } = await supabase.rpc('preview_wallet_transfer', {
         p_sender_id: user.id,
-        p_receiver_id: userData.user_id,
+        p_receiver_id: receiverId,
         p_amount: amount
       });
 
@@ -342,7 +349,7 @@ export default function Payment() {
         amount_received: result.amount_received || 0,
         current_balance: result.current_balance || 0,
         balance_after: result.balance_after || 0,
-        receiver_id: userData.user_id // Stocker le user_id pour la confirmation
+        receiver_id: receiverId // Stocker le user_id pour la confirmation
       };
 
       console.log('[Payment] Preview data extracted:', previewData);

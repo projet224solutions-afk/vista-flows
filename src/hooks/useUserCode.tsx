@@ -1,6 +1,6 @@
 /**
  * HOOK POUR RÉCUPÉRER LE CODE ID DE L'UTILISATEUR CONNECTÉ
- * Cherche dans custom_id ou public_id
+ * Source de vérité unique: profiles.public_id
  */
 
 import { useState, useEffect } from 'react';
@@ -23,36 +23,18 @@ export function useUserCode() {
       try {
         setLoading(true);
 
-        // Chercher dans user_ids d'abord
-        const { data: userIdData } = await supabase
-          .from('user_ids')
-          .select('custom_id')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (userIdData?.custom_id) {
-          console.log('✅ Code trouvé dans user_ids:', userIdData.custom_id);
-          setUserCode(userIdData.custom_id);
-          setLoading(false);
-          return;
-        }
-        
-        console.log('⚠️ Pas de code dans user_ids, cherche dans profiles...');
-
-        // Sinon chercher dans profiles
+        // Source unique: profiles.public_id (ID standardisé)
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('custom_id, public_id')
+          .select('public_id')
           .eq('id', user.id)
           .maybeSingle();
 
-        if (profileData) {
-          // Priorité à custom_id, sinon public_id
-          const code = profileData.custom_id || profileData.public_id;
-          console.log('✅ Code trouvé dans profiles:', code);
-          setUserCode(code);
+        if (profileData?.public_id) {
+          setUserCode(profileData.public_id);
         } else {
-          console.log('❌ Aucun code trouvé pour user_id:', user.id);
+          console.warn('⚠️ Aucun public_id trouvé pour user:', user.id);
+          setUserCode(null);
         }
       } catch (error) {
         console.error('Erreur récupération code utilisateur:', error);

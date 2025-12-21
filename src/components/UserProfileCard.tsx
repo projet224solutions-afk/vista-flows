@@ -89,11 +89,11 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
 
     setLoading(true);
     try {
-      // Récupérer l'ID utilisateur
-      const { data: userIdData } = await supabase
-        .from('user_ids')
-        .select('custom_id')
-        .eq('user_id', user.id)
+      // Source unique: profiles.public_id (ID standardisé)
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('public_id')
+        .eq('id', user.id)
         .single();
 
       // Récupérer le wallet
@@ -111,7 +111,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
         .maybeSingle();
 
       setUserInfo({
-        customId: userIdData?.custom_id || null,
+        customId: profileData?.public_id || null,
         wallet: walletData || null,
         virtualCard: cardData || null
       });

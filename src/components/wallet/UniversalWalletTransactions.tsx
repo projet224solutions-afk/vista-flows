@@ -113,15 +113,15 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         setIsAgent(true);
         setAgentInfo(agentInfoData);
       } else {
-        // Si ce n'est pas un agent, charger le custom_id depuis user_ids
-        const { data: userIdData } = await supabase
-          .from('user_ids')
-          .select('custom_id')
-          .eq('user_id', effectiveUserId)
+        // Si ce n'est pas un agent, charger le public_id depuis profiles
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('public_id')
+          .eq('id', effectiveUserId)
           .maybeSingle();
 
-        if (userIdData?.custom_id) {
-          setUserCustomId(userIdData.custom_id);
+        if (profileData?.public_id) {
+          setUserCustomId(profileData.public_id);
         }
       }
 
@@ -268,22 +268,20 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         if (w.user_id) userIdsToResolve.add(w.user_id);
       }
 
-      // 3) Charger en batch: user_ids + profiles
+      // 3) Charger en batch: profiles avec public_id et full_name
       const idsArray = Array.from(userIdsToResolve);
-      let userIdsRows: Array<{ user_id: string; custom_id: string | null }> = [];
-      let profilesRows: Array<{ id: string; full_name: string | null }> = [];
+      let profilesRows: Array<{ id: string; public_id: string | null; full_name: string | null }> = [];
 
       if (idsArray.length > 0) {
-        const [userIdsRes, profilesRes] = await Promise.all([
-          supabase.from('user_ids').select('user_id, custom_id').in('user_id', idsArray),
-          supabase.from('profiles').select('id, full_name').in('id', idsArray),
-        ]);
+        const { data: profilesRes } = await supabase
+          .from('profiles')
+          .select('id, public_id, full_name')
+          .in('id', idsArray);
 
-        userIdsRows = (userIdsRes.data ?? []) as any;
-        profilesRows = (profilesRes.data ?? []) as any;
+        profilesRows = (profilesRes ?? []) as any;
       }
 
-      const userIdToCustomId = new Map(userIdsRows.map((r) => [r.user_id, r.custom_id]));
+      const userIdToPublicId = new Map(profilesRows.map((r) => [r.id, r.public_id]));
       const userIdToName = new Map(profilesRows.map((r) => [r.id, r.full_name]));
 
       const getUserDisplay = (uid?: string | null) => {
@@ -292,7 +290,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         }
         return {
           name: userIdToName.get(uid) || 'Utilisateur',
-          customId: userIdToCustomId.get(uid) || uid.slice(0, 8),
+          customId: userIdToPublicId.get(uid) || uid.slice(0, 8),
         };
       };
 
@@ -379,8 +377,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         enhancedCount: enhancedData?.length ?? 0,
         walletTxCount: walletTxData.length,
         resolvedUserIds: idsArray.length,
-        profilesRows: profilesRows.length,
-        userIdsRows: userIdsRows.length,
+        profilesCount: profilesRows.length,
         sampleUnresolved: unresolved,
       });
     } catch (error) {
