@@ -1,17 +1,15 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { useSubscriptionFeatures, SubscriptionFeature } from '@/hooks/useSubscriptionFeatures';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
 import { Lock, Crown } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useState } from 'react';
+import { VendorSubscriptionPlanSelector } from '@/components/vendor/VendorSubscriptionPlanSelector';
 
 interface FeatureGuardProps {
   feature: SubscriptionFeature;
@@ -28,7 +26,7 @@ export function FeatureGuard({
 }: FeatureGuardProps) {
   const { canAccessFeature, loading, getPlanName, isActive } = useSubscriptionFeatures();
   const [showDialog, setShowDialog] = useState(false);
-  const navigate = useNavigate();
+  const [showPlanSelector, setShowPlanSelector] = useState(false);
 
   // En cours de chargement
   if (loading) {
@@ -45,6 +43,17 @@ export function FeatureGuard({
   if (fallback) {
     return <>{fallback}</>;
   }
+
+  const handleSubscribe = () => {
+    setShowDialog(false);
+    setShowPlanSelector(true);
+  };
+
+  const handleSubscriptionSuccess = () => {
+    setShowPlanSelector(false);
+    // Recharger la page pour appliquer le nouvel abonnement
+    window.location.reload();
+  };
 
   if (showUpgradePrompt) {
     return (
@@ -65,6 +74,7 @@ export function FeatureGuard({
           </div>
         </div>
 
+        {/* Dialog d'information */}
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
           <DialogContent>
             <DialogHeader>
@@ -86,19 +96,23 @@ export function FeatureGuard({
               </p>
             </div>
 
-            <DialogFooter>
+            <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setShowDialog(false)}>
                 Fermer
               </Button>
-              <Button onClick={() => {
-                setShowDialog(false);
-                navigate('/vendeur/subscription');
-              }}>
-                Voir les plans
+              <Button onClick={handleSubscribe}>
+                S'abonner maintenant
               </Button>
-            </DialogFooter>
+            </div>
           </DialogContent>
         </Dialog>
+
+        {/* Sélecteur de plan intégré */}
+        <VendorSubscriptionPlanSelector 
+          open={showPlanSelector} 
+          onOpenChange={setShowPlanSelector}
+          onSuccess={handleSubscriptionSuccess}
+        />
       </>
     );
   }
@@ -128,7 +142,7 @@ export function FeatureButton({
 }: FeatureButtonProps) {
   const { canAccessFeature, loading, isActive, getPlanName } = useSubscriptionFeatures();
   const [showDialog, setShowDialog] = useState(false);
-  const navigate = useNavigate();
+  const [showPlanSelector, setShowPlanSelector] = useState(false);
 
   // Vérifier l'accès à la fonctionnalité ET que l'abonnement est actif
   const hasAccess = isActive() && canAccessFeature(feature);
@@ -139,6 +153,16 @@ export function FeatureButton({
     } else if (!hasAccess) {
       setShowDialog(true);
     }
+  };
+
+  const handleSubscribe = () => {
+    setShowDialog(false);
+    setShowPlanSelector(true);
+  };
+
+  const handleSubscriptionSuccess = () => {
+    setShowPlanSelector(false);
+    window.location.reload();
   };
 
   return (
@@ -175,19 +199,22 @@ export function FeatureButton({
             </p>
           </div>
 
-          <DialogFooter>
+          <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setShowDialog(false)}>
               Fermer
             </Button>
-            <Button onClick={() => {
-              setShowDialog(false);
-              navigate('/vendeur/subscription');
-            }}>
-              Voir les plans
+            <Button onClick={handleSubscribe}>
+              S'abonner maintenant
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
+
+      <VendorSubscriptionPlanSelector 
+        open={showPlanSelector} 
+        onOpenChange={setShowPlanSelector}
+        onSuccess={handleSubscriptionSuccess}
+      />
     </>
   );
 }
