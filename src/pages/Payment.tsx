@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { CreditCard, ArrowLeft, Wallet, Receipt, TrendingUp, TrendingDown, Clock, Send, User, Smartphone } from "lucide-react";
+import { CreditCard, ArrowLeft, Wallet, Receipt, TrendingUp, TrendingDown, Clock, Send, User, Smartphone, ArrowRight } from "lucide-react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
@@ -18,6 +18,7 @@ import { FedaPayPaymentDialog } from "@/components/payment/FedaPayPaymentDialog"
 import WalletMonthlyStats from "@/components/WalletMonthlyStats";
 import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 import { PaymentMethodsManager } from "@/components/payment/PaymentMethodsManager";
+import { PaymentMethodSelection, type PaymentMethodType } from "@/components/payment/PaymentMethodSelection";
 
 export default function Payment() {
   const navigate = useNavigate();
@@ -48,6 +49,11 @@ export default function Payment() {
     receiver_id?: string;
   } | null>(null);
   const [showFedaPayDialog, setShowFedaPayDialog] = useState(false);
+  
+  // États pour la sélection de méthode de paiement
+  const [paymentStep, setPaymentStep] = useState<'form' | 'method'>('form');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
+  const [mobileMoneyPhone, setMobileMoneyPhone] = useState('');
 
   useEffect(() => {
     if (user?.id) {
@@ -383,6 +389,144 @@ export default function Payment() {
     }
   };
 
+  // Fonction pour paiement à la livraison
+  const handleCashOnDeliveryPayment = async () => {
+    if (!user?.id || !paymentAmount || !recipientId) return;
+
+    setProcessing(true);
+    try {
+      // Convertir le public_id en user_id
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('public_id', recipientId.toUpperCase())
+        .single();
+
+      if (userError || !userData) {
+        toast({
+          title: "Erreur",
+          description: "Utilisateur introuvable avec cet ID",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Si c'est un achat produit ou panier, créer la commande en mode "cash on delivery"
+      if (productPaymentInfo || cartPaymentInfo) {
+        const vendorId = productPaymentInfo?.vendorId || cartPaymentInfo?.vendorId;
+        const items = productPaymentInfo 
+          ? [{ product_id: productPaymentInfo.productId, quantity: productPaymentInfo.quantity, price: parseFloat(paymentAmount) / productPaymentInfo.quantity }]
+          : cartPaymentInfo?.items.map((item: any) => ({ product_id: item.product_id || item.id, quantity: item.quantity, price: item.price }));
+
+        const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
+          p_user_id: user.id,
+          p_vendor_id: vendorId,
+          p_items: items,
+          p_total_amount: parseFloat(paymentAmount),
+          p_payment_method: 'cash_on_delivery',
+          p_shipping_address: {
+            address: 'Adresse de livraison',
+            city: 'Conakry',
+            country: 'Guinée'
+          }
+        });
+
+        if (orderError) throw orderError;
+
+        toast({
+          title: "✅ Commande créée !",
+          description: "Votre commande sera payée à la livraison"
+        });
+
+        setPaymentOpen(false);
+        setPaymentStep('form');
+        setProductPaymentInfo(null);
+        setCartPaymentInfo(null);
+        navigate('/orders');
+      } else {
+        toast({
+          title: "Information",
+          description: "Le paiement à la livraison n'est disponible que pour les achats de produits",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      console.error('Erreur paiement livraison:', error);
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de créer la commande",
+        variant: "destructive"
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // Fonction pour paiement Mobile Money
+  const handleMobileMoneyPayment = async (method: 'orange_money' | 'mtn_money', phone: string) => {
+    if (!user?.id || !paymentAmount) return;
+
+    setProcessing(true);
+    try {
+      // Invoquer la fonction FedaPay ou mobile money selon le provider
+      const provider = method === 'orange_money' ? 'orange' : 'mtn';
+      
+      toast({
+        title: "📱 Demande envoyée",
+        description: `Confirmez le paiement sur votre téléphone ${provider.toUpperCase()} (${phone})`
+      });
+
+      // TODO: Intégrer avec l'API FedaPay ou autre provider mobile money
+      // Pour l'instant, on ouvre le dialog FedaPay
+      setPaymentOpen(false);
+      setShowFedaPayDialog(true);
+      
+    } catch (error: any) {
+      console.error('Erreur paiement mobile money:', error);
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible d'initier le paiement",
+        variant: "destructive"
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // Fonction pour paiement par carte
+  const handleCardPayment = async () => {
+    if (!user?.id || !paymentAmount) return;
+
+    setProcessing(true);
+    try {
+      toast({
+        title: "💳 Paiement par carte",
+        description: "Redirection vers la page de paiement sécurisé..."
+      });
+
+      // TODO: Intégrer avec Stripe ou autre provider
+      // Pour l'instant, afficher un message
+      setTimeout(() => {
+        toast({
+          title: "Information",
+          description: "Le paiement par carte sera bientôt disponible",
+        });
+        setProcessing(false);
+        setPaymentOpen(false);
+        setPaymentStep('form');
+      }, 1500);
+      
+    } catch (error: any) {
+      console.error('Erreur paiement carte:', error);
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible d'initier le paiement",
+        variant: "destructive"
+      });
+      setProcessing(false);
+    }
+  };
+
   // Fonction pour confirmer et effectuer un paiement
   const handleConfirmPayment = async () => {
     if (!user?.id || !paymentPreview || !paymentPreview.receiver_id) return;
@@ -660,67 +804,116 @@ export default function Payment() {
                   Recharger (Orange/MTN)
                 </Button>
                 <ProfessionalVirtualCard />
-                <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
+                <Dialog 
+                  open={paymentOpen} 
+                  onOpenChange={(open) => {
+                    setPaymentOpen(open);
+                    if (!open) {
+                      setPaymentStep('form');
+                      setSelectedPaymentMethod(null);
+                      setMobileMoneyPhone('');
+                    }
+                  }}
+                >
                   <DialogTrigger asChild>
                     <Button className="gap-2">
                       <Send className="h-4 w-4" />
                       Payer
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Effectuer un paiement</DialogTitle>
-                      <DialogDescription>
-                        Payez facilement avec votre wallet 224SOLUTIONS
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="recipient-id">ID du destinataire *</Label>
-                        <Input
-                          id="recipient-id"
-                          placeholder="USR0001, VEN0001..."
-                          value={recipientId}
-                          onChange={(e) => setRecipientId(e.target.value.toUpperCase())}
-                          maxLength={7}
-                          readOnly={searchParams.get('productId') !== null || location.state?.productId}
-                          className={searchParams.get('productId') || location.state?.productId ? 'bg-muted cursor-not-allowed' : ''}
+                  <DialogContent className="max-w-md">
+                    {paymentStep === 'form' ? (
+                      <>
+                        <DialogHeader>
+                          <DialogTitle>Effectuer un paiement</DialogTitle>
+                          <DialogDescription>
+                            Payez facilement avec votre wallet 224SOLUTIONS
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="recipient-id">ID du destinataire *</Label>
+                            <Input
+                              id="recipient-id"
+                              placeholder="USR0001, VEN0001..."
+                              value={recipientId}
+                              onChange={(e) => setRecipientId(e.target.value.toUpperCase())}
+                              maxLength={7}
+                              readOnly={searchParams.get('productId') !== null || location.state?.productId}
+                              className={searchParams.get('productId') || location.state?.productId ? 'bg-muted cursor-not-allowed' : ''}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              Format: 3 lettres + 4 chiffres (ex: USR0001)
+                            </p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="payment-amount">Montant (GNF) *</Label>
+                            <Input
+                              id="payment-amount"
+                              type="number"
+                              placeholder="10000"
+                              value={paymentAmount}
+                              onChange={(e) => setPaymentAmount(e.target.value)}
+                              readOnly={searchParams.get('productId') !== null || location.state?.productId}
+                              className={searchParams.get('productId') || location.state?.productId ? 'bg-muted cursor-not-allowed font-bold text-primary' : ''}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Input
+                              id="payment-description"
+                              placeholder="Achat de produits..."
+                              value={paymentDescription}
+                              onChange={(e) => setPaymentDescription(e.target.value)}
+                              readOnly={searchParams.get('productId') !== null || location.state?.productId}
+                              className={searchParams.get('productId') || location.state?.productId ? 'bg-muted cursor-not-allowed' : ''}
+                            />
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button 
+                            onClick={() => setPaymentStep('method')} 
+                            disabled={!paymentAmount || !recipientId}
+                            className="gap-2"
+                          >
+                            Choisir le mode de paiement
+                            <ArrowRight className="h-4 w-4" />
+                          </Button>
+                        </DialogFooter>
+                      </>
+                    ) : (
+                      <>
+                        <DialogHeader>
+                          <DialogTitle>Mode de paiement</DialogTitle>
+                          <DialogDescription>
+                            Choisissez comment vous souhaitez payer
+                          </DialogDescription>
+                        </DialogHeader>
+                        <PaymentMethodSelection
+                          walletBalance={walletBalance}
+                          amount={parseFloat(paymentAmount) || 0}
+                          processing={processing}
+                          onMethodSelected={(method, phone) => {
+                            setSelectedPaymentMethod(method);
+                            if (phone) setMobileMoneyPhone(phone);
+                            
+                            // Si wallet, on procède à la prévisualisation normale
+                            if (method === 'wallet') {
+                              handlePreviewPayment();
+                            } else if (method === 'cash_on_delivery') {
+                              // Paiement à la livraison - créer commande en attente
+                              handleCashOnDeliveryPayment();
+                            } else if (method === 'orange_money' || method === 'mtn_money') {
+                              // Mobile money - à implémenter
+                              handleMobileMoneyPayment(method, phone || '');
+                            } else if (method === 'card') {
+                              // Carte - à implémenter
+                              handleCardPayment();
+                            }
+                          }}
+                          onCancel={() => setPaymentStep('form')}
                         />
-                        <p className="text-xs text-muted-foreground">
-                          Format: 3 lettres + 4 chiffres (ex: USR0001)
-                        </p>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="payment-amount">Montant (GNF) *</Label>
-                        <Input
-                          id="payment-amount"
-                          type="number"
-                          placeholder="10000"
-                          value={paymentAmount}
-                          onChange={(e) => setPaymentAmount(e.target.value)}
-                          readOnly={searchParams.get('productId') !== null || location.state?.productId}
-                          className={searchParams.get('productId') || location.state?.productId ? 'bg-muted cursor-not-allowed font-bold text-primary' : ''}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Input
-                          id="payment-description"
-                          placeholder="Achat de produits..."
-                          value={paymentDescription}
-                          onChange={(e) => setPaymentDescription(e.target.value)}
-                          readOnly={searchParams.get('productId') !== null || location.state?.productId}
-                          className={searchParams.get('productId') || location.state?.productId ? 'bg-muted cursor-not-allowed' : ''}
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button 
-                        onClick={handlePreviewPayment} 
-                        disabled={processing || !paymentAmount || !recipientId}
-                      >
-                        {processing ? 'Vérification...' : 'Prévisualiser'}
-                      </Button>
-                    </DialogFooter>
+                      </>
+                    )}
                   </DialogContent>
                 </Dialog>
               </div>
