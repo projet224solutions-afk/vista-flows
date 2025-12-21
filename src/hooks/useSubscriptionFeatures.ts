@@ -173,16 +173,24 @@ export function useSubscriptionFeatures() {
   const { subscription, loading } = useVendorSubscription();
 
   const canAccessFeature = (feature: SubscriptionFeature): boolean => {
-    // Permettre l'accès pendant le chargement ou si pas d'abonnement
+    // Bloquer l'accès pendant le chargement (sécurité par défaut)
     if (loading) {
-      return true; // Permettre l'accès pendant le chargement
+      return false;
     }
     
+    // Pas d'abonnement = pas d'accès (sauf aux fonctionnalités gratuites)
     if (!subscription) {
-      return true; // Permettre l'accès si pas d'abonnement trouvé
+      const freeFeatures = PLAN_FEATURES['free'] || [];
+      return freeFeatures.includes(feature);
     }
 
-    const planName = subscription.plan_name;
+    // Vérifier que l'abonnement est actif
+    if (subscription.status !== 'active') {
+      const freeFeatures = PLAN_FEATURES['free'] || [];
+      return freeFeatures.includes(feature);
+    }
+
+    const planName = subscription.plan_name?.toLowerCase() || 'free';
     const planFeatures = PLAN_FEATURES[planName] || PLAN_FEATURES['free'];
     
     return planFeatures.includes(feature);
@@ -197,20 +205,31 @@ export function useSubscriptionFeatures() {
   };
 
   const getAvailableFeatures = (): SubscriptionFeature[] => {
-    if (!subscription) {
+    // Pas d'abonnement ou pas actif = seulement fonctionnalités gratuites
+    if (!subscription || subscription.status !== 'active') {
       return PLAN_FEATURES['free'] || [];
     }
     
-    const planName = subscription.plan_name;
+    const planName = subscription.plan_name?.toLowerCase() || 'free';
     return PLAN_FEATURES[planName] || PLAN_FEATURES['free'];
   };
 
   const getPlanName = (): string => {
-    return subscription?.plan_display_name || 'Gratuit';
+    return subscription?.plan_display_name || subscription?.plan_name || 'Aucun';
   };
 
   const isActive = (): boolean => {
-    return subscription?.status === 'active';
+    if (!subscription) return false;
+    if (subscription.status !== 'active') return false;
+    
+    // Vérifier aussi la date d'expiration
+    if (subscription.current_period_end) {
+      const endDate = new Date(subscription.current_period_end);
+      const now = new Date();
+      if (endDate <= now) return false;
+    }
+    
+    return true;
   };
 
   return {

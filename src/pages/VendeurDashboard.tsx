@@ -438,49 +438,141 @@ export default function VendeurDashboard() {
           {/* Contenu principal - padding réduit sur mobile */}
           <main className="flex-1 p-2 sm:p-3 md:p-6 overflow-x-hidden overflow-y-auto pb-20 md:pb-6 w-full max-w-full">
             <Routes>
-              {/* Route par défaut */}
+              {/* Route par défaut - toujours accessible */}
               <Route index element={<DashboardHome />} />
               <Route path="dashboard" element={<DashboardHome />} />
               
-              {/* Vue d'ensemble */}
-              <Route path="analytics" element={<VendorAnalyticsDashboard />} />
+              {/* Vue d'ensemble - Analytics */}
+              <Route path="analytics" element={
+                <ProtectedRoute feature="analytics_basic">
+                  <VendorAnalyticsDashboard />
+                </ProtectedRoute>
+              } />
               
               {/* Ventes & Commerce */}
-              <Route path="pos" element={<POSSystemWrapper />} />
-              <Route path="products" element={<ProductManagement />} />
-              <Route path="orders" element={<OrderManagement />} />
-              <Route path="inventory" element={<InventoryManagement />} />
-              <Route path="warehouse" element={<WarehouseManagement />} />
-              <Route path="suppliers" element={<SupplierManagement />} />
+              <Route path="pos" element={
+                <ProtectedRoute feature="pos_system">
+                  <POSSystemWrapper />
+                </ProtectedRoute>
+              } />
+              <Route path="products" element={
+                <ProtectedRoute feature="products_basic">
+                  <ProductManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="orders" element={
+                <ProtectedRoute feature="orders_simple">
+                  <OrderManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="inventory" element={
+                <ProtectedRoute feature="inventory_management">
+                  <InventoryManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="warehouse" element={
+                <ProtectedRoute feature="multi_warehouse">
+                  <WarehouseManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="suppliers" element={
+                <ProtectedRoute feature="supplier_management">
+                  <SupplierManagement />
+                </ProtectedRoute>
+              } />
               
               {/* Clients & Marketing */}
-              <Route path="agents" element={<AgentManagement />} />
-              <Route path="clients" element={<ClientManagement />} />
-              <Route path="prospects" element={<ProspectManagement />} />
-              <Route path="marketing" element={<MarketingManagement />} />
+              <Route path="agents" element={
+                <ProtectedRoute feature="sales_agents">
+                  <AgentManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="clients" element={
+                <ProtectedRoute feature="crm_basic">
+                  <ClientManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="prospects" element={
+                <ProtectedRoute feature="prospect_management">
+                  <ProspectManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="marketing" element={
+                <ProtectedRoute feature="marketing_promotions">
+                  <MarketingManagement />
+                </ProtectedRoute>
+              } />
               
-              {/* Finances */}
+              {/* Finances - Wallet toujours accessible pour voir le solde */}
               <Route path="wallet" element={<UniversalWalletTransactions />} />
-              <Route path="quotes-invoices" element={<VendorQuotesInvoices />} />
-              <Route path="payments" element={<PaymentManagement />} />
-              <Route path="payment-links" element={<PaymentLinksManager />} />
-              <Route path="expenses" element={<ExpenseManagementDashboard />} />
-              <Route path="debts" element={<VendorDebtManagement vendorId={(stats as any)?.vendorId || ''} />} />
-              <Route path="contracts" element={<VendorContracts />} />
-              <Route path="affiliate" element={<AffiliateManagement shopId={(stats as any)?.vendorId || undefined} />} />
+              <Route path="quotes-invoices" element={
+                <ProtectedRoute feature="orders_detailed">
+                  <VendorQuotesInvoices />
+                </ProtectedRoute>
+              } />
+              <Route path="payments" element={
+                <ProtectedRoute feature="payment_links">
+                  <PaymentManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="payment-links" element={
+                <ProtectedRoute feature="payment_links">
+                  <PaymentLinksManager />
+                </ProtectedRoute>
+              } />
+              <Route path="expenses" element={
+                <ProtectedRoute feature="expense_management">
+                  <ExpenseManagementDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="debts" element={
+                <ProtectedRoute feature="debt_management">
+                  <VendorDebtManagement vendorId={(stats as any)?.vendorId || ''} />
+                </ProtectedRoute>
+              } />
+              <Route path="contracts" element={
+                <ProtectedRoute feature="orders_detailed">
+                  <VendorContracts />
+                </ProtectedRoute>
+              } />
+              <Route path="affiliate" element={
+                <ProtectedRoute feature="affiliate_program">
+                  <AffiliateManagement shopId={(stats as any)?.vendorId || undefined} />
+                </ProtectedRoute>
+              } />
               
               {/* Support & Outils */}
-              <Route path="delivery" element={<VendorDeliveriesPanel />} />
+              <Route path="delivery" element={
+                <ProtectedRoute feature="delivery_tracking">
+                  <VendorDeliveriesPanel />
+                </ProtectedRoute>
+              } />
               <Route path="ratings" element={<VendorRatingsPanel />} />
-              <Route path="support" element={<SupportTickets />} />
-              <Route path="communication" element={<UniversalCommunicationHub />} />
-              <Route path="reports" element={<Card><CardContent className="p-6">Module Rapports - En développement</CardContent></Card>} />
+              <Route path="support" element={
+                <ProtectedRoute feature="support_tickets">
+                  <SupportTickets />
+                </ProtectedRoute>
+              } />
+              <Route path="communication" element={
+                <ProtectedRoute feature="communication_hub">
+                  <UniversalCommunicationHub />
+                </ProtectedRoute>
+              } />
+              <Route path="reports" element={
+                <ProtectedRoute feature="data_export">
+                  <Card><CardContent className="p-6">Module Rapports - En développement</CardContent></Card>
+                </ProtectedRoute>
+              } />
               
-              {/* Configuration */}
+              {/* Configuration - toujours accessible */}
               <Route path="settings" element={<VendorSettings />} />
               
               {/* Autres */}
-              <Route path="offline-sync" element={<OfflineSyncPanel />} />
+              <Route path="offline-sync" element={
+                <ProtectedRoute feature="offline_mode">
+                  <OfflineSyncPanel />
+                </ProtectedRoute>
+              } />
             </Routes>
           </main>
         </div>
