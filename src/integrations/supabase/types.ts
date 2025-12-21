@@ -12390,6 +12390,16 @@ export type Database = {
         }
         Relationships: []
       }
+      security_policy_summary: {
+        Row: {
+          anon_policies: number | null
+          auth_policies: number | null
+          policy_count: number | null
+          schemaname: unknown
+          tablename: unknown
+        }
+        Relationships: []
+      }
       security_stats: {
         Row: {
           blocked_ips: number | null
@@ -13479,6 +13489,7 @@ export type Database = {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
+      is_owner: { Args: { resource_user_id: string }; Returns: boolean }
       is_panic_mode_active: { Args: never; Returns: boolean }
       is_payment_link_publicly_accessible: {
         Args: { p_payment_id: string }
