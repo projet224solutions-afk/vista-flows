@@ -244,83 +244,83 @@ export default function ProductRatingDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Notez vos produits</DialogTitle>
           <DialogDescription>
             Commande chez <strong>{vendorName}</strong> • {ratedCount}/{totalCount} produit(s) noté(s)
           </DialogDescription>
         </DialogHeader>
 
-        {/* Liste des produits avec statut */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {products.map((product, index) => (
-            <button
-              key={product.id}
-              onClick={() => !product.rated && setCurrentProductIndex(index)}
-              disabled={product.rated}
-              className={`flex-shrink-0 p-2 rounded-lg border transition-all ${
-                index === currentProductIndex
-                  ? 'border-primary bg-primary/5'
-                  : product.rated
-                  ? 'border-green-500 bg-green-50 dark:bg-green-950 opacity-60'
-                  : 'border-border hover:border-primary/50'
-              }`}
-            >
-              <div className="relative w-12 h-12">
-                {product.product_image ? (
-                  <img
-                    src={product.product_image}
-                    alt={product.product_name}
-                    className="w-full h-full object-cover rounded"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-muted rounded flex items-center justify-center">
-                    <Package className="w-6 h-6 text-muted-foreground" />
-                  </div>
-                )}
-                {product.rated && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                    <Check className="w-3 h-3 text-white" />
-                  </div>
-                )}
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {/* Produit actuel */}
-        {currentProduct && (
-          <Card className="border-primary/20">
-            <CardContent className="p-4">
-              <div className="flex gap-4">
-                <div className="w-20 h-20 flex-shrink-0">
-                  {currentProduct.product_image ? (
+        <div className="flex-1 overflow-y-auto space-y-4 py-2">
+          {/* Liste des produits avec statut */}
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {products.map((product, index) => (
+              <button
+                key={product.id}
+                onClick={() => !product.rated && setCurrentProductIndex(index)}
+                disabled={product.rated}
+                className={`flex-shrink-0 p-2 rounded-lg border transition-all ${
+                  index === currentProductIndex
+                    ? 'border-primary bg-primary/5'
+                    : product.rated
+                    ? 'border-green-500 bg-green-50 dark:bg-green-950 opacity-60'
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <div className="relative w-12 h-12">
+                  {product.product_image ? (
                     <img
-                      src={currentProduct.product_image}
-                      alt={currentProduct.product_name}
-                      className="w-full h-full object-cover rounded-lg"
+                      src={product.product_image}
+                      alt={product.product_name}
+                      className="w-full h-full object-cover rounded"
                     />
                   ) : (
-                    <div className="w-full h-full bg-muted rounded-lg flex items-center justify-center">
-                      <Package className="w-8 h-8 text-muted-foreground" />
+                    <div className="w-full h-full bg-muted rounded flex items-center justify-center">
+                      <Package className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                  )}
+                  {product.rated && (
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                      <Check className="w-3 h-3 text-white" />
                     </div>
                   )}
                 </div>
-                <div className="flex-1">
-                  <h4 className="font-medium line-clamp-2">{currentProduct.product_name}</h4>
-                  <Badge variant="secondary" className="mt-1">
-                    Quantité: {currentProduct.quantity}
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              </button>
+            ))}
+          </div>
 
-        <div className="space-y-4">
+          {/* Produit actuel */}
+          {currentProduct && (
+            <Card className="border-primary/20">
+              <CardContent className="p-3">
+                <div className="flex gap-3">
+                  <div className="w-14 h-14 flex-shrink-0">
+                    {currentProduct.product_image ? (
+                      <img
+                        src={currentProduct.product_image}
+                        alt={currentProduct.product_name}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-muted rounded-lg flex items-center justify-center">
+                        <Package className="w-6 h-6 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-sm line-clamp-2">{currentProduct.product_name}</h4>
+                    <Badge variant="secondary" className="mt-1 text-xs">
+                      Qté: {currentProduct.quantity}
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Système de notation par étoiles */}
-          <div className="flex flex-col items-center gap-3">
+          <div className="flex flex-col items-center gap-2">
             <p className="text-sm text-muted-foreground">Comment évaluez-vous ce produit ?</p>
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -333,7 +333,7 @@ export default function ProductRatingDialog({
                   className="transition-transform hover:scale-110 focus:outline-none"
                 >
                   <Star
-                    className={`w-10 h-10 ${
+                    className={`w-8 h-8 ${
                       star <= (hoveredRating || rating)
                         ? 'fill-yellow-400 text-yellow-400'
                         : 'text-muted-foreground/30'
@@ -360,10 +360,10 @@ export default function ProductRatingDialog({
               Votre avis (optionnel)
             </label>
             <Textarea
-              placeholder="Partagez votre expérience avec ce produit..."
+              placeholder="Partagez votre expérience..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              rows={3}
+              rows={2}
               maxLength={500}
             />
             <p className="text-xs text-muted-foreground text-right">
@@ -372,7 +372,7 @@ export default function ProductRatingDialog({
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="flex-shrink-0 gap-2 sm:gap-0 pt-4 border-t">
           <Button
             variant="ghost"
             onClick={handleClose}
