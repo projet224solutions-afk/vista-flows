@@ -110,7 +110,7 @@ export function PaymentMethodSelection({
     processing;
 
   return (
-    <div className="flex flex-col min-h-0">
+    <div className="flex flex-col h-[70vh] max-h-[70vh] min-h-0">
       {/* Header fixe */}
       <div className="space-y-3 pb-3">
         {/* Message Escrow */}
@@ -140,7 +140,7 @@ export function PaymentMethodSelection({
 
       {/* Zone scrollable pour les méthodes de paiement */}
       <ScrollArea className="flex-1 min-h-0 pr-2">
-        <div className="pb-24">
+          <div className="pb-40">
           <RadioGroup
             value={selectedMethod || ''}
             onValueChange={(value) => setSelectedMethod(value as PaymentMethodType)}
@@ -211,7 +211,7 @@ export function PaymentMethodSelection({
       </ScrollArea>
 
       {/* Boutons d'action fixes en bas */}
-      <div className="sticky bottom-0 bg-background/95 supports-[backdrop-filter]:bg-background/80 backdrop-blur border-t pt-4 mt-2 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+      <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+5rem)] sm:bottom-0 bg-background/95 supports-[backdrop-filter]:bg-background/80 backdrop-blur border-t pt-4 mt-2 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
         <div className="flex gap-3">
           <Button 
             variant="outline" 
