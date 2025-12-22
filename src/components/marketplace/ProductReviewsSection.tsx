@@ -1,28 +1,22 @@
 /**
  * Section d'affichage des avis clients sur un produit spécifique
- * Chaque produit a ses propres avis indépendants
+ * Récupère les avis depuis vendor_ratings liés aux commandes contenant ce produit
  */
 
 import { useState, useEffect } from 'react';
-import { Star, User, Calendar, MessageSquare } from 'lucide-react';
+import { Star, User, Calendar, MessageSquare, CheckCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabaseClient';
 
 interface Review {
   id: string;
   rating: number;
-  title: string | null;
-  content: string | null;
-  vendor_response: string | null;
-  vendor_response_at: string | null;
-  verified_purchase: boolean;
-  helpful_count: number;
+  comment: string | null;
   created_at: string;
-  profiles?: {
-    first_name: string;
-    last_name: string;
-  };
+  customer_name: string;
+  verified_purchase: boolean;
 }
 
 interface ReviewStats {
@@ -55,41 +49,75 @@ export default function ProductReviewsSection({ productId, productName }: Produc
     try {
       setLoading(true);
 
-      // Récupérer les avis spécifiques à CE produit uniquement
-      const { data, error } = await supabase
-        .from('product_reviews')
-        .select('*')
-        .eq('product_id', productId)
-        .eq('is_approved', true)
+      // Récupérer les commandes qui contiennent ce produit
+      const { data: orderItems, error: orderError } = await supabase
+        .from('order_items')
+        .select('order_id')
+        .eq('product_id', productId);
+
+      if (orderError) throw orderError;
+
+      if (!orderItems || orderItems.length === 0) {
+        setReviews([]);
+        setStats({
+          averageRating: 0,
+          totalReviews: 0,
+          distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+        });
+        setLoading(false);
+        return;
+      }
+
+      const orderIds = orderItems.map(item => item.order_id);
+
+      // Récupérer les avis vendor_ratings liés à ces commandes
+      const { data: ratingsData, error: ratingsError } = await supabase
+        .from('vendor_ratings')
+        .select(`
+          id,
+          rating,
+          comment,
+          created_at,
+          customer_id
+        `)
+        .in('order_id', orderIds)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (ratingsError) throw ratingsError;
 
-      // Récupérer les profils des clients séparément
-      const reviewsWithProfiles = await Promise.all((data || []).map(async (review) => {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('first_name, last_name')
-          .eq('id', review.user_id)
-          .maybeSingle();
-        
-        return {
-          ...review,
-          profiles: profile || { first_name: 'Client', last_name: '' }
-        };
+      // Récupérer les profils des clients
+      const customerIds = [...new Set((ratingsData || []).map(r => r.customer_id))];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, full_name, first_name, last_name')
+        .in('id', customerIds);
+
+      const profilesMap = new Map(
+        (profilesData || []).map(p => [p.id, p.full_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Client'])
+      );
+
+      const reviewsList: Review[] = (ratingsData || []).map(rating => ({
+        id: rating.id,
+        rating: rating.rating,
+        comment: rating.comment,
+        created_at: rating.created_at,
+        customer_name: profilesMap.get(rating.customer_id) || 'Client',
+        verified_purchase: true // Tous les avis viennent de commandes réelles
       }));
 
-      setReviews(reviewsWithProfiles);
+      setReviews(reviewsList);
 
-      // Calculer les statistiques pour ce produit
-      if (reviewsWithProfiles && reviewsWithProfiles.length > 0) {
-        const total = reviewsWithProfiles.length;
-        const sum = reviewsWithProfiles.reduce((acc, r) => acc + r.rating, 0);
+      // Calculer les statistiques
+      if (reviewsList.length > 0) {
+        const total = reviewsList.length;
+        const sum = reviewsList.reduce((acc, r) => acc + r.rating, 0);
         const avg = sum / total;
 
-        const dist = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-        reviewsWithProfiles.forEach(r => {
-          dist[r.rating as keyof typeof dist]++;
+        const dist: { [key: number]: number } = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+        reviewsList.forEach(r => {
+          if (r.rating >= 1 && r.rating <= 5) {
+            dist[r.rating]++;
+          }
         });
 
         setStats({
@@ -210,8 +238,7 @@ export default function ProductReviewsSection({ productId, productName }: Produc
                   </div>
                   <div>
                     <p className="font-medium">
-                      {review.profiles?.first_name || 'Client'}{' '}
-                      {review.profiles?.last_name || ''}
+                      {review.customer_name}
                     </p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Calendar className="w-3 h-3" />
@@ -221,7 +248,10 @@ export default function ProductReviewsSection({ productId, productName }: Produc
                         year: 'numeric'
                       })}
                       {review.verified_purchase && (
-                        <span className="text-green-600 font-medium">• Achat vérifié</span>
+                        <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Achat vérifié
+                        </Badge>
                       )}
                     </div>
                   </div>
@@ -229,40 +259,10 @@ export default function ProductReviewsSection({ productId, productName }: Produc
                 {renderStars(review.rating)}
               </div>
 
-              {/* Titre de l'avis */}
-              {review.title && (
-                <h5 className="font-medium mb-2">{review.title}</h5>
-              )}
-
               {/* Commentaire du client */}
-              {review.content && (
+              {review.comment && (
                 <div className="mb-3">
-                  <p className="text-sm text-foreground">{review.content}</p>
-                </div>
-              )}
-
-              {/* Compteur utile */}
-              {review.helpful_count > 0 && (
-                <p className="text-xs text-muted-foreground mb-2">
-                  {review.helpful_count} personne(s) ont trouvé cet avis utile
-                </p>
-              )}
-
-              {/* Réponse du vendeur */}
-              {review.vendor_response && (
-                <div className="mt-3 pl-4 border-l-2 border-primary/30 bg-accent/30 p-3 rounded-r">
-                  <div className="flex items-center gap-2 mb-2">
-                    <MessageSquare className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-medium text-primary">
-                      Réponse du vendeur
-                    </span>
-                    {review.vendor_response_at && (
-                      <span className="text-xs text-muted-foreground">
-                        • {new Date(review.vendor_response_at).toLocaleDateString('fr-FR')}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-foreground">{review.vendor_response}</p>
+                  <p className="text-sm text-foreground">{review.comment}</p>
                 </div>
               )}
             </CardContent>
