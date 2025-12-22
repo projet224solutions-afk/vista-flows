@@ -1440,25 +1440,35 @@ export function POSSystem() {
         </div>
 
         {/* Section Panier - Interface professionnelle - Responsive optimisé mobile */}
-        <div className={`w-full md:w-80 lg:w-[360px] flex-shrink-0 flex flex-col min-w-0 max-w-full md:min-h-0 md:max-h-full ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
+        <div className={`w-full md:w-72 lg:w-[320px] flex-shrink-0 flex flex-col min-w-0 max-w-full md:min-h-0 md:max-h-full ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
           {/* Panier - Design ultra compact mobile */}
           <Card className="shadow-xl border-0 bg-card overflow-hidden flex flex-col max-w-full md:flex-1 md:max-h-full">
             {/* En-tête compact */}
-            <div className="p-2 sm:p-3 bg-gradient-to-r from-primary/15 via-primary/10 to-primary/5 border-b border-primary/20 flex-shrink-0">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <div className="p-1 sm:p-1.5 rounded-lg bg-primary/20">
-                    <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+            <div className="p-1.5 sm:p-2 bg-gradient-to-r from-primary/15 via-primary/10 to-primary/5 border-b border-primary/20 flex-shrink-0">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <div className="p-1 rounded-md bg-primary/20">
+                    <ShoppingCart className="h-4 w-4 text-primary" />
                   </div>
-                  <span className="font-bold text-sm sm:text-base text-foreground">Panier</span>
-                  <Badge variant="secondary" className="bg-primary text-primary-foreground font-bold px-1.5 sm:px-2 text-xs">
+                  <span className="sr-only">Panier</span>
+                  <Badge
+                    variant="secondary"
+                    className="bg-primary text-primary-foreground font-bold px-1.5 text-[11px] tabular-nums"
+                  >
                     {cart.reduce((sum, item) => sum + item.quantity, 0)}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className="text-sm sm:text-base font-black text-primary">{subtotal.toLocaleString()}</span>
+                  <span className="text-xs sm:text-sm font-black text-primary tabular-nums">
+                    {subtotal.toLocaleString()}
+                  </span>
                   <span className="text-[10px] text-muted-foreground">GNF</span>
-                  <Button variant="ghost" size="sm" onClick={clearCart} className="h-6 w-6 sm:h-7 sm:w-7 p-0 ml-1 text-muted-foreground hover:text-destructive">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearCart}
+                    className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                  >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
