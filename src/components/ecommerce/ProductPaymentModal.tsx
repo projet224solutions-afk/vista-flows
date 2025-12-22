@@ -240,6 +240,9 @@ export default function ProductPaymentModal({
           payment_method: paymentMethod
         });
 
+        const isCOD = paymentMethod === 'cash_on_delivery';
+        const normalizedPaymentMethod = isCOD ? 'cash' : paymentMethod;
+
         const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
           p_user_id: userId,
           p_vendor_id: vendorId,
@@ -249,11 +252,12 @@ export default function ProductPaymentModal({
             price: item.price
           })),
           p_total_amount: vendorTotal,
-          p_payment_method: paymentMethod,
+          p_payment_method: normalizedPaymentMethod,
           p_shipping_address: {
             address: 'Adresse de livraison',
             city: 'Conakry',
-            country: 'Guinée'
+            country: 'Guinée',
+            ...(isCOD ? { is_cod: true } : {})
           }
         });
 
