@@ -25,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import VendorRatingDialog from './VendorRatingDialog';
+import ProductRatingDialog from './ProductRatingDialog';
 
 interface Order {
   id: string;
@@ -759,9 +759,9 @@ export default function ClientOrdersList() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Dialog de notation du vendeur */}
+      {/* Dialog de notation des produits */}
       {ratingOrderData && (
-        <VendorRatingDialog
+        <ProductRatingDialog
           open={showRatingDialog}
           onOpenChange={setShowRatingDialog}
           orderId={ratingOrderData.orderId}

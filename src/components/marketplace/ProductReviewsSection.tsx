@@ -1,10 +1,10 @@
 /**
  * Section d'affichage des avis clients sur un produit spécifique
- * Récupère les avis depuis vendor_ratings liés aux commandes contenant ce produit
+ * Récupère les avis depuis product_reviews pour ce produit uniquement
  */
 
 import { useState, useEffect } from 'react';
-import { Star, User, Calendar, MessageSquare, CheckCircle } from 'lucide-react';
+import { Star, User, Calendar, CheckCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,8 @@ import { supabase } from '@/lib/supabaseClient';
 interface Review {
   id: string;
   rating: number;
-  comment: string | null;
+  title: string;
+  content: string;
   created_at: string;
   customer_name: string;
   verified_purchase: boolean;
@@ -49,15 +50,26 @@ export default function ProductReviewsSection({ productId, productName }: Produc
     try {
       setLoading(true);
 
-      // Récupérer les commandes qui contiennent ce produit
-      const { data: orderItems, error: orderError } = await supabase
-        .from('order_items')
-        .select('order_id')
-        .eq('product_id', productId);
+      // Récupérer les avis depuis product_reviews pour CE produit uniquement
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from('product_reviews')
+        .select(`
+          id,
+          rating,
+          title,
+          content,
+          created_at,
+          user_id,
+          verified_purchase,
+          is_approved
+        `)
+        .eq('product_id', productId)
+        .eq('is_approved', true)
+        .order('created_at', { ascending: false });
 
-      if (orderError) throw orderError;
+      if (reviewsError) throw reviewsError;
 
-      if (!orderItems || orderItems.length === 0) {
+      if (!reviewsData || reviewsData.length === 0) {
         setReviews([]);
         setStats({
           averageRating: 0,
@@ -68,70 +80,49 @@ export default function ProductReviewsSection({ productId, productName }: Produc
         return;
       }
 
-      const orderIds = orderItems.map(item => item.order_id);
-
-      // Récupérer les avis vendor_ratings liés à ces commandes
-      const { data: ratingsData, error: ratingsError } = await supabase
-        .from('vendor_ratings')
-        .select(`
-          id,
-          rating,
-          comment,
-          created_at,
-          customer_id
-        `)
-        .in('order_id', orderIds)
-        .order('created_at', { ascending: false });
-
-      if (ratingsError) throw ratingsError;
-
       // Récupérer les profils des clients
-      const customerIds = [...new Set((ratingsData || []).map(r => r.customer_id))];
+      const userIds = [...new Set(reviewsData.map(r => r.user_id))];
       const { data: profilesData } = await supabase
         .from('profiles')
         .select('id, full_name, first_name, last_name')
-        .in('id', customerIds);
+        .in('id', userIds);
 
       const profilesMap = new Map(
-        (profilesData || []).map(p => [p.id, p.full_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Client'])
+        (profilesData || []).map(p => [
+          p.id, 
+          p.full_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Client'
+        ])
       );
 
-      const reviewsList: Review[] = (ratingsData || []).map(rating => ({
-        id: rating.id,
-        rating: rating.rating,
-        comment: rating.comment,
-        created_at: rating.created_at,
-        customer_name: profilesMap.get(rating.customer_id) || 'Client',
-        verified_purchase: true // Tous les avis viennent de commandes réelles
+      const reviewsList: Review[] = reviewsData.map(review => ({
+        id: review.id,
+        rating: review.rating,
+        title: review.title,
+        content: review.content,
+        created_at: review.created_at,
+        customer_name: profilesMap.get(review.user_id) || 'Client',
+        verified_purchase: review.verified_purchase ?? false
       }));
 
       setReviews(reviewsList);
 
       // Calculer les statistiques
-      if (reviewsList.length > 0) {
-        const total = reviewsList.length;
-        const sum = reviewsList.reduce((acc, r) => acc + r.rating, 0);
-        const avg = sum / total;
+      const total = reviewsList.length;
+      const sum = reviewsList.reduce((acc, r) => acc + r.rating, 0);
+      const avg = sum / total;
 
-        const dist: { [key: number]: number } = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-        reviewsList.forEach(r => {
-          if (r.rating >= 1 && r.rating <= 5) {
-            dist[r.rating]++;
-          }
-        });
+      const dist: { [key: number]: number } = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+      reviewsList.forEach(r => {
+        if (r.rating >= 1 && r.rating <= 5) {
+          dist[r.rating]++;
+        }
+      });
 
-        setStats({
-          averageRating: avg,
-          totalReviews: total,
-          distribution: dist
-        });
-      } else {
-        setStats({
-          averageRating: 0,
-          totalReviews: 0,
-          distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
-        });
-      }
+      setStats({
+        averageRating: avg,
+        totalReviews: total,
+        distribution: dist
+      });
     } catch (error) {
       console.error('Error loading product reviews:', error);
     } finally {
@@ -149,7 +140,7 @@ export default function ProductReviewsSection({ productId, productName }: Produc
             className={`${sizeClass} ${
               star <= rating
                 ? 'fill-yellow-400 text-yellow-400'
-                : 'text-gray-300'
+                : 'text-muted-foreground/30'
             }`}
           />
         ))}
@@ -259,11 +250,14 @@ export default function ProductReviewsSection({ productId, productName }: Produc
                 {renderStars(review.rating)}
               </div>
 
+              {/* Titre de l'avis */}
+              {review.title && (
+                <h5 className="font-medium text-sm mb-2">{review.title}</h5>
+              )}
+
               {/* Commentaire du client */}
-              {review.comment && (
-                <div className="mb-3">
-                  <p className="text-sm text-foreground">{review.comment}</p>
-                </div>
+              {review.content && (
+                <p className="text-sm text-foreground">{review.content}</p>
               )}
             </CardContent>
           </Card>
