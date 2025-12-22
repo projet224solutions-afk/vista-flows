@@ -448,7 +448,7 @@ export default function Payment() {
         setPaymentStep('form');
         setProductPaymentInfo(null);
         setCartPaymentInfo(null);
-        navigate('/orders');
+        navigate('/profil');
       } else {
         toast({
           title: "Information",
@@ -611,7 +611,7 @@ export default function Payment() {
 
         // Réinitialiser et naviguer vers les commandes
         setCartPaymentInfo(null);
-        navigate('/orders');
+        navigate('/profil');
         return;
       } 
       
@@ -681,8 +681,10 @@ export default function Payment() {
           description: `Commande ${orderNumber} - Paiement sécurisé par Escrow`
         });
 
-        // Réinitialiser l'info produit
+        // Réinitialiser l'info produit et rediriger
         setProductPaymentInfo(null);
+        navigate('/profil');
+        return;
       } else {
         // Transfert wallet normal (non-produit)
         const shouldUseEscrow = paymentPreview.amount >= 10000;
