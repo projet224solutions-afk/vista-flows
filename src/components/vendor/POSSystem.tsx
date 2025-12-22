@@ -1129,12 +1129,11 @@ export function POSSystem() {
             <Button
               variant={mobileTab === 'cart' ? 'default' : 'outline'}
               onClick={() => setMobileTab('cart')}
-              className="h-10 flex-1 relative"
+              className="h-10 px-4 relative"
             >
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              Panier
+              <ShoppingCart className="h-4 w-4" />
               {cart.length > 0 && (
-                <Badge className="absolute -top-1.5 -right-1.5 h-5 w-5 p-0 flex items-center justify-center text-[10px] font-bold bg-gradient-to-br from-orange-500 to-red-500 border-2 border-background shadow-md">
+                <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[9px] font-bold bg-destructive text-destructive-foreground">
                   {cart.reduce((sum, item) => sum + item.quantity, 0)}
                 </Badge>
               )}
