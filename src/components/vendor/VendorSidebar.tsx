@@ -140,7 +140,7 @@ export function VendorSidebar() {
 
   return (
     <Sidebar className={cn(
-      collapsed ? "w-16" : "w-64",
+      collapsed ? "w-14" : "w-52",
       "border-r border-border/40 shadow-lg"
     )} collapsible="icon">
       <ScrollArea className="h-full">
@@ -182,23 +182,23 @@ export function VendorSidebar() {
                             }
                           }}
                           className={cn(
-                            "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200 cursor-pointer select-none",
+                            "group flex w-full items-center gap-2 rounded-lg px-2 py-2 text-xs transition-all duration-200 cursor-pointer select-none",
                             "hover:bg-primary/10 hover:text-primary",
                             active && "bg-primary/15 text-primary font-medium shadow-sm",
                             isPOS && "bg-gradient-to-r from-primary/5 to-transparent border border-primary/20",
                             isPOS && active && "from-primary/20 border-primary/40 shadow-md",
-                            collapsed && "justify-center px-2"
+                            collapsed && "justify-center px-1"
                           )}
                         >
                           {/* Icône */}
                           <div className={cn(
-                            "flex items-center justify-center rounded-md transition-all",
-                            isPOS ? "w-8 h-8 bg-gradient-to-br from-primary to-primary/80 shadow-md" : "w-7 h-7",
+                            "flex items-center justify-center rounded-md transition-all flex-shrink-0",
+                            isPOS ? "w-6 h-6 bg-gradient-to-br from-primary to-primary/80 shadow-sm" : "w-5 h-5",
                             active && !isPOS && "bg-primary/10",
-                            collapsed && isPOS && "w-7 h-7"
+                            collapsed && isPOS && "w-5 h-5"
                           )}>
                             <item.icon className={cn(
-                              "w-4 h-4 transition-colors",
+                              "w-3.5 h-3.5 transition-colors",
                               isPOS ? "text-primary-foreground" : "",
                               active && !isPOS && "text-primary",
                               !active && !isPOS && "text-muted-foreground group-hover:text-primary"
@@ -219,7 +219,7 @@ export function VendorSidebar() {
                                 <Badge 
                                   variant={badgeValue === "HOT" ? "destructive" : "secondary"}
                                   className={cn(
-                                    "text-[10px] px-1.5 py-0 h-5 min-w-[20px] flex items-center justify-center",
+                                    "text-[9px] px-1 py-0 h-4 min-w-[16px] flex items-center justify-center flex-shrink-0",
                                     isPOS && "bg-gradient-to-r from-orange-500 to-red-500 text-white border-0 animate-pulse"
                                   )}
                                 >
@@ -228,7 +228,7 @@ export function VendorSidebar() {
                               )}
                               
                               {active && (
-                                <ChevronRight className="w-4 h-4 text-primary/60" />
+                                <ChevronRight className="w-3 h-3 text-primary/60 flex-shrink-0" />
                               )}
                             </>
                           )}
