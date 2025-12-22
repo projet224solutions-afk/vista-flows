@@ -12,7 +12,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { 
   Package, CheckCircle, Clock, Truck, XCircle, 
-  Shield, AlertCircle, Loader2, ListFilter, Ban, DollarSign
+  Shield, AlertCircle, Loader2, ListFilter, Ban, DollarSign, Banknote
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -32,10 +32,12 @@ interface Order {
   order_number: string;
   status: string;
   payment_status: string;
+  payment_method?: string;
   total_amount: number;
   created_at: string;
   vendor_id: string;
   metadata?: any;
+  shipping_address?: any;
   vendors?: {
     business_name: string;
   };
@@ -47,6 +49,11 @@ interface Order {
   }[];
 }
 
+// Helper pour vérifier si une commande est paiement à la livraison
+const isCashOnDelivery = (order: Order): boolean => {
+  return order.payment_method === 'cash' && 
+         order.shipping_address?.is_cod === true;
+};
 interface EscrowStatus {
   id: string;
   status: string;
@@ -512,7 +519,29 @@ export default function ClientOrdersList() {
                 <div className="flex flex-wrap gap-2">
                   {getStatusBadge(order.status)}
                   {escrow && getEscrowBadge(escrow.status)}
+                  {/* Badge paiement à la livraison */}
+                  {isCashOnDelivery(order) && (
+                    <Badge className="bg-amber-100 text-amber-800">
+                      <Banknote className="w-3 h-3 mr-1" />
+                      Paiement à la livraison
+                    </Badge>
+                  )}
                 </div>
+
+                {/* Info Paiement à la livraison */}
+                {isCashOnDelivery(order) && order.status !== 'delivered' && order.status !== 'cancelled' && (
+                  <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <Banknote className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                        Paiement à la livraison
+                      </p>
+                      <p className="text-xs text-amber-700 dark:text-amber-300">
+                        Vous paierez {order.total_amount.toLocaleString()} GNF à la réception de votre commande
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Protection Escrow */}
                 {escrow && (escrow.status === 'pending' || escrow.status === 'held') && (
