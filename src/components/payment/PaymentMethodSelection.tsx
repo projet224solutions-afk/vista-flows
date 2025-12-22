@@ -110,7 +110,7 @@ export function PaymentMethodSelection({
     processing;
 
   return (
-    <div className="flex flex-col max-h-[80vh]">
+    <div className="flex flex-col min-h-0">
       {/* Header fixe */}
       <div className="space-y-3 pb-3">
         {/* Message Escrow */}
@@ -139,92 +139,96 @@ export function PaymentMethodSelection({
       </div>
 
       {/* Zone scrollable pour les méthodes de paiement */}
-      <ScrollArea className="flex-1 pr-2" style={{ maxHeight: '300px' }}>
-        <RadioGroup
-          value={selectedMethod || ''}
-          onValueChange={(value) => setSelectedMethod(value as PaymentMethodType)}
-          className="space-y-2"
-        >
-          {paymentMethods.map((method) => (
-            <div key={method.id}>
-              <Label
-                htmlFor={method.id}
-                className={cn(
-                  "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all",
-                  selectedMethod === method.id
-                    ? "border-primary bg-primary/5 ring-1 ring-primary"
-                    : "border-border hover:border-primary/50 hover:bg-muted/30",
-                  !method.available && method.id === 'wallet' && "opacity-60"
-                )}
-              >
-                <RadioGroupItem 
-                  value={method.id} 
-                  id={method.id}
-                  disabled={!method.available && method.id === 'wallet'}
-                  className="border-2"
-                />
-                
-                <div className={cn("flex items-center justify-center w-10 h-10 rounded-lg", method.iconBg)}>
-                  {method.icon}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <span className="font-medium block text-sm">{method.name}</span>
-                  <span className="text-xs text-muted-foreground truncate block">{method.description}</span>
-                  {method.id === 'wallet' && !isWalletSufficient && (
-                    <span className="text-xs text-destructive block">Solde insuffisant</span>
+      <ScrollArea className="flex-1 min-h-0 pr-2">
+        <div className="pb-24">
+          <RadioGroup
+            value={selectedMethod || ''}
+            onValueChange={(value) => setSelectedMethod(value as PaymentMethodType)}
+            className="space-y-2"
+          >
+            {paymentMethods.map((method) => (
+              <div key={method.id}>
+                <Label
+                  htmlFor={method.id}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all",
+                    selectedMethod === method.id
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "border-border hover:border-primary/50 hover:bg-muted/30",
+                    !method.available && method.id === 'wallet' && "opacity-60"
                   )}
-                </div>
+                >
+                  <RadioGroupItem 
+                    value={method.id} 
+                    id={method.id}
+                    disabled={!method.available && method.id === 'wallet'}
+                    className="border-2"
+                  />
+                  
+                  <div className={cn("flex items-center justify-center w-10 h-10 rounded-lg", method.iconBg)}>
+                    {method.icon}
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <span className="font-medium block text-sm">{method.name}</span>
+                    <span className="text-xs text-muted-foreground truncate block">{method.description}</span>
+                    {method.id === 'wallet' && !isWalletSufficient && (
+                      <span className="text-xs text-destructive block">Solde insuffisant</span>
+                    )}
+                  </div>
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
+
+          {/* Champ téléphone pour mobile money */}
+          {requiresPhone && (
+            <div className="space-y-2 p-3 mt-2 bg-muted/50 rounded-lg border animate-in slide-in-from-top-2">
+              <Label htmlFor="phone-number" className="flex items-center gap-2 text-sm">
+                <Smartphone className="h-4 w-4" />
+                Numéro {selectedMethod === 'orange_money' ? 'Orange' : 'MTN'}
               </Label>
+              <Input
+                id="phone-number"
+                type="tel"
+                placeholder={selectedMethod === 'orange_money' ? '620 XX XX XX' : '660 XX XX XX'}
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+              />
             </div>
-          ))}
-        </RadioGroup>
+          )}
 
-        {/* Champ téléphone pour mobile money */}
-        {requiresPhone && (
-          <div className="space-y-2 p-3 mt-2 bg-muted/50 rounded-lg border animate-in slide-in-from-top-2">
-            <Label htmlFor="phone-number" className="flex items-center gap-2 text-sm">
-              <Smartphone className="h-4 w-4" />
-              Numéro {selectedMethod === 'orange_money' ? 'Orange' : 'MTN'}
-            </Label>
-            <Input
-              id="phone-number"
-              type="tel"
-              placeholder={selectedMethod === 'orange_money' ? '620 XX XX XX' : '660 XX XX XX'}
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-            />
-          </div>
-        )}
-
-        {/* Avertissement paiement à la livraison */}
-        {selectedMethod === 'cash_on_delivery' && (
-          <div className="flex items-start gap-2 p-3 mt-2 bg-amber-50 border border-amber-200 rounded-lg animate-in slide-in-from-top-2">
-            <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-amber-700">
-              Préparez le montant exact en espèces pour la livraison.
-            </p>
-          </div>
-        )}
+          {/* Avertissement paiement à la livraison */}
+          {selectedMethod === 'cash_on_delivery' && (
+            <div className="flex items-start gap-2 p-3 mt-2 bg-amber-50 border border-amber-200 rounded-lg animate-in slide-in-from-top-2">
+              <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-amber-700">
+                Préparez le montant exact en espèces pour la livraison.
+              </p>
+            </div>
+          )}
+        </div>
       </ScrollArea>
 
       {/* Boutons d'action fixes en bas */}
-      <div className="flex gap-3 pt-4 mt-2 border-t">
-        <Button 
-          variant="outline" 
-          onClick={onCancel}
-          className="flex-1"
-          disabled={processing}
-        >
-          Annuler
-        </Button>
-        <Button 
-          onClick={handleConfirm}
-          disabled={isConfirmDisabled}
-          className="flex-1 bg-primary hover:bg-primary/90"
-        >
-          {processing ? 'Traitement...' : 'Payer maintenant'}
-        </Button>
+      <div className="sticky bottom-0 bg-background/95 supports-[backdrop-filter]:bg-background/80 backdrop-blur border-t pt-4 mt-2 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+        <div className="flex gap-3">
+          <Button 
+            variant="outline" 
+            onClick={onCancel}
+            className="flex-1"
+            disabled={processing}
+          >
+            Annuler
+          </Button>
+          <Button 
+            onClick={handleConfirm}
+            disabled={isConfirmDisabled}
+            className="flex-1"
+          >
+            {processing ? 'Traitement...' : 'Payer maintenant'}
+          </Button>
+        </div>
       </div>
     </div>
   );
