@@ -1068,7 +1068,8 @@ export default function OrderManagement() {
                       {/* Badge Paiement à la livraison */}
                       {order.source === 'online' && 
                        order.payment_method === 'cash' && 
-                       order.payment_status === 'pending' && (
+                       order.payment_status === 'pending' &&
+                       (order.shipping_address as any)?.is_cod === true && (
                         <Badge className="bg-amber-100 text-amber-800 border-amber-300 border-2">
                           <Truck className="w-3 h-3 mr-1" />
                           💵 Paiement à la livraison

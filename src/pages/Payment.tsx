@@ -123,17 +123,18 @@ export default function Payment() {
           vendorUserId: vendorInfo.user_id
         });
 
-        // Récupérer le public_id du vendeur depuis profiles
+        // Récupérer le public_id / custom_id du vendeur depuis profiles
         const { data: vendorProfile } = await supabase
           .from('profiles')
-          .select('public_id')
+          .select('public_id, custom_id')
           .eq('id', vendorInfo.user_id)
           .single();
 
         // Pré-remplir les champs
         setPaymentAmount(totalAmount.toString());
-        if (vendorProfile?.public_id) {
-          setRecipientId(vendorProfile.public_id);
+        const vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id;
+        if (vendorCode) {
+          setRecipientId(vendorCode);
         }
         
         const itemNames = cartItems.map((item: any) => `${item.name} (x${item.quantity})`).join(', ');
@@ -186,17 +187,18 @@ export default function Payment() {
             vendorUserId: product.vendors.user_id
           });
           
-          // Récupérer le public_id du vendeur depuis profiles
+          // Récupérer le public_id / custom_id du vendeur depuis profiles
           const { data: vendorProfile } = await supabase
             .from('profiles')
-            .select('public_id')
+            .select('public_id, custom_id')
             .eq('id', product.vendors.user_id)
             .single();
 
           // Pré-remplir les champs
           setPaymentAmount(totalAmount.toString());
-          if (vendorProfile?.public_id) {
-            setRecipientId(vendorProfile.public_id);
+          const vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id;
+          if (vendorCode) {
+            setRecipientId(vendorCode);
           }
           setPaymentDescription(`Achat: ${product.name} (x${qty})`);
           
@@ -311,12 +313,13 @@ export default function Payment() {
 
     setProcessing(true);
     try {
-      // Convertir le public_id en user_id
+      // Convertir le code (custom_id ou public_id) en user_id
+      const normalizedRecipient = recipientId.trim().toUpperCase();
       const { data: userData, error: userError } = await supabase
         .from('profiles')
         .select('id')
-        .eq('public_id', recipientId.toUpperCase())
-        .single();
+        .or(`public_id.eq.${normalizedRecipient},custom_id.eq.${normalizedRecipient}`)
+        .maybeSingle();
 
       if (userError || !userData) {
         toast({
@@ -395,12 +398,13 @@ export default function Payment() {
 
     setProcessing(true);
     try {
-      // Convertir le public_id en user_id
+      // Convertir le code (custom_id ou public_id) en user_id
+      const normalizedRecipient = recipientId.trim().toUpperCase();
       const { data: userData, error: userError } = await supabase
         .from('profiles')
         .select('id')
-        .eq('public_id', recipientId.toUpperCase())
-        .single();
+        .or(`public_id.eq.${normalizedRecipient},custom_id.eq.${normalizedRecipient}`)
+        .maybeSingle();
 
       if (userError || !userData) {
         toast({
@@ -823,7 +827,7 @@ export default function Payment() {
                       Payer
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-md">
+                  <DialogContent className="max-w-md max-h-[90vh] overflow-hidden">
                     {paymentStep === 'form' ? (
                       <>
                         <DialogHeader>
