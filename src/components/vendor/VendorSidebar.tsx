@@ -51,7 +51,7 @@ export function VendorSidebar() {
     
     switch (path) {
       case 'pos':
-        return 'HOT';
+        return null;
       case 'products':
         return badges.totalProducts > 0 ? badges.totalProducts.toString() : null;
       case 'inventory':
@@ -80,7 +80,7 @@ export function VendorSidebar() {
       items: [
         { title: "Dashboard", icon: BarChart3, path: "dashboard" },
         { title: "Analytiques", icon: TrendingUp, path: "analytics" },
-        { title: "Point de vente", icon: Store, path: "pos", isPOS: true },
+        { title: "POS", icon: Store, path: "pos", isPOS: true },
       ]
     },
     {
@@ -140,7 +140,7 @@ export function VendorSidebar() {
 
   return (
     <Sidebar className={cn(
-      collapsed ? "w-14" : "w-52",
+      collapsed ? "w-12" : "w-44",
       "border-r border-border/40 shadow-lg"
     )} collapsible="icon">
       <ScrollArea className="h-full">
