@@ -448,7 +448,7 @@ export default function Payment() {
         setPaymentStep('form');
         setProductPaymentInfo(null);
         setCartPaymentInfo(null);
-        navigate('/profil');
+        navigate('/client');
       } else {
         toast({
           title: "Information",
@@ -611,7 +611,7 @@ export default function Payment() {
 
         // Réinitialiser et naviguer vers les commandes
         setCartPaymentInfo(null);
-        navigate('/profil');
+        navigate('/client');
         return;
       } 
       
@@ -683,7 +683,7 @@ export default function Payment() {
 
         // Réinitialiser l'info produit et rediriger
         setProductPaymentInfo(null);
-        navigate('/profil');
+        navigate('/client');
         return;
       } else {
         // Transfert wallet normal (non-produit)
