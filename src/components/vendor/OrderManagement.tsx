@@ -117,6 +117,30 @@ const paymentStatusLabels: Record<string, string> = {
   refunded: 'Remboursé'
 };
 
+// Labels pour les méthodes de paiement
+const paymentMethodLabels: Record<string, string> = {
+  wallet: 'Wallet 224Solutions',
+  card: 'Carte bancaire',
+  cash: 'Espèces',
+  mobile_money: 'Mobile Money',
+  bank_transfer: 'Virement bancaire'
+};
+
+// Fonction pour obtenir le libellé de la méthode de paiement
+const getPaymentMethodLabel = (order: Order): string => {
+  const method = order.payment_method;
+  const isCOD = order.source === 'online' && 
+                method === 'cash' && 
+                order.payment_status === 'pending' &&
+                (order.shipping_address as any)?.is_cod === true;
+  
+  if (isCOD) {
+    return '💵 Paiement à la livraison';
+  }
+  
+  return paymentMethodLabels[method || ''] || method || 'Non spécifié';
+};
+
 export default function OrderManagement() {
   const { vendorId, user, loading: vendorLoading } = useCurrentVendor();
   const { toast } = useToast();
@@ -841,7 +865,7 @@ export default function OrderManagement() {
                       <p className="text-sm font-medium text-muted-foreground">Méthode de paiement</p>
                       <div className="text-sm text-muted-foreground">
                         <CreditCard className="w-4 h-4 inline mr-1" />
-                        {order.payment_method || 'Espèces'}
+                        {getPaymentMethodLabel(order)}
                       </div>
                     </div>
                   </div>
@@ -1041,6 +1065,15 @@ export default function OrderManagement() {
                           {order.escrow.status === 'dispute' && '⚠️ Litige'}
                         </Badge>
                       )}
+                      {/* Badge Paiement à la livraison */}
+                      {order.source === 'online' && 
+                       order.payment_method === 'cash' && 
+                       order.payment_status === 'pending' && (
+                        <Badge className="bg-amber-100 text-amber-800 border-amber-300 border-2">
+                          <Truck className="w-3 h-3 mr-1" />
+                          💵 Paiement à la livraison
+                        </Badge>
+                      )}
                     </div>
                   </div>
 
@@ -1080,7 +1113,7 @@ export default function OrderManagement() {
                       <p className="text-sm font-medium text-muted-foreground">Méthode de paiement</p>
                       <div className="text-sm text-muted-foreground">
                         <CreditCard className="w-4 h-4 inline mr-1" />
-                        {order.payment_method || 'Non spécifié'}
+                        {getPaymentMethodLabel(order)}
                       </div>
                     </div>
                   </div>
@@ -1126,9 +1159,7 @@ export default function OrderManagement() {
                     <div>Status: <Badge className={statusColors[selectedOrder.status]}>{statusLabels[selectedOrder.status]}</Badge></div>
                     <div>Paiement: <Badge className={paymentStatusColors[selectedOrder.payment_status]}>{paymentStatusLabels[selectedOrder.payment_status]}</Badge></div>
                     <div>Date: {new Date(selectedOrder.created_at).toLocaleDateString('fr-FR')}</div>
-                    {selectedOrder.payment_method && (
-                      <div>Méthode de paiement: {selectedOrder.payment_method}</div>
-                    )}
+                    <div>Méthode de paiement: {getPaymentMethodLabel(selectedOrder)}</div>
                   </div>
                 </div>
                 <div>
