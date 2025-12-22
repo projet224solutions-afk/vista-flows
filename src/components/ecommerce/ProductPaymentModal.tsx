@@ -21,7 +21,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Escrow224Service } from "@/services/escrow224Service";
 import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 
-export type ProductPaymentMethod = 'wallet' | 'cash';
+export type ProductPaymentMethod = 'wallet' | 'cash' | 'cash_on_delivery';
 
 interface CartItem {
   id: string;
