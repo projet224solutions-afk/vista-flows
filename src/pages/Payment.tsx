@@ -418,16 +418,18 @@ export default function Payment() {
           ? [{ product_id: productPaymentInfo.productId, quantity: productPaymentInfo.quantity, price: parseFloat(paymentAmount) / productPaymentInfo.quantity }]
           : cartPaymentInfo?.items.map((item: any) => ({ product_id: item.product_id || item.id, quantity: item.quantity, price: item.price }));
 
+        // Utiliser 'cash' comme payment_method (valeur valide de l'enum) avec is_cod dans metadata
         const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
           p_user_id: user.id,
           p_vendor_id: vendorId,
           p_items: items,
           p_total_amount: parseFloat(paymentAmount),
-          p_payment_method: 'cash_on_delivery',
+          p_payment_method: 'cash', // Utiliser 'cash' car 'cash_on_delivery' n'existe pas dans l'enum
           p_shipping_address: {
             address: 'Adresse de livraison',
             city: 'Conakry',
-            country: 'Guinée'
+            country: 'Guinée',
+            is_cod: true // Marquer comme paiement à la livraison
           }
         });
 
