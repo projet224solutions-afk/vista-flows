@@ -7,8 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useProfessionalServices } from '@/hooks/useProfessionalServices';
 import type { ProfessionalService } from '@/hooks/useProfessionalServices';
-import { RestaurantMenu } from '@/components/professional-services/modules/RestaurantMenu';
-import { EcommerceProducts } from '@/components/professional-services/modules/EcommerceProducts';
+import { ServiceModuleManager } from '@/components/professional-services/modules/ServiceModuleManager';
 import { BookingManagement } from '@/components/professional-services/modules/BookingManagement';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
@@ -193,11 +192,13 @@ export default function ServiceDashboard() {
           </TabsContent>
 
           <TabsContent value="products">
-            {service.service_type?.category === 'food' ? (
-              <RestaurantMenu serviceId={service.id} />
-            ) : (
-              <EcommerceProducts serviceId={service.id} />
-            )}
+            <ServiceModuleManager
+              serviceId={service.id}
+              serviceTypeId={service.service_type_id}
+              serviceTypeName={service.service_type?.name || 'Service'}
+              serviceTypeCode={service.service_type?.code}
+              businessName={service.business_name}
+            />
           </TabsContent>
 
           <TabsContent value="bookings">
