@@ -425,9 +425,6 @@ export default function Auth() {
           </Button>
         </div>
 
-        {/* Authentification avec Supabase */}
-        <p className="text-gray-500 mb-4 text-lg">{t('auth.supabaseAuth')}</p>
-
         {/* Titre principal */}
         <h2 className="text-2xl text-gray-600 mb-8">
           {t('auth.connectToSpace')} <span className="font-bold text-gray-800">{t('auth.professionalSpace')}</span>
