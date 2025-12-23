@@ -245,7 +245,7 @@ export default function Auth() {
             // Trouver le bureau de la ville sélectionnée
             const bureau = bureaus.find(b => b.commune === validatedData.city);
             
-            // Créer l'entrée taxi_drivers avec les infos du bureau pour la synchronisation
+            // 1. Créer l'entrée taxi_drivers avec les infos du bureau pour la synchronisation
             const { error: driverError } = await supabase
               .from('taxi_drivers')
               .insert({
@@ -263,7 +263,31 @@ export default function Auth() {
             if (driverError) {
               console.error('❌ Erreur création profil conducteur:', driverError);
             } else {
-              console.log('✅ Profil taxi-motard créé et synchronisé avec le bureau de', validatedData.city);
+              console.log('✅ Profil taxi-motard créé avec succès');
+            }
+
+            // 2. SYNCHRONISATION BUREAU: Créer l'entrée dans la table members pour que le bureau le voit
+            if (bureau?.id) {
+              const { error: memberError } = await supabase
+                .from('members')
+                .insert({
+                  bureau_id: bureau.id,
+                  name: `${validatedData.firstName} ${validatedData.lastName}`,
+                  email: validatedData.email,
+                  phone: `${phoneCode} ${formData.phone}`,
+                  status: 'pending', // En attente de validation par le bureau
+                  cotisation_status: 'pending',
+                  join_date: new Date().toISOString().split('T')[0],
+                  custom_id: userCustomId
+                });
+              
+              if (memberError) {
+                console.error('❌ Erreur synchronisation bureau:', memberError);
+              } else {
+                console.log('✅ Taxi-motard synchronisé avec le bureau syndical de', validatedData.city);
+              }
+            } else {
+              console.warn('⚠️ Aucun bureau trouvé pour la ville:', validatedData.city);
             }
           } catch (syncError) {
             console.error('❌ Erreur synchronisation:', syncError);
