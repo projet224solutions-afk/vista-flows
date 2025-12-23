@@ -819,19 +819,32 @@ export default function Auth() {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <Label htmlFor="city">Ville / Commune</Label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setManualCityEntry(!manualCityEntry);
-                          setFormData({ ...formData, city: '' });
-                        }}
-                        className="text-xs text-primary hover:underline"
-                      >
-                        {manualCityEntry ? '📋 Choisir dans la liste' : '✏️ Saisir manuellement'}
-                      </button>
+                      {/* Afficher le bouton de sélection uniquement pour vendeur et taxi */}
+                      {(selectedRole === 'vendeur' || selectedRole === 'taxi') && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setManualCityEntry(!manualCityEntry);
+                            setFormData({ ...formData, city: '' });
+                          }}
+                          className="text-xs text-primary hover:underline"
+                        >
+                          {manualCityEntry ? '📋 Choisir dans la liste' : '✏️ Saisir manuellement'}
+                        </button>
+                      )}
                     </div>
                     
-                    {manualCityEntry ? (
+                    {/* Pour client et livreur: saisie manuelle uniquement */}
+                    {(selectedRole === 'client' || selectedRole === 'livreur') ? (
+                      <Input
+                        id="city"
+                        type="text"
+                        value={formData.city}
+                        onChange={(e) => handleInputChange('city', e.target.value)}
+                        placeholder="Saisissez votre ville"
+                        className="mt-1"
+                      />
+                    ) : manualCityEntry ? (
                       <Input
                         id="city"
                         type="text"
