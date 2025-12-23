@@ -3,25 +3,23 @@
  * Charge dynamiquement le module approprié selon le type de service
  */
 
-import { Loader2 } from 'lucide-react';
-
-// Import direct des modules stubs
+// Import des modules complets
 import { RestaurantModule } from './RestaurantModule';
 import { EcommerceModule } from './EcommerceModule';
 import { BeautyModule } from './BeautyModule';
 import { TransportModule } from './TransportModule';
 import { HealthModule } from './HealthModule';
 import { EducationModule } from './EducationModule';
+import { PhotoStudioModule } from './PhotoStudioModule';
+import { DeveloperModule } from './DeveloperModule';
+import { DeliveryModule } from './DeliveryModule';
+import { RealEstateModule } from './RealEstateModule';
+import { CoachModule } from './CoachModule';
 import { 
-  DeliveryModule, 
-  PhotoStudioModule, 
-  DeveloperModule, 
   FitnessModule, 
   HairdresserModule, 
   CateringModule, 
-  FashionModule, 
-  HotelModule, 
-  RepairModule 
+  FashionModule 
 } from './stubs';
 
 interface ServiceModuleManagerProps {
@@ -80,11 +78,11 @@ export function ServiceModuleManager({
     case '13': // Boutique Mode
       return <FashionModule {...props} />;
     
-    case '14': // Hôtel
-      return <HotelModule {...props} />;
+    case '14': // Agence Immobilière
+      return <RealEstateModule {...props} />;
     
-    case '15': // Réparation Auto
-      return <RepairModule {...props} />;
+    case '15': // Coach Sportif
+      return <CoachModule {...props} />;
     
     default:
       return (
