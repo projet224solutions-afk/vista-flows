@@ -47,6 +47,7 @@ const PDGKYCManagement = lazy(() => import('@/components/pdg/PDGKYCManagement'))
 const BankingDashboard = lazy(() => import('@/components/pdg/BankingDashboard'));
 const PDGStolenVehiclesSupervision = lazy(() => import('@/components/pdg/PDGStolenVehiclesSupervision'));
 const DriverSubscriptionManagement = lazy(() => import('@/components/pdg/DriverSubscriptionManagement'));
+const PDGServiceSubscriptions = lazy(() => import('@/components/pdg/PDGServiceSubscriptions'));
 
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();

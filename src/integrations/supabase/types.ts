@@ -9103,6 +9103,127 @@ export type Database = {
           },
         ]
       }
+      service_plan_price_history: {
+        Row: {
+          changed_at: string | null
+          changed_by: string | null
+          id: string
+          new_price: number
+          old_price: number
+          plan_id: string
+          reason: string | null
+        }
+        Insert: {
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          new_price: number
+          old_price: number
+          plan_id: string
+          reason?: string | null
+        }
+        Update: {
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          new_price?: number
+          old_price?: number
+          plan_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_plan_price_history_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "service_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_plans: {
+        Row: {
+          analytics_access: boolean | null
+          api_access: boolean | null
+          created_at: string | null
+          custom_branding: boolean | null
+          description: string | null
+          display_name: string
+          display_order: number | null
+          email_notifications: boolean | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          max_bookings_per_month: number | null
+          max_products: number | null
+          max_staff: number | null
+          monthly_price_gnf: number
+          name: string
+          priority_listing: boolean | null
+          service_type_id: string | null
+          sms_notifications: boolean | null
+          updated_at: string | null
+          yearly_discount_percentage: number | null
+          yearly_price_gnf: number | null
+        }
+        Insert: {
+          analytics_access?: boolean | null
+          api_access?: boolean | null
+          created_at?: string | null
+          custom_branding?: boolean | null
+          description?: string | null
+          display_name: string
+          display_order?: number | null
+          email_notifications?: boolean | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_bookings_per_month?: number | null
+          max_products?: number | null
+          max_staff?: number | null
+          monthly_price_gnf?: number
+          name: string
+          priority_listing?: boolean | null
+          service_type_id?: string | null
+          sms_notifications?: boolean | null
+          updated_at?: string | null
+          yearly_discount_percentage?: number | null
+          yearly_price_gnf?: number | null
+        }
+        Update: {
+          analytics_access?: boolean | null
+          api_access?: boolean | null
+          created_at?: string | null
+          custom_branding?: boolean | null
+          description?: string | null
+          display_name?: string
+          display_order?: number | null
+          email_notifications?: boolean | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_bookings_per_month?: number | null
+          max_products?: number | null
+          max_staff?: number | null
+          monthly_price_gnf?: number
+          name?: string
+          priority_listing?: boolean | null
+          service_type_id?: string | null
+          sms_notifications?: boolean | null
+          updated_at?: string | null
+          yearly_discount_percentage?: number | null
+          yearly_price_gnf?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_plans_service_type_id_fkey"
+            columns: ["service_type_id"]
+            isOneToOne: false
+            referencedRelation: "service_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_products: {
         Row: {
           category: string | null
@@ -9206,6 +9327,125 @@ export type Database = {
           },
           {
             foreignKeyName: "service_reviews_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_subscription_payments: {
+        Row: {
+          amount_gnf: number
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          payment_method: string
+          status: string | null
+          subscription_id: string
+          transaction_reference: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_gnf: number
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_method: string
+          status?: string | null
+          subscription_id: string
+          transaction_reference?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_gnf?: number
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_method?: string
+          status?: string | null
+          subscription_id?: string
+          transaction_reference?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_subscription_payments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "service_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_subscriptions: {
+        Row: {
+          auto_renew: boolean | null
+          billing_cycle: string
+          cancelled_at: string | null
+          created_at: string | null
+          current_period_end: string
+          current_period_start: string | null
+          id: string
+          metadata: Json | null
+          payment_method: string | null
+          payment_transaction_id: string | null
+          plan_id: string
+          price_paid_gnf: number
+          professional_service_id: string
+          started_at: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auto_renew?: boolean | null
+          billing_cycle?: string
+          cancelled_at?: string | null
+          created_at?: string | null
+          current_period_end: string
+          current_period_start?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          payment_transaction_id?: string | null
+          plan_id: string
+          price_paid_gnf?: number
+          professional_service_id: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auto_renew?: boolean | null
+          billing_cycle?: string
+          cancelled_at?: string | null
+          created_at?: string | null
+          current_period_end?: string
+          current_period_start?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          payment_transaction_id?: string | null
+          plan_id?: string
+          price_paid_gnf?: number
+          professional_service_id?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "service_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_subscriptions_professional_service_id_fkey"
             columns: ["professional_service_id"]
             isOneToOne: false
             referencedRelation: "professional_services"
@@ -14530,6 +14770,37 @@ export type Database = {
       }
       get_public_setting: { Args: { setting_key: string }; Returns: string }
       get_role_prefix: { Args: { user_role: string }; Returns: string }
+      get_service_subscription: {
+        Args: { p_service_id: string }
+        Returns: {
+          analytics_access: boolean
+          auto_renew: boolean
+          current_period_end: string
+          features: Json
+          max_bookings: number
+          max_products: number
+          max_staff: number
+          plan_display_name: string
+          plan_id: string
+          plan_name: string
+          price_paid: number
+          priority_listing: boolean
+          status: string
+          subscription_id: string
+        }[]
+      }
+      get_service_subscription_stats: {
+        Args: never
+        Returns: {
+          active_subscriptions: number
+          expired_subscriptions: number
+          monthly_revenue: number
+          subscriptions_by_plan: Json
+          subscriptions_by_status: Json
+          total_revenue: number
+          total_subscriptions: number
+        }[]
+      }
       get_syndicate_worker_permissions: {
         Args: { p_worker_id: string }
         Returns: Json
@@ -14930,6 +15201,18 @@ export type Database = {
           p_metadata?: Json
           p_revenue_type: string
           p_source_transaction_id?: string
+        }
+        Returns: string
+      }
+      record_service_subscription_payment: {
+        Args: {
+          p_billing_cycle?: string
+          p_payment_method?: string
+          p_payment_transaction_id?: string
+          p_plan_id: string
+          p_price_paid: number
+          p_service_id: string
+          p_user_id: string
         }
         Returns: string
       }
