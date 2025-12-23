@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import VendorBusinessSettings from '@/components/vendor/settings/VendorBusinessSettings';
+import VendorLocationSettings from '@/components/vendor/settings/VendorLocationSettings';
 import VendorDeliveryPricing from '@/components/vendor/settings/VendorDeliveryPricing';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, User, Bell, Truck } from 'lucide-react';
+import { Building2, User, Bell, Truck, MapPin } from 'lucide-react';
 
 export default function VendorSettings() {
   const navigate = useNavigate();
@@ -78,27 +79,35 @@ export default function VendorSettings() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="business" className="gap-2">
             <Building2 className="w-4 h-4" />
-            Entreprise
+            <span className="hidden sm:inline">Entreprise</span>
+          </TabsTrigger>
+          <TabsTrigger value="location" className="gap-2">
+            <MapPin className="w-4 h-4" />
+            <span className="hidden sm:inline">Localisation</span>
           </TabsTrigger>
           <TabsTrigger value="delivery" className="gap-2">
             <Truck className="w-4 h-4" />
-            Livraison
+            <span className="hidden sm:inline">Livraison</span>
           </TabsTrigger>
           <TabsTrigger value="profile" className="gap-2">
             <User className="w-4 h-4" />
-            Profil
+            <span className="hidden sm:inline">Profil</span>
           </TabsTrigger>
           <TabsTrigger value="notifications" className="gap-2">
             <Bell className="w-4 h-4" />
-            Notifications
+            <span className="hidden sm:inline">Notifs</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="business" className="mt-6">
           <VendorBusinessSettings vendorId={vendorId} />
+        </TabsContent>
+
+        <TabsContent value="location" className="mt-6">
+          <VendorLocationSettings vendorId={vendorId} />
         </TabsContent>
 
         <TabsContent value="delivery" className="mt-6">
