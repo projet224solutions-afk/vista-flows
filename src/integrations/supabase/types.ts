@@ -11439,6 +11439,8 @@ export type Database = {
         Row: {
           address: string | null
           business_name: string
+          business_type: string | null
+          city: string | null
           created_at: string | null
           delivery_base_price: number | null
           delivery_enabled: boolean | null
@@ -11449,10 +11451,14 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_verified: boolean | null
+          latitude: number | null
           logo_url: string | null
+          longitude: number | null
+          neighborhood: string | null
           phone: string | null
           public_id: string | null
           rating: number | null
+          service_type: string | null
           total_reviews: number | null
           updated_at: string | null
           user_id: string
@@ -11461,6 +11467,8 @@ export type Database = {
         Insert: {
           address?: string | null
           business_name: string
+          business_type?: string | null
+          city?: string | null
           created_at?: string | null
           delivery_base_price?: number | null
           delivery_enabled?: boolean | null
@@ -11471,10 +11479,14 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_verified?: boolean | null
+          latitude?: number | null
           logo_url?: string | null
+          longitude?: number | null
+          neighborhood?: string | null
           phone?: string | null
           public_id?: string | null
           rating?: number | null
+          service_type?: string | null
           total_reviews?: number | null
           updated_at?: string | null
           user_id: string
@@ -11483,6 +11495,8 @@ export type Database = {
         Update: {
           address?: string | null
           business_name?: string
+          business_type?: string | null
+          city?: string | null
           created_at?: string | null
           delivery_base_price?: number | null
           delivery_enabled?: boolean | null
@@ -11493,10 +11507,14 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_verified?: boolean | null
+          latitude?: number | null
           logo_url?: string | null
+          longitude?: number | null
+          neighborhood?: string | null
           phone?: string | null
           public_id?: string | null
           rating?: number | null
+          service_type?: string | null
           total_reviews?: number | null
           updated_at?: string | null
           user_id?: string
