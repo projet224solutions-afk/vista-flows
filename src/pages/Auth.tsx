@@ -293,6 +293,82 @@ export default function Auth() {
     { code: '+263', country: 'Zimbabwe', flag: '🇿🇼' },
   ];
 
+  // Règles de validation des numéros par indicatif (longueur min/max sans l'indicatif)
+  const PHONE_VALIDATION_RULES: Record<string, { minLength: number; maxLength: number; example: string }> = {
+    '+224': { minLength: 9, maxLength: 9, example: '621234567' },      // Guinée
+    '+221': { minLength: 9, maxLength: 9, example: '771234567' },      // Sénégal
+    '+223': { minLength: 8, maxLength: 8, example: '76123456' },       // Mali
+    '+225': { minLength: 10, maxLength: 10, example: '0712345678' },   // Côte d'Ivoire
+    '+226': { minLength: 8, maxLength: 8, example: '70123456' },       // Burkina Faso
+    '+227': { minLength: 8, maxLength: 8, example: '90123456' },       // Niger
+    '+228': { minLength: 8, maxLength: 8, example: '90123456' },       // Togo
+    '+229': { minLength: 8, maxLength: 8, example: '97123456' },       // Bénin
+    '+222': { minLength: 8, maxLength: 8, example: '22123456' },       // Mauritanie
+    '+220': { minLength: 7, maxLength: 7, example: '3012345' },        // Gambie
+    '+245': { minLength: 7, maxLength: 7, example: '9551234' },        // Guinée-Bissau
+    '+238': { minLength: 7, maxLength: 7, example: '9911234' },        // Cap-Vert
+    '+231': { minLength: 7, maxLength: 9, example: '770123456' },      // Liberia
+    '+232': { minLength: 8, maxLength: 8, example: '76123456' },       // Sierra Leone
+    '+233': { minLength: 9, maxLength: 9, example: '241234567' },      // Ghana
+    '+234': { minLength: 10, maxLength: 11, example: '8012345678' },   // Nigeria
+    '+237': { minLength: 9, maxLength: 9, example: '671234567' },      // Cameroun
+    '+241': { minLength: 7, maxLength: 8, example: '06123456' },       // Gabon
+    '+242': { minLength: 9, maxLength: 9, example: '066123456' },      // Congo
+    '+243': { minLength: 9, maxLength: 9, example: '812345678' },      // RDC
+    '+212': { minLength: 9, maxLength: 9, example: '612345678' },      // Maroc
+    '+213': { minLength: 9, maxLength: 9, example: '551234567' },      // Algérie
+    '+216': { minLength: 8, maxLength: 8, example: '22123456' },       // Tunisie
+    '+33': { minLength: 9, maxLength: 9, example: '612345678' },       // France
+    '+32': { minLength: 9, maxLength: 9, example: '471234567' },       // Belgique
+    '+41': { minLength: 9, maxLength: 9, example: '791234567' },       // Suisse
+    '+1': { minLength: 10, maxLength: 10, example: '2025551234' },     // USA/Canada
+    '+44': { minLength: 10, maxLength: 10, example: '7911123456' },    // UK
+    '+49': { minLength: 10, maxLength: 11, example: '15123456789' },   // Allemagne
+    '+34': { minLength: 9, maxLength: 9, example: '612345678' },       // Espagne
+    '+39': { minLength: 9, maxLength: 10, example: '3123456789' },     // Italie
+    '+86': { minLength: 11, maxLength: 11, example: '13123456789' },   // Chine
+    '+91': { minLength: 10, maxLength: 10, example: '9876543210' },    // Inde
+    '+81': { minLength: 10, maxLength: 10, example: '9012345678' },    // Japon
+    '+55': { minLength: 10, maxLength: 11, example: '11987654321' },   // Brésil
+    '+7': { minLength: 10, maxLength: 10, example: '9123456789' },     // Russie
+    '+20': { minLength: 10, maxLength: 10, example: '1012345678' },    // Égypte
+    '+27': { minLength: 9, maxLength: 9, example: '712345678' },       // Afrique du Sud
+    '+254': { minLength: 9, maxLength: 9, example: '712345678' },      // Kenya
+    '+255': { minLength: 9, maxLength: 9, example: '712345678' },      // Tanzanie
+    '+256': { minLength: 9, maxLength: 9, example: '712345678' },      // Ouganda
+    '+250': { minLength: 9, maxLength: 9, example: '781234567' },      // Rwanda
+    '+251': { minLength: 9, maxLength: 9, example: '911234567' },      // Éthiopie
+    '+971': { minLength: 9, maxLength: 9, example: '501234567' },      // Émirats
+    '+966': { minLength: 9, maxLength: 9, example: '512345678' },      // Arabie Saoudite
+    '+90': { minLength: 10, maxLength: 10, example: '5321234567' },    // Turquie
+  };
+
+  // Validation du numéro de téléphone
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  
+  const validatePhoneNumber = (phone: string, code: string): boolean => {
+    const rule = PHONE_VALIDATION_RULES[code];
+    if (!rule) {
+      // Si pas de règle spécifique, accepter entre 7 et 15 chiffres (norme internationale)
+      return phone.length >= 7 && phone.length <= 15;
+    }
+    return phone.length >= rule.minLength && phone.length <= rule.maxLength;
+  };
+
+  const getPhoneExample = (code: string): string => {
+    const rule = PHONE_VALIDATION_RULES[code];
+    return rule?.example || '123456789';
+  };
+
+  const getPhoneLengthHint = (code: string): string => {
+    const rule = PHONE_VALIDATION_RULES[code];
+    if (!rule) return '7-15 chiffres';
+    if (rule.minLength === rule.maxLength) {
+      return `${rule.minLength} chiffres`;
+    }
+    return `${rule.minLength}-${rule.maxLength} chiffres`;
+  };
+
   const [phoneCode, setPhoneCode] = useState('+224');
 
   const [formData, setFormData] = useState({
@@ -317,6 +393,21 @@ export default function Auth() {
       }
     }
   }, [formData.country]);
+
+  // Validation du numéro quand il change
+  useEffect(() => {
+    if (formData.phone) {
+      const isValid = validatePhoneNumber(formData.phone, phoneCode);
+      if (!isValid) {
+        const hint = getPhoneLengthHint(phoneCode);
+        setPhoneError(`Format invalide pour ${phoneCode}. Attendu: ${hint}`);
+      } else {
+        setPhoneError(null);
+      }
+    } else {
+      setPhoneError(null);
+    }
+  }, [formData.phone, phoneCode]);
   
   const [manualCityEntry, setManualCityEntry] = useState(false);
   
@@ -369,6 +460,11 @@ export default function Auth() {
           throw new Error("❌ Les mots de passe ne correspondent pas");
         }
 
+        // Validation du numéro de téléphone
+        if (!validatePhoneNumber(formData.phone, phoneCode)) {
+          const hint = getPhoneLengthHint(phoneCode);
+          throw new Error(`❌ Numéro de téléphone invalide pour ${phoneCode}. Format attendu: ${hint}`);
+        }
         const validatedData = signupSchema.parse({ ...formData, role: selectedRole });
 
         // Générer un ID utilisateur avec le bon préfixe selon le rôle
@@ -1210,14 +1306,24 @@ export default function Auth() {
                           const cleaned = e.target.value.replace(/[^\d]/g, '');
                           handleInputChange('phone', cleaned);
                         }}
-                        placeholder="XXX XXX XXX"
+                        placeholder={getPhoneExample(phoneCode)}
                         required
-                        className="flex-1"
+                        className={`flex-1 ${phoneError ? 'border-red-500 focus:ring-red-500' : ''}`}
                       />
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      L'indicatif s'ajuste automatiquement selon le pays, mais vous pouvez le modifier
-                    </p>
+                    {phoneError ? (
+                      <p className="text-xs text-red-500 mt-1">
+                        ❌ {phoneError}
+                      </p>
+                    ) : formData.phone && !phoneError ? (
+                      <p className="text-xs text-green-600 mt-1">
+                        ✅ Format valide ({getPhoneLengthHint(phoneCode)})
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Format attendu: {getPhoneLengthHint(phoneCode)} • Ex: {getPhoneExample(phoneCode)}
+                      </p>
+                    )}
                   </div>
                 </>
               )}
