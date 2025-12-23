@@ -944,9 +944,6 @@ export default function Auth() {
                         required
                         className="mt-1"
                       />
-                      <p className="text-xs text-green-600 mt-1">
-                        ✅ Ce nom s'affichera sur votre profil POS et dans la liste des boutiques
-                      </p>
                     </div>
                   )}
 
