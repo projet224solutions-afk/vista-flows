@@ -81,7 +81,7 @@ export default function Auth() {
   const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
   const [showServiceSelection, setShowServiceSelection] = useState(false);
 
-  // Mapping pays → indicatif téléphonique
+  // Mapping pays → indicatif téléphonique (pour auto-détection)
   const COUNTRY_PHONE_CODES: Record<string, string> = {
     'guinée': '+224',
     'guinee': '+224',
@@ -135,6 +135,163 @@ export default function Auth() {
     'usa': '+1',
     'united states': '+1',
   };
+
+  // Liste complète des indicatifs téléphoniques du monde pour le sélecteur
+  const WORLD_PHONE_CODES = [
+    { code: '+93', country: 'Afghanistan', flag: '🇦🇫' },
+    { code: '+355', country: 'Albanie', flag: '🇦🇱' },
+    { code: '+213', country: 'Algérie', flag: '🇩🇿' },
+    { code: '+376', country: 'Andorre', flag: '🇦🇩' },
+    { code: '+244', country: 'Angola', flag: '🇦🇴' },
+    { code: '+54', country: 'Argentine', flag: '🇦🇷' },
+    { code: '+374', country: 'Arménie', flag: '🇦🇲' },
+    { code: '+61', country: 'Australie', flag: '🇦🇺' },
+    { code: '+43', country: 'Autriche', flag: '🇦🇹' },
+    { code: '+994', country: 'Azerbaïdjan', flag: '🇦🇿' },
+    { code: '+973', country: 'Bahreïn', flag: '🇧🇭' },
+    { code: '+880', country: 'Bangladesh', flag: '🇧🇩' },
+    { code: '+32', country: 'Belgique', flag: '🇧🇪' },
+    { code: '+229', country: 'Bénin', flag: '🇧🇯' },
+    { code: '+975', country: 'Bhoutan', flag: '🇧🇹' },
+    { code: '+591', country: 'Bolivie', flag: '🇧🇴' },
+    { code: '+387', country: 'Bosnie', flag: '🇧🇦' },
+    { code: '+267', country: 'Botswana', flag: '🇧🇼' },
+    { code: '+55', country: 'Brésil', flag: '🇧🇷' },
+    { code: '+359', country: 'Bulgarie', flag: '🇧🇬' },
+    { code: '+226', country: 'Burkina Faso', flag: '🇧🇫' },
+    { code: '+257', country: 'Burundi', flag: '🇧🇮' },
+    { code: '+855', country: 'Cambodge', flag: '🇰🇭' },
+    { code: '+237', country: 'Cameroun', flag: '🇨🇲' },
+    { code: '+1', country: 'Canada/USA', flag: '🇨🇦' },
+    { code: '+238', country: 'Cap-Vert', flag: '🇨🇻' },
+    { code: '+236', country: 'Centrafrique', flag: '🇨🇫' },
+    { code: '+56', country: 'Chili', flag: '🇨🇱' },
+    { code: '+86', country: 'Chine', flag: '🇨🇳' },
+    { code: '+57', country: 'Colombie', flag: '🇨🇴' },
+    { code: '+269', country: 'Comores', flag: '🇰🇲' },
+    { code: '+242', country: 'Congo', flag: '🇨🇬' },
+    { code: '+243', country: 'RD Congo', flag: '🇨🇩' },
+    { code: '+225', country: 'Côte d\'Ivoire', flag: '🇨🇮' },
+    { code: '+385', country: 'Croatie', flag: '🇭🇷' },
+    { code: '+53', country: 'Cuba', flag: '🇨🇺' },
+    { code: '+45', country: 'Danemark', flag: '🇩🇰' },
+    { code: '+253', country: 'Djibouti', flag: '🇩🇯' },
+    { code: '+20', country: 'Égypte', flag: '🇪🇬' },
+    { code: '+971', country: 'Émirats Arabes Unis', flag: '🇦🇪' },
+    { code: '+593', country: 'Équateur', flag: '🇪🇨' },
+    { code: '+291', country: 'Érythrée', flag: '🇪🇷' },
+    { code: '+34', country: 'Espagne', flag: '🇪🇸' },
+    { code: '+372', country: 'Estonie', flag: '🇪🇪' },
+    { code: '+251', country: 'Éthiopie', flag: '🇪🇹' },
+    { code: '+679', country: 'Fidji', flag: '🇫🇯' },
+    { code: '+358', country: 'Finlande', flag: '🇫🇮' },
+    { code: '+33', country: 'France', flag: '🇫🇷' },
+    { code: '+241', country: 'Gabon', flag: '🇬🇦' },
+    { code: '+220', country: 'Gambie', flag: '🇬🇲' },
+    { code: '+995', country: 'Géorgie', flag: '🇬🇪' },
+    { code: '+233', country: 'Ghana', flag: '🇬🇭' },
+    { code: '+30', country: 'Grèce', flag: '🇬🇷' },
+    { code: '+502', country: 'Guatemala', flag: '🇬🇹' },
+    { code: '+224', country: 'Guinée', flag: '🇬🇳' },
+    { code: '+245', country: 'Guinée-Bissau', flag: '🇬🇼' },
+    { code: '+240', country: 'Guinée Équatoriale', flag: '🇬🇶' },
+    { code: '+509', country: 'Haïti', flag: '🇭🇹' },
+    { code: '+504', country: 'Honduras', flag: '🇭🇳' },
+    { code: '+852', country: 'Hong Kong', flag: '🇭🇰' },
+    { code: '+36', country: 'Hongrie', flag: '🇭🇺' },
+    { code: '+91', country: 'Inde', flag: '🇮🇳' },
+    { code: '+62', country: 'Indonésie', flag: '🇮🇩' },
+    { code: '+98', country: 'Iran', flag: '🇮🇷' },
+    { code: '+964', country: 'Irak', flag: '🇮🇶' },
+    { code: '+353', country: 'Irlande', flag: '🇮🇪' },
+    { code: '+354', country: 'Islande', flag: '🇮🇸' },
+    { code: '+972', country: 'Israël', flag: '🇮🇱' },
+    { code: '+39', country: 'Italie', flag: '🇮🇹' },
+    { code: '+81', country: 'Japon', flag: '🇯🇵' },
+    { code: '+962', country: 'Jordanie', flag: '🇯🇴' },
+    { code: '+7', country: 'Kazakhstan', flag: '🇰🇿' },
+    { code: '+254', country: 'Kenya', flag: '🇰🇪' },
+    { code: '+996', country: 'Kirghizistan', flag: '🇰🇬' },
+    { code: '+965', country: 'Koweït', flag: '🇰🇼' },
+    { code: '+856', country: 'Laos', flag: '🇱🇦' },
+    { code: '+371', country: 'Lettonie', flag: '🇱🇻' },
+    { code: '+961', country: 'Liban', flag: '🇱🇧' },
+    { code: '+231', country: 'Liberia', flag: '🇱🇷' },
+    { code: '+218', country: 'Libye', flag: '🇱🇾' },
+    { code: '+423', country: 'Liechtenstein', flag: '🇱🇮' },
+    { code: '+370', country: 'Lituanie', flag: '🇱🇹' },
+    { code: '+352', country: 'Luxembourg', flag: '🇱🇺' },
+    { code: '+261', country: 'Madagascar', flag: '🇲🇬' },
+    { code: '+60', country: 'Malaisie', flag: '🇲🇾' },
+    { code: '+265', country: 'Malawi', flag: '🇲🇼' },
+    { code: '+960', country: 'Maldives', flag: '🇲🇻' },
+    { code: '+223', country: 'Mali', flag: '🇲🇱' },
+    { code: '+356', country: 'Malte', flag: '🇲🇹' },
+    { code: '+212', country: 'Maroc', flag: '🇲🇦' },
+    { code: '+230', country: 'Maurice', flag: '🇲🇺' },
+    { code: '+222', country: 'Mauritanie', flag: '🇲🇷' },
+    { code: '+52', country: 'Mexique', flag: '🇲🇽' },
+    { code: '+373', country: 'Moldavie', flag: '🇲🇩' },
+    { code: '+377', country: 'Monaco', flag: '🇲🇨' },
+    { code: '+976', country: 'Mongolie', flag: '🇲🇳' },
+    { code: '+382', country: 'Monténégro', flag: '🇲🇪' },
+    { code: '+258', country: 'Mozambique', flag: '🇲🇿' },
+    { code: '+95', country: 'Myanmar', flag: '🇲🇲' },
+    { code: '+264', country: 'Namibie', flag: '🇳🇦' },
+    { code: '+977', country: 'Népal', flag: '🇳🇵' },
+    { code: '+505', country: 'Nicaragua', flag: '🇳🇮' },
+    { code: '+227', country: 'Niger', flag: '🇳🇪' },
+    { code: '+234', country: 'Nigeria', flag: '🇳🇬' },
+    { code: '+47', country: 'Norvège', flag: '🇳🇴' },
+    { code: '+64', country: 'Nouvelle-Zélande', flag: '🇳🇿' },
+    { code: '+968', country: 'Oman', flag: '🇴🇲' },
+    { code: '+256', country: 'Ouganda', flag: '🇺🇬' },
+    { code: '+998', country: 'Ouzbékistan', flag: '🇺🇿' },
+    { code: '+92', country: 'Pakistan', flag: '🇵🇰' },
+    { code: '+970', country: 'Palestine', flag: '🇵🇸' },
+    { code: '+507', country: 'Panama', flag: '🇵🇦' },
+    { code: '+595', country: 'Paraguay', flag: '🇵🇾' },
+    { code: '+31', country: 'Pays-Bas', flag: '🇳🇱' },
+    { code: '+51', country: 'Pérou', flag: '🇵🇪' },
+    { code: '+63', country: 'Philippines', flag: '🇵🇭' },
+    { code: '+48', country: 'Pologne', flag: '🇵🇱' },
+    { code: '+351', country: 'Portugal', flag: '🇵🇹' },
+    { code: '+974', country: 'Qatar', flag: '🇶🇦' },
+    { code: '+40', country: 'Roumanie', flag: '🇷🇴' },
+    { code: '+44', country: 'Royaume-Uni', flag: '🇬🇧' },
+    { code: '+7', country: 'Russie', flag: '🇷🇺' },
+    { code: '+250', country: 'Rwanda', flag: '🇷🇼' },
+    { code: '+221', country: 'Sénégal', flag: '🇸🇳' },
+    { code: '+381', country: 'Serbie', flag: '🇷🇸' },
+    { code: '+232', country: 'Sierra Leone', flag: '🇸🇱' },
+    { code: '+65', country: 'Singapour', flag: '🇸🇬' },
+    { code: '+421', country: 'Slovaquie', flag: '🇸🇰' },
+    { code: '+386', country: 'Slovénie', flag: '🇸🇮' },
+    { code: '+252', country: 'Somalie', flag: '🇸🇴' },
+    { code: '+249', country: 'Soudan', flag: '🇸🇩' },
+    { code: '+211', country: 'Soudan du Sud', flag: '🇸🇸' },
+    { code: '+94', country: 'Sri Lanka', flag: '🇱🇰' },
+    { code: '+46', country: 'Suède', flag: '🇸🇪' },
+    { code: '+41', country: 'Suisse', flag: '🇨🇭' },
+    { code: '+963', country: 'Syrie', flag: '🇸🇾' },
+    { code: '+886', country: 'Taïwan', flag: '🇹🇼' },
+    { code: '+992', country: 'Tadjikistan', flag: '🇹🇯' },
+    { code: '+255', country: 'Tanzanie', flag: '🇹🇿' },
+    { code: '+235', country: 'Tchad', flag: '🇹🇩' },
+    { code: '+420', country: 'Tchéquie', flag: '🇨🇿' },
+    { code: '+66', country: 'Thaïlande', flag: '🇹🇭' },
+    { code: '+228', country: 'Togo', flag: '🇹🇬' },
+    { code: '+216', country: 'Tunisie', flag: '🇹🇳' },
+    { code: '+993', country: 'Turkménistan', flag: '🇹🇲' },
+    { code: '+90', country: 'Turquie', flag: '🇹🇷' },
+    { code: '+380', country: 'Ukraine', flag: '🇺🇦' },
+    { code: '+598', country: 'Uruguay', flag: '🇺🇾' },
+    { code: '+58', country: 'Venezuela', flag: '🇻🇪' },
+    { code: '+84', country: 'Vietnam', flag: '🇻🇳' },
+    { code: '+967', country: 'Yémen', flag: '🇾🇪' },
+    { code: '+260', country: 'Zambie', flag: '🇿🇲' },
+    { code: '+263', country: 'Zimbabwe', flag: '🇿🇼' },
+  ];
 
   const [phoneCode, setPhoneCode] = useState('+224');
 
@@ -1030,17 +1187,19 @@ export default function Auth() {
                   <div>
                     <Label htmlFor="phone">Numéro de téléphone</Label>
                     <div className="flex gap-2 mt-1">
-                      {/* Indicatif pays (auto-rempli) */}
-                      <div className="relative">
-                        <Input
-                          id="phoneCode"
-                          type="text"
-                          value={phoneCode}
-                          onChange={(e) => setPhoneCode(e.target.value)}
-                          className="w-20 text-center font-medium"
-                          placeholder="+224"
-                        />
-                      </div>
+                      {/* Sélecteur d'indicatif pays */}
+                      <select
+                        id="phoneCode"
+                        value={phoneCode}
+                        onChange={(e) => setPhoneCode(e.target.value)}
+                        className="w-28 px-2 py-2 border border-input rounded-md bg-background text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring"
+                      >
+                        {WORLD_PHONE_CODES.map((item) => (
+                          <option key={`${item.code}-${item.country}`} value={item.code}>
+                            {item.flag} {item.code}
+                          </option>
+                        ))}
+                      </select>
                       {/* Numéro de téléphone */}
                       <Input
                         id="phone"
@@ -1057,7 +1216,7 @@ export default function Auth() {
                       />
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      L'indicatif s'ajuste automatiquement selon le pays saisi
+                      L'indicatif s'ajuste automatiquement selon le pays, mais vous pouvez le modifier
                     </p>
                   </div>
                 </>
