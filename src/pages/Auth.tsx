@@ -1329,7 +1329,7 @@ export default function Auth() {
               )}
 
               <div>
-                <Label htmlFor="email">Email professionnel</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
