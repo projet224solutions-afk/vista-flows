@@ -93,7 +93,7 @@ export default function VisualSearch() {
       const { data: products, error } = await supabase
         .from('products')
         .select('id, name, price, images')
-        .eq('status', 'active')
+        .eq('is_active', true)
         .limit(12);
 
       if (error) throw error;
