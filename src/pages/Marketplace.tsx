@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon } from "lucide-react";
+import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -213,14 +213,25 @@ export default function Marketplace() {
               )}
             </div>
           </div>
-          <div className="mt-4">
-            <SearchBar
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Rechercher des produits..."
-              showFilter
-              onFilter={() => setShowFilters(!showFilters)}
-            />
+          <div className="mt-4 flex gap-2">
+            <div className="flex-1">
+              <SearchBar
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Rechercher des produits..."
+                showFilter
+                onFilter={() => setShowFilters(!showFilters)}
+              />
+            </div>
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => navigate('/marketplace/visual-search')}
+              className="shrink-0 h-10 w-10 border-primary/30 hover:bg-primary/10"
+              title="Recherche par image"
+            >
+              <Camera className="w-5 h-5 text-primary" />
+            </Button>
           </div>
         </ResponsiveContainer>
       </header>
