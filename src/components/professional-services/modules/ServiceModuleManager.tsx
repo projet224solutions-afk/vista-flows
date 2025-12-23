@@ -15,12 +15,9 @@ import { DeveloperModule } from './DeveloperModule';
 import { DeliveryModule } from './DeliveryModule';
 import { RealEstateModule } from './RealEstateModule';
 import { CoachModule } from './CoachModule';
-import { 
-  FitnessModule, 
-  HairdresserModule, 
-  CateringModule, 
-  FashionModule 
-} from './stubs';
+import { FitnessModule } from './FitnessModule';
+import { HairdresserModule } from './HairdresserModule';
+import { CateringModule, FashionModule } from './stubs';
 
 interface ServiceModuleManagerProps {
   serviceId: string;
