@@ -81,6 +81,63 @@ export default function Auth() {
   const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
   const [showServiceSelection, setShowServiceSelection] = useState(false);
 
+  // Mapping pays → indicatif téléphonique
+  const COUNTRY_PHONE_CODES: Record<string, string> = {
+    'guinée': '+224',
+    'guinee': '+224',
+    'guinea': '+224',
+    'sénégal': '+221',
+    'senegal': '+221',
+    'mali': '+223',
+    'côte d\'ivoire': '+225',
+    'cote d\'ivoire': '+225',
+    'ivory coast': '+225',
+    'burkina faso': '+226',
+    'burkina': '+226',
+    'niger': '+227',
+    'togo': '+228',
+    'bénin': '+229',
+    'benin': '+229',
+    'mauritanie': '+222',
+    'mauritania': '+222',
+    'gambie': '+220',
+    'gambia': '+220',
+    'guinée-bissau': '+245',
+    'guinee bissau': '+245',
+    'guinea bissau': '+245',
+    'cap-vert': '+238',
+    'cap vert': '+238',
+    'cape verde': '+238',
+    'liberia': '+231',
+    'sierra leone': '+232',
+    'ghana': '+233',
+    'nigeria': '+234',
+    'cameroun': '+237',
+    'cameroon': '+237',
+    'gabon': '+241',
+    'congo': '+242',
+    'rdc': '+243',
+    'maroc': '+212',
+    'morocco': '+212',
+    'algérie': '+213',
+    'algerie': '+213',
+    'algeria': '+213',
+    'tunisie': '+216',
+    'tunisia': '+216',
+    'france': '+33',
+    'belgique': '+32',
+    'belgium': '+32',
+    'suisse': '+41',
+    'switzerland': '+41',
+    'canada': '+1',
+    'états-unis': '+1',
+    'etats-unis': '+1',
+    'usa': '+1',
+    'united states': '+1',
+  };
+
+  const [phoneCode, setPhoneCode] = useState('+224');
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -91,6 +148,17 @@ export default function Auth() {
     country: '',
     city: ''
   });
+
+  // Auto-détection de l'indicatif téléphonique basé sur le pays
+  useEffect(() => {
+    if (formData.country) {
+      const countryLower = formData.country.toLowerCase().trim();
+      const code = COUNTRY_PHONE_CODES[countryLower];
+      if (code) {
+        setPhoneCode(code);
+      }
+    }
+  }, [formData.country]);
   
   const [manualCityEntry, setManualCityEntry] = useState(false);
   
@@ -162,7 +230,7 @@ export default function Auth() {
               first_name: validatedData.firstName,
               last_name: validatedData.lastName,
               role: validatedData.role,
-              phone: formData.phone,
+              phone: `${phoneCode} ${formData.phone}`,
               country: formData.country,
               city: validatedData.city,
               custom_id: userCustomId
@@ -885,15 +953,36 @@ export default function Auth() {
 
                   <div>
                     <Label htmlFor="phone">Numéro de téléphone</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      placeholder="+224 XXX XXX XXX"
-                      required
-                      className="mt-1"
-                    />
+                    <div className="flex gap-2 mt-1">
+                      {/* Indicatif pays (auto-rempli) */}
+                      <div className="relative">
+                        <Input
+                          id="phoneCode"
+                          type="text"
+                          value={phoneCode}
+                          onChange={(e) => setPhoneCode(e.target.value)}
+                          className="w-20 text-center font-medium"
+                          placeholder="+224"
+                        />
+                      </div>
+                      {/* Numéro de téléphone */}
+                      <Input
+                        id="phone"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => {
+                          // Nettoyer le numéro (enlever espaces et caractères non numériques)
+                          const cleaned = e.target.value.replace(/[^\d]/g, '');
+                          handleInputChange('phone', cleaned);
+                        }}
+                        placeholder="XXX XXX XXX"
+                        required
+                        className="flex-1"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      L'indicatif s'ajuste automatiquement selon le pays saisi
+                    </p>
                   </div>
                 </>
               )}
