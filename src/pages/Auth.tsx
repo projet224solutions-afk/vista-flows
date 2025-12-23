@@ -887,8 +887,8 @@ export default function Auth() {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <Label htmlFor="city">Ville / Commune</Label>
-                      {/* Afficher le bouton de sélection uniquement pour vendeur et taxi */}
-                      {(selectedRole === 'vendeur' || selectedRole === 'taxi') && (
+                      {/* Afficher le bouton de sélection uniquement pour taxi (synchronisation bureau) */}
+                      {selectedRole === 'taxi' && (
                         <button
                           type="button"
                           onClick={() => {
@@ -902,8 +902,8 @@ export default function Auth() {
                       )}
                     </div>
                     
-                    {/* Pour client et livreur: saisie manuelle uniquement */}
-                    {(selectedRole === 'client' || selectedRole === 'livreur') ? (
+                    {/* Pour client, livreur, vendeur et transitaire: saisie manuelle uniquement */}
+                    {(selectedRole === 'client' || selectedRole === 'livreur' || selectedRole === 'vendeur' || selectedRole === 'transitaire') ? (
                       <Input
                         id="city"
                         type="text"
