@@ -51,6 +51,7 @@ const categories: NavCategory[] = [
       { value: 'products', label: 'Produits', icon: Package },
       { value: 'transfer-fees', label: 'Frais de Transfert', icon: Percent },
       { value: 'kyc', label: 'Gestion KYC', icon: Shield },
+      { value: 'service-subscriptions', label: 'Abonnements Services', icon: Sparkles, badge: true },
     ]
   },
   {

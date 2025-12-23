@@ -618,6 +618,12 @@ export default function PDG224Solutions() {
                   <DriverSubscriptionManagement />
                 </ErrorBoundary>
               )}
+
+              {activeTab === 'service-subscriptions' && (
+                <ErrorBoundary>
+                  <PDGServiceSubscriptions />
+                </ErrorBoundary>
+              )}
             </Suspense>
           </div>
         </div>
