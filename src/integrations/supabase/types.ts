@@ -929,6 +929,185 @@ export type Database = {
         }
         Relationships: []
       }
+      beauty_appointments: {
+        Row: {
+          appointment_date: string
+          appointment_time: string
+          beauty_service_id: string | null
+          created_at: string | null
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          duration_minutes: number | null
+          id: string
+          notes: string | null
+          professional_service_id: string
+          staff_id: string | null
+          status: string | null
+          total_price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          appointment_date: string
+          appointment_time: string
+          beauty_service_id?: string | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          professional_service_id: string
+          staff_id?: string | null
+          status?: string | null
+          total_price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          appointment_date?: string
+          appointment_time?: string
+          beauty_service_id?: string | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          professional_service_id?: string
+          staff_id?: string | null
+          status?: string | null
+          total_price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beauty_appointments_beauty_service_id_fkey"
+            columns: ["beauty_service_id"]
+            isOneToOne: false
+            referencedRelation: "beauty_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "beauty_appointments_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "beauty_appointments_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "beauty_staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      beauty_services: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          price: number
+          professional_service_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          price: number
+          professional_service_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          price?: number
+          professional_service_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beauty_services_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      beauty_staff: {
+        Row: {
+          commission_rate: number | null
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          photo_url: string | null
+          professional_service_id: string
+          schedule: Json | null
+          specialties: string[] | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          commission_rate?: number | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          photo_url?: string | null
+          professional_service_id: string
+          schedule?: Json | null
+          specialties?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          commission_rate?: number | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          professional_service_id?: string
+          schedule?: Json | null
+          specialties?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beauty_staff_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blocked_ips: {
         Row: {
           blocked_at: string | null
@@ -3223,6 +3402,121 @@ export type Database = {
           },
         ]
       }
+      education_courses: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          current_students: number | null
+          description: string | null
+          duration_hours: number | null
+          id: string
+          image_url: string | null
+          instructor_name: string | null
+          is_active: boolean | null
+          max_students: number | null
+          price: number | null
+          professional_service_id: string
+          schedule: Json | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          current_students?: number | null
+          description?: string | null
+          duration_hours?: number | null
+          id?: string
+          image_url?: string | null
+          instructor_name?: string | null
+          is_active?: boolean | null
+          max_students?: number | null
+          price?: number | null
+          professional_service_id: string
+          schedule?: Json | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          current_students?: number | null
+          description?: string | null
+          duration_hours?: number | null
+          id?: string
+          image_url?: string | null
+          instructor_name?: string | null
+          is_active?: boolean | null
+          max_students?: number | null
+          price?: number | null
+          professional_service_id?: string
+          schedule?: Json | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "education_courses_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      education_enrollments: {
+        Row: {
+          amount_paid: number | null
+          course_id: string
+          created_at: string | null
+          enrollment_date: string | null
+          id: string
+          notes: string | null
+          payment_status: string | null
+          status: string | null
+          student_email: string | null
+          student_name: string
+          student_phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount_paid?: number | null
+          course_id: string
+          created_at?: string | null
+          enrollment_date?: string | null
+          id?: string
+          notes?: string | null
+          payment_status?: string | null
+          status?: string | null
+          student_email?: string | null
+          student_name: string
+          student_phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount_paid?: number | null
+          course_id?: string
+          created_at?: string | null
+          enrollment_date?: string | null
+          id?: string
+          notes?: string | null
+          payment_status?: string | null
+          status?: string | null
+          student_email?: string | null
+          student_name?: string
+          student_phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "education_enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "education_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       enhanced_transactions: {
         Row: {
           amount: number
@@ -4122,6 +4416,115 @@ export type Database = {
         }
         Relationships: []
       }
+      fitness_classes: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          instructor_name: string | null
+          is_active: boolean | null
+          max_participants: number | null
+          name: string
+          professional_service_id: string
+          schedule: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          instructor_name?: string | null
+          is_active?: boolean | null
+          max_participants?: number | null
+          name: string
+          professional_service_id: string
+          schedule?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          instructor_name?: string | null
+          is_active?: boolean | null
+          max_participants?: number | null
+          name?: string
+          professional_service_id?: string
+          schedule?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fitness_classes_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fitness_memberships: {
+        Row: {
+          created_at: string | null
+          emergency_contact: Json | null
+          end_date: string
+          id: string
+          member_email: string | null
+          member_name: string
+          member_phone: string | null
+          membership_type: string | null
+          photo_url: string | null
+          price: number | null
+          professional_service_id: string
+          start_date: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          emergency_contact?: Json | null
+          end_date: string
+          id?: string
+          member_email?: string | null
+          member_name: string
+          member_phone?: string | null
+          membership_type?: string | null
+          photo_url?: string | null
+          price?: number | null
+          professional_service_id: string
+          start_date: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          emergency_contact?: Json | null
+          end_date?: string
+          id?: string
+          member_email?: string | null
+          member_name?: string
+          member_phone?: string | null
+          membership_type?: string | null
+          photo_url?: string | null
+          price?: number | null
+          professional_service_id?: string
+          start_date?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fitness_memberships_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forensic_reports: {
         Row: {
           created_at: string | null
@@ -4267,6 +4670,116 @@ export type Database = {
         }
         Relationships: []
       }
+      hairdresser_appointments: {
+        Row: {
+          appointment_date: string
+          appointment_time: string
+          created_at: string | null
+          customer_name: string
+          customer_phone: string | null
+          id: string
+          notes: string | null
+          professional_service_id: string
+          service_id: string | null
+          status: string | null
+          total_price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          appointment_date: string
+          appointment_time: string
+          created_at?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          id?: string
+          notes?: string | null
+          professional_service_id: string
+          service_id?: string | null
+          status?: string | null
+          total_price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          appointment_date?: string
+          appointment_time?: string
+          created_at?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          id?: string
+          notes?: string | null
+          professional_service_id?: string
+          service_id?: string | null
+          status?: string | null
+          total_price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hairdresser_appointments_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hairdresser_appointments_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "hairdresser_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hairdresser_services: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          duration_minutes: number | null
+          gender_target: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          price: number
+          professional_service_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          gender_target?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price: number
+          professional_service_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          gender_target?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price?: number
+          professional_service_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hairdresser_services_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       health_check_reports: {
         Row: {
           checks: Json
@@ -4299,6 +4812,137 @@ export type Database = {
           uptime?: number | null
         }
         Relationships: []
+      }
+      health_consultations: {
+        Row: {
+          consultation_date: string
+          consultation_fee: number | null
+          consultation_time: string
+          created_at: string | null
+          diagnosis: string | null
+          follow_up_date: string | null
+          id: string
+          notes: string | null
+          patient_id: string | null
+          prescription: string | null
+          professional_service_id: string
+          reason: string | null
+          status: string | null
+          treatment: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          consultation_date: string
+          consultation_fee?: number | null
+          consultation_time: string
+          created_at?: string | null
+          diagnosis?: string | null
+          follow_up_date?: string | null
+          id?: string
+          notes?: string | null
+          patient_id?: string | null
+          prescription?: string | null
+          professional_service_id: string
+          reason?: string | null
+          status?: string | null
+          treatment?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          consultation_date?: string
+          consultation_fee?: number | null
+          consultation_time?: string
+          created_at?: string | null
+          diagnosis?: string | null
+          follow_up_date?: string | null
+          id?: string
+          notes?: string | null
+          patient_id?: string | null
+          prescription?: string | null
+          professional_service_id?: string
+          reason?: string | null
+          status?: string | null
+          treatment?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_consultations_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "health_patient_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "health_consultations_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      health_patient_records: {
+        Row: {
+          address: string | null
+          allergies: string[] | null
+          blood_type: string | null
+          chronic_conditions: string[] | null
+          created_at: string | null
+          date_of_birth: string | null
+          email: string | null
+          emergency_contact: Json | null
+          gender: string | null
+          id: string
+          notes: string | null
+          patient_name: string
+          phone: string | null
+          professional_service_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          allergies?: string[] | null
+          blood_type?: string | null
+          chronic_conditions?: string[] | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          emergency_contact?: Json | null
+          gender?: string | null
+          id?: string
+          notes?: string | null
+          patient_name: string
+          phone?: string | null
+          professional_service_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          allergies?: string[] | null
+          blood_type?: string | null
+          chronic_conditions?: string[] | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          emergency_contact?: Json | null
+          gender?: string | null
+          id?: string
+          notes?: string | null
+          patient_name?: string
+          phone?: string | null
+          professional_service_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_patient_records_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       id_counters: {
         Row: {
@@ -7287,6 +7931,124 @@ export type Database = {
         }
         Relationships: []
       }
+      realestate_properties: {
+        Row: {
+          address: string | null
+          bathrooms: number | null
+          bedrooms: number | null
+          city: string | null
+          created_at: string | null
+          description: string | null
+          features: string[] | null
+          id: string
+          images: string[] | null
+          price: number
+          professional_service_id: string
+          property_type: string | null
+          status: string | null
+          surface_area: number | null
+          title: string
+          transaction_type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          created_at?: string | null
+          description?: string | null
+          features?: string[] | null
+          id?: string
+          images?: string[] | null
+          price: number
+          professional_service_id: string
+          property_type?: string | null
+          status?: string | null
+          surface_area?: number | null
+          title: string
+          transaction_type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          created_at?: string | null
+          description?: string | null
+          features?: string[] | null
+          id?: string
+          images?: string[] | null
+          price?: number
+          professional_service_id?: string
+          property_type?: string | null
+          status?: string | null
+          surface_area?: number | null
+          title?: string
+          transaction_type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "realestate_properties_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      realestate_visits: {
+        Row: {
+          created_at: string | null
+          id: string
+          notes: string | null
+          property_id: string
+          status: string | null
+          updated_at: string | null
+          visit_date: string
+          visit_time: string
+          visitor_email: string | null
+          visitor_name: string
+          visitor_phone: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          property_id: string
+          status?: string | null
+          updated_at?: string | null
+          visit_date: string
+          visit_time: string
+          visitor_email?: string | null
+          visitor_name: string
+          visitor_phone?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          property_id?: string
+          status?: string | null
+          updated_at?: string | null
+          visit_date?: string
+          visit_time?: string
+          visitor_email?: string | null
+          visitor_name?: string
+          visitor_phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "realestate_visits_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "realestate_properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       registered_motos: {
         Row: {
           brand: string | null
@@ -7372,6 +8134,233 @@ export type Database = {
             columns: ["worker_id"]
             isOneToOne: false
             referencedRelation: "syndicate_workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_orders: {
+        Row: {
+          created_at: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          id: string
+          items: Json
+          notes: string | null
+          order_type: string | null
+          professional_service_id: string
+          status: string | null
+          subtotal: number | null
+          table_number: string | null
+          tax: number | null
+          total: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          items?: Json
+          notes?: string | null
+          order_type?: string | null
+          professional_service_id: string
+          status?: string | null
+          subtotal?: number | null
+          table_number?: string | null
+          tax?: number | null
+          total?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          items?: Json
+          notes?: string | null
+          order_type?: string | null
+          professional_service_id?: string
+          status?: string | null
+          subtotal?: number | null
+          table_number?: string | null
+          tax?: number | null
+          total?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_orders_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_reservations: {
+        Row: {
+          created_at: string | null
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          id: string
+          party_size: number | null
+          professional_service_id: string
+          reservation_date: string
+          reservation_time: string
+          special_requests: string | null
+          status: string | null
+          table_number: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          id?: string
+          party_size?: number | null
+          professional_service_id: string
+          reservation_date: string
+          reservation_time: string
+          special_requests?: string | null
+          status?: string | null
+          table_number?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          id?: string
+          party_size?: number | null
+          professional_service_id?: string
+          reservation_date?: string
+          reservation_time?: string
+          special_requests?: string | null
+          status?: string | null
+          table_number?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_reservations_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_staff: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          hire_date: string | null
+          hourly_rate: number | null
+          id: string
+          name: string
+          phone: string | null
+          professional_service_id: string
+          role: string
+          schedule: Json | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          hire_date?: string | null
+          hourly_rate?: number | null
+          id?: string
+          name: string
+          phone?: string | null
+          professional_service_id: string
+          role: string
+          schedule?: Json | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          hire_date?: string | null
+          hourly_rate?: number | null
+          id?: string
+          name?: string
+          phone?: string | null
+          professional_service_id?: string
+          role?: string
+          schedule?: Json | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_staff_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_stock: {
+        Row: {
+          category: string | null
+          cost_per_unit: number | null
+          created_at: string | null
+          expiry_date: string | null
+          id: string
+          is_low_stock: boolean | null
+          last_restock_date: string | null
+          min_quantity: number | null
+          name: string
+          professional_service_id: string
+          quantity: number
+          supplier: string | null
+          unit: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          cost_per_unit?: number | null
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_low_stock?: boolean | null
+          last_restock_date?: string | null
+          min_quantity?: number | null
+          name: string
+          professional_service_id: string
+          quantity?: number
+          supplier?: string | null
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          cost_per_unit?: number | null
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_low_stock?: boolean | null
+          last_restock_date?: string | null
+          min_quantity?: number | null
+          name?: string
+          professional_service_id?: string
+          quantity?: number
+          supplier?: string | null
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_stock_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
             referencedColumns: ["id"]
           },
         ]
@@ -10340,6 +11329,96 @@ export type Database = {
           },
         ]
       }
+      transport_rides: {
+        Row: {
+          actual_fare: number | null
+          created_at: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          distance_km: number | null
+          dropoff_address: string
+          dropoff_coordinates: Json | null
+          dropoff_time: string | null
+          estimated_fare: number | null
+          id: string
+          notes: string | null
+          payment_method: string | null
+          payment_status: string | null
+          pickup_address: string
+          pickup_coordinates: Json | null
+          pickup_time: string | null
+          professional_service_id: string
+          rating: number | null
+          scheduled_time: string | null
+          status: string | null
+          updated_at: string | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          actual_fare?: number | null
+          created_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          distance_km?: number | null
+          dropoff_address: string
+          dropoff_coordinates?: Json | null
+          dropoff_time?: string | null
+          estimated_fare?: number | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
+          pickup_address: string
+          pickup_coordinates?: Json | null
+          pickup_time?: string | null
+          professional_service_id: string
+          rating?: number | null
+          scheduled_time?: string | null
+          status?: string | null
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          actual_fare?: number | null
+          created_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          distance_km?: number | null
+          dropoff_address?: string
+          dropoff_coordinates?: Json | null
+          dropoff_time?: string | null
+          estimated_fare?: number | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
+          pickup_address?: string
+          pickup_coordinates?: Json | null
+          pickup_time?: string | null
+          professional_service_id?: string
+          rating?: number | null
+          scheduled_time?: string | null
+          status?: string | null
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transport_rides_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transport_rides_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "transport_vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transport_ticket_batches: {
         Row: {
           batch_number: string
@@ -10394,6 +11473,68 @@ export type Database = {
             columns: ["bureau_id"]
             isOneToOne: false
             referencedRelation: "bureaus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transport_vehicles: {
+        Row: {
+          capacity: number | null
+          color: string | null
+          created_at: string | null
+          current_driver_id: string | null
+          id: string
+          inspection_expiry: string | null
+          insurance_expiry: string | null
+          license_plate: string
+          make: string
+          model: string
+          professional_service_id: string
+          status: string | null
+          updated_at: string | null
+          vehicle_type: string | null
+          year: number | null
+        }
+        Insert: {
+          capacity?: number | null
+          color?: string | null
+          created_at?: string | null
+          current_driver_id?: string | null
+          id?: string
+          inspection_expiry?: string | null
+          insurance_expiry?: string | null
+          license_plate: string
+          make: string
+          model: string
+          professional_service_id: string
+          status?: string | null
+          updated_at?: string | null
+          vehicle_type?: string | null
+          year?: number | null
+        }
+        Update: {
+          capacity?: number | null
+          color?: string | null
+          created_at?: string | null
+          current_driver_id?: string | null
+          id?: string
+          inspection_expiry?: string | null
+          insurance_expiry?: string | null
+          license_plate?: string
+          make?: string
+          model?: string
+          professional_service_id?: string
+          status?: string | null
+          updated_at?: string | null
+          vehicle_type?: string | null
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transport_vehicles_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
             referencedColumns: ["id"]
           },
         ]
@@ -12829,6 +13970,7 @@ export type Database = {
           tables_without_rls: number
         }[]
       }
+      check_service_owner: { Args: { service_id: string }; Returns: boolean }
       clean_old_errors: { Args: never; Returns: undefined }
       cleanup_expired_tokens: { Args: never; Returns: undefined }
       cleanup_old_errors: { Args: never; Returns: undefined }
