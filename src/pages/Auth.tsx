@@ -146,7 +146,8 @@ export default function Auth() {
     lastName: '',
     phone: '',
     country: '',
-    city: ''
+    city: '',
+    businessName: '' // Nom de l'entreprise pour les marchands
   });
 
   // Auto-détection de l'indicatif téléphonique basé sur le pays
@@ -233,7 +234,10 @@ export default function Auth() {
               phone: `${phoneCode} ${formData.phone}`,
               country: formData.country,
               city: validatedData.city,
-              custom_id: userCustomId
+              custom_id: userCustomId,
+              // Nom d'entreprise pour les marchands (synchronisation automatique)
+              business_name: validatedData.role === 'vendeur' ? (formData.businessName?.trim() || `${validatedData.firstName} ${validatedData.lastName}`) : null,
+              service_type: validatedData.role === 'vendeur' ? selectedServiceType : null
             },
             emailRedirectTo: `${window.location.origin}/`
           }
@@ -291,6 +295,35 @@ export default function Auth() {
             }
           } catch (syncError) {
             console.error('❌ Erreur synchronisation:', syncError);
+          }
+        }
+
+        // Si c'est un vendeur (marchand), créer automatiquement son profil vendor avec le nom d'entreprise
+        if (!error && authData.user && validatedData.role === 'vendeur') {
+          try {
+            const businessName = formData.businessName?.trim() || `${validatedData.firstName} ${validatedData.lastName}`;
+            
+            const { error: vendorError } = await supabase
+              .from('vendors')
+              .insert({
+                user_id: authData.user.id,
+                business_name: businessName,
+                email: validatedData.email,
+                phone: `${phoneCode} ${formData.phone}`,
+                address: validatedData.city,
+                city: validatedData.city,
+                is_verified: false,
+                is_active: true,
+                service_type: selectedServiceType || 'general'
+              });
+            
+            if (vendorError) {
+              console.error('❌ Erreur création profil vendeur:', vendorError);
+            } else {
+              console.log('✅ Profil vendeur créé avec nom entreprise:', businessName);
+            }
+          } catch (vendorSyncError) {
+            console.error('❌ Erreur synchronisation vendeur:', vendorSyncError);
           }
         }
 
@@ -894,6 +927,28 @@ export default function Auth() {
                       />
                     </div>
                   </div>
+
+                  {/* Champ Nom d'entreprise - uniquement pour les marchands */}
+                  {selectedRole === 'vendeur' && (
+                    <div>
+                      <Label htmlFor="businessName">
+                        <Store className="inline w-4 h-4 mr-1" />
+                        Nom de l'entreprise / Boutique
+                      </Label>
+                      <Input
+                        id="businessName"
+                        type="text"
+                        value={formData.businessName}
+                        onChange={(e) => handleInputChange('businessName', e.target.value)}
+                        placeholder="Ex: Boutique Fatou, Restaurant Le Délice..."
+                        required
+                        className="mt-1"
+                      />
+                      <p className="text-xs text-green-600 mt-1">
+                        ✅ Ce nom s'affichera sur votre profil POS et dans la liste des boutiques
+                      </p>
+                    </div>
+                  )}
 
                   <div>
                     <Label htmlFor="country">Pays</Label>
