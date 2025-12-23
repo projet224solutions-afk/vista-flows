@@ -84,6 +84,7 @@ const AgentCreation = lazy(() => import("./pages/AgentCreation"));
 const WorkerSettings = lazy(() => import("./pages/WorkerSettings"));
 const BadgeVerification = lazy(() => import("./pages/BadgeVerification"));
 const StolenMotoDeclaration = lazy(() => import("./pages/StolenMotoDeclaration"));
+const VisualSearch = lazy(() => import("./pages/VisualSearch"));
 // Ultra-simple loading component - Pure CSS inline (no Tailwind dependency)
 const PageLoader = memo(() => (
   <div style={{ 
@@ -167,6 +168,7 @@ function App() {
               {/* Main App Routes */}
               <Route path="/home" element={<Home />} />
               <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/marketplace/visual-search" element={<VisualSearch />} />
               <Route path="/marketplace/product/:id" element={<ProductDetail />} />
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
