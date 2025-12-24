@@ -210,8 +210,15 @@ serve(async (req) => {
   }
 
   try {
-    const projectId = Deno.env.get('GOOGLE_CLOUD_PROJECT_ID');
-    const serviceAccountJson = Deno.env.get('GOOGLE_CLOUD_SERVICE_ACCOUNT');
+    // Get and parse configuration (handle swapped env vars)
+    let projectId = Deno.env.get('GOOGLE_CLOUD_PROJECT_ID');
+    let serviceAccountJson = Deno.env.get('GOOGLE_CLOUD_SERVICE_ACCOUNT');
+
+    if (projectId && projectId.includes('{') && projectId.includes('project_id')) {
+      serviceAccountJson = projectId;
+      const parsed = JSON.parse(projectId);
+      projectId = parsed.project_id;
+    }
 
     if (!projectId || !serviceAccountJson) {
       throw new Error('Google Cloud configuration missing');
@@ -221,39 +228,51 @@ serve(async (req) => {
     const request = await req.json() as ManageAction;
     const accessToken = await getAccessToken(serviceAccount);
 
+    // Validate topic/subscription names (must start with letter)
+    const validateName = (name: string) => /^[0-9]/.test(name) ? `sol-${name}` : name;
+
     let result: any;
 
     switch (request.action) {
-      case 'createTopic':
-        console.log(`📌 Creating topic: ${request.topicName}`);
-        result = await createTopic(projectId, accessToken, request.topicName);
+      case 'createTopic': {
+        const topicName = validateName(request.topicName);
+        console.log(`📌 Creating topic: ${topicName}`);
+        result = await createTopic(projectId, accessToken, topicName);
         break;
+      }
       
-      case 'deleteTopic':
-        console.log(`🗑️ Deleting topic: ${request.topicName}`);
-        result = await deleteTopic(projectId, accessToken, request.topicName);
+      case 'deleteTopic': {
+        const topicName = validateName(request.topicName);
+        console.log(`🗑️ Deleting topic: ${topicName}`);
+        result = await deleteTopic(projectId, accessToken, topicName);
         break;
+      }
       
       case 'listTopics':
         console.log('📋 Listing topics');
         result = await listTopics(projectId, accessToken);
         break;
       
-      case 'createSubscription':
-        console.log(`📌 Creating subscription: ${request.subscriptionName} for topic: ${request.topicName}`);
+      case 'createSubscription': {
+        const topicName = validateName(request.topicName);
+        const subName = validateName(request.subscriptionName);
+        console.log(`📌 Creating subscription: ${subName} for topic: ${topicName}`);
         result = await createSubscription(
           projectId, 
           accessToken, 
-          request.topicName, 
-          request.subscriptionName,
+          topicName, 
+          subName,
           request.pushEndpoint
         );
         break;
+      }
       
-      case 'deleteSubscription':
-        console.log(`🗑️ Deleting subscription: ${request.subscriptionName}`);
-        result = await deleteSubscription(projectId, accessToken, request.subscriptionName);
+      case 'deleteSubscription': {
+        const subName = validateName(request.subscriptionName);
+        console.log(`🗑️ Deleting subscription: ${subName}`);
+        result = await deleteSubscription(projectId, accessToken, subName);
         break;
+      }
       
       case 'listSubscriptions':
         console.log('📋 Listing subscriptions');

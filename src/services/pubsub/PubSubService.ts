@@ -20,7 +20,7 @@ export interface PullResult {
   error?: string;
 }
 
-// Topics prédéfinis pour 224Solutions
+// Topics prédéfinis pour 224Solutions (noms valides commençant par lettres)
 export const TOPICS = {
   // Transactions et paiements
   TRANSACTION_CREATED: 'transaction-created',
