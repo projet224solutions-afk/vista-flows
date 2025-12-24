@@ -229,16 +229,40 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const authHeader = req.headers.get('Authorization')!;
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    
+    // Vérifier le header d'autorisation
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('Header Authorization manquant');
       throw new Error('Non autorisé');
     }
+    
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Créer un client avec le token de l'utilisateur pour valider
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    });
+    
+    // Valider le token en récupérant l'utilisateur
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError) {
+      console.error('Erreur auth:', authError.message);
+      throw new Error('Non autorisé');
+    }
+    
+    if (!user) {
+      console.error('Utilisateur non trouvé');
+      throw new Error('Non autorisé');
+    }
+    
+    console.log('Utilisateur authentifié:', user.id);
 
     const { channel, uid, role = 'publisher' } = await req.json();
 
