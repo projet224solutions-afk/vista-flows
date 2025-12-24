@@ -146,12 +146,12 @@ export function useVendorStats() {
           .eq('products.vendor_id', vendor.id)
           .lt('quantity', 10);
 
-        // Fetch overdue payments
+        // Fetch overdue payments - Qualify status column to avoid ambiguity
         const { count: overdue_payments } = await supabase
           .from('payment_schedules')
-          .select('*, orders!inner(*)', { count: 'exact', head: true })
+          .select('id, orders!inner(vendor_id)', { count: 'exact', head: true })
           .eq('orders.vendor_id', vendor.id)
-          .eq('status', 'overdue');
+          .eq('payment_schedules.status', 'overdue');
 
         // Fetch customers count (approximate)
         const { count: customers_count } = await supabase
