@@ -214,13 +214,10 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.pubsub-publish]
-verify_jwt = true
+verify_jwt = false
 
 [functions.pubsub-subscribe]
-verify_jwt = true
+verify_jwt = false
 
 [functions.pubsub-manage]
-verify_jwt = true
-
-[functions.pubsub-test]
 verify_jwt = false
