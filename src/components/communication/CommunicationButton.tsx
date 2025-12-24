@@ -60,9 +60,9 @@ export function CommunicationButton({
 
       console.log('✅ Conversation créée:', data);
 
-      // Navigate to conversation
+      // Navigate to conversation using the actual conversation ID
       if (data.conversationId) {
-        navigate(`/communication/direct_${targetId}`);
+        navigate(`/communication/${data.conversationId}`);
         toast.success('Conversation démarrée');
       }
 

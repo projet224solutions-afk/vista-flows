@@ -98,7 +98,7 @@ serve(async (req) => {
           type: 'private',
           creator_id: userId,
           last_message: initialMessage?.text || null,
-          status: 'open',
+          last_message_preview: initialMessage?.text || null,
           created_at: new Date().toISOString()
         })
         .select()
@@ -169,6 +169,8 @@ serve(async (req) => {
           sender_id: userId,
           recipient_id: targetId,
           content: initialMessage.text,
+          topic: 'chat',
+          extension: 'txt',
           type: 'text',
           status: 'sent',
           created_at: new Date().toISOString()
