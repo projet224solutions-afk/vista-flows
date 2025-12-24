@@ -228,48 +228,89 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('Configuration Supabase manquante (SUPABASE_URL/SUPABASE_ANON_KEY)');
+      throw new Error('Configuration Supabase manquante');
+    }
+
     // Vérifier le header d'autorisation
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       console.error('Header Authorization manquant');
       throw new Error('Non autorisé');
     }
-    
-    const token = authHeader.replace('Bearer ', '');
-    
-    // Créer un client avec le token de l'utilisateur pour valider
+
+    const token = authHeader.replace('Bearer ', '').trim();
+    if (!token) {
+      console.error('Token vide');
+      throw new Error('Non autorisé');
+    }
+
+    // Extraire le user_id depuis le JWT (la validité est ensuite confirmée via un appel DB)
+    const parseJwtPayload = (jwt: string): any => {
+      const parts = jwt.split('.');
+      if (parts.length !== 3) throw new Error('JWT invalide');
+      const base64Url = parts[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+      const json = atob(padded);
+      return JSON.parse(json);
+    };
+
+    const claims = parseJwtPayload(token);
+    const userId = typeof claims?.sub === 'string' ? claims.sub : null;
+    const exp = typeof claims?.exp === 'number' ? claims.exp : null;
+
+    if (!userId) {
+      console.error('JWT sans sub');
+      throw new Error('Non autorisé');
+    }
+
+    if (exp && exp <= Math.floor(Date.now() / 1000)) {
+      console.error('JWT expiré');
+      throw new Error('Non autorisé');
+    }
+
+    // Confirmer le token via une requête DB (PostgREST valide la signature JWT)
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
     });
-    
-    // Valider le token en récupérant l'utilisateur
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError) {
-      console.error('Erreur auth:', authError.message);
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (profileError || !profile) {
+      console.error('Validation token DB échouée:', profileError?.message);
       throw new Error('Non autorisé');
     }
-    
-    if (!user) {
-      console.error('Utilisateur non trouvé');
-      throw new Error('Non autorisé');
-    }
-    
-    console.log('Utilisateur authentifié:', user.id);
 
-    const { channel, uid, role = 'publisher' } = await req.json();
+    console.log('Utilisateur authentifié (DB):', userId);
 
-    if (!channel || !uid) {
-      throw new Error('Channel et UID requis');
+    const { channel, uid: requestedUid, role = 'publisher' } = await req.json();
+
+    if (!channel) {
+      throw new Error('Channel requis');
     }
 
+    // On impose l'UID Agora = userId authentifié (évite usurpation)
+    const uid = userId;
+    if (requestedUid && requestedUid !== uid) {
+      console.warn('UID demandé différent du userId authentifié; override.', { requestedUid, uid });
+    }
     const AGORA_APP_ID = Deno.env.get('AGORA_APP_ID');
     const AGORA_APP_CERTIFICATE = Deno.env.get('AGORA_APP_CERTIFICATE');
 
@@ -311,11 +352,12 @@ serve(async (req) => {
   } catch (error) {
     console.error('Erreur génération token Agora:', error);
     const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+    const status = errorMessage === 'Non autorisé' ? 401 : 400;
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 
+        status,
       }
     );
   }
