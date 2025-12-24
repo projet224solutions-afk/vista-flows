@@ -28,7 +28,7 @@ interface AgoraAudioCallProps {
   callerInfo?: {
     name: string;
     avatar?: string;
-    userId: string;
+    userId?: string;
   };
   onCallEnd?: () => void;
 }

@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { useAgentManagement, usePDGManagement, useCommissionManagement, useAgentSystemOverview } from "@/hooks/useAgentSystem";
 import { toast } from "sonner";
-import RealCommunicationInterface from "@/components/communication/RealCommunicationInterface";
+import ProfessionalMessaging from "@/components/messaging/ProfessionalMessaging";
 
 interface AgentManagementDashboardProps {
   pdgId: string;
@@ -566,7 +566,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
         </TabsContent>
 
         <TabsContent value="communication" className="space-y-6">
-          <RealCommunicationInterface />
+          <ProfessionalMessaging />
         </TabsContent>
       </Tabs>
     </div>
