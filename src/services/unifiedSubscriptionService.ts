@@ -323,9 +323,9 @@ export class UnifiedSubscriptionService {
         supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'expired'),
         supabase.from('revenus_pdg').select('amount').eq('source_type', 'frais_abonnement'),
         supabase.from('revenus_pdg').select('amount').eq('source_type', 'frais_abonnement').gte('created_at', firstDayOfMonth.toISOString()),
-        supabase.from('subscriptions').select('id, plans!inner(user_role)', { count: 'exact', head: true }).eq('subscriptions.status', 'active').eq('plans.user_role', 'vendeur'),
-        supabase.from('subscriptions').select('id, plans!inner(user_role)', { count: 'exact', head: true }).eq('subscriptions.status', 'active').eq('plans.user_role', 'taxi'),
-        supabase.from('subscriptions').select('id, plans!inner(user_role)', { count: 'exact', head: true }).eq('subscriptions.status', 'active').eq('plans.user_role', 'livreur')
+        supabase.from('subscriptions').select('id, plans!inner(user_role)', { count: 'exact', head: true }).eq('status', 'active').eq('plans.user_role', 'vendeur'),
+        supabase.from('subscriptions').select('id, plans!inner(user_role)', { count: 'exact', head: true }).eq('status', 'active').eq('plans.user_role', 'taxi'),
+        supabase.from('subscriptions').select('id, plans!inner(user_role)', { count: 'exact', head: true }).eq('status', 'active').eq('plans.user_role', 'livreur')
       ]);
 
       const totalRevenue = (totalRevenueRes.data || []).reduce((sum: number, r: any) => sum + (r.amount || 0), 0);
