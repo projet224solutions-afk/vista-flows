@@ -212,3 +212,12 @@ verify_jwt = true
 
 [functions.fedapay-webhook]
 verify_jwt = false
+
+[functions.pubsub-publish]
+verify_jwt = true
+
+[functions.pubsub-subscribe]
+verify_jwt = true
+
+[functions.pubsub-manage]
+verify_jwt = true
