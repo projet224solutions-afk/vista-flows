@@ -58,33 +58,9 @@ export function useAgora() {
     return data;
   }, []);
 
-  // Auto-initialiser Agora au montage
-  useEffect(() => {
-    const initAgora = async () => {
-      if (isInitialized || !user?.id) return;
-
-      try {
-        // Récupérer un token temporaire pour initialiser
-        const credentials = await fetchAgoraCredentials('init', user.id);
-        
-        const config: AgoraConfig = {
-          appId: credentials.appId,
-          appCertificate: '',
-          tempToken: credentials.token
-        };
-
-        await agoraService.initialize(config);
-        configRef.current = config;
-        setIsInitialized(true);
-        
-        console.log('✅ Agora initialisé automatiquement');
-      } catch (err) {
-        console.error('❌ Erreur initialisation auto Agora:', err);
-      }
-    };
-
-    initAgora();
-  }, [user?.id, isInitialized, fetchAgoraCredentials]);
+  // Note: on n'initialise plus Agora automatiquement au montage.
+  // L'initialisation se fait à la demande lors de joinCall(), pour éviter
+  // des erreurs (token/autorisation) quand l'utilisateur n'utilise pas les appels.
 
   /**
    * Initialiser Agora avec les clés
@@ -137,23 +113,24 @@ export function useAgora() {
 
       console.log('📞 Tentative de rejoindre l\'appel:', channel, 'User:', user.id);
 
-      // S'assurer qu'Agora est initialisé
+      // Récupérer le token (et l'appId) pour ce canal
+      console.log('🔑 Récupération du token pour:', channel);
+      const credentials = await fetchAgoraCredentials(channel, user.id);
+
+      if (!credentials?.appId) {
+        throw new Error('App ID Agora non reçu');
+      }
+
       if (!isInitialized) {
-        console.log('⏳ Initialisation d\'Agora...');
-        const credentials = await fetchAgoraCredentials('init', user.id);
+        console.log('⏳ Initialisation d\'Agora (à la demande)...');
         const config: AgoraConfig = {
           appId: credentials.appId,
           appCertificate: '',
-          tempToken: credentials.token
         };
         await agoraService.initialize(config);
         configRef.current = config;
         setIsInitialized(true);
       }
-
-      // Récupérer le token pour ce canal
-      console.log('🔑 Récupération du token pour:', channel);
-      const credentials = await fetchAgoraCredentials(channel, user.id);
 
       if (!credentials?.token) {
         throw new Error('Token Agora non reçu');

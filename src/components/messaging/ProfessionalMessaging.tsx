@@ -82,7 +82,7 @@ interface Contact {
 
 export default function ProfessionalMessaging() {
   const { user, profile } = useAuth();
-  const { callState, isInitialized: agoraInitialized, startCall, endCall } = useAgora();
+  const { callState, endCall } = useAgora();
   
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
@@ -104,21 +104,14 @@ export default function ProfessionalMessaging() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Handle starting a call
-  const handleStartCall = async (type: 'audio' | 'video') => {
-    if (!activeConversation?.participantId) {
+  const handleStartCall = (type: 'audio' | 'video') => {
+    if (!activeConversation?.participantId || !user?.id) {
       toast.error('Impossible de démarrer l\'appel');
       return;
     }
 
-    try {
-      setCallType(type);
-      setShowCallDialog(true);
-      await startCall(activeConversation.participantId, type === 'video');
-    } catch (error) {
-      console.error('Error starting call:', error);
-      toast.error('Erreur lors du démarrage de l\'appel');
-      setShowCallDialog(false);
-    }
+    setCallType(type);
+    setShowCallDialog(true);
   };
 
   const handleEndCall = () => {
@@ -704,8 +697,8 @@ export default function ProfessionalMessaging() {
                     size="sm" 
                     variant="ghost"
                     onClick={() => handleStartCall('audio')}
-                    disabled={!agoraInitialized}
-                    title={agoraInitialized ? 'Appel audio' : 'Service d\'appel non disponible'}
+                    disabled={!user?.id || !activeConversation?.participantId}
+                    title="Appel audio"
                   >
                     <Phone className="w-4 h-4" />
                   </Button>
@@ -713,8 +706,8 @@ export default function ProfessionalMessaging() {
                     size="sm" 
                     variant="ghost"
                     onClick={() => handleStartCall('video')}
-                    disabled={!agoraInitialized}
-                    title={agoraInitialized ? 'Appel vidéo' : 'Service d\'appel non disponible'}
+                    disabled={!user?.id || !activeConversation?.participantId}
+                    title="Appel vidéo"
                   >
                     <Video className="w-4 h-4" />
                   </Button>
@@ -729,21 +722,21 @@ export default function ProfessionalMessaging() {
                 <DialogContent className="max-w-lg p-0 overflow-hidden">
                   {callType === 'video' ? (
                     <AgoraVideoCall
-                      channel={callState.currentChannel || `call_${activeConversation?.participantId}`}
+                      channel={`dm_${[user?.id, activeConversation?.participantId].filter(Boolean).sort().join('_')}`}
                       isIncoming={false}
                       callerInfo={{
                         name: activeConversation?.name || 'Utilisateur',
-                        avatar: activeConversation?.avatar
+                        avatar: activeConversation?.avatar,
                       }}
                       onCallEnd={handleEndCall}
                     />
                   ) : (
                     <AgoraAudioCall
-                      channel={callState.currentChannel || `call_${activeConversation?.participantId}`}
+                      channel={`dm_${[user?.id, activeConversation?.participantId].filter(Boolean).sort().join('_')}`}
                       isIncoming={false}
                       callerInfo={{
                         name: activeConversation?.name || 'Utilisateur',
-                        avatar: activeConversation?.avatar
+                        avatar: activeConversation?.avatar,
                       }}
                       onCallEnd={handleEndCall}
                     />
