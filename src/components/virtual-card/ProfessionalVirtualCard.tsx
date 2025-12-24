@@ -46,7 +46,7 @@ export const ProfessionalVirtualCard = () => {
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
+  const [showDetails, setShowDetails] = useState(true);
   const [isFlipped, setIsFlipped] = useState(false);
   const [open, setOpen] = useState(false);
 
