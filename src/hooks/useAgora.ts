@@ -121,9 +121,11 @@ export function useAgora() {
    */
   const joinCall = useCallback(async (channel: string, isVideo: boolean = true) => {
     if (!user?.id) {
+      const errorMsg = "Utilisateur non connecté. Veuillez vous connecter.";
+      setError(errorMsg);
       toast({
-        title: "❌ Erreur",
-        description: "Utilisateur non connecté",
+        title: "❌ Erreur d'authentification",
+        description: errorMsg,
         variant: "destructive"
       });
       return;
@@ -133,8 +135,29 @@ export function useAgora() {
       setIsLoading(true);
       setError(null);
 
+      console.log('📞 Tentative de rejoindre l\'appel:', channel, 'User:', user.id);
+
+      // S'assurer qu'Agora est initialisé
+      if (!isInitialized) {
+        console.log('⏳ Initialisation d\'Agora...');
+        const credentials = await fetchAgoraCredentials('init', user.id);
+        const config: AgoraConfig = {
+          appId: credentials.appId,
+          appCertificate: '',
+          tempToken: credentials.token
+        };
+        await agoraService.initialize(config);
+        configRef.current = config;
+        setIsInitialized(true);
+      }
+
       // Récupérer le token pour ce canal
+      console.log('🔑 Récupération du token pour:', channel);
       const credentials = await fetchAgoraCredentials(channel, user.id);
+
+      if (!credentials?.token) {
+        throw new Error('Token Agora non reçu');
+      }
 
       const callConfig: CallConfig = {
         channel,
@@ -143,6 +166,7 @@ export function useAgora() {
         role: 'publisher'
       };
 
+      console.log('🔗 Connexion au canal Agora...');
       await agoraService.joinChannel(callConfig);
 
       setCallState(prev => ({
@@ -153,13 +177,15 @@ export function useAgora() {
         isVideoEnabled: isVideo
       }));
 
+      console.log('✅ Appel rejoint avec succès');
       toast({
-        title: "📞 Appel rejoint",
-        description: `Canal: ${channel}`
+        title: "📞 Appel en cours",
+        description: "Connexion établie"
       });
 
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Erreur rejoindre appel';
+      const errorMsg = err instanceof Error ? err.message : 'Erreur lors de la connexion à l\'appel';
+      console.error('❌ Erreur joinCall:', errorMsg, err);
       setError(errorMsg);
       toast({
         title: "❌ Erreur appel",
@@ -169,7 +195,7 @@ export function useAgora() {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id, toast, fetchAgoraCredentials]);
+  }, [user?.id, toast, fetchAgoraCredentials, isInitialized]);
 
   /**
    * Quitter un appel
