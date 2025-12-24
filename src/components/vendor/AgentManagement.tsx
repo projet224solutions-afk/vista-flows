@@ -12,7 +12,7 @@ import { Users, UserPlus, Settings, MessageSquare, Copy, ExternalLink, Edit, Tre
 import { useVendorAgentsData, type VendorAgent } from '@/hooks/useVendorAgentsData';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import RealCommunicationInterface from '@/components/communication/RealCommunicationInterface';
+import ProfessionalMessaging from '@/components/messaging/ProfessionalMessaging';
 
 export default function AgentManagement() {
   const { 
@@ -1092,7 +1092,7 @@ export default function AgentManagement() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6">
-              <RealCommunicationInterface />
+              <ProfessionalMessaging />
             </CardContent>
           </Card>
         </TabsContent>

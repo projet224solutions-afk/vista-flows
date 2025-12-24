@@ -10,7 +10,7 @@ import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useTransitaireErrorBoundary } from "@/hooks/useTransitaireErrorBoundary";
 
 import { useTransitaireStats } from "@/hooks/useTransitaireStats";
-import RealCommunicationInterface from "@/components/communication/RealCommunicationInterface";
+import ProfessionalMessaging from "@/components/messaging/ProfessionalMessaging";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
@@ -283,7 +283,7 @@ export default function TransitaireDashboard() {
 
         <TabsContent value="communication" className="space-y-6">
           <div className="px-4 py-6">
-            <RealCommunicationInterface />
+            <ProfessionalMessaging />
           </div>
         </TabsContent>
       </Tabs>
