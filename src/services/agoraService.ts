@@ -271,16 +271,41 @@ class AgoraService {
   private async publishLocalTracks(): Promise<void> {
     if (!this.client) return;
 
+    const tracksToPublish: (IMicrophoneAudioTrack | ICameraVideoTrack)[] = [];
+
     try {
-      // Créer et publier audio
-      this.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-      await this.client.publish([this.localAudioTrack]);
+      // Créer track audio
+      try {
+        this.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack({
+          encoderConfig: 'music_standard'
+        });
+        tracksToPublish.push(this.localAudioTrack);
+        console.log('✅ Track audio créé');
+      } catch (audioError) {
+        console.warn('⚠️ Impossible d\'accéder au microphone:', audioError);
+      }
 
-      // Créer et publier vidéo
-      this.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
-      await this.client.publish([this.localVideoTrack]);
+      // Créer track vidéo
+      try {
+        this.localVideoTrack = await AgoraRTC.createCameraVideoTrack({
+          encoderConfig: '720p_2'
+        });
+        tracksToPublish.push(this.localVideoTrack);
+        console.log('✅ Track vidéo créé');
+        
+        // Notifier que la vidéo locale est prête
+        this.onLocalVideoReady?.(this.localVideoTrack);
+      } catch (videoError) {
+        console.warn('⚠️ Impossible d\'accéder à la caméra:', videoError);
+      }
 
-      console.log('✅ Tracks locaux publiés');
+      // Publier les tracks disponibles
+      if (tracksToPublish.length > 0) {
+        await this.client.publish(tracksToPublish);
+        console.log('✅ Tracks locaux publiés:', tracksToPublish.length);
+      } else {
+        console.warn('⚠️ Aucun track média disponible à publier');
+      }
     } catch (error) {
       console.error('❌ Erreur publication tracks:', error);
       throw error;
@@ -321,32 +346,41 @@ class AgoraService {
 
   /**
    * Activer/désactiver microphone
+   * @returns true si microphone est MUTE (désactivé)
    */
   async toggleMicrophone(): Promise<boolean> {
-    if (!this.localAudioTrack) return false;
+    if (!this.localAudioTrack) {
+      console.warn('⚠️ Pas de track audio local');
+      return true; // Considéré comme muté
+    }
 
     try {
-      const enabled = !this.localAudioTrack.enabled;
-      await this.localAudioTrack.setEnabled(enabled);
-      console.log('🎤 Microphone:', enabled ? 'activé' : 'désactivé');
-      return enabled;
+      const newEnabled = !this.localAudioTrack.enabled;
+      await this.localAudioTrack.setEnabled(newEnabled);
+      const isMuted = !newEnabled; // Inversé: enabled=true signifie isMuted=false
+      console.log('🎤 Microphone:', newEnabled ? 'activé' : 'désactivé (mute)');
+      return isMuted;
     } catch (error) {
       console.error('❌ Erreur toggle microphone:', error);
-      return false;
+      return true; // Considéré comme muté en cas d'erreur
     }
   }
 
   /**
    * Activer/désactiver caméra
+   * @returns true si vidéo est ACTIVÉE
    */
   async toggleCamera(): Promise<boolean> {
-    if (!this.localVideoTrack) return false;
+    if (!this.localVideoTrack) {
+      console.warn('⚠️ Pas de track vidéo local');
+      return false; // Vidéo désactivée
+    }
 
     try {
-      const enabled = !this.localVideoTrack.enabled;
-      await this.localVideoTrack.setEnabled(enabled);
-      console.log('📹 Caméra:', enabled ? 'activée' : 'désactivée');
-      return enabled;
+      const newEnabled = !this.localVideoTrack.enabled;
+      await this.localVideoTrack.setEnabled(newEnabled);
+      console.log('📹 Caméra:', newEnabled ? 'activée' : 'désactivée');
+      return newEnabled;
     } catch (error) {
       console.error('❌ Erreur toggle caméra:', error);
       return false;
