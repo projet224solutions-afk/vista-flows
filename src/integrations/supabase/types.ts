@@ -14907,6 +14907,7 @@ export type Database = {
       is_admin:
         | { Args: never; Returns: boolean }
         | { Args: { _user_id: string }; Returns: boolean }
+      is_admin_or_ceo: { Args: never; Returns: boolean }
       is_agent_in_same_pdg: {
         Args: { _pdg_id: string; _user_id: string }
         Returns: boolean
