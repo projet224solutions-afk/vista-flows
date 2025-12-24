@@ -10,7 +10,7 @@ import {
   Wallet, Receipt, Truck, Megaphone, FileText, Settings,
   Target, TrendingUp, Box, MessageSquare, HeadphonesIcon,
   Store, DollarSign, Boxes, AlertTriangle, Link, Building2,
-  LayoutDashboard, ChevronRight, Star
+  LayoutDashboard, ChevronRight, Star, Smartphone
 } from "lucide-react";
 
 import {
@@ -109,6 +109,7 @@ export function VendorSidebar() {
       icon: Wallet,
       items: [
         { title: "Wallet", icon: Wallet, path: "wallet" },
+        { title: "Carte Virtuelle", icon: Smartphone, path: "virtual-card" },
         { title: "Devis & Factures", icon: FileText, path: "quotes-invoices" },
         { title: "Paiements", icon: CreditCard, path: "payments" },
         { title: "Liens paiement", icon: DollarSign, path: "payment-links" },

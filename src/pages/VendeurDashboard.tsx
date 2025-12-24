@@ -43,6 +43,7 @@ import UniversalCommunicationHub from "@/components/communication/UniversalCommu
 import AffiliateManagement from "@/components/vendor/AffiliateManagement";
 import SupplierManagement from "@/components/vendor/SupplierManagement";
 import UniversalWalletTransactions from "@/components/wallet/UniversalWalletTransactions";
+import { ProfessionalVirtualCard } from "@/components/virtual-card";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 import OfflineSyncPanel from "@/components/vendor/OfflineSyncPanel";
@@ -505,6 +506,17 @@ export default function VendeurDashboard() {
               
               {/* Finances - Wallet toujours accessible pour voir le solde */}
               <Route path="wallet" element={<UniversalWalletTransactions />} />
+              <Route path="virtual-card" element={
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Carte Virtuelle 224PAY</CardTitle>
+                    <CardDescription>Gérez votre carte virtuelle pour les paiements en ligne</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ProfessionalVirtualCard />
+                  </CardContent>
+                </Card>
+              } />
               <Route path="quotes-invoices" element={
                 <ProtectedRoute feature="orders_detailed">
                   <VendorQuotesInvoices />
