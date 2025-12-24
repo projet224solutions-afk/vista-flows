@@ -394,6 +394,28 @@ class AlertingService {
     }, 300000);
   }
 
+  // Patterns à ignorer dans les alertes (déploiements, cache, modules dynamiques)
+  private readonly DEPRIORITIZED_PATTERNS = [
+    'Failed to fetch dynamically imported module',
+    'dynamically imported module',
+    'Loading chunk',
+    'ChunkLoadError',
+    'Failed to fetch',
+    'NetworkError',
+    'network request failed',
+    'ServiceWorker',
+    'workbox',
+    'hot-update',
+    'hmr',
+  ];
+
+  private shouldDeprioritizeError(errorMessage: string): boolean {
+    const message = errorMessage.toLowerCase();
+    return this.DEPRIORITIZED_PATTERNS.some(pattern => 
+      message.includes(pattern.toLowerCase())
+    );
+  }
+
   private async checkForAlerts() {
     try {
       // Récupérer les erreurs récentes (dernière minute)
@@ -409,11 +431,26 @@ class AlertingService {
         return;
       }
 
-      // Évaluer chaque règle d'alerte
+      // Filtrer les erreurs de déploiement/cache (ne pas alerter sur ces erreurs)
+      const criticalErrors = recentErrors.filter(error => 
+        !this.shouldDeprioritizeError(error.error_message || '')
+      );
+
+      // Log silencieux pour les erreurs déprioritisées
+      const deprioritizedCount = recentErrors.length - criticalErrors.length;
+      if (deprioritizedCount > 0) {
+        console.log(`📦 ${deprioritizedCount} erreur(s) de déploiement/cache ignorée(s) dans les alertes`);
+      }
+
+      if (criticalErrors.length === 0) {
+        return;
+      }
+
+      // Évaluer chaque règle d'alerte uniquement sur les erreurs critiques
       for (const rule of this.alertRules) {
         if (!rule.enabled) continue;
         
-        if (rule.condition(recentErrors)) {
+        if (rule.condition(criticalErrors)) {
           rule.action();
         }
       }
