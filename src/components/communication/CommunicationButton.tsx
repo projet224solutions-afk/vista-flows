@@ -1,25 +1,54 @@
 /**
  * 💬 BOUTON COMMUNICATION - 224SOLUTIONS
- * Composant React pour initier une conversation
+ * Composant professionnel pour initier une conversation
+ * 
+ * Features:
+ * - Design accessible et responsive
+ * - États visuels clairs (loading, disabled)
+ * - Validation des entrées
+ * - Intégration avec le hook useCommunicationButton
  */
 
-import React, { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { useCommunicationButton } from '@/hooks/useCommunicationButton';
 
-interface CommunicationButtonProps {
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface CommunicationButtonProps {
+  /** ID de l'utilisateur courant */
   userId: string;
+  /** ID de l'utilisateur cible */
   targetId: string;
+  /** Texte du bouton */
   label?: string;
+  /** Message initial à envoyer */
   initialText?: string;
-  variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'link';
+  /** Variante du bouton */
+  variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'link' | 'destructive';
+  /** Taille du bouton */
   size?: 'default' | 'sm' | 'lg' | 'icon';
+  /** Classes CSS additionnelles */
   className?: string;
+  /** Afficher l'icône */
   showIcon?: boolean;
+  /** Désactiver le bouton */
+  disabled?: boolean;
+  /** Rediriger automatiquement */
+  autoNavigate?: boolean;
+  /** Callback après succès */
+  onSuccess?: () => void;
+  /** Callback en cas d'erreur */
+  onError?: (error: string) => void;
 }
+
+// ============================================================================
+// COMPONENT
+// ============================================================================
 
 export function CommunicationButton({
   userId,
@@ -28,72 +57,147 @@ export function CommunicationButton({
   initialText = 'Bonjour',
   variant = 'default',
   size = 'default',
-  className = '',
-  showIcon = true
+  className,
+  showIcon = true,
+  disabled = false,
+  autoNavigate = true,
+  onSuccess,
+  onError
 }: CommunicationButtonProps) {
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-
-  const handleClick = async () => {
-    if (!userId || !targetId) {
-      toast.error('Informations utilisateur manquantes');
+  const { isLoading, startConversation } = useCommunicationButton({
+    initialMessage: initialText,
+    autoNavigate,
+    showToasts: true,
+    onSuccess: onSuccess ? () => onSuccess() : undefined,
+    onError
+  });
+  
+  const handleClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!userId || !targetId || disabled || isLoading) {
       return;
     }
-
-    setLoading(true);
-
-    try {
-      console.log('📨 Création conversation...');
-
-      // Call edge function to create conversation
-      const { data, error } = await supabase.functions.invoke('communication-handler', {
-        body: {
-          userId,
-          targetId,
-          initialMessage: { text: initialText }
-        }
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      console.log('✅ Conversation créée:', data);
-
-      // Navigate to conversation using the actual conversation ID
-      if (data.conversationId) {
-        navigate(`/communication/${data.conversationId}`);
-        toast.success('Conversation démarrée');
-      }
-
-    } catch (err: any) {
-      console.error('❌ Erreur création conversation:', err);
-      toast.error(err.message || 'Échec de la création de conversation');
-    } finally {
-      setLoading(false);
-    }
+    
+    await startConversation(userId, targetId, initialText);
   };
-
+  
+  const isDisabled = disabled || isLoading || !userId || !targetId;
+  
   return (
     <Button
       onClick={handleClick}
-      disabled={loading}
+      disabled={isDisabled}
       variant={variant}
       size={size}
-      className={className}
+      className={cn(
+        'transition-all duration-200',
+        isLoading && 'cursor-wait',
+        className
+      )}
+      aria-busy={isLoading}
+      aria-label={isLoading ? 'Envoi en cours...' : label}
     >
-      {loading ? (
+      {isLoading ? (
         <>
-          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          Envoi...
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
+          <span>Envoi...</span>
         </>
       ) : (
         <>
-          {showIcon && <MessageSquare className="w-4 h-4 mr-2" />}
-          {label}
+          {showIcon && (
+            <MessageSquare className="w-4 h-4 mr-2" aria-hidden="true" />
+          )}
+          <span>{label}</span>
         </>
       )}
     </Button>
+  );
+}
+
+// ============================================================================
+// VARIANTS
+// ============================================================================
+
+/**
+ * Version icône seule du bouton
+ */
+export function CommunicationIconButton({
+  userId,
+  targetId,
+  initialText = 'Bonjour',
+  className,
+  disabled = false,
+  autoNavigate = true,
+  onSuccess,
+  onError
+}: Omit<CommunicationButtonProps, 'label' | 'showIcon' | 'variant' | 'size'>) {
+  const { isLoading, startConversation } = useCommunicationButton({
+    initialMessage: initialText,
+    autoNavigate,
+    showToasts: true,
+    onSuccess: onSuccess ? () => onSuccess() : undefined,
+    onError
+  });
+  
+  const handleClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!userId || !targetId || disabled || isLoading) {
+      return;
+    }
+    
+    await startConversation(userId, targetId, initialText);
+  };
+  
+  return (
+    <Button
+      onClick={handleClick}
+      disabled={disabled || isLoading || !userId || !targetId}
+      variant="ghost"
+      size="icon"
+      className={cn('h-9 w-9', className)}
+      aria-busy={isLoading}
+      aria-label="Envoyer un message"
+    >
+      {isLoading ? (
+        <Loader2 className="w-4 h-4 animate-spin" />
+      ) : (
+        <MessageSquare className="w-4 h-4" />
+      )}
+    </Button>
+  );
+}
+
+/**
+ * Version compacte pour les listes
+ */
+export function CommunicationCompactButton({
+  userId,
+  targetId,
+  initialText = 'Bonjour',
+  className,
+  disabled = false,
+  onSuccess,
+  onError
+}: Omit<CommunicationButtonProps, 'label' | 'showIcon' | 'variant' | 'size' | 'autoNavigate'>) {
+  return (
+    <CommunicationButton
+      userId={userId}
+      targetId={targetId}
+      initialText={initialText}
+      label="Message"
+      variant="outline"
+      size="sm"
+      showIcon={true}
+      disabled={disabled}
+      autoNavigate={true}
+      className={className}
+      onSuccess={onSuccess}
+      onError={onError}
+    />
   );
 }
 
