@@ -74,12 +74,24 @@ serve(async (req) => {
       );
     }
 
-    // Check if order can be cancelled (only pending or confirmed)
-    if (!["pending", "confirmed", "preparing"].includes(order.status)) {
+    // Check if order can be cancelled
+    // Client can only cancel if order is still "pending" (not yet confirmed by vendor)
+    if (order.status !== "pending") {
+      // If confirmed or beyond, client must request a refund instead
+      const statusMessages: Record<string, string> = {
+        confirmed: "Cette commande a été confirmée par le vendeur. Vous pouvez demander un remboursement si nécessaire.",
+        preparing: "Cette commande est en préparation. Vous pouvez demander un remboursement si nécessaire.",
+        shipped: "Cette commande est en cours de livraison. Vous pouvez demander un remboursement si nécessaire.",
+        delivered: "Cette commande a été livrée. Vous pouvez demander un remboursement si nécessaire.",
+        cancelled: "Cette commande est déjà annulée.",
+        refunded: "Cette commande a déjà été remboursée."
+      };
+      
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: "Cette commande ne peut plus être annulée (déjà en transit ou livrée)" 
+          error: statusMessages[order.status] || "Cette commande ne peut plus être annulée.",
+          require_refund_request: ["confirmed", "preparing", "shipped", "delivered"].includes(order.status)
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
