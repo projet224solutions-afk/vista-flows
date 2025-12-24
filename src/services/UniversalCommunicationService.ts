@@ -1,6 +1,15 @@
 /**
- * Service de Communication Universel pour 224SOLUTIONS
- * Gère messagerie, appels audio/vidéo, notifications et audit
+ * 🎯 SERVICE DE COMMUNICATION UNIVERSEL - 224SOLUTIONS
+ * Service professionnel pour la gestion des communications
+ * Version: 2.0.0
+ * 
+ * Features:
+ * - Gestion des conversations (création, récupération)
+ * - Gestion des messages (texte, fichiers, audio, vidéo)
+ * - Gestion des appels (audio, vidéo)
+ * - Notifications et audit
+ * - Recherche utilisateurs
+ * - Subscriptions temps réel
  */
 
 import { supabase } from '@/integrations/supabase/client';
@@ -9,51 +18,95 @@ import type {
   Conversation,
   Call,
   CommunicationNotification,
-  ConversationParticipant,
   UserProfile,
-  MessageMetadata,
-  ConversationMetadata,
-  CallMetadata,
-  NotificationMetadata,
-  PaginationParams,
-  PaginatedResponse,
-  SearchParams,
-  SearchResult,
-  UploadOptions,
-  UploadProgress,
+  MessageType,
 } from '@/types/communication.types';
 
-// Export des types pour compatibilité backward
+// Re-export des types pour compatibilité
 export type {
   Message,
   Conversation,
   Call,
   CommunicationNotification,
-  ConversationParticipant,
   UserProfile,
 };
 
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const MAX_MESSAGE_LENGTH = 5000;
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const STORAGE_BUCKET = 'communication-files';
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+function isDirectConversation(conversationId: string): boolean {
+  return conversationId.startsWith('direct_');
+}
+
+function extractRecipientFromDirectId(conversationId: string): string {
+  return conversationId.replace('direct_', '');
+}
+
+function validateUUID(id: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
+}
+
+function getFileType(mimeType: string, fileName: string): MessageType {
+  if (mimeType.startsWith('image/')) return 'image';
+  if (mimeType.startsWith('video/')) return 'video';
+  if (mimeType.startsWith('audio/') || fileName.startsWith('audio_')) return 'audio';
+  return 'file';
+}
+
+// ============================================================================
+// SERVICE CLASS
+// ============================================================================
+
 class UniversalCommunicationService {
+  
+  // ==========================================================================
+  // CONVERSATIONS
+  // ==========================================================================
+
   /**
    * Récupérer toutes les conversations de l'utilisateur
    */
   async getConversations(userId: string): Promise<Conversation[]> {
+    if (!validateUUID(userId)) {
+      throw new Error('ID utilisateur invalide');
+    }
+
     try {
-      // Récupérer les conversations normales (avec conversation_id)
-      const { data: normalConvs, error: convError } = await supabase.rpc('get_user_conversations', {
-        p_user_id: userId
-      });
+      console.log('[Communication] Chargement conversations pour:', userId);
 
-      if (convError) throw convError;
+      // Récupérer les conversations avec conversation_id
+      const { data: normalConvs, error: convError } = await supabase.rpc(
+        'get_user_conversations',
+        { p_user_id: userId }
+      );
 
-      // Récupérer les conversations de messages directs (sans conversation_id)
-      const { data: directConvs, error: directError } = await supabase.rpc('get_user_direct_message_conversations', {
-        p_user_id: userId
-      });
+      if (convError) {
+        console.error('[Communication] Erreur RPC get_user_conversations:', convError);
+        throw convError;
+      }
 
-      if (directError) throw directError;
+      // Récupérer les conversations directes (sans conversation_id)
+      const { data: directConvs, error: directError } = await supabase.rpc(
+        'get_user_direct_message_conversations',
+        { p_user_id: userId }
+      );
 
-      // Fusionner et trier par date de dernier message
+      if (directError) {
+        console.error('[Communication] Erreur RPC get_user_direct_message_conversations:', directError);
+        // Ne pas throw, continuer avec les conversations normales
+      }
+
+      // Fusionner et trier par date
       const allConversations = [
         ...(normalConvs || []),
         ...(directConvs || [])
@@ -63,9 +116,10 @@ class UniversalCommunicationService {
         return dateB.getTime() - dateA.getTime();
       });
 
-      return allConversations as any;
+      console.log('[Communication] Conversations chargées:', allConversations.length);
+      return allConversations as unknown as Conversation[];
     } catch (error) {
-      console.error('Erreur récupération conversations:', error);
+      console.error('[Communication] Erreur getConversations:', error);
       throw error;
     }
   }
@@ -79,39 +133,60 @@ class UniversalCommunicationService {
     name?: string,
     type: 'private' | 'group' = 'private'
   ): Promise<Conversation> {
+    if (!validateUUID(creatorId)) {
+      throw new Error('ID créateur invalide');
+    }
+
+    for (const id of participantIds) {
+      if (!validateUUID(id)) {
+        throw new Error(`ID participant invalide: ${id}`);
+      }
+    }
+
     try {
+      console.log('[Communication] Création conversation:', { participantIds, creatorId, type });
+
       // Créer la conversation
       const { data: conversation, error: convError } = await supabase
         .from('conversations')
         .insert({
           type,
-          name,
-          creator_id: creatorId
+          name: name || null,
+          creator_id: creatorId,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         })
         .select()
         .single();
 
       if (convError) throw convError;
 
-      // Ajouter les participants (incluant le créateur)
+      // Ajouter les participants
       const allParticipantIds = Array.from(new Set([creatorId, ...participantIds]));
-      const participants = allParticipantIds.map(userId => ({
+      const participants = allParticipantIds.map((userId, index) => ({
         conversation_id: conversation.id,
-        user_id: userId
+        user_id: userId,
+        role: index === 0 ? 'admin' : 'member',
+        joined_at: new Date().toISOString()
       }));
 
       const { error: participantsError } = await supabase
         .from('conversation_participants')
         .insert(participants);
 
-      if (participantsError) throw participantsError;
+      if (participantsError) {
+        // Rollback: supprimer la conversation
+        await supabase.from('conversations').delete().eq('id', conversation.id);
+        throw participantsError;
+      }
 
-      // Audit log
+      // Log audit
       await this.logAudit(creatorId, 'conversation_created', conversation.id);
 
+      // Récupérer la conversation complète
       return await this.getConversationById(conversation.id);
     } catch (error) {
-      console.error('Erreur création conversation:', error);
+      console.error('[Communication] Erreur createConversation:', error);
       throw error;
     }
   }
@@ -122,72 +197,85 @@ class UniversalCommunicationService {
   async getConversationById(conversationId: string): Promise<Conversation> {
     try {
       const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user) throw new Error('Non authentifié');
+      if (!session?.session?.user) {
+        throw new Error('Non authentifié');
+      }
 
       const conversations = await this.getConversations(session.session.user.id);
       const conversation = conversations.find(c => c.id === conversationId);
-      
-      if (!conversation) throw new Error('Conversation non trouvée');
+
+      if (!conversation) {
+        throw new Error('Conversation non trouvée');
+      }
+
       return conversation;
     } catch (error) {
-      console.error('Erreur récupération conversation:', error);
+      console.error('[Communication] Erreur getConversationById:', error);
       throw error;
     }
   }
+
+  // ==========================================================================
+  // MESSAGES
+  // ==========================================================================
 
   /**
    * Récupérer les messages d'une conversation
    */
   async getMessages(conversationId: string, limit = 50): Promise<Message[]> {
     try {
-      // Si c'est une conversation directe (ID commence par "direct_")
-      if (conversationId.startsWith('direct_')) {
-        const otherUserId = conversationId.replace('direct_', '');
+      console.log('[Communication] Chargement messages pour:', conversationId);
+
+      let query;
+
+      if (isDirectConversation(conversationId)) {
+        // Conversation directe
+        const otherUserId = extractRecipientFromDirectId(conversationId);
         const { data: session } = await supabase.auth.getSession();
-        if (!session?.session?.user) throw new Error('Non authentifié');
         
+        if (!session?.session?.user) {
+          throw new Error('Non authentifié');
+        }
+
         const currentUserId = session.session.user.id;
-        
-        const { data, error } = await supabase
+
+        query = supabase
           .from('messages')
           .select(`
             *,
             sender:profiles!messages_sender_id_fkey (
-              first_name,
-              last_name,
-              email,
-              avatar_url
+              id, first_name, last_name, email, avatar_url
             )
           `)
           .is('conversation_id', null)
           .or(`and(sender_id.eq.${currentUserId},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${currentUserId})`)
           .order('created_at', { ascending: false })
           .limit(limit);
-
-        if (error) throw error;
-        return ((data || []) as any[]).reverse();
+      } else {
+        // Conversation normale
+        query = supabase
+          .from('messages')
+          .select(`
+            *,
+            sender:profiles!messages_sender_id_fkey (
+              id, first_name, last_name, email, avatar_url
+            )
+          `)
+          .eq('conversation_id', conversationId)
+          .order('created_at', { ascending: false })
+          .limit(limit);
       }
-      
-      // Conversation normale avec conversation_id
-      const { data, error } = await supabase
-        .from('messages')
-        .select(`
-          *,
-          sender:profiles!messages_sender_id_fkey (
-            first_name,
-            last_name,
-            email,
-            avatar_url
-          )
-        `)
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: false })
-        .limit(limit);
+
+      const { data, error } = await query;
 
       if (error) throw error;
-      return ((data || []) as any[]).reverse();
+
+      const messages = (data || []).reverse();
+      console.log('[Communication] Messages chargés:', messages.length);
+      
+      return messages as Message[];
     } catch (error) {
-      console.error('Erreur récupération messages:', error);
+      console.error('[Communication] Erreur getMessages:', error);
       throw error;
     }
   }
@@ -200,122 +288,125 @@ class UniversalCommunicationService {
     senderId: string,
     content: string
   ): Promise<Message> {
-    try {
-      console.log('sendTextMessage appelé:', { conversationId, senderId, contentLength: content.length });
-      
-      // Si c'est une conversation directe (ID commence par "direct_")
-      if (conversationId.startsWith('direct_')) {
-        const recipientId = conversationId.replace('direct_', '');
-        console.log('Conversation directe détectée, recipient:', recipientId);
-        
-        const { data, error } = await supabase
-          .from('messages')
-          .insert({
-            sender_id: senderId,
-            recipient_id: recipientId,
-            content,
-            type: 'text',
-            status: 'sent'
-          } as any)
-          .select()
-          .single();
+    if (!content.trim()) {
+      throw new Error('Le message ne peut pas être vide');
+    }
 
-        if (error) {
-          console.error('Erreur insert message direct:', error);
-          throw error;
-        }
-        console.log('Message direct inséré:', data.id);
-        await this.logAudit(senderId, 'message_sent', data.id);
-        return data as any;
+    if (content.length > MAX_MESSAGE_LENGTH) {
+      throw new Error(`Le message ne peut pas dépasser ${MAX_MESSAGE_LENGTH} caractères`);
+    }
+
+    try {
+      console.log('[Communication] Envoi message texte:', { conversationId, senderId });
+
+      let recipientId: string;
+      let dbConversationId: string | null;
+
+      if (isDirectConversation(conversationId)) {
+        recipientId = extractRecipientFromDirectId(conversationId);
+        dbConversationId = null;
+      } else {
+        const conversation = await this.getConversationById(conversationId);
+        const recipient = conversation.participants.find(p => p.user_id !== senderId);
+        recipientId = recipient?.user_id || senderId;
+        dbConversationId = conversationId;
       }
-      
-      // Obtenir le destinataire pour conversation normale
-      console.log('Récupération de la conversation:', conversationId);
-      const conversation = await this.getConversationById(conversationId);
-      const recipientId = conversation.participants.find((p: any) => p.user_id !== senderId)?.user_id || senderId;
-      console.log('Recipient trouvé:', recipientId);
 
       const { data, error } = await supabase
         .from('messages')
         .insert({
-          conversation_id: conversationId,
+          conversation_id: dbConversationId,
           sender_id: senderId,
           recipient_id: recipientId,
           content,
+          topic: 'chat',
+          extension: 'txt',
           type: 'text',
-          status: 'sent'
-        } as any)
+          status: 'sent',
+          created_at: new Date().toISOString()
+        })
         .select()
         .single();
 
-      if (error) {
-        console.error('Erreur insert message conversation:', error);
-        throw error;
-      }
-      console.log('Message conversation inséré:', data.id);
+      if (error) throw error;
+
       await this.logAudit(senderId, 'message_sent', data.id);
-      return data as any;
+      
+      console.log('[Communication] Message envoyé:', data.id);
+      return data as Message;
     } catch (error) {
-      console.error('Erreur envoi message (catch global):', error);
+      console.error('[Communication] Erreur sendTextMessage:', error);
       throw error;
     }
   }
 
   /**
-   * Upload fichier et envoyer message
+   * Envoyer un fichier
    */
   async sendFileMessage(
     conversationId: string,
     senderId: string,
     file: File,
-    type: 'image' | 'video' | 'file' | 'audio' = 'file'
+    type?: 'image' | 'video' | 'file' | 'audio'
   ): Promise<Message> {
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error(`Le fichier ne peut pas dépasser ${MAX_FILE_SIZE / 1024 / 1024}MB`);
+    }
+
     try {
-      console.log('sendFileMessage appelé:', { conversationId, senderId, fileName: file.name, type });
-      
+      console.log('[Communication] Envoi fichier:', { 
+        conversationId, 
+        senderId, 
+        fileName: file.name,
+        fileSize: file.size 
+      });
+
+      // Déterminer le type de fichier
+      const fileType = type || getFileType(file.type, file.name);
+
       // Upload du fichier
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const fileExt = file.name.split('.').pop() || 'bin';
+      const fileName = `${Date.now()}_${crypto.randomUUID()}.${fileExt}`;
       const filePath = `communication/${conversationId}/${fileName}`;
 
-      console.log('Upload fichier vers storage:', filePath);
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('communication-files')
+      const { error: uploadError } = await supabase.storage
+        .from(STORAGE_BUCKET)
         .upload(filePath, file);
 
       if (uploadError) {
-        console.error('Erreur upload storage:', uploadError);
-        throw uploadError;
+        console.error('[Communication] Erreur upload:', uploadError);
+        throw new Error(`Échec upload: ${uploadError.message}`);
       }
 
       // Obtenir l'URL publique
       const { data: { publicUrl } } = supabase.storage
-        .from('communication-files')
+        .from(STORAGE_BUCKET)
         .getPublicUrl(filePath);
 
-      console.log('URL publique générée:', publicUrl);
-
-      // Obtenir le destinataire
+      // Déterminer le destinataire
       let recipientId: string;
-      
-      if (conversationId.startsWith('direct_')) {
-        // Conversation directe
-        recipientId = conversationId.replace('direct_', '');
+      let dbConversationId: string | null;
+
+      if (isDirectConversation(conversationId)) {
+        recipientId = extractRecipientFromDirectId(conversationId);
+        dbConversationId = null;
       } else {
-        // Conversation normale
         const conversation = await this.getConversationById(conversationId);
-        recipientId = conversation.participants.find((p: any) => p.user_id !== senderId)?.user_id || senderId;
+        const recipient = conversation.participants.find(p => p.user_id !== senderId);
+        recipientId = recipient?.user_id || senderId;
+        dbConversationId = conversationId;
       }
 
-      console.log('Insertion message dans DB:', { type, recipientId });
+      // Créer le message
       const { data, error } = await supabase
         .from('messages')
         .insert({
-          conversation_id: conversationId.startsWith('direct_') ? null : conversationId,
           sender_id: senderId,
           recipient_id: recipientId,
           content: file.name,
-          type,
+          topic: 'chat',
+          extension: fileExt,
+          type: fileType,
           status: 'sent',
           file_url: publicUrl,
           file_name: file.name,
@@ -324,15 +415,14 @@ class UniversalCommunicationService {
         .select()
         .single();
 
-      if (error) {
-        console.error('Erreur insertion message:', error);
-        throw error;
-      }
-      console.log('Message fichier inséré:', data.id);
+      if (error) throw error;
+
       await this.logAudit(senderId, 'message_sent', data.id);
-      return data as any;
+      
+      console.log('[Communication] Fichier envoyé:', data.id);
+      return data as Message;
     } catch (error) {
-      console.error('Erreur envoi fichier (catch global):', error);
+      console.error('[Communication] Erreur sendFileMessage:', error);
       throw error;
     }
   }
@@ -342,37 +432,104 @@ class UniversalCommunicationService {
    */
   async markMessagesAsRead(conversationId: string, userId: string): Promise<void> {
     try {
-      // Si c'est une conversation directe (ID commence par "direct_")
-      if (conversationId.startsWith('direct_')) {
-        const otherUserId = conversationId.replace('direct_', '');
-        
-        // Marquer comme lus les messages reçus de l'autre utilisateur
-        const { error } = await supabase
+      if (isDirectConversation(conversationId)) {
+        const otherUserId = extractRecipientFromDirectId(conversationId);
+
+        await supabase
           .from('messages')
           .update({ read_at: new Date().toISOString() })
           .is('conversation_id', null)
           .eq('sender_id', otherUserId)
           .eq('recipient_id', userId)
           .is('read_at', null);
-
-        if (error) throw error;
       } else {
-        // Conversation normale avec conversation_id
-        const { error } = await supabase.rpc('mark_messages_as_read', {
+        await supabase.rpc('mark_messages_as_read', {
           p_conversation_id: conversationId,
           p_user_id: userId
         });
-
-        if (error) throw error;
       }
 
-      // Audit log
       await this.logAudit(userId, 'message_read', conversationId);
     } catch (error) {
-      console.error('Erreur marquage messages lus:', error);
+      console.error('[Communication] Erreur markMessagesAsRead:', error);
       throw error;
     }
   }
+
+  /**
+   * Supprimer un message
+   */
+  async deleteMessage(messageId: string, userId: string): Promise<void> {
+    try {
+      // Vérifier l'auteur
+      const { data: message, error: fetchError } = await supabase
+        .from('messages')
+        .select('sender_id')
+        .eq('id', messageId)
+        .single();
+
+      if (fetchError) throw fetchError;
+      
+      if (message.sender_id !== userId) {
+        throw new Error('Vous ne pouvez supprimer que vos propres messages');
+      }
+
+      const { error } = await supabase
+        .from('messages')
+        .delete()
+        .eq('id', messageId);
+
+      if (error) throw error;
+      
+      await this.logAudit(userId, 'message_deleted', messageId);
+    } catch (error) {
+      console.error('[Communication] Erreur deleteMessage:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Modifier un message
+   */
+  async editMessage(messageId: string, userId: string, newContent: string): Promise<void> {
+    if (!newContent.trim()) {
+      throw new Error('Le message ne peut pas être vide');
+    }
+
+    try {
+      // Vérifier l'auteur
+      const { data: message, error: fetchError } = await supabase
+        .from('messages')
+        .select('sender_id')
+        .eq('id', messageId)
+        .single();
+
+      if (fetchError) throw fetchError;
+      
+      if (message.sender_id !== userId) {
+        throw new Error('Vous ne pouvez modifier que vos propres messages');
+      }
+
+      const { error } = await supabase
+        .from('messages')
+        .update({ 
+          content: newContent,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', messageId);
+
+      if (error) throw error;
+      
+      await this.logAudit(userId, 'message_edited', messageId);
+    } catch (error) {
+      console.error('[Communication] Erreur editMessage:', error);
+      throw error;
+    }
+  }
+
+  // ==========================================================================
+  // CALLS
+  // ==========================================================================
 
   /**
    * Démarrer un appel
@@ -382,6 +539,10 @@ class UniversalCommunicationService {
     receiverId: string,
     callType: 'audio' | 'video'
   ): Promise<Call> {
+    if (!validateUUID(callerId) || !validateUUID(receiverId)) {
+      throw new Error('IDs invalides');
+    }
+
     try {
       const { data, error } = await supabase
         .from('calls')
@@ -389,19 +550,18 @@ class UniversalCommunicationService {
           caller_id: callerId,
           receiver_id: receiverId,
           call_type: callType,
-          status: 'ringing'
+          status: 'ringing',
+          started_at: new Date().toISOString()
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      // Audit log
       await this.logAudit(callerId, 'call_started', data.id);
-
-      return data as any;
+      return data as Call;
     } catch (error) {
-      console.error('Erreur démarrage appel:', error);
+      console.error('[Communication] Erreur startCall:', error);
       throw error;
     }
   }
@@ -422,16 +582,19 @@ class UniversalCommunicationService {
 
       if (error) throw error;
 
-      // Audit log
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
         await this.logAudit(session.session.user.id, 'call_ended', callId);
       }
     } catch (error) {
-      console.error('Erreur fin appel:', error);
+      console.error('[Communication] Erreur endCall:', error);
       throw error;
     }
   }
+
+  // ==========================================================================
+  // NOTIFICATIONS
+  // ==========================================================================
 
   /**
    * Récupérer les notifications non lues
@@ -446,9 +609,9 @@ class UniversalCommunicationService {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return (data || []) as any;
+      return (data || []) as CommunicationNotification[];
     } catch (error) {
-      console.error('Erreur récupération notifications:', error);
+      console.error('[Communication] Erreur getUnreadNotifications:', error);
       throw error;
     }
   }
@@ -465,174 +628,100 @@ class UniversalCommunicationService {
 
       if (error) throw error;
     } catch (error) {
-      console.error('Erreur marquage notification:', error);
+      console.error('[Communication] Erreur markNotificationAsRead:', error);
       throw error;
     }
   }
 
+  // ==========================================================================
+  // USERS
+  // ==========================================================================
+
   /**
-   * Supprimer un message
+   * Rechercher des utilisateurs
    */
-  async deleteMessage(messageId: string, userId: string): Promise<void> {
-    try {
-      // Vérifier que l'utilisateur est l'auteur du message
-      const { data: message, error: fetchError } = await supabase
-        .from('messages')
-        .select('sender_id')
-        .eq('id', messageId)
-        .single();
-
-      if (fetchError) throw fetchError;
-      if (message.sender_id !== userId) {
-        throw new Error('Vous ne pouvez supprimer que vos propres messages');
-      }
-
-      const { error } = await supabase
-        .from('messages')
-        .delete()
-        .eq('id', messageId);
-
-      if (error) throw error;
-      await this.logAudit(userId, 'message_deleted', messageId);
-    } catch (error) {
-      console.error('Erreur suppression message:', error);
-      throw error;
+  async searchUsers(query: string): Promise<UserProfile[]> {
+    if (!query.trim() || query.length < 2) {
+      return [];
     }
-  }
 
-  /**
-   * Modifier un message
-   */
-  async editMessage(messageId: string, userId: string, newContent: string): Promise<void> {
-    try {
-      // Vérifier que l'utilisateur est l'auteur du message
-      const { data: message, error: fetchError } = await supabase
-        .from('messages')
-        .select('sender_id')
-        .eq('id', messageId)
-        .single();
-
-      if (fetchError) throw fetchError;
-      if (message.sender_id !== userId) {
-        throw new Error('Vous ne pouvez modifier que vos propres messages');
-      }
-
-      const { error } = await supabase
-        .from('messages')
-        .update({ content: newContent })
-        .eq('id', messageId);
-
-      if (error) throw error;
-      await this.logAudit(userId, 'message_edited', messageId);
-    } catch (error) {
-      console.error('Erreur modification message:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Chercher des utilisateurs pour démarrer une conversation
-   */
-  async searchUsers(query: string): Promise<Array<{
-    id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-    avatar_url?: string;
-  }>> {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, email, avatar_url')
+        .select('id, first_name, last_name, email, avatar_url, public_id')
         .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%`)
         .limit(10);
 
       if (error) throw error;
-      return (data || []) as any;
+      return (data || []) as UserProfile[];
     } catch (error) {
-      console.error('Erreur recherche utilisateurs:', error);
+      console.error('[Communication] Erreur searchUsers:', error);
       throw error;
     }
   }
 
   /**
-   * Récupérer un utilisateur par ID (UUID)
+   * Récupérer un utilisateur par UUID
    */
-  async getUserById(userId: string): Promise<{
-    id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-    avatar_url?: string;
-  } | null> {
+  async getUserById(userId: string): Promise<UserProfile | null> {
+    if (!validateUUID(userId)) {
+      return null;
+    }
+
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, email, avatar_url')
+        .select('id, first_name, last_name, email, avatar_url, public_id')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          // Not found
-          return null;
-        }
-        throw error;
+        console.error('[Communication] Erreur getUserById:', error);
+        return null;
       }
-      return data as any;
+
+      return data as UserProfile | null;
     } catch (error) {
-      console.error('Erreur récupération utilisateur:', error);
+      console.error('[Communication] Erreur getUserById:', error);
       return null;
     }
   }
 
   /**
    * Récupérer un utilisateur par ID personnalisé
-   * Supporte plusieurs formats:
-   * - Custom ID (3 lettres + 4 chiffres): USR0001, VEN0001, PDG0001, DRV0001, CLT0001, AGT0001
-   * - Public ID (format 224): 224-XXX-XXX
    */
-  async getUserByCustomId(customId: string): Promise<{
-    id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-    avatar_url?: string;
-    public_id?: string;
-  } | null> {
-    try {
-      const normalizedId = customId.toUpperCase().trim();
-      console.log('Recherche utilisateur par ID:', normalizedId);
+  async getUserByCustomId(customId: string): Promise<UserProfile | null> {
+    const normalizedId = customId.toUpperCase().trim();
+    console.log('[Communication] Recherche utilisateur par custom ID:', normalizedId);
 
-      // Format 1: ID personnalisé 3 lettres + 4 chiffres (USR0001, VEN0001, etc.)
+    try {
+      // Format: 3 lettres + 4 chiffres (USR0001, VEN0001, etc.)
       const customIdRegex = /^[A-Z]{3}\d{4}$/;
       if (customIdRegex.test(normalizedId)) {
-        // Rechercher dans user_ids
-        const { data: userIdData, error: userIdError } = await supabase
+        // Chercher dans user_ids
+        const { data: userIdData } = await supabase
           .from('user_ids')
           .select('user_id')
           .eq('custom_id', normalizedId)
           .maybeSingle();
 
         if (userIdData?.user_id) {
-          console.log('Trouvé dans user_ids:', userIdData.user_id);
-          return await this.getProfileById(userIdData.user_id);
+          return await this.getUserById(userIdData.user_id);
         }
 
-        // Fallback: chercher dans profiles.public_id
-        const { data: profileByPublicId } = await supabase
+        // Fallback: profiles.public_id
+        const { data: profileData } = await supabase
           .from('profiles')
           .select('id, first_name, last_name, email, avatar_url, public_id')
           .eq('public_id', normalizedId)
           .maybeSingle();
 
-        if (profileByPublicId) {
-          console.log('Trouvé dans profiles.public_id:', profileByPublicId.id);
-          return profileByPublicId as any;
+        if (profileData) {
+          return profileData as UserProfile;
         }
       }
 
-      // Format 2: ID public 224-XXX-XXX
+      // Format: 224-XXX-XXX
       const publicIdRegex = /^224-[A-Z]{3}-\d{3}$/;
       if (publicIdRegex.test(normalizedId)) {
         const { data: profileData } = await supabase
@@ -642,67 +731,21 @@ class UniversalCommunicationService {
           .maybeSingle();
 
         if (profileData) {
-          console.log('Trouvé par public_id:', profileData.id);
-          return profileData as any;
+          return profileData as UserProfile;
         }
       }
 
-      // Format 3: Recherche flexible (préfixes connus: CLT, VND, AGT, DRV, PDG, BST, USR, VEN)
-      const knownPrefixes = ['CLT', 'VND', 'AGT', 'DRV', 'PDG', 'BST', 'USR', 'VEN'];
-      const prefix = normalizedId.substring(0, 3);
-      
-      if (knownPrefixes.includes(prefix)) {
-        // Rechercher dans toutes les sources possibles
-        const { data: allUserIds } = await supabase
-          .from('user_ids')
-          .select('user_id, custom_id')
-          .ilike('custom_id', `${normalizedId}%`)
-          .limit(1);
-
-        if (allUserIds && allUserIds.length > 0) {
-          return await this.getProfileById(allUserIds[0].user_id);
-        }
-
-        // Recherche dans profiles
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name, email, avatar_url, public_id')
-          .ilike('public_id', `%${normalizedId}%`)
-          .limit(1);
-
-        if (profiles && profiles.length > 0) {
-          return profiles[0] as any;
-        }
-      }
-
-      console.log('Utilisateur non trouvé pour ID:', normalizedId);
+      console.log('[Communication] Utilisateur non trouvé pour ID:', normalizedId);
       return null;
     } catch (error) {
-      console.error('Erreur récupération utilisateur par custom_id:', error);
+      console.error('[Communication] Erreur getUserByCustomId:', error);
       return null;
     }
   }
 
-  /**
-   * Helper pour récupérer un profil par son UUID
-   */
-  private async getProfileById(userId: string): Promise<{
-    id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-    avatar_url?: string;
-    public_id?: string;
-  } | null> {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, first_name, last_name, email, avatar_url, public_id')
-      .eq('id', userId)
-      .maybeSingle();
-
-    if (error || !data) return null;
-    return data as any;
-  }
+  // ==========================================================================
+  // SUBSCRIPTIONS
+  // ==========================================================================
 
   /**
    * S'abonner aux nouveaux messages d'une conversation
@@ -711,6 +754,8 @@ class UniversalCommunicationService {
     conversationId: string,
     callback: (message: Message) => void
   ) {
+    console.log('[Communication] Subscription messages:', conversationId);
+
     return supabase
       .channel(`messages:${conversationId}`)
       .on(
@@ -722,23 +767,20 @@ class UniversalCommunicationService {
           filter: `conversation_id=eq.${conversationId}`
         },
         async (payload) => {
-          // Récupérer les détails complets du message
+          // Récupérer le message complet avec le profil
           const { data } = await supabase
             .from('messages')
             .select(`
               *,
               sender:profiles!messages_sender_id_fkey (
-                first_name,
-                last_name,
-                email,
-                avatar_url
+                id, first_name, last_name, email, avatar_url
               )
             `)
             .eq('id', payload.new.id)
             .single();
 
           if (data) {
-            callback(data as any);
+            callback(data as Message);
           }
         }
       )
@@ -752,6 +794,8 @@ class UniversalCommunicationService {
     userId: string,
     callback: (notification: CommunicationNotification) => void
   ) {
+    console.log('[Communication] Subscription notifications:', userId);
+
     return supabase
       .channel(`notifications:${userId}`)
       .on(
@@ -769,8 +813,12 @@ class UniversalCommunicationService {
       .subscribe();
   }
 
+  // ==========================================================================
+  // AUDIT
+  // ==========================================================================
+
   /**
-   * Enregistrer un audit log
+   * Enregistrer un log d'audit
    */
   private async logAudit(
     userId: string,
@@ -782,12 +830,18 @@ class UniversalCommunicationService {
         user_id: userId,
         action_type: actionType,
         target_id: targetId,
-        metadata: {}
+        metadata: {},
+        created_at: new Date().toISOString()
       });
     } catch (error) {
-      console.error('Erreur audit log:', error);
+      // Ne pas faire échouer l'opération principale
+      console.warn('[Communication] Échec audit log:', error);
     }
   }
 }
+
+// ============================================================================
+// EXPORT SINGLETON
+// ============================================================================
 
 export const universalCommunicationService = new UniversalCommunicationService();
