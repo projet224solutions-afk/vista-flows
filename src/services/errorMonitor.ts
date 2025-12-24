@@ -185,37 +185,89 @@ class ErrorMonitorService {
       // Prévenir le comportement par défaut pour éviter les logs en double
       event.preventDefault();
       
-      // Déterminer le type de raison
+      // Déterminer le type de raison avec capture robuste
       const reason = event.reason;
-      let errorMessage = 'Unknown promise rejection';
-      let stackTrace = 'No stack trace available';
-      let errorType = 'unknown';
-      let additionalContext: any = {};
+      let errorMessage = '';
+      let stackTrace = '';
+      let errorType = 'unhandled_rejection';
+      let additionalContext: Record<string, any> = {};
+
+      // Générer une stack trace de contexte
+      const contextStack = new Error('Promise rejection context').stack || '';
 
       // Cas 1: Error object standard
       if (reason instanceof Error) {
-        errorMessage = reason.message || 'Error without message';
-        stackTrace = reason.stack || 'No stack trace';
-        errorType = reason.constructor.name;
+        errorMessage = reason.message || reason.name || 'Error without message';
+        stackTrace = reason.stack || contextStack;
+        errorType = reason.constructor?.name || 'Error';
+        additionalContext = {
+          errorName: reason.name,
+          errorCause: (reason as any).cause,
+        };
       }
       // Cas 2: String
       else if (typeof reason === 'string') {
-        errorMessage = reason;
+        errorMessage = reason || 'Empty string rejection';
         errorType = 'string_rejection';
-        stackTrace = new Error().stack || 'No stack trace';
+        stackTrace = contextStack;
       }
-      // Cas 3: Object avec message
+      // Cas 3: Object avec message/error
       else if (reason && typeof reason === 'object') {
-        errorMessage = reason.message || reason.error || JSON.stringify(reason);
-        errorType = 'object_rejection';
-        stackTrace = reason.stack || new Error().stack || 'No stack trace';
-        additionalContext = { rejectionDetails: reason };
+        // Essayer plusieurs propriétés possibles
+        errorMessage = 
+          reason.message || 
+          reason.error || 
+          reason.msg ||
+          reason.errorMessage ||
+          reason.description ||
+          (reason.data?.message) ||
+          (reason.response?.data?.message) ||
+          (typeof reason.toString === 'function' && reason.toString() !== '[object Object]' 
+            ? reason.toString() 
+            : null) ||
+          JSON.stringify(reason).substring(0, 500);
+        
+        errorType = reason.name || reason.type || reason.code || 'object_rejection';
+        stackTrace = reason.stack || contextStack;
+        
+        // Capturer les détails additionnels
+        additionalContext = {
+          rejectionType: typeof reason,
+          hasMessage: !!reason.message,
+          hasError: !!reason.error,
+          hasStack: !!reason.stack,
+          objectKeys: Object.keys(reason).slice(0, 10),
+          rawValue: JSON.stringify(reason).substring(0, 200),
+        };
       }
-      // Cas 4: Null, undefined ou autre
+      // Cas 4: Null
+      else if (reason === null) {
+        errorMessage = 'Promise rejected with null value';
+        errorType = 'null_rejection';
+        stackTrace = contextStack;
+        additionalContext = { rejectionValue: 'null' };
+      }
+      // Cas 5: Undefined
+      else if (reason === undefined) {
+        errorMessage = 'Promise rejected with undefined value';
+        errorType = 'undefined_rejection';
+        stackTrace = contextStack;
+        additionalContext = { rejectionValue: 'undefined' };
+      }
+      // Cas 6: Autres types primitifs
       else {
-        errorMessage = `Promise rejected with value: ${String(reason)}`;
-        errorType = typeof reason;
-        stackTrace = new Error().stack || 'No stack trace';
+        errorMessage = `Promise rejected with ${typeof reason}: ${String(reason)}`;
+        errorType = `${typeof reason}_rejection`;
+        stackTrace = contextStack;
+        additionalContext = { rejectionValue: String(reason) };
+      }
+
+      // Assurer que les valeurs ne sont jamais vides
+      if (!errorMessage || errorMessage === 'Unknown promise rejection') {
+        errorMessage = `Unhandled rejection (type: ${errorType}, reason type: ${typeof reason})`;
+      }
+      if (!stackTrace || stackTrace === 'No stack trace available') {
+        stackTrace = contextStack || `No stack trace - Location: ${window.location.href}`;
       }
 
       // Filtrer les erreurs non critiques
@@ -225,16 +277,16 @@ class ErrorMonitorService {
 
       this.logError({
         module: 'frontend_promise',
-        error_type: 'unhandled_rejection',
+        error_type: errorType,
         error_message: errorMessage,
         stack_trace: stackTrace,
         severity: 'modérée',
         metadata: {
           promiseState: 'rejected',
-          rejectionType: errorType,
+          originalReasonType: typeof reason,
           timestamp: new Date().toISOString(),
           url: window.location.href,
-          userAgent: navigator.userAgent,
+          userAgent: navigator.userAgent.substring(0, 200),
           ...additionalContext,
         },
       });
