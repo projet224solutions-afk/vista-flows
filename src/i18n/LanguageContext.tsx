@@ -126,11 +126,26 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
   );
 };
 
+// Valeurs par défaut pour usage en dehors du provider (fallback sécurisé)
+const defaultContextValue: LanguageContextType = {
+  language: defaultLanguage,
+  setLanguage: () => console.warn('LanguageProvider not mounted'),
+  t: (key: string) => translations[defaultLanguage]?.[key] || key,
+  userCountry: null,
+  isRTL: false,
+  supportedLanguages
+};
+
 export const useLanguage = (): LanguageContextType => {
   const context = useContext(LanguageContext);
+  
+  // Retourner un fallback silencieux au lieu de throw pour éviter les erreurs
+  // lors du rendu initial ou en dehors du provider
   if (!context) {
-    throw new Error('useLanguage must be used within a LanguageProvider');
+    console.warn('⚠️ useLanguage utilisé hors du LanguageProvider, fallback activé');
+    return defaultContextValue;
   }
+  
   return context;
 };
 
