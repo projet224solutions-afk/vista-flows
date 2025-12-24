@@ -236,23 +236,28 @@ serve(async (req) => {
       throw new Error('Configuration Supabase manquante');
     }
 
+    // Répondre proprement en 401 sans déclencher d'exception (évite le spam de logs)
+    const unauthorized = (reason?: string) =>
+      new Response(
+        JSON.stringify({ error: 'Non autorisé', ...(reason ? { reason } : {}) }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+
     // Vérifier le header d'autorisation
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      console.error('Header Authorization manquant');
-      throw new Error('Non autorisé');
+    if (!authHeader || !authHeader.toLowerCase().startsWith('bearer ')) {
+      return unauthorized('Header Authorization manquant');
     }
 
-    const token = authHeader.replace('Bearer ', '').trim();
+    const token = authHeader.slice('Bearer '.length).trim();
     if (!token) {
-      console.error('Token vide');
-      throw new Error('Non autorisé');
+      return unauthorized('Token vide');
     }
 
     // Extraire le user_id depuis le JWT (la validité est ensuite confirmée via un appel DB)
-    const parseJwtPayload = (jwt: string): any => {
+    const parseJwtPayload = (jwt: string): unknown => {
       const parts = jwt.split('.');
-      if (parts.length !== 3) throw new Error('JWT invalide');
+      if (parts.length !== 3) return null;
       const base64Url = parts[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
@@ -260,18 +265,16 @@ serve(async (req) => {
       return JSON.parse(json);
     };
 
-    const claims = parseJwtPayload(token);
+    const claims = parseJwtPayload(token) as { sub?: string; exp?: number } | null;
     const userId = typeof claims?.sub === 'string' ? claims.sub : null;
     const exp = typeof claims?.exp === 'number' ? claims.exp : null;
 
     if (!userId) {
-      console.error('JWT sans sub');
-      throw new Error('Non autorisé');
+      return unauthorized('JWT sans sub');
     }
 
     if (exp && exp <= Math.floor(Date.now() / 1000)) {
-      console.error('JWT expiré');
-      throw new Error('Non autorisé');
+      return unauthorized('JWT expiré');
     }
 
     // Confirmer le token via une requête DB (PostgREST valide la signature JWT)
@@ -294,8 +297,7 @@ serve(async (req) => {
       .maybeSingle();
 
     if (profileError || !profile) {
-      console.error('Validation token DB échouée:', profileError?.message);
-      throw new Error('Non autorisé');
+      return unauthorized('Validation token DB échouée');
     }
 
     console.log('Utilisateur authentifié (DB):', userId);

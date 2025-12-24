@@ -38,55 +38,15 @@ export default function VendorCommunication() {
     callState,
     isInitialized,
     isLoading,
-    initializeAgora,
     startCall,
     endCall,
     toggleMute,
     toggleVideo
   } = useAgora();
 
-  // Initialiser Agora au chargement
-  useEffect(() => {
-    const initAgora = async () => {
-      try {
-        console.log('Initialisation Agora via Edge Function...');
-        
-        const { data, error } = await supabase.functions.invoke('agora-token', {
-          body: { 
-            channel: 'init',
-            uid: user?.id || 'temp',
-            role: 'publisher'
-          }
-        });
-
-        if (error) {
-          console.error('Erreur récupération config Agora:', error);
-          throw error;
-        }
-
-        console.log('Config Agora récupérée:', { appId: data.appId });
-
-        if (data.appId && !isInitialized) {
-          await initializeAgora({
-            appId: data.appId,
-            appCertificate: '', // Non nécessaire côté client
-            tempToken: data.token
-          });
-        }
-      } catch (error) {
-        console.error('Erreur initialisation Agora:', error);
-        toast({
-          title: "Erreur Agora",
-          description: "Impossible d'initialiser la communication. Vérifiez la configuration.",
-          variant: "destructive"
-        });
-      }
-    };
-
-    if (!isInitialized && user) {
-      initAgora();
-    }
-  }, [isInitialized, initializeAgora, user, toast]);
+  // Agora s'initialise désormais à la demande (useAgora.joinCall/startCall).
+  // On évite d'appeler l'edge function au montage afin de ne pas générer
+  // des erreurs "Non autorisé" quand il n'y a pas de session Supabase.
 
   // Charger les contacts
   useEffect(() => {
