@@ -147,8 +147,15 @@ serve(async (req) => {
   }
 
   try {
-    const projectId = Deno.env.get('GOOGLE_CLOUD_PROJECT_ID');
-    const serviceAccountJson = Deno.env.get('GOOGLE_CLOUD_SERVICE_ACCOUNT');
+    // Get and parse configuration (handle swapped env vars)
+    let projectId = Deno.env.get('GOOGLE_CLOUD_PROJECT_ID');
+    let serviceAccountJson = Deno.env.get('GOOGLE_CLOUD_SERVICE_ACCOUNT');
+
+    if (projectId && projectId.includes('{') && projectId.includes('project_id')) {
+      serviceAccountJson = projectId;
+      const parsed = JSON.parse(projectId);
+      projectId = parsed.project_id;
+    }
 
     if (!projectId || !serviceAccountJson) {
       throw new Error('Google Cloud configuration missing');

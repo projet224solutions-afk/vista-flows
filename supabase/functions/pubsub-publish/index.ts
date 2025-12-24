@@ -124,8 +124,16 @@ serve(async (req) => {
   }
 
   try {
-    const projectId = Deno.env.get('GOOGLE_CLOUD_PROJECT_ID');
-    const serviceAccountJson = Deno.env.get('GOOGLE_CLOUD_SERVICE_ACCOUNT');
+    // Get and parse configuration (handle swapped env vars)
+    let projectId = Deno.env.get('GOOGLE_CLOUD_PROJECT_ID');
+    let serviceAccountJson = Deno.env.get('GOOGLE_CLOUD_SERVICE_ACCOUNT');
+
+    // Check if variables are swapped (projectId contains JSON)
+    if (projectId && projectId.includes('{') && projectId.includes('project_id')) {
+      serviceAccountJson = projectId;
+      const parsed = JSON.parse(projectId);
+      projectId = parsed.project_id;
+    }
 
     if (!projectId || !serviceAccountJson) {
       throw new Error('Google Cloud configuration missing');
@@ -138,10 +146,13 @@ serve(async (req) => {
       throw new Error('Topic and data are required');
     }
 
-    console.log(`📤 Publishing to topic: ${topic}`);
+    // Ensure topic name is valid (prefix with 'sol-' if starts with number)
+    const validTopic = /^[0-9]/.test(topic) ? `sol-${topic}` : topic;
+
+    console.log(`📤 Publishing to topic: ${validTopic}`);
     
     const accessToken = await getAccessToken(serviceAccount);
-    const result = await publishMessage(projectId, accessToken, topic, data, attributes);
+    const result = await publishMessage(projectId, accessToken, validTopic, data, attributes);
 
     console.log(`✅ Message published with ID: ${result.messageId}`);
 
