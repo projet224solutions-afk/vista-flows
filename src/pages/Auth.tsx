@@ -1167,13 +1167,38 @@ export default function Auth() {
               </>
             )}
             
-            {showSignup && (
+              {showSignup && (
               <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
                 <p className="text-purple-800 text-sm">
                   <strong>🎯 Création de compte :</strong> Remplissez les informations ci-dessous pour créer votre compte {selectedRole ? `en tant que ${selectedRole === 'vendeur' ? (selectedServiceType ? 'Marchand Professionnel' : 'Vendeur E-commerce') : selectedRole}` : ''}.
                   {selectedServiceType && (
-                    <span className="block mt-1 font-semibold">
-                      Service professionnel sélectionné
+                    <span className="block mt-2 font-semibold text-primary">
+                      ✓ Service sélectionné : {(() => {
+                        const allServices = [
+                          { id: 'ecommerce', name: 'Boutique', icon: '🏪' },
+                          { id: 'restaurant', name: 'Restaurant', icon: '🍽️' },
+                          { id: 'livraison', name: 'Livraison', icon: '📦' },
+                          { id: 'beaute', name: 'Beauté & Coiffure', icon: '💇' },
+                          { id: 'vtc', name: 'Transport VTC', icon: '🚗' },
+                          { id: 'reparation', name: 'Réparation', icon: '🔧' },
+                          { id: 'menage', name: 'Nettoyage', icon: '✨' },
+                          { id: 'informatique', name: 'Informatique', icon: '💻' },
+                          { id: 'mode', name: 'Mode & Vêtements', icon: '👗' },
+                          { id: 'sante', name: 'Santé & Bien-être', icon: '💊' },
+                          { id: 'electronique', name: 'Électronique', icon: '📱' },
+                          { id: 'maison', name: 'Maison & Déco', icon: '🏠' },
+                          { id: 'location', name: 'Immobilier', icon: '🏢' },
+                          { id: 'education', name: 'Formation', icon: '🎓' },
+                          { id: 'media', name: 'Photo & Vidéo', icon: '📸' },
+                          { id: 'sport', name: 'Sport & Fitness', icon: '🏋️' },
+                          { id: 'voyage', name: 'Voyage & Billetterie', icon: '✈️' },
+                          { id: 'freelance', name: 'Administratif', icon: '💼' },
+                          { id: 'agriculture', name: 'Agriculture', icon: '🌾' },
+                          { id: 'construction', name: 'Construction & BTP', icon: '🏗️' },
+                        ];
+                        const service = allServices.find(s => s.id === selectedServiceType);
+                        return service ? `${service.icon} ${service.name}` : selectedServiceType;
+                      })()}
                     </span>
                   )}
                   {selectedRole === 'vendeur' && !selectedServiceType && (
