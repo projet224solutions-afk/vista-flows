@@ -544,6 +544,11 @@ class UniversalCommunicationService {
     }
 
     try {
+      // Générer un channel unique pour Agora
+      const agoraChannel = `call_${callerId.substring(0, 8)}_${receiverId.substring(0, 8)}_${Date.now()}`;
+      
+      console.log('[Communication] Création appel avec channel Agora:', agoraChannel);
+
       const { data, error } = await supabase
         .from('calls')
         .insert({
@@ -551,15 +556,27 @@ class UniversalCommunicationService {
           receiver_id: receiverId,
           call_type: callType,
           status: 'ringing',
-          started_at: new Date().toISOString()
+          started_at: new Date().toISOString(),
+          metadata: {
+            agora_channel: agoraChannel,
+            initiated_at: new Date().toISOString()
+          }
         })
         .select()
         .single();
 
       if (error) throw error;
 
+      // Ajouter le channel au résultat
+      const callWithChannel = {
+        ...data,
+        agora_channel: agoraChannel
+      };
+
       await this.logAudit(callerId, 'call_started', data.id);
-      return data as Call;
+      console.log('[Communication] Appel créé:', callWithChannel);
+      
+      return callWithChannel as Call;
     } catch (error) {
       console.error('[Communication] Erreur startCall:', error);
       throw error;

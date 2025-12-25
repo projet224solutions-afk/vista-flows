@@ -38,6 +38,7 @@ import AgoraAudioCall from './AgoraAudioCall';
 import ImprovedMessageInput from './ImprovedMessageInput';
 import ContactUserById from './ContactUserById';
 import { useSearchUserId } from '@/hooks/useSearchUserId';
+import { useUserPresence } from '@/hooks/useUserPresence';
 import type { UserProfile } from '@/types/communication.types';
 import { format, isToday, isYesterday } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -57,6 +58,7 @@ export default function UniversalCommunicationHub({
   const { toast } = useToast();
   const { isMobile } = useResponsive();
   const { searchById, loading: searchLoading } = useSearchUserId();
+  const { isUserOnline, getUserStatus } = useUserPresence();
   
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [showSearchById, setShowSearchById] = useState(false);
@@ -464,6 +466,9 @@ export default function UniversalCommunicationHub({
                 filteredConversations.map((conv) => {
                   const other = getOtherParticipant(conv);
                   const name = `${other?.user?.first_name || ''} ${other?.user?.last_name || ''}`.trim() || 'Conversation';
+                  const otherUserId = other?.user_id;
+                  const isOnline = otherUserId ? isUserOnline(otherUserId) : false;
+                  const presenceStatus = otherUserId ? getUserStatus(otherUserId) : null;
                   
                   return (
                     <button
@@ -475,16 +480,29 @@ export default function UniversalCommunicationHub({
                         selectedConversation?.id === conv.id && "bg-accent"
                       )}
                     >
-                      <Avatar className="w-11 h-11 flex-shrink-0">
-                        <AvatarImage src={other?.user?.avatar_url} />
-                        <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">
-                          {other?.user?.first_name?.[0]}{other?.user?.last_name?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="relative">
+                        <Avatar className="w-11 h-11 flex-shrink-0">
+                          <AvatarImage src={other?.user?.avatar_url} />
+                          <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">
+                            {other?.user?.first_name?.[0]}{other?.user?.last_name?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        {/* Indicateur de présence */}
+                        <span className={cn(
+                          "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background",
+                          isOnline ? "bg-green-500" : 
+                          presenceStatus?.status === 'away' ? "bg-yellow-500" : "bg-gray-400"
+                        )} />
+                      </div>
                       
                       <div className="flex-1 min-w-0 text-left">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-medium truncate text-sm">{name}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-medium truncate text-sm">{name}</span>
+                            {isOnline && (
+                              <span className="text-[10px] text-green-500 font-medium">En ligne</span>
+                            )}
+                          </div>
                           {conv.last_message_at && (
                             <span className="text-xs text-muted-foreground flex-shrink-0">
                               {formatTime(conv.last_message_at)}
@@ -527,13 +545,19 @@ export default function UniversalCommunicationHub({
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               
-              <Avatar className="w-10 h-10">
-                <AvatarImage src={getOtherParticipant(selectedConversation)?.user?.avatar_url} />
-                <AvatarFallback className="bg-primary/10 text-primary">
-                  {getOtherParticipant(selectedConversation)?.user?.first_name?.[0]}
-                  {getOtherParticipant(selectedConversation)?.user?.last_name?.[0]}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar className="w-10 h-10">
+                  <AvatarImage src={getOtherParticipant(selectedConversation)?.user?.avatar_url} />
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    {getOtherParticipant(selectedConversation)?.user?.first_name?.[0]}
+                    {getOtherParticipant(selectedConversation)?.user?.last_name?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <span className={cn(
+                  "absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-background",
+                  isUserOnline(getOtherParticipant(selectedConversation)?.user_id || '') ? "bg-green-500" : "bg-gray-400"
+                )} />
+              </div>
               
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold truncate">
@@ -541,7 +565,9 @@ export default function UniversalCommunicationHub({
                   {getOtherParticipant(selectedConversation)?.user?.last_name}
                 </h2>
                 <p className="text-xs text-muted-foreground truncate">
-                  {getOtherParticipant(selectedConversation)?.user?.email}
+                  {isUserOnline(getOtherParticipant(selectedConversation)?.user_id || '') 
+                    ? '🟢 En ligne' 
+                    : 'Hors ligne'}
                 </p>
               </div>
               
@@ -721,9 +747,17 @@ export default function UniversalCommunicationHub({
         <Dialog open={!!activeCall} onOpenChange={() => handleEndCall()}>
           <DialogContent className="max-w-4xl">
             {callType === 'video' ? (
-              <AgoraVideoCall channel={activeCall.id} isIncoming={false} onCallEnd={handleEndCall} />
+              <AgoraVideoCall 
+                channel={activeCall.agora_channel || `call_${activeCall.id}`} 
+                isIncoming={false} 
+                onCallEnd={handleEndCall} 
+              />
             ) : (
-              <AgoraAudioCall channel={activeCall.id} isIncoming={false} onCallEnd={handleEndCall} />
+              <AgoraAudioCall 
+                channel={activeCall.agora_channel || `call_${activeCall.id}`} 
+                isIncoming={false} 
+                onCallEnd={handleEndCall} 
+              />
             )}
           </DialogContent>
         </Dialog>
