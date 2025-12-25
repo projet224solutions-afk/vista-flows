@@ -53,7 +53,7 @@ export default function QuickFooter() {
               key={item.id}
               onClick={() => navigate(item.path)}
               className={cn(
-                "flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 min-w-[70px] group",
+                "flex flex-col items-center justify-center p-1.5 rounded-lg transition-all duration-300 min-w-[56px] group",
                 isActive
                   ? "text-primary bg-accent scale-105"
                   : "text-muted-foreground hover:text-primary hover:bg-accent/50 hover:scale-105"
@@ -61,15 +61,15 @@ export default function QuickFooter() {
               title={item.description}
             >
               <div className={cn(
-                "p-2 rounded-full transition-all duration-300",
+                "p-1.5 rounded-full transition-all duration-300",
                 isActive
                   ? "bg-primary text-primary-foreground shadow-glow"
                   : "bg-muted group-hover:bg-accent group-hover:text-primary"
               )}>
-                <Icon size={20} />
+                <Icon size={18} />
               </div>
               <span className={cn(
-                "text-xs font-medium mt-1 leading-tight",
+                "text-[10px] font-medium mt-0.5 leading-tight",
                 isActive ? "text-primary font-semibold" : "text-muted-foreground group-hover:text-primary"
               )}>
                 {item.label}
