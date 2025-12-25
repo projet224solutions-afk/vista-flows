@@ -587,10 +587,15 @@ export default function PDGAgentsManagement() {
                     <Checkbox 
                       id="create_users"
                       checked={formData.permissions.create_users}
-                      onCheckedChange={(checked) => setFormData({
-                        ...formData,
-                        permissions: { ...formData.permissions, create_users: checked as boolean }
-                      })}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          permissions: {
+                            ...prev.permissions,
+                            create_users: checked === true,
+                          },
+                        }))
+                      }
                     />
                     <label htmlFor="create_users" className="text-sm">Créer des utilisateurs</label>
                   </div>
@@ -598,10 +603,15 @@ export default function PDGAgentsManagement() {
                     <Checkbox 
                       id="create_sub_agents"
                       checked={formData.permissions.create_sub_agents}
-                      onCheckedChange={(checked) => setFormData({
-                        ...formData,
-                        permissions: { ...formData.permissions, create_sub_agents: checked as boolean }
-                      })}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          permissions: {
+                            ...prev.permissions,
+                            create_sub_agents: checked === true,
+                          },
+                        }))
+                      }
                     />
                     <label htmlFor="create_sub_agents" className="text-sm">Créer des sous-agents</label>
                   </div>
@@ -609,10 +619,15 @@ export default function PDGAgentsManagement() {
                     <Checkbox 
                       id="view_reports"
                       checked={formData.permissions.view_reports}
-                      onCheckedChange={(checked) => setFormData({
-                        ...formData,
-                        permissions: { ...formData.permissions, view_reports: checked as boolean }
-                      })}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          permissions: {
+                            ...prev.permissions,
+                            view_reports: checked === true,
+                          },
+                        }))
+                      }
                     />
                     <label htmlFor="view_reports" className="text-sm">Voir les rapports</label>
                   </div>
@@ -620,10 +635,15 @@ export default function PDGAgentsManagement() {
                     <Checkbox 
                       id="manage_commissions"
                       checked={formData.permissions.manage_commissions}
-                      onCheckedChange={(checked) => setFormData({
-                        ...formData,
-                        permissions: { ...formData.permissions, manage_commissions: checked as boolean }
-                      })}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          permissions: {
+                            ...prev.permissions,
+                            manage_commissions: checked === true,
+                          },
+                        }))
+                      }
                     />
                     <label htmlFor="manage_commissions" className="text-sm">Gérer les commissions</label>
                   </div>
@@ -631,10 +651,15 @@ export default function PDGAgentsManagement() {
                     <Checkbox 
                       id="manage_users"
                       checked={formData.permissions.manage_users}
-                      onCheckedChange={(checked) => setFormData({
-                        ...formData,
-                        permissions: { ...formData.permissions, manage_users: checked as boolean }
-                      })}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          permissions: {
+                            ...prev.permissions,
+                            manage_users: checked === true,
+                          },
+                        }))
+                      }
                     />
                     <label htmlFor="manage_users" className="text-sm">Gérer les utilisateurs</label>
                   </div>
@@ -642,10 +667,15 @@ export default function PDGAgentsManagement() {
                     <Checkbox 
                       id="manage_products"
                       checked={formData.permissions.manage_products}
-                      onCheckedChange={(checked) => setFormData({
-                        ...formData,
-                        permissions: { ...formData.permissions, manage_products: checked as boolean }
-                      })}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          permissions: {
+                            ...prev.permissions,
+                            manage_products: checked === true,
+                          },
+                        }))
+                      }
                     />
                     <label htmlFor="manage_products" className="text-sm">Gérer les produits</label>
                   </div>
