@@ -88,6 +88,7 @@ const WorkerSettings = lazy(() => import("./pages/WorkerSettings"));
 const BadgeVerification = lazy(() => import("./pages/BadgeVerification"));
 const StolenMotoDeclaration = lazy(() => import("./pages/StolenMotoDeclaration"));
 const VisualSearch = lazy(() => import("./pages/VisualSearch"));
+const Categories = lazy(() => import("./pages/Categories"));
 // Ultra-simple loading component - Pure CSS inline (no Tailwind dependency)
 const PageLoader = memo(() => (
   <div style={{ 
@@ -180,6 +181,7 @@ function App() {
               <Route path="/contact-user" element={<ContactUserById />} />
               <Route path="/communication/direct_:userId" element={<DirectConversation />} />
               <Route path="/proximite" element={<Proximite />} />
+              <Route path="/categories" element={<Categories />} />
               <Route path="/boutiques" element={<NearbyBoutiques />} />
               <Route path="/services-proximite" element={<ServicesProximite />} />
               <Route path="/services-proximite/:id" element={<ServiceDetail />} />
