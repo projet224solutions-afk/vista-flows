@@ -1578,6 +1578,7 @@ export type Database = {
           last_login_at: string | null
           locked_until: string | null
           login_attempts: number | null
+          password_hash: string | null
           prefecture: string
           president_email: string | null
           president_name: string | null
@@ -1586,6 +1587,7 @@ export type Database = {
           total_cotisations: number | null
           total_members: number | null
           total_vehicles: number | null
+          user_id: string | null
           validated_at: string | null
         }
         Insert: {
@@ -1600,6 +1602,7 @@ export type Database = {
           last_login_at?: string | null
           locked_until?: string | null
           login_attempts?: number | null
+          password_hash?: string | null
           prefecture: string
           president_email?: string | null
           president_name?: string | null
@@ -1608,6 +1611,7 @@ export type Database = {
           total_cotisations?: number | null
           total_members?: number | null
           total_vehicles?: number | null
+          user_id?: string | null
           validated_at?: string | null
         }
         Update: {
@@ -1622,6 +1626,7 @@ export type Database = {
           last_login_at?: string | null
           locked_until?: string | null
           login_attempts?: number | null
+          password_hash?: string | null
           prefecture?: string
           president_email?: string | null
           president_name?: string | null
@@ -1630,6 +1635,7 @@ export type Database = {
           total_cotisations?: number | null
           total_members?: number | null
           total_vehicles?: number | null
+          user_id?: string | null
           validated_at?: string | null
         }
         Relationships: []
@@ -12383,11 +12389,13 @@ export type Database = {
           id: string
           is_active: boolean | null
           name: string
+          password_hash: string | null
           permissions: Json | null
           phone: string
           total_commissions_earned: number | null
           total_users_created: number | null
           updated_at: string | null
+          user_id: string | null
           vendor_id: string
         }
         Insert: {
@@ -12402,11 +12410,13 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name: string
+          password_hash?: string | null
           permissions?: Json | null
           phone: string
           total_commissions_earned?: number | null
           total_users_created?: number | null
           updated_at?: string | null
+          user_id?: string | null
           vendor_id: string
         }
         Update: {
@@ -12421,11 +12431,13 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
+          password_hash?: string | null
           permissions?: Json | null
           phone?: string
           total_commissions_earned?: number | null
           total_users_created?: number | null
           updated_at?: string | null
+          user_id?: string | null
           vendor_id?: string
         }
         Relationships: []

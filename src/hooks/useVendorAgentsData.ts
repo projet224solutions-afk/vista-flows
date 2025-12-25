@@ -140,6 +140,7 @@ export const useVendorAgentsData = () => {
     name: string;
     email: string;
     phone: string;
+    password?: string;
     permissions?: VendorAgentPermissions;
     can_create_sub_agent?: boolean;
     agent_type?: 'commercial' | 'logistique' | 'support' | 'administratif' | 'manager' | 'technique';
@@ -150,7 +151,40 @@ export const useVendorAgentsData = () => {
     }
 
     try {
-      // Generate unique agent_code and access_token
+      // Si un mot de passe est fourni, utiliser l'edge function pour créer avec auth
+      if (agentData.password && agentData.password.length >= 8) {
+        console.log('📧 Création agent avec authentification Supabase');
+        
+        const { data, error } = await supabase.functions.invoke('create-vendor-agent', {
+          body: {
+            vendor_id: realVendorId,
+            name: agentData.name,
+            email: agentData.email,
+            phone: agentData.phone,
+            password: agentData.password,
+            agent_type: agentData.agent_type || 'commercial',
+            permissions: agentData.permissions || { view_dashboard: true, access_communication: true },
+            can_create_sub_agent: agentData.can_create_sub_agent || false,
+          }
+        });
+
+        if (error) {
+          console.error('Error creating vendor agent with auth:', error);
+          toast.error(error.message || 'Erreur lors de la création de l\'agent');
+          return null;
+        }
+
+        if (!data?.success) {
+          toast.error(data?.error || 'Erreur lors de la création de l\'agent');
+          return null;
+        }
+
+        toast.success('Agent créé avec authentification');
+        await loadAgents();
+        return data.agent;
+      }
+
+      // Création sans authentification (mode legacy avec token)
       const timestamp = Date.now().toString(36).toUpperCase();
       const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
       const agentCode = `VAG${timestamp}${randomPart}`;
@@ -191,14 +225,54 @@ export const useVendorAgentsData = () => {
     }
   }, [user, realVendorId, loadAgents]);
 
-  const updateAgent = useCallback(async (agentId: string, updates: Partial<VendorAgent>) => {
+  const updateAgent = useCallback(async (agentId: string, updates: Partial<VendorAgent> & { new_email?: string }) => {
     if (!user || !realVendorId) {
       toast.error('Vous devez être connecté');
       return;
     }
 
     try {
-      // Cast permissions to any to satisfy Supabase Json type
+      // Si l'email est modifié, utiliser l'edge function pour synchroniser auth
+      if (updates.email || updates.new_email) {
+        const newEmail = updates.new_email || updates.email;
+        console.log('📧 Mise à jour email agent via edge function');
+        
+        const { data, error } = await supabase.functions.invoke('update-vendor-agent-email', {
+          body: {
+            agent_id: agentId,
+            new_email: newEmail,
+            vendor_id: realVendorId
+          }
+        });
+
+        if (error) {
+          console.error('Error updating vendor agent email:', error);
+          toast.error(error.message || 'Erreur lors de la modification de l\'email');
+          return;
+        }
+
+        if (!data?.success) {
+          toast.error(data?.error || 'Erreur lors de la modification de l\'email');
+          return;
+        }
+
+        // Mettre à jour les autres champs si nécessaire
+        const { email, new_email, ...otherUpdates } = updates;
+        if (Object.keys(otherUpdates).length > 0) {
+          const updatePayload: any = { ...otherUpdates };
+          await supabase
+            .from('vendor_agents')
+            .update(updatePayload)
+            .eq('id', agentId)
+            .eq('vendor_id', realVendorId);
+        }
+
+        toast.success('Agent modifié (email synchronisé)');
+        await loadAgents();
+        return;
+      }
+
+      // Mise à jour sans changement d'email
       const updatePayload: any = { ...updates };
       
       const { error } = await supabase

@@ -220,6 +220,7 @@ export default function AgentManagement() {
     name: '',
     email: '',
     phone: '',
+    password: '',
     agent_type: 'commercial' as 'commercial' | 'logistique' | 'support' | 'administratif' | 'manager' | 'technique',
     permissions: {
       // Vue d'ensemble
@@ -266,6 +267,16 @@ export default function AgentManagement() {
       return;
     }
 
+    // Validation du mot de passe pour les nouveaux agents
+    if (!editingAgent && formData.password && formData.password.length > 0 && formData.password.length < 8) {
+      toast({
+        title: "❌ Mot de passe trop court",
+        description: "Le mot de passe doit contenir au moins 8 caractères",
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Convert permissions object to format needed for update
     const permissionsForDB = formData.permissions;
 
@@ -283,6 +294,7 @@ export default function AgentManagement() {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
+        password: formData.password || undefined,
         agent_type: formData.agent_type,
         permissions: permissionsForDB,
         can_create_sub_agent: formData.permissions.manage_agents,
@@ -293,6 +305,7 @@ export default function AgentManagement() {
       name: '',
       email: '',
       phone: '',
+      password: '',
       agent_type: 'commercial',
       permissions: {
         view_dashboard: true,
@@ -331,6 +344,7 @@ export default function AgentManagement() {
       name: agent.name,
       email: agent.email,
       phone: agent.phone,
+      password: '',
       agent_type: agent.agent_type || 'commercial',
       permissions: {
         view_dashboard: agent.permissions.view_dashboard || false,
@@ -418,6 +432,7 @@ export default function AgentManagement() {
                     name: '',
                     email: '',
                     phone: '',
+                    password: '',
                     agent_type: 'commercial',
                     permissions: {
                       view_dashboard: true,
@@ -494,6 +509,23 @@ export default function AgentManagement() {
                       placeholder="Ex: agent@224solutions.com"
                     />
                   </div>
+
+                  {/* Champ mot de passe pour nouveaux agents */}
+                  {!editingAgent && (
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Mot de passe (optionnel)</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        placeholder="Min. 8 caractères pour auth par email"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        💡 Si fourni, l'agent pourra se connecter avec email/mot de passe. Sinon, il utilisera le lien d'accès.
+                      </p>
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label htmlFor="agent_type">Type d'Agent *</Label>
