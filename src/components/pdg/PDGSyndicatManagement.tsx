@@ -60,6 +60,7 @@ export default function PDGSyndicatManagement() {
     president_name: '',
     president_email: '',
     president_phone: '',
+    password: '',
     full_location: ''
   });
 
@@ -81,6 +82,7 @@ export default function PDGSyndicatManagement() {
         president_name: '',
         president_email: '',
         president_phone: '',
+        password: '',
         full_location: ''
       });
     }
@@ -290,6 +292,18 @@ export default function PDGSyndicatManagement() {
                         placeholder="+224 XXX XX XX XX"
                       />
                     </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Mot de passe * (min. 8 caractères)</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      required
+                      minLength={8}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      placeholder="••••••••"
+                    />
                   </div>
                 </div>
               </div>
