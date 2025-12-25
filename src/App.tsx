@@ -22,6 +22,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const Home = lazy(() => import("./pages/Home"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
+const VendorShop = lazy(() => import("./pages/VendorShop"));
 const Messages = lazy(() => import("./pages/Messages"));
 const ServicesProximite = lazy(() => import("./pages/ServicesProximite"));
 const ClientTrackingPage = lazy(() => import("./pages/ClientTrackingPage"));
@@ -171,6 +172,7 @@ function App() {
               <Route path="/marketplace/visual-search" element={<VisualSearch />} />
               <Route path="/marketplace/product/:id" element={<ProductDetail />} />
               <Route path="/product/:id" element={<ProductDetail />} />
+              <Route path="/shop/:vendorId" element={<VendorShop />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/messages" element={<Messages />} />
               <Route path="/contact-user" element={<ContactUserById />} />

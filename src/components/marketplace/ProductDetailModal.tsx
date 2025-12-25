@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import ProductReviewsSection from "./ProductReviewsSection";
-
+import { ShareButton } from "@/components/shared/ShareButton";
 interface Product {
   id: string;
   name: string;
@@ -339,14 +339,23 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                 <Plus className="w-4 h-4 mr-2" />
                 Ajouter au panier ({quantity})
               </Button>
-              <Button 
-                variant="outline" 
-                className="w-full" 
-                onClick={handleContact}
-              >
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Contacter le vendeur
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  className="flex-1" 
+                  onClick={handleContact}
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Contacter
+                </Button>
+                <ShareButton
+                  title={product.name}
+                  text={`Découvrez ${product.name} à ${product.price.toLocaleString()} GNF sur 224 Solutions`}
+                  url={`${window.location.origin}/product/${product.id}`}
+                  size="default"
+                  className="flex-1"
+                />
+              </div>
             </div>
 
             {/* Garanties */}
