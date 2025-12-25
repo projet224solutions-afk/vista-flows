@@ -37,6 +37,7 @@ import AgoraVideoCall from './AgoraVideoCall';
 import AgoraAudioCall from './AgoraAudioCall';
 import ImprovedMessageInput from './ImprovedMessageInput';
 import ContactUserById from './ContactUserById';
+import { useSearchUserId } from '@/hooks/useSearchUserId';
 import type { UserProfile } from '@/types/communication.types';
 import { format, isToday, isYesterday } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -55,6 +56,7 @@ export default function UniversalCommunicationHub({
   const { user } = useAuth();
   const { toast } = useToast();
   const { isMobile } = useResponsive();
+  const { searchById, loading: searchLoading } = useSearchUserId();
   
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [showSearchById, setShowSearchById] = useState(false);
@@ -268,19 +270,13 @@ export default function UniversalCommunicationHub({
       toast({ title: "Erreur", description: "Veuillez entrer un ID", variant: "destructive" });
       return;
     }
-
-    const customIdRegex = /^[A-Z]{3}\d{4}$/;
-    const publicIdRegex = /^224-[A-Z]{3}-\d{3}$/;
-    
-    if (!customIdRegex.test(customId) && !publicIdRegex.test(customId)) {
-      toast({ title: "Format invalide", description: "Formats: USR0001 ou 224-XXX-XXX", variant: "destructive" });
-      return;
-    }
     
     try {
-      const profile = await universalCommunicationService.getUserByCustomId(customId);
+      // Utiliser le hook useSearchUserId pour la recherche
+      const profile = await searchById(customId);
+      
       if (!profile) {
-        toast({ title: "Introuvable", description: `Aucun utilisateur: ${customId}`, variant: "destructive" });
+        // Le hook affiche déjà un toast d'erreur
         return;
       }
 
@@ -292,8 +288,8 @@ export default function UniversalCommunicationHub({
       await handleCreateConversation(profile.id);
       setShowNewConversation(false);
       setUserIdSearch('');
-      toast({ title: "Succès", description: `Conversation avec ${profile.first_name} ${profile.last_name}` });
     } catch (error) {
+      console.error('Erreur recherche par ID:', error);
       toast({ title: "Erreur", description: "Impossible de contacter cet utilisateur", variant: "destructive" });
     }
   };
@@ -661,16 +657,26 @@ export default function UniversalCommunicationHub({
             <TabsContent value="id" className="space-y-4 mt-4">
               <div className="flex gap-2">
                 <Input
-                  placeholder="CLT0001 ou 224-ABC-123"
+                  placeholder="USR0001 ou 224-123-456"
                   className="font-mono uppercase"
                   value={userIdSearch}
                   onChange={(e) => setUserIdSearch(e.target.value.toUpperCase())}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearchById()}
+                  onKeyDown={(e) => e.key === 'Enter' && !searchLoading && handleSearchById()}
                 />
-                <Button onClick={handleSearchById} disabled={!userIdSearch.trim()}>
-                  <Search className="w-4 h-4" />
+                <Button 
+                  onClick={handleSearchById} 
+                  disabled={!userIdSearch.trim() || searchLoading}
+                >
+                  {searchLoading ? (
+                    <span className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  ) : (
+                    <Search className="w-4 h-4" />
+                  )}
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Formats acceptés: USR0001 (3 lettres + 4 chiffres) ou 224-123-456
+              </p>
             </TabsContent>
           </Tabs>
         </DialogContent>
