@@ -1,27 +1,20 @@
 /**
- * 💬 MESSAGERIE PROFESSIONNELLE - 224SOLUTIONS
- * Interface de messagerie moderne avec Supabase Realtime
+ * Messagerie Professionnelle - Interface Mobile-First
+ * Composant moderne avec Supabase Realtime
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useAgora } from '@/hooks/useAgora';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import AgoraVideoCall from '@/components/communication/AgoraVideoCall';
 import AgoraAudioCall from '@/components/communication/AgoraAudioCall';
 import {
@@ -29,19 +22,14 @@ import {
   Send,
   Search,
   Plus,
-  Image as ImageIcon,
   Paperclip,
   Phone,
   Video,
   MoreVertical,
-  Check,
   CheckCheck,
-  Clock,
-  Smile,
-  X,
-  Users,
   ArrowLeft,
   Loader2,
+  X,
 } from 'lucide-react';
 import { format, isToday, isYesterday } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -77,12 +65,11 @@ interface Contact {
   last_name: string;
   email: string;
   avatar_url?: string;
-  role?: string;
 }
 
 export default function ProfessionalMessaging() {
   const { user, profile } = useAuth();
-  const { callState, endCall } = useAgora();
+  const { endCall } = useAgora();
   
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
@@ -95,21 +82,19 @@ export default function ProfessionalMessaging() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [searchContacts, setSearchContacts] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [showMobileChat, setShowMobileChat] = useState(false);
   const [showCallDialog, setShowCallDialog] = useState(false);
   const [callType, setCallType] = useState<'audio' | 'video'>('audio');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Handle starting a call
   const handleStartCall = (type: 'audio' | 'video') => {
     if (!activeConversation?.participantId || !user?.id) {
       toast.error('Impossible de démarrer l\'appel');
       return;
     }
-
     setCallType(type);
     setShowCallDialog(true);
   };
@@ -119,7 +104,6 @@ export default function ProfessionalMessaging() {
     setShowCallDialog(false);
   };
 
-  // Scroll to bottom when messages change
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
@@ -128,7 +112,6 @@ export default function ProfessionalMessaging() {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  // Load conversations
   const loadConversations = useCallback(async () => {
     if (!user?.id) return;
     
@@ -137,14 +120,7 @@ export default function ProfessionalMessaging() {
         .from('conversation_participants')
         .select(`
           conversation_id,
-          conversations!inner(
-            id,
-            name,
-            last_message,
-            last_message_at,
-            unread_count,
-            type
-          )
+          conversations!inner(id, name, last_message, last_message_at, unread_count, type)
         `)
         .eq('user_id', user.id)
         .order('conversations(last_message_at)', { ascending: false });
@@ -155,13 +131,9 @@ export default function ProfessionalMessaging() {
         (participantsData || []).map(async (p: any) => {
           const conv = p.conversations;
           
-          // Get other participant info
           const { data: otherParticipant } = await supabase
             .from('conversation_participants')
-            .select(`
-              user_id,
-              profiles!inner(first_name, last_name, avatar_url)
-            `)
+            .select(`user_id, profiles!inner(first_name, last_name, avatar_url)`)
             .eq('conversation_id', conv.id)
             .neq('user_id', user.id)
             .single();
@@ -186,30 +158,19 @@ export default function ProfessionalMessaging() {
       setConversations(convs);
     } catch (error) {
       console.error('Error loading conversations:', error);
-      toast.error('Erreur lors du chargement des conversations');
     } finally {
       setIsLoading(false);
     }
   }, [user?.id]);
 
-  // Load messages for active conversation
   const loadMessages = useCallback(async (conversationId: string) => {
     if (!user?.id) return;
     
     try {
       const { data, error } = await supabase
         .from('messages')
-        .select(`
-          id,
-          content,
-          sender_id,
-          type,
-          file_url,
-          file_name,
-          status,
-          created_at,
-          profiles!messages_sender_id_fkey(first_name, last_name, avatar_url)
-        `)
+        .select(`id, content, sender_id, type, file_url, file_name, status, created_at,
+          profiles!messages_sender_id_fkey(first_name, last_name, avatar_url)`)
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
 
@@ -235,7 +196,6 @@ export default function ProfessionalMessaging() {
     }
   }, [user?.id]);
 
-  // Search contacts
   const searchForContacts = useCallback(async (query: string) => {
     if (!query.trim() || query.length < 2) {
       setContacts([]);
@@ -245,7 +205,7 @@ export default function ProfessionalMessaging() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, email, avatar_url, role')
+        .select('id, first_name, last_name, email, avatar_url')
         .neq('id', user?.id)
         .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%`)
         .limit(10);
@@ -257,12 +217,10 @@ export default function ProfessionalMessaging() {
     }
   }, [user?.id]);
 
-  // Create new conversation
   const createConversation = async (contact: Contact) => {
     if (!user?.id) return;
 
     try {
-      // Check if conversation already exists
       const { data: existingConv } = await supabase
         .from('conversation_participants')
         .select('conversation_id')
@@ -278,7 +236,6 @@ export default function ProfessionalMessaging() {
             .single();
 
           if (otherParticipant) {
-            // Conversation exists, open it
             const conv = conversations.find(c => c.id === cp.conversation_id);
             if (conv) {
               setActiveConversation(conv);
@@ -290,28 +247,20 @@ export default function ProfessionalMessaging() {
         }
       }
 
-      // Create new conversation
       const { data: newConv, error: convError } = await supabase
         .from('conversations')
-        .insert({
-          name: `${contact.first_name} ${contact.last_name}`,
-          type: 'private',
-          creator_id: user.id
-        })
+        .insert({ name: `${contact.first_name} ${contact.last_name}`, type: 'private', creator_id: user.id })
         .select()
         .single();
 
       if (convError) throw convError;
 
-      // Add participants
-      const { error: partError } = await supabase
+      await supabase
         .from('conversation_participants')
         .insert([
           { conversation_id: newConv.id, user_id: user.id, role: 'admin' },
           { conversation_id: newConv.id, user_id: contact.id, role: 'member' }
         ]);
-
-      if (partError) throw partError;
 
       const newConversation: Conversation = {
         id: newConv.id,
@@ -330,11 +279,10 @@ export default function ProfessionalMessaging() {
       toast.success('Conversation créée');
     } catch (error) {
       console.error('Error creating conversation:', error);
-      toast.error('Erreur lors de la création de la conversation');
+      toast.error('Erreur lors de la création');
     }
   };
 
-  // Send message
   const sendMessage = async () => {
     if ((!newMessage.trim() && !selectedFile) || !activeConversation || !user?.id) return;
 
@@ -344,7 +292,6 @@ export default function ProfessionalMessaging() {
     let messageType: 'text' | 'image' | 'file' = 'text';
 
     try {
-      // Upload file if selected
       if (selectedFile) {
         const fileExt = selectedFile.name.split('.').pop();
         const filePath = `${user.id}/${Date.now()}.${fileExt}`;
@@ -364,7 +311,6 @@ export default function ProfessionalMessaging() {
         messageType = selectedFile.type.startsWith('image/') ? 'image' : 'file';
       }
 
-      // Get recipient
       const { data: recipient } = await supabase
         .from('conversation_participants')
         .select('user_id')
@@ -372,7 +318,6 @@ export default function ProfessionalMessaging() {
         .neq('user_id', user.id)
         .single();
 
-      // Insert message
       const { data: msgData, error: msgError } = await supabase
         .from('messages')
         .insert({
@@ -390,7 +335,6 @@ export default function ProfessionalMessaging() {
 
       if (msgError) throw msgError;
 
-      // Update conversation last message
       await supabase
         .from('conversations')
         .update({
@@ -399,7 +343,6 @@ export default function ProfessionalMessaging() {
         })
         .eq('id', activeConversation.id);
 
-      // Add message to local state
       const newMsg: Message = {
         id: msgData.id,
         content: newMessage.trim() || fileName,
@@ -416,16 +359,15 @@ export default function ProfessionalMessaging() {
       setMessages(prev => [...prev, newMsg]);
       setNewMessage('');
       setSelectedFile(null);
-      
+      inputRef.current?.focus();
     } catch (error) {
       console.error('Error sending message:', error);
-      toast.error('Erreur lors de l\'envoi du message');
+      toast.error('Erreur lors de l\'envoi');
     } finally {
       setIsSending(false);
     }
   };
 
-  // Handle file selection
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -437,13 +379,6 @@ export default function ProfessionalMessaging() {
     }
   };
 
-  // Format message time
-  const formatMessageTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return format(date, 'HH:mm', { locale: fr });
-  };
-
-  // Format conversation time
   const formatConversationTime = (dateStr?: string) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
@@ -452,7 +387,6 @@ export default function ProfessionalMessaging() {
     return format(date, 'dd/MM');
   };
 
-  // Real-time subscription
   useEffect(() => {
     if (!activeConversation?.id) return;
 
@@ -460,12 +394,7 @@ export default function ProfessionalMessaging() {
       .channel(`messages:${activeConversation.id}`)
       .on(
         'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${activeConversation.id}`
-        },
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${activeConversation.id}` },
         (payload) => {
           const newMsg = payload.new as any;
           if (newMsg.sender_id !== user?.id) {
@@ -490,413 +419,279 @@ export default function ProfessionalMessaging() {
     };
   }, [activeConversation?.id, user?.id]);
 
-  // Initial load
   useEffect(() => {
     loadConversations();
   }, [loadConversations]);
 
-  // Load messages when conversation changes
   useEffect(() => {
     if (activeConversation?.id) {
       loadMessages(activeConversation.id);
     }
   }, [activeConversation?.id, loadMessages]);
 
-  // Search contacts debounce
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (searchContacts) {
-        searchForContacts(searchContacts);
-      }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchContacts, searchForContacts]);
-
-  // Message status icon
-  const MessageStatus = ({ status }: { status: string }) => {
-    switch (status) {
-      case 'sending':
-        return <Clock className="w-3 h-3 text-muted-foreground" />;
-      case 'sent':
-        return <Check className="w-3 h-3 text-muted-foreground" />;
-      case 'delivered':
-        return <CheckCheck className="w-3 h-3 text-muted-foreground" />;
-      case 'read':
-        return <CheckCheck className="w-3 h-3 text-blue-500" />;
-      default:
-        return null;
-    }
-  };
-
-  // Filtered conversations
-  const filteredConversations = conversations.filter(c =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  if (isLoading) {
-    return (
-      <Card className="w-full h-[600px] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </Card>
-    );
-  }
+  const filteredConversations = searchQuery
+    ? conversations.filter(c => c.name?.toLowerCase().includes(searchQuery.toLowerCase()))
+    : conversations;
 
   return (
-    <Card className="w-full h-[600px] overflow-hidden">
-      <div className="flex h-full">
-        {/* Sidebar - Conversations list */}
-        <div className={`w-full md:w-80 border-r flex flex-col ${showMobileChat ? 'hidden md:flex' : 'flex'}`}>
-          {/* Header */}
-          <div className="p-4 border-b">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <MessageSquare className="w-5 h-5" />
-                Messages
-              </h2>
-              <Dialog open={showNewChat} onOpenChange={setShowNewChat}>
-                <DialogTrigger asChild>
-                  <Button size="sm" variant="ghost">
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Nouvelle conversation</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <Input
-                      placeholder="Rechercher un contact..."
-                      value={searchContacts}
-                      onChange={(e) => setSearchContacts(e.target.value)}
-                    />
-                    <ScrollArea className="h-64">
-                      {contacts.map((contact) => (
-                        <div
-                          key={contact.id}
-                          className="flex items-center gap-3 p-3 hover:bg-accent rounded-lg cursor-pointer"
-                          onClick={() => createConversation(contact)}
-                        >
-                          <Avatar>
-                            <AvatarImage src={contact.avatar_url} />
-                            <AvatarFallback>
-                              {contact.first_name?.[0]}{contact.last_name?.[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium">{contact.first_name} {contact.last_name}</p>
-                            <p className="text-sm text-muted-foreground">{contact.email}</p>
-                          </div>
-                        </div>
-                      ))}
-                      {searchContacts && contacts.length === 0 && (
-                        <p className="text-center text-muted-foreground py-4">
-                          Aucun contact trouvé
-                        </p>
-                      )}
-                    </ScrollArea>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher..."
-                className="pl-9"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
+    <div className="flex h-full bg-background">
+      {/* Liste des conversations */}
+      <div className={cn(
+        "flex flex-col border-r border-border bg-card",
+        "w-full md:w-80 lg:w-96",
+        showMobileChat && activeConversation ? "hidden md:flex" : "flex"
+      )}>
+        <div className="p-4 border-b border-border">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-xl font-bold">Messages</h1>
+            <Button size="icon" variant="ghost" onClick={() => setShowNewChat(true)} className="h-9 w-9">
+              <Plus className="w-5 h-5" />
+            </Button>
           </div>
-
-          {/* Conversations list */}
-          <ScrollArea className="flex-1">
-            {filteredConversations.length === 0 ? (
+          
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 bg-muted/50 border-0"
+            />
+          </div>
+        </div>
+        
+        <ScrollArea className="flex-1">
+          <div className="p-2 space-y-1">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : filteredConversations.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                <MessageSquare className="w-12 h-12 mb-4 opacity-50" />
-                <p>Aucune conversation</p>
-                <Button
-                  variant="link"
-                  onClick={() => setShowNewChat(true)}
-                  className="mt-2"
-                >
-                  Démarrer une conversation
-                </Button>
+                <MessageSquare className="w-12 h-12 mb-3 opacity-40" />
+                <p className="text-sm">Aucune conversation</p>
               </div>
             ) : (
-              filteredConversations.map((conv) => (
-                <div
+              filteredConversations.map(conv => (
+                <button
                   key={conv.id}
-                  className={`flex items-center gap-3 p-4 cursor-pointer transition-colors hover:bg-accent ${
-                    activeConversation?.id === conv.id ? 'bg-accent' : ''
-                  }`}
-                  onClick={() => {
-                    setActiveConversation(conv);
-                    setShowMobileChat(true);
-                  }}
+                  onClick={() => { setActiveConversation(conv); setShowMobileChat(true); }}
+                  className={cn(
+                    "w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200",
+                    "hover:bg-accent/50 active:scale-[0.98]",
+                    activeConversation?.id === conv.id && "bg-accent"
+                  )}
                 >
-                  <div className="relative">
-                    <Avatar>
+                  <div className="relative flex-shrink-0">
+                    <Avatar className="w-12 h-12">
                       <AvatarImage src={conv.avatar} />
-                      <AvatarFallback>{conv.name[0]}</AvatarFallback>
+                      <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                        {conv.name?.charAt(0)?.toUpperCase() || '?'}
+                      </AvatarFallback>
                     </Avatar>
                     {conv.isOnline && (
-                      <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-background rounded-full" />
+                      <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-background" />
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium truncate">{conv.name}</p>
-                      <span className="text-xs text-muted-foreground">
-                        {formatConversationTime(conv.lastMessageTime)}
-                      </span>
+                  
+                  <div className="flex-1 min-w-0 text-left">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium truncate">{conv.name}</span>
+                      {conv.lastMessageTime && (
+                        <span className="text-xs text-muted-foreground flex-shrink-0">
+                          {formatConversationTime(conv.lastMessageTime)}
+                        </span>
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {conv.lastMessage || 'Pas de message'}
-                    </p>
+                    <div className="flex items-center justify-between gap-2 mt-0.5">
+                      <span className="text-sm text-muted-foreground truncate">
+                        {conv.lastMessage || 'Aucun message'}
+                      </span>
+                      {conv.unreadCount > 0 && (
+                        <Badge variant="default" className="h-5 min-w-5 px-1.5 text-xs flex-shrink-0">
+                          {conv.unreadCount}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                  {conv.unreadCount > 0 && (
-                    <Badge variant="destructive" className="rounded-full">
-                      {conv.unreadCount}
-                    </Badge>
-                  )}
-                </div>
+                </button>
               ))
             )}
-          </ScrollArea>
-        </div>
-
-        {/* Chat area */}
-        <div className={`flex-1 flex flex-col ${!showMobileChat ? 'hidden md:flex' : 'flex'}`}>
-          {activeConversation ? (
-            <>
-              {/* Chat header */}
-              <div className="p-4 border-b flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="md:hidden"
-                    onClick={() => setShowMobileChat(false)}
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                  </Button>
-                  <Avatar>
-                    <AvatarImage src={activeConversation.avatar} />
-                    <AvatarFallback>{activeConversation.name[0]}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium">{activeConversation.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {activeConversation.isOnline ? 'En ligne' : 'Hors ligne'}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    size="sm" 
-                    variant="ghost"
-                    onClick={() => handleStartCall('audio')}
-                    disabled={!user?.id || !activeConversation?.participantId}
-                    title="Appel audio"
-                  >
-                    <Phone className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="ghost"
-                    onClick={() => handleStartCall('video')}
-                    disabled={!user?.id || !activeConversation?.participantId}
-                    title="Appel vidéo"
-                  >
-                    <Video className="w-4 h-4" />
-                  </Button>
-                  <Button size="sm" variant="ghost">
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                </div>
+          </div>
+        </ScrollArea>
+      </div>
+      
+      {/* Zone de chat */}
+      <div className={cn(
+        "flex-1 flex flex-col bg-background",
+        !showMobileChat && !activeConversation ? "hidden md:flex" : "flex"
+      )}>
+        {activeConversation ? (
+          <>
+            <div className="flex items-center gap-3 p-3 border-b border-border bg-card">
+              <Button variant="ghost" size="icon" onClick={() => setShowMobileChat(false)} className="md:hidden h-9 w-9">
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              
+              <Avatar className="w-10 h-10">
+                <AvatarImage src={activeConversation.avatar} />
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  {activeConversation.name?.charAt(0)?.toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              
+              <div className="flex-1 min-w-0">
+                <h2 className="font-semibold truncate">{activeConversation.name}</h2>
+                {activeConversation.isOnline && <p className="text-xs text-green-500">En ligne</p>}
               </div>
-
-              {/* Call Dialog */}
-              <Dialog open={showCallDialog} onOpenChange={setShowCallDialog}>
-                <DialogContent className="max-w-lg p-0 overflow-hidden">
-                  {callType === 'video' ? (
-                    <AgoraVideoCall
-                      channel={`dm_${[user?.id, activeConversation?.participantId].filter(Boolean).sort().join('_')}`}
-                      isIncoming={false}
-                      callerInfo={{
-                        name: activeConversation?.name || 'Utilisateur',
-                        avatar: activeConversation?.avatar,
-                      }}
-                      onCallEnd={handleEndCall}
-                    />
-                  ) : (
-                    <AgoraAudioCall
-                      channel={`dm_${[user?.id, activeConversation?.participantId].filter(Boolean).sort().join('_')}`}
-                      isIncoming={false}
-                      callerInfo={{
-                        name: activeConversation?.name || 'Utilisateur',
-                        avatar: activeConversation?.avatar,
-                      }}
-                      onCallEnd={handleEndCall}
-                    />
-                  )}
-                </DialogContent>
-              </Dialog>
-
-              {/* Messages */}
-              <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4">
+              
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" onClick={() => handleStartCall('audio')} className="h-9 w-9">
+                  <Phone className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => handleStartCall('video')} className="h-9 w-9">
+                  <Video className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <MoreVertical className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+            
+            <ScrollArea className="flex-1 p-4">
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                  <MessageSquare className="w-16 h-16 mb-4 opacity-30" />
+                  <p>Aucun message</p>
+                  <p className="text-sm">Commencez la conversation</p>
+                </div>
+              ) : (
+                <>
                   {messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`flex ${msg.isOwn ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div className={`max-w-[70%] ${msg.isOwn ? 'order-2' : 'order-1'}`}>
-                        {!msg.isOwn && (
-                          <div className="flex items-center gap-2 mb-1">
-                            <Avatar className="w-6 h-6">
-                              <AvatarImage src={msg.sender_avatar} />
-                              <AvatarFallback className="text-xs">
-                                {msg.sender_name?.[0]}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-xs text-muted-foreground">
-                              {msg.sender_name}
-                            </span>
-                          </div>
+                    <div key={msg.id} className={cn("flex mb-3", msg.isOwn ? "justify-end" : "justify-start")}>
+                      {!msg.isOwn && msg.sender_avatar && (
+                        <Avatar className="w-8 h-8 mr-2 flex-shrink-0">
+                          <AvatarImage src={msg.sender_avatar} />
+                          <AvatarFallback className="text-xs">{msg.sender_name?.charAt(0) || '?'}</AvatarFallback>
+                        </Avatar>
+                      )}
+                      
+                      <div className={cn(
+                        "max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm",
+                        msg.isOwn ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted rounded-bl-md"
+                      )}>
+                        {msg.type === 'image' && msg.file_url && (
+                          <img src={msg.file_url} alt="Image" className="rounded-lg max-w-full mb-2" />
                         )}
-                        <div
-                          className={`rounded-2xl px-4 py-2 ${
-                            msg.isOwn
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted'
-                          }`}
-                        >
-                          {msg.type === 'image' && msg.file_url && (
-                            <img
-                              src={msg.file_url}
-                              alt={msg.file_name || 'Image'}
-                              className="rounded-lg max-w-full mb-2 cursor-pointer"
-                              onClick={() => window.open(msg.file_url, '_blank')}
-                            />
-                          )}
-                          {msg.type === 'file' && msg.file_url && (
-                            <a
-                              href={msg.file_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 text-sm underline mb-2"
-                            >
-                              <Paperclip className="w-4 h-4" />
-                              {msg.file_name}
-                            </a>
-                          )}
-                          {msg.content && <p className="text-sm">{msg.content}</p>}
-                        </div>
-                        <div className={`flex items-center gap-1 mt-1 ${msg.isOwn ? 'justify-end' : 'justify-start'}`}>
-                          <span className="text-xs text-muted-foreground">
-                            {formatMessageTime(msg.created_at)}
-                          </span>
-                          {msg.isOwn && <MessageStatus status={msg.status} />}
+                        {msg.type === 'file' && msg.file_url && (
+                          <a href={msg.file_url} target="_blank" rel="noopener noreferrer" 
+                            className="flex items-center gap-2 text-sm underline mb-2">
+                            <Paperclip className="w-4 h-4" />
+                            {msg.file_name || 'Fichier'}
+                          </a>
+                        )}
+                        {msg.content && <p className="text-sm leading-relaxed break-words">{msg.content}</p>}
+                        <div className={cn(
+                          "flex items-center justify-end gap-1 mt-1",
+                          msg.isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
+                        )}>
+                          <span className="text-[10px]">{format(new Date(msg.created_at), 'HH:mm', { locale: fr })}</span>
+                          {msg.isOwn && <CheckCheck className="w-3 h-3" />}
                         </div>
                       </div>
                     </div>
                   ))}
                   <div ref={messagesEndRef} />
-                </div>
-              </ScrollArea>
-
-              {/* File preview */}
+                </>
+              )}
+            </ScrollArea>
+            
+            <div className="p-3 border-t border-border bg-card">
               {selectedFile && (
-                <div className="px-4 py-2 border-t flex items-center gap-2 bg-muted/50">
-                  {selectedFile.type.startsWith('image/') ? (
-                    <img
-                      src={URL.createObjectURL(selectedFile)}
-                      alt="Preview"
-                      className="w-12 h-12 object-cover rounded"
-                    />
-                  ) : (
-                    <Paperclip className="w-4 h-4" />
-                  )}
+                <div className="flex items-center gap-2 mb-2 p-2 bg-muted rounded-lg">
+                  <Paperclip className="w-4 h-4" />
                   <span className="text-sm truncate flex-1">{selectedFile.name}</span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setSelectedFile(null)}
-                  >
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSelectedFile(null)}>
                     <X className="w-4 h-4" />
                   </Button>
                 </div>
               )}
-
-              {/* Input area */}
-              <div className="p-4 border-t">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    className="hidden"
-                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-                    onChange={handleFileSelect}
-                  />
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Paperclip className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      if (fileInputRef.current) {
-                        fileInputRef.current.accept = 'image/*';
-                        fileInputRef.current.click();
-                      }
-                    }}
-                  >
-                    <ImageIcon className="w-4 h-4" />
-                  </Button>
-                  <Input
-                    placeholder="Écrivez votre message..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                    className="flex-1"
-                  />
-                  <Button
-                    size="sm"
-                    onClick={sendMessage}
-                    disabled={isSending || (!newMessage.trim() && !selectedFile)}
-                  >
-                    {isSending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Send className="w-4 h-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
-              <MessageSquare className="w-16 h-16 mb-4 opacity-50" />
-              <p className="text-lg font-medium">Sélectionnez une conversation</p>
-              <p className="text-sm">ou démarrez une nouvelle discussion</p>
-              <Button
-                variant="outline"
-                className="mt-4"
-                onClick={() => setShowNewChat(true)}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Nouvelle conversation
-              </Button>
+              
+              <form onSubmit={(e) => { e.preventDefault(); sendMessage(); }} className="flex items-center gap-2">
+                <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*,.pdf,.doc,.docx" />
+                <Button type="button" variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="h-10 w-10 flex-shrink-0">
+                  <Paperclip className="w-5 h-5" />
+                </Button>
+                
+                <Input
+                  ref={inputRef}
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Écrivez votre message..."
+                  className="flex-1 bg-muted/50 border-0"
+                  disabled={isSending}
+                />
+                
+                <Button type="submit" size="icon" disabled={(!newMessage.trim() && !selectedFile) || isSending} className="h-10 w-10 flex-shrink-0 rounded-full">
+                  {isSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                </Button>
+              </form>
             </div>
-          )}
-        </div>
+          </>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
+            <MessageSquare className="w-20 h-20 mb-4 opacity-20" />
+            <p className="text-lg">Sélectionnez une conversation</p>
+          </div>
+        )}
       </div>
-    </Card>
+
+      {/* Dialog nouvelle conversation */}
+      <Dialog open={showNewChat} onOpenChange={setShowNewChat}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nouvelle conversation</DialogTitle>
+          </DialogHeader>
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher un contact..."
+              value={searchContacts}
+              onChange={(e) => { setSearchContacts(e.target.value); searchForContacts(e.target.value); }}
+              className="pl-9"
+            />
+          </div>
+          <ScrollArea className="h-[300px]">
+            {contacts.map(contact => (
+              <button
+                key={contact.id}
+                onClick={() => createConversation(contact)}
+                className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
+              >
+                <Avatar>
+                  <AvatarImage src={contact.avatar_url} />
+                  <AvatarFallback>{contact.first_name?.[0]}{contact.last_name?.[0]}</AvatarFallback>
+                </Avatar>
+                <div className="text-left">
+                  <p className="font-medium">{contact.first_name} {contact.last_name}</p>
+                  <p className="text-sm text-muted-foreground">{contact.email}</p>
+                </div>
+              </button>
+            ))}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog appel */}
+      <Dialog open={showCallDialog} onOpenChange={setShowCallDialog}>
+        <DialogContent className="max-w-4xl">
+          {callType === 'video' ? (
+            <AgoraVideoCall channel={activeConversation?.id || ''} isIncoming={false} onCallEnd={handleEndCall} />
+          ) : (
+            <AgoraAudioCall channel={activeConversation?.id || ''} isIncoming={false} onCallEnd={handleEndCall} />
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
