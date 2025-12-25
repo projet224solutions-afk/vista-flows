@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import QuickFooter from "@/components/QuickFooter";
 import { cn } from "@/lib/utils";
+import { useGeoDistance, formatDistance } from "@/hooks/useGeoDistance";
 
 interface ProfessionalService {
   id: string;
@@ -32,42 +33,19 @@ interface ProfessionalService {
     code?: string;
     category?: string;
   } | null;
-  distance?: number;
+  distance?: number | null;
 }
 
 const RADIUS_KM = 50;
-const DEFAULT_POSITION = { latitude: 9.6412, longitude: -13.5784 };
-
-const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-};
-
-const formatDistance = (distance?: number) => {
-  if (distance === undefined || distance === null) return null;
-  if (distance < 1) return `${Math.round(distance * 1000)} m`;
-  return `${distance.toFixed(1)} km`;
-};
 
 export default function ServicesProximite() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { userPosition, positionReady, usingRealLocation, getDistanceTo } = useGeoDistance();
   const [services, setServices] = useState<ProfessionalService[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get("type") || "all");
-  const [userPosition, setUserPosition] = useState<{ latitude: number; longitude: number }>(DEFAULT_POSITION);
-  const [positionReady, setPositionReady] = useState(false);
-  const [usingRealLocation, setUsingRealLocation] = useState(false);
 
   const categories = [
     { id: "all", name: "Tous", icon: "🏪" },
@@ -87,26 +65,6 @@ export default function ServicesProximite() {
 
   useEffect(() => {
     document.title = "Services de Proximité | 224SOLUTIONS";
-  }, []);
-
-  useEffect(() => {
-    if (!navigator.geolocation) {
-      setPositionReady(true);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setUserPosition({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-        setUsingRealLocation(true);
-        setPositionReady(true);
-      },
-      () => {
-        setUsingRealLocation(false);
-        setPositionReady(true);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-    );
   }, []);
 
   const loadServices = async () => {
@@ -146,24 +104,16 @@ export default function ServicesProximite() {
       // Calculer les distances
       list = list
         .map((s) => {
-          if (s.latitude && s.longitude) {
-            const distance = calculateDistance(
-              userPosition.latitude, 
-              userPosition.longitude, 
-              Number(s.latitude), 
-              Number(s.longitude)
-            );
-            return { ...s, distance };
-          }
-          return s;
+          const distance = getDistanceTo(s.latitude, s.longitude);
+          return { ...s, distance };
         })
-        .filter((s) => (s.distance === undefined ? true : s.distance <= RADIUS_KM));
+        .filter((s) => (s.distance === null ? true : s.distance <= RADIUS_KM));
 
       // Tri: plus proches d'abord, sinon par note
       list.sort((a, b) => {
-        if (a.distance === undefined && b.distance === undefined) return (b.rating || 0) - (a.rating || 0);
-        if (a.distance === undefined) return 1;
-        if (b.distance === undefined) return -1;
+        if (a.distance === null && b.distance === null) return (b.rating || 0) - (a.rating || 0);
+        if (a.distance === null) return 1;
+        if (b.distance === null) return -1;
         return a.distance - b.distance;
       });
 
@@ -180,7 +130,6 @@ export default function ServicesProximite() {
     if (positionReady) {
       loadServices();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [positionReady, userPosition]);
 
   const filteredServices = useMemo(() => {
@@ -306,7 +255,7 @@ export default function ServicesProximite() {
                 )}
                 style={{ animationDelay: `${index * 30}ms` }}
               >
-                {service.distance !== undefined ? (
+                {service.distance !== null ? (
                   <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-md flex items-center gap-1">
                     <MapPin className="w-3 h-3" />
                     {formatDistance(service.distance)}
