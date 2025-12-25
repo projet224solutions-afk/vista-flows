@@ -26,6 +26,7 @@ const VendorShop = lazy(() => import("./pages/VendorShop"));
 const Messages = lazy(() => import("./pages/Messages"));
 const ServicesProximite = lazy(() => import("./pages/ServicesProximite"));
 const Proximite = lazy(() => import("./pages/Proximite"));
+const NearbyBoutiques = lazy(() => import("./pages/NearbyBoutiques"));
 const ClientTrackingPage = lazy(() => import("./pages/ClientTrackingPage"));
 const Profil = lazy(() => import("./pages/Profil"));
 const LoginGoogle = lazy(() => import("./pages/LoginGoogle"));
@@ -179,6 +180,7 @@ function App() {
               <Route path="/contact-user" element={<ContactUserById />} />
               <Route path="/communication/direct_:userId" element={<DirectConversation />} />
               <Route path="/proximite" element={<Proximite />} />
+              <Route path="/boutiques" element={<NearbyBoutiques />} />
               <Route path="/services-proximite" element={<ServicesProximite />} />
               <Route path="/services-proximite/:id" element={<ServiceDetail />} />
               <Route path="/devis" element={<Devis />} />

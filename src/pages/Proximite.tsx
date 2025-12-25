@@ -43,7 +43,7 @@ const getServiceCategories = (stats: any) => [
     bgColor: "bg-blue-50",
     textColor: "text-blue-600",
     count: stats.boutiques,
-    path: "/marketplace", // Afficher toutes les boutiques/vendeurs
+    path: "/boutiques", // Liste des boutiques (vendeurs) à proximité
     description: "Commerces locaux",
     trending: stats.boutiques > 5
   },
