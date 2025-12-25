@@ -135,7 +135,7 @@ export default function Auth() {
   const [showSignup, setShowSignup] = useState(false);
   const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
   const [showServiceSelection, setShowServiceSelection] = useState(false);
-  const [showRoleSelectionPrompt, setShowRoleSelectionPrompt] = useState(false);
+  const [showRoleSelectionModal, setShowRoleSelectionModal] = useState(false);
 
   // Mapping pays → indicatif téléphonique (pour auto-détection)
   const COUNTRY_PHONE_CODES: Record<string, string> = {
@@ -859,29 +859,18 @@ export default function Auth() {
           </Button>
         </div>
 
-        {/* Titre principal */}
-        <h2 className="text-2xl text-gray-600 mb-8">
+        {/* Titre principal - rapproché du bloc de sélection */}
+        <h2 className="text-2xl text-gray-600 mb-4">
           {t('auth.connectToSpace')} <span className="font-bold text-gray-800">{t('auth.professionalSpace')}</span>
         </h2>
       </div>
 
-      {/* Sélection du type de compte */}
-      <div className="max-w-4xl mx-auto px-6 mt-8">
-        <div className={`bg-gradient-to-br from-slate-50 to-blue-50 border rounded-3xl p-6 shadow-lg transition-all ${
-          showRoleSelectionPrompt ? 'border-red-400 ring-2 ring-red-200 animate-pulse' : 'border-border/50'
-        }`}>
+      {/* Sélection du type de compte - rapproché du titre */}
+      <div className="max-w-4xl mx-auto px-6 mt-2">
+        <div className="bg-gradient-to-br from-slate-50 to-blue-50 border border-border/50 rounded-3xl p-6 shadow-lg transition-all">
           <h3 className="text-xl font-bold text-center mb-4">
             {showSignup ? t('auth.selectAccountType') : t('auth.supportedAccounts')}
           </h3>
-          
-          {/* Alerte demandant de sélectionner un type */}
-          {showRoleSelectionPrompt && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-300 rounded-xl animate-bounce">
-              <p className="text-red-700 text-center text-sm font-medium">
-                ⚠️ Veuillez d'abord sélectionner le type de compte que vous souhaitez créer !
-              </p>
-            </div>
-          )}
           
           {/* Ligne des 4 boutons professionnels (Marchand, Livreur, Taxi, Transitaire) */}
           <div className="flex flex-wrap justify-center gap-2 mb-4">
@@ -934,19 +923,21 @@ export default function Auth() {
             </button>
           </div>
           
-          {/* Bouton Client - plus large et stylé en bas */}
+          {/* Bouton Client - plus large et stylé en bas avec texte réorganisé */}
           <button
             onClick={() => handleRoleClick('client')}
-            className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl text-lg font-semibold transition-all ${
+            className={`w-full flex flex-col items-center justify-center gap-1 py-4 rounded-2xl transition-all ${
               selectedRole === 'client' 
                 ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl scale-[1.02]' 
                 : 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border-2 border-blue-200 hover:border-blue-400 hover:from-blue-100 hover:to-purple-100 hover:shadow-lg'
             }`}
           >
-            <UserIcon className={`h-6 w-6 ${selectedRole === 'client' ? 'text-white' : 'text-blue-600'}`} />
-            <span>{t('auth.client')}</span>
+            <div className="flex items-center gap-2">
+              <UserIcon className={`h-6 w-6 ${selectedRole === 'client' ? 'text-white' : 'text-blue-600'}`} />
+              <span className="text-lg font-semibold">{t('auth.client')}</span>
+            </div>
             <span className={`text-sm font-normal ${selectedRole === 'client' ? 'text-blue-100' : 'text-muted-foreground'}`}>
-              — Acheter des produits et services
+              Acheter des produits et services
             </span>
           </button>
         </div>
@@ -1569,10 +1560,8 @@ export default function Auth() {
                   onClick={() => {
                     if (!showSignup && !selectedRole) {
                       // L'utilisateur veut s'inscrire mais n'a pas sélectionné de type de compte
-                      setShowRoleSelectionPrompt(true);
-                      setTimeout(() => setShowRoleSelectionPrompt(false), 4000);
-                      // Scroller vers le haut pour montrer les options
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                      // Afficher le modal de sélection
+                      setShowRoleSelectionModal(true);
                     } else {
                       setShowSignup(!showSignup);
                       if (showSignup) {
@@ -1580,7 +1569,6 @@ export default function Auth() {
                       }
                       setError(null);
                       setSuccess(null);
-                      setShowRoleSelectionPrompt(false);
                     }
                   }}
                   className="text-sm text-purple-600 font-medium hover:underline"
@@ -1593,6 +1581,99 @@ export default function Auth() {
           </CardContent>
         </Card>
       </div>
+      )}
+
+      {/* Modal de sélection de type de compte */}
+      {showRoleSelectionModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowRoleSelectionModal(false)}>
+          <div 
+            className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold text-center mb-2 text-gray-800">
+              Choisissez votre type de compte
+            </h3>
+            <p className="text-sm text-muted-foreground text-center mb-6">
+              Sélectionnez le profil qui correspond à votre activité
+            </p>
+            
+            {/* Boutons professionnels en grille 2x2 */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <button
+                onClick={() => {
+                  setShowRoleSelectionModal(false);
+                  handleRoleClick('vendeur');
+                }}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-green-50 border-2 border-green-200 hover:border-green-400 hover:bg-green-100 transition-all"
+              >
+                <Store className="h-8 w-8 text-green-600" />
+                <span className="font-semibold text-green-700">{t('auth.merchant')}</span>
+                <span className="text-xs text-muted-foreground text-center">Gérer une boutique</span>
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowRoleSelectionModal(false);
+                  handleRoleClick('livreur');
+                }}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-orange-50 border-2 border-orange-200 hover:border-orange-400 hover:bg-orange-100 transition-all"
+              >
+                <Truck className="h-8 w-8 text-orange-600" />
+                <span className="font-semibold text-orange-700">{t('auth.deliveryDriver')}</span>
+                <span className="text-xs text-muted-foreground text-center">Livrer des colis</span>
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowRoleSelectionModal(false);
+                  handleRoleClick('taxi');
+                }}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-yellow-50 border-2 border-yellow-200 hover:border-yellow-400 hover:bg-yellow-100 transition-all"
+              >
+                <Bike className="h-8 w-8 text-yellow-600" />
+                <span className="font-semibold text-yellow-700">{t('auth.taxiMoto')}</span>
+                <span className="text-xs text-muted-foreground text-center">Transport de personnes</span>
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowRoleSelectionModal(false);
+                  handleRoleClick('transitaire');
+                }}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-indigo-50 border-2 border-indigo-200 hover:border-indigo-400 hover:bg-indigo-100 transition-all"
+              >
+                <Ship className="h-8 w-8 text-indigo-600" />
+                <span className="font-semibold text-indigo-700">{t('auth.transitAgent')}</span>
+                <span className="text-xs text-muted-foreground text-center">Import/Export</span>
+              </button>
+            </div>
+            
+            {/* Bouton Client stylé */}
+            <button
+              onClick={() => {
+                setShowRoleSelectionModal(false);
+                handleRoleClick('client');
+              }}
+              className="w-full flex flex-col items-center gap-1 py-4 rounded-2xl bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 hover:border-blue-400 hover:from-blue-100 hover:to-purple-100 hover:shadow-lg transition-all"
+            >
+              <div className="flex items-center gap-2">
+                <UserIcon className="h-6 w-6 text-blue-600" />
+                <span className="text-lg font-semibold text-blue-700">{t('auth.client')}</span>
+              </div>
+              <span className="text-sm text-muted-foreground">
+                Acheter des produits et services
+              </span>
+            </button>
+            
+            {/* Bouton fermer */}
+            <button
+              onClick={() => setShowRoleSelectionModal(false)}
+              className="w-full mt-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Footer de navigation */}
