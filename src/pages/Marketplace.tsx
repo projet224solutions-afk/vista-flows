@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon, Camera, MapPin, Globe } from "lucide-react";
+import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon, Camera, MapPin, Globe, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import { useResponsive } from "@/hooks/useResponsive";
 import { ResponsiveContainer } from "@/components/responsive/ResponsiveContainer";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/hooks/useAuth";
+import { ShareButton } from "@/components/shared/ShareButton";
 
 const PAGE_LIMIT = 24;
 
@@ -213,14 +214,23 @@ export default function Marketplace() {
             </div>
             <div className="flex items-center gap-2">
               {vendorId && (
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => navigate('/marketplace')}
-                  className="text-xs"
-                >
-                  Voir tout
-                </Button>
+                <>
+                  <ShareButton
+                    title={vendorName || 'Boutique'}
+                    text={`Découvrez la boutique ${vendorName} sur 224 Solutions`}
+                    url={`${window.location.origin}/shop/${vendorId}`}
+                    variant="ghost"
+                    size="icon"
+                  />
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => navigate('/marketplace')}
+                    className="text-xs"
+                  >
+                    Voir tout
+                  </Button>
+                </>
               )}
               {user && (
                 <Button 
