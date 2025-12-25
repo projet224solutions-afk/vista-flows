@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, MapPin, Phone, Clock, Star, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,19 +23,27 @@ interface Service {
 
 export default function ServicesProximite() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  // Lire le paramètre "type" de l'URL pour pré-sélectionner la catégorie
+  const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get("type") || "all");
 
   const categories = [
     { id: "all", name: "Tous", icon: "🏪" },
     { id: "restaurant", name: "Restaurants", icon: "🍽️" },
+    { id: "beaute", name: "Beauté & Coiffure", icon: "💇" },
+    { id: "reparation", name: "Réparation", icon: "🔧" },
+    { id: "nettoyage", name: "Nettoyage", icon: "✨" },
+    { id: "immobilier", name: "Immobilier", icon: "🏢" },
+    { id: "formation", name: "Formation", icon: "🎓" },
+    { id: "photo-video", name: "Photo & Vidéo", icon: "📸" },
+    { id: "sport", name: "Sport & Fitness", icon: "🏋️" },
     { id: "sante", name: "Santé", icon: "🏥" },
     { id: "education", name: "Éducation", icon: "📚" },
-    { id: "beaute", name: "Beauté", icon: "💇" },
     { id: "commerce", name: "Commerce", icon: "🛍️" },
-    { id: "service", name: "Services", icon: "🔧" },
+    { id: "service", name: "Autres Services", icon: "⚙️" },
   ];
 
   useEffect(() => {
