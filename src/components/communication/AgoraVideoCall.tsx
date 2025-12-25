@@ -78,6 +78,7 @@ export default function AgoraVideoCall({
   // Démarrer l'appel automatiquement
   useEffect(() => {
     if (!isIncoming && channel) {
+      console.log('🎥 AgoraVideoCall: Démarrage automatique pour channel:', channel);
       handleJoinCall();
     }
   }, [channel, isIncoming]);
@@ -110,11 +111,13 @@ export default function AgoraVideoCall({
   }, [callState.isInCall]);
 
   const handleJoinCall = useCallback(async () => {
+    console.log('🎥 AgoraVideoCall: handleJoinCall appelé');
     setIsConnecting(true);
     try {
       await joinCall(channel, true);
+      console.log('🎥 AgoraVideoCall: Appel rejoint avec succès');
     } catch (error) {
-      console.error('Erreur rejoindre appel:', error);
+      console.error('🎥 AgoraVideoCall: Erreur rejoindre appel:', error);
     } finally {
       setIsConnecting(false);
     }

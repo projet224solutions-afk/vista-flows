@@ -49,6 +49,7 @@ export default function AgoraAudioCall({
   // Démarrer l'appel automatiquement
   useEffect(() => {
     if (!isIncoming && channel) {
+      console.log('🔊 AgoraAudioCall: Démarrage automatique pour channel:', channel);
       handleJoinCall();
     }
   }, [channel, isIncoming]);
@@ -69,11 +70,13 @@ export default function AgoraAudioCall({
   }, [callState.isInCall]);
 
   const handleJoinCall = async () => {
+    console.log('🔊 AgoraAudioCall: handleJoinCall appelé');
     setIsConnecting(true);
     try {
       await joinCall(channel, false); // Audio seulement
+      console.log('🔊 AgoraAudioCall: Appel rejoint avec succès');
     } catch (error) {
-      console.error('Erreur rejoindre appel:', error);
+      console.error('🔊 AgoraAudioCall: Erreur rejoindre appel:', error);
     } finally {
       setIsConnecting(false);
     }
