@@ -3,7 +3,7 @@
  * Interface mobile-first optimisée
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -14,22 +14,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
+import { useResponsive } from '@/hooks/useResponsive';
 import {
   MessageSquare,
   Phone,
   Video,
   Search,
-  Bell,
   Users,
   Hash,
   Plus,
   ArrowLeft,
-  Send,
-  MoreVertical,
   Paperclip,
-  Check,
   CheckCheck,
-  Clock,
 } from 'lucide-react';
 import {
   universalCommunicationService,
@@ -58,6 +54,7 @@ export default function UniversalCommunicationHub({
 }: UniversalCommunicationHubProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { isMobile } = useResponsive();
   
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [showSearchById, setShowSearchById] = useState(false);
@@ -375,120 +372,118 @@ export default function UniversalCommunicationHub({
       })
     : conversations;
 
+  // Sur mobile, on affiche soit la liste soit le chat, pas les deux
+  const showConversationList = isMobile ? !showMobileChat : true;
+  const showChatPanel = isMobile ? showMobileChat : true;
+
   return (
-    <div className={cn("flex h-full bg-background", className)}>
+    <div className={cn("flex h-full bg-background overflow-hidden", className)}>
       {/* Liste des conversations */}
-      <div className={cn(
-        "flex flex-col border-r border-border bg-card",
-        "w-full md:w-80 lg:w-96",
-        showMobileChat && selectedConversation ? "hidden md:flex" : "flex"
-      )}>
-        {/* Header */}
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-bold flex items-center gap-2">
-              <MessageSquare className="w-5 h-5" />
-              Messages
-            </h1>
-            <div className="flex items-center gap-2">
-              <Button 
-                size="icon" 
-                variant="ghost" 
-                onClick={() => setShowSearchById(true)}
-                className="h-9 w-9"
-              >
-                <Hash className="w-4 h-4" />
-              </Button>
-              <Button 
-                size="icon" 
-                variant="ghost" 
-                onClick={() => setShowNewConversation(true)}
-                className="h-9 w-9"
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-              {unreadCount > 0 && (
-                <Badge variant="destructive" className="h-6 min-w-6 px-2">
-                  {unreadCount}
-                </Badge>
-              )}
+      {showConversationList && (
+        <div className={cn(
+          "flex flex-col border-r border-border bg-card h-full",
+          isMobile ? "w-full" : "w-80 lg:w-96 flex-shrink-0"
+        )}>
+          {/* Header */}
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center justify-between mb-3">
+              <h1 className="text-lg font-bold flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" />
+                Messages
+              </h1>
+              <div className="flex items-center gap-1">
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  onClick={() => setShowSearchById(true)}
+                  className="h-8 w-8"
+                >
+                  <Hash className="w-4 h-4" />
+                </Button>
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  onClick={() => setShowNewConversation(true)}
+                  className="h-8 w-8"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+            
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 bg-muted/50 border-0 h-9"
+              />
             </div>
           </div>
           
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-muted/50 border-0"
-            />
-          </div>
-        </div>
-        
-        {/* Liste */}
-        <ScrollArea className="flex-1">
-          <div className="p-2 space-y-1">
-            {filteredConversations.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                <MessageSquare className="w-12 h-12 mb-3 opacity-40" />
-                <p className="text-sm">Aucune conversation</p>
-              </div>
-            ) : (
-              filteredConversations.map((conv) => {
-                const other = getOtherParticipant(conv);
-                const name = `${other?.user?.first_name || ''} ${other?.user?.last_name || ''}`.trim() || 'Conversation';
-                
-                return (
-                  <button
-                    key={conv.id}
-                    onClick={() => handleSelectConversation(conv)}
-                    className={cn(
-                      "w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200",
-                      "hover:bg-accent/50 active:scale-[0.98]",
-                      selectedConversation?.id === conv.id && "bg-accent"
-                    )}
-                  >
-                    <Avatar className="w-12 h-12 flex-shrink-0">
-                      <AvatarImage src={other?.user?.avatar_url} />
-                      <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                        {other?.user?.first_name?.[0]}{other?.user?.last_name?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    
-                    <div className="flex-1 min-w-0 text-left">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-medium truncate">{name}</span>
-                        {conv.last_message_at && (
-                          <span className="text-xs text-muted-foreground flex-shrink-0">
-                            {formatTime(conv.last_message_at)}
+          {/* Liste */}
+          <ScrollArea className="flex-1">
+            <div className="p-2 space-y-1">
+              {filteredConversations.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <MessageSquare className="w-12 h-12 mb-3 opacity-40" />
+                  <p className="text-sm">Aucune conversation</p>
+                </div>
+              ) : (
+                filteredConversations.map((conv) => {
+                  const other = getOtherParticipant(conv);
+                  const name = `${other?.user?.first_name || ''} ${other?.user?.last_name || ''}`.trim() || 'Conversation';
+                  
+                  return (
+                    <button
+                      key={conv.id}
+                      onClick={() => handleSelectConversation(conv)}
+                      className={cn(
+                        "w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200",
+                        "hover:bg-accent/50 active:scale-[0.98]",
+                        selectedConversation?.id === conv.id && "bg-accent"
+                      )}
+                    >
+                      <Avatar className="w-11 h-11 flex-shrink-0">
+                        <AvatarImage src={other?.user?.avatar_url} />
+                        <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">
+                          {other?.user?.first_name?.[0]}{other?.user?.last_name?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      <div className="flex-1 min-w-0 text-left">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium truncate text-sm">{name}</span>
+                          {conv.last_message_at && (
+                            <span className="text-xs text-muted-foreground flex-shrink-0">
+                              {formatTime(conv.last_message_at)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between gap-2 mt-0.5">
+                          <span className="text-xs text-muted-foreground truncate">
+                            {conv.last_message_preview || 'Aucun message'}
                           </span>
-                        )}
+                          {(conv.unread_count ?? 0) > 0 && (
+                            <Badge variant="default" className="h-5 min-w-5 px-1.5 text-xs flex-shrink-0">
+                              {conv.unread_count}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between gap-2 mt-0.5">
-                        <span className="text-sm text-muted-foreground truncate">
-                          {conv.last_message_preview || 'Aucun message'}
-                        </span>
-                        {(conv.unread_count ?? 0) > 0 && (
-                          <Badge variant="default" className="h-5 min-w-5 px-1.5 text-xs flex-shrink-0">
-                            {conv.unread_count}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </ScrollArea>
-      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+      )}
       
       {/* Zone de chat */}
-      <div className={cn(
-        "flex-1 flex flex-col bg-background",
-        !showMobileChat && !selectedConversation ? "hidden md:flex" : "flex"
-      )}>
+      {showChatPanel && (
+        <div className="flex-1 flex flex-col bg-background h-full min-w-0">
         {selectedConversation ? (
           <>
             {/* Header chat */}
@@ -612,6 +607,7 @@ export default function UniversalCommunicationHub({
           </div>
         )}
       </div>
+      )}
 
       {/* Dialog nouvelle conversation */}
       <Dialog open={showNewConversation} onOpenChange={setShowNewConversation}>
