@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon, Camera } from "lucide-react";
+import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon, Camera, MapPin, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -46,8 +46,12 @@ export default function Marketplace() {
   const { user } = useAuth();
   const { addToCart, getCartCount } = useCart();
   const [categories, setCategories] = useState<Category[]>([]);
+  const [countries, setCountries] = useState<string[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || "");
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || "all");
+  const [selectedCountry, setSelectedCountry] = useState("all");
+  const [selectedCity, setSelectedCity] = useState("all");
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'popular' | 'price_asc' | 'price_desc' | 'rating' | 'newest'>("newest");
   const [showFilters, setShowFilters] = useState(false);
@@ -90,13 +94,16 @@ export default function Marketplace() {
     maxPrice: filters.maxPrice,
     minRating: filters.minRating,
     vendorId,
+    country: selectedCountry,
+    city: selectedCity,
     sortBy,
     autoLoad: true
   });
 
-  // Charger les catégories
+  // Charger les catégories et les localisations
   useEffect(() => {
     loadCategories();
+    loadLocations();
   }, []);
 
   const loadCategories = async () => {
@@ -114,6 +121,30 @@ export default function Marketplace() {
     } catch (error) {
       console.error('Erreur chargement catégories:', error);
       setCategories([{ id: 'all', name: 'Toutes', is_active: true }]);
+    }
+  };
+
+  const loadLocations = async () => {
+    try {
+      // Charger les pays distincts
+      const { data: countryData } = await supabase
+        .from('vendors')
+        .select('country')
+        .not('country', 'is', null);
+      
+      const uniqueCountries = [...new Set((countryData || []).map(v => v.country).filter(Boolean))];
+      setCountries(uniqueCountries.sort());
+
+      // Charger les villes distinctes
+      const { data: cityData } = await supabase
+        .from('vendors')
+        .select('city')
+        .not('city', 'is', null);
+      
+      const uniqueCities = [...new Set((cityData || []).map(v => v.city).filter(Boolean))];
+      setCities(uniqueCities.sort());
+    } catch (error) {
+      console.error('Erreur chargement localisations:', error);
     }
   };
 
@@ -258,10 +289,11 @@ export default function Marketplace() {
 
       {/* Filters & View Controls Responsive */}
       <section className="p-responsive border-b border-border">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          {/* Tri */}
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className={isMobile ? "w-32 text-xs" : "w-40"}>
-              <ArrowUpDown className="w-4 h-4 mr-2" />
+            <SelectTrigger className={isMobile ? "w-28 text-xs" : "w-36"}>
+              <ArrowUpDown className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 shrink-0" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -270,6 +302,34 @@ export default function Marketplace() {
                 <SelectItem value="price_asc">Prix croissant</SelectItem>
                 <SelectItem value="price_desc">Prix décroissant</SelectItem>
                 <SelectItem value="rating">Mieux notés</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Filtre Pays */}
+          <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+            <SelectTrigger className={isMobile ? "w-28 text-xs" : "w-36"}>
+              <Globe className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 shrink-0" />
+              <SelectValue placeholder="Pays" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les pays</SelectItem>
+              {countries.map((country) => (
+                <SelectItem key={country} value={country}>{country}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Filtre Ville */}
+          <Select value={selectedCity} onValueChange={setSelectedCity}>
+            <SelectTrigger className={isMobile ? "w-28 text-xs" : "w-36"}>
+              <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 shrink-0" />
+              <SelectValue placeholder="Ville" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes les villes</SelectItem>
+              {cities.map((city) => (
+                <SelectItem key={city} value={city}>{city}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
@@ -297,20 +357,20 @@ export default function Marketplace() {
 
         {showFilters && (
           <div className="mt-4 p-4 bg-accent rounded-lg animate-fade-in">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium mb-2 block">Prix (GNF)</label>
                 <div className="flex gap-2">
                   <input
                     type="number"
                     placeholder="Min"
-                    className="flex-1 px-3 py-2 border border-border rounded-md text-sm"
+                    className="flex-1 px-3 py-2 border border-border rounded-md text-sm bg-background"
                     onChange={e => setFilters(prev => ({ ...prev, minPrice: parseInt(e.target.value) || 0 }))}
                   />
                   <input
                     type="number"
                     placeholder="Max"
-                    className="flex-1 px-3 py-2 border border-border rounded-md text-sm"
+                    className="flex-1 px-3 py-2 border border-border rounded-md text-sm bg-background"
                     onChange={e => setFilters(prev => ({ ...prev, maxPrice: parseInt(e.target.value) || 0 }))}
                   />
                 </div>
