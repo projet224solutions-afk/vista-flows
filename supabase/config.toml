@@ -227,3 +227,15 @@ verify_jwt = false
 
 [functions.pdg-update-agent-email]
 verify_jwt = true
+
+[functions.create-vendor-agent]
+verify_jwt = true
+
+[functions.update-vendor-agent-email]
+verify_jwt = true
+
+[functions.create-bureau-with-auth]
+verify_jwt = true
+
+[functions.update-bureau-email]
+verify_jwt = true
