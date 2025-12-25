@@ -1,4 +1,4 @@
-import { Home, ShoppingBag, MessageSquare, User } from "lucide-react";
+import { Home, ShoppingBag, MapPin, MessageSquare, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,6 +23,13 @@ export default function QuickFooter() {
       icon: ShoppingBag,
       path: '/marketplace',
       description: 'Achats en ligne - Produits et vendeurs'
+    },
+    {
+      id: 'proximite',
+      label: 'Proximité',
+      icon: MapPin,
+      path: '/proximite',
+      description: 'Services de proximité - Boutiques, taxi, livraison'
     },
     {
       id: 'messages',
