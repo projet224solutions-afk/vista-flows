@@ -239,7 +239,32 @@ export default function AgentWalletManagement({
     try {
       setBusy(true);
       
-      // Créer une transaction de retrait dans wallet_transactions
+      const newBalance = wallet.balance - amount;
+      
+      // ÉTAPE 1: Mettre à jour le solde D'ABORD
+      console.log('📝 Mise à jour du solde agent_wallets:', wallet.id, 'nouveau solde:', newBalance);
+      const { data: updateData, error: updateError } = await supabase
+        .from('agent_wallets')
+        .update({ 
+          balance: newBalance,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', wallet.id)
+        .select();
+
+      if (updateError) {
+        console.error('❌ Erreur mise à jour solde:', updateError);
+        throw new Error(`Impossible de mettre à jour le solde: ${updateError.message}`);
+      }
+
+      if (!updateData || updateData.length === 0) {
+        console.error('❌ Aucune ligne mise à jour - vérifiez les permissions RLS');
+        throw new Error('Mise à jour du solde échouée - permissions insuffisantes');
+      }
+
+      console.log('✅ Solde mis à jour:', updateData);
+
+      // ÉTAPE 2: Créer la transaction de retrait
       const referenceNumber = `AGT-WDR-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       
       const { error: txError } = await supabase
@@ -259,31 +284,29 @@ export default function AgentWalletManagement({
             type: 'commission_withdrawal',
             agent_id: agentId,
             balance_before: wallet.balance,
-            balance_after: wallet.balance - amount
+            balance_after: newBalance
           }
         });
 
-      if (txError) throw txError;
+      if (txError) {
+        console.error('❌ Erreur création transaction:', txError);
+        // Rollback: restaurer le solde original
+        await supabase
+          .from('agent_wallets')
+          .update({ balance: wallet.balance })
+          .eq('id', wallet.id);
+        throw new Error(`Impossible de créer la transaction: ${txError.message}`);
+      }
 
-      // Mettre à jour le solde
-      const { error: updateError } = await supabase
-        .from('agent_wallets')
-        .update({ 
-          balance: wallet.balance - amount,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', wallet.id);
-
-      if (updateError) throw updateError;
-
+      console.log('✅ Transaction créée avec succès');
       toast.success(`Retrait de ${amount.toLocaleString()} GNF effectué avec succès`);
       setWithdrawAmount('');
       setShowWithdrawConfirm(false);
       await loadWallet();
       window.dispatchEvent(new CustomEvent('wallet-updated'));
     } catch (error: any) {
-      console.error('Erreur retrait:', error);
-      toast.error('Erreur lors du retrait');
+      console.error('❌ Erreur retrait:', error);
+      toast.error(error.message || 'Erreur lors du retrait');
     } finally {
       setBusy(false);
     }
