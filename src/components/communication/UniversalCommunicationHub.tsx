@@ -217,23 +217,57 @@ export default function UniversalCommunicationHub({
   };
 
   const handleStartCall = async (type: 'audio' | 'video') => {
-    if (!selectedConversation || !user?.id) return;
+    console.log('📞 handleStartCall appelé:', { type, selectedConversation, userId: user?.id });
+    
+    if (!selectedConversation) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez sélectionner une conversation',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    if (!user?.id) {
+      toast({
+        title: 'Erreur',
+        description: 'Vous devez être connecté pour passer un appel',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     const otherParticipant = selectedConversation.participants.find(
       p => p.user_id !== user.id
     );
 
-    if (!otherParticipant) return;
+    console.log('📞 Autre participant:', otherParticipant);
+
+    if (!otherParticipant) {
+      toast({
+        title: 'Erreur',
+        description: 'Aucun participant trouvé dans cette conversation',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     try {
+      console.log('📞 Création de l\'appel...');
       const call = await universalCommunicationService.startCall(
         user.id,
         otherParticipant.user_id,
         type
       );
+      console.log('📞 Appel créé:', call);
       setActiveCall(call);
       setCallType(type);
+      toast({
+        title: type === 'video' ? '📹 Appel vidéo' : '📞 Appel audio',
+        description: 'Connexion en cours...'
+      });
     } catch (error) {
+      console.error('📞 Erreur startCall:', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de démarrer l\'appel',
