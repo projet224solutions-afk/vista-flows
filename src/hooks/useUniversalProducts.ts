@@ -38,6 +38,8 @@ interface UseUniversalProductsOptions {
   maxPrice?: number;
   minRating?: number;
   vendorId?: string;
+  country?: string;
+  city?: string;
   sortBy?: 'popular' | 'price_asc' | 'price_desc' | 'rating' | 'newest';
   autoLoad?: boolean;
 }
@@ -51,6 +53,8 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
     maxPrice,
     minRating,
     vendorId,
+    country,
+    city,
     sortBy = 'newest',
     autoLoad = true
   } = options;
@@ -89,7 +93,9 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
           is_active,
           vendors!inner(
             business_name,
-            user_id
+            user_id,
+            country,
+            city
           ),
           categories(
             name
@@ -122,6 +128,15 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
         query = query.gte('rating', minRating);
       }
 
+      // Filtre par pays
+      if (country && country !== 'all') {
+        query = query.eq('vendors.country', country);
+      }
+
+      // Filtre par ville
+      if (city && city !== 'all') {
+        query = query.eq('vendors.city', city);
+      }
       // Tri
       switch (sortBy) {
         case 'price_asc':
@@ -220,7 +235,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
     } finally {
       setLoading(false);
     }
-  }, [page, limit, category, searchQuery, minPrice, maxPrice, minRating, vendorId, sortBy]);
+  }, [page, limit, category, searchQuery, minPrice, maxPrice, minRating, vendorId, country, city, sortBy]);
 
   const loadMore = useCallback(() => {
     if (!loading && hasMore) {
@@ -237,7 +252,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
     if (autoLoad) {
       loadProducts(true);
     }
-  }, [category, searchQuery, minPrice, maxPrice, minRating, vendorId, sortBy, autoLoad]);
+  }, [category, searchQuery, minPrice, maxPrice, minRating, vendorId, country, city, sortBy, autoLoad]);
 
   // Charger plus quand la page change
   useEffect(() => {

@@ -12822,6 +12822,7 @@ export type Database = {
           business_name: string
           business_type: string | null
           city: string | null
+          country: string | null
           created_at: string | null
           delivery_base_price: number | null
           delivery_enabled: boolean | null
@@ -12850,6 +12851,7 @@ export type Database = {
           business_name: string
           business_type?: string | null
           city?: string | null
+          country?: string | null
           created_at?: string | null
           delivery_base_price?: number | null
           delivery_enabled?: boolean | null
@@ -12878,6 +12880,7 @@ export type Database = {
           business_name?: string
           business_type?: string | null
           city?: string | null
+          country?: string | null
           created_at?: string | null
           delivery_base_price?: number | null
           delivery_enabled?: boolean | null
