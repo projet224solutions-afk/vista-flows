@@ -314,7 +314,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user, refreshProfile, ensureUserSetup]);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      // Nettoyer immédiatement l'état local
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+      stopSessionMonitor();
+      
+      // Essayer de déconnecter côté Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      // Si la session n'existait pas côté serveur, ce n'est pas grave
+      // L'important est que l'état local soit nettoyé
+      if (error && error.message !== 'Session not found') {
+        console.error('Erreur déconnexion Supabase:', error);
+      }
+      
+      // Nettoyer aussi le localStorage de façon explicite
+      localStorage.removeItem('supabase.auth.token');
+      localStorage.removeItem('sb-uakkxaibujzxdiqzpnpr-auth-token');
+      localStorage.removeItem('agent_token');
+      sessionStorage.clear();
+      
+      console.log('✅ Déconnexion réussie');
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+      // Même en cas d'erreur, on nettoie l'état local
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+    }
   };
 
   const value = {
