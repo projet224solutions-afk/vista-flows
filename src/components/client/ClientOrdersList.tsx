@@ -489,17 +489,21 @@ export default function ClientOrdersList() {
 
                   return (
             <Card key={order.id} className="overflow-hidden">
-              <CardHeader className="bg-muted/50">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg">Commande #{order.order_number}</CardTitle>
-                    <p className="text-sm text-muted-foreground">
+              <CardHeader className="bg-muted/50 p-3 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="text-sm sm:text-lg truncate">
+                      Commande #{order.order_number}
+                    </CardTitle>
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">
                       {order.vendors?.business_name || 'Vendeur'}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <div className="font-bold text-lg">{order.total_amount.toLocaleString()} GNF</div>
-                    <div className="text-xs text-muted-foreground">
+                  <div className="flex items-center justify-between sm:flex-col sm:items-end gap-1">
+                    <div className="font-bold text-sm sm:text-lg whitespace-nowrap">
+                      {order.total_amount.toLocaleString()} GNF
+                    </div>
+                    <div className="text-xs text-muted-foreground whitespace-nowrap">
                       {new Date(order.created_at).toLocaleDateString('fr-FR')}
                     </div>
                   </div>
