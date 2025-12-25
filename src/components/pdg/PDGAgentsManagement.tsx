@@ -73,6 +73,12 @@ export default function PDGAgentsManagement() {
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [isResettingPassword, setIsResettingPassword] = useState(false);
+  // Email change state
+  const [changeEmailAgent, setChangeEmailAgent] = useState<Agent | null>(null);
+  const [isChangeEmailDialogOpen, setIsChangeEmailDialogOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [emailPassword, setEmailPassword] = useState('');
+  const [isChangingEmail, setIsChangingEmail] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -231,6 +237,53 @@ export default function PDGAgentsManagement() {
       toast.error(error.message || 'Erreur lors de la réinitialisation');
     } finally {
       setIsResettingPassword(false);
+    }
+  };
+
+  const handleChangeEmail = (agent: Agent) => {
+    setChangeEmailAgent(agent);
+    setNewEmail('');
+    setEmailPassword('');
+    setIsChangeEmailDialogOpen(true);
+  };
+
+  const handleConfirmChangeEmail = async () => {
+    if (!changeEmailAgent || !newEmail || !emailPassword) return;
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      toast.error("Format d'email invalide");
+      return;
+    }
+
+    try {
+      setIsChangingEmail(true);
+      
+      const { data, error } = await supabase.functions.invoke('change-agent-email', {
+        body: {
+          agent_id: changeEmailAgent.id,
+          new_email: newEmail,
+          current_password: emailPassword
+        }
+      });
+
+      if (error) throw error;
+      
+      if (data?.success) {
+        toast.success(`Email de ${changeEmailAgent.name} modifié avec succès`);
+        setIsChangeEmailDialogOpen(false);
+        setChangeEmailAgent(null);
+        setNewEmail('');
+        setEmailPassword('');
+        refetch();
+      } else {
+        throw new Error(data?.error || 'Erreur inconnue');
+      }
+    } catch (error: any) {
+      console.error('Erreur changement email:', error);
+      toast.error(error.message || 'Erreur lors du changement d\'email');
+    } finally {
+      setIsChangingEmail(false);
     }
   };
 
@@ -923,6 +976,15 @@ export default function PDGAgentsManagement() {
                     <KeyRound className="w-4 h-4 mr-1" />
                     Mot de passe
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleChangeEmail(agent)}
+                    className="flex-1"
+                  >
+                    <Mail className="w-4 h-4 mr-1" />
+                    Email
+                  </Button>
                   {agent.is_active ? (
                     <Button
                       size="sm"
@@ -1008,6 +1070,64 @@ export default function PDGAgentsManagement() {
                 disabled={isResettingPassword || newPassword.length < 8}
               >
                 {isResettingPassword ? 'Réinitialisation...' : 'Réinitialiser'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialogue de changement d'email */}
+      <Dialog open={isChangeEmailDialogOpen} onOpenChange={setIsChangeEmailDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Changer l'email de l'agent</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Changer l'email de <strong>{changeEmailAgent?.name}</strong>
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="current_email">Email actuel</Label>
+              <Input
+                id="current_email"
+                type="email"
+                value={changeEmailAgent?.email || ''}
+                disabled
+                className="bg-muted"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new_email">Nouvel email</Label>
+              <Input
+                id="new_email"
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="nouveau@email.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email_password">Mot de passe de l'agent (pour confirmer)</Label>
+              <Input
+                id="email_password"
+                type="password"
+                value={emailPassword}
+                onChange={(e) => setEmailPassword(e.target.value)}
+                placeholder="••••••••"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsChangeEmailDialogOpen(false)}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleConfirmChangeEmail}
+                disabled={isChangingEmail || !newEmail || !emailPassword}
+              >
+                {isChangingEmail ? 'Modification...' : 'Modifier'}
               </Button>
             </div>
           </div>

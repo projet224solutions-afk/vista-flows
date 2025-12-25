@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import * as bcrypt from 'https://deno.land/x/bcrypt@v0.4.1/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -113,7 +114,7 @@ serve(async (req) => {
 
     console.log('✅ Agent verified:', agent.name);
 
-    // Mettre à jour le mot de passe dans Supabase Auth
+    // Mettre à jour le mot de passe dans Supabase Auth si l'agent a un user_id
     if (agent.user_id) {
       const { error: updateAuthError } = await supabaseAdmin.auth.admin.updateUserById(
         agent.user_id,
@@ -131,19 +132,26 @@ serve(async (req) => {
       console.log('✅ Auth password updated for user:', agent.user_id);
     }
 
-    // Mettre à jour le hash dans la table agents si elle existe
+    // Mettre à jour le hash dans la table agents_management
     try {
-      const bcrypt = await import('https://deno.land/x/bcrypt@v0.4.1/mod.ts');
-      const passwordHash = await bcrypt.hash(new_password);
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(new_password, salt);
       
-      await supabaseAdmin
-        .from('agents')
-        .update({ password_hash: passwordHash })
-        .eq('id', agent.user_id);
-      
-      console.log('✅ Password hash updated in agents table');
+      const { error: updateDbError } = await supabaseAdmin
+        .from('agents_management')
+        .update({ 
+          password_hash: passwordHash,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', agent_id);
+
+      if (updateDbError) {
+        console.error('❌ Error updating password_hash:', updateDbError);
+      } else {
+        console.log('✅ Password hash updated in agents_management table');
+      }
     } catch (bcryptError) {
-      console.warn('⚠️ Could not update agents table:', bcryptError);
+      console.warn('⚠️ Could not update password hash:', bcryptError);
     }
 
     return new Response(
