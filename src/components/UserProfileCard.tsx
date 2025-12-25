@@ -65,6 +65,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
   const [loading, setLoading] = useState(true);
   const [showCardNumber, setShowCardNumber] = useState(true);
   const [creatingCard, setCreatingCard] = useState(false);
+  const [userRole, setUserRole] = useState<string>('client');
   
   // États pour les opérations wallet
   const [depositOpen, setDepositOpen] = useState(false);
@@ -81,8 +82,47 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
   useEffect(() => {
     if (user) {
       loadUserInfo();
+      detectUserRole();
     }
   }, [user]);
+
+  // Détecter le rôle réel de l'utilisateur (agent, vendeur, etc.)
+  const detectUserRole = async () => {
+    if (!user) return;
+    
+    try {
+      // Vérifier si c'est un agent
+      const { data: agentData } = await supabase
+        .from('agents_management')
+        .select('agent_code, type_agent')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (agentData) {
+        setUserRole(agentData.type_agent === 'sous_agent' ? 'Sous-Agent' : 'Agent');
+        return;
+      }
+
+      // Vérifier si c'est un vendeur
+      const { data: vendorData } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (vendorData) {
+        setUserRole('Vendeur');
+        return;
+      }
+
+      // Utiliser le rôle du profil ou 'Client' par défaut
+      setUserRole(profile?.role || 'Client');
+      setUserRole(profile?.role || 'Client');
+    } catch (error) {
+      console.error('Erreur détection rôle:', error);
+      setUserRole(profile?.role || 'Client');
+    }
+  };
 
   const loadUserInfo = async () => {
     if (!user) return;
@@ -422,7 +462,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
           </Avatar>
           <div className="flex-1">
             <CardTitle className="text-xl text-gray-800">{displayName}</CardTitle>
-            <p className="text-sm text-gray-600 mt-1">{profile?.role || 'client'}</p>
+            <p className="text-sm text-gray-600 mt-1">{userRole}</p>
           </div>
         </div>
       </CardHeader>
