@@ -1,34 +1,73 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, MapPin, Phone, Clock, Star, Search } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Clock, Star, Search, RefreshCw, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import QuickFooter from "@/components/QuickFooter";
+import { cn } from "@/lib/utils";
 
-interface Service {
+interface ProfessionalService {
   id: string;
-  name: string;
-  description: string;
-  category: string;
-  address?: string;
-  phone?: string;
-  rating?: number;
-  reviews_count?: number;
-  is_open?: boolean;
-  image_url?: string;
+  business_name: string;
+  description?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  logo_url?: string | null;
+  rating?: number | null;
+  total_reviews?: number | null;
+  city?: string | null;
+  neighborhood?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  status?: string | null;
+  service_type_id?: string | null;
+  service_type?: {
+    id: string;
+    name: string;
+    code?: string;
+    category?: string;
+  } | null;
+  distance?: number;
 }
+
+const RADIUS_KM = 50;
+const DEFAULT_POSITION = { latitude: 9.6412, longitude: -13.5784 };
+
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+const formatDistance = (distance?: number) => {
+  if (distance === undefined || distance === null) return null;
+  if (distance < 1) return `${Math.round(distance * 1000)} m`;
+  return `${distance.toFixed(1)} km`;
+};
 
 export default function ServicesProximite() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [services, setServices] = useState<Service[]>([]);
+  const [services, setServices] = useState<ProfessionalService[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  // Lire le paramètre "type" de l'URL pour pré-sélectionner la catégorie
   const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get("type") || "all");
+  const [userPosition, setUserPosition] = useState<{ latitude: number; longitude: number }>(DEFAULT_POSITION);
+  const [positionReady, setPositionReady] = useState(false);
+  const [usingRealLocation, setUsingRealLocation] = useState(false);
 
   const categories = [
     { id: "all", name: "Tous", icon: "🏪" },
@@ -47,43 +86,88 @@ export default function ServicesProximite() {
   ];
 
   useEffect(() => {
-    loadServices();
-  }, [selectedCategory, searchQuery]);
+    document.title = "Services de Proximité | 224SOLUTIONS";
+  }, []);
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setPositionReady(true);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserPosition({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+        setUsingRealLocation(true);
+        setPositionReady(true);
+      },
+      () => {
+        setUsingRealLocation(false);
+        setPositionReady(true);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  }, []);
 
   const loadServices = async () => {
     try {
       setLoading(true);
       
-      let query = supabase
-        .from('service_types')
-        .select('*')
-        .eq('is_active', true);
-
-      if (selectedCategory !== 'all') {
-        query = query.eq('category', selectedCategory);
-      }
-
-      if (searchQuery) {
-        query = query.ilike('name', `%${searchQuery}%`);
-      }
-
-      const { data, error } = await query.order('name');
+      const { data, error } = await supabase
+        .from('professional_services')
+        .select(`
+          id, 
+          business_name, 
+          description, 
+          address, 
+          phone, 
+          email,
+          logo_url, 
+          rating, 
+          total_reviews,
+          city,
+          neighborhood,
+          latitude,
+          longitude,
+          status,
+          service_type_id,
+          service_types (id, name, code, category)
+        `)
+        .eq('status', 'active')
+        .order('rating', { ascending: false, nullsFirst: false });
 
       if (error) throw error;
 
-      // Transformer les données pour correspondre à l'interface Service
-      const transformedData = (data || []).map(item => ({
-        id: item.id,
-        name: item.name,
-        description: item.description || '',
-        category: item.category || 'service',
-        rating: 4.5,
-        reviews_count: Math.floor(Math.random() * 100),
-        is_open: true,
-        image_url: item.icon
+      let list: ProfessionalService[] = (data || []).map((item: any) => ({
+        ...item,
+        service_type: item.service_types,
       }));
 
-      setServices(transformedData);
+      // Calculer les distances
+      list = list
+        .map((s) => {
+          if (s.latitude && s.longitude) {
+            const distance = calculateDistance(
+              userPosition.latitude, 
+              userPosition.longitude, 
+              Number(s.latitude), 
+              Number(s.longitude)
+            );
+            return { ...s, distance };
+          }
+          return s;
+        })
+        .filter((s) => (s.distance === undefined ? true : s.distance <= RADIUS_KM));
+
+      // Tri: plus proches d'abord, sinon par note
+      list.sort((a, b) => {
+        if (a.distance === undefined && b.distance === undefined) return (b.rating || 0) - (a.rating || 0);
+        if (a.distance === undefined) return 1;
+        if (b.distance === undefined) return -1;
+        return a.distance - b.distance;
+      });
+
+      setServices(list);
     } catch (error) {
       console.error('Erreur chargement services:', error);
       toast.error('Erreur lors du chargement des services');
@@ -92,32 +176,83 @@ export default function ServicesProximite() {
     }
   };
 
+  useEffect(() => {
+    if (positionReady) {
+      loadServices();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [positionReady, userPosition]);
+
+  const filteredServices = useMemo(() => {
+    let result = services;
+
+    // Filtrer par catégorie
+    if (selectedCategory !== 'all') {
+      result = result.filter((s) => {
+        const category = s.service_type?.category?.toLowerCase() || '';
+        const code = s.service_type?.code?.toLowerCase() || '';
+        return category.includes(selectedCategory) || code.includes(selectedCategory);
+      });
+    }
+
+    // Filtrer par recherche
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      result = result.filter((s) => {
+        return (
+          s.business_name?.toLowerCase().includes(q) ||
+          s.city?.toLowerCase().includes(q) ||
+          s.neighborhood?.toLowerCase().includes(q) ||
+          s.description?.toLowerCase().includes(q) ||
+          s.service_type?.name?.toLowerCase().includes(q)
+        );
+      });
+    }
+
+    return result;
+  }, [services, selectedCategory, searchQuery]);
+
   const handleServiceClick = (serviceId: string) => {
     navigate(`/services-proximite/${serviceId}`);
   };
 
-  const filteredServices = services;
-
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-40">
-        <div className="px-4 py-4">
-          <div className="flex items-center gap-4 mb-4">
-            <Button variant="outline" onClick={() => navigate(-1)}>
-              <ArrowLeft className="w-5 h-5" />
-              <span className="ml-2">Retour</span>
+      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/50">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <Button variant="ghost" size="icon" className="rounded-full" onClick={() => navigate("/proximite")}>
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <div className="min-w-0">
+                <h1 className="text-lg font-bold text-foreground truncate">Services de Proximité</h1>
+                <p className="text-xs text-muted-foreground truncate">Dans un rayon de {RADIUS_KM} km</p>
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" className="rounded-full" onClick={loadServices} disabled={loading}>
+              <RefreshCw className={cn("w-5 h-5", loading && "animate-spin")} />
             </Button>
-            <h1 className="text-2xl font-bold text-foreground">Services de Proximité</h1>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Badge variant={usingRealLocation ? "default" : "secondary"} className="gap-1">
+              <MapPin className="w-3 h-3" />
+              {usingRealLocation ? "Position GPS active" : "Position par défaut"}
+            </Badge>
+            <Badge variant="outline" className="text-xs">
+              {filteredServices.length} service{filteredServices.length > 1 ? "s" : ""}
+            </Badge>
           </div>
           
-          <div className="relative">
+          <div className="mt-3 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               placeholder="Rechercher un service..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-11 rounded-xl bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/50"
             />
           </div>
         </div>
@@ -142,88 +277,109 @@ export default function ServicesProximite() {
       </section>
 
       {/* Liste des services */}
-      <section className="px-4 py-6">
+      <section className="max-w-7xl mx-auto px-4 py-6">
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Chargement des services...</p>
+          <div className="rounded-2xl border border-border/50 bg-card p-10 text-center">
+            <RefreshCw className="w-6 h-6 animate-spin text-primary mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">Chargement des services...</p>
           </div>
         ) : filteredServices.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground mb-4">Aucun service trouvé</p>
-            <Button variant="outline" onClick={() => setSearchQuery("")}>
-              Effacer la recherche
+          <div className="rounded-2xl border border-border/50 bg-card p-10 text-center">
+            <Store className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+            <p className="text-sm font-medium text-foreground mb-1">Aucun service trouvé</p>
+            <p className="text-sm text-muted-foreground mb-4">Essayez de modifier les filtres ou la recherche.</p>
+            <Button variant="outline" onClick={() => { setSearchQuery(""); setSelectedCategory("all"); }}>
+              Réinitialiser les filtres
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredServices.map((service) => (
-              <Card 
-                key={service.id} 
-                className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredServices.map((service, index) => (
+              <button
+                key={service.id}
                 onClick={() => handleServiceClick(service.id)}
+                className={cn(
+                  "group relative flex flex-col p-4 rounded-2xl text-left",
+                  "bg-card border border-border/50",
+                  "hover:border-primary/30 hover:shadow-lg transition-all duration-300",
+                  "hover:-translate-y-1"
+                )}
+                style={{ animationDelay: `${index * 30}ms` }}
               >
-                {service.image_url && (
-                  <div className="h-40 bg-accent overflow-hidden">
-                    <img 
-                      src={service.image_url} 
-                      alt={service.name}
-                      className="w-full h-full object-cover"
-                    />
+                {service.distance !== undefined ? (
+                  <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-md flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    {formatDistance(service.distance)}
+                  </div>
+                ) : (
+                  <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full bg-muted text-muted-foreground text-[10px] font-medium shadow-sm">
+                    Pas de GPS
                   </div>
                 )}
-                
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold text-foreground text-lg">
-                      {service.name}
-                    </h3>
-                    {service.is_open && (
-                      <Badge variant="default" className="text-xs">
-                        Ouvert
-                      </Badge>
+
+                <div className="w-14 h-14 rounded-xl bg-muted/40 flex items-center justify-center overflow-hidden mb-3 group-hover:scale-105 transition-transform">
+                  {service.logo_url ? (
+                    <img
+                      src={service.logo_url}
+                      alt={`Logo ${service.business_name}`}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <Store className="w-7 h-7 text-primary" />
+                  )}
+                </div>
+
+                <div className="flex-1 space-y-2">
+                  <h2 className="font-semibold text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                    {service.business_name}
+                  </h2>
+
+                  {service.service_type?.name && (
+                    <Badge variant="secondary" className="text-[10px]">
+                      {service.service_type.name}
+                    </Badge>
+                  )}
+
+                  {(service.city || service.neighborhood || service.address) && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <MapPin className="w-3 h-3 flex-shrink-0" />
+                      <span className="line-clamp-1">
+                        {[service.neighborhood, service.city, !service.city && !service.neighborhood ? service.address : null]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </span>
+                    </p>
+                  )}
+
+                  {service.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-2">{service.description}</p>
+                  )}
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <div className="flex items-center gap-1">
+                      <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                      <span className="text-xs font-semibold text-foreground">{service.rating?.toFixed(1) || "4.5"}</span>
+                    </div>
+                    {service.total_reviews && service.total_reviews > 0 && (
+                      <span className="text-[10px] text-muted-foreground">({service.total_reviews} avis)</span>
                     )}
                   </div>
 
-                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                    {service.description}
-                  </p>
-
-                  {service.rating && (
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="flex items-center">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm font-medium ml-1">{service.rating}</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        ({service.reviews_count} avis)
-                      </span>
-                    </div>
-                  )}
-
-                  {service.address && (
-                    <div className="flex items-start gap-2 text-sm text-muted-foreground mb-2">
-                      <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                      <span className="line-clamp-1">{service.address}</span>
-                    </div>
-                  )}
-
                   {service.phone && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Phone className="w-4 h-4 flex-shrink-0" />
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Phone className="w-3 h-3" />
                       <span>{service.phone}</span>
                     </div>
                   )}
-
-                  <Button className="w-full mt-4" size="sm">
-                    Voir les détails
-                  </Button>
-                </CardContent>
-              </Card>
+                </div>
+              </button>
             ))}
           </div>
         )}
       </section>
+
+      <QuickFooter />
     </div>
   );
 }
