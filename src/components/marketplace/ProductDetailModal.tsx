@@ -352,6 +352,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                   title={product.name}
                   text={`Découvrez ${product.name} à ${product.price.toLocaleString()} GNF sur 224 Solutions`}
                   url={`${window.location.origin}/product/${product.id}`}
+                  variant="default"
                   size="default"
                   className="flex-1"
                 />
@@ -359,7 +360,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             </div>
 
             {/* Garanties */}
-            <div className="space-y-2 pt-4">
+            <div className="space-y-2 pt-4 pb-6">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Shield className="w-4 h-4" />
                 <span>Paiement sécurisé</span>

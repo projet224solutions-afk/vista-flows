@@ -44,21 +44,26 @@ export function ShareButton({
   };
 
   const handleNativeShare = async () => {
-    if (navigator.share) {
-      try {
+    try {
+      if (navigator.share) {
         await navigator.share({
           title,
           text: shareText,
           url: shareUrl,
         });
-      } catch (error) {
-        // User cancelled or error
-        if ((error as Error).name !== "AbortError") {
-          console.error("Erreur lors du partage:", error);
-        }
+        toast.success("Partage réussi !");
+      } else {
+        // Fallback: copier le lien
+        await handleCopyLink();
       }
-    } else {
-      handleCopyLink();
+    } catch (error) {
+      // User cancelled sharing
+      if ((error as Error).name === "AbortError") {
+        return;
+      }
+      // Other errors - fallback to copy
+      console.error("Erreur lors du partage:", error);
+      await handleCopyLink();
     }
   };
 
