@@ -4,11 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus } from "lucide-react";
+import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus, ExternalLink } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import ProductReviewsSection from "./ProductReviewsSection";
 import { ShareButton } from "@/components/shared/ShareButton";
@@ -274,9 +274,30 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                 </span>
                 <Badge variant="secondary">En stock</Badge>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Vendu par <span className="font-medium text-foreground">{product.vendors?.business_name || 'Vendeur'}</span>
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm text-muted-foreground min-w-0">
+                  Vendu par{" "}
+                  {product.vendors?.business_name ? (
+                    <Link
+                      to={`/shop/${product.vendor_id}`}
+                      className="font-medium text-foreground hover:text-primary inline-flex items-center gap-1"
+                    >
+                      <span className="truncate">{product.vendors.business_name}</span>
+                      <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                    </Link>
+                  ) : (
+                    <span className="font-medium text-foreground">Vendeur</span>
+                  )}
+                </p>
+
+                <ShareButton
+                  title={product.vendors?.business_name || "Boutique"}
+                  text={`Découvrez la boutique ${product.vendors?.business_name || ""} sur 224 Solutions`}
+                  url={`${window.location.origin}/shop/${product.vendor_id}`}
+                  variant="outline"
+                  size="icon"
+                />
+              </div>
             </div>
 
             <Separator />
@@ -351,7 +372,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                 <ShareButton
                   title={product.name}
                   text={`Découvrez ${product.name} à ${product.price.toLocaleString()} GNF sur 224 Solutions`}
-                  url={`${window.location.origin}/product/${product.id}`}
+                  url={`${window.location.origin}/marketplace/product/${product.id}`}
                   variant="default"
                   size="default"
                   className="flex-1"

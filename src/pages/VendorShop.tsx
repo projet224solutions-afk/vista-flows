@@ -191,6 +191,8 @@ export default function VendorShop() {
             title={vendor.business_name}
             text={`Découvrez la boutique ${vendor.business_name} sur 224 Solutions`}
             url={`${window.location.origin}/shop/${vendor.id}`}
+            variant="secondary"
+            size="icon"
           />
         </div>
       </header>
@@ -264,10 +266,19 @@ export default function VendorShop() {
             </div>
           </div>
 
-          <Button onClick={handleContactVendor} className="md:self-start">
-            <MessageCircle className="w-4 h-4 mr-2" />
-            Contacter
-          </Button>
+          <div className="flex items-center gap-2 md:self-start">
+            <Button onClick={handleContactVendor}>
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Contacter
+            </Button>
+            <ShareButton
+              title={vendor.business_name}
+              text={`Découvrez la boutique ${vendor.business_name} sur 224 Solutions`}
+              url={`${window.location.origin}/shop/${vendor.id}`}
+              variant="outline"
+              size="icon"
+            />
+          </div>
         </div>
       </div>
 
