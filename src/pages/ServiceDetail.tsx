@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useGeoDistance, formatDistance } from "@/hooks/useGeoDistance";
 
 interface ServiceDetail {
   id: string;
@@ -55,48 +56,19 @@ export default function ServiceDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { getDistanceTo, usingRealLocation, positionReady } = useGeoDistance();
   const [service, setService] = useState<ServiceDetail | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
 
   useEffect(() => {
-    if (id) {
+    if (id && positionReady) {
       loadServiceDetails();
       loadReviews();
-      getUserLocation();
     }
-  }, [id]);
-
-  const getUserLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        },
-        (error) => {
-          console.warn('Géolocalisation non disponible:', error);
-        }
-      );
-    }
-  };
-
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371; // Rayon de la Terre en km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  };
+  }, [id, positionReady]);
 
   const loadServiceDetails = async () => {
     try {
@@ -136,16 +108,9 @@ export default function ServiceDetail() {
 
       setService(serviceData);
 
-      // Calculer la distance si géolocalisation disponible
-      if (userLocation && serviceData.latitude && serviceData.longitude) {
-        const dist = calculateDistance(
-          userLocation.lat,
-          userLocation.lng,
-          serviceData.latitude,
-          serviceData.longitude
-        );
-        setDistance(dist);
-      }
+      // Calculer la distance avec le hook de géolocalisation
+      const dist = getDistanceTo(serviceData.latitude, serviceData.longitude);
+      setDistance(dist);
 
     } catch (error) {
       console.error('Erreur chargement service:', error);
@@ -366,12 +331,11 @@ export default function ServiceDetail() {
                       ({service.reviews_count} avis)
                     </span>
                   </div>
-                  {distance && (
-                    <Badge variant="outline" className="flex items-center gap-1">
-                      <Navigation className="w-3 h-3" />
-                      {distance.toFixed(1)} km
-                    </Badge>
-                  )}
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Navigation className="w-3 h-3" />
+                    {formatDistance(distance)}
+                    {usingRealLocation && <span className="ml-1 text-green-500">●</span>}
+                  </Badge>
                 </div>
                 <Badge variant="secondary">{service.category}</Badge>
               </div>

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import QuickFooter from "@/components/QuickFooter";
 import { cn } from "@/lib/utils";
+import { useGeoDistance, formatDistance } from "@/hooks/useGeoDistance";
 
 interface Vendor {
   id: string;
@@ -22,67 +23,23 @@ interface Vendor {
   business_type?: "physical" | "digital" | "hybrid" | null;
   service_type?: "wholesale" | "retail" | "mixed" | null;
   is_verified?: boolean | null;
-  distance?: number;
+  distance?: number | null;
 }
 
 const RADIUS_KM = 50;
-const DEFAULT_POSITION = { latitude: 9.6412, longitude: -13.5784 };
-
-const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-};
-
-const formatDistance = (distance?: number) => {
-  if (distance === undefined || distance === null) return null;
-  if (distance < 1) return `${Math.round(distance * 1000)} m`;
-  return `${distance.toFixed(1)} km`;
-};
 
 export default function NearbyBoutiques() {
   const navigate = useNavigate();
+  const { userPosition, positionReady, usingRealLocation, getDistanceTo } = useGeoDistance();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [userPosition, setUserPosition] = useState<{ latitude: number; longitude: number }>(DEFAULT_POSITION);
-  const [positionReady, setPositionReady] = useState(false);
-  const [usingRealLocation, setUsingRealLocation] = useState(false);
   const [businessTypeFilter, setBusinessTypeFilter] = useState<string>("all");
   const [serviceTypeFilter, setServiceTypeFilter] = useState<string>("all");
 
   useEffect(() => {
     document.title = "Boutiques à proximité | 224SOLUTIONS";
-  }, []);
-
-  useEffect(() => {
-    if (!navigator.geolocation) {
-      setPositionReady(true);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setUserPosition({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-        setUsingRealLocation(true);
-        setPositionReady(true);
-      },
-      () => {
-        // fallback position already set
-        setUsingRealLocation(false);
-        setPositionReady(true);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-    );
   }, []);
 
   const loadVendors = async () => {
@@ -112,19 +69,16 @@ export default function NearbyBoutiques() {
       // Distances + filtre rayon
       list = list
         .map((v) => {
-          if (v.latitude && v.longitude) {
-            const distance = calculateDistance(userPosition.latitude, userPosition.longitude, Number(v.latitude), Number(v.longitude));
-            return { ...v, distance };
-          }
-          return v;
+          const distance = getDistanceTo(v.latitude, v.longitude);
+          return { ...v, distance };
         })
-        .filter((v) => (v.distance === undefined ? true : v.distance <= RADIUS_KM));
+        .filter((v) => (v.distance === null ? true : v.distance <= RADIUS_KM));
 
       // Tri: plus proches d'abord, sinon par note
       list.sort((a, b) => {
-        if (a.distance === undefined && b.distance === undefined) return (b.rating || 0) - (a.rating || 0);
-        if (a.distance === undefined) return 1;
-        if (b.distance === undefined) return -1;
+        if (a.distance === null && b.distance === null) return (b.rating || 0) - (a.rating || 0);
+        if (a.distance === null) return 1;
+        if (b.distance === null) return -1;
         return a.distance - b.distance;
       });
 
@@ -141,8 +95,7 @@ export default function NearbyBoutiques() {
     if (positionReady) {
       loadVendors();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [positionReady, businessTypeFilter, serviceTypeFilter]);
+  }, [positionReady, businessTypeFilter, serviceTypeFilter, userPosition]);
 
   const filteredVendors = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -267,7 +220,7 @@ export default function NearbyBoutiques() {
                 )}
                 style={{ animationDelay: `${index * 30}ms` }}
               >
-                {vendor.distance !== undefined ? (
+                {vendor.distance !== null ? (
                   <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-md flex items-center gap-1">
                     <MapPin className="w-3 h-3" />
                     {formatDistance(vendor.distance)}
