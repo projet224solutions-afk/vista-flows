@@ -191,8 +191,44 @@ export class AgentService {
     }
   }
 
-  async updateAgent(agentId: string, updates: Partial<AgentManagement>): Promise<void> {
+  async updateAgent(agentId: string, updates: Partial<AgentManagement>, pdgId?: string): Promise<void> {
     try {
+      // Si l'email est modifié, utiliser l'edge function pour mettre à jour auth.users aussi
+      if (updates.email) {
+        console.log('📧 Mise à jour email agent via edge function');
+        const { data, error } = await supabase.functions.invoke('pdg-update-agent-email', {
+          body: {
+            agent_id: agentId,
+            new_email: updates.email,
+            pdg_id: pdgId
+          }
+        });
+
+        if (error) {
+          console.error('❌ Erreur edge function pdg-update-agent-email:', error);
+          throw new Error(error.message || 'Erreur lors de la mise à jour de l\'email');
+        }
+
+        if (data && !data.success) {
+          throw new Error(data.error || 'Erreur lors de la mise à jour de l\'email');
+        }
+
+        // Si d'autres champs à mettre à jour (sans l'email)
+        const { email, ...otherUpdates } = updates;
+        if (Object.keys(otherUpdates).length > 0) {
+          const { error: dbError } = await supabase
+            .from('agents_management')
+            .update({ ...otherUpdates, updated_at: new Date().toISOString() })
+            .eq('id', agentId);
+
+          if (dbError) throw dbError;
+        }
+
+        toast.success('✅ Agent mis à jour (email synchronisé)');
+        return;
+      }
+
+      // Mise à jour normale (sans email)
       const { error } = await supabase
         .from('agents_management')
         .update({ ...updates, updated_at: new Date().toISOString() })
@@ -202,7 +238,7 @@ export class AgentService {
       toast.success('✅ Agent mis à jour');
     } catch (error) {
       console.error('❌ Erreur mise à jour agent:', error);
-      toast.error('Erreur lors de la mise à jour');
+      toast.error(error instanceof Error ? error.message : 'Erreur lors de la mise à jour');
       throw error;
     }
   }

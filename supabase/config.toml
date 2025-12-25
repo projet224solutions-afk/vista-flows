@@ -224,3 +224,6 @@ verify_jwt = false
 
 [functions.firebase-config]
 verify_jwt = false
+
+[functions.pdg-update-agent-email]
+verify_jwt = true
