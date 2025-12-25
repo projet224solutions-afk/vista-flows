@@ -127,8 +127,17 @@ export function MarketplaceProductCard({
     );
   };
 
+  const handleCardClick = () => {
+    if (onBuy) {
+      onBuy();
+    }
+  };
+
   return (
-    <Card className="marketplace-card group overflow-hidden">
+    <Card 
+      className="marketplace-card group overflow-hidden cursor-pointer" 
+      onClick={handleCardClick}
+    >
       {/* Image Container - Format Carré Grande */}
       <div className="marketplace-card-image-container">
         {/* Placeholder skeleton */}
@@ -237,16 +246,16 @@ export function MarketplaceProductCard({
         </div>
         
         {/* Actions - CTA compacts pour mobile */}
-        <div className="marketplace-card-actions">
+        <div className="marketplace-card-actions" onClick={(e) => e.stopPropagation()}>
           <Button 
-            onClick={onBuy}
+            onClick={(e) => { e.stopPropagation(); onBuy?.(); }}
             className="flex-1 h-7 sm:h-8 text-[10px] sm:text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm px-2 sm:px-3"
             size="sm"
           >
             Voir
           </Button>
           <Button 
-            onClick={onAddToCart}
+            onClick={(e) => { e.stopPropagation(); onAddToCart?.(); }}
             variant="outline" 
             size="sm"
             className="h-7 w-7 sm:h-8 sm:w-8 p-0 border-border/60 hover:bg-accent hover:border-primary/30"
@@ -255,7 +264,7 @@ export function MarketplaceProductCard({
             <ShoppingCart className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           </Button>
           <Button 
-            onClick={onContact}
+            onClick={(e) => { e.stopPropagation(); onContact?.(); }}
             variant="outline" 
             size="sm"
             className="h-7 w-7 sm:h-8 sm:w-8 p-0 border-border/60 hover:bg-accent hover:border-primary/30"
