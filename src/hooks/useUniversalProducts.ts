@@ -115,7 +115,14 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
       }
 
       if (category && category !== 'all') {
-        query = query.eq('category_id', category);
+        // Vérifier si c'est un UUID valide ou un nom de catégorie
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category);
+        if (isUUID) {
+          query = query.eq('category_id', category);
+        } else {
+          // Filtrer par nom de catégorie (ilike pour être insensible à la casse)
+          query = query.ilike('categories.name', `%${category}%`);
+        }
       }
 
       if (searchQuery && searchQuery.trim()) {
