@@ -311,22 +311,36 @@ export default function ProductDetail() {
               <ShareButton
                 title={product.name}
                 text={`Découvrez ${product.name} à ${product.price.toLocaleString()} ${product.currency || 'GNF'} sur 224 Solutions`}
-                url={`${window.location.origin}/product/${product.id}`}
+                url={`${window.location.origin}/marketplace/product/${product.id}`}
               />
             </div>
 
             {/* Vendor */}
             {product.vendors && (
               <Card className="p-4">
-                <h3 className="font-semibold mb-2">Vendu par</h3>
-                <Link 
-                  to={`/shop/${product.vendors.id}`}
-                  className="flex items-center justify-between group hover:text-primary transition-colors"
-                >
-                  <span className="text-foreground group-hover:text-primary">{product.vendors.business_name}</span>
-                  <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
-                </Link>
-                <p className="text-xs text-muted-foreground mt-1">Cliquez pour voir la boutique</p>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold mb-2">Vendu par</h3>
+                    <Link
+                      to={`/shop/${product.vendors.id}`}
+                      className="flex items-center justify-between gap-2 group hover:text-primary transition-colors"
+                    >
+                      <span className="text-foreground group-hover:text-primary truncate">
+                        {product.vendors.business_name}
+                      </span>
+                      <ExternalLink className="w-4 h-4 shrink-0 text-muted-foreground group-hover:text-primary" />
+                    </Link>
+                    <p className="text-xs text-muted-foreground mt-1">Cliquez pour voir la boutique</p>
+                  </div>
+
+                  <ShareButton
+                    title={product.vendors.business_name}
+                    text={`Découvrez la boutique ${product.vendors.business_name} sur 224 Solutions`}
+                    url={`${window.location.origin}/shop/${product.vendors.id}`}
+                    variant="outline"
+                    size="icon"
+                  />
+                </div>
               </Card>
             )}
 

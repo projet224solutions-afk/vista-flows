@@ -69,7 +69,7 @@ export function MarketplaceProductCard({
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const shareUrl = `${window.location.origin}/product/${id}`;
+    const shareUrl = `${window.location.origin}/marketplace/product/${id}`;
     const shareText = `Découvrez ${title} à ${formatPrice(price)} GNF sur 224 Solutions`;
 
     if (navigator.share) {
