@@ -302,7 +302,7 @@ export default function Marketplace() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           {/* Tri */}
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className={isMobile ? "w-28 text-xs" : "w-36"}>
+            <SelectTrigger className="w-auto min-w-fit text-xs sm:text-sm">
               <ArrowUpDown className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 shrink-0" />
               <SelectValue />
             </SelectTrigger>
@@ -317,9 +317,9 @@ export default function Marketplace() {
 
           {/* Filtre Pays */}
           <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-            <SelectTrigger className={isMobile ? "w-28 text-xs" : "w-36"}>
+            <SelectTrigger className="w-auto min-w-fit text-xs sm:text-sm">
               <Globe className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 shrink-0" />
-              <SelectValue placeholder="Pays" />
+              <SelectValue placeholder="Tous les pays" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tous les pays</SelectItem>
@@ -331,9 +331,9 @@ export default function Marketplace() {
 
           {/* Filtre Ville */}
           <Select value={selectedCity} onValueChange={setSelectedCity}>
-            <SelectTrigger className={isMobile ? "w-28 text-xs" : "w-36"}>
+            <SelectTrigger className="w-auto min-w-fit text-xs sm:text-sm">
               <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 shrink-0" />
-              <SelectValue placeholder="Ville" />
+              <SelectValue placeholder="Toutes les villes" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toutes les villes</SelectItem>
