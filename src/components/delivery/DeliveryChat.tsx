@@ -1,23 +1,30 @@
 /**
- * 💬 Chat de Livraison - Communication Client ↔ Livreur
+ * Chat de Livraison - Interface Mobile-First
+ * Communication Client ↔ Livreur
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Send, Phone, MapPin, Package } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Send, Phone, MapPin, ArrowLeft, MoreVertical, CheckCheck, Package } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 interface DeliveryChatProps {
   deliveryId: string;
   recipientId: string;
   recipientName: string;
   recipientRole: 'client' | 'livreur' | 'vendeur';
+  recipientAvatar?: string;
+  onBack?: () => void;
+  className?: string;
 }
 
 interface Message {
@@ -32,13 +39,17 @@ export default function DeliveryChat({
   deliveryId, 
   recipientId, 
   recipientName,
-  recipientRole 
+  recipientRole,
+  recipientAvatar,
+  onBack,
+  className
 }: DeliveryChatProps) {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Charger les messages
   const loadMessages = async () => {
@@ -62,7 +73,6 @@ export default function DeliveryChat({
         .eq('delivery_id', deliveryId)
         .eq('recipient_id', user.id)
         .eq('is_read', false);
-
     } catch (error) {
       console.error('Erreur chargement messages:', error);
     }
@@ -87,8 +97,7 @@ export default function DeliveryChat({
       if (error) throw error;
 
       setNewMessage('');
-      loadMessages();
-      toast.success('Message envoyé');
+      inputRef.current?.focus();
     } catch (error) {
       console.error('Erreur envoi message:', error);
       toast.error('Erreur lors de l\'envoi');
@@ -97,7 +106,7 @@ export default function DeliveryChat({
     }
   };
 
-  // Écouter les nouveaux messages en temps réel
+  // Écouter les nouveaux messages
   useEffect(() => {
     if (!user) return;
 
@@ -124,98 +133,133 @@ export default function DeliveryChat({
     };
   }, [user, deliveryId]);
 
-  // Auto-scroll vers le bas
+  // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   if (!user) return null;
 
-  return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="border-b pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Avatar>
-              <AvatarFallback>
-                {recipientName.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <CardTitle className="text-lg">{recipientName}</CardTitle>
-              <Badge variant="outline" className="text-xs">
-                {recipientRole === 'livreur' ? '🚴 Livreur' : 
-                 recipientRole === 'vendeur' ? '🏪 Vendeur' : '👤 Client'}
-              </Badge>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline">
-              <Phone className="h-4 w-4" />
-            </Button>
-            <Button size="sm" variant="outline">
-              <MapPin className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
+  const getRoleBadge = () => {
+    switch (recipientRole) {
+      case 'livreur': return { icon: '🚴', label: 'Livreur', variant: 'default' as const };
+      case 'vendeur': return { icon: '🏪', label: 'Vendeur', variant: 'secondary' as const };
+      default: return { icon: '👤', label: 'Client', variant: 'outline' as const };
+    }
+  };
 
-      <CardContent className="flex-1 overflow-y-auto p-4 space-y-3">
+  const badge = getRoleBadge();
+
+  return (
+    <div className={cn("flex flex-col h-full bg-background", className)}>
+      {/* Header */}
+      <div className="flex items-center gap-3 p-3 border-b border-border bg-card">
+        {onBack && (
+          <Button variant="ghost" size="icon" onClick={onBack} className="h-9 w-9">
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+        )}
+        
+        <Avatar className="w-10 h-10">
+          <AvatarImage src={recipientAvatar} />
+          <AvatarFallback className="bg-primary/10 text-primary font-medium">
+            {recipientName.charAt(0).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h2 className="font-semibold truncate">{recipientName}</h2>
+            <Badge variant={badge.variant} className="text-xs h-5">
+              {badge.icon} {badge.label}
+            </Badge>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Livraison #{deliveryId.slice(0, 8)}
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" className="h-9 w-9">
+            <Phone className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-9 w-9">
+            <MapPin className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-9 w-9">
+            <MoreVertical className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Messages */}
+      <ScrollArea className="flex-1 p-4">
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-            <Package className="h-12 w-12 mb-2 opacity-50" />
-            <p>Aucun message pour cette livraison</p>
-            <p className="text-sm">Commencez la conversation</p>
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-12">
+            <Package className="w-16 h-16 mb-4 opacity-30" />
+            <p className="font-medium text-foreground">Aucun message</p>
+            <p className="text-sm">Commencez la conversation pour cette livraison</p>
           </div>
         ) : (
-          messages.map((message) => {
-            const isOwn = message.sender_id === user.id;
-            return (
-              <div
-                key={message.id}
-                className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-              >
+          <>
+            {messages.map((message) => {
+              const isOwn = message.sender_id === user.id;
+              return (
                 <div
-                  className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                    isOwn
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted'
-                  }`}
+                  key={message.id}
+                  className={cn("flex mb-3", isOwn ? "justify-end" : "justify-start")}
                 >
-                  <p className="text-sm">{message.content}</p>
-                  <p className={`text-xs mt-1 ${isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                    {new Date(message.created_at).toLocaleTimeString('fr-FR', {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </p>
+                  <div
+                    className={cn(
+                      "max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm",
+                      isOwn 
+                        ? "bg-primary text-primary-foreground rounded-br-md" 
+                        : "bg-muted rounded-bl-md"
+                    )}
+                  >
+                    <p className="text-sm leading-relaxed break-words">{message.content}</p>
+                    <div className={cn(
+                      "flex items-center justify-end gap-1 mt-1",
+                      isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
+                    )}>
+                      <span className="text-[10px]">
+                        {format(new Date(message.created_at), 'HH:mm', { locale: fr })}
+                      </span>
+                      {isOwn && <CheckCheck className="w-3 h-3" />}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            );
-          })
+              );
+            })}
+            <div ref={messagesEndRef} />
+          </>
         )}
-        <div ref={messagesEndRef} />
-      </CardContent>
+      </ScrollArea>
 
-      <div className="border-t p-4">
+      {/* Input */}
+      <div className="p-3 border-t border-border bg-card">
         <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            sendMessage();
-          }}
-          className="flex gap-2"
+          onSubmit={(e) => { e.preventDefault(); sendMessage(); }}
+          className="flex items-center gap-2"
         >
           <Input
+            ref={inputRef}
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Écrivez votre message..."
+            className="flex-1 bg-muted/50 border-0"
             disabled={loading}
           />
-          <Button type="submit" disabled={loading || !newMessage.trim()}>
-            <Send className="h-4 w-4" />
+          <Button 
+            type="submit" 
+            size="icon"
+            disabled={loading || !newMessage.trim()}
+            className="h-10 w-10 flex-shrink-0 rounded-full"
+          >
+            <Send className="w-5 h-5" />
           </Button>
         </form>
       </div>
-    </Card>
+    </div>
   );
 }
