@@ -5,7 +5,7 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { Store, Utensils, Truck, Car, Sparkles, ChevronRight } from 'lucide-react';
+import { Store, Utensils, Truck, Car, Sparkles, ChevronRight, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
@@ -87,6 +87,22 @@ export function HeroSection({ className }: HeroSectionProps) {
         >
           <Store className="w-5 h-5" />
           {t('home.startNow')}
+        </Button>
+
+        {/* Categories Button */}
+        <Button
+          onClick={() => navigate('/categories')}
+          variant="outline"
+          size="lg"
+          className={cn(
+            'w-full gap-2 h-11 rounded-xl text-base font-medium mt-3',
+            'border-primary/30 text-primary',
+            'hover:bg-primary/10 hover:border-primary/50',
+            'active:scale-[0.98] transition-all duration-200'
+          )}
+        >
+          <ShoppingBag className="w-5 h-5" />
+          Catégories
         </Button>
       </div>
 
