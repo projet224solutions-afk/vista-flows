@@ -236,11 +236,11 @@ export function MarketplaceProductCard({
           )}
         </div>
         
-        {/* Actions - CTA modernisés */}
+        {/* Actions - CTA compacts pour mobile */}
         <div className="marketplace-card-actions">
           <Button 
             onClick={onBuy}
-            className="flex-1 h-8 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+            className="flex-1 h-7 sm:h-8 text-[10px] sm:text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm px-2 sm:px-3"
             size="sm"
           >
             Voir
@@ -249,28 +249,28 @@ export function MarketplaceProductCard({
             onClick={onAddToCart}
             variant="outline" 
             size="sm"
-            className="h-8 w-8 p-0 border-border/60 hover:bg-accent hover:border-primary/30"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0 border-border/60 hover:bg-accent hover:border-primary/30"
             title="Ajouter au panier"
           >
-            <ShoppingCart className="w-3.5 h-3.5" />
+            <ShoppingCart className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           </Button>
           <Button 
             onClick={onContact}
             variant="outline" 
             size="sm"
-            className="h-8 w-8 p-0 border-border/60 hover:bg-accent hover:border-primary/30"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0 border-border/60 hover:bg-accent hover:border-primary/30"
             title="Contacter le vendeur"
           >
-            <MessageCircle className="w-3.5 h-3.5" />
+            <MessageCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           </Button>
           <Button 
             onClick={handleShare}
             variant="outline" 
             size="sm"
-            className="h-8 w-8 p-0 border-border/60 hover:bg-accent hover:border-primary/30"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0 border-border/60 hover:bg-accent hover:border-primary/30"
             title="Partager"
           >
-            <Share2 className="w-3.5 h-3.5" />
+            <Share2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           </Button>
         </div>
       </CardContent>
