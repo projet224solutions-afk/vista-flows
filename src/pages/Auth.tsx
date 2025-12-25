@@ -688,6 +688,12 @@ export default function Auth() {
   };
 
   const handleRoleClick = (role: UserRole) => {
+    // Si on clique sur un autre rôle que vendeur et que showServiceSelection est ouvert, le fermer
+    if (role !== 'vendeur' && showServiceSelection) {
+      setShowServiceSelection(false);
+      setSelectedServiceType(null);
+    }
+    
     if (role === 'vendeur') {
       // Pour les marchands, afficher d'abord la sélection du type de service
       setShowServiceSelection(true);
@@ -696,6 +702,13 @@ export default function Auth() {
       setSelectedRole(role);
       setShowSignup(true);
     }
+  };
+
+  // Fonction pour fermer la sélection de service quand on clique ailleurs
+  const handleCloseServiceSelection = () => {
+    setShowServiceSelection(false);
+    setSelectedServiceType(null);
+    setSelectedRole(null);
   };
 
   const handleSkipServiceSelection = () => {
@@ -859,14 +872,14 @@ export default function Auth() {
           </Button>
         </div>
 
-        {/* Titre principal - rapproché du bloc de sélection */}
-        <h2 className="text-2xl text-gray-600 mb-4">
+        {/* Titre principal - encore plus rapproché du bloc de sélection */}
+        <h2 className="text-2xl text-gray-600 mb-2">
           {t('auth.connectToSpace')} <span className="font-bold text-gray-800">{t('auth.professionalSpace')}</span>
         </h2>
       </div>
 
-      {/* Sélection du type de compte - rapproché du titre */}
-      <div className="max-w-4xl mx-auto px-6 mt-2">
+      {/* Sélection du type de compte - collé au titre */}
+      <div className="max-w-4xl mx-auto px-6 -mt-2">
         <div className="bg-gradient-to-br from-slate-50 to-blue-50 border border-border/50 rounded-3xl p-6 shadow-lg transition-all">
           <h3 className="text-xl font-bold text-center mb-4">
             {showSignup ? t('auth.selectAccountType') : t('auth.supportedAccounts')}
@@ -945,8 +958,14 @@ export default function Auth() {
 
       {/* Sélection du type de service professionnel pour les marchands */}
       {showServiceSelection && (
-        <div className="max-w-6xl mx-auto px-6 mt-8">
-          <Card className="shadow-xl border-2 border-primary">
+        <>
+          {/* Overlay cliquable pour fermer */}
+          <div 
+            className="fixed inset-0 bg-black/20 z-40"
+            onClick={handleCloseServiceSelection}
+          />
+          <div className="max-w-6xl mx-auto px-6 mt-8 relative z-50">
+            <Card className="shadow-xl border-2 border-primary bg-white">
             <CardContent className="p-8">
               <div className="flex items-center justify-between mb-6">
                 <Button
@@ -1013,6 +1032,7 @@ export default function Auth() {
             </CardContent>
           </Card>
         </div>
+        </>
       )}
 
       {/* Formulaire de connexion/inscription/reset */}
