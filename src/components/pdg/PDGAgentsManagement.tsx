@@ -197,6 +197,10 @@ export default function PDGAgentsManagement() {
 
   const handleEditAgent = (agent: Agent) => {
     setEditingAgent(agent);
+
+    // Robust: certaines anciennes données stockent "create_sub_agents" uniquement dans le tableau permissions
+    const canCreateSubAgents = Boolean(agent.can_create_sub_agent) || agent.permissions.includes('create_sub_agents');
+
     setFormData({
       name: agent.name,
       email: agent.email,
@@ -206,7 +210,7 @@ export default function PDGAgentsManagement() {
       commission_rate: agent.commission_rate,
       permissions: {
         create_users: agent.permissions.includes('create_users'),
-        create_sub_agents: agent.can_create_sub_agent,
+        create_sub_agents: canCreateSubAgents,
         view_reports: agent.permissions.includes('view_reports'),
         manage_commissions: agent.permissions.includes('manage_commissions'),
         manage_users: agent.permissions.includes('manage_users'),
