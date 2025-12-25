@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ServiceSelectionCard } from '@/components/professional-services/ServiceSelectionCard';
 import { ServiceSetupDialog } from '@/components/professional-services/ServiceSetupDialog';
 import { useProfessionalServices } from '@/hooks/useProfessionalServices';
@@ -69,29 +68,28 @@ export default function ServiceSelection() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
-      {/* Header */}
-      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              onClick={() => navigate(-1)}
-              className="gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Retour
-            </Button>
-          </div>
+    <div className="min-h-screen bg-background pb-20">
+      {/* Header - opaque pour éviter le texte fantôme */}
+      <div className="border-b bg-card sticky top-0 z-10">
+        <div className="px-4 py-4">
+          <Button
+            variant="ghost"
+            onClick={() => navigate(-1)}
+            className="gap-2 -ml-2"
+            size="sm"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Retour
+          </Button>
 
-          <div className="mt-6 text-center space-y-3 animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="mt-4 text-center space-y-3">
             <div className="flex items-center justify-center gap-2">
-              <Sparkles className="w-8 h-8 text-primary" />
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-primary shrink-0" />
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent leading-tight">
                 Choisissez votre Service Professionnel
               </h1>
             </div>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-sm sm:text-base max-w-2xl mx-auto px-2">
               Sélectionnez le type de service que vous souhaitez créer. 
               Chaque service dispose d'outils professionnels complets inspirés des meilleurs standards internationaux.
             </p>
@@ -99,51 +97,53 @@ export default function ServiceSelection() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="px-4 py-6">
         {/* Barre de recherche */}
-        <div className="max-w-2xl mx-auto mb-8 animate-in fade-in slide-in-from-top-4 duration-500 delay-150">
+        <div className="max-w-2xl mx-auto mb-6">
           <Input
             type="search"
-            placeholder="Rechercher un service... (ex: Restaurant, Livraison, Beauté)"
+            placeholder="Rechercher un service..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-12 text-lg"
+            className="h-11 text-sm sm:text-base"
           />
         </div>
 
-        {/* Filtres par catégorie */}
-        <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="mb-8">
-          <TabsList className="grid grid-cols-3 lg:grid-cols-9 gap-2 h-auto bg-card/50 p-2">
+        {/* Filtres par catégorie - scrollable horizontalement sur mobile */}
+        <div className="mb-6 -mx-4 px-4">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
             {categories.map((category) => (
-              <TabsTrigger
+              <button
                 key={category.value}
-                value={category.value}
-                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                onClick={() => setSelectedCategory(category.value)}
+                className={`shrink-0 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
+                  selectedCategory === category.value
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-accent'
+                }`}
               >
-                <span className="hidden sm:inline">{category.label}</span>
-                <span className="sm:hidden">{category.label.split(' ')[0]}</span>
-                <span className="ml-1 text-xs opacity-75">({category.count})</span>
-              </TabsTrigger>
+                {category.label}
+                <span className="ml-1 opacity-75">({category.count})</span>
+              </button>
             ))}
-          </TabsList>
-        </Tabs>
+          </div>
+        </div>
 
         {/* Grille des services */}
         {filteredServices.length === 0 ? (
-          <div className="text-center py-16 animate-in fade-in">
-            <p className="text-muted-foreground text-lg">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground text-sm">
               Aucun service trouvé pour "{searchQuery}"
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in duration-500">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredServices.map((service) => (
-              <div key={service.id} className="animate-in fade-in slide-in-from-bottom-4">
-                <ServiceSelectionCard
-                  service={service}
-                  onSelect={() => handleServiceSelect(service)}
-                />
-              </div>
+              <ServiceSelectionCard
+                key={service.id}
+                service={service}
+                onSelect={() => handleServiceSelect(service)}
+              />
             ))}
           </div>
         )}
