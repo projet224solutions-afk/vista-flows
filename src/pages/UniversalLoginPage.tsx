@@ -1,10 +1,11 @@
 /**
- * Page de Connexion Universelle
- * Point d'entrée unique pour Agent, Bureau, Travailleur
+ * Page d'Authentification Améliorée
+ * Connexion sociale + Email/Téléphone
+ * Support: Client, Marchand, Livreur, Taxi Moto, Transitaire
  */
 
-import UniversalLogin from '@/components/auth/UniversalLogin';
+import EnhancedAuth from '@/components/auth/EnhancedAuth';
 
 export default function UniversalLoginPage() {
-  return <UniversalLogin />;
+  return <EnhancedAuth />;
 }
