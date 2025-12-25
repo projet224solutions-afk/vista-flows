@@ -2,9 +2,10 @@
  * HOME PAGE - Ultra Professional Design
  * 224Solutions - Marketplace Landing Page
  * Premium design inspired by Apple, Stripe, Linear
+ * OPTIMISÉ pour les performances
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -32,10 +33,19 @@ interface ServiceStatsData {
   livraison: number;
 }
 
+// Cache des stats avec TTL
+const statsCache = {
+  data: null as ServiceStatsData | null,
+  timestamp: 0,
+  TTL: 60000, // 1 minute
+};
+
 export default function Home() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addToCart, getCartCount } = useCart();
+  const isLoadingStats = useRef(false);
+  const hasMounted = useRef(false);
 
   // Redirect authenticated users to appropriate dashboard
   useRoleRedirect();
@@ -44,94 +54,98 @@ export default function Home() {
   const [showVendorsModal, setShowVendorsModal] = useState(false);
   const [showTaxiModal, setShowTaxiModal] = useState(false);
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
-  const [serviceStats, setServiceStats] = useState<ServiceStatsData>({
-    boutiques: 0,
-    taxi: 0,
-    livraison: 0,
-  });
+  const [serviceStats, setServiceStats] = useState<ServiceStatsData>(() => 
+    statsCache.data || { boutiques: 0, taxi: 0, livraison: 0 }
+  );
   const [notificationCount, setNotificationCount] = useState(0);
 
-  // Universal products hook
-  const { products: universalProducts, loading: productsLoading } = useUniversalProducts({
+  // Universal products hook - memoized options
+  const productOptions = useMemo(() => ({
     limit: 6,
-    sortBy: 'newest',
+    sortBy: 'newest' as const,
     autoLoad: true,
-  });
+  }), []);
+  
+  const { products: universalProducts, loading: productsLoading } = useUniversalProducts(productOptions);
 
-  // Load service statistics
-  useEffect(() => {
-    loadServiceStats();
-    const interval = setInterval(loadServiceStats, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Real-time profile changes
-  useEffect(() => {
-    const profilesChannel = supabase
-      .channel('profiles_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'profiles',
-        },
-        () => {
-          loadServiceStats();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(profilesChannel);
-    };
-  }, []);
-
-  // Load notifications
-  useEffect(() => {
-    if (user) {
-      loadNotifications();
+  // Load service statistics - optimisé avec cache et debounce
+  const loadServiceStats = useCallback(async () => {
+    // Vérifier le cache
+    if (statsCache.data && Date.now() - statsCache.timestamp < statsCache.TTL) {
+      setServiceStats(statsCache.data);
+      return;
     }
-  }, [user]);
 
-  const loadServiceStats = async () => {
+    // Éviter les appels multiples
+    if (isLoadingStats.current) return;
+    isLoadingStats.current = true;
+
     try {
+      // Une seule requête combinée au lieu de 3
       const [vendorsResult, taxiResult, livreurResult] = await Promise.all([
-        supabase.from('vendors').select('*', { count: 'exact', head: true }),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'taxi'),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'livreur'),
+        supabase.from('vendors').select('id', { count: 'exact', head: true }),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'taxi'),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'livreur'),
       ]);
 
-      setServiceStats({
+      const newStats = {
         boutiques: vendorsResult.count || 0,
         taxi: taxiResult.count || 0,
         livraison: livreurResult.count || 0,
-      });
+      };
+
+      // Mettre en cache
+      statsCache.data = newStats;
+      statsCache.timestamp = Date.now();
+      
+      setServiceStats(newStats);
     } catch (error) {
       console.error('Error loading stats:', error);
-      setServiceStats({ boutiques: 0, taxi: 0, livraison: 0 });
+    } finally {
+      isLoadingStats.current = false;
     }
-  };
+  }, []);
 
-  const loadNotifications = async () => {
-    try {
-      const { count } = await supabase
-        .from('notifications')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('read', false);
-
-      setNotificationCount(count || 0);
-    } catch (error) {
-      console.error('Error loading notifications:', error);
+  // Charger les stats une seule fois au montage
+  useEffect(() => {
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      loadServiceStats();
     }
-  };
+  }, [loadServiceStats]);
 
-  const handleProductClick = (productId: string) => {
+  // Refresh stats toutes les 60 secondes (au lieu de 30)
+  useEffect(() => {
+    const interval = setInterval(loadServiceStats, 60000);
+    return () => clearInterval(interval);
+  }, [loadServiceStats]);
+
+  // Load notifications - seulement si user existe
+  useEffect(() => {
+    if (!user?.id) return;
+    
+    const loadNotifications = async () => {
+      try {
+        const { count } = await supabase
+          .from('notifications')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('read', false);
+
+        setNotificationCount(count || 0);
+      } catch (error) {
+        console.error('Error loading notifications:', error);
+      }
+    };
+    
+    loadNotifications();
+  }, [user?.id]);
+
+  const handleProductClick = useCallback((productId: string) => {
     navigate(`/marketplace?product=${productId}`);
-  };
+  }, [navigate]);
 
-  const handleServiceClick = (serviceId: string) => {
+  const handleServiceClick = useCallback((serviceId: string) => {
     switch (serviceId) {
       case 'boutiques':
         setShowVendorsModal(true);
@@ -143,9 +157,9 @@ export default function Home() {
         setShowDeliveryModal(true);
         break;
     }
-  };
+  }, []);
 
-  const handleAddToCart = (product: any) => {
+  const handleAddToCart = useCallback((product: any) => {
     addToCart({
       id: product.id,
       name: product.name,
@@ -155,7 +169,7 @@ export default function Home() {
       vendor_name: product.vendor_name,
     });
     toast.success('Produit ajouté au panier');
-  };
+  }, [addToCart]);
 
   return (
     <div className="min-h-screen bg-background pb-24">
