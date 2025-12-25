@@ -89,6 +89,22 @@ serve(async (req) => {
       );
     }
 
+    // Validate password complexity for Supabase Auth
+    const hasLower = /[a-z]/.test(new_password);
+    const hasUpper = /[A-Z]/.test(new_password);
+    const hasNumber = /[0-9]/.test(new_password);
+    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(new_password);
+
+    if (!hasLower || !hasUpper || !hasNumber || !hasSpecial) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Le mot de passe doit contenir: minuscules, majuscules, chiffres et caractères spéciaux (!@#$%...)' 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Récupérer l'agent pour vérifier qu'il appartient au PDG
     const { data: agent, error: agentError } = await supabaseAdmin
       .from('agents_management')

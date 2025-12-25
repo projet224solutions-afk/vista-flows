@@ -1049,14 +1049,17 @@ export default function PDGAgentsManagement() {
               Définir un nouveau mot de passe pour <strong>{resetPasswordAgent?.name}</strong>
             </p>
             <div className="space-y-2">
-              <Label htmlFor="new_password">Nouveau mot de passe (min. 8 caractères)</Label>
+              <Label htmlFor="new_password">Nouveau mot de passe</Label>
               <Input
                 id="new_password"
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="Ex: Agent123!"
               />
+              <p className="text-xs text-muted-foreground">
+                Min. 8 caractères avec: minuscules, MAJUSCULES, chiffres et caractères spéciaux (!@#$%...)
+              </p>
             </div>
             <div className="flex justify-end gap-2">
               <Button
