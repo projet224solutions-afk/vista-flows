@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Bike, Users, Plus, AlertCircle, RefreshCw, MessageSquare, Settings, Lock, Mail, Copy, Ticket } from 'lucide-react';
+import { Bike, Users, Plus, AlertCircle, RefreshCw, MessageSquare, Settings, Lock, Mail, Copy, Ticket, Eye, EyeOff, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from '@/integrations/supabase/client';
@@ -27,6 +27,7 @@ import { BureauLayout } from '@/components/bureau/BureauLayout';
 import { BureauOverviewContent } from '@/components/bureau/BureauOverviewContent';
 import { BureauSyndicatSOSDashboard } from '@/components/bureau-syndicat/BureauSyndicatSOSDashboard';
 import TransportTicketGenerator from '@/components/syndicate/TransportTicketGenerator';
+import { ChangePasswordDialog, ChangeEmailDialog } from '@/components/bureau/BureauSettingsDialogs';
 
 export default function BureauDashboard() {
   const { token } = useParams();
@@ -45,7 +46,11 @@ export default function BureauDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [walletBalance, setWalletBalance] = useState(0);
   const [isWorkerDialogOpen, setIsWorkerDialogOpen] = useState(false);
+  const [isMemberDialogOpen, setIsMemberDialogOpen] = useState(false);
   const [isSubmittingWorker, setIsSubmittingWorker] = useState(false);
+  const [isSubmittingMember, setIsSubmittingMember] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [workerForm, setWorkerForm] = useState({
     nom: '',
     email: '',
@@ -60,6 +65,15 @@ export default function BureauDashboard() {
       view_reports: false
     }
   });
+  const [memberForm, setMemberForm] = useState({
+    full_name: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirm_password: '',
+    membership_type: 'individual'
+  });
+  const [showMemberPassword, setShowMemberPassword] = useState(false);
 
   const loadBureauData = async () => {
     try {
@@ -162,6 +176,60 @@ export default function BureauDashboard() {
     }
   };
 
+  // Ajouter un adhérent avec email/password
+  const handleAddMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (memberForm.password !== memberForm.confirm_password) {
+      toast.error('Les mots de passe ne correspondent pas');
+      return;
+    }
+
+    if (memberForm.password.length < 8) {
+      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      return;
+    }
+
+    try {
+      setIsSubmittingMember(true);
+
+      const { data, error } = await supabase.functions.invoke('create-syndicate-member', {
+        body: {
+          bureau_id: bureau.id,
+          full_name: memberForm.full_name,
+          email: memberForm.email,
+          phone: memberForm.phone,
+          password: memberForm.password,
+          membership_type: memberForm.membership_type
+        }
+      });
+
+      if (error) throw error;
+
+      if (!data.success) {
+        toast.error(data.error || 'Erreur lors de la création');
+        return;
+      }
+
+      toast.success('Adhérent créé avec succès');
+      setMemberForm({
+        full_name: '',
+        email: '',
+        phone: '',
+        password: '',
+        confirm_password: '',
+        membership_type: 'individual'
+      });
+      setIsMemberDialogOpen(false);
+      loadBureauData();
+    } catch (error: any) {
+      console.error('❌ Erreur création adhérent:', error);
+      toast.error(error.message || 'Erreur lors de la création de l\'adhérent');
+    } finally {
+      setIsSubmittingMember(false);
+    }
+  };
+
   const unreadAlerts = alerts.filter(a => !a.is_read).length;
 
   if (loading) {
@@ -258,13 +326,60 @@ export default function BureauDashboard() {
                 <Users className="w-5 h-5 text-emerald-600" />
                 Gestion des Membres du Bureau
               </CardTitle>
-              <Dialog open={isWorkerDialogOpen} onOpenChange={setIsWorkerDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Ajouter un Membre
-                  </Button>
-                </DialogTrigger>
+              <div className="flex gap-2">
+                <Dialog open={isMemberDialogOpen} onOpenChange={setIsMemberDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="border-emerald-300 text-emerald-700 hover:bg-emerald-50">
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Ajouter un Adhérent
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Ajouter un adhérent</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleAddMember} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="member_name">Nom complet *</Label>
+                        <Input id="member_name" required value={memberForm.full_name} onChange={(e) => setMemberForm({ ...memberForm, full_name: e.target.value })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="member_email">Email *</Label>
+                        <Input id="member_email" type="email" required value={memberForm.email} onChange={(e) => setMemberForm({ ...memberForm, email: e.target.value })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="member_phone">Téléphone</Label>
+                        <Input id="member_phone" type="tel" value={memberForm.phone} onChange={(e) => setMemberForm({ ...memberForm, phone: e.target.value })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="member_password">Mot de passe * (min. 8 caractères)</Label>
+                        <div className="relative">
+                          <Input id="member_password" type={showMemberPassword ? 'text' : 'password'} required minLength={8} value={memberForm.password} onChange={(e) => setMemberForm({ ...memberForm, password: e.target.value })} />
+                          <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" onClick={() => setShowMemberPassword(!showMemberPassword)}>
+                            {showMemberPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="member_confirm">Confirmer mot de passe *</Label>
+                        <Input id="member_confirm" type="password" required minLength={8} value={memberForm.confirm_password} onChange={(e) => setMemberForm({ ...memberForm, confirm_password: e.target.value })} />
+                      </div>
+                      <div className="flex justify-end gap-2 pt-4">
+                        <Button type="button" variant="outline" onClick={() => setIsMemberDialogOpen(false)} disabled={isSubmittingMember}>Annuler</Button>
+                        <Button type="submit" disabled={isSubmittingMember} className="bg-gradient-to-r from-emerald-600 to-teal-600">
+                          {isSubmittingMember ? 'Création...' : 'Créer l\'adhérent'}
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+                <Dialog open={isWorkerDialogOpen} onOpenChange={setIsWorkerDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Ajouter un Membre Bureau
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
                     <DialogTitle>Ajouter un membre du bureau</DialogTitle>
@@ -344,6 +459,7 @@ export default function BureauDashboard() {
                   </form>
                 </DialogContent>
               </Dialog>
+              </div>
             </CardHeader>
             <CardContent className="p-6">
               <div className="space-y-4">
@@ -529,7 +645,11 @@ export default function BureauDashboard() {
                     <p className="text-sm text-slate-500">Email actuel</p>
                     <p className="font-medium text-slate-800">{bureau?.president_email}</p>
                   </div>
-                  <Button className="w-full" variant="outline" onClick={() => toast.info('Fonctionnalité en cours de développement')}>
+                  <Button 
+                    className="w-full" 
+                    variant="outline" 
+                    onClick={() => setShowEmailDialog(true)}
+                  >
                     Modifier l'email
                   </Button>
                 </CardContent>
@@ -548,12 +668,7 @@ export default function BureauDashboard() {
                   </p>
                   <Button 
                     className="w-full bg-gradient-to-r from-emerald-600 to-teal-600"
-                    onClick={() => {
-                      if (bureau?.access_token) {
-                        localStorage.setItem('bureau_return_token', bureau.access_token);
-                      }
-                      navigate('/bureau/change-password');
-                    }}
+                    onClick={() => setShowPasswordDialog(true)}
                   >
                     Changer le mot de passe
                   </Button>
@@ -587,6 +702,21 @@ export default function BureauDashboard() {
       </BureauLayout>
       
       <CommunicationWidget position="bottom-right" showNotifications={true} />
+      
+      {/* Dialogs de modification compte */}
+      <ChangePasswordDialog
+        open={showPasswordDialog}
+        onOpenChange={setShowPasswordDialog}
+        bureauId={bureau?.id || ''}
+        onSuccess={loadBureauData}
+      />
+      <ChangeEmailDialog
+        open={showEmailDialog}
+        onOpenChange={setShowEmailDialog}
+        bureauId={bureau?.id || ''}
+        currentEmail={bureau?.president_email || ''}
+        onSuccess={loadBureauData}
+      />
     </>
   );
 }

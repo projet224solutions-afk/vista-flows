@@ -51,9 +51,9 @@ serve(async (req) => {
       );
     }
 
-    // Récupérer le bureau depuis la base de données
+    // Récupérer le bureau depuis la base de données (table bureaus)
     const { data: bureau, error: bureauError } = await supabaseClient
-      .from('syndicate_bureaus')
+      .from('bureaus')
       .select('*')
       .eq('id', bureau_id)
       .single();
@@ -73,7 +73,7 @@ serve(async (req) => {
     }
 
     // Vérifier si le bureau est actif
-    if (!bureau.is_active) {
+    if (bureau.status !== 'active' && bureau.status !== 'validated') {
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -119,9 +119,9 @@ serve(async (req) => {
     const salt = await bcrypt.genSalt(10);
     const newPasswordHash = await bcrypt.hash(new_password, salt);
 
-    // Mettre à jour le mot de passe dans la base de données
+    // Mettre à jour le mot de passe dans la base de données (table bureaus)
     const { error: updateError } = await supabaseClient
-      .from('syndicate_bureaus')
+      .from('bureaus')
       .update({ password_hash: newPasswordHash })
       .eq('id', bureau_id);
 
