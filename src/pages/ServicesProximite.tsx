@@ -209,17 +209,17 @@ export default function ServicesProximite() {
 
       {/* Catégories */}
       <section className="px-4 py-4 border-b border-border bg-card">
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2" style={{ WebkitOverflowScrolling: 'touch' }}>
           {categories.map((category) => (
             <Button
               key={category.id}
               variant={selectedCategory === category.id ? "default" : "outline"}
               size="sm"
               onClick={() => setSelectedCategory(category.id)}
-              className="whitespace-nowrap"
+              className="whitespace-nowrap flex-shrink-0 min-w-fit px-3"
             >
-              <span className="mr-2">{category.icon}</span>
-              {category.name}
+              <span className="mr-1.5">{category.icon}</span>
+              <span>{category.name}</span>
             </Button>
           ))}
         </div>
