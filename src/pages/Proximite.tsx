@@ -43,7 +43,7 @@ const getServiceCategories = (stats: any) => [
     bgColor: "bg-blue-50",
     textColor: "text-blue-600",
     count: stats.boutiques,
-    path: "/marketplace?category=boutiques",
+    path: "/marketplace", // Afficher toutes les boutiques/vendeurs
     description: "Commerces locaux",
     trending: stats.boutiques > 5
   },
@@ -90,7 +90,7 @@ const getServiceCategories = (stats: any) => [
     bgColor: "bg-red-50",
     textColor: "text-red-600",
     count: stats.restaurant,
-    path: "/marketplace?category=restaurant",
+    path: "/services-proximite?type=restaurant",
     description: "Cuisine locale"
   },
   {
@@ -128,10 +128,10 @@ const getServiceCategories = (stats: any) => [
   }
 ];
 
-// Catégories de produits avec stats dynamiques
+// Catégories de produits avec stats dynamiques - utilisation des vrais UUIDs de la base
 const getProductCategories = (stats: any) => [
   {
-    id: "mode",
+    id: "aa251121-4721-4f5c-a3e0-c3336f4093ed", // UUID réel de "Mode & Vêtements"
     title: "Mode & Vêtements",
     icon: ShoppingBag,
     color: "from-purple-500 to-purple-600",
@@ -140,7 +140,7 @@ const getProductCategories = (stats: any) => [
     count: stats.mode
   },
   {
-    id: "sante",
+    id: "b4376e0a-bac5-4359-bc1f-e476655a1df2", // UUID réel de "Beauté & Santé"
     title: "Santé & Bien-être",
     icon: Heart,
     color: "from-rose-500 to-rose-600",
@@ -149,7 +149,7 @@ const getProductCategories = (stats: any) => [
     count: stats.sante
   },
   {
-    id: "electronique",
+    id: "ca850dd2-99f8-4dfc-bd48-cf958c90cff6", // UUID réel de "Électronique"
     title: "Électronique",
     icon: Laptop,
     color: "from-indigo-500 to-indigo-600",
@@ -158,7 +158,7 @@ const getProductCategories = (stats: any) => [
     count: stats.electronique
   },
   {
-    id: "maison",
+    id: "a50506f0-a7f3-4b3f-ad51-aef5d46a7a1a", // UUID réel de "Maison & Décoration"
     title: "Maison & Déco",
     icon: Home,
     color: "from-teal-500 to-teal-600",
