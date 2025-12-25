@@ -109,11 +109,11 @@ export function useAgentManagement(pdgId?: string) {
   }, [pdgId]);
 
   const updateAgent = useCallback(async (agentId: string, updates: Partial<AgentManagement>) => {
-    await agentService.updateAgent(agentId, updates);
+    await agentService.updateAgent(agentId, updates, pdgId);
     setAgents(prev => prev.map(agent => 
       agent.id === agentId ? { ...agent, ...updates } : agent
     ));
-  }, []);
+  }, [pdgId]);
 
   const deleteAgent = useCallback(async (agentId: string) => {
     await agentService.updateAgent(agentId, { is_active: false });
