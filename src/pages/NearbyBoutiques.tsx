@@ -43,7 +43,7 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
 };
 
 const formatDistance = (distance?: number) => {
-  if (distance === undefined) return null;
+  if (distance === undefined || distance === null) return null;
   if (distance < 1) return `${Math.round(distance * 1000)} m`;
   return `${distance.toFixed(1)} km`;
 };
@@ -56,6 +56,7 @@ export default function NearbyBoutiques() {
   const [searchQuery, setSearchQuery] = useState("");
   const [userPosition, setUserPosition] = useState<{ latitude: number; longitude: number }>(DEFAULT_POSITION);
   const [positionReady, setPositionReady] = useState(false);
+  const [usingRealLocation, setUsingRealLocation] = useState(false);
   const [businessTypeFilter, setBusinessTypeFilter] = useState<string>("all");
   const [serviceTypeFilter, setServiceTypeFilter] = useState<string>("all");
 
@@ -72,13 +73,15 @@ export default function NearbyBoutiques() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setUserPosition({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+        setUsingRealLocation(true);
         setPositionReady(true);
       },
       () => {
         // fallback position already set
+        setUsingRealLocation(false);
         setPositionReady(true);
       },
-      { enableHighAccuracy: false, timeout: 6000 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );
   }, []);
 
@@ -176,8 +179,11 @@ export default function NearbyBoutiques() {
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant={usingRealLocation ? "default" : "secondary"} className="gap-1">
               <MapPin className="w-3 h-3" />
+              {usingRealLocation ? "Position GPS active" : "Position par défaut"}
+            </Badge>
+            <Badge variant="secondary" className="gap-1">
               Rayon: {RADIUS_KM} km
             </Badge>
             <Badge variant="outline" className="text-xs">
@@ -261,9 +267,14 @@ export default function NearbyBoutiques() {
                 )}
                 style={{ animationDelay: `${index * 30}ms` }}
               >
-                {vendor.distance !== undefined && (
-                  <div className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold shadow-sm">
+                {vendor.distance !== undefined ? (
+                  <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-md flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
                     {formatDistance(vendor.distance)}
+                  </div>
+                ) : (
+                  <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full bg-muted text-muted-foreground text-[10px] font-medium shadow-sm">
+                    Pas de GPS
                   </div>
                 )}
 
