@@ -23,6 +23,7 @@ interface Conversation {
   id: string;
   other_user_id: string;
   other_user_name: string;
+  other_user_email?: string;
   other_user_avatar?: string;
   last_message: string;
   last_message_time: string;
@@ -154,6 +155,7 @@ export default function Messages() {
             id: otherUserId,
             other_user_id: otherUserId,
             other_user_name: userName,
+            other_user_email: profile?.email || '',
             other_user_avatar: profile?.avatar_url,
             last_message: message.content,
             last_message_time: message.created_at,
@@ -177,6 +179,7 @@ export default function Messages() {
           id: recipientIdParam,
           other_user_id: recipientIdParam,
           other_user_name: userName,
+          other_user_email: profile?.email || '',
           other_user_avatar: profile?.avatar_url,
           last_message: 'Nouvelle conversation',
           last_message_time: new Date().toISOString(),
@@ -253,9 +256,15 @@ export default function Messages() {
     setSelectedConversation(null);
   };
 
-  const filteredConversations = conversations.filter(conv =>
-    conv.other_user_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredConversations = conversations.filter(conv => {
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return true;
+    return (
+      conv.other_user_name.toLowerCase().includes(query) ||
+      (conv.other_user_email && conv.other_user_email.toLowerCase().includes(query)) ||
+      conv.last_message.toLowerCase().includes(query)
+    );
+  });
 
   const selectedConvData = conversations.find(c => c.id === selectedConversation);
 
