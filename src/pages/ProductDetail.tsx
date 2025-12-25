@@ -1,13 +1,13 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ShoppingCart, MessageCircle, Star, Shield, Truck } from "lucide-react";
+import { ArrowLeft, ShoppingCart, MessageCircle, Star, Shield, Truck, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ProductPaymentModal from "@/components/ecommerce/ProductPaymentModal";
-
+import { ShareButton } from "@/components/shared/ShareButton";
 interface Product {
   id: string;
   name: string;
@@ -308,13 +308,25 @@ export default function ProductDetail() {
               <Button onClick={handleContact} variant="outline">
                 <MessageCircle className="w-4 h-4" />
               </Button>
+              <ShareButton
+                title={product.name}
+                text={`Découvrez ${product.name} à ${product.price.toLocaleString()} ${product.currency || 'GNF'} sur 224 Solutions`}
+                url={`${window.location.origin}/product/${product.id}`}
+              />
             </div>
 
             {/* Vendor */}
             {product.vendors && (
               <Card className="p-4">
                 <h3 className="font-semibold mb-2">Vendu par</h3>
-                <p className="text-foreground">{product.vendors.business_name}</p>
+                <Link 
+                  to={`/shop/${product.vendors.id}`}
+                  className="flex items-center justify-between group hover:text-primary transition-colors"
+                >
+                  <span className="text-foreground group-hover:text-primary">{product.vendors.business_name}</span>
+                  <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
+                </Link>
+                <p className="text-xs text-muted-foreground mt-1">Cliquez pour voir la boutique</p>
               </Card>
             )}
 

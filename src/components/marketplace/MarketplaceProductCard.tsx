@@ -11,12 +11,13 @@
  * - Responsive premium
  */
 
-import { Star, ShoppingCart, MessageCircle, MapPin, Package } from "lucide-react";
+import { Star, ShoppingCart, MessageCircle, MapPin, Package, Share2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface MarketplaceProductCardProps {
   id: string;
@@ -25,6 +26,7 @@ interface MarketplaceProductCardProps {
   price: number;
   originalPrice?: number;
   vendor: string;
+  vendorId?: string;
   vendorLocation?: string;
   vendorRating?: number;
   vendorRatingCount?: number;
@@ -40,11 +42,13 @@ interface MarketplaceProductCardProps {
 }
 
 export function MarketplaceProductCard({
+  id,
   image,
   title,
   price,
   originalPrice,
   vendor,
+  vendorId,
   vendorLocation,
   vendorRating = 0,
   vendorRatingCount = 0,
@@ -63,6 +67,33 @@ export function MarketplaceProductCard({
   const images = Array.isArray(image) ? image : [image];
   const primaryImage = images[0] || '/placeholder.svg';
 
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const shareUrl = `${window.location.origin}/product/${id}`;
+    const shareText = `Découvrez ${title} à ${formatPrice(price)} GNF sur 224 Solutions`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title,
+          text: shareText,
+          url: shareUrl,
+        });
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          console.error("Erreur lors du partage:", error);
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Lien copié dans le presse-papier !");
+      } catch (error) {
+        console.error("Erreur lors de la copie:", error);
+        toast.error("Impossible de copier le lien");
+      }
+    }
+  };
   const formatPrice = (value: number) => {
     return new Intl.NumberFormat('fr-GN', {
       style: 'decimal',
@@ -231,6 +262,15 @@ export function MarketplaceProductCard({
             title="Contacter le vendeur"
           >
             <MessageCircle className="w-3.5 h-3.5" />
+          </Button>
+          <Button 
+            onClick={handleShare}
+            variant="outline" 
+            size="sm"
+            className="h-8 w-8 p-0 border-border/60 hover:bg-accent hover:border-primary/30"
+            title="Partager"
+          >
+            <Share2 className="w-3.5 h-3.5" />
           </Button>
         </div>
       </CardContent>
