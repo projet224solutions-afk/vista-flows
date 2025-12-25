@@ -198,12 +198,12 @@ export default function Marketplace() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header Responsive */}
+      {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-40">
-        <ResponsiveContainer autoPadding>
-          <div className="flex items-center justify-between">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <h1 className="heading-responsive font-bold text-foreground truncate">
+              <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">
                 {vendorName ? vendorName : 'Marketplace'}
               </h1>
               {vendorName && (
@@ -212,7 +212,7 @@ export default function Marketplace() {
                 </p>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 shrink-0">
               {vendorId && (
                 <>
                   <ShareButton
@@ -236,7 +236,7 @@ export default function Marketplace() {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="relative"
+                  className="relative h-9 w-9"
                   onClick={() => navigate('/cart')}
                 >
                   <ShoppingCartIcon className="w-5 h-5" />
@@ -248,14 +248,16 @@ export default function Marketplace() {
                 </Button>
               )}
               {isMobile && (
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="h-9 w-9">
                   <Menu className="w-5 h-5" />
                 </Button>
               )}
             </div>
           </div>
-          <div className="mt-4 flex gap-2">
-            <div className="flex-1">
+          
+          {/* Barre de recherche */}
+          <div className="mt-3 flex gap-2">
+            <div className="flex-1 min-w-0">
               <SearchBar
                 value={searchQuery}
                 onChange={setSearchQuery}
@@ -268,23 +270,23 @@ export default function Marketplace() {
               variant="outline" 
               size="icon"
               onClick={() => navigate('/marketplace/visual-search')}
-              className="shrink-0 h-10 w-10 border-primary/30 hover:bg-primary/10"
+              className="shrink-0 h-11 w-11 border-primary/30 hover:bg-primary/10"
               title="Recherche par image"
             >
               <Camera className="w-5 h-5 text-primary" />
             </Button>
           </div>
-        </ResponsiveContainer>
+        </div>
       </header>
 
       {/* Categories Responsive */}
-      <section className="p-responsive border-b border-border">
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+      <section className="px-4 py-3 border-b border-border overflow-hidden">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
           {categories.map((category) => (
             <Badge
               key={category.id}
               variant={selectedCategory === category.id ? "default" : "secondary"}
-              className={`cursor-pointer whitespace-nowrap ${
+              className={`cursor-pointer whitespace-nowrap shrink-0 px-3 py-1.5 text-xs ${
                 selectedCategory === category.id
                   ? "bg-primary text-primary-foreground" 
                   : "hover:bg-accent"
@@ -298,28 +300,29 @@ export default function Marketplace() {
       </section>
 
       {/* Filters & View Controls Responsive */}
-      <section className="p-responsive border-b border-border">
-        <div className="flex flex-wrap items-center justify-between gap-2">
+      <section className="px-4 py-3 border-b border-border">
+        {/* Première ligne de filtres - scrollable horizontalement */}
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
           {/* Tri */}
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-auto min-w-fit text-xs sm:text-sm">
-              <ArrowUpDown className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 shrink-0" />
-              <SelectValue />
+            <SelectTrigger className="h-9 shrink-0 w-auto min-w-[120px] text-xs border-border bg-background">
+              <ArrowUpDown className="w-3 h-3 mr-1.5 shrink-0" />
+              <span className="truncate"><SelectValue /></span>
             </SelectTrigger>
             <SelectContent>
-                <SelectItem value="newest">Plus récents</SelectItem>
-                <SelectItem value="popular">Popularité</SelectItem>
-                <SelectItem value="price_asc">Prix croissant</SelectItem>
-                <SelectItem value="price_desc">Prix décroissant</SelectItem>
-                <SelectItem value="rating">Mieux notés</SelectItem>
+              <SelectItem value="newest">Plus récents</SelectItem>
+              <SelectItem value="popular">Popularité</SelectItem>
+              <SelectItem value="price_asc">Prix croissant</SelectItem>
+              <SelectItem value="price_desc">Prix décroissant</SelectItem>
+              <SelectItem value="rating">Mieux notés</SelectItem>
             </SelectContent>
           </Select>
 
           {/* Filtre Pays */}
           <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-            <SelectTrigger className="w-auto min-w-fit text-xs sm:text-sm">
-              <Globe className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 shrink-0" />
-              <SelectValue placeholder="Tous les pays" />
+            <SelectTrigger className="h-9 shrink-0 w-auto min-w-[130px] text-xs border-border bg-background">
+              <Globe className="w-3 h-3 mr-1.5 shrink-0" />
+              <span className="truncate"><SelectValue placeholder="Tous les pays" /></span>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tous les pays</SelectItem>
@@ -331,9 +334,9 @@ export default function Marketplace() {
 
           {/* Filtre Ville */}
           <Select value={selectedCity} onValueChange={setSelectedCity}>
-            <SelectTrigger className="w-auto min-w-fit text-xs sm:text-sm">
-              <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 shrink-0" />
-              <SelectValue placeholder="Toutes les villes" />
+            <SelectTrigger className="h-9 shrink-0 w-auto min-w-[140px] text-xs border-border bg-background">
+              <MapPin className="w-3 h-3 mr-1.5 shrink-0" />
+              <span className="truncate"><SelectValue placeholder="Toutes les villes" /></span>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toutes les villes</SelectItem>
@@ -344,12 +347,12 @@ export default function Marketplace() {
           </Select>
 
           {!isMobile && (
-            <div className="flex items-center gap-1 bg-accent rounded-lg p-1">
+            <div className="flex items-center gap-1 bg-accent rounded-lg p-1 shrink-0">
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('grid')}
-                className="h-8 w-8 p-0"
+                className="h-7 w-7 p-0"
               >
                 <Grid className="w-4 h-4" />
               </Button>
@@ -357,7 +360,7 @@ export default function Marketplace() {
                 variant={viewMode === 'list' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('list')}
-                className="h-8 w-8 p-0"
+                className="h-7 w-7 p-0"
               >
                 <List className="w-4 h-4" />
               </Button>
@@ -365,31 +368,32 @@ export default function Marketplace() {
           )}
         </div>
 
+        {/* Panneau de filtres avancés */}
         {showFilters && (
-          <div className="mt-4 p-4 bg-accent rounded-lg animate-fade-in">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="mt-3 p-3 bg-muted/50 rounded-lg border border-border">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-sm font-medium mb-2 block">Prix (GNF)</label>
+                <label className="text-xs font-medium mb-1.5 block text-foreground">Prix (GNF)</label>
                 <div className="flex gap-2">
                   <input
                     type="number"
                     placeholder="Min"
-                    className="flex-1 px-3 py-2 border border-border rounded-md text-sm bg-background"
+                    className="flex-1 px-3 py-2 border border-border rounded-md text-xs bg-background w-full"
                     onChange={e => setFilters(prev => ({ ...prev, minPrice: parseInt(e.target.value) || 0 }))}
                   />
                   <input
                     type="number"
                     placeholder="Max"
-                    className="flex-1 px-3 py-2 border border-border rounded-md text-sm bg-background"
+                    className="flex-1 px-3 py-2 border border-border rounded-md text-xs bg-background w-full"
                     onChange={e => setFilters(prev => ({ ...prev, maxPrice: parseInt(e.target.value) || 0 }))}
                   />
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium mb-2 block">Note minimum</label>
+                <label className="text-xs font-medium mb-1.5 block text-foreground">Note minimum</label>
                 <Select onValueChange={(val) => setFilters(prev => ({ ...prev, minRating: parseInt(val) || 0 }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choisir" />
+                  <SelectTrigger className="h-9 text-xs w-full">
+                    <SelectValue placeholder="Choisir une note" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="4">4+ étoiles</SelectItem>
@@ -403,10 +407,10 @@ export default function Marketplace() {
         )}
       </section>
 
-      {/* Results Responsive */}
-      <section className="p-responsive">
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-xs md:text-sm text-muted-foreground">
+      {/* Results */}
+      <section className="px-4 py-3">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs text-muted-foreground">
             {products.length} / {total} résultats
           </p>
         </div>
