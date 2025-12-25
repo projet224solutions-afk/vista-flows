@@ -58,7 +58,44 @@ export default function AgentDashboard() {
   useEffect(() => {
     if (agent?.id) {
       loadWalletBalance();
+      
+      // Abonnement temps réel pour les changements de wallet
+      const channel = supabase
+        .channel(`agent-wallet-dashboard-${agent.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'agent_wallets',
+            filter: `agent_id=eq.${agent.id}`,
+          },
+          (payload) => {
+            console.log('💰 Wallet agent mis à jour (dashboard):', payload);
+            if (payload.new && typeof (payload.new as any).balance === 'number') {
+              setWalletBalance((payload.new as any).balance);
+            } else {
+              loadWalletBalance();
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
+  }, [agent?.id]);
+
+  // Écouter l'événement personnalisé de mise à jour wallet
+  useEffect(() => {
+    const handleWalletUpdate = () => {
+      console.log('📢 Event wallet-updated reçu (dashboard)');
+      loadWalletBalance();
+    };
+
+    window.addEventListener('wallet-updated', handleWalletUpdate);
+    return () => window.removeEventListener('wallet-updated', handleWalletUpdate);
   }, [agent?.id]);
 
   const loadAgentData = async () => {
@@ -84,6 +121,7 @@ export default function AgentDashboard() {
     if (!agent?.id) return;
     
     try {
+      console.log('🔄 Chargement solde wallet dashboard pour agent:', agent.id);
       const { data, error } = await supabase
         .from('agent_wallets')
         .select('balance')
@@ -91,6 +129,7 @@ export default function AgentDashboard() {
         .single();
       
       if (!error && data) {
+        console.log('✅ Solde wallet dashboard:', data.balance);
         setWalletBalance(data.balance || 0);
       }
     } catch (error) {
