@@ -191,8 +191,8 @@ export default function VendorShop() {
             title={vendor.business_name}
             text={`Découvrez la boutique ${vendor.business_name} sur 224 Solutions`}
             url={`${window.location.origin}/shop/${vendor.id}`}
-            variant="secondary"
-            size="icon"
+            variant="outline"
+            size="sm"
           />
         </div>
       </header>

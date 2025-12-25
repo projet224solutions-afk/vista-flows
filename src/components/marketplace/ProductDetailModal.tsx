@@ -372,7 +372,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                 <ShareButton
                   title={product.name}
                   text={`Découvrez ${product.name} à ${product.price.toLocaleString()} GNF sur 224 Solutions`}
-                  url={`${window.location.origin}/marketplace/product/${product.id}`}
+                  url={`${window.location.origin}/product/${product.id}`}
                   variant="default"
                   size="default"
                   className="flex-1"

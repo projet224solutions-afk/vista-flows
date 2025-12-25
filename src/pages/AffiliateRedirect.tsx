@@ -80,9 +80,9 @@ export default function AffiliateRedirect() {
         .eq('is_active', true)
         .limit(1);
 
-      // Rediriger vers le marketplace avec un filtre vendeur ou vers un produit
+      // Rediriger directement vers le produit (lien partageable)
       if (products && products.length > 0) {
-        navigate(`/marketplace/product/${products[0].id}`);
+        navigate(`/product/${products[0].id}`);
       } else {
         navigate('/marketplace');
       }
