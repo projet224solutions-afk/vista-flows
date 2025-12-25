@@ -966,12 +966,12 @@ export default function Auth() {
         <>
           {/* Overlay cliquable pour fermer */}
           <div 
-            className="fixed inset-0 bg-black/20 z-40"
+            className="fixed inset-0 bg-black/30 z-40 backdrop-blur-sm"
             onClick={handleCloseServiceSelection}
           />
-          <div className="max-w-6xl mx-auto px-6 mt-8 relative z-50">
-            <Card className="shadow-xl border-2 border-primary bg-white">
-            <CardContent className="p-8">
+          <div className="max-w-6xl mx-auto px-4 mt-6 relative z-50">
+            <Card className="shadow-2xl border-2 border-primary bg-white overflow-hidden">
+            <CardContent className="p-6 md:p-8">
               <div className="flex items-center justify-between mb-6">
                 <Button
                   variant="ghost"
@@ -990,49 +990,137 @@ export default function Auth() {
                   className="gap-2 bg-primary/10 hover:bg-primary/20 border-primary"
                 >
                   <Store className="w-4 h-4" />
-                  Vendeur E-commerce Classique
+                  Vendeur E-commerce
                 </Button>
               </div>
               
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold mb-2">
-                  Choisissez votre Type de Service Professionnel
+              <div className="text-center mb-6">
+                <h3 className="text-xl md:text-2xl font-bold mb-2">
+                  Choisissez votre Type de Service
                 </h3>
-                <p className="text-muted-foreground">
-                  Sélectionnez le service que vous souhaitez créer parmi nos 15 catégories professionnelles<br/>
-                  <span className="text-sm text-primary font-medium">Ou cliquez sur "Vendeur E-commerce Classique" pour vendre uniquement des produits</span>
+                <p className="text-muted-foreground text-sm">
+                  Sélectionnez le service que vous souhaitez proposer sur la plateforme
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                {[
-                  { id: 'restaurant', name: 'Restauration', icon: '🍽️', color: 'orange' },
-                  { id: 'ecommerce', name: 'Boutique Digitale', icon: '🛍️', color: 'blue' },
-                  { id: 'livraison', name: 'Livraison / Coursier', icon: '📦', color: 'green' },
-                  { id: 'beaute', name: 'Beauté & Bien-être', icon: '💇', color: 'pink' },
-                  { id: 'reparation', name: 'Service de Réparation', icon: '🔧', color: 'gray' },
-                  { id: 'location', name: 'Location Immobilière', icon: '🏠', color: 'purple' },
-                  { id: 'education', name: 'Éducation / Formation', icon: '🎓', color: 'indigo' },
-                  { id: 'sante', name: 'Santé & Bien-être', icon: '🏥', color: 'red' },
-                  { id: 'voyage', name: 'Voyage & Billetterie', icon: '✈️', color: 'cyan' },
-                  { id: 'freelance', name: 'Services Administratifs', icon: '💼', color: 'teal' },
-                  { id: 'agriculture', name: 'Service Agricole', icon: '🌾', color: 'lime' },
-                  { id: 'construction', name: 'Construction & BTP', icon: '🏗️', color: 'amber' },
-                  { id: 'media', name: 'Média & Création', icon: '📸', color: 'rose' },
-                  { id: 'informatique', name: 'Technique & Informatique', icon: '💻', color: 'violet' },
-                  { id: 'menage', name: 'Ménage & Entretien', icon: '🧹', color: 'emerald' },
-                ].map((service) => (
-                  <button
-                    key={service.id}
-                    onClick={() => handleServiceTypeSelect(service.id)}
-                    className={`flex flex-col items-center p-4 bg-white rounded-lg border-2 hover:border-primary hover:shadow-lg transition-all ${
-                      selectedServiceType === service.id ? 'border-primary ring-2 ring-primary' : 'border-border'
-                    }`}
-                  >
-                    <div className="text-4xl mb-2">{service.icon}</div>
-                    <span className="text-sm font-medium text-center">{service.name}</span>
-                  </button>
-                ))}
+              {/* Section: Services de Proximité Populaires */}
+              <div className="mb-6">
+                <h4 className="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
+                  <span className="w-8 h-0.5 bg-primary rounded"></span>
+                  Services de Proximité Populaires
+                  <span className="w-8 h-0.5 bg-primary rounded"></span>
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {[
+                    { id: 'ecommerce', name: 'Boutique', icon: '🏪', desc: 'Commerce de détail' },
+                    { id: 'restaurant', name: 'Restaurant', icon: '🍽️', desc: 'Cuisine & plats' },
+                    { id: 'livraison', name: 'Livraison', icon: '📦', desc: 'Colis & courses' },
+                    { id: 'beaute', name: 'Beauté & Coiffure', icon: '💇', desc: 'Soins & styling' },
+                    { id: 'vtc', name: 'Transport VTC', icon: '🚗', desc: 'Véhicules privés' },
+                    { id: 'reparation', name: 'Réparation', icon: '🔧', desc: 'Électro & mécanique' },
+                    { id: 'menage', name: 'Nettoyage', icon: '✨', desc: 'Ménage & pressing' },
+                    { id: 'informatique', name: 'Informatique', icon: '💻', desc: 'Tech & dépannage' },
+                  ].map((service) => (
+                    <button
+                      key={service.id}
+                      onClick={() => handleServiceTypeSelect(service.id)}
+                      className={`flex flex-col items-center p-3 bg-gradient-to-br from-white to-slate-50 rounded-xl border-2 hover:border-primary hover:shadow-lg hover:scale-[1.02] transition-all ${
+                        selectedServiceType === service.id ? 'border-primary ring-2 ring-primary/30 bg-primary/5' : 'border-slate-200'
+                      }`}
+                    >
+                      <div className="text-3xl mb-1.5">{service.icon}</div>
+                      <span className="text-sm font-semibold text-foreground">{service.name}</span>
+                      <span className="text-[10px] text-muted-foreground">{service.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Section: Catégories de Produits */}
+              <div className="mb-6">
+                <h4 className="text-sm font-semibold text-emerald-600 mb-3 flex items-center gap-2">
+                  <span className="w-8 h-0.5 bg-emerald-500 rounded"></span>
+                  Vente de Produits par Catégorie
+                  <span className="w-8 h-0.5 bg-emerald-500 rounded"></span>
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { id: 'mode', name: 'Mode & Vêtements', icon: '👗', desc: 'Prêt-à-porter' },
+                    { id: 'sante', name: 'Santé & Bien-être', icon: '💊', desc: 'Pharmacie & soins' },
+                    { id: 'electronique', name: 'Électronique', icon: '📱', desc: 'High-tech' },
+                    { id: 'maison', name: 'Maison & Déco', icon: '🏠', desc: 'Intérieur' },
+                  ].map((service) => (
+                    <button
+                      key={service.id}
+                      onClick={() => handleServiceTypeSelect(service.id)}
+                      className={`flex flex-col items-center p-3 bg-gradient-to-br from-emerald-50 to-white rounded-xl border-2 hover:border-emerald-500 hover:shadow-lg hover:scale-[1.02] transition-all ${
+                        selectedServiceType === service.id ? 'border-emerald-500 ring-2 ring-emerald-500/30' : 'border-emerald-200'
+                      }`}
+                    >
+                      <div className="text-3xl mb-1.5">{service.icon}</div>
+                      <span className="text-sm font-semibold text-foreground">{service.name}</span>
+                      <span className="text-[10px] text-muted-foreground">{service.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Section: Services Professionnels */}
+              <div className="mb-4">
+                <h4 className="text-sm font-semibold text-violet-600 mb-3 flex items-center gap-2">
+                  <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
+                  Services Professionnels
+                  <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { id: 'location', name: 'Immobilier', icon: '🏢', desc: 'Location & vente' },
+                    { id: 'education', name: 'Formation', icon: '🎓', desc: 'Cours & coaching' },
+                    { id: 'media', name: 'Photo & Vidéo', icon: '📸', desc: 'Événements' },
+                    { id: 'sport', name: 'Sport & Fitness', icon: '🏋️', desc: 'Coaching' },
+                  ].map((service) => (
+                    <button
+                      key={service.id}
+                      onClick={() => handleServiceTypeSelect(service.id)}
+                      className={`flex flex-col items-center p-3 bg-gradient-to-br from-violet-50 to-white rounded-xl border-2 hover:border-violet-500 hover:shadow-lg hover:scale-[1.02] transition-all ${
+                        selectedServiceType === service.id ? 'border-violet-500 ring-2 ring-violet-500/30' : 'border-violet-200'
+                      }`}
+                    >
+                      <div className="text-3xl mb-1.5">{service.icon}</div>
+                      <span className="text-sm font-semibold text-foreground">{service.name}</span>
+                      <span className="text-[10px] text-muted-foreground">{service.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Section: Autres Services */}
+              <div>
+                <h4 className="text-sm font-semibold text-amber-600 mb-3 flex items-center gap-2">
+                  <span className="w-8 h-0.5 bg-amber-500 rounded"></span>
+                  Autres Services
+                  <span className="w-8 h-0.5 bg-amber-500 rounded"></span>
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { id: 'voyage', name: 'Voyage & Billetterie', icon: '✈️', desc: 'Voyages' },
+                    { id: 'freelance', name: 'Administratif', icon: '💼', desc: 'Secrétariat' },
+                    { id: 'agriculture', name: 'Agriculture', icon: '🌾', desc: 'Produits locaux' },
+                    { id: 'construction', name: 'Construction & BTP', icon: '🏗️', desc: 'Bâtiment' },
+                  ].map((service) => (
+                    <button
+                      key={service.id}
+                      onClick={() => handleServiceTypeSelect(service.id)}
+                      className={`flex flex-col items-center p-3 bg-gradient-to-br from-amber-50 to-white rounded-xl border-2 hover:border-amber-500 hover:shadow-lg hover:scale-[1.02] transition-all ${
+                        selectedServiceType === service.id ? 'border-amber-500 ring-2 ring-amber-500/30' : 'border-amber-200'
+                      }`}
+                    >
+                      <div className="text-3xl mb-1.5">{service.icon}</div>
+                      <span className="text-sm font-semibold text-foreground">{service.name}</span>
+                      <span className="text-[10px] text-muted-foreground">{service.desc}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>
