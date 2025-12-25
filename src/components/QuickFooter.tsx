@@ -1,4 +1,4 @@
-import { Home, ShoppingBag, MapPin, User } from "lucide-react";
+import { Home, ShoppingBag, MessageSquare, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,11 +25,11 @@ export default function QuickFooter() {
       description: 'Achats en ligne - Produits et vendeurs'
     },
     {
-      id: 'tracking',
-      label: 'Tracking',
-      icon: MapPin,
-      path: '/tracking',
-      description: 'Suivi de commandes en temps réel'
+      id: 'messages',
+      label: 'Messages',
+      icon: MessageSquare,
+      path: '/messages',
+      description: 'Messagerie - Communication entre utilisateurs'
     },
     {
       id: 'profil',
