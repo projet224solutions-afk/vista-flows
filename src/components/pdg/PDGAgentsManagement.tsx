@@ -123,9 +123,32 @@ export default function PDGAgentsManagement() {
 
       if (editingAgent) {
         // Mode édition
+        // Si l'email a changé, on doit aussi synchroniser Supabase Auth
+        const nextEmail = formData.email.trim().toLowerCase();
+        const prevEmail = (editingAgent.email || '').trim().toLowerCase();
+
+        if (nextEmail && nextEmail !== prevEmail) {
+          if (!pdgProfile?.id) {
+            throw new Error('PDG ID manquant');
+          }
+
+          const { data, error } = await supabase.functions.invoke('pdg-update-agent-email', {
+            body: {
+              agent_id: editingAgent.id,
+              new_email: nextEmail,
+              pdg_id: pdgProfile.id,
+            },
+          });
+
+          if (error) throw error;
+          if (!data?.success) {
+            throw new Error(data?.error || "Erreur lors de la synchronisation de l'email");
+          }
+        }
+
+        // Mettre à jour les autres champs (sans email pour éviter une désynchronisation)
         await updateAgentAction(editingAgent.id, {
           name: formData.name,
-          email: formData.email,
           phone: formData.phone,
           permissions,
           commission_rate: formData.commission_rate,
@@ -248,29 +271,36 @@ export default function PDGAgentsManagement() {
   };
 
   const handleConfirmChangeEmail = async () => {
-    if (!changeEmailAgent || !newEmail || !emailPassword) return;
-    
+    if (!changeEmailAgent || !newEmail) return;
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(newEmail)) {
+    const nextEmail = newEmail.trim().toLowerCase();
+
+    if (!emailRegex.test(nextEmail)) {
       toast.error("Format d'email invalide");
+      return;
+    }
+
+    if (!pdgProfile?.id) {
+      toast.error('PDG ID manquant');
       return;
     }
 
     try {
       setIsChangingEmail(true);
-      
-      const { data, error } = await supabase.functions.invoke('change-agent-email', {
+
+      const { data, error } = await supabase.functions.invoke('pdg-update-agent-email', {
         body: {
           agent_id: changeEmailAgent.id,
-          new_email: newEmail,
-          current_password: emailPassword
-        }
+          new_email: nextEmail,
+          pdg_id: pdgProfile.id,
+        },
       });
 
       if (error) throw error;
-      
+
       if (data?.success) {
-        toast.success(`Email de ${changeEmailAgent.name} modifié avec succès`);
+        toast.success(`Email de ${changeEmailAgent.name} modifié et synchronisé`);
         setIsChangeEmailDialogOpen(false);
         setChangeEmailAgent(null);
         setNewEmail('');
@@ -281,7 +311,7 @@ export default function PDGAgentsManagement() {
       }
     } catch (error: any) {
       console.error('Erreur changement email:', error);
-      toast.error(error.message || 'Erreur lors du changement d\'email');
+      toast.error(error.message || "Erreur lors du changement d'email");
     } finally {
       setIsChangingEmail(false);
     }
@@ -1110,7 +1140,7 @@ export default function PDGAgentsManagement() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email_password">Mot de passe de l'agent (pour confirmer)</Label>
+              <Label htmlFor="email_password">Mot de passe de l'agent (optionnel)</Label>
               <Input
                 id="email_password"
                 type="password"
@@ -1128,7 +1158,7 @@ export default function PDGAgentsManagement() {
               </Button>
               <Button
                 onClick={handleConfirmChangeEmail}
-                disabled={isChangingEmail || !newEmail || !emailPassword}
+                disabled={isChangingEmail || !newEmail}
               >
                 {isChangingEmail ? 'Modification...' : 'Modifier'}
               </Button>
