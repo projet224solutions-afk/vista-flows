@@ -7,7 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship, Crown, Utensils, ShoppingBag, Scissors, Car, GraduationCap, Stethoscope, Wrench, Home, Plane, Camera, ArrowLeft, Eye, EyeOff, Chrome } from "lucide-react";
+import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship, Crown, Utensils, ShoppingBag, Scissors, Car, GraduationCap, Stethoscope, Wrench, Home, Plane, Camera, ArrowLeft, Eye, EyeOff, Chrome, Search, ChevronDown, Check } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Separator } from "@/components/ui/separator";
 import QuickFooter from "@/components/QuickFooter";
 import { z } from "zod";
@@ -196,6 +198,7 @@ export default function Auth() {
   const WORLD_PHONE_CODES = [
     { code: '+93', country: 'Afghanistan', flag: '🇦🇫' },
     { code: '+355', country: 'Albanie', flag: '🇦🇱' },
+    { code: '+49', country: 'Allemagne', flag: '🇩🇪' },
     { code: '+213', country: 'Algérie', flag: '🇩🇿' },
     { code: '+376', country: 'Andorre', flag: '🇦🇩' },
     { code: '+244', country: 'Angola', flag: '🇦🇴' },
@@ -227,6 +230,7 @@ export default function Auth() {
     { code: '+269', country: 'Comores', flag: '🇰🇲' },
     { code: '+242', country: 'Congo', flag: '🇨🇬' },
     { code: '+243', country: 'RD Congo', flag: '🇨🇩' },
+    { code: '+82', country: 'Corée du Sud', flag: '🇰🇷' },
     { code: '+225', country: 'Côte d\'Ivoire', flag: '🇨🇮' },
     { code: '+385', country: 'Croatie', flag: '🇭🇷' },
     { code: '+53', country: 'Cuba', flag: '🇨🇺' },
@@ -426,6 +430,7 @@ export default function Auth() {
   };
 
   const [phoneCode, setPhoneCode] = useState('+224');
+  const [phoneCodeOpen, setPhoneCodeOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -1385,19 +1390,50 @@ export default function Auth() {
                   <div>
                     <Label htmlFor="phone">Numéro de téléphone</Label>
                     <div className="flex gap-2 mt-1">
-                      {/* Sélecteur d'indicatif pays */}
-                      <select
-                        id="phoneCode"
-                        value={phoneCode}
-                        onChange={(e) => setPhoneCode(e.target.value)}
-                        className="w-28 px-2 py-2 border border-input rounded-md bg-background text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring"
-                      >
-                        {WORLD_PHONE_CODES.map((item) => (
-                          <option key={`${item.code}-${item.country}`} value={item.code}>
-                            {item.flag} {item.code}
-                          </option>
-                        ))}
-                      </select>
+                      {/* Sélecteur d'indicatif pays avec recherche */}
+                      <Popover open={phoneCodeOpen} onOpenChange={setPhoneCodeOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={phoneCodeOpen}
+                            className="w-32 justify-between px-2 font-medium"
+                          >
+                            <span className="flex items-center gap-1 truncate">
+                              {WORLD_PHONE_CODES.find(c => c.code === phoneCode)?.flag} {phoneCode}
+                            </span>
+                            <ChevronDown className="ml-1 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-64 p-0 bg-background border shadow-lg z-[100]" align="start">
+                          <Command>
+                            <CommandInput placeholder="Rechercher un pays..." className="h-9" />
+                            <CommandList>
+                              <CommandEmpty>Aucun pays trouvé</CommandEmpty>
+                              <CommandGroup className="max-h-60 overflow-auto">
+                                {WORLD_PHONE_CODES.map((item) => (
+                                  <CommandItem
+                                    key={`${item.code}-${item.country}`}
+                                    value={`${item.country} ${item.code}`}
+                                    onSelect={() => {
+                                      setPhoneCode(item.code);
+                                      setPhoneCodeOpen(false);
+                                    }}
+                                    className="cursor-pointer"
+                                  >
+                                    <span className="mr-2">{item.flag}</span>
+                                    <span className="flex-1 truncate">{item.country}</span>
+                                    <span className="ml-2 text-muted-foreground">{item.code}</span>
+                                    {phoneCode === item.code && (
+                                      <Check className="ml-2 h-4 w-4 text-primary" />
+                                    )}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                       {/* Numéro de téléphone */}
                       <Input
                         id="phone"
