@@ -135,6 +135,7 @@ export default function Auth() {
   const [showSignup, setShowSignup] = useState(false);
   const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
   const [showServiceSelection, setShowServiceSelection] = useState(false);
+  const [showRoleSelectionPrompt, setShowRoleSelectionPrompt] = useState(false);
 
   // Mapping pays → indicatif téléphonique (pour auto-détection)
   const COUNTRY_PHONE_CODES: Record<string, string> = {
@@ -864,55 +865,90 @@ export default function Auth() {
         </h2>
       </div>
 
-      {/* Information supplémentaire */}
+      {/* Sélection du type de compte */}
       <div className="max-w-4xl mx-auto px-6 mt-8">
-        <div className="bg-gradient-to-br from-slate-50 to-blue-50 border border-border/50 rounded-3xl p-6 shadow-lg">
+        <div className={`bg-gradient-to-br from-slate-50 to-blue-50 border rounded-3xl p-6 shadow-lg transition-all ${
+          showRoleSelectionPrompt ? 'border-red-400 ring-2 ring-red-200 animate-pulse' : 'border-border/50'
+        }`}>
           <h3 className="text-xl font-bold text-center mb-4">
             {showSignup ? t('auth.selectAccountType') : t('auth.supportedAccounts')}
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-            <button
-              onClick={() => handleRoleClick('client')}
-              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${selectedRole === 'client' ? 'ring-2 ring-blue-600' : ''
-                }`}
-            >
-              <UserIcon className="h-6 w-6 text-blue-600 mb-2" />
-              <span className="font-medium">{t('auth.client')}</span>
-            </button>
+          
+          {/* Alerte demandant de sélectionner un type */}
+          {showRoleSelectionPrompt && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-300 rounded-xl animate-bounce">
+              <p className="text-red-700 text-center text-sm font-medium">
+                ⚠️ Veuillez d'abord sélectionner le type de compte que vous souhaitez créer !
+              </p>
+            </div>
+          )}
+          
+          {/* Ligne des 4 boutons professionnels (Marchand, Livreur, Taxi, Transitaire) */}
+          <div className="flex flex-wrap justify-center gap-2 mb-4">
             <button
               onClick={() => handleRoleClick('vendeur')}
-              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${selectedRole === 'vendeur' ? 'ring-2 ring-green-600' : ''
-                }`}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+                selectedRole === 'vendeur' 
+                  ? 'bg-green-600 text-white shadow-lg scale-105' 
+                  : 'bg-white text-green-700 border-2 border-green-200 hover:border-green-400 hover:bg-green-50'
+              }`}
             >
-              <Store className="h-6 w-6 text-green-600 mb-2" />
-              <span className="font-medium">{t('auth.merchant')}</span>
-              <span className="text-xs text-muted-foreground">{t('auth.merchantSub')}</span>
+              <Store className="h-4 w-4" />
+              <span>{t('auth.merchant')}</span>
             </button>
+            
             <button
               onClick={() => handleRoleClick('livreur')}
-              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${selectedRole === 'livreur' ? 'ring-2 ring-orange-600' : ''
-                }`}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+                selectedRole === 'livreur' 
+                  ? 'bg-orange-600 text-white shadow-lg scale-105' 
+                  : 'bg-white text-orange-700 border-2 border-orange-200 hover:border-orange-400 hover:bg-orange-50'
+              }`}
             >
-              <Truck className="h-6 w-6 text-orange-600 mb-2" />
-              <span className="font-medium">{t('auth.deliveryDriver')}</span>
+              <Truck className="h-4 w-4" />
+              <span>{t('auth.deliveryDriver')}</span>
             </button>
+            
             <button
               onClick={() => handleRoleClick('taxi')}
-              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${selectedRole === 'taxi' ? 'ring-2 ring-yellow-600' : ''
-                }`}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+                selectedRole === 'taxi' 
+                  ? 'bg-yellow-600 text-white shadow-lg scale-105' 
+                  : 'bg-white text-yellow-700 border-2 border-yellow-200 hover:border-yellow-400 hover:bg-yellow-50'
+              }`}
             >
-              <Bike className="h-6 w-6 text-yellow-600 mb-2" />
-              <span className="font-medium">{t('auth.taxiMoto')}</span>
+              <Bike className="h-4 w-4" />
+              <span>{t('auth.taxiMoto')}</span>
             </button>
+            
             <button
               onClick={() => handleRoleClick('transitaire')}
-              className={`flex flex-col items-center p-3 bg-white/60 rounded-lg hover:bg-white hover:shadow-md transition-all cursor-pointer ${selectedRole === 'transitaire' ? 'ring-2 ring-indigo-600' : ''
-                }`}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+                selectedRole === 'transitaire' 
+                  ? 'bg-indigo-600 text-white shadow-lg scale-105' 
+                  : 'bg-white text-indigo-700 border-2 border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50'
+              }`}
             >
-              <Ship className="h-6 w-6 text-indigo-600 mb-2" />
-              <span className="font-medium">{t('auth.transitAgent')}</span>
+              <Ship className="h-4 w-4" />
+              <span>{t('auth.transitAgent')}</span>
             </button>
           </div>
+          
+          {/* Bouton Client - plus large et stylé en bas */}
+          <button
+            onClick={() => handleRoleClick('client')}
+            className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl text-lg font-semibold transition-all ${
+              selectedRole === 'client' 
+                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl scale-[1.02]' 
+                : 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border-2 border-blue-200 hover:border-blue-400 hover:from-blue-100 hover:to-purple-100 hover:shadow-lg'
+            }`}
+          >
+            <UserIcon className={`h-6 w-6 ${selectedRole === 'client' ? 'text-white' : 'text-blue-600'}`} />
+            <span>{t('auth.client')}</span>
+            <span className={`text-sm font-normal ${selectedRole === 'client' ? 'text-blue-100' : 'text-muted-foreground'}`}>
+              — Acheter des produits et services
+            </span>
+          </button>
         </div>
       </div>
 
@@ -1531,10 +1567,21 @@ export default function Auth() {
                 <button
                   type="button"
                   onClick={() => {
-                    setShowSignup(!showSignup);
-                    setSelectedRole(null);
-                    setError(null);
-                    setSuccess(null);
+                    if (!showSignup && !selectedRole) {
+                      // L'utilisateur veut s'inscrire mais n'a pas sélectionné de type de compte
+                      setShowRoleSelectionPrompt(true);
+                      setTimeout(() => setShowRoleSelectionPrompt(false), 4000);
+                      // Scroller vers le haut pour montrer les options
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else {
+                      setShowSignup(!showSignup);
+                      if (showSignup) {
+                        setSelectedRole(null);
+                      }
+                      setError(null);
+                      setSuccess(null);
+                      setShowRoleSelectionPrompt(false);
+                    }
                   }}
                   className="text-sm text-purple-600 font-medium hover:underline"
                 >
