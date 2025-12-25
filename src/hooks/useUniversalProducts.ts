@@ -3,7 +3,7 @@
  * Système unifié pour charger et gérer les produits dans toute l'application
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -64,8 +64,14 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const isLoadingRef = useRef(false);
+  const hasMountedRef = useRef(false);
 
   const loadProducts = useCallback(async (reset = false) => {
+    // Éviter les appels multiples simultanés
+    if (isLoadingRef.current) return;
+    isLoadingRef.current = true;
+    
     try {
       setLoading(true);
       const currentPage = reset ? 1 : page;
@@ -209,6 +215,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
       toast.error('Erreur lors du chargement des produits');
     } finally {
       setLoading(false);
+      isLoadingRef.current = false;
     }
   }, [page, limit, category, searchQuery, minPrice, maxPrice, minRating, vendorId, country, city, sortBy]);
 
@@ -224,7 +231,11 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
 
   // Charger automatiquement au montage et quand les options changent
   useEffect(() => {
-    if (autoLoad) {
+    if (autoLoad && !hasMountedRef.current) {
+      hasMountedRef.current = true;
+      loadProducts(true);
+    } else if (autoLoad && hasMountedRef.current) {
+      // Recharger uniquement si les filtres changent après le montage
       loadProducts(true);
     }
   }, [category, searchQuery, minPrice, maxPrice, minRating, vendorId, country, city, sortBy, autoLoad]);
