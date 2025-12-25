@@ -73,7 +73,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
       const from = (currentPage - 1) * pageLimit;
       const to = from + pageLimit - 1;
 
-      // Construire la requête
+      // Requête optimisée - une seule requête
       let query = supabase
         .from('products')
         .select(`
@@ -137,6 +137,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
       if (city && city !== 'all') {
         query = query.eq('vendors.city', city);
       }
+
       // Tri
       switch (sortBy) {
         case 'price_asc':
@@ -164,37 +165,11 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
 
       if (error) throw error;
 
-      // Récupérer les notes moyennes des vendeurs
-      const vendorIds = [...new Set((data || []).map(p => p.vendor_id))];
-      const vendorRatings = new Map<string, { avg: number; count: number }>();
-
-      if (vendorIds.length > 0) {
-        const { data: ratingsData } = await supabase
-          .from('vendor_ratings')
-          .select('vendor_id, rating')
-          .in('vendor_id', vendorIds);
-
-        if (ratingsData) {
-          const ratingsMap = new Map<string, number[]>();
-          ratingsData.forEach(r => {
-            if (!ratingsMap.has(r.vendor_id)) {
-              ratingsMap.set(r.vendor_id, []);
-            }
-            ratingsMap.get(r.vendor_id)!.push(r.rating);
-          });
-
-          ratingsMap.forEach((ratings, vendorId) => {
-            const avg = ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
-            vendorRatings.set(vendorId, { avg, count: ratings.length });
-          });
-        }
-      }
-
+      // Transformation directe sans requête supplémentaire
       const formattedProducts: UniversalProduct[] = (data || []).map(product => {
         const vendor = product.vendors as any;
         const category = product.categories as any;
         const isNew = new Date(product.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-        const vendorRatingInfo = vendorRatings.get(product.vendor_id) || { avg: 0, count: 0 };
 
         return {
           id: product.id,
@@ -205,8 +180,8 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
           vendor_id: product.vendor_id,
           vendor_name: vendor?.business_name || 'Vendeur',
           vendor_user_id: vendor?.user_id || '',
-          vendor_rating: vendorRatingInfo.avg,
-          vendor_rating_count: vendorRatingInfo.count,
+          vendor_rating: product.rating || 0,
+          vendor_rating_count: product.reviews_count || 0,
           category_id: product.category_id || '',
           category_name: category?.name || 'Général',
           stock_quantity: product.stock_quantity || 0,
