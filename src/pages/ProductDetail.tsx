@@ -311,7 +311,7 @@ export default function ProductDetail() {
               <ShareButton
                 title={product.name}
                 text={`Découvrez ${product.name} à ${product.price.toLocaleString()} ${product.currency || 'GNF'} sur 224 Solutions`}
-                url={`${window.location.origin}/marketplace/product/${product.id}`}
+                url={`${window.location.origin}/product/${product.id}`}
               />
             </div>
 
