@@ -143,37 +143,62 @@ export class Payment224Service {
   }
 
   /**
-   * Initier un paiement Mobile Money
+   * Initier un paiement Mobile Money via PawaPay
    */
   static async initiateMobileMoneyPayment(
     provider: 'orange_money' | 'mtn_money',
     phoneNumber: string,
     amount: number,
-    deliveryId: string
-  ): Promise<{ success: boolean; paymentId?: string }> {
+    deliveryId: string,
+    description?: string
+  ): Promise<{ success: boolean; paymentId?: string; depositId?: string }> {
     try {
-      // Appeler l'edge function pour initier le paiement
-      const { data, error } = await supabase.functions.invoke('process-mobile-money-payment', {
+      // Utiliser PawaPay pour les paiements Mobile Money
+      const { data, error } = await supabase.functions.invoke('pawapay-initialize-payment', {
         body: {
-          provider,
-          phoneNumber,
           amount,
-          deliveryId,
+          currency: 'GNF',
+          phone_number: phoneNumber,
+          correspondent: provider,
+          description: description || `Paiement livraison ${deliveryId}`,
+          metadata: { delivery_id: deliveryId },
         },
       });
 
       if (error) throw error;
 
       if (data?.success) {
-        toast.success(`Paiement ${provider} initié. Confirmez sur votre téléphone.`);
-        return { success: true, paymentId: data.paymentId };
+        toast.success(`Paiement ${provider === 'orange_money' ? 'Orange Money' : 'MTN Mobile Money'} initié. Confirmez sur votre téléphone.`);
+        return { success: true, paymentId: data.deposit_id, depositId: data.deposit_id };
       }
 
+      toast.error(data?.error || 'Échec de l\'initiation du paiement');
       return { success: false };
     } catch (error) {
       console.error('[Payment224Service] Error initiating mobile money:', error);
       toast.error('Erreur lors de l\'initiation du paiement');
       return { success: false };
+    }
+  }
+
+  /**
+   * Vérifier le statut d'un paiement PawaPay
+   */
+  static async verifyPawapayPayment(depositId: string): Promise<{ status: string; completed: boolean }> {
+    try {
+      const { data, error } = await supabase.functions.invoke('pawapay-verify-payment', {
+        body: { deposit_id: depositId },
+      });
+
+      if (error) throw error;
+
+      return {
+        status: data?.status || 'unknown',
+        completed: data?.mapped_status === 'completed',
+      };
+    } catch (error) {
+      console.error('[Payment224Service] Error verifying payment:', error);
+      return { status: 'error', completed: false };
     }
   }
 

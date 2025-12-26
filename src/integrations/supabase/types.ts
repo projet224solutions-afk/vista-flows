@@ -6505,6 +6505,57 @@ export type Database = {
         }
         Relationships: []
       }
+      pawapay_payments: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          correspondent: string
+          created_at: string
+          currency: string
+          deposit_id: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          pawapay_response: Json | null
+          phone_number: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          completed_at?: string | null
+          correspondent: string
+          created_at?: string
+          currency?: string
+          deposit_id: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          pawapay_response?: Json | null
+          phone_number: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          correspondent?: string
+          created_at?: string
+          currency?: string
+          deposit_id?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          pawapay_response?: Json | null
+          phone_number?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payment_links: {
         Row: {
           client_id: string | null
