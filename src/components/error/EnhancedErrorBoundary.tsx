@@ -1,13 +1,15 @@
 /**
  * ENHANCED ERROR BOUNDARY
  * 224Solutions - Capture et gestion élégante des erreurs React
+ * Avec récupération automatique pour les erreurs de cache/déploiement
  */
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertCircle, RefreshCw, Home } from 'lucide-react';
+import { AlertCircle, RefreshCw, Home, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { secureLogger } from '@/services/SecureLogger';
+import { autoErrorRecovery } from '@/services/AutoErrorRecoveryService';
 
 /**
  * Types
@@ -24,6 +26,8 @@ interface ErrorBoundaryState {
   error: Error | null;
   errorInfo: ErrorInfo | null;
   errorCount: number;
+  isRecovering: boolean;
+  recoveryAttempted: boolean;
 }
 
 /**
@@ -117,7 +121,9 @@ class EnhancedErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryS
       hasError: false,
       error: null,
       errorInfo: null,
-      errorCount: 0
+      errorCount: 0,
+      isRecovering: false,
+      recoveryAttempted: false
     };
   }
 
@@ -127,7 +133,9 @@ class EnhancedErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryS
   static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     return {
       hasError: true,
-      error
+      error,
+      isRecovering: false,
+      recoveryAttempted: false
     };
   }
 
@@ -161,10 +169,46 @@ class EnhancedErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryS
     // Envoyer à monitoring service
     this.reportToMonitoring(error, errorInfo);
 
+    // Tenter la récupération automatique pour les erreurs de cache/module
+    this.attemptAutoRecovery(error);
+
     // Auto-reset si erreur répétée (possible loop)
     if (this.state.errorCount >= 3) {
       console.warn('⚠️ Trop d\'erreurs détectées, redirection...');
       this.redirectToSafePage();
+    }
+  }
+
+  /**
+   * Tenter la récupération automatique
+   */
+  private async attemptAutoRecovery(error: Error): Promise<void> {
+    // Vérifier si c'est une erreur de cache/module
+    const errorMessage = error.message || '';
+    const isDynamicImportError = 
+      errorMessage.includes('dynamically imported module') ||
+      errorMessage.includes('Importing a module script failed') ||
+      errorMessage.includes('Failed to fetch dynamically imported module');
+
+    if (isDynamicImportError && !this.state.recoveryAttempted) {
+      this.setState({ isRecovering: true, recoveryAttempted: true });
+      
+      console.log('🔄 Erreur de cache détectée, tentative de récupération...');
+      
+      try {
+        const recovered = await autoErrorRecovery.handleError(
+          'dynamic_import_failed',
+          errorMessage,
+          'react_error_boundary'
+        );
+        
+        if (!recovered) {
+          this.setState({ isRecovering: false });
+        }
+        // Si recovered = true, la page sera rechargée automatiquement
+      } catch {
+        this.setState({ isRecovering: false });
+      }
     }
   }
 
@@ -216,7 +260,9 @@ class EnhancedErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryS
     this.setState({
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
+      isRecovering: false,
+      recoveryAttempted: false
     });
 
     // Clear timeout précédent
@@ -240,6 +286,20 @@ class EnhancedErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryS
   }
 
   render(): ReactNode {
+    // Afficher indicateur de récupération
+    if (this.state.isRecovering) {
+      return (
+        <div className="flex items-center justify-center min-h-screen bg-background p-4">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">
+              Mise à jour de l'application en cours...
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     if (this.state.hasError && this.state.error) {
       // Fallback personnalisé si fourni
       if (this.props.fallback) {
