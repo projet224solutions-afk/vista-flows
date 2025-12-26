@@ -251,3 +251,6 @@ verify_jwt = true
 
 [functions.pawapay-webhook]
 verify_jwt = false
+
+[functions.pawapay-active-config]
+verify_jwt = true
