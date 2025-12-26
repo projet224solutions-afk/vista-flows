@@ -17,7 +17,6 @@ import {
   Plus, 
   Minus, 
   Trash2, 
-  CreditCard, 
   Receipt, 
   Search,
   Grid3X3,
@@ -42,7 +41,8 @@ import {
   Upload,
   ImageIcon,
   Percent,
-  ChevronRight
+  ChevronRight,
+  Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
@@ -257,7 +257,7 @@ export function POSSystem() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'mobile_money'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'mobile_money'>('cash');
   const [mobileMoneyPhone, setMobileMoneyPhone] = useState('');
   const [mobileMoneyProvider, setMobileMoneyProvider] = useState<'orange' | 'mtn'>('orange');
   const [receivedAmount, setReceivedAmount] = useState<number>(0);
@@ -601,103 +601,19 @@ export function POSSystem() {
     }
 
     try {
-      // Pour Mobile Money, appeler l'Edge Function FedaPay
+      // Pour Mobile Money, utiliser PawaPay
       if (paymentMethod === 'mobile_money') {
-        toast.loading('Initialisation du paiement FedaPay...');
+        toast.loading('Initialisation du paiement PawaPay...');
         
-        const { data: fedapayResult, error: fedapayError } = await supabase.functions.invoke('fedapay-initialize-payment', {
+        const correspondent = mobileMoneyProvider === 'orange' ? 'orange_money' : 'mtn_money';
+        
+        const { data: pawapayResult, error: pawapayError } = await supabase.functions.invoke('pawapay-initialize-payment', {
           body: {
             amount: total,
             currency: 'GNF',
+            phone_number: mobileMoneyPhone,
+            correspondent: correspondent,
             description: `Vente POS - ${cart.length} article(s)`,
-            customer_email: user?.email || 'client@224solutions.com',
-            customer_phone: mobileMoneyPhone,
-            customer_name: selectedCustomer?.name || 'Client POS',
-            return_url: `${window.location.origin}/vendeur/pos`,
-            order_id: `POS-${Date.now()}`,
-          }
-        });
-
-        toast.dismiss();
-
-        if (fedapayError || !fedapayResult?.success) {
-          console.error('FedaPay error:', fedapayError || fedapayResult);
-          const detailsMessage = await getEdgeFunctionErrorMessage(fedapayError);
-
-          toast.error('Erreur lors de l\'initialisation du paiement', {
-            description: fedapayResult?.error || detailsMessage || fedapayError?.message || 'Veuillez réessayer',
-          });
-          return;
-        }
-
-        if (fedapayResult.payment_url) {
-          toast.info('Redirection vers FedaPay...', {
-            description: `Complétez le paiement ${mobileMoneyProvider === 'orange' ? 'Orange Money' : 'MTN MoMo'}.`
-          });
-          
-          window.open(fedapayResult.payment_url, '_blank', 'width=500,height=700');
-          
-          const customerId = await getOrCreateCustomerId();
-          if (!customerId) return;
-
-          const { data: order, error: orderError } = await supabase
-            .from('orders')
-            .insert({
-              vendor_id: vendorId,
-              customer_id: customerId,
-              total_amount: total,
-              subtotal: subtotal,
-              tax_amount: tax,
-              discount_amount: discountValue,
-              payment_status: 'pending',
-              status: 'pending',
-              payment_method: paymentMethod,
-              shipping_address: { address: 'Point de vente' },
-              notes: `Paiement Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange' : 'MTN'}) - ${mobileMoneyPhone} - Transaction FedaPay: ${fedapayResult.transaction_id}`,
-              source: 'pos'
-            })
-            .select('id, order_number')
-            .single();
-
-          if (orderError) throw orderError;
-
-          // Calcul du vrai prix unitaire (important pour ventes carton)
-          const orderItems = cart.map(item => ({
-            order_id: order.id,
-            product_id: item.id,
-            quantity: item.quantity,
-            unit_price: item.quantity > 0 ? item.total / item.quantity : item.price,
-            total_price: item.total
-          }));
-
-          await supabase.from('order_items').insert(orderItems);
-
-          setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
-          setShowOrderSummary(false);
-          
-          toast.success('Commande créée - En attente de paiement', {
-            description: `Numéro: ${order.order_number || order.id.substring(0, 8).toUpperCase()}`
-          });
-          
-          setCart([]);
-          return;
-        }
-      }
-
-      // Pour le paiement par carte, utiliser Stripe
-      if (paymentMethod === 'card') {
-        toast.loading('Initialisation du paiement Stripe...');
-        
-        const { data: stripeResult, error: stripeError } = await supabase.functions.invoke('stripe-card-payment', {
-          body: {
-            amount: total,
-            currency: 'gnf',
-            description: `Vente POS - ${cart.length} article(s)`,
-            customer_email: user?.email || 'client@224solutions.com',
-            customer_name: selectedCustomer?.name || 'Client POS',
-            success_url: `${window.location.origin}/vendeur/pos?payment=success`,
-            cancel_url: `${window.location.origin}/vendeur/pos?payment=canceled`,
-            payment_type: 'checkout',
             metadata: {
               source: 'pos',
               vendor_id: vendorId,
@@ -708,69 +624,68 @@ export function POSSystem() {
 
         toast.dismiss();
 
-        if (stripeError || !stripeResult?.success) {
-          console.error('Stripe error:', stripeError || stripeResult);
-          const detailsMessage = await getEdgeFunctionErrorMessage(stripeError);
+        if (pawapayError || !pawapayResult?.success) {
+          console.error('PawaPay error:', pawapayError || pawapayResult);
+          const detailsMessage = await getEdgeFunctionErrorMessage(pawapayError);
 
-          toast.error('Erreur lors de l\'initialisation du paiement Stripe', {
-            description: stripeResult?.error || detailsMessage || stripeError?.message || 'Veuillez réessayer',
+          toast.error('Erreur lors de l\'initialisation du paiement', {
+            description: pawapayResult?.error || detailsMessage || pawapayError?.message || 'Veuillez réessayer',
           });
           return;
         }
 
-        if (stripeResult.payment_url) {
-          toast.info('Redirection vers Stripe...', {
-            description: 'Complétez le paiement sur la page Stripe.'
-          });
-          
-          window.open(stripeResult.payment_url, '_blank', 'width=500,height=700');
-          
-          const customerId = await getOrCreateCustomerId();
-          if (!customerId) return;
+        // PawaPay envoie une notification USSD sur le téléphone
+        toast.info('Demande de paiement envoyée', {
+          description: `Confirmez le paiement sur votre téléphone ${mobileMoneyProvider === 'orange' ? 'Orange Money' : 'MTN MoMo'}.`
+        });
+        
+        const customerId = await getOrCreateCustomerId();
+        if (!customerId) return;
 
-          const { data: order, error: orderError } = await supabase
-            .from('orders')
-            .insert({
-              vendor_id: vendorId,
-              customer_id: customerId,
-              total_amount: total,
-              subtotal: subtotal,
-              tax_amount: tax,
-              discount_amount: discountValue,
-              payment_status: 'pending',
-              status: 'pending',
-              payment_method: 'card',
-              shipping_address: { address: 'Point de vente' },
-              notes: `Paiement Stripe - Session: ${stripeResult.session_id}`,
-              source: 'pos'
-            })
-            .select('id, order_number')
-            .single();
+        const { data: order, error: orderError } = await supabase
+          .from('orders')
+          .insert({
+            vendor_id: vendorId,
+            customer_id: customerId,
+            total_amount: total,
+            subtotal: subtotal,
+            tax_amount: tax,
+            discount_amount: discountValue,
+            payment_status: 'pending',
+            status: 'pending',
+            payment_method: paymentMethod,
+            shipping_address: { address: 'Point de vente' },
+            notes: `Paiement Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange' : 'MTN'}) - ${mobileMoneyPhone} - PawaPay: ${pawapayResult.deposit_id}`,
+            source: 'pos'
+          })
+          .select('id, order_number')
+          .single();
 
-          if (orderError) throw orderError;
+        if (orderError) throw orderError;
 
-          // Calcul du vrai prix unitaire (important pour ventes carton)
-          const orderItems = cart.map(item => ({
-            order_id: order.id,
-            product_id: item.id,
-            quantity: item.quantity,
-            unit_price: item.quantity > 0 ? item.total / item.quantity : item.price,
-            total_price: item.total
-          }));
+        // Calcul du vrai prix unitaire (important pour ventes carton)
+        const orderItems = cart.map(item => ({
+          order_id: order.id,
+          product_id: item.id,
+          quantity: item.quantity,
+          unit_price: item.quantity > 0 ? item.total / item.quantity : item.price,
+          total_price: item.total
+        }));
 
-          await supabase.from('order_items').insert(orderItems);
+        await supabase.from('order_items').insert(orderItems);
 
-          setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
-          setShowOrderSummary(false);
-          
-          toast.success('Commande créée - En attente de paiement', {
-            description: `Numéro: ${order.order_number || order.id.substring(0, 8).toUpperCase()}`
-          });
-          
-          setCart([]);
-          return;
-        }
+        setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
+        setShowOrderSummary(false);
+        
+        toast.success('Commande créée - En attente de confirmation', {
+          description: `Numéro: ${order.order_number || order.id.substring(0, 8).toUpperCase()}`
+        });
+        
+        setCart([]);
+        return;
       }
+
+      // NOTE: Le paiement par carte (Stripe) a été désactivé - PawaPay uniquement
 
       // Pour les paiements en espèces, procéder normalement
       const customerId = await getOrCreateCustomerId();
@@ -1620,12 +1535,11 @@ export function POSSystem() {
                   </div>
                 </div>
 
-                {/* Mode de paiement en icônes */}
+                {/* Mode de paiement - PawaPay uniquement */}
                 <div className="flex gap-1">
                   {[
                     { id: 'cash', icon: Euro, label: 'Espèces' },
-                    { id: 'card', icon: CreditCard, label: 'Carte' },
-                    { id: 'mobile_money', icon: Smartphone, label: 'Mobile' },
+                    { id: 'mobile_money', icon: Smartphone, label: 'Mobile Money' },
                   ].map((method) => (
                     <Button
                       key={method.id}
@@ -1639,36 +1553,6 @@ export function POSSystem() {
                     </Button>
                   ))}
                 </div>
-
-                {/* Champs de saisie selon le mode de paiement */}
-                {paymentMethod === 'card' && (
-                  <div className="space-y-2 p-2 bg-muted/20 rounded-lg border border-border/50">
-                    <Label className="text-xs font-medium flex items-center gap-1">
-                      <CreditCard className="h-3 w-3" />
-                      Informations de la carte
-                    </Label>
-                    <Input
-                      type="text"
-                      placeholder="Numéro de carte"
-                      className="h-8 text-sm"
-                      maxLength={19}
-                    />
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input
-                        type="text"
-                        placeholder="MM/AA"
-                        className="h-8 text-sm"
-                        maxLength={5}
-                      />
-                      <Input
-                        type="text"
-                        placeholder="CVV"
-                        className="h-8 text-sm"
-                        maxLength={4}
-                      />
-                    </div>
-                  </div>
-                )}
 
                 {paymentMethod === 'mobile_money' && (
                   <div className="space-y-2 p-2 bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-950/20 dark:to-yellow-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
@@ -1776,8 +1660,7 @@ export function POSSystem() {
             <div className="bg-muted/20 p-3 rounded-lg">
               <div className="text-sm">
                 <strong>Mode de paiement:</strong> {
-                  paymentMethod === 'cash' ? 'Espèces' :
-                  paymentMethod === 'card' ? 'Carte bancaire' : 'Paiement mobile'
+                  paymentMethod === 'cash' ? 'Espèces' : 'Mobile Money (PawaPay)'
                 }
               </div>
               {paymentMethod === 'cash' && receivedAmount > 0 && (

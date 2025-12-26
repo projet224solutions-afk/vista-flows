@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
-import { FedaPayPaymentDialog } from "@/components/payment/FedaPayPaymentDialog";
+import { PawaPayPaymentDialog } from "@/components/payment/PawaPayPaymentDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -514,19 +514,18 @@ export default function WalletDashboard() {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* FedaPay Payment Dialog */}
-        <FedaPayPaymentDialog
+        {/* PawaPay Mobile Money Dialog */}
+        <PawaPayPaymentDialog
           open={showFedaPayDialog}
           onOpenChange={setShowFedaPayDialog}
-          defaultAmount={depositAmount ? parseInt(depositAmount) : 10000}
-          description="Rechargez votre wallet vendeur via FedaPay"
+          amount={depositAmount ? parseInt(depositAmount) : 10000}
+          description="Recharge wallet via Mobile Money"
           metadata={{ wallet_recharge: true, user_type: 'vendor' }}
-          onSuccess={(transactionId) => {
-            console.log('Paiement FedaPay initié:', transactionId);
-            toast.success('Paiement initié. Complétez dans la fenêtre FedaPay.');
+          onPaymentSuccess={(depositId) => {
+            console.log('Paiement PawaPay réussi:', depositId);
+            toast.success('Wallet rechargé avec succès!');
             setDepositAmount("");
-            // Rafraîchir le solde après quelques secondes
-            setTimeout(() => loadWalletData(), 5000);
+            loadWalletData();
           }}
         />
       </CardContent>
