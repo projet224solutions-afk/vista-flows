@@ -68,14 +68,6 @@ const productModules: ProductModule[] = [
     description: 'eBooks PDF, EPUB ou affiliation',
     gradient: 'from-amber-500 to-yellow-500',
     category: 'livre'
-  },
-  {
-    id: 'custom',
-    icon: <Sparkles className="w-7 h-7" />,
-    title: 'Mon Produit Numérique',
-    description: 'Templates, scripts, designs, services',
-    gradient: 'from-indigo-500 to-violet-500',
-    category: 'custom'
   }
 ];
 
