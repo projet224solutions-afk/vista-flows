@@ -95,41 +95,73 @@ serve(async (req) => {
     const customerTimestamp = new Date().toISOString();
 
     // Déterminer l'environnement (sandbox ou production)
-    const isProduction = pawapayApiKey.length > 50; // Les clés de prod sont plus longues
-    const baseUrl = isProduction 
-      ? 'https://api.pawapay.io'
-      : 'https://api.sandbox.pawapay.io';
+    // NOTE: la longueur de la clé n'est pas un indicateur fiable. On garde un choix par défaut
+    // mais on retente automatiquement sur l'autre environnement si on reçoit une erreur d'auth.
+    const baseUrlPrimary = pawapayApiKey.length > 50 ? 'https://api.pawapay.io' : 'https://api.sandbox.pawapay.io';
+    const baseUrlFallback = baseUrlPrimary === 'https://api.pawapay.io'
+      ? 'https://api.sandbox.pawapay.io'
+      : 'https://api.pawapay.io';
 
-    // Créer la requête de dépôt PawaPay
+    // Construire la requête de dépôt PawaPay (API v2)
+    // Docs: POST {baseUrl}/v2/deposits
+    const customerMessage = (body.description || 'Paiement 224Solutions').trim();
+    const safeCustomerMessage = (customerMessage.length >= 4 ? customerMessage : 'Paiement').substring(0, 22);
+
+    const metadataArray = body.metadata
+      ? Object.entries(body.metadata).map(([key, value]) => ({ [key]: value }))
+      : [];
+
     const depositRequest = {
-      depositId: depositId,
+      depositId,
+      payer: {
+        type: 'MMO',
+        accountDetails: {
+          phoneNumber,
+          provider: correspondentCode,
+        },
+      },
+      clientReferenceId: depositId,
+      customerMessage: safeCustomerMessage,
       amount: body.amount.toString(),
       currency: body.currency || 'GNF',
-      correspondent: correspondentCode,
-      payer: {
-        type: 'MSISDN',
-        address: {
-          value: phoneNumber
-        }
-      },
-      customerTimestamp: customerTimestamp,
-      statementDescription: (body.description || 'Paiement 224Solutions').substring(0, 22)
+      metadata: metadataArray,
     };
 
-    logStep('Deposit request', depositRequest);
+    logStep('Deposit request', { ...depositRequest, payer: { ...depositRequest.payer, accountDetails: { ...depositRequest.payer.accountDetails, phoneNumber } } });
 
-    // Appeler l'API PawaPay
-    const response = await fetch(`${baseUrl}/deposits`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${pawapayApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(depositRequest),
-    });
+    const callPawaPay = async (baseUrl: string) => {
+      logStep('Calling PawaPay', { baseUrl, path: '/v2/deposits' });
+      const response = await fetch(`${baseUrl}/v2/deposits`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${pawapayApiKey}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(depositRequest),
+      });
 
-    const responseText = await response.text();
-    logStep('PawaPay response', { status: response.status, body: responseText });
+      const responseText = await response.text();
+      logStep('PawaPay response', { status: response.status, body: responseText });
+      return { response, responseText };
+    };
+
+    // Appeler l'API PawaPay (avec fallback si auth error)
+    let { response, responseText } = await callPawaPay(baseUrlPrimary);
+
+    if (!response.ok && response.status === 401) {
+      try {
+        const err = JSON.parse(responseText);
+        const isAuthError = err?.errorCode === 2 || err?.errorMessage === 'Authentication error';
+        if (isAuthError) {
+          logStep('Auth error on primary baseUrl, retrying with fallback', { baseUrlFallback });
+          ({ response, responseText } = await callPawaPay(baseUrlFallback));
+        }
+      } catch {
+        // ignore parse errors
+      }
+    }
+
 
     if (!response.ok) {
       let errorMessage = 'PawaPay API error';
