@@ -50,23 +50,52 @@ serve(async (req) => {
     }
     logStep('Checking deposit', { deposit_id });
 
-    // Déterminer l'environnement
-    const isProduction = pawapayApiKey.length > 50;
-    const baseUrl = isProduction 
+    // Déterminer l'environnement (sandbox ou production)
+    const baseUrlPrimary = pawapayApiKey.length > 50
       ? 'https://api.pawapay.io'
       : 'https://api.sandbox.pawapay.io';
 
-    // Vérifier le statut auprès de PawaPay
-    const response = await fetch(`${baseUrl}/deposits/${deposit_id}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${pawapayApiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const baseUrlFallback = baseUrlPrimary === 'https://api.pawapay.io'
+      ? 'https://api.sandbox.pawapay.io'
+      : 'https://api.pawapay.io';
 
-    const responseText = await response.text();
-    logStep('PawaPay response', { status: response.status, body: responseText });
+    const callPawaPay = async (baseUrl: string) => {
+      const response = await fetch(`${baseUrl}/v2/deposits/${deposit_id}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${pawapayApiKey}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+
+      const responseText = await response.text();
+      logStep('PawaPay response', { status: response.status, body: responseText, baseUrl });
+      return { response, responseText };
+    };
+
+    // Vérifier le statut auprès de PawaPay (avec fallback si auth error)
+    let { response, responseText } = await callPawaPay(baseUrlPrimary);
+
+    if (!response.ok && response.status === 401) {
+      let isAuthError = false;
+      try {
+        const err = JSON.parse(responseText);
+        isAuthError =
+          err?.errorCode === 2 ||
+          /authentication/i.test(err?.errorMessage ?? '') ||
+          err?.failureReason?.failureCode === 'AUTHENTICATION_ERROR' ||
+          /api token/i.test(err?.failureReason?.failureMessage ?? '') ||
+          /invalid/i.test(err?.failureReason?.failureMessage ?? '');
+      } catch {
+        // ignore parse errors
+      }
+
+      if (isAuthError) {
+        logStep('Auth error on primary baseUrl, retrying with fallback', { baseUrlFallback });
+        ({ response, responseText } = await callPawaPay(baseUrlFallback));
+      }
+    }
 
     if (!response.ok) {
       throw new Error(`Failed to verify deposit: ${responseText}`);
