@@ -21,6 +21,8 @@ export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2
 
 export function formatDistance(distance: number | null | undefined): string {
   if (distance === null || distance === undefined) return "Pas de GPS";
+  // Distance très proche (moins de 50 mètres) - afficher "Ici" ou "< 50 m"
+  if (distance < 0.05) return "Ici";
   if (distance < 1) return `${Math.round(distance * 1000)} m`;
   return `${distance.toFixed(1)} km`;
 }
