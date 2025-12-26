@@ -15,7 +15,8 @@ import {
   Sparkles,
   ArrowLeft,
   Store,
-  Lock
+  Lock,
+  Bot
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -32,7 +33,7 @@ interface ProductModule {
   title: string;
   description: string;
   gradient: string;
-  category: 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom';
+  category: 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom' | 'ai';
 }
 
 // Dropshipping retiré de l'affichage mais catégorie conservée pour l'auth
@@ -68,6 +69,14 @@ const productModules: ProductModule[] = [
     description: 'eBooks PDF, EPUB ou affiliation',
     gradient: 'from-amber-500 to-yellow-500',
     category: 'livre'
+  },
+  {
+    id: 'ai',
+    icon: <Bot className="w-7 h-7" />,
+    title: 'AI',
+    description: 'Outils et services IA',
+    gradient: 'from-violet-500 to-fuchsia-500',
+    category: 'ai'
   }
 ];
 

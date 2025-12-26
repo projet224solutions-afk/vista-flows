@@ -16,7 +16,7 @@ import { MerchantActivationDialog } from './MerchantActivationDialog';
 import { toast } from 'sonner';
 
 interface CategoryProductsListProps {
-  category: 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom';
+  category: 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom' | 'ai';
   title: string;
   description: string;
   gradient: string;
