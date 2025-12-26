@@ -402,11 +402,11 @@ export default function VendeurDashboard() {
                 <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0">
                   <Activity className="w-4 h-4 md:w-6 md:h-6 text-white" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <h1 className="text-base md:text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent truncate">
                     224SOLUTIONS
                   </h1>
-                  <div className="flex items-center gap-1 md:gap-2">
+                  <div className="flex items-center gap-1 md:gap-2 flex-wrap">
                     <p className="text-[10px] md:text-xs text-muted-foreground flex items-center gap-1">
                       <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
                       <span className="truncate max-w-[60px] md:max-w-none">{profile?.first_name || user?.email?.split('@')[0]}</span>
@@ -416,14 +416,16 @@ export default function VendeurDashboard() {
                 </div>
               </div>
 
+              {/* Wallet compact - visible uniquement sur grands écrans */}
+              <div className="hidden xl:block flex-shrink-0 mx-2">
+                <WalletBalanceWidget className="max-w-[250px]" showTransferButton={false} />
+              </div>
+
               <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
                 <div className="hidden md:block">
                   <NetworkStatusIndicator />
                 </div>
                 
-                <div className="hidden lg:block">
-                  <WalletBalanceWidget className="max-w-[280px]" />
-                </div>
                 <QuickTransferButton variant="ghost" size="icon" showText={false} className="h-8 w-8 md:h-10 md:w-10" />
                 <div className="hidden sm:block">
                   <VendorSubscriptionButton />
@@ -432,8 +434,14 @@ export default function VendeurDashboard() {
                 <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10">
                   <Bell className="w-4 h-4 md:w-5 md:h-5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="hidden sm:flex h-8 w-8 md:h-10 md:w-10">
-                  <User className="w-4 h-4 md:w-5 md:h-5" />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 md:h-10 md:w-10"
+                  onClick={() => navigate('/vendeur/settings')}
+                  title="Paramètres"
+                >
+                  <Settings className="w-4 h-4 md:w-5 md:h-5" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={handleSignOut} className="h-8 w-8 md:h-10 md:w-10">
                   <LogOut className="w-4 h-4 md:w-5 md:h-5" />
