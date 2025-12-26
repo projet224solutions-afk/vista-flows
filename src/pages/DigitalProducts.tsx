@@ -246,35 +246,6 @@ export default function DigitalProducts() {
         </div>
       </section>
 
-      {/* Info Section */}
-      <section className="px-4 py-4">
-        <Card className="bg-muted/30 border-border/50">
-          <CardContent className="p-4">
-            <h3 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-primary" />
-              Comment ça marche ?
-            </h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center shrink-0 mt-0.5">1</span>
-                <span>Activez votre statut Marchand (gratuit)</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center shrink-0 mt-0.5">2</span>
-                <span>Choisissez un module et ajoutez votre produit</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center shrink-0 mt-0.5">3</span>
-                <span>Votre produit apparaît automatiquement sur le marketplace</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center shrink-0 mt-0.5">4</span>
-                <span>Recevez les paiements directement sur votre wallet</span>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
-      </section>
 
       {/* Dialog d'activation marchand */}
       <MerchantActivationDialog
