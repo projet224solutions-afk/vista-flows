@@ -124,7 +124,7 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-24">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
