@@ -46,7 +46,7 @@ serve(async (req) => {
     const body = await req.json();
     const { 
       amount, 
-      currency = 'GNF',
+      currency: requestedCurrency = 'XOF',
       description,
       customer_email,
       customer_phone,
@@ -56,7 +56,33 @@ serve(async (req) => {
       return_url
     } = body;
 
-    console.log('FedaPay payment request:', { amount, currency, customer_email, customer_phone, order_id });
+    // FedaPay only supports XOF and XAF - NOT GNF
+    // If GNF is requested, convert to XOF (approximate rate: 1 XOF ≈ 14.5 GNF)
+    let finalAmount = Math.round(amount);
+    let finalCurrency = requestedCurrency;
+    
+    if (requestedCurrency === 'GNF') {
+      // Convert GNF to XOF (approximate rate)
+      const GNF_TO_XOF_RATE = 14.5;
+      finalAmount = Math.round(amount / GNF_TO_XOF_RATE);
+      finalCurrency = 'XOF';
+      console.log(`Converting GNF to XOF: ${amount} GNF → ${finalAmount} XOF`);
+    }
+
+    // Ensure currency is supported by FedaPay
+    const SUPPORTED_CURRENCIES = ['XOF', 'XAF', 'EUR', 'USD'];
+    if (!SUPPORTED_CURRENCIES.includes(finalCurrency)) {
+      console.error(`Unsupported currency: ${finalCurrency}`);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Devise non supportée', 
+          details: `FedaPay ne supporte pas ${finalCurrency}. Devises supportées: ${SUPPORTED_CURRENCIES.join(', ')}. Utilisez PawaPay pour GNF.`
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('FedaPay payment request:', { originalAmount: amount, finalAmount, finalCurrency, customer_email, customer_phone, order_id });
 
     // Validate required fields
     if (!amount || amount <= 0) {
@@ -96,8 +122,8 @@ serve(async (req) => {
     // Create transaction payload
     const transactionPayload: Record<string, unknown> = {
       description: description || `Paiement commande ${order_id || 'N/A'}`,
-      amount: Math.round(amount),
-      currency: { iso: currency },
+      amount: finalAmount,
+      currency: { iso: finalCurrency },
       callback_url: callback_url || `${Deno.env.get('SUPABASE_URL')}/functions/v1/fedapay-webhook`,
     };
 
@@ -191,13 +217,15 @@ serve(async (req) => {
         user_id: user.id,
         provider: 'fedapay',
         provider_transaction_id: String(transactionId),
-        amount: amount,
-        currency: currency,
+        amount: finalAmount,
+        currency: finalCurrency,
         status: 'pending',
         metadata: {
           order_id,
           payment_token: paymentToken,
-          sandbox: isSandbox
+          sandbox: isSandbox,
+          original_amount: amount,
+          original_currency: requestedCurrency
         }
       });
     } catch (dbError) {
