@@ -4,8 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import VendorBusinessSettings from '@/components/vendor/settings/VendorBusinessSettings';
 import VendorLocationSettings from '@/components/vendor/settings/VendorLocationSettings';
 import VendorDeliveryPricing from '@/components/vendor/settings/VendorDeliveryPricing';
+import VendorShopImagesSettings from '@/components/vendor/settings/VendorShopImagesSettings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, User, Bell, Truck, MapPin } from 'lucide-react';
+import { Building2, User, Bell, Truck, MapPin, ImageIcon } from 'lucide-react';
 
 export default function VendorSettings() {
   const navigate = useNavigate();
