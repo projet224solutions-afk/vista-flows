@@ -186,6 +186,7 @@ function App() {
               <Route path="/proximite" element={<Proximite />} />
               <Route path="/proximite/taxi-moto" element={<NearbyTaxiMoto />} />
               <Route path="/proximite/livraison" element={<NearbyLivraison />} />
+              <Route path="/proximite/boutiques" element={<NearbyBoutiques />} />
               <Route path="/categories" element={<Categories />} />
               <Route path="/digital-products" element={<DigitalProducts />} />
               <Route path="/boutiques" element={<NearbyBoutiques />} />
