@@ -30,7 +30,7 @@ const RADIUS_KM = 50;
 
 export default function NearbyBoutiques() {
   const navigate = useNavigate();
-  const { userPosition, positionReady, usingRealLocation, getDistanceTo } = useGeoDistance();
+  const { userPosition, positionReady, usingRealLocation, refreshPosition, calculateDistance } = useGeoDistance();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +42,7 @@ export default function NearbyBoutiques() {
     document.title = "Boutiques à proximité | 224SOLUTIONS";
   }, []);
 
-  const loadVendors = async () => {
+  const loadVendors = async (overridePosition?: { latitude: number; longitude: number }) => {
     setLoading(true);
     setError(null);
     try {
@@ -60,6 +60,8 @@ export default function NearbyBoutiques() {
       const { data, error: dbError } = await query;
       if (dbError) throw dbError;
 
+      const origin = overridePosition ?? userPosition;
+
       let list: Vendor[] = (data || []).map((v: any) => ({
         ...v,
         business_type: v.business_type as Vendor["business_type"],
@@ -69,7 +71,10 @@ export default function NearbyBoutiques() {
       // Distances + filtre rayon
       list = list
         .map((v) => {
-          const distance = getDistanceTo(v.latitude, v.longitude);
+          const distance =
+            v.latitude === null || v.latitude === undefined || v.longitude === null || v.longitude === undefined
+              ? null
+              : calculateDistance(origin.latitude, origin.longitude, Number(v.latitude), Number(v.longitude));
           return { ...v, distance };
         })
         .filter((v) => (v.distance === null ? true : v.distance <= RADIUS_KM));
@@ -89,6 +94,11 @@ export default function NearbyBoutiques() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRefresh = async () => {
+    const pos = await refreshPosition();
+    await loadVendors(pos);
   };
 
   useEffect(() => {
@@ -126,7 +136,7 @@ export default function NearbyBoutiques() {
                 <p className="text-xs text-muted-foreground truncate">Découvrez les vendeurs dans un rayon de {RADIUS_KM} km</p>
               </div>
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full" onClick={loadVendors} disabled={loading} aria-label="Actualiser">
+            <Button variant="ghost" size="icon" className="rounded-full" onClick={handleRefresh} disabled={loading} aria-label="Actualiser">
               <RefreshCw className={cn("w-5 h-5", loading && "animate-spin")} />
             </Button>
           </div>
@@ -190,7 +200,7 @@ export default function NearbyBoutiques() {
           <div className="rounded-2xl border border-border/50 bg-card p-6 text-center">
             <p className="text-sm font-medium text-foreground mb-1">Erreur</p>
             <p className="text-sm text-muted-foreground mb-4">{error}</p>
-            <Button variant="outline" onClick={loadVendors} className="gap-2">
+            <Button variant="outline" onClick={handleRefresh} className="gap-2">
               <RefreshCw className="w-4 h-4" />
               Réessayer
             </Button>
