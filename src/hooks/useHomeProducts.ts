@@ -20,7 +20,7 @@ export const useHomeProducts = (limit: number = 4) => {
       try {
         setLoading(true);
 
-        // Filtrer les produits des vendeurs qui ont une présence en ligne (digital ou hybrid, pas physical uniquement)
+        // Filtrer les produits - exclure uniquement les vendeurs "physical" (boutique physique uniquement)
         const { data, error } = await supabase
           .from('products')
           .select(`
@@ -28,7 +28,7 @@ export const useHomeProducts = (limit: number = 4) => {
             vendors!inner(business_type)
           `)
           .eq('is_active', true)
-          .in('vendors.business_type', ['digital', 'hybrid'])
+          .neq('vendors.business_type', 'physical')
           .order('created_at', { ascending: false })
           .limit(limit);
 
