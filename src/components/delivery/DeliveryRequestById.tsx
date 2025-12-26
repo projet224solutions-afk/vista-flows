@@ -31,30 +31,34 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
   const [clientLocation, setClientLocation] = useState<UserLocation | null>(null);
   const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
 
-  const handleGeolocate = async () => {
+  const handleGeolocate = async (): Promise<boolean> => {
     if (!vendorId || !clientId) {
-      toast.error('Veuillez saisir les deux IDs');
-      return;
+      toast.error('Veuillez saisir le fournisseur et le client');
+      return false;
     }
 
     setGeolocating(true);
     try {
       // Géolocaliser le vendeur
+      console.log('[DeliveryRequest] Geolocating vendor:', vendorId);
       const vendorLoc = await UserGeolocService.getVendorInfo(vendorId);
       if (!vendorLoc) {
-        toast.error('Vendeur introuvable');
+        toast.error('Fournisseur introuvable. Vérifiez le nom ou téléphone.');
         setGeolocating(false);
-        return;
+        return false;
       }
+      console.log('[DeliveryRequest] Vendor found:', vendorLoc);
       setVendorLocation(vendorLoc);
 
       // Géolocaliser le client
+      console.log('[DeliveryRequest] Geolocating client:', clientId);
       const clientLoc = await UserGeolocService.getUserLocation(clientId);
       if (!clientLoc) {
-        toast.error('Client introuvable');
+        toast.error('Client introuvable. Vérifiez le nom ou téléphone.');
         setGeolocating(false);
-        return;
+        return false;
       }
+      console.log('[DeliveryRequest] Client found:', clientLoc);
       setClientLocation(clientLoc);
 
       // Calculer le prix estimé
@@ -64,60 +68,108 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
         clientLoc.latitude,
         clientLoc.longitude
       );
+      console.log('[DeliveryRequest] Price estimate:', estimate);
       setEstimatedPrice(estimate.totalPrice);
 
-      toast.success('✅ Géolocalisation réussie !');
+      toast.success('Géolocalisation réussie !');
+      return true;
     } catch (error) {
-      console.error('Error geolocating:', error);
+      console.error('[DeliveryRequest] Error geolocating:', error);
       toast.error('Erreur lors de la géolocalisation');
+      return false;
     } finally {
       setGeolocating(false);
     }
   };
 
   const handleCreateDelivery = async () => {
-    if (!vendorLocation || !clientLocation || !estimatedPrice) {
-      toast.error('Veuillez d\'abord géolocaliser');
+    if (!vendorId || !clientId) {
+      toast.error('Veuillez saisir le fournisseur et le client');
       return;
+    }
+
+    // Auto-géolocaliser si pas encore fait
+    let vLoc = vendorLocation;
+    let cLoc = clientLocation;
+    let price = estimatedPrice;
+
+    if (!vLoc || !cLoc || price === null) {
+      toast.info('Géolocalisation en cours...');
+      const success = await handleGeolocate();
+      if (!success) return;
+      
+      // Récupérer les valeurs mises à jour après handleGeolocate
+      // On doit refaire les appels car setState est async
+      const vendorLoc = await UserGeolocService.getVendorInfo(vendorId);
+      const clientLoc = await UserGeolocService.getUserLocation(clientId);
+      if (!vendorLoc || !clientLoc) return;
+      
+      const estimate = await PricingService.estimateDeliveryPrice(
+        vendorLoc.latitude,
+        vendorLoc.longitude,
+        clientLoc.latitude,
+        clientLoc.longitude
+      );
+      
+      vLoc = vendorLoc;
+      cLoc = clientLoc;
+      price = estimate.totalPrice;
     }
 
     setLoading(true);
     try {
       const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('Non authentifié');
+      if (!user.user) {
+        toast.error('Vous devez être connecté');
+        return;
+      }
+
+      const distance = UserGeolocService.calculateDistance(
+        vLoc.latitude,
+        vLoc.longitude,
+        cLoc.latitude,
+        cLoc.longitude
+      );
+
+      console.log('[DeliveryRequest] Creating delivery:', {
+        vendor: vLoc,
+        client: cLoc,
+        distance,
+        price
+      });
 
       const { data, error } = await supabase
         .from('deliveries')
         .insert({
-          pickup_address: vendorLocation.address || `${vendorLocation.name} - ${vendorLocation.phone}`,
-          delivery_address: clientLocation.address || `${clientLocation.name} - ${clientLocation.phone}`,
-          distance_km: UserGeolocService.calculateDistance(
-            vendorLocation.latitude,
-            vendorLocation.longitude,
-            clientLocation.latitude,
-            clientLocation.longitude
-          ),
-          delivery_fee: estimatedPrice,
-          customer_name: clientLocation.name || 'Client',
-          customer_phone: clientLocation.phone || '',
+          pickup_address: vLoc.address || `${vLoc.name} - ${vLoc.phone}`,
+          delivery_address: cLoc.address || `${cLoc.name} - ${cLoc.phone}`,
+          distance_km: distance,
+          delivery_fee: price,
+          customer_name: cLoc.name || 'Client',
+          customer_phone: cLoc.phone || '',
           package_description: packageDescription,
           driver_notes: specialInstructions,
           status: 'pending',
           metadata: {
             vendor_id: vendorId,
-            client_id: clientId
+            client_id: clientId,
+            vendor_name: vLoc.name,
+            client_name: cLoc.name
           }
         } as any)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('[DeliveryRequest] Supabase error:', error);
+        throw error;
+      }
 
-      toast.success('✅ Livraison créée avec succès !');
+      toast.success('Livraison créée avec succès !');
       onDeliveryCreated(data.id);
     } catch (error) {
-      console.error('Error creating delivery:', error);
-      toast.error('Erreur lors de la création');
+      console.error('[DeliveryRequest] Error creating delivery:', error);
+      toast.error('Erreur lors de la création de la livraison');
     } finally {
       setLoading(false);
     }
@@ -232,7 +284,7 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
             className="w-full"
             size="lg"
             onClick={handleCreateDelivery}
-            disabled={!vendorLocation || !clientLocation || loading}
+            disabled={!vendorId || !clientId || loading || geolocating}
             style={{ 
               background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))',
               color: 'white'
