@@ -77,12 +77,17 @@ Deno.serve(async (req) => {
     
     console.log('Suppression des données liées...');
     
+    // 0. Supprimer les erreurs système et logs d'audit
+    await supabaseAdmin.from('system_errors').delete().eq('user_id', userId);
+    await supabaseAdmin.from('audit_logs').delete().eq('actor_id', userId);
+    await supabaseAdmin.from('inventory_history').delete().eq('user_id', userId);
+    
     // 1. Supprimer les wallets et transactions
     await supabaseAdmin.from('wallet_transactions').delete().eq('user_id', userId);
     await supabaseAdmin.from('wallets').delete().eq('user_id', userId);
     
     // 2. Supprimer les données client
-    const { data: customer } = await supabaseAdmin.from('customers').select('id').eq('user_id', userId).single();
+    const { data: customer } = await supabaseAdmin.from('customers').select('id').eq('user_id', userId).maybeSingle();
     if (customer) {
       await supabaseAdmin.from('carts').delete().eq('customer_id', customer.id);
       await supabaseAdmin.from('advanced_carts').delete().eq('user_id', userId);
@@ -91,8 +96,17 @@ Deno.serve(async (req) => {
     }
     
     // 3. Supprimer les données vendeur
-    const { data: vendor } = await supabaseAdmin.from('vendors').select('id').eq('user_id', userId).single();
+    const { data: vendor } = await supabaseAdmin.from('vendors').select('id').eq('user_id', userId).maybeSingle();
     if (vendor) {
+      // D'abord supprimer les escrow_transactions liées aux orders du vendeur
+      const { data: vendorOrders } = await supabaseAdmin.from('orders').select('id').eq('vendor_id', vendor.id);
+      if (vendorOrders && vendorOrders.length > 0) {
+        const orderIds = vendorOrders.map(o => o.id);
+        await supabaseAdmin.from('escrow_transactions').delete().in('order_id', orderIds);
+        await supabaseAdmin.from('order_items').delete().in('order_id', orderIds);
+        await supabaseAdmin.from('payment_schedules').delete().in('order_id', orderIds);
+      }
+      
       await supabaseAdmin.from('vendor_subscriptions').delete().eq('vendor_id', vendor.id);
       await supabaseAdmin.from('products').delete().eq('vendor_id', vendor.id);
       await supabaseAdmin.from('orders').delete().eq('vendor_id', vendor.id);
@@ -101,11 +115,15 @@ Deno.serve(async (req) => {
       await supabaseAdmin.from('contracts').delete().eq('vendor_id', vendor.id);
       await supabaseAdmin.from('deliveries').delete().eq('vendor_id', vendor.id);
       await supabaseAdmin.from('vendor_agents').delete().eq('vendor_id', vendor.id);
+      await supabaseAdmin.from('clients').delete().eq('vendor_id', vendor.id);
+      await supabaseAdmin.from('prospects').delete().eq('vendor_id', vendor.id);
+      await supabaseAdmin.from('promo_codes').delete().eq('vendor_id', vendor.id);
+      await supabaseAdmin.from('support_tickets').delete().eq('vendor_id', vendor.id);
       await supabaseAdmin.from('vendors').delete().eq('id', vendor.id);
     }
     
     // 4. Supprimer les données livreur
-    const { data: driver } = await supabaseAdmin.from('delivery_drivers').select('id').eq('user_id', userId).single();
+    const { data: driver } = await supabaseAdmin.from('delivery_drivers').select('id').eq('user_id', userId).maybeSingle();
     if (driver) {
       await supabaseAdmin.from('deliveries').delete().eq('driver_id', driver.id);
       await supabaseAdmin.from('delivery_drivers').delete().eq('id', driver.id);
