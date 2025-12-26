@@ -20,10 +20,15 @@ export const useHomeProducts = (limit: number = 4) => {
       try {
         setLoading(true);
 
+        // Filtrer les produits des vendeurs qui ont une présence en ligne
         const { data, error } = await supabase
           .from('products')
-          .select('id, name, price, images, category_id, rating, reviews_count')
+          .select(`
+            id, name, price, images, category_id, rating, reviews_count,
+            vendors!inner(business_type)
+          `)
           .eq('is_active', true)
+          .in('vendors.business_type', ['En ligne', 'Physique + En ligne'])
           .order('created_at', { ascending: false })
           .limit(limit);
 

@@ -80,6 +80,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
       const to = from + pageLimit - 1;
 
       // Requête optimisée - une seule requête
+      // Filtrer les produits des vendeurs qui ont une présence en ligne (pas boutique physique uniquement)
       let query = supabase
         .from('products')
         .select(`
@@ -101,13 +102,15 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
             business_name,
             user_id,
             country,
-            city
+            city,
+            business_type
           ),
           categories(
             name
           )
         `, { count: 'exact' })
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .in('vendors.business_type', ['En ligne', 'Physique + En ligne']);
 
       // Filtres
       if (vendorId) {
