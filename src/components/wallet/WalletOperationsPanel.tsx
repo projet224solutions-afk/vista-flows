@@ -17,21 +17,18 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   Send,
-  CreditCard,
   Smartphone,
   Wallet as WalletIcon,
-  Banknote,
-  Loader2
+  Loader2,
+  Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+// PawaPay uniquement - Suppression de carte bancaire
 const PAYMENT_METHODS = [
-  { value: 'card', label: 'Carte bancaire', icon: CreditCard, color: 'text-blue-600' },
   { value: 'orange_money', label: 'Orange Money', icon: Smartphone, color: 'text-orange-600' },
   { value: 'mtn_money', label: 'MTN Money', icon: Smartphone, color: 'text-yellow-600' },
-  { value: 'moov_money', label: 'Moov Money', icon: Smartphone, color: 'text-blue-500' },
-  { value: 'wallet_224', label: '224Sallet', icon: WalletIcon, color: 'text-purple-600' },
-  { value: 'cash', label: 'Espèces', icon: Banknote, color: 'text-green-600' }
+  { value: 'wallet_224', label: '224Wallet', icon: WalletIcon, color: 'text-purple-600' }
 ];
 
 export function WalletOperationsPanel() {

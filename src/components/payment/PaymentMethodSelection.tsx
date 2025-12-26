@@ -1,3 +1,8 @@
+/**
+ * 💳 PAYMENT METHOD SELECTION - PAWAPAY ONLY
+ * Sélection de méthode de paiement - Mobile Money uniquement via PawaPay
+ */
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,15 +11,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Wallet, 
-  CreditCard, 
   Smartphone, 
-  Truck, 
   Shield,
   AlertCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type PaymentMethodType = 'wallet' | 'card' | 'orange_money' | 'mtn_money' | 'cash_on_delivery';
+export type PaymentMethodType = 'wallet' | 'orange_money' | 'mtn_money';
 
 interface PaymentMethodOption {
   id: PaymentMethodType;
@@ -50,6 +53,7 @@ export function PaymentMethodSelection({
 
   const isWalletSufficient = walletBalance >= amount;
 
+  // PawaPay Mobile Money uniquement - Plus de carte bancaire ni cash
   const paymentMethods: PaymentMethodOption[] = [
     {
       id: 'wallet',
@@ -62,7 +66,7 @@ export function PaymentMethodSelection({
     {
       id: 'orange_money',
       name: 'Orange Money',
-      description: 'Payer avec votre compte Orange Money',
+      description: 'Payer avec votre compte Orange Money via PawaPay',
       icon: <Smartphone className="h-5 w-5 text-orange-500" />,
       iconBg: 'bg-orange-100',
       available: true,
@@ -71,27 +75,11 @@ export function PaymentMethodSelection({
     {
       id: 'mtn_money',
       name: 'MTN Mobile Money',
-      description: 'Payer avec votre compte MTN MoMo',
+      description: 'Payer avec votre compte MTN MoMo via PawaPay',
       icon: <Smartphone className="h-5 w-5 text-yellow-600" />,
       iconBg: 'bg-yellow-100',
       available: true,
       requiresPhone: true
-    },
-    {
-      id: 'card',
-      name: 'Carte bancaire',
-      description: 'Visa, Mastercard, etc.',
-      icon: <CreditCard className="h-5 w-5 text-blue-500" />,
-      iconBg: 'bg-blue-100',
-      available: true
-    },
-    {
-      id: 'cash_on_delivery',
-      name: 'Paiement à la livraison',
-      description: 'Payez en espèces à la réception',
-      icon: <Truck className="h-5 w-5 text-green-600" />,
-      iconBg: 'bg-green-100',
-      available: true
     }
   ];
 
@@ -122,6 +110,12 @@ export function PaymentMethodSelection({
             </p>
           </div>
         )}
+
+        {/* Badge PawaPay */}
+        <div className="flex items-center justify-center gap-2 p-2 bg-primary/5 rounded-lg border border-primary/20">
+          <Shield className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium">Paiement sécurisé par PawaPay</span>
+        </div>
 
         {/* Solde et ID Vendeur */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -195,15 +189,18 @@ export function PaymentMethodSelection({
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
               />
+              <p className="text-xs text-muted-foreground">
+                Une demande de confirmation sera envoyée sur ce numéro
+              </p>
             </div>
           )}
 
-          {/* Avertissement paiement à la livraison */}
-          {selectedMethod === 'cash_on_delivery' && (
-            <div className="flex items-start gap-2 p-3 mt-2 bg-amber-50 border border-amber-200 rounded-lg animate-in slide-in-from-top-2">
-              <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-amber-700">
-                Préparez le montant exact en espèces pour la livraison.
+          {/* Info Mobile Money */}
+          {(selectedMethod === 'orange_money' || selectedMethod === 'mtn_money') && (
+            <div className="flex items-start gap-2 p-3 mt-2 bg-blue-50 border border-blue-200 rounded-lg animate-in slide-in-from-top-2">
+              <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-blue-700">
+                Vous recevrez une demande de paiement sur votre téléphone. Confirmez avec votre code secret Mobile Money.
               </p>
             </div>
           )}
