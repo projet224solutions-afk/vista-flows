@@ -1,6 +1,7 @@
 /**
  * Page Produits Numériques & Marketplace
- * Modules: Dropshipping, Voyage, Logiciel, Formation, Livres, Produit custom
+ * Modules: Voyage, Logiciel, Formation, Livres, Produit custom
+ * Note: Dropshipping retiré de l'UI mais authentification conservée
  */
 
 import { useState } from 'react';
@@ -12,7 +13,6 @@ import {
   GraduationCap, 
   BookOpen, 
   Sparkles,
-  ShoppingBag,
   ArrowLeft,
   Store,
   Lock
@@ -24,7 +24,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import QuickFooter from '@/components/QuickFooter';
 import { MerchantActivationDialog } from '@/components/digital-products/MerchantActivationDialog';
-import { DigitalProductForm } from '@/components/digital-products/DigitalProductForm';
+import { CategoryProductsList } from '@/components/digital-products/CategoryProductsList';
 
 interface ProductModule {
   id: string;
@@ -35,15 +35,8 @@ interface ProductModule {
   category: 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom';
 }
 
+// Dropshipping retiré de l'affichage mais catégorie conservée pour l'auth
 const productModules: ProductModule[] = [
-  {
-    id: 'dropshipping',
-    icon: <ShoppingBag className="w-7 h-7" />,
-    title: 'Dropshipping',
-    description: 'Importez depuis Amazon, AliExpress, Alibaba',
-    gradient: 'from-orange-500 to-red-500',
-    category: 'dropshipping'
-  },
   {
     id: 'voyage',
     icon: <Plane className="w-7 h-7" />,
@@ -91,7 +84,7 @@ export default function DigitalProducts() {
   const { user, profile, loading } = useAuth();
   const [showActivationDialog, setShowActivationDialog] = useState(false);
   const [selectedModule, setSelectedModule] = useState<ProductModule | null>(null);
-  const [showProductForm, setShowProductForm] = useState(false);
+  const [showCategoryProducts, setShowCategoryProducts] = useState(false);
 
   const isMerchant = profile?.role === 'vendeur';
 
@@ -110,22 +103,16 @@ export default function DigitalProducts() {
       return;
     }
 
-    // Si marchand, ouvrir le formulaire de création
+    // Si marchand, afficher les produits de la catégorie
     setSelectedModule(module);
-    setShowProductForm(true);
+    setShowCategoryProducts(true);
   };
 
   const handleActivationSuccess = () => {
     setShowActivationDialog(false);
     if (selectedModule) {
-      setShowProductForm(true);
+      setShowCategoryProducts(true);
     }
-  };
-
-  const handleProductCreated = () => {
-    setShowProductForm(false);
-    setSelectedModule(null);
-    toast.success('Produit créé et publié sur le marketplace!');
   };
 
   if (loading) {
@@ -136,16 +123,18 @@ export default function DigitalProducts() {
     );
   }
 
-  // Formulaire de création de produit
-  if (showProductForm && selectedModule) {
+  // Affichage des produits par catégorie
+  if (showCategoryProducts && selectedModule) {
     return (
-      <DigitalProductForm
+      <CategoryProductsList
         category={selectedModule.category}
+        title={selectedModule.title}
+        description={selectedModule.description}
+        gradient={selectedModule.gradient}
         onBack={() => {
-          setShowProductForm(false);
+          setShowCategoryProducts(false);
           setSelectedModule(null);
         }}
-        onSuccess={handleProductCreated}
       />
     );
   }
