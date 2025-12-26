@@ -16,11 +16,15 @@ interface PaymentRequest {
   return_url?: string;
 }
 
-// Correspondants PawaPay pour la Guinée
-const GUINEA_CORRESPONDENTS = {
-  orange_money: 'ORANGE_GIN',
-  mtn_money: 'MTN_MOMO_GIN',
-} as const;
+// Correspondants supportés côté UI (le provider réel sera prédit par PawaPay)
+const SUPPORTED_CORRESPONDENTS = ['orange_money', 'mtn_money'] as const;
+type SupportedCorrespondent = (typeof SUPPORTED_CORRESPONDENTS)[number];
+
+const providerMatchesCorrespondent = (provider: string, correspondent: SupportedCorrespondent) => {
+  if (correspondent === 'orange_money') return provider.startsWith('ORANGE_');
+  if (correspondent === 'mtn_money') return provider.startsWith('MTN_');
+  return false;
+};
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -77,10 +81,10 @@ serve(async (req) => {
       throw new Error('Correspondent (payment method) is required');
     }
 
-    // Mapper le correspondent
-    const correspondentCode = GUINEA_CORRESPONDENTS[body.correspondent as keyof typeof GUINEA_CORRESPONDENTS];
-    if (!correspondentCode) {
-      throw new Error(`Invalid correspondent: ${body.correspondent}. Supported: orange_money, mtn_money`);
+    // Valider le correspondent (choisi côté UI)
+    const correspondent = body.correspondent as SupportedCorrespondent;
+    if (!SUPPORTED_CORRESPONDENTS.includes(correspondent)) {
+      throw new Error(`Invalid correspondent: ${body.correspondent}. Supported: ${SUPPORTED_CORRESPONDENTS.join(', ')}`);
     }
 
     // Formater le numéro de téléphone (format international sans +)
@@ -112,6 +116,64 @@ serve(async (req) => {
       apiKeyLength: pawapayApiKey.length,
     });
 
+    // Prédire le provider (valeur attendue par PawaPay) à partir du MSISDN
+    const callPredictProvider = async (baseUrl: string) => {
+      logStep('Calling PawaPay', { baseUrl, path: '/v2/predict-provider' });
+      const response = await fetch(`${baseUrl}/v2/predict-provider`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${pawapayApiKey}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ phoneNumber: `+${phoneNumber}` }),
+      });
+
+      const responseText = await response.text();
+      logStep('Predict provider response', { status: response.status, body: responseText });
+      return { response, responseText };
+    };
+
+    let { response: predictRes, responseText: predictText } = await callPredictProvider(baseUrlPrimary);
+
+    if (!predictRes.ok && predictRes.status === 401) {
+      logStep('Auth error on predict-provider primary, retrying with fallback', { baseUrlFallback });
+      ({ response: predictRes, responseText: predictText } = await callPredictProvider(baseUrlFallback));
+    }
+
+    if (!predictRes.ok) {
+      let errorMessage = 'PawaPay predict-provider error';
+      try {
+        const errorData = JSON.parse(predictText);
+        errorMessage = errorData.message || errorData.errorMessage || JSON.stringify(errorData);
+      } catch {
+        errorMessage = predictText || `HTTP ${predictRes.status}`;
+      }
+      throw new Error(`PawaPay error: ${errorMessage}`);
+    }
+
+    let predictedProvider = '';
+    let predictedCountry: string | undefined;
+    try {
+      const predicted = JSON.parse(predictText);
+      predictedProvider = predicted?.provider;
+      predictedCountry = predicted?.country;
+    } catch {
+      // ignore
+    }
+
+    if (!predictedProvider || typeof predictedProvider !== 'string') {
+      throw new Error('PawaPay predict-provider returned no provider');
+    }
+
+    if (!providerMatchesCorrespondent(predictedProvider, correspondent)) {
+      throw new Error(
+        `Numéro non compatible avec ${correspondent === 'orange_money' ? 'Orange Money' : 'MTN MoMo'} selon PawaPay (provider prédit: ${predictedProvider})`
+      );
+    }
+
+    logStep('Provider predicted', { provider: predictedProvider, country: predictedCountry });
+
     // Construire la requête de dépôt PawaPay (API v2)
     // Docs: POST {baseUrl}/v2/deposits
     // IMPORTANT: PawaPay n'accepte que les caractères alphanumériques et espaces
@@ -130,7 +192,7 @@ serve(async (req) => {
         type: 'MMO',
         accountDetails: {
           phoneNumber,
-          provider: correspondentCode,
+          provider: predictedProvider,
         },
       },
       clientReferenceId: depositId,
@@ -209,11 +271,16 @@ serve(async (req) => {
         user_id: userData.user.id,
         amount: body.amount,
         currency: body.currency || 'GNF',
-        correspondent: correspondentCode,
+        correspondent: predictedProvider,
         phone_number: phoneNumber,
         status: depositResponse.status || 'PENDING',
         description: body.description,
-        metadata: body.metadata || {},
+        metadata: {
+          ...(body.metadata || {}),
+          selected_correspondent: correspondent,
+          predicted_country: predictedCountry,
+          predicted_provider: predictedProvider,
+        },
         pawapay_response: depositResponse,
       });
 
@@ -229,7 +296,8 @@ serve(async (req) => {
         deposit_id: depositId,
         status: depositResponse.status || 'PENDING',
         message: 'Veuillez confirmer le paiement sur votre téléphone',
-        correspondent: correspondentCode,
+        correspondent: predictedProvider,
+        predicted_country: predictedCountry,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
