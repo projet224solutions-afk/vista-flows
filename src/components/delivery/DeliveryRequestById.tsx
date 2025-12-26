@@ -133,40 +133,46 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* ID du fournisseur */}
+          {/* Fournisseur */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <MapPin className="h-4 w-4 text-orange-600" />
-              ID du fournisseur (retrait du colis)
+              Fournisseur (retrait du colis)
             </Label>
             <Input
-              placeholder="Ex: vendor_abc123..."
+              placeholder="Nom boutique, téléphone ou ID..."
               value={vendorId}
               onChange={(e) => setVendorId(e.target.value)}
             />
+            <p className="text-xs text-muted-foreground">
+              Saisir le nom de la boutique, numéro de téléphone ou l'ID
+            </p>
             {vendorLocation && (
               <div className="flex items-center gap-2 text-sm text-green-600">
                 <CheckCircle2 className="h-4 w-4" />
-                <span>{vendorLocation.name} - {vendorLocation.address || 'Position GPS trouvée'}</span>
+                <span>{vendorLocation.name} {vendorLocation.phone && `(${vendorLocation.phone})`}</span>
               </div>
             )}
           </div>
 
-          {/* ID du client */}
+          {/* Client */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <User className="h-4 w-4 text-green-600" />
-              ID du client (livraison)
+              Client (livraison)
             </Label>
             <Input
-              placeholder="Ex: user_xyz789..."
+              placeholder="Nom, téléphone ou ID..."
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
             />
+            <p className="text-xs text-muted-foreground">
+              Saisir le nom du client, numéro de téléphone ou l'ID
+            </p>
             {clientLocation && (
               <div className="flex items-center gap-2 text-sm text-green-600">
                 <CheckCircle2 className="h-4 w-4" />
-                <span>{clientLocation.name} - {clientLocation.address || 'Position GPS trouvée'}</span>
+                <span>{clientLocation.name} {clientLocation.phone && `(${clientLocation.phone})`}</span>
               </div>
             )}
           </div>
