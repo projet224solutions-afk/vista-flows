@@ -74,7 +74,7 @@ export default function VendeurDashboard() {
   const location = useLocation();
   useRoleRedirect();
   const { userInfo } = useUserInfo();
-  const { stats, loading: statsLoading } = useVendorStats();
+  const { stats, loading: statsLoading, error: statsError } = useVendorStats();
   
   // Gestion des erreurs centralisée
   const { error, captureError, clearError } = useVendorErrorBoundary();
@@ -146,8 +146,13 @@ export default function VendeurDashboard() {
           .eq('user_id', user.id)
           .maybeSingle();
         
-        if (vendorError || !vendor) {
-          console.warn('Vendeur non trouvé:', vendorError);
+        if (vendorError) {
+          console.warn('Erreur chargement vendeur:', vendorError);
+          return;
+        }
+
+        if (!vendor) {
+          console.info('Aucun vendeur pour cet utilisateur, commandes ignorées');
           return;
         }
 
@@ -208,22 +213,37 @@ export default function VendeurDashboard() {
   
   // Afficher un message d'erreur si les stats ne chargent pas
   if (!isLoading && stats === null) {
+    const isVendorMissing = statsError === 'Vendor profile not found';
+
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white p-6">
-        <Card className="max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <Card className="max-w-md w-full">
           <CardHeader>
-            <CardTitle className="text-red-600">{t('vendor.loadError')}</CardTitle>
+            <CardTitle className={isVendorMissing ? undefined : "text-destructive"}>
+              {isVendorMissing ? "Accès vendeur indisponible" : t('vendor.loadError')}
+            </CardTitle>
             <CardDescription>
-              {t('vendor.loadErrorDesc')}
+              {isVendorMissing
+                ? "Ce compte n'est pas rattaché à une boutique vendeur."
+                : t('vendor.loadErrorDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              {t('vendor.checkConnection')}
+              {isVendorMissing
+                ? "Retournez à l'accueil pour utiliser votre compte utilisateur."
+                : t('vendor.checkConnection')}
             </p>
-            <Button onClick={() => window.location.reload()} className="w-full">
-              {t('common.reloadPage')}
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button onClick={() => navigate('/')} className="w-full">
+                Aller à l'accueil
+              </Button>
+              {!isVendorMissing && (
+                <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
+                  {t('common.reloadPage')}
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
