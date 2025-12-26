@@ -3009,6 +3009,189 @@ export type Database = {
         }
         Relationships: []
       }
+      digital_product_purchases: {
+        Row: {
+          access_expires_at: string | null
+          access_granted: boolean | null
+          amount: number
+          buyer_id: string
+          commission_amount: number | null
+          created_at: string | null
+          download_count: number | null
+          id: string
+          max_downloads: number | null
+          merchant_id: string
+          payment_status: string | null
+          product_id: string
+          transaction_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          access_expires_at?: string | null
+          access_granted?: boolean | null
+          amount: number
+          buyer_id: string
+          commission_amount?: number | null
+          created_at?: string | null
+          download_count?: number | null
+          id?: string
+          max_downloads?: number | null
+          merchant_id: string
+          payment_status?: string | null
+          product_id: string
+          transaction_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          access_expires_at?: string | null
+          access_granted?: boolean | null
+          amount?: number
+          buyer_id?: string
+          commission_amount?: number | null
+          created_at?: string | null
+          download_count?: number | null
+          id?: string
+          max_downloads?: number | null
+          merchant_id?: string
+          payment_status?: string | null
+          product_id?: string
+          transaction_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "digital_product_purchases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "digital_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      digital_products: {
+        Row: {
+          affiliate_platform: string | null
+          affiliate_url: string | null
+          category: string
+          commission_rate: number | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          file_type: string | null
+          file_urls: string[] | null
+          id: string
+          images: string[] | null
+          is_featured: boolean | null
+          is_premium: boolean | null
+          merchant_id: string
+          metadata: Json | null
+          original_price: number | null
+          price: number
+          product_mode: string
+          published_at: string | null
+          rating: number | null
+          reviews_count: number | null
+          sales_count: number | null
+          short_description: string | null
+          source_platform: string | null
+          source_url: string | null
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          vendor_id: string | null
+          views_count: number | null
+        }
+        Insert: {
+          affiliate_platform?: string | null
+          affiliate_url?: string | null
+          category: string
+          commission_rate?: number | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          file_type?: string | null
+          file_urls?: string[] | null
+          id?: string
+          images?: string[] | null
+          is_featured?: boolean | null
+          is_premium?: boolean | null
+          merchant_id: string
+          metadata?: Json | null
+          original_price?: number | null
+          price?: number
+          product_mode?: string
+          published_at?: string | null
+          rating?: number | null
+          reviews_count?: number | null
+          sales_count?: number | null
+          short_description?: string | null
+          source_platform?: string | null
+          source_url?: string | null
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          vendor_id?: string | null
+          views_count?: number | null
+        }
+        Update: {
+          affiliate_platform?: string | null
+          affiliate_url?: string | null
+          category?: string
+          commission_rate?: number | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          file_type?: string | null
+          file_urls?: string[] | null
+          id?: string
+          images?: string[] | null
+          is_featured?: boolean | null
+          is_premium?: boolean | null
+          merchant_id?: string
+          metadata?: Json | null
+          original_price?: number | null
+          price?: number
+          product_mode?: string
+          published_at?: string | null
+          rating?: number | null
+          reviews_count?: number | null
+          sales_count?: number | null
+          short_description?: string | null
+          source_platform?: string | null
+          source_url?: string | null
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          vendor_id?: string | null
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "digital_products_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "digital_products_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "digital_products_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dispute_actions: {
         Row: {
           action_type: string
