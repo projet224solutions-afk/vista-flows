@@ -1,6 +1,7 @@
 /**
- * SÉLECTEUR DE MÉTHODE DE PAIEMENT 224SOLUTIONS
- * Portefeuille + Orange Money + MTN + Cash
+ * 💳 SÉLECTEUR DE MÉTHODE DE PAIEMENT 224SOLUTIONS
+ * PawaPay Mobile Money UNIQUEMENT
+ * Wallet 224Solutions + Orange Money + MTN Mobile Money
  */
 
 import { useState, useEffect } from 'react';
@@ -10,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Wallet, Smartphone, Banknote, Check, AlertCircle, Shield } from 'lucide-react';
+import { Wallet, Smartphone, Check, AlertCircle, Shield } from 'lucide-react';
 import { Payment224Service, type PaymentMethod } from '@/services/payment/Payment224Service';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -66,7 +67,7 @@ export function PaymentMethodSelector({
   };
 
   const handleConfirm = () => {
-    if (!selectedMethod && selectedMethod !== 'new_cash') {
+    if (!selectedMethod) {
       toast.error('Veuillez sélectionner une méthode de paiement');
       return;
     }
@@ -86,14 +87,21 @@ export function PaymentMethodSelector({
       <CardHeader>
         <CardTitle className="flex items-center justify-center gap-2">
           {enableEscrow && <Shield className="h-5 w-5 text-primary" />}
-          Méthode de paiement
-          {enableEscrow && <Badge variant="outline" className="ml-2">Sécurisé par Escrow</Badge>}
+          Paiement Mobile Money
+          {enableEscrow && <Badge variant="outline" className="ml-2">Sécurisé</Badge>}
         </CardTitle>
         <div className="text-center mt-2">
           <p className="text-3xl font-bold text-primary">
             {amount.toLocaleString()} GNF
           </p>
           <p className="text-sm text-muted-foreground">Montant à payer</p>
+          
+          {/* Badge PawaPay */}
+          <div className="flex items-center justify-center gap-1 mt-2">
+            <Shield className="h-3 w-3 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Powered by PawaPay</span>
+          </div>
+          
           {enableEscrow && transactionType !== 'wallet_transfer' && (
             <Alert className="mt-3">
               <Shield className="h-4 w-4" />
@@ -133,7 +141,7 @@ export function PaymentMethodSelector({
             </div>
           </div>
 
-          {/* Orange Money */}
+          {/* Orange Money via PawaPay */}
           <div className="space-y-2">
             <Label className="text-base font-semibold flex items-center gap-2">
               <Smartphone className="h-5 w-5" style={{ color: '#FF6B00' }} />
@@ -151,15 +159,18 @@ export function PaymentMethodSelector({
                 <Label htmlFor="phone_orange">Numéro Orange Money</Label>
                 <Input
                   id="phone_orange"
-                  placeholder="+224 XXX XX XX XX"
+                  placeholder="620 XX XX XX"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Une notification sera envoyée sur votre téléphone
+                </p>
               </div>
             )}
           </div>
 
-          {/* MTN Mobile Money */}
+          {/* MTN Mobile Money via PawaPay */}
           <div className="space-y-2">
             <Label className="text-base font-semibold flex items-center gap-2">
               <Smartphone className="h-5 w-5" style={{ color: '#FFCC00' }} />
@@ -177,26 +188,15 @@ export function PaymentMethodSelector({
                 <Label htmlFor="phone_mtn">Numéro MTN Money</Label>
                 <Input
                   id="phone_mtn"
-                  placeholder="+224 XXX XX XX XX"
+                  placeholder="660 XX XX XX"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Une notification sera envoyée sur votre téléphone
+                </p>
               </div>
             )}
-          </div>
-
-          {/* Paiement en espèces */}
-          <div className="space-y-2">
-            <Label className="text-base font-semibold flex items-center gap-2">
-              <Banknote className="h-5 w-5 text-green-600" />
-              Espèces
-            </Label>
-            <div className="flex items-center space-x-2 p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
-              <RadioGroupItem value="new_cash" id="new_cash" />
-              <Label htmlFor="new_cash" className="flex-1 cursor-pointer">
-                Payer en espèces à la livraison
-              </Label>
-            </div>
           </div>
         </RadioGroup>
 
