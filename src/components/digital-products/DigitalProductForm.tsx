@@ -29,7 +29,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-type ProductCategory = 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom';
+type ProductCategory = 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom' | 'ai';
 
 interface DigitalProductFormProps {
   category: ProductCategory;
@@ -87,6 +87,13 @@ const categoryConfig: Record<ProductCategory, {
     showSourceUrl: false,
     showAffiliateUrl: false,
     showFileUpload: true
+  },
+  ai: {
+    title: 'Outil / Service IA',
+    description: 'Outils et services basés sur l\'intelligence artificielle',
+    showSourceUrl: false,
+    showAffiliateUrl: true,
+    showFileUpload: false
   }
 };
 
