@@ -167,7 +167,7 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
               <SelectTrigger>
                 <SelectValue placeholder={city ? "Sélectionnez un quartier" : "Choisissez d'abord une ville"} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" className="z-[9999]">
                 {selectedCity?.neighborhoods.map((n) => (
                   <SelectItem key={n} value={n}>
                     {n}
