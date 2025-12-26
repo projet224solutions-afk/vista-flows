@@ -160,7 +160,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.generate-product-description]
-verify_jwt = true
+verify_jwt = false
 
 [functions.vendor-agent-get-products]
 verify_jwt = false
@@ -196,9 +196,6 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.google-places-autocomplete]
-verify_jwt = false
-
-[functions.generate-product-description]
 verify_jwt = false
 
 [functions.generate-product-image-openai]
@@ -254,3 +251,15 @@ verify_jwt = false
 
 [functions.pawapay-active-config]
 verify_jwt = true
+
+[functions.get-google-secret]
+verify_jwt = true
+
+[functions.gcs-signed-url]
+verify_jwt = true
+
+[functions.gcs-upload-complete]
+verify_jwt = true
+
+[functions.test-google-cloud-api]
+verify_jwt = false
