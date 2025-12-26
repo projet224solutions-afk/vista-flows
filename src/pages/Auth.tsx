@@ -1094,6 +1094,36 @@ export default function Auth() {
                 </div>
               </div>
 
+              {/* Section: Produits Numériques */}
+              <div className="mb-6">
+                <h4 className="text-sm font-semibold text-cyan-600 mb-3 flex items-center gap-2">
+                  <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
+                  Produits Numériques
+                  <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                  {[
+                    { id: 'digital_voyage', name: 'Vol/Hôtel', icon: '✈️', desc: 'Billets & réservations' },
+                    { id: 'digital_logiciel', name: 'Logiciel', icon: '💻', desc: 'Antivirus & SaaS' },
+                    { id: 'digital_formation', name: 'Formation', icon: '🎓', desc: 'Vidéos & PDF' },
+                    { id: 'digital_livre', name: 'Livres', icon: '📚', desc: 'eBooks & affiliation' },
+                    { id: 'digital_custom', name: 'Produit Numérique', icon: '✨', desc: 'Templates & services' },
+                  ].map((service) => (
+                    <button
+                      key={service.id}
+                      onClick={() => handleServiceTypeSelect(service.id)}
+                      className={`flex flex-col items-center p-3 bg-gradient-to-br from-cyan-50 to-white rounded-xl border-2 hover:border-cyan-500 hover:shadow-lg hover:scale-[1.02] transition-all ${
+                        selectedServiceType === service.id ? 'border-cyan-500 ring-2 ring-cyan-500/30' : 'border-cyan-200'
+                      }`}
+                    >
+                      <div className="text-3xl mb-1.5">{service.icon}</div>
+                      <span className="text-sm font-semibold text-foreground">{service.name}</span>
+                      <span className="text-[10px] text-muted-foreground">{service.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Section: Autres Services */}
               <div>
                 <h4 className="text-sm font-semibold text-amber-600 mb-3 flex items-center gap-2">
@@ -1103,10 +1133,10 @@ export default function Auth() {
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
-                    { id: 'voyage', name: 'Voyage & Billetterie', icon: '✈️', desc: 'Voyages' },
                     { id: 'freelance', name: 'Administratif', icon: '💼', desc: 'Secrétariat' },
                     { id: 'agriculture', name: 'Agriculture', icon: '🌾', desc: 'Produits locaux' },
                     { id: 'construction', name: 'Construction & BTP', icon: '🏗️', desc: 'Bâtiment' },
+                    { id: 'dropshipping', name: 'Dropshipping', icon: '📦', desc: 'Amazon, AliExpress' },
                   ].map((service) => (
                     <button
                       key={service.id}
@@ -1191,10 +1221,15 @@ export default function Auth() {
                           { id: 'education', name: 'Formation', icon: '🎓' },
                           { id: 'media', name: 'Photo & Vidéo', icon: '📸' },
                           { id: 'sport', name: 'Sport & Fitness', icon: '🏋️' },
-                          { id: 'voyage', name: 'Voyage & Billetterie', icon: '✈️' },
                           { id: 'freelance', name: 'Administratif', icon: '💼' },
                           { id: 'agriculture', name: 'Agriculture', icon: '🌾' },
                           { id: 'construction', name: 'Construction & BTP', icon: '🏗️' },
+                          { id: 'dropshipping', name: 'Dropshipping', icon: '📦' },
+                          { id: 'digital_voyage', name: 'Vol/Hôtel', icon: '✈️' },
+                          { id: 'digital_logiciel', name: 'Logiciel', icon: '💻' },
+                          { id: 'digital_formation', name: 'Formation Numérique', icon: '🎓' },
+                          { id: 'digital_livre', name: 'Livres Numériques', icon: '📚' },
+                          { id: 'digital_custom', name: 'Produit Numérique', icon: '✨' },
                         ];
                         const service = allServices.find(s => s.id === selectedServiceType);
                         return service ? `${service.icon} ${service.name}` : selectedServiceType;
