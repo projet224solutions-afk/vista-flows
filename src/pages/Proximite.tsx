@@ -55,7 +55,7 @@ const getServiceCategories = (stats: any) => [
     bgColor: "bg-emerald-50",
     textColor: "text-emerald-600",
     count: stats.taxiMoto,
-    path: "/taxi-moto",
+    path: "/proximite/taxi-moto", // Liste des motos disponibles à proximité
     description: "Transport rapide",
     trending: stats.taxiMoto > 3
   },
@@ -67,7 +67,7 @@ const getServiceCategories = (stats: any) => [
     bgColor: "bg-orange-50",
     textColor: "text-orange-600",
     count: stats.livraison,
-    path: "/delivery",
+    path: "/proximite/livraison", // Liste des livreurs disponibles à proximité
     description: "Colis & courses",
     trending: false
   },

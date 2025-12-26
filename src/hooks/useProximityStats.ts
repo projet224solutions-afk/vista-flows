@@ -121,13 +121,21 @@ export function useProximityStats() {
 
       if (psError) throw psError;
 
-      // Fetch all active drivers
+      // Fetch all active drivers from drivers table
       const { data: drivers, error: driversError } = await supabase
         .from('drivers')
         .select('id, vehicle_type, current_location')
         .or('status.eq.active,is_online.eq.true');
 
       if (driversError) throw driversError;
+      
+      // Fetch taxi drivers from taxi_drivers table
+      const { data: taxiDrivers, error: taxiDriversError } = await supabase
+        .from('taxi_drivers')
+        .select('id, vehicle_type, last_lat, last_lng, is_online, status')
+        .eq('is_online', true);
+
+      if (taxiDriversError) throw taxiDriversError;
 
       // Fetch products with their categories
       const { data: products, error: productsError } = await supabase
@@ -196,7 +204,7 @@ export function useProximityStats() {
         }
       });
 
-      // Count drivers (taxi-moto and delivery)
+      // Count drivers (taxi-moto and delivery) from drivers table
       drivers?.forEach(driver => {
         // Parse current_location point format (x,y)
         let driverLat: number | null = null;
@@ -223,12 +231,31 @@ export function useProximityStats() {
         }
 
         if (isNearby) {
-          if (driver.vehicle_type === 'moto') {
-            newStats.taxiMoto++;
-          } else if (driver.vehicle_type === 'car') {
+          if (driver.vehicle_type === 'car') {
             newStats.vtc++;
           }
           // All drivers can do delivery
+          newStats.livraison++;
+        }
+      });
+
+      // Count taxi-moto drivers from taxi_drivers table (primary source)
+      taxiDrivers?.forEach(driver => {
+        let isNearby = true;
+        if (driver.last_lat && driver.last_lng) {
+          const distance = calculateDistance(
+            position.latitude, 
+            position.longitude, 
+            Number(driver.last_lat), 
+            Number(driver.last_lng)
+          );
+          isNearby = distance <= RADIUS_KM;
+        }
+
+        if (isNearby) {
+          // Count as taxi-moto (all taxi_drivers are motos)
+          newStats.taxiMoto++;
+          // Taxi-moto drivers can also do delivery
           newStats.livraison++;
         }
       });
