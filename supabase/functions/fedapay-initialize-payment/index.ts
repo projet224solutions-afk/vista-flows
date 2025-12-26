@@ -167,7 +167,13 @@ serve(async (req) => {
       );
     }
 
-    const transactionId = createData.v1?.transaction?.id || createData.id;
+    // FedaPay returns data in "v1/transaction" key (with slash, not dot)
+    const transactionData = createData['v1/transaction'] || createData.transaction || createData;
+    const transactionId = transactionData?.id || createData.id;
+    let finalPaymentToken = transactionData?.payment_token;
+    let finalPaymentUrl = transactionData?.payment_url;
+    
+    console.log('Extracted transaction data:', { transactionId, finalPaymentToken, hasPaymentUrl: !!finalPaymentUrl });
     
     if (!transactionId) {
       console.error('No transaction ID in response:', createData);
@@ -177,39 +183,43 @@ serve(async (req) => {
       );
     }
 
-    // Generate payment token/URL
-    const tokenUrl = isSandbox
-      ? `https://sandbox-api.fedapay.com/v1/transactions/${transactionId}/token`
-      : `https://api.fedapay.com/v1/transactions/${transactionId}/token`;
+    // If we don't have payment_url from create response, generate it
+    if (!finalPaymentUrl || !finalPaymentToken) {
+      console.log('Generating payment token via separate API call');
+      
+      const tokenUrl = isSandbox
+        ? `https://sandbox-api.fedapay.com/v1/transactions/${transactionId}/token`
+        : `https://api.fedapay.com/v1/transactions/${transactionId}/token`;
 
-    const tokenResponse = await fetch(tokenUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${FEDAPAY_SECRET_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    });
+      const tokenResponse = await fetch(tokenUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${FEDAPAY_SECRET_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-    const tokenData = await tokenResponse.json();
-    console.log('FedaPay token response:', tokenResponse.status, JSON.stringify(tokenData));
+      const tokenData = await tokenResponse.json();
+      console.log('FedaPay token response:', tokenResponse.status, JSON.stringify(tokenData));
 
-    if (!tokenResponse.ok) {
-      console.error('FedaPay token error:', tokenData);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Erreur lors de la génération du lien de paiement',
-          details: tokenData 
-        }),
-        { status: tokenResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (!tokenResponse.ok) {
+        console.error('FedaPay token error:', tokenData);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Erreur lors de la génération du lien de paiement',
+            details: tokenData 
+          }),
+          { status: tokenResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      finalPaymentToken = tokenData.token || tokenData.v1?.token || tokenData['v1/token']?.token;
+      finalPaymentUrl = isSandbox
+        ? `https://sandbox-checkout.fedapay.com/checkout/${finalPaymentToken}`
+        : `https://checkout.fedapay.com/checkout/${finalPaymentToken}`;
     }
 
-    const paymentToken = tokenData.token || tokenData.v1?.token;
-    const paymentUrl = isSandbox
-      ? `https://sandbox-checkout.fedapay.com/checkout/${paymentToken}`
-      : `https://checkout.fedapay.com/checkout/${paymentToken}`;
-
-    console.log('FedaPay payment URL generated:', paymentUrl);
+    console.log('FedaPay payment URL:', finalPaymentUrl);
 
     // Store transaction reference in database
     try {
@@ -222,7 +232,7 @@ serve(async (req) => {
         status: 'pending',
         metadata: {
           order_id,
-          payment_token: paymentToken,
+          payment_token: finalPaymentToken,
           sandbox: isSandbox,
           original_amount: amount,
           original_currency: requestedCurrency
@@ -236,8 +246,12 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         transaction_id: transactionId,
-        payment_url: paymentUrl,
-        payment_token: paymentToken,
+        payment_url: finalPaymentUrl,
+        payment_token: finalPaymentToken,
+        amount: finalAmount,
+        currency: finalCurrency,
+        original_amount: amount,
+        original_currency: requestedCurrency,
         sandbox: isSandbox
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
