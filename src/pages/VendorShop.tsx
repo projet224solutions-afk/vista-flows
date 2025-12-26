@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { ArrowLeft, MapPin, Star, Phone, Mail, MessageCircle, Package } from "lucide-react";
+import { ArrowLeft, MapPin, Star, Phone, Mail, MessageCircle, Package, Clock, Store, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,10 +20,13 @@ interface Vendor {
   email?: string;
   address?: string;
   city?: string;
+  neighborhood?: string;
   rating?: number;
   total_orders?: number;
   business_type?: string;
+  service_type?: string;
   service_types?: string[];
+  opening_hours?: string;
   is_active: boolean;
   user_id: string;
 }
@@ -233,11 +236,27 @@ export default function VendorShop() {
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-foreground mb-1">{vendor.business_name}</h2>
             
-            {vendor.business_type && (
-              <Badge variant="secondary" className="mb-2">{vendor.business_type}</Badge>
-            )}
+            <div className="flex flex-wrap gap-2 mb-3">
+              {vendor.business_type && (
+                <Badge variant="secondary">
+                  <Store className="w-3 h-3 mr-1" />
+                  {vendor.business_type === 'physical' ? 'Boutique physique' : 
+                   vendor.business_type === 'digital' ? 'En ligne' : 
+                   vendor.business_type === 'hybrid' ? 'Physique + En ligne' : vendor.business_type}
+                </Badge>
+              )}
+              {vendor.service_type && (
+                <Badge variant="outline">
+                  <Truck className="w-3 h-3 mr-1" />
+                  {vendor.service_type === 'retail' ? 'Vente au détail' :
+                   vendor.service_type === 'wholesale' ? 'Vente en gros' :
+                   vendor.service_type === 'mixed' ? 'Détail + Gros' :
+                   vendor.service_type === 'services' ? 'Services' : vendor.service_type}
+                </Badge>
+              )}
+            </div>
 
-            {vendor.rating !== undefined && (
+            {vendor.rating !== undefined && vendor.rating > 0 && (
               <div className="flex items-center gap-2 mb-2">
                 {renderStars(vendor.rating)}
                 <span className="text-sm text-muted-foreground">
@@ -247,29 +266,62 @@ export default function VendorShop() {
             )}
 
             {vendor.description && (
-              <p className="text-muted-foreground mb-3">{vendor.description}</p>
+              <p className="text-muted-foreground mb-4">{vendor.description}</p>
             )}
 
-            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-              {(vendor.address || vendor.city) && (
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  <span>{[vendor.address, vendor.city].filter(Boolean).join(', ')}</span>
+            {/* Informations de contact et localisation */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              {(vendor.city || vendor.neighborhood || vendor.address) && (
+                <div className="flex items-start gap-2 text-muted-foreground">
+                  <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <div>
+                    {vendor.address && <p>{vendor.address}</p>}
+                    {(vendor.neighborhood || vendor.city) && (
+                      <p>{[vendor.neighborhood, vendor.city].filter(Boolean).join(', ')}</p>
+                    )}
+                  </div>
                 </div>
               )}
+              
               {vendor.phone && (
-                <div className="flex items-center gap-1">
-                  <Phone className="w-4 h-4" />
-                  <a href={`tel:${vendor.phone}`} className="hover:text-primary">{vendor.phone}</a>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Phone className="w-4 h-4 flex-shrink-0" />
+                  <a href={`tel:${vendor.phone}`} className="hover:text-primary transition-colors">
+                    {vendor.phone}
+                  </a>
+                </div>
+              )}
+
+              {vendor.email && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Mail className="w-4 h-4 flex-shrink-0" />
+                  <a href={`mailto:${vendor.email}`} className="hover:text-primary transition-colors truncate">
+                    {vendor.email}
+                  </a>
+                </div>
+              )}
+
+              {vendor.opening_hours && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Clock className="w-4 h-4 flex-shrink-0" />
+                  <span>{vendor.opening_hours}</span>
                 </div>
               )}
             </div>
           </div>
 
           <div className="flex items-center gap-2 md:self-start">
+            {vendor.phone && (
+              <Button variant="outline" asChild>
+                <a href={`tel:${vendor.phone}`}>
+                  <Phone className="w-4 h-4 mr-2" />
+                  Appeler
+                </a>
+              </Button>
+            )}
             <Button onClick={handleContactVendor}>
               <MessageCircle className="w-4 h-4 mr-2" />
-              Contacter
+              Message
             </Button>
             <ShareButton
               title={vendor.business_name}
