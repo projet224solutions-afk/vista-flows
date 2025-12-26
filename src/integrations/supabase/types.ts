@@ -14768,7 +14768,7 @@ export type Database = {
         }[]
       }
       generate_role_based_custom_id: {
-        Args: { user_id: string }
+        Args: { p_user_id: string }
         Returns: string
       }
       generate_secure_token: { Args: never; Returns: string }
