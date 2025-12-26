@@ -3,10 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { MapPin, Navigation, Save, Loader2 } from 'lucide-react';
+import { MapPin, Navigation, Save, Loader2, ChevronDown } from 'lucide-react';
 
 interface VendorLocationSettingsProps {
   vendorId: string;
@@ -37,6 +36,40 @@ const SERVICE_TYPES = [
   { value: 'services', label: 'Services' },
 ];
 
+// Composant Select natif stylisé
+function NativeSelect({ 
+  value, 
+  onChange, 
+  options, 
+  placeholder,
+  disabled = false 
+}: { 
+  value: string; 
+  onChange: (value: string) => void; 
+  options: { value: string; label: string }[]; 
+  placeholder: string;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none cursor-pointer"
+      >
+        <option value="" disabled>{placeholder}</option>
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50 pointer-events-none" />
+    </div>
+  );
+}
+
 export default function VendorLocationSettings({ vendorId }: VendorLocationSettingsProps) {
   const [city, setCity] = useState('');
   const [neighborhood, setNeighborhood] = useState('');
@@ -46,9 +79,11 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
   const [businessType, setBusinessType] = useState('physical');
   const [serviceType, setServiceType] = useState('retail');
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [gettingLocation, setGettingLocation] = useState(false);
 
   const selectedCity = GUINEA_CITIES.find(c => c.name === city);
+  const neighborhoodOptions = selectedCity?.neighborhoods.map(n => ({ value: n, label: n })) || [];
 
   useEffect(() => {
     loadVendorLocation();
@@ -56,6 +91,7 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
 
   const loadVendorLocation = async () => {
     try {
+      setInitialLoading(true);
       const { data, error } = await supabase
         .from('vendors')
         .select('city, neighborhood, address, latitude, longitude, business_type, service_type')
@@ -75,7 +111,15 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
       }
     } catch (error) {
       console.error('Erreur chargement localisation:', error);
+      toast.error('Erreur lors du chargement des données');
+    } finally {
+      setInitialLoading(false);
     }
+  };
+
+  const handleCityChange = (newCity: string) => {
+    setCity(newCity);
+    setNeighborhood(''); // Reset quartier quand la ville change
   };
 
   const getCurrentLocation = () => {
@@ -103,6 +147,12 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!city) {
+      toast.error('Veuillez sélectionner une ville');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -130,6 +180,16 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
     }
   };
 
+  if (initialLoading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -145,36 +205,30 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Ville */}
           <div className="space-y-2">
-            <Label htmlFor="city">Ville</Label>
-            <Select value={city} onValueChange={(value) => { setCity(value); setNeighborhood(''); }}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionnez une ville" />
-              </SelectTrigger>
-              <SelectContent>
-                {GUINEA_CITIES.map((c) => (
-                  <SelectItem key={c.name} value={c.name}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="city">Ville *</Label>
+            <NativeSelect
+              value={city}
+              onChange={handleCityChange}
+              options={GUINEA_CITIES.map(c => ({ value: c.name, label: c.name }))}
+              placeholder="Sélectionnez une ville"
+            />
           </div>
 
           {/* Quartier */}
           <div className="space-y-2">
             <Label htmlFor="neighborhood">Quartier</Label>
-            <Select value={neighborhood} onValueChange={setNeighborhood} disabled={!city}>
-              <SelectTrigger>
-                <SelectValue placeholder={city ? "Sélectionnez un quartier" : "Choisissez d'abord une ville"} />
-              </SelectTrigger>
-              <SelectContent position="popper" className="z-[9999]">
-                {selectedCity?.neighborhoods.map((n) => (
-                  <SelectItem key={n} value={n}>
-                    {n}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <NativeSelect
+              value={neighborhood}
+              onChange={setNeighborhood}
+              options={neighborhoodOptions}
+              placeholder={city ? "Sélectionnez un quartier" : "Choisissez d'abord une ville"}
+              disabled={!city}
+            />
+            {city && neighborhoodOptions.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {neighborhoodOptions.length} quartier(s) disponible(s) pour {city}
+              </p>
+            )}
           </div>
 
           {/* Adresse complète */}
@@ -191,31 +245,34 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
           {/* GPS */}
           <div className="space-y-2">
             <Label>Coordonnées GPS</Label>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={getCurrentLocation}
-                disabled={gettingLocation}
-                className="flex-1"
-              >
-                {gettingLocation ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Récupération...
-                  </>
-                ) : (
-                  <>
-                    <Navigation className="w-4 h-4 mr-2" />
-                    Utiliser ma position actuelle
-                  </>
-                )}
-              </Button>
-            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={getCurrentLocation}
+              disabled={gettingLocation}
+              className="w-full"
+            >
+              {gettingLocation ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Récupération en cours...
+                </>
+              ) : (
+                <>
+                  <Navigation className="w-4 h-4 mr-2" />
+                  Utiliser ma position actuelle
+                </>
+              )}
+            </Button>
             {latitude && longitude && (
-              <p className="text-sm text-muted-foreground mt-2">
-                📍 Position: {latitude.toFixed(6)}, {longitude.toFixed(6)}
-              </p>
+              <div className="p-3 bg-muted rounded-md">
+                <p className="text-sm text-foreground font-medium">
+                  📍 Position enregistrée
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Lat: {latitude.toFixed(6)}, Lng: {longitude.toFixed(6)}
+                </p>
+              </div>
             )}
           </div>
 
@@ -223,34 +280,22 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="businessType">Type de commerce</Label>
-              <Select value={businessType} onValueChange={setBusinessType}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {BUSINESS_TYPES.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <NativeSelect
+                value={businessType}
+                onChange={setBusinessType}
+                options={BUSINESS_TYPES}
+                placeholder="Sélectionnez un type"
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="serviceType">Type de vente</Label>
-              <Select value={serviceType} onValueChange={setServiceType}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SERVICE_TYPES.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <NativeSelect
+                value={serviceType}
+                onChange={setServiceType}
+                options={SERVICE_TYPES}
+                placeholder="Sélectionnez un type"
+              />
             </div>
           </div>
 
