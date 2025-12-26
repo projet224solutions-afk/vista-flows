@@ -176,7 +176,7 @@ export function useProximityStats() {
         sport: 0
       };
 
-      // Count vendors within radius
+      // Count ALL vendors as boutiques (regardless of service_type)
       vendors?.forEach(vendor => {
         let isNearby = true;
         
@@ -192,12 +192,10 @@ export function useProximityStats() {
         }
 
         if (isNearby) {
-          // Count as boutique (general retail/wholesale)
-          if (vendor.service_type === 'retail' || vendor.service_type === 'wholesale') {
-            newStats.boutiques++;
-          }
+          // Count ALL active vendors as boutiques
+          newStats.boutiques++;
           
-          // Count by business type
+          // Also count by business type for restaurants
           if (vendor.business_type === 'restaurant' || vendor.service_type === 'restaurant') {
             newStats.restaurant++;
           }

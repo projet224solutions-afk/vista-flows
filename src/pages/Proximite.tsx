@@ -43,7 +43,7 @@ const getServiceCategories = (stats: any) => [
     bgColor: "bg-blue-50",
     textColor: "text-blue-600",
     count: stats.boutiques,
-    path: "/boutiques", // Liste des boutiques (vendeurs) à proximité
+    path: "/proximite/boutiques", // Liste des boutiques à proximité avec distance
     description: "Commerces locaux",
     trending: stats.boutiques > 5
   },
