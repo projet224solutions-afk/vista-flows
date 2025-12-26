@@ -6,6 +6,7 @@ import VendorLocationSettings from '@/components/vendor/settings/VendorLocationS
 import VendorDeliveryPricing from '@/components/vendor/settings/VendorDeliveryPricing';
 import VendorShopImagesSettings from '@/components/vendor/settings/VendorShopImagesSettings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, User, Bell, Truck, MapPin, ImageIcon } from 'lucide-react';
 
 export default function VendorSettings() {
@@ -124,15 +125,37 @@ export default function VendorSettings() {
         </TabsContent>
 
         <TabsContent value="profile" className="mt-6">
-          <div className="text-center text-muted-foreground py-8">
-            Paramètres de profil à venir...
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Profil personnel
+              </CardTitle>
+              <CardDescription>
+                Gérez vos informations personnelles
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center text-muted-foreground py-8">
+              Cette fonctionnalité sera disponible prochainement.
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="notifications" className="mt-6">
-          <div className="text-center text-muted-foreground py-8">
-            Paramètres de notifications à venir...
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="w-5 h-5" />
+                Notifications
+              </CardTitle>
+              <CardDescription>
+                Configurez vos préférences de notifications
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center text-muted-foreground py-8">
+              Cette fonctionnalité sera disponible prochainement.
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

@@ -15,7 +15,7 @@ interface Vendor {
   business_name: string;
   description?: string;
   logo_url?: string;
-  cover_image?: string;
+  cover_image_url?: string;
   phone?: string;
   email?: string;
   address?: string;
@@ -199,9 +199,9 @@ export default function VendorShop() {
 
       {/* Cover Image / Header */}
       <div className="relative h-48 bg-gradient-to-r from-primary/20 to-primary/5">
-        {vendor.cover_image && (
+        {vendor.cover_image_url && (
           <img 
-            src={vendor.cover_image} 
+            src={vendor.cover_image_url} 
             alt={`Bannière ${vendor.business_name}`}
             className="w-full h-full object-cover"
           />
