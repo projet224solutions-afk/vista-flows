@@ -110,16 +110,34 @@ export function useVendorStats() {
 
     const fetchStats = async () => {
       try {
-        // Get vendor ID first
-        const { data: vendor } = await supabase
+        // Get vendor ID first - try to find or create
+        let { data: vendor } = await supabase
           .from('vendors')
           .select('id')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
+        // If vendor doesn't exist, create it automatically
         if (!vendor) {
-          setError('Vendor profile not found');
-          return;
+          console.log('🔧 Création automatique du profil vendeur...');
+          const { data: newVendor, error: createError } = await supabase
+            .from('vendors')
+            .insert({
+              user_id: user.id,
+              business_name: user.email?.split('@')[0] || 'Ma Boutique',
+              status: 'active'
+            })
+            .select('id')
+            .single();
+          
+          if (createError) {
+            console.error('Erreur création vendeur:', createError);
+            setError('Impossible de créer le profil vendeur');
+            setLoading(false);
+            return;
+          }
+          vendor = newVendor;
+          console.log('✅ Profil vendeur créé:', vendor.id);
         }
 
         // Fetch revenue and orders stats

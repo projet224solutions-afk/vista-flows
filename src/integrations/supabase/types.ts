@@ -14767,6 +14767,10 @@ export type Database = {
           score: number
         }[]
       }
+      generate_role_based_custom_id: {
+        Args: { p_user_id: string }
+        Returns: string
+      }
       generate_secure_token: { Args: never; Returns: string }
       generate_sequential_id: { Args: { p_prefix: string }; Returns: string }
       generate_standard_id: { Args: { p_prefix: string }; Returns: string }
