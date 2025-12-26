@@ -108,19 +108,19 @@ export default function VendorSettings() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="business" className="mt-6">
+        <TabsContent value="business" className="mt-6" forceMount hidden={activeTab !== 'business'}>
           <VendorBusinessSettings vendorId={vendorId} />
         </TabsContent>
 
-        <TabsContent value="images" className="mt-6">
+        <TabsContent value="images" className="mt-6" forceMount hidden={activeTab !== 'images'}>
           <VendorShopImagesSettings vendorId={vendorId} />
         </TabsContent>
 
-        <TabsContent value="location" className="mt-6">
+        <TabsContent value="location" className="mt-6" forceMount hidden={activeTab !== 'location'}>
           <VendorLocationSettings vendorId={vendorId} />
         </TabsContent>
 
-        <TabsContent value="delivery" className="mt-6">
+        <TabsContent value="delivery" className="mt-6" forceMount hidden={activeTab !== 'delivery'}>
           <VendorDeliveryPricing vendorId={vendorId} />
         </TabsContent>
 
