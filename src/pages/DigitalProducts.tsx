@@ -73,7 +73,7 @@ const productModules: ProductModule[] = [
   {
     id: 'ai',
     icon: <Bot className="w-7 h-7" />,
-    title: 'Intelligences Artificielles',
+    title: 'AI',
     description: 'Outils et services IA',
     gradient: 'from-violet-500 to-fuchsia-500',
     category: 'ai'
