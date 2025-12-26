@@ -114,7 +114,9 @@ serve(async (req) => {
 
     // Construire la requête de dépôt PawaPay (API v2)
     // Docs: POST {baseUrl}/v2/deposits
-    const customerMessage = (body.description || 'Paiement 224Solutions').trim();
+    // IMPORTANT: PawaPay n'accepte que les caractères alphanumériques et espaces
+    const rawMessage = (body.description || 'Paiement 224Solutions').trim();
+    const customerMessage = rawMessage.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
     const safeCustomerMessage = (customerMessage.length >= 4 ? customerMessage : 'Paiement').substring(0, 22);
 
     const metadataArray = body.metadata
