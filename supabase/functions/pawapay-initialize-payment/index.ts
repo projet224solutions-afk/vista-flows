@@ -118,6 +118,7 @@ serve(async (req) => {
     const rawMessage = (body.description || 'Paiement 224Solutions').trim();
     const customerMessage = rawMessage.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
     const safeCustomerMessage = (customerMessage.length >= 4 ? customerMessage : 'Paiement').substring(0, 22);
+    logStep('Customer message sanitized', { rawMessage, customerMessage, safeCustomerMessage });
 
     const metadataArray = body.metadata
       ? Object.entries(body.metadata).map(([key, value]) => ({ [key]: value }))
