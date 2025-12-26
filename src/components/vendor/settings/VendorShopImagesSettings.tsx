@@ -41,11 +41,12 @@ export default function VendorShopImagesSettings({ vendorId }: VendorShopImagesS
       if (error) throw error;
 
       if (data) {
-        setBusinessName(data.business_name || '');
-        setLogoUrl(data.logo_url || null);
-        setCoverUrl(data.cover_image_url || null);
-        setLogoPreview(data.logo_url || null);
-        setCoverPreview(data.cover_image_url || null);
+        const vendorData = data as { business_name: string; logo_url: string | null; cover_image_url: string | null };
+        setBusinessName(vendorData.business_name || '');
+        setLogoUrl(vendorData.logo_url || null);
+        setCoverUrl(vendorData.cover_image_url || null);
+        setLogoPreview(vendorData.logo_url || null);
+        setCoverPreview(vendorData.cover_image_url || null);
       }
     } catch (error) {
       console.error('Erreur chargement données:', error);
