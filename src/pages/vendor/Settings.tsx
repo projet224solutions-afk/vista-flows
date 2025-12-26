@@ -80,10 +80,14 @@ export default function VendorSettings() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="business" className="gap-2">
             <Building2 className="w-4 h-4" />
             <span className="hidden sm:inline">Entreprise</span>
+          </TabsTrigger>
+          <TabsTrigger value="images" className="gap-2">
+            <ImageIcon className="w-4 h-4" />
+            <span className="hidden sm:inline">Images</span>
           </TabsTrigger>
           <TabsTrigger value="location" className="gap-2">
             <MapPin className="w-4 h-4" />
@@ -105,6 +109,10 @@ export default function VendorSettings() {
 
         <TabsContent value="business" className="mt-6">
           <VendorBusinessSettings vendorId={vendorId} />
+        </TabsContent>
+
+        <TabsContent value="images" className="mt-6">
+          <VendorShopImagesSettings vendorId={vendorId} />
         </TabsContent>
 
         <TabsContent value="location" className="mt-6">

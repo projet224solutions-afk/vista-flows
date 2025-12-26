@@ -13030,6 +13030,7 @@ export type Database = {
           business_type: string | null
           city: string | null
           country: string | null
+          cover_image_url: string | null
           created_at: string | null
           delivery_base_price: number | null
           delivery_enabled: boolean | null
@@ -13059,6 +13060,7 @@ export type Database = {
           business_type?: string | null
           city?: string | null
           country?: string | null
+          cover_image_url?: string | null
           created_at?: string | null
           delivery_base_price?: number | null
           delivery_enabled?: boolean | null
@@ -13088,6 +13090,7 @@ export type Database = {
           business_type?: string | null
           city?: string | null
           country?: string | null
+          cover_image_url?: string | null
           created_at?: string | null
           delivery_base_price?: number | null
           delivery_enabled?: boolean | null
