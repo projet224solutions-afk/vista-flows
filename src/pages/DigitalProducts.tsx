@@ -40,7 +40,7 @@ const productModules: ProductModule[] = [
   {
     id: 'voyage',
     icon: <Plane className="w-7 h-7" />,
-    title: 'Voyage & Billetterie',
+    title: 'Vol/Hôtel',
     description: 'Billets d\'avion, hôtels, voyages affiliés',
     gradient: 'from-blue-500 to-cyan-500',
     category: 'voyage'
