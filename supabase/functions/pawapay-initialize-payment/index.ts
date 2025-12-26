@@ -95,12 +95,22 @@ serve(async (req) => {
     const customerTimestamp = new Date().toISOString();
 
     // Déterminer l'environnement (sandbox ou production)
-    // NOTE: la longueur de la clé n'est pas un indicateur fiable. On garde un choix par défaut
-    // mais on retente automatiquement sur l'autre environnement si on reçoit une erreur d'auth.
-    const baseUrlPrimary = pawapayApiKey.length > 50 ? 'https://api.pawapay.io' : 'https://api.sandbox.pawapay.io';
+    // IMPORTANT: La clé peut être valide uniquement en sandbox OU en production.
+    // On garde un choix par défaut mais on retente AUTOMATIQUEMENT sur l'autre environnement
+    // dès qu'on détecte une erreur d'auth, même si le format d'erreur est différent.
+    const baseUrlPrimary = pawapayApiKey.length > 50
+      ? 'https://api.pawapay.io'
+      : 'https://api.sandbox.pawapay.io';
+
     const baseUrlFallback = baseUrlPrimary === 'https://api.pawapay.io'
       ? 'https://api.sandbox.pawapay.io'
       : 'https://api.pawapay.io';
+
+    logStep('PawaPay environment selected', {
+      baseUrlPrimary,
+      baseUrlFallback,
+      apiKeyLength: pawapayApiKey.length,
+    });
 
     // Construire la requête de dépôt PawaPay (API v2)
     // Docs: POST {baseUrl}/v2/deposits
@@ -150,18 +160,24 @@ serve(async (req) => {
     let { response, responseText } = await callPawaPay(baseUrlPrimary);
 
     if (!response.ok && response.status === 401) {
+      let isAuthError = false;
       try {
         const err = JSON.parse(responseText);
-        const isAuthError = err?.errorCode === 2 || err?.errorMessage === 'Authentication error';
-        if (isAuthError) {
-          logStep('Auth error on primary baseUrl, retrying with fallback', { baseUrlFallback });
-          ({ response, responseText } = await callPawaPay(baseUrlFallback));
-        }
+        isAuthError =
+          err?.errorCode === 2 ||
+          /authentication/i.test(err?.errorMessage ?? '') ||
+          err?.failureReason?.failureCode === 'AUTHENTICATION_ERROR' ||
+          /api token/i.test(err?.failureReason?.failureMessage ?? '') ||
+          /invalid/i.test(err?.failureReason?.failureMessage ?? '');
       } catch {
         // ignore parse errors
       }
-    }
 
+      if (isAuthError) {
+        logStep('Auth error on primary baseUrl, retrying with fallback', { baseUrlFallback });
+        ({ response, responseText } = await callPawaPay(baseUrlFallback));
+      }
+    }
 
     if (!response.ok) {
       let errorMessage = 'PawaPay API error';
