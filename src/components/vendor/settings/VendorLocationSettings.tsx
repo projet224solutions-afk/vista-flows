@@ -124,7 +124,13 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
-      toast.error('La géolocalisation n\'est pas supportée par votre navigateur');
+      toast.error("La géolocalisation n'est pas supportée par votre navigateur");
+      return;
+    }
+
+    // Dans certains environnements (iframe / paramètres navigateur), la géoloc est bloquée
+    if (!window.isSecureContext) {
+      toast.error("La géolocalisation nécessite une connexion sécurisée (HTTPS)");
       return;
     }
 
@@ -138,10 +144,19 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
       },
       (error) => {
         console.error('Erreur géolocalisation:', error);
-        toast.error('Impossible de récupérer votre position. Vérifiez les permissions.');
+        const code = (error as GeolocationPositionError).code;
+        if (code === 1) {
+          toast.error("Permission refusée : autorisez la localisation puis rechargez la page");
+        } else if (code === 2) {
+          toast.error("Position indisponible : activez le GPS / localisation de l'appareil");
+        } else if (code === 3) {
+          toast.error("Délai dépassé : réessayez (ou saisissez les coordonnées manuellement)");
+        } else {
+          toast.error("Impossible de récupérer votre position. Vérifiez les permissions.");
+        }
         setGettingLocation(false);
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   };
 
@@ -264,16 +279,52 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
                 </>
               )}
             </Button>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="latitude">Latitude (optionnel)</Label>
+                <Input
+                  id="latitude"
+                  type="number"
+                  inputMode="decimal"
+                  step="any"
+                  value={latitude ?? ''}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setLatitude(v === '' ? null : Number(v));
+                  }}
+                  placeholder="Ex: 9.641185"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="longitude">Longitude (optionnel)</Label>
+                <Input
+                  id="longitude"
+                  type="number"
+                  inputMode="decimal"
+                  step="any"
+                  value={longitude ?? ''}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setLongitude(v === '' ? null : Number(v));
+                  }}
+                  placeholder="Ex: -13.578401"
+                />
+              </div>
+            </div>
+
             {latitude && longitude && (
               <div className="p-3 bg-muted rounded-md">
-                <p className="text-sm text-foreground font-medium">
-                  📍 Position enregistrée
-                </p>
+                <p className="text-sm text-foreground font-medium">📍 Position enregistrée</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Lat: {latitude.toFixed(6)}, Lng: {longitude.toFixed(6)}
                 </p>
               </div>
             )}
+
+            <p className="text-xs text-muted-foreground">
+              Si la position ne se récupère pas, autorisez la localisation dans le navigateur (ou saisissez la latitude/longitude).
+            </p>
           </div>
 
           {/* Type d'activité */}
