@@ -82,8 +82,9 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
   const [initialLoading, setInitialLoading] = useState(true);
   const [gettingLocation, setGettingLocation] = useState(false);
 
-  const selectedCity = GUINEA_CITIES.find(c => c.name === city);
-  const neighborhoodOptions = selectedCity?.neighborhoods.map(n => ({ value: n, label: n })) || [];
+  const normalizedCity = city.trim().toLowerCase();
+  const selectedCity = GUINEA_CITIES.find((c) => c.name.toLowerCase() === normalizedCity);
+  const neighborhoodOptions = selectedCity?.neighborhoods.map((n) => ({ value: n, label: n })) || [];
 
   useEffect(() => {
     loadVendorLocation();
@@ -119,7 +120,26 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
 
   const handleCityChange = (newCity: string) => {
     setCity(newCity);
-    setNeighborhood(''); // Reset quartier quand la ville change
+    setNeighborhood(''); // reset quartier quand la ville change
+  };
+
+  const fillAddressFromCoords = async (lat: number, lng: number) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('geocode-address', {
+        body: { type: 'reverse', lat, lng },
+      });
+
+      if (error) throw error;
+
+      const formatted = data?.results?.[0]?.formatted_address;
+      if (formatted) {
+        setAddress(formatted);
+        toast.success('Adresse détectée automatiquement');
+      }
+    } catch (err) {
+      console.error('Erreur reverse geocode:', err);
+      toast.error("Impossible de récupérer l'adresse automatiquement");
+    }
   };
 
   const getCurrentLocation = () => {
@@ -137,9 +157,13 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
     setGettingLocation(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setLatitude(position.coords.latitude);
-        setLongitude(position.coords.longitude);
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        setLatitude(lat);
+        setLongitude(lng);
         toast.success('Position GPS récupérée avec succès');
+        void fillAddressFromCoords(lat, lng);
         setGettingLocation(false);
       },
       (error) => {
@@ -221,24 +245,37 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
           {/* Ville */}
           <div className="space-y-2">
             <Label htmlFor="city">Ville *</Label>
-            <NativeSelect
+            <Input
+              id="city"
+              list="guinea-cities"
               value={city}
-              onChange={handleCityChange}
-              options={GUINEA_CITIES.map(c => ({ value: c.name, label: c.name }))}
-              placeholder="Sélectionnez une ville"
+              onChange={(e) => handleCityChange(e.target.value)}
+              placeholder="Tapez ou sélectionnez une ville"
+              autoComplete="off"
             />
+            <datalist id="guinea-cities">
+              {GUINEA_CITIES.map((c) => (
+                <option key={c.name} value={c.name} />
+              ))}
+            </datalist>
           </div>
 
           {/* Quartier */}
           <div className="space-y-2">
             <Label htmlFor="neighborhood">Quartier</Label>
-            <NativeSelect
+            <Input
+              id="neighborhood"
+              list="guinea-neighborhoods"
               value={neighborhood}
-              onChange={setNeighborhood}
-              options={neighborhoodOptions}
-              placeholder={city ? "Sélectionnez un quartier" : "Choisissez d'abord une ville"}
-              disabled={!city}
+              onChange={(e) => setNeighborhood(e.target.value)}
+              placeholder={city ? "Tapez ou sélectionnez un quartier" : "Choisissez d'abord une ville (ou tapez un quartier)"}
+              autoComplete="off"
             />
+            <datalist id="guinea-neighborhoods">
+              {neighborhoodOptions.map((n) => (
+                <option key={n.value} value={n.value} />
+              ))}
+            </datalist>
             {city && neighborhoodOptions.length > 0 && (
               <p className="text-xs text-muted-foreground">
                 {neighborhoodOptions.length} quartier(s) disponible(s) pour {city}
