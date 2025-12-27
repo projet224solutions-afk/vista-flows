@@ -394,59 +394,65 @@ export default function VendeurDashboard() {
 
         <div className="flex-1 flex flex-col w-full min-w-0 max-w-full overflow-x-hidden">
           {/* Header global optimisé mobile */}
-          <header className="min-h-14 md:min-h-16 bg-white/95 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-40 shadow-sm flex items-center px-2 sm:px-3 md:px-6 w-full max-w-full overflow-x-hidden">
-            <SidebarTrigger className="mr-2 md:mr-4" />
+          <header className="min-h-14 md:min-h-16 bg-white/95 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-40 shadow-sm px-2 sm:px-3 md:px-6 w-full max-w-full overflow-x-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center w-full min-w-0 gap-2 py-2 md:py-0">
+              {/* Ligne 1 (mobile): menu + logo + nom app */}
+              <div className="flex items-center gap-2 min-w-0">
+                <SidebarTrigger className="sm:mr-2 md:mr-4" />
 
-            <div className="flex items-center justify-between flex-1 min-w-0">
-              <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
                 <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0">
                   <Activity className="w-4 h-4 md:w-6 md:h-6 text-white" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <h1 className="text-sm md:text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent whitespace-nowrap">
-                    224solutions
-                  </h1>
-                  <div className="flex items-center gap-1 md:gap-2 flex-wrap">
-                    <p className="text-[10px] md:text-xs text-muted-foreground flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                      <span className="truncate max-w-[90px] sm:max-w-[160px] md:max-w-none">{profile?.first_name || user?.email?.split('@')[0]}</span>
-                    </p>
-                    <VendorIdDisplay showName={false} />
+
+                <h1 className="text-sm md:text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent whitespace-nowrap pr-1">
+                  224solutions
+                </h1>
+              </div>
+
+              {/* Ligne 2 (mobile): user+ID à gauche, actions à droite */}
+              <div className="flex items-center justify-between w-full min-w-0 gap-2">
+                <div className="flex items-center gap-1 md:gap-2 min-w-0 flex-1">
+                  <p className="text-[10px] md:text-xs text-muted-foreground flex items-center gap-1 min-w-0">
+                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse flex-shrink-0"></span>
+                    <span className="truncate max-w-[120px] sm:max-w-[200px] md:max-w-none">
+                      {profile?.first_name || user?.email?.split('@')[0]}
+                    </span>
+                  </p>
+                  <VendorIdDisplay showName={false} />
+                </div>
+
+                <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+                  <div className="hidden md:block">
+                    <NetworkStatusIndicator />
                   </div>
-                </div>
-              </div>
 
-              {/* Wallet compact - visible uniquement sur grands écrans */}
-              <div className="hidden xl:block flex-shrink-0 mx-2">
-                <WalletBalanceWidget className="max-w-[250px]" showTransferButton={false} />
-              </div>
+                  <QuickTransferButton variant="ghost" size="icon" showText={false} className="h-8 w-8 md:h-10 md:w-10" />
+                  <div className="hidden sm:block">
+                    <VendorSubscriptionButton />
+                  </div>
 
-              <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-                <div className="hidden md:block">
-                  <NetworkStatusIndicator />
+                  <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10">
+                    <Bell className="w-4 h-4 md:w-5 md:h-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 md:h-10 md:w-10"
+                    onClick={() => navigate('/vendeur/settings')}
+                    title="Paramètres"
+                  >
+                    <Settings className="w-4 h-4 md:w-5 md:h-5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={handleSignOut} className="h-8 w-8 md:h-10 md:w-10">
+                    <LogOut className="w-4 h-4 md:w-5 md:h-5" />
+                  </Button>
                 </div>
-                
-                <QuickTransferButton variant="ghost" size="icon" showText={false} className="h-8 w-8 md:h-10 md:w-10" />
-                <div className="hidden sm:block">
-                  <VendorSubscriptionButton />
-                </div>
-                
-                <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10">
-                  <Bell className="w-4 h-4 md:w-5 md:h-5" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 md:h-10 md:w-10"
-                  onClick={() => navigate('/vendeur/settings')}
-                  title="Paramètres"
-                >
-                  <Settings className="w-4 h-4 md:w-5 md:h-5" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={handleSignOut} className="h-8 w-8 md:h-10 md:w-10">
-                  <LogOut className="w-4 h-4 md:w-5 md:h-5" />
-                </Button>
               </div>
+            </div>
+
+            {/* Wallet compact - visible uniquement sur grands écrans */}
+            <div className="hidden xl:block pb-2">
+              <WalletBalanceWidget className="max-w-[250px]" showTransferButton={false} />
             </div>
           </header>
 
