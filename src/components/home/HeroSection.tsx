@@ -5,7 +5,7 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { Store, Utensils, Truck, Car, Sparkles, ChevronRight, Package } from 'lucide-react';
+import { Store, Utensils, Truck, Car, Sparkles, ChevronRight, Package, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
@@ -89,7 +89,7 @@ export function HeroSection({ className }: HeroSectionProps) {
           {t('home.startNow')}
         </Button>
 
-        {/* Digital Products Button */}
+        {/* Digital Products & Formation Button */}
         <Button
           onClick={() => navigate('/digital-products')}
           variant="outline"
@@ -101,8 +101,8 @@ export function HeroSection({ className }: HeroSectionProps) {
             'active:scale-[0.98] transition-all duration-200'
           )}
         >
-          <Package className="w-5 h-5" />
-          Produits numériques
+          <GraduationCap className="w-5 h-5" />
+          Formation & Produits numériques
         </Button>
       </div>
 
