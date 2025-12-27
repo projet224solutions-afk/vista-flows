@@ -54,11 +54,14 @@ export function useGeoDistance() {
             longitude: pos.coords.longitude,
           };
 
+          const accuracy = pos.coords.accuracy;
+          const accurateEnough = typeof accuracy === 'number' ? accuracy <= 10000 : true; // <= 10 km
+
           lastKnownPositionRef.current = next;
-          hasRealLocationRef.current = true;
+          hasRealLocationRef.current = accurateEnough;
 
           setUserPosition(next);
-          setUsingRealLocation(true);
+          setUsingRealLocation(accurateEnough);
           setPositionReady(true);
 
           resolve(next);
@@ -70,7 +73,8 @@ export function useGeoDistance() {
 
           lastKnownPositionRef.current = fallback;
           setUserPosition(fallback);
-          setUsingRealLocation(hasRealLocationRef.current);
+          // IMPORTANT: en cas d'erreur, on considère que le GPS n'est PAS actif.
+          setUsingRealLocation(false);
           setPositionReady(true);
 
           resolve(fallback);
@@ -97,15 +101,19 @@ export function useGeoDistance() {
           longitude: pos.coords.longitude,
         };
 
+        const accuracy = pos.coords.accuracy;
+        const accurateEnough = typeof accuracy === 'number' ? accuracy <= 10000 : true; // <= 10 km
+
         lastKnownPositionRef.current = next;
-        hasRealLocationRef.current = true;
+        hasRealLocationRef.current = accurateEnough;
 
         setUserPosition(next);
-        setUsingRealLocation(true);
+        setUsingRealLocation(accurateEnough);
         setPositionReady(true);
       },
       () => {
-        // On ignore l'erreur ici: requestPosition gère déjà un fallback.
+        // Si le suivi échoue (ex: GPS coupé), on marque le GPS comme inactif.
+        setUsingRealLocation(false);
       },
       {
         enableHighAccuracy: true,
