@@ -1,72 +1,32 @@
 /**
  * 💱 CONVERTISSEUR DE DEVISES
- * Conversion en temps réel selon les taux configurés par le PDG
+ * Conversion en temps réel avec taux du jour automatique
+ * 224SOLUTIONS
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
 import { ArrowRightLeft, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-
-interface Currency {
-  code: string;
-  name: string;
-  symbol: string;
-}
-
-interface ExchangeRate {
-  from_currency: string;
-  to_currency: string;
-  rate: number;
-}
+import { CurrencySelect } from '@/components/ui/currency-select';
+import { useFxRates } from '@/hooks/useFxRates';
+import { formatCurrency, getCurrencyByCode } from '@/data/currencies';
 
 export function CurrencyConverter() {
-  const [currencies, setCurrencies] = useState<Currency[]>([]);
-  const [rates, setRates] = useState<ExchangeRate[]>([]);
   const [amount, setAmount] = useState('');
   const [fromCurrency, setFromCurrency] = useState('GNF');
   const [toCurrency, setToCurrency] = useState('USD');
   const [result, setResult] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-
-      // Charger les devises
-      const { data: currenciesData, error: currError } = await supabase
-        .from('currencies')
-        .select('*')
-        .eq('is_active', true);
-
-      if (currError) throw currError;
-      setCurrencies(currenciesData || []);
-
-      // Charger les taux
-      const { data: ratesData, error: ratesError } = await supabase
-        .from('exchange_rates')
-        .select('*')
-        .eq('is_active', true);
-
-      if (ratesError) throw ratesError;
-      setRates(ratesData || []);
-
-    } catch (error) {
-      console.error('❌ Erreur loadData:', error);
-      toast.error('Erreur chargement devises');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Taux en temps réel via Edge Function
+  const { rates, lastUpdated, loading, refresh } = useFxRates({
+    base: fromCurrency,
+    symbols: [toCurrency],
+    refreshMinutes: 30,
+  });
 
   const handleConvert = () => {
     const amountNum = parseFloat(amount);
@@ -80,18 +40,14 @@ export function CurrencyConverter() {
       return;
     }
 
-    // Trouver le taux
-    const rate = rates.find(
-      r => r.from_currency === fromCurrency && r.to_currency === toCurrency
-    );
-
-    if (!rate) {
-      toast.error(`Taux de change ${fromCurrency} vers ${toCurrency} non disponible`);
+    const rate = rates?.[toCurrency];
+    if (typeof rate !== 'number' || rate <= 0) {
+      toast.error(`Taux ${fromCurrency} → ${toCurrency} non disponible`);
       setResult(null);
       return;
     }
 
-    const converted = amountNum * rate.rate;
+    const converted = amountNum * rate;
     setResult(converted);
     toast.success('Conversion effectuée');
   };
@@ -102,22 +58,19 @@ export function CurrencyConverter() {
     setResult(null);
   };
 
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <RefreshCw className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
-        </CardContent>
-      </Card>
-    );
-  }
+  const rate = rates?.[toCurrency];
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ArrowRightLeft className="w-5 h-5" />
-          Convertisseur de devises
+        <CardTitle className="flex items-center justify-between">
+          <span className="flex items-center gap-2">
+            <ArrowRightLeft className="w-5 h-5" />
+            Convertisseur de devises
+          </span>
+          <Button variant="ghost" size="icon" onClick={refresh} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -132,29 +85,18 @@ export function CurrencyConverter() {
               onChange={(e) => setAmount(e.target.value)}
               className="flex-1"
             />
-            <Select value={fromCurrency} onValueChange={setFromCurrency}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {currencies.map((curr) => (
-                  <SelectItem key={curr.code} value={curr.code}>
-                    {curr.symbol}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CurrencySelect
+              value={fromCurrency}
+              onValueChange={(v) => { setFromCurrency(v); setResult(null); }}
+              className="w-32"
+              showFlag
+            />
           </div>
         </div>
 
         {/* Bouton inverser */}
         <div className="flex justify-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={swapCurrencies}
-            className="rounded-full"
-          >
+          <Button variant="ghost" size="icon" onClick={swapCurrencies} className="rounded-full">
             <ArrowRightLeft className="w-4 h-4" />
           </Button>
         </div>
@@ -165,42 +107,37 @@ export function CurrencyConverter() {
           <div className="flex gap-2">
             <Input
               type="text"
-              value={result !== null ? result.toFixed(2) : ''}
+              value={result !== null ? formatCurrency(result, toCurrency) : ''}
               readOnly
               placeholder="..."
               className="flex-1 font-bold text-lg"
             />
-            <Select value={toCurrency} onValueChange={setToCurrency}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {currencies.map((curr) => (
-                  <SelectItem key={curr.code} value={curr.code}>
-                    {curr.symbol}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CurrencySelect
+              value={toCurrency}
+              onValueChange={(v) => { setToCurrency(v); setResult(null); }}
+              className="w-32"
+              showFlag
+            />
           </div>
         </div>
 
         {/* Bouton convertir */}
-        <Button
-          onClick={handleConvert}
-          disabled={!amount}
-          className="w-full gap-2"
-        >
+        <Button onClick={handleConvert} disabled={!amount || loading} className="w-full gap-2">
           <ArrowRightLeft className="w-4 h-4" />
           Convertir
         </Button>
 
         {/* Info taux */}
-        {rates.find(r => r.from_currency === fromCurrency && r.to_currency === toCurrency) && (
-          <div className="p-3 bg-muted/50 rounded-lg text-sm text-center">
-            <p className="text-muted-foreground">
-              1 {fromCurrency} = {rates.find(r => r.from_currency === fromCurrency && r.to_currency === toCurrency)?.rate} {toCurrency}
+        {typeof rate === 'number' && rate > 0 && (
+          <div className="p-3 bg-muted/50 rounded-lg text-sm text-center space-y-1">
+            <p className="font-medium">
+              1 {fromCurrency} = {rate.toFixed(6)} {toCurrency}
             </p>
+            {lastUpdated && (
+              <p className="text-xs text-muted-foreground">
+                Mis à jour: {lastUpdated.toLocaleString('fr-FR')}
+              </p>
+            )}
           </div>
         )}
       </CardContent>
