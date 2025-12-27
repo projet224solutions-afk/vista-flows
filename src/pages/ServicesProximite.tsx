@@ -188,7 +188,7 @@ export default function ServicesProximite() {
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Badge variant={usingRealLocation ? "default" : "secondary"} className="gap-1">
               <MapPin className="w-3 h-3" />
-              {usingRealLocation ? "Position GPS active" : "Position par défaut"}
+              {usingRealLocation ? "Position GPS active" : "GPS désactivé"}
             </Badge>
             <Badge variant="outline" className="text-xs">
               {filteredServices.length} service{filteredServices.length > 1 ? "s" : ""}
