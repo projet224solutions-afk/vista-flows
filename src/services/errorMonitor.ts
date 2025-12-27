@@ -518,11 +518,11 @@ class ErrorMonitorService {
         };
       }
 
-      // Fallback: requête directe avec filtre status != 'fixed'
+      // Fallback: requête directe - ne compter que les erreurs actives (ni fixed ni resolved)
       const { data, error } = await supabase
         .from('system_errors')
         .select('severity, status, fix_applied')
-        .neq('status', 'fixed');
+        .in('status', ['detected', 'critical', 'pending']);
 
       if (error) throw error;
 
