@@ -16,6 +16,7 @@ import Index from "./pages/Index";
 // Lazy load non-critical components
 const QuickFooter = lazy(() => import("@/components/QuickFooter"));
 const CommunicationWidget = lazy(() => import("@/components/communication/CommunicationWidget"));
+const DeepLinkInitializer = lazy(() => import("@/components/DeepLinkInitializer"));
 
 // Lazy loading des pages - regroupées par priorité
 const Auth = lazy(() => import("./pages/Auth"));
@@ -92,6 +93,7 @@ const StolenMotoDeclaration = lazy(() => import("./pages/StolenMotoDeclaration")
 const VisualSearch = lazy(() => import("./pages/VisualSearch"));
 const Categories = lazy(() => import("./pages/Categories"));
 const DigitalProducts = lazy(() => import("./pages/DigitalProducts"));
+const ShortLinkRedirect = lazy(() => import("./pages/ShortLinkRedirect"));
 // Ultra-simple loading component - Pure CSS inline (no Tailwind dependency)
 const PageLoader = memo(() => (
   <div style={{ 
@@ -153,6 +155,7 @@ function App() {
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
+                <DeepLinkInitializer />
                 <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>
               <Routes>
@@ -210,6 +213,9 @@ function App() {
               
               {/* Affiliate Routes */}
               <Route path="/ref/:vendorId" element={<AffiliateRedirect />} />
+              
+              {/* Short Link / Deep Link Redirect */}
+              <Route path="/s/:shortCode" element={<ShortLinkRedirect />} />
 
               {/* Dashboard Routes */}
               <Route

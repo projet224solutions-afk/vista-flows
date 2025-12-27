@@ -312,6 +312,9 @@ export default function ProductDetail() {
                 title={product.name}
                 text={`Découvrez ${product.name} à ${product.price.toLocaleString()} ${product.currency || 'GNF'} sur 224 Solutions`}
                 url={`${window.location.origin}/product/${product.id}`}
+                resourceType="product"
+                resourceId={product.id}
+                useShortUrl={true}
               />
             </div>
 
@@ -339,6 +342,9 @@ export default function ProductDetail() {
                     url={`${window.location.origin}/shop/${product.vendors.id}`}
                     variant="outline"
                     size="icon"
+                    resourceType="shop"
+                    resourceId={product.vendors.id}
+                    useShortUrl={true}
                   />
                 </div>
               </Card>

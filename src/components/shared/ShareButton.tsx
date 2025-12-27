@@ -6,8 +6,9 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { Share2, Copy, Check, Link2 } from "lucide-react";
+import { Share2, Copy, Check, Link2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { createShortLink } from "@/hooks/useDeepLinking";
 
 interface ShareButtonProps {
   title: string;
@@ -16,6 +17,12 @@ interface ShareButtonProps {
   variant?: "default" | "outline" | "ghost" | "secondary";
   size?: "default" | "sm" | "lg" | "icon";
   className?: string;
+  /** Type de ressource pour le tracking */
+  resourceType?: 'shop' | 'product' | 'service' | 'other';
+  /** ID de la ressource pour le tracking */
+  resourceId?: string;
+  /** Utiliser les short URLs avec tracking */
+  useShortUrl?: boolean;
 }
 
 export function ShareButton({ 
@@ -24,16 +31,44 @@ export function ShareButton({
   url, 
   variant = "outline", 
   size = "icon",
-  className 
+  className,
+  resourceType = 'other',
+  resourceId,
+  useShortUrl = false
 }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const shareUrl = url || window.location.href;
   const shareText = text || title;
 
+  // Obtenir l'URL de partage (courte ou normale)
+  const getShareUrl = async (): Promise<string> => {
+    if (!useShortUrl) {
+      return shareUrl;
+    }
+
+    setLoading(true);
+    try {
+      const shortUrl = await createShortLink({
+        originalUrl: shareUrl,
+        title: title,
+        type: resourceType,
+        resourceId: resourceId
+      });
+      return shortUrl || shareUrl;
+    } catch (error) {
+      console.error('Error creating short URL:', error);
+      return shareUrl;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      const urlToShare = await getShareUrl();
+      await navigator.clipboard.writeText(urlToShare);
       setCopied(true);
       toast.success("Lien copié dans le presse-papier !");
       setTimeout(() => setCopied(false), 2000);
@@ -45,16 +80,21 @@ export function ShareButton({
 
   const handleNativeShare = async () => {
     try {
+      const urlToShare = await getShareUrl();
+      
       if (navigator.share) {
         await navigator.share({
           title,
           text: shareText,
-          url: shareUrl,
+          url: urlToShare,
         });
         toast.success("Partage réussi !");
       } else {
         // Fallback: copier le lien
-        await handleCopyLink();
+        await navigator.clipboard.writeText(urlToShare);
+        setCopied(true);
+        toast.success("Lien copié dans le presse-papier !");
+        setTimeout(() => setCopied(false), 2000);
       }
     } catch (error) {
       // User cancelled sharing
@@ -67,20 +107,35 @@ export function ShareButton({
     }
   };
 
-  const handleWhatsAppShare = () => {
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`;
+  const handleWhatsAppShare = async () => {
+    const urlToShare = await getShareUrl();
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${urlToShare}`)}`;
     window.open(whatsappUrl, "_blank");
   };
 
-  const handleFacebookShare = () => {
-    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+  const handleFacebookShare = async () => {
+    const urlToShare = await getShareUrl();
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`;
     window.open(facebookUrl, "_blank", "width=600,height=400");
   };
 
-  const handleTwitterShare = () => {
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+  const handleTwitterShare = async () => {
+    const urlToShare = await getShareUrl();
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(urlToShare)}`;
     window.open(twitterUrl, "_blank", "width=600,height=400");
   };
+
+  // Bouton avec indicateur de chargement
+  const ButtonContent = () => (
+    <>
+      {loading ? (
+        <Loader2 className="w-4 h-4 animate-spin" />
+      ) : (
+        <Share2 className="w-4 h-4" />
+      )}
+      {size !== "icon" && <span className="ml-2">Partager</span>}
+    </>
+  );
 
   // Si le navigateur supporte le partage natif, on utilise directement le bouton
   if (navigator.share) {
@@ -91,9 +146,9 @@ export function ShareButton({
         onClick={handleNativeShare}
         className={className}
         title="Partager"
+        disabled={loading}
       >
-        <Share2 className="w-4 h-4" />
-        {size !== "icon" && <span className="ml-2">Partager</span>}
+        <ButtonContent />
       </Button>
     );
   }
@@ -102,9 +157,8 @@ export function ShareButton({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant={variant} size={size} className={className} title="Partager">
-          <Share2 className="w-4 h-4" />
-          {size !== "icon" && <span className="ml-2">Partager</span>}
+        <Button variant={variant} size={size} className={className} title="Partager" disabled={loading}>
+          <ButtonContent />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">

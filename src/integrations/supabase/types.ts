@@ -9780,6 +9780,51 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          link_type: string
+          metadata: Json | null
+          original_url: string
+          resource_id: string | null
+          short_code: string
+          title: string
+          views_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          link_type?: string
+          metadata?: Json | null
+          original_url: string
+          resource_id?: string | null
+          short_code: string
+          title: string
+          views_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          link_type?: string
+          metadata?: Json | null
+          original_url?: string
+          resource_id?: string | null
+          short_code?: string
+          title?: string
+          views_count?: number
+        }
+        Relationships: []
+      }
       shipment_tracking: {
         Row: {
           created_at: string | null
@@ -15307,6 +15352,10 @@ export type Database = {
       }
       increment_product_stock: {
         Args: { p_product_id: string; p_quantity: number }
+        Returns: undefined
+      }
+      increment_shared_link_views: {
+        Args: { p_short_code: string }
         Returns: undefined
       }
       initialize_user_wallet: { Args: { p_user_id: string }; Returns: Json }
