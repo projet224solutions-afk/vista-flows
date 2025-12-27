@@ -87,18 +87,18 @@ export function VendorIdDisplay({
   }
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div className={`flex items-center gap-2 flex-wrap ${className}`}>
+      {showName && vendorData.business_name && (
+        <h1 className="text-sm md:text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent break-words">
+          {vendorData.business_name}
+        </h1>
+      )}
       <StandardIdBadge 
         standardId={vendorData.custom_id}
         variant="secondary"
         size="md"
         copyable={true}
       />
-      {showName && vendorData.business_name && (
-        <span className="text-sm font-medium">
-          {vendorData.business_name}
-        </span>
-      )}
     </div>
   );
 }
