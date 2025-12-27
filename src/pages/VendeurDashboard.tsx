@@ -405,7 +405,7 @@ export default function VendeurDashboard() {
                 </div>
 
                 <h1 className="text-sm md:text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent whitespace-nowrap pr-1">
-                  224solutions
+                  224Solutions
                 </h1>
               </div>
 
