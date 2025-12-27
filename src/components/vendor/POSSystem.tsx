@@ -128,6 +128,79 @@ export function POSSystem() {
   // Charger les catégories depuis la base de données
   const [categories, setCategories] = useState<Array<{id: string, name: string}>>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
+  
+  // Taux de change pour la conversion des prix
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
+  
+  // Charger les taux de change
+  const loadExchangeRates = async () => {
+    try {
+      const { data: ratesData, error } = await supabase
+        .from('exchange_rates')
+        .select('from_currency, to_currency, rate')
+        .eq('is_active', true);
+      
+      if (error) throw error;
+      
+      // Créer un dictionnaire des taux
+      const rates: Record<string, number> = {};
+      (ratesData || []).forEach((rate: any) => {
+        rates[`${rate.from_currency}_${rate.to_currency}`] = rate.rate;
+      });
+      
+      // Ajouter les taux par défaut si non présents (GNF comme base)
+      if (!rates['GNF_EUR']) rates['GNF_EUR'] = 0.000092; // ~1 EUR = 10,869 GNF
+      if (!rates['GNF_USD']) rates['GNF_USD'] = 0.000084; // ~1 USD = 11,905 GNF
+      if (!rates['EUR_GNF']) rates['EUR_GNF'] = 10869;
+      if (!rates['USD_GNF']) rates['USD_GNF'] = 11905;
+      if (!rates['EUR_USD']) rates['EUR_USD'] = 1.09;
+      if (!rates['USD_EUR']) rates['USD_EUR'] = 0.92;
+      
+      setExchangeRates(rates);
+    } catch (error) {
+      console.error('Erreur chargement taux de change:', error);
+      // Taux par défaut en cas d'erreur
+      setExchangeRates({
+        'GNF_EUR': 0.000092,
+        'GNF_USD': 0.000084,
+        'EUR_GNF': 10869,
+        'USD_GNF': 11905,
+        'EUR_USD': 1.09,
+        'USD_EUR': 0.92
+      });
+    }
+  };
+  
+  useEffect(() => {
+    loadExchangeRates();
+  }, []);
+  
+  // Fonction pour convertir un prix de GNF vers la devise sélectionnée
+  const convertPrice = (priceInGNF: number): number => {
+    const currency = settings?.currency || 'GNF';
+    if (currency === 'GNF') return priceInGNF;
+    
+    const rate = exchangeRates[`GNF_${currency}`];
+    if (rate) {
+      return priceInGNF * rate;
+    }
+    return priceInGNF;
+  };
+  
+  // Formater le prix avec la devise
+  const formatPriceWithCurrency = (priceInGNF: number): string => {
+    const currency = settings?.currency || 'GNF';
+    const convertedPrice = convertPrice(priceInGNF);
+    
+    if (currency === 'GNF') {
+      return `${Math.round(convertedPrice).toLocaleString()} GNF`;
+    } else if (currency === 'EUR') {
+      return `${convertedPrice.toFixed(2)} €`;
+    } else if (currency === 'USD') {
+      return `$${convertedPrice.toFixed(2)}`;
+    }
+    return `${convertedPrice.toLocaleString()} ${currency}`;
+  };
 
   const loadCategories = async () => {
     try {
@@ -1239,9 +1312,9 @@ export function POSSystem() {
                             {/* Prix unité */}
                             <div className="flex items-baseline gap-1">
                               <span className="text-sm md:text-lg font-bold text-primary">
-                                {product.price.toLocaleString()}
+                                {formatPriceWithCurrency(product.price)}
                               </span>
-                              <span className="text-[10px] text-muted-foreground">GNF/unité</span>
+                              <span className="text-[10px] text-muted-foreground">/unité</span>
                             </div>
 
                             {/* Prix carton */}
@@ -1260,7 +1333,7 @@ export function POSSystem() {
                                       : 'text-muted-foreground'
                                   }`}
                                 >
-                                  📦 {(cartonsAvailable > 0 ? cartonPrice : 0).toLocaleString()}
+                                  📦 {formatPriceWithCurrency(cartonsAvailable > 0 ? cartonPrice : 0)}
                                 </span>
                                 <span
                                   className={`text-[9px] ${
@@ -1269,7 +1342,7 @@ export function POSSystem() {
                                       : 'text-muted-foreground'
                                   }`}
                                 >
-                                  GNF/{cartonsAvailable > 0 ? product.units_per_carton : 0}u
+                                  /{cartonsAvailable > 0 ? product.units_per_carton : 0}u
                                 </span>
                               </div>
                             )}
@@ -1374,10 +1447,9 @@ export function POSSystem() {
                   </Badge>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className="text-xs sm:text-sm font-black text-primary tabular-nums">
-                    {subtotal.toLocaleString()}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">GNF</span>
+                                <span className="text-xs sm:text-sm font-black text-primary tabular-nums">
+                                  {formatPriceWithCurrency(subtotal)}
+                                </span>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -1413,7 +1485,7 @@ export function POSSystem() {
                             {item.name}
                           </p>
                           <p className="text-[9px] sm:text-[10px] text-muted-foreground">
-                            {item.price.toLocaleString()} GNF
+                            {formatPriceWithCurrency(item.price)}
                           </p>
                         </div>
                         
@@ -1480,7 +1552,7 @@ export function POSSystem() {
                       <span className="text-xs font-bold">Remise</span>
                       {discountValue > 0 && (
                         <Badge variant="destructive" className="text-[9px] px-1 py-0 h-4">
-                          -{discountValue.toLocaleString()}
+                          -{formatPriceWithCurrency(discountValue)}
                         </Badge>
                       )}
                     </div>
@@ -1527,11 +1599,10 @@ export function POSSystem() {
                 {/* Total et TVA sur une ligne */}
                 <div className="flex items-center justify-between py-1.5 border-y border-border/30">
                   <span className="text-[10px] text-muted-foreground">
-                    TVA: {tax.toLocaleString()} GNF
+                    TVA: {formatPriceWithCurrency(tax)}
                   </span>
                   <div className="text-right">
-                    <span className="text-lg sm:text-xl font-black text-primary">{total.toLocaleString()}</span>
-                    <span className="text-xs text-muted-foreground ml-1">GNF</span>
+                    <span className="text-lg sm:text-xl font-black text-primary">{formatPriceWithCurrency(total)}</span>
                   </div>
                 </div>
 
