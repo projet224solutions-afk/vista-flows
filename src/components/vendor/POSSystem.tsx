@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,6 +46,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
+import { useFxRates } from '@/hooks/useFxRates';
 import { useAuth } from '@/hooks/useAuth';
 import { useAgent } from '@/contexts/AgentContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -129,93 +130,37 @@ export function POSSystem() {
   const [categories, setCategories] = useState<Array<{id: string, name: string}>>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   
-  // Taux de change pour la conversion des prix
-  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
-  
-  // Charger les taux de change en temps réel via API externe
-  const [ratesLastUpdated, setRatesLastUpdated] = useState<Date | null>(null);
-  
-  const loadExchangeRates = async () => {
-    try {
-      // Utiliser l'API Frankfurter (gratuite, sans clé API) pour EUR et USD
-      // Puis calculer les taux GNF via une autre source ou estimation
-      const response = await fetch('https://api.frankfurter.app/latest?from=EUR&to=USD,GBP');
-      
-      if (!response.ok) throw new Error('API Frankfurter non disponible');
-      
-      const data = await response.json();
-      
-      // Frankfurter ne supporte pas GNF, on utilise une API alternative pour GNF
-      // Ou on récupère le taux depuis exchangerate-api.com (gratuit limité)
-      let gnfRateFromUSD = 8600; // Taux par défaut approximatif
-      let gnfRateFromEUR = gnfRateFromUSD * (1 / data.rates.USD); // Calculer EUR->GNF
-      
-      try {
-        // Essayer d'obtenir le taux GNF réel via une API gratuite
-        const gnfResponse = await fetch('https://open.er-api.com/v6/latest/USD');
-        if (gnfResponse.ok) {
-          const gnfData = await gnfResponse.json();
-          if (gnfData.rates?.GNF) {
-            gnfRateFromUSD = gnfData.rates.GNF;
-            // Calculer EUR->GNF: EUR->USD * USD->GNF
-            gnfRateFromEUR = (1 / data.rates.USD) * gnfRateFromUSD;
-          }
-        }
-      } catch (gnfError) {
-        console.log('API GNF non disponible, utilisation taux estimé');
-      }
-      
-      // Créer les taux de conversion
-      const rates: Record<string, number> = {
-        'EUR_USD': data.rates.USD,
-        'USD_EUR': 1 / data.rates.USD,
-        'EUR_GNF': gnfRateFromEUR,
-        'USD_GNF': gnfRateFromUSD,
-        'GNF_EUR': 1 / gnfRateFromEUR,
-        'GNF_USD': 1 / gnfRateFromUSD,
-      };
-      
-      setExchangeRates(rates);
-      setRatesLastUpdated(new Date());
-      console.log('✅ Taux de change mis à jour:', rates);
-      
-    } catch (error) {
-      console.error('Erreur chargement taux de change API:', error);
-      
-      // Fallback: essayer de charger depuis la base de données locale
-      try {
-        const { data: ratesData } = await supabase
-          .from('exchange_rates')
-          .select('from_currency, to_currency, rate')
-          .eq('is_active', true);
-        
-        if (ratesData && ratesData.length > 0) {
-          const rates: Record<string, number> = {};
-          ratesData.forEach((rate: any) => {
-            rates[`${rate.from_currency}_${rate.to_currency}`] = rate.rate;
-          });
-          setExchangeRates(rates);
-          return;
-        }
-      } catch (dbError) {
-        console.error('Erreur chargement taux locaux:', dbError);
-      }
-      
-      // Taux par défaut en dernier recours
-      setExchangeRates({
-        'GNF_EUR': 0.000107,
-        'GNF_USD': 0.000116,
-        'EUR_GNF': 9350,
-        'USD_GNF': 8600,
-        'EUR_USD': 1.09,
-        'USD_EUR': 0.92
-      });
+  // Taux de change (taux exact du jour) via Edge Function (évite CORS côté navigateur)
+  const { rates: fxRates, lastUpdated: ratesLastUpdated } = useFxRates({
+    base: 'GNF',
+    symbols: ['USD', 'EUR'],
+    refreshMinutes: 12 * 60, // auto: toutes les 12h
+  });
+
+  const exchangeRates = useMemo(() => {
+    const r: Record<string, number> = {};
+
+    const gnfUsd = fxRates?.USD;
+    const gnfEur = fxRates?.EUR;
+
+    if (typeof gnfUsd === 'number' && gnfUsd > 0) {
+      r['GNF_USD'] = gnfUsd;
+      r['USD_GNF'] = 1 / gnfUsd;
     }
-  };
-  
-  useEffect(() => {
-    loadExchangeRates();
-  }, []);
+
+    if (typeof gnfEur === 'number' && gnfEur > 0) {
+      r['GNF_EUR'] = gnfEur;
+      r['EUR_GNF'] = 1 / gnfEur;
+    }
+
+    // Cross rates
+    if (r['GNF_USD'] && r['GNF_EUR']) {
+      r['USD_EUR'] = r['GNF_EUR'] / r['GNF_USD'];
+      r['EUR_USD'] = r['GNF_USD'] / r['GNF_EUR'];
+    }
+
+    return r;
+  }, [fxRates]);
   
   // Fonction pour convertir un prix de GNF vers la devise sélectionnée
   const convertPrice = (priceInGNF: number): number => {
