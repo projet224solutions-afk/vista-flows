@@ -403,7 +403,7 @@ export default function VendeurDashboard() {
                   <Activity className="w-4 h-4 md:w-6 md:h-6 text-white" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h1 className="text-sm md:text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent whitespace-normal break-words">
+                  <h1 className="text-sm md:text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent whitespace-nowrap">
                     224solutions
                   </h1>
                   <div className="flex items-center gap-1 md:gap-2 flex-wrap">
