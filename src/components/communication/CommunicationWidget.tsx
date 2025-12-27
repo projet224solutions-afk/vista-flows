@@ -1,14 +1,14 @@
 /**
  * Widget de Communication Flottant - 224SOLUTIONS
  * Widget réutilisable pour toutes les interfaces
+ * Optimisé pour éviter les problèmes INP (Interaction to Next Paint)
  */
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useCallback, startTransition, memo, useDeferredValue } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { MessageSquare, Bell, X, Minimize2, Maximize2 } from 'lucide-react';
+import { MessageSquare, Bell, Minimize2, Maximize2 } from 'lucide-react';
 import { useUniversalCommunication } from '@/hooks/useUniversalCommunication';
 import { useAuth } from '@/hooks/useAuth';
 import UniversalCommunicationHub from './UniversalCommunicationHub';
@@ -19,47 +19,54 @@ interface CommunicationWidgetProps {
   showNotifications?: boolean;
 }
 
-export default function CommunicationWidget({ 
+const positionClasses = {
+  'bottom-right': 'bottom-4 right-4',
+  'bottom-left': 'bottom-4 left-4',
+  'top-right': 'top-4 right-4',
+  'top-left': 'top-4 left-4'
+};
+
+// Mémoisation du composant principal pour éviter re-renders inutiles
+const CommunicationWidgetContent = memo(function CommunicationWidgetContent({ 
   position = 'bottom-right',
-  showNotifications = true 
-}: CommunicationWidgetProps) {
-  const { user } = useAuth();
-  const { stats } = useUniversalCommunication();
+  showNotifications = true,
+  unreadCount,
+  notificationCount
+}: {
+  position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+  showNotifications: boolean;
+  unreadCount: number;
+  notificationCount: number;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [showNotificationCenter, setShowNotificationCenter] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
 
-  const positionClasses = {
-    'bottom-right': 'bottom-4 right-4',
-    'bottom-left': 'bottom-4 left-4',
-    'top-right': 'top-4 right-4',
-    'top-left': 'top-4 left-4'
-  };
+  // Handler optimisé pour éviter le blocage du thread principal
+  const handleOpenChange = useCallback((open: boolean) => {
+    startTransition(() => {
+      setIsOpen(open);
+    });
+  }, []);
 
-  const unreadCount = stats.unreadCount + stats.notificationCount;
+  const handleNotificationOpenChange = useCallback((open: boolean) => {
+    startTransition(() => {
+      setShowNotificationCenter(open);
+    });
+  }, []);
 
-  // Auto-ouvrir si nouvelles notifications importantes
-  useEffect(() => {
-    if (stats.notificationCount > 0 && !isOpen) {
-      // Auto-show notification badge
-      const timer = setTimeout(() => {
-        // Animation de notification
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [stats.notificationCount, isOpen]);
-
-  // Ne pas afficher le widget si l'utilisateur n'est pas authentifié
-  if (!user) {
-    return null;
-  }
+  const handleMinimizeToggle = useCallback(() => {
+    startTransition(() => {
+      setIsMinimized(prev => !prev);
+    });
+  }, []);
 
   return (
     <>
       {/* Widget flottant - pointer-events-none sur le conteneur pour ne pas bloquer les clics */}
       <div className={`fixed ${positionClasses[position]} z-50 flex flex-col gap-2 pointer-events-none`}>
         {/* Bouton principal - pointer-events-auto pour réactiver les clics sur le bouton */}
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={isOpen} onOpenChange={handleOpenChange}>
           <DialogTrigger asChild>
             <Button
               size="lg"
@@ -87,7 +94,7 @@ export default function CommunicationWidget({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsMinimized(!isMinimized)}
+                    onClick={handleMinimizeToggle}
                   >
                     {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
                   </Button>
@@ -103,8 +110,8 @@ export default function CommunicationWidget({
         </Dialog>
 
         {/* Bouton notifications (optionnel) - pointer-events-auto */}
-        {showNotifications && stats.notificationCount > 0 && (
-          <Dialog open={showNotificationCenter} onOpenChange={setShowNotificationCenter}>
+        {showNotifications && notificationCount > 0 && (
+          <Dialog open={showNotificationCenter} onOpenChange={handleNotificationOpenChange}>
             <DialogTrigger asChild>
               <Button
                 variant="secondary"
@@ -116,7 +123,7 @@ export default function CommunicationWidget({
                   variant="destructive" 
                   className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs"
                 >
-                  {stats.notificationCount}
+                  {notificationCount}
                 </Badge>
               </Button>
             </DialogTrigger>
@@ -133,5 +140,31 @@ export default function CommunicationWidget({
       {/* Sound notification (hidden audio) - uses file to avoid CSP blocking */}
       <audio id="notification-sound" preload="none" />
     </>
+  );
+});
+
+export default function CommunicationWidget({ 
+  position = 'bottom-right',
+  showNotifications = true 
+}: CommunicationWidgetProps) {
+  const { user } = useAuth();
+  const { stats } = useUniversalCommunication();
+  
+  // Utiliser useDeferredValue pour éviter le blocage du thread principal
+  const deferredUnreadCount = useDeferredValue(stats.unreadCount + stats.notificationCount);
+  const deferredNotificationCount = useDeferredValue(stats.notificationCount);
+
+  // Ne pas afficher le widget si l'utilisateur n'est pas authentifié
+  if (!user) {
+    return null;
+  }
+
+  return (
+    <CommunicationWidgetContent 
+      position={position}
+      showNotifications={showNotifications}
+      unreadCount={deferredUnreadCount}
+      notificationCount={deferredNotificationCount}
+    />
   );
 }
