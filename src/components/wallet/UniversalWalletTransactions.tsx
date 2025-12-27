@@ -84,6 +84,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   const [transferOpen, setTransferOpen] = useState(false);
   const [showTransferPreview, setShowTransferPreview] = useState(false);
   const [transferPreview, setTransferPreview] = useState<any>(null);
+  const [showAllTransactions, setShowAllTransactions] = useState(false);
 
   useEffect(() => {
     if (effectiveUserId) {
@@ -1257,7 +1258,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
             </div>
           ) : (
             <div className="space-y-2">
-              {transactions.map((tx) => (
+              {(showAllTransactions ? transactions : transactions.slice(0, 4)).map((tx) => (
                 <div
                   key={tx.id}
                   className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
@@ -1310,6 +1311,18 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   </div>
                 </div>
               ))}
+              
+              {transactions.length > 4 && (
+                <Button
+                  variant="ghost"
+                  className="w-full mt-2 text-sm"
+                  onClick={() => setShowAllTransactions(!showAllTransactions)}
+                >
+                  {showAllTransactions 
+                    ? 'Afficher moins' 
+                    : `Voir tout (${transactions.length - 4} de plus)`}
+                </Button>
+              )}
             </div>
           )}
         </div>
