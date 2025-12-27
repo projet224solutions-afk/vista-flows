@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-const DEFAULT_POSITION = { latitude: 9.6412, longitude: -13.5784 }; // Conakry par défaut
+const DEFAULT_POSITION = { latitude: 9.7086357, longitude: -13.3876116 }; // Coyah par défaut
 
 interface GeoPosition {
   latitude: number;

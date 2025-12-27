@@ -88,12 +88,12 @@ export function useNearbyVendors(options: UseNearbyVendorsOptions = {}) {
       },
       (err) => {
         console.warn('Geolocation error:', err.message);
-        // Default to Conakry center if geolocation fails
+        // Default to Coyah if geolocation fails
         setUserPosition({
-          latitude: 9.6412,
-          longitude: -13.5784,
+          latitude: 9.7086357,
+          longitude: -13.3876116,
         });
-        setLocationError('Position par défaut utilisée');
+        setLocationError('Position par défaut utilisée (Coyah)');
       },
       {
         enableHighAccuracy: true,
