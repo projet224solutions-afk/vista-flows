@@ -23,8 +23,10 @@ const PUBLIC_ROUTES = [
   '/wallet',
   '/cart',
   '/product',
-  '/shop', // Deep linking - boutiques accessibles via lien partagé
-  '/s', // Short URLs
+  '/produit',
+  '/shop',
+  '/boutique',
+  '/s',
   '/contact-user',
   '/communication',
   '/bug-bounty',
