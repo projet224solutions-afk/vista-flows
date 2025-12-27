@@ -394,21 +394,24 @@ export default function VendeurDashboard() {
 
         <div className="flex-1 flex flex-col w-full min-w-0 max-w-full overflow-x-hidden">
           {/* Header global optimisé mobile */}
-          <header className="h-14 md:h-16 bg-white/95 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-40 shadow-sm flex items-center px-2 sm:px-3 md:px-6 w-full max-w-full overflow-x-hidden">
+          <header className="min-h-14 md:min-h-16 bg-white/95 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-40 shadow-sm flex items-center px-2 sm:px-3 md:px-6 w-full max-w-full overflow-x-hidden">
             <SidebarTrigger className="mr-2 md:mr-4" />
 
             <div className="flex items-center justify-between flex-1 min-w-0">
-              <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1 max-w-[50%] sm:max-w-none">
+              <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
                 <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0">
                   <Activity className="w-4 h-4 md:w-6 md:h-6 text-white" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <VendorIdDisplay showName={true} className="flex-wrap" />
+                  <h1 className="text-sm md:text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent whitespace-normal break-words">
+                    224solutions
+                  </h1>
                   <div className="flex items-center gap-1 md:gap-2 flex-wrap">
                     <p className="text-[10px] md:text-xs text-muted-foreground flex items-center gap-1">
                       <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                      <span>{profile?.first_name || user?.email?.split('@')[0]}</span>
+                      <span className="truncate max-w-[90px] sm:max-w-[160px] md:max-w-none">{profile?.first_name || user?.email?.split('@')[0]}</span>
                     </p>
+                    <VendorIdDisplay showName={false} />
                   </div>
                 </div>
               </div>
