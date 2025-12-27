@@ -160,32 +160,6 @@ export function POSSystem() {
     return formatCurrency(convertedPrice, selectedCurrency);
   };
   
-  // Fonction pour convertir un prix de GNF vers la devise sélectionnée
-  const convertPrice = (priceInGNF: number): number => {
-    const currency = settings?.currency || 'GNF';
-    if (currency === 'GNF') return priceInGNF;
-    
-    const rate = exchangeRates[`GNF_${currency}`];
-    if (rate) {
-      return priceInGNF * rate;
-    }
-    return priceInGNF;
-  };
-  
-  // Formater le prix avec la devise
-  const formatPriceWithCurrency = (priceInGNF: number): string => {
-    const currency = settings?.currency || 'GNF';
-    const convertedPrice = convertPrice(priceInGNF);
-    
-    if (currency === 'GNF') {
-      return `${Math.round(convertedPrice).toLocaleString()} GNF`;
-    } else if (currency === 'EUR') {
-      return `${convertedPrice.toFixed(2)} €`;
-    } else if (currency === 'USD') {
-      return `$${convertedPrice.toFixed(2)}`;
-    }
-    return `${convertedPrice.toLocaleString()} ${currency}`;
-  };
 
   const loadCategories = async () => {
     try {
