@@ -132,39 +132,81 @@ export function POSSystem() {
   // Taux de change pour la conversion des prix
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
   
-  // Charger les taux de change
+  // Charger les taux de change en temps réel via API externe
+  const [ratesLastUpdated, setRatesLastUpdated] = useState<Date | null>(null);
+  
   const loadExchangeRates = async () => {
     try {
-      const { data: ratesData, error } = await supabase
-        .from('exchange_rates')
-        .select('from_currency, to_currency, rate')
-        .eq('is_active', true);
+      // Utiliser l'API Frankfurter (gratuite, sans clé API) pour EUR et USD
+      // Puis calculer les taux GNF via une autre source ou estimation
+      const response = await fetch('https://api.frankfurter.app/latest?from=EUR&to=USD,GBP');
       
-      if (error) throw error;
+      if (!response.ok) throw new Error('API Frankfurter non disponible');
       
-      // Créer un dictionnaire des taux
-      const rates: Record<string, number> = {};
-      (ratesData || []).forEach((rate: any) => {
-        rates[`${rate.from_currency}_${rate.to_currency}`] = rate.rate;
-      });
+      const data = await response.json();
       
-      // Ajouter les taux par défaut si non présents (GNF comme base)
-      if (!rates['GNF_EUR']) rates['GNF_EUR'] = 0.000092; // ~1 EUR = 10,869 GNF
-      if (!rates['GNF_USD']) rates['GNF_USD'] = 0.000084; // ~1 USD = 11,905 GNF
-      if (!rates['EUR_GNF']) rates['EUR_GNF'] = 10869;
-      if (!rates['USD_GNF']) rates['USD_GNF'] = 11905;
-      if (!rates['EUR_USD']) rates['EUR_USD'] = 1.09;
-      if (!rates['USD_EUR']) rates['USD_EUR'] = 0.92;
+      // Frankfurter ne supporte pas GNF, on utilise une API alternative pour GNF
+      // Ou on récupère le taux depuis exchangerate-api.com (gratuit limité)
+      let gnfRateFromUSD = 8600; // Taux par défaut approximatif
+      let gnfRateFromEUR = gnfRateFromUSD * (1 / data.rates.USD); // Calculer EUR->GNF
+      
+      try {
+        // Essayer d'obtenir le taux GNF réel via une API gratuite
+        const gnfResponse = await fetch('https://open.er-api.com/v6/latest/USD');
+        if (gnfResponse.ok) {
+          const gnfData = await gnfResponse.json();
+          if (gnfData.rates?.GNF) {
+            gnfRateFromUSD = gnfData.rates.GNF;
+            // Calculer EUR->GNF: EUR->USD * USD->GNF
+            gnfRateFromEUR = (1 / data.rates.USD) * gnfRateFromUSD;
+          }
+        }
+      } catch (gnfError) {
+        console.log('API GNF non disponible, utilisation taux estimé');
+      }
+      
+      // Créer les taux de conversion
+      const rates: Record<string, number> = {
+        'EUR_USD': data.rates.USD,
+        'USD_EUR': 1 / data.rates.USD,
+        'EUR_GNF': gnfRateFromEUR,
+        'USD_GNF': gnfRateFromUSD,
+        'GNF_EUR': 1 / gnfRateFromEUR,
+        'GNF_USD': 1 / gnfRateFromUSD,
+      };
       
       setExchangeRates(rates);
+      setRatesLastUpdated(new Date());
+      console.log('✅ Taux de change mis à jour:', rates);
+      
     } catch (error) {
-      console.error('Erreur chargement taux de change:', error);
-      // Taux par défaut en cas d'erreur
+      console.error('Erreur chargement taux de change API:', error);
+      
+      // Fallback: essayer de charger depuis la base de données locale
+      try {
+        const { data: ratesData } = await supabase
+          .from('exchange_rates')
+          .select('from_currency, to_currency, rate')
+          .eq('is_active', true);
+        
+        if (ratesData && ratesData.length > 0) {
+          const rates: Record<string, number> = {};
+          ratesData.forEach((rate: any) => {
+            rates[`${rate.from_currency}_${rate.to_currency}`] = rate.rate;
+          });
+          setExchangeRates(rates);
+          return;
+        }
+      } catch (dbError) {
+        console.error('Erreur chargement taux locaux:', dbError);
+      }
+      
+      // Taux par défaut en dernier recours
       setExchangeRates({
-        'GNF_EUR': 0.000092,
-        'GNF_USD': 0.000084,
-        'EUR_GNF': 10869,
-        'USD_GNF': 11905,
+        'GNF_EUR': 0.000107,
+        'GNF_USD': 0.000116,
+        'EUR_GNF': 9350,
+        'USD_GNF': 8600,
         'EUR_USD': 1.09,
         'USD_EUR': 0.92
       });
