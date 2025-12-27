@@ -7,8 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import QuickFooter from "@/components/QuickFooter";
 import { cn } from "@/lib/utils";
-import { useGeoDistance } from "@/hooks/useGeoDistance";
+import { useGeoDistance, calculateDistance as calcDistanceFn } from "@/hooks/useGeoDistance";
 import { VendorCard } from "@/components/vendor/VendorCard";
+
+// Position par défaut: Coyah
+const FALLBACK_POSITION = { latitude: 9.7086357, longitude: -13.3876116 };
 interface Vendor {
   id: string;
   business_name: string;
@@ -30,7 +33,7 @@ const RADIUS_KM = 20;
 
 export default function NearbyBoutiques() {
   const navigate = useNavigate();
-  const { userPosition, positionReady, usingRealLocation, refreshPosition, calculateDistance } = useGeoDistance();
+  const { userPosition, positionReady, usingRealLocation, refreshPosition } = useGeoDistance();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,15 +63,10 @@ export default function NearbyBoutiques() {
       const { data, error: dbError } = await query;
       if (dbError) throw dbError;
 
-      const origin = overridePosition ?? userPosition;
+      // Utiliser la position fournie, ou la position utilisateur, ou la position par défaut
+      const origin = overridePosition ?? (userPosition.latitude ? userPosition : FALLBACK_POSITION);
 
-      // IMPORTANT: sans GPS réel, les distances peuvent être fausses (position par défaut).
-      // On force donc l'utilisateur à activer le GPS pour afficher les boutiques proches.
-      if (!overridePosition && !usingRealLocation) {
-        setVendors([]);
-        setError(`Activez le GPS pour voir les boutiques à moins de ${RADIUS_KM} km.`);
-        return;
-      }
+      // On utilise la position (réelle ou par défaut) pour calculer les distances
 
       let list: Vendor[] = (data || []).map((v: any) => ({
         ...v,
@@ -83,10 +81,10 @@ export default function NearbyBoutiques() {
           if (v.latitude === null || v.latitude === undefined || v.longitude === null || v.longitude === undefined) {
             return { ...v, distance: null };
           }
-          const distance = calculateDistance(origin.latitude, origin.longitude, Number(v.latitude), Number(v.longitude));
+          const distance = calcDistanceFn(origin.latitude, origin.longitude, Number(v.latitude), Number(v.longitude));
           return { ...v, distance };
         })
-        // IMPORTANT: Exclure les boutiques sans GPS (distance === null) ET celles hors rayon
+        // Exclure les boutiques sans GPS et celles hors rayon
         .filter((v) => v.distance !== null && v.distance <= RADIUS_KM);
 
       // Tri: plus proches d'abord, sinon par note
@@ -112,10 +110,17 @@ export default function NearbyBoutiques() {
   };
 
   useEffect(() => {
+    // Charger les boutiques dès que la position est prête ou après un court délai
     if (positionReady) {
       loadVendors();
+    } else {
+      // Si le GPS n'est pas disponible après 2 secondes, charger avec position par défaut
+      const timer = setTimeout(() => {
+        loadVendors(FALLBACK_POSITION);
+      }, 2000);
+      return () => clearTimeout(timer);
     }
-  }, [positionReady, businessTypeFilter, serviceTypeFilter, userPosition]);
+  }, [positionReady, businessTypeFilter, serviceTypeFilter]);
 
   const filteredVendors = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
