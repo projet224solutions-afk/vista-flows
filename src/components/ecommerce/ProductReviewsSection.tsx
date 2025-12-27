@@ -40,44 +40,33 @@ export const ProductReviewsSection = ({ productId }: ProductReviewsSectionProps)
   const loadReviews = async () => {
     setLoading(true);
     try {
-      // D'abord récupérer le vendor_id du produit
-      const { data: productData, error: productError } = await supabase
-        .from('products')
-        .select('vendor_id')
-        .eq('id', productId)
-        .single();
-
-      if (productError || !productData?.vendor_id) {
-        setReviews([]);
-        setRating({ average: 0, total: 0 });
-        setLoading(false);
-        return;
-      }
-
-      // Charger les avis depuis vendor_ratings pour ce vendeur
+      // Charger les avis depuis product_reviews pour ce produit spécifique
       const { data: reviewsData } = await supabase
-        .from('vendor_ratings')
+        .from('product_reviews')
         .select(`
           id,
-          customer_id,
+          user_id,
           rating,
-          comment,
-          order_id,
+          title,
+          content,
+          verified_purchase,
+          helpful_count,
           created_at
         `)
-        .eq('vendor_id', productData.vendor_id)
+        .eq('product_id', productId)
+        .eq('is_approved', true)
         .order('created_at', { ascending: false })
         .limit(20);
 
       // Récupérer les profils
-      const customerIds = [...new Set((reviewsData || []).map(r => r.customer_id))];
+      const userIds = [...new Set((reviewsData || []).map(r => r.user_id))];
       let profilesMap = new Map();
       
-      if (customerIds.length > 0) {
+      if (userIds.length > 0) {
         const { data: profilesData } = await supabase
           .from('profiles')
           .select('id, full_name, first_name, last_name, avatar_url')
-          .in('id', customerIds);
+          .in('id', userIds);
         
         profilesMap = new Map(
           (profilesData || []).map(p => [p.id, p])
@@ -86,14 +75,14 @@ export const ProductReviewsSection = ({ productId }: ProductReviewsSectionProps)
 
       const formattedReviews: Review[] = (reviewsData || []).map(r => ({
         id: r.id,
-        user_id: r.customer_id,
+        user_id: r.user_id,
         rating: r.rating,
-        title: '',
-        content: r.comment || '',
-        verified_purchase: true,
-        helpful_count: 0,
+        title: r.title || '',
+        content: r.content || '',
+        verified_purchase: r.verified_purchase || false,
+        helpful_count: r.helpful_count || 0,
         created_at: r.created_at,
-        profiles: profilesMap.get(r.customer_id)
+        profiles: profilesMap.get(r.user_id)
       }));
 
       setReviews(formattedReviews);
