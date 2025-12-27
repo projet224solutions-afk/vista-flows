@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
 interface DeepLinkHandler {
@@ -43,7 +43,6 @@ const DEEP_LINK_PATTERNS: DeepLinkHandler[] = [
 
 export function useDeepLinking() {
   const navigate = useNavigate();
-  const location = useLocation();
 
   // Parser un deep link et retourner la route correspondante
   const parseDeepLink = useCallback((url: string): string | null => {
@@ -75,36 +74,45 @@ export function useDeepLinking() {
     return false;
   }, [navigate, parseDeepLink]);
 
-  // Écouter les deep links Capacitor (App.addListener)
+  // Écouter les deep links Capacitor via l'API globale
   useEffect(() => {
-    const setupCapacitorDeepLinks = async () => {
-      try {
-        // Vérifier si Capacitor est disponible
-        const { App } = await import('@capacitor/app');
-        
-        // Écouter les deep links quand l'app est ouverte via un lien
-        const appUrlOpenListener = await App.addListener('appUrlOpen', (event) => {
-          console.log('🔗 [Capacitor] App opened with URL:', event.url);
-          handleDeepLink(event.url);
-        });
+    // Vérifier si on est dans un contexte Capacitor natif
+    const capacitor = (window as any).Capacitor;
+    if (!capacitor || !capacitor.isNativePlatform?.()) {
+      console.log('🔗 [DeepLink] Running in web mode');
+      return;
+    }
 
-        // Vérifier si l'app a été lancée avec un deep link
-        const launchUrl = await App.getLaunchUrl();
-        if (launchUrl?.url) {
-          console.log('🔗 [Capacitor] App launched with URL:', launchUrl.url);
-          handleDeepLink(launchUrl.url);
-        }
+    // Accéder aux plugins Capacitor via l'API globale
+    const plugins = capacitor.Plugins;
+    if (!plugins?.App) {
+      console.log('🔗 [DeepLink] Capacitor App plugin not available');
+      return;
+    }
 
-        return () => {
-          appUrlOpenListener.remove();
-        };
-      } catch (error) {
-        // Capacitor n'est pas disponible (web mode)
-        console.log('🔗 [DeepLink] Running in web mode (Capacitor not available)');
-      }
+    const App = plugins.App;
+
+    // Écouter les deep links quand l'app est ouverte via un lien
+    const handleAppUrlOpen = (event: { url: string }) => {
+      console.log('🔗 [Capacitor] App opened with URL:', event.url);
+      handleDeepLink(event.url);
     };
 
-    setupCapacitorDeepLinks();
+    App.addListener('appUrlOpen', handleAppUrlOpen);
+
+    // Vérifier si l'app a été lancée avec un deep link
+    App.getLaunchUrl().then((result: { url?: string } | null) => {
+      if (result?.url) {
+        console.log('🔗 [Capacitor] App launched with URL:', result.url);
+        handleDeepLink(result.url);
+      }
+    }).catch(() => {
+      // Ignorer les erreurs
+    });
+
+    return () => {
+      App.removeAllListeners?.();
+    };
   }, [handleDeepLink]);
 
   return {
@@ -121,8 +129,8 @@ async function trackLinkOpen(url: string) {
     if (shortMatch) {
       const shortCode = shortMatch[1];
       
-      // Incrémenter le compteur de vues
-      await supabase.rpc('increment_shared_link_views', { 
+      // Incrémenter le compteur de vues via RPC (cast to any pour éviter les erreurs de type)
+      await (supabase.rpc as any)('increment_shared_link_views', { 
         p_short_code: shortCode 
       });
     }
@@ -141,6 +149,21 @@ export function generateShortCode(length: number = 8): string {
   return result;
 }
 
+interface SharedLink {
+  id: string;
+  short_code: string;
+  original_url: string;
+  title: string;
+  link_type: string;
+  resource_id: string | null;
+  views_count: number;
+  created_at: string;
+  created_by: string | null;
+  expires_at: string | null;
+  is_active: boolean;
+  metadata: any;
+}
+
 // Créer un lien court pour le partage
 export async function createShortLink(params: {
   originalUrl: string;
@@ -151,16 +174,17 @@ export async function createShortLink(params: {
   try {
     const shortCode = generateShortCode();
     
-    const { error } = await supabase
-      .from('shared_links')
+    // Utiliser un cast pour éviter les erreurs de type avec la nouvelle table
+    const { error } = await (supabase
+      .from('shared_links' as any)
       .insert({
         short_code: shortCode,
         original_url: params.originalUrl,
         title: params.title,
         link_type: params.type,
-        resource_id: params.resourceId,
+        resource_id: params.resourceId || null,
         views_count: 0
-      });
+      }) as any);
 
     if (error) {
       console.error('Error creating short link:', error);
@@ -181,11 +205,11 @@ export async function resolveShortLink(shortCode: string): Promise<{
   type: string;
 } | null> {
   try {
-    const { data, error } = await supabase
-      .from('shared_links')
+    const { data, error } = await (supabase
+      .from('shared_links' as any)
       .select('original_url, title, link_type')
       .eq('short_code', shortCode)
-      .single();
+      .single() as any) as { data: Pick<SharedLink, 'original_url' | 'title' | 'link_type'> | null; error: any };
 
     if (error || !data) {
       console.error('Error resolving short link:', error);

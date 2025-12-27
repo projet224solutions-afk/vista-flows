@@ -10,6 +10,13 @@ import { Loader2, Link2Off, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
+interface SharedLinkData {
+  original_url: string;
+  title: string;
+  link_type: string;
+  resource_id: string | null;
+}
+
 export default function ShortLinkRedirect() {
   const { shortCode } = useParams<{ shortCode: string }>();
   const navigate = useNavigate();
@@ -32,12 +39,12 @@ export default function ShortLinkRedirect() {
       setLoading(true);
       setError(null);
 
-      // Récupérer les infos du lien
-      const { data, error: fetchError } = await supabase
-        .from('shared_links')
+      // Récupérer les infos du lien (avec cast pour éviter les erreurs de type)
+      const { data, error: fetchError } = await (supabase
+        .from('shared_links' as any)
         .select('original_url, title, link_type, resource_id')
         .eq('short_code', shortCode)
-        .single();
+        .single() as any) as { data: SharedLinkData | null; error: any };
 
       if (fetchError || !data) {
         setError('Lien introuvable ou expiré');
@@ -45,8 +52,8 @@ export default function ShortLinkRedirect() {
         return;
       }
 
-      // Incrémenter le compteur de vues
-      await supabase.rpc('increment_shared_link_views', { 
+      // Incrémenter le compteur de vues (cast to any pour éviter les erreurs de type)
+      await (supabase.rpc as any)('increment_shared_link_views', { 
         p_short_code: shortCode 
       });
 
@@ -58,11 +65,15 @@ export default function ShortLinkRedirect() {
       });
 
       // Extraire le chemin relatif de l'URL originale
-      const url = new URL(data.original_url);
-      const relativePath = url.pathname + url.search;
-
-      // Rediriger vers la page
-      navigate(relativePath, { replace: true });
+      try {
+        const url = new URL(data.original_url);
+        const relativePath = url.pathname + url.search;
+        // Rediriger vers la page
+        navigate(relativePath, { replace: true });
+      } catch {
+        // Si l'URL est déjà relative
+        navigate(data.original_url, { replace: true });
+      }
 
     } catch (err) {
       console.error('Error resolving short link:', err);

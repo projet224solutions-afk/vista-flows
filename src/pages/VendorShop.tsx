@@ -196,6 +196,9 @@ export default function VendorShop() {
             url={`${window.location.origin}/shop/${vendor.id}`}
             variant="outline"
             size="sm"
+            resourceType="shop"
+            resourceId={vendor.id}
+            useShortUrl={true}
           />
         </div>
       </header>
@@ -329,6 +332,9 @@ export default function VendorShop() {
               url={`${window.location.origin}/shop/${vendor.id}`}
               variant="outline"
               size="icon"
+              resourceType="shop"
+              resourceId={vendor.id}
+              useShortUrl={true}
             />
           </div>
         </div>
