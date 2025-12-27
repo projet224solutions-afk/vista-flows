@@ -398,7 +398,7 @@ export default function VendeurDashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center w-full min-w-0 gap-2 py-2 md:py-0">
               {/* Ligne 1 (mobile): menu + logo + nom app */}
               <div className="flex items-center gap-2 min-w-0">
-                <SidebarTrigger className="h-10 w-10 sm:h-9 sm:w-9 md:h-8 md:w-8 sm:mr-2 md:mr-4 [&_svg]:h-6 [&_svg]:w-6 sm:[&_svg]:h-5 sm:[&_svg]:w-5" />
+                <SidebarTrigger className="h-[60px] w-[60px] sm:h-10 sm:w-10 md:h-8 md:w-8 sm:mr-2 md:mr-4 [&_svg]:h-8 [&_svg]:w-8 sm:[&_svg]:h-5 sm:[&_svg]:w-5" />
 
                 <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0">
                   <Activity className="w-4 h-4 md:w-6 md:h-6 text-white" />
