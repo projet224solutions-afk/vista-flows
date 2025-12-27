@@ -36,7 +36,7 @@ interface ProfessionalService {
   distance?: number | null;
 }
 
-const RADIUS_KM = 50;
+const RADIUS_KM = 20;
 
 export default function ServicesProximite() {
   const navigate = useNavigate();
