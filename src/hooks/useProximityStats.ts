@@ -30,7 +30,7 @@ const DEFAULT_POSITION: UserPosition = {
   longitude: -13.5784
 };
 
-const RADIUS_KM = 50;
+const RADIUS_KM = 20;
 
 // Haversine formula for distance calculation
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -176,22 +176,22 @@ export function useProximityStats() {
         sport: 0
       };
 
-      // Count ALL vendors as boutiques (regardless of service_type)
+      // Count only vendors WITH location data and within radius
       vendors?.forEach(vendor => {
-        let isNearby = true;
-        
-        // Check distance if location is available
-        if (vendor.latitude && vendor.longitude) {
-          const distance = calculateDistance(
-            position.latitude, 
-            position.longitude, 
-            Number(vendor.latitude), 
-            Number(vendor.longitude)
-          );
-          isNearby = distance <= RADIUS_KM;
+        // Skip vendors without location data
+        if (!vendor.latitude || !vendor.longitude) {
+          return;
         }
-
-        if (isNearby) {
+        
+        const distance = calculateDistance(
+          position.latitude, 
+          position.longitude, 
+          Number(vendor.latitude), 
+          Number(vendor.longitude)
+        );
+        
+        // Only count if within radius
+        if (distance <= RADIUS_KM) {
           // Count ALL active vendors as boutiques
           newStats.boutiques++;
           
@@ -202,7 +202,7 @@ export function useProximityStats() {
         }
       });
 
-      // Count drivers (taxi-moto and delivery) from drivers table
+      // Count drivers (taxi-moto and delivery) from drivers table - only with location
       drivers?.forEach(driver => {
         // Parse current_location point format (x,y)
         let driverLat: number | null = null;
@@ -217,18 +217,19 @@ export function useProximityStats() {
           }
         }
 
-        let isNearby = true;
-        if (driverLat && driverLon) {
-          const distance = calculateDistance(
-            position.latitude, 
-            position.longitude, 
-            driverLat, 
-            driverLon
-          );
-          isNearby = distance <= RADIUS_KM;
+        // Skip drivers without location data
+        if (!driverLat || !driverLon) {
+          return;
         }
 
-        if (isNearby) {
+        const distance = calculateDistance(
+          position.latitude, 
+          position.longitude, 
+          driverLat, 
+          driverLon
+        );
+        
+        if (distance <= RADIUS_KM) {
           if (driver.vehicle_type === 'car') {
             newStats.vtc++;
           }
@@ -237,20 +238,21 @@ export function useProximityStats() {
         }
       });
 
-      // Count taxi-moto drivers from taxi_drivers table (primary source)
+      // Count taxi-moto drivers from taxi_drivers table - only with location
       taxiDrivers?.forEach(driver => {
-        let isNearby = true;
-        if (driver.last_lat && driver.last_lng) {
-          const distance = calculateDistance(
-            position.latitude, 
-            position.longitude, 
-            Number(driver.last_lat), 
-            Number(driver.last_lng)
-          );
-          isNearby = distance <= RADIUS_KM;
+        // Skip drivers without location data
+        if (!driver.last_lat || !driver.last_lng) {
+          return;
         }
 
-        if (isNearby) {
+        const distance = calculateDistance(
+          position.latitude, 
+          position.longitude, 
+          Number(driver.last_lat), 
+          Number(driver.last_lng)
+        );
+        
+        if (distance <= RADIUS_KM) {
           // Count as taxi-moto (all taxi_drivers are motos)
           newStats.taxiMoto++;
           // Taxi-moto drivers can also do delivery
