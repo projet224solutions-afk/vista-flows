@@ -48,7 +48,6 @@ const DriverSubscriptionPage = lazy(() => import("./pages/DriverSubscriptionPage
 const TaxiMotoClient = lazy(() => import("./pages/TaxiMotoClient"));
 const TaxiMotoRouter = lazy(() => import("./components/taxi-moto/TaxiMotoRouter"));
 const SyndicatDashboardUltraPro = lazy(() => import("./pages/SyndicatDashboardUltraPro"));
-const SystemTest = lazy(() => import("./pages/SystemTest"));
 const UserActivationPage = lazy(() => import("./components/agent-system/UserActivationPage"));
 const TransitaireDashboard = lazy(() => import("./pages/TransitaireDashboard"));
 const PDG224Solutions = lazy(() => import("./pages/PDG224Solutions"));
@@ -418,9 +417,6 @@ function App() {
 
               {/* Badge Verification - Public */}
               <Route path="/badge/:vehicleId" element={<BadgeVerification />} />
-
-              {/* System Test Route */}
-              <Route path="/system-test" element={<SystemTest />} />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
