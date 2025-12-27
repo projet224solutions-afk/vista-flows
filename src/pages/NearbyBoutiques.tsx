@@ -1,14 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, RefreshCw, Search, Star, Store } from "lucide-react";
+import { ArrowLeft, MapPin, RefreshCw, Search, Store } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import QuickFooter from "@/components/QuickFooter";
 import { cn } from "@/lib/utils";
-import { useGeoDistance, formatDistance } from "@/hooks/useGeoDistance";
-
+import { useGeoDistance } from "@/hooks/useGeoDistance";
+import { VendorCard } from "@/components/vendor/VendorCard";
 interface Vendor {
   id: string;
   business_name: string;
@@ -120,6 +120,11 @@ export default function NearbyBoutiques() {
     });
   }, [vendors, searchQuery]);
 
+  // Handler de navigation optimisé avec useCallback pour éviter les re-créations
+  const handleVendorNavigate = useCallback((vendorId: string) => {
+    navigate(`/shop/${vendorId}`);
+  }, [navigate]);
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/50">
@@ -219,72 +224,12 @@ export default function NearbyBoutiques() {
         ) : (
           <section aria-label="Liste des boutiques" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredVendors.map((vendor, index) => (
-              <button
+              <VendorCard
                 key={vendor.id}
-                onClick={() => navigate(`/shop/${vendor.id}`)}
-                className={cn(
-                  "group relative flex flex-col p-4 rounded-2xl text-left",
-                  "bg-card border border-border/50",
-                  "hover:border-primary/30 hover:shadow-lg transition-all duration-300",
-                  "hover:-translate-y-1"
-                )}
-                style={{ animationDelay: `${index * 30}ms` }}
-              >
-                {vendor.distance !== null ? (
-                  <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-md flex items-center gap-1">
-                    <MapPin className="w-3 h-3" />
-                    {formatDistance(vendor.distance)}
-                  </div>
-                ) : (
-                  <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full bg-muted text-muted-foreground text-[10px] font-medium shadow-sm">
-                    Pas de GPS
-                  </div>
-                )}
-
-                <div className="w-14 h-14 rounded-xl bg-muted/40 flex items-center justify-center overflow-hidden mb-3 group-hover:scale-105 transition-transform">
-                  {vendor.logo_url ? (
-                    <img
-                      src={vendor.logo_url}
-                      alt={`Logo boutique ${vendor.business_name}`}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <Store className="w-7 h-7 text-primary" />
-                  )}
-                </div>
-
-                <div className="flex-1 space-y-2">
-                  <h2 className="font-semibold text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-                    {vendor.business_name}
-                  </h2>
-
-                  {(vendor.city || vendor.neighborhood || vendor.address) && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <MapPin className="w-3 h-3" />
-                      <span className="line-clamp-1">
-                        {[vendor.neighborhood, vendor.city, !vendor.city && !vendor.neighborhood ? vendor.address : null]
-                          .filter(Boolean)
-                          .join(", ")}
-                      </span>
-                    </p>
-                  )}
-
-                  {vendor.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-2">{vendor.description}</p>
-                  )}
-
-                  <div className="flex items-center gap-2 pt-1">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                      <span className="text-xs font-semibold text-foreground">{vendor.rating?.toFixed(1) || "4.5"}</span>
-                    </div>
-                    {vendor.is_verified && (
-                      <Badge variant="secondary" className="text-[10px]">Vérifié</Badge>
-                    )}
-                  </div>
-                </div>
-              </button>
+                vendor={vendor}
+                index={index}
+                onNavigate={handleVendorNavigate}
+              />
             ))}
           </section>
         )}
