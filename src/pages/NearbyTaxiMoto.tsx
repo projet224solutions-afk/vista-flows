@@ -25,6 +25,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import QuickFooter from "@/components/QuickFooter";
 import { motion } from "framer-motion";
+import { useGeoDistance, calculateDistance } from "@/hooks/useGeoDistance";
+
+const RADIUS_KM = 20;
 
 interface NearbyDriver {
   id: string;
@@ -44,19 +47,6 @@ interface NearbyDriver {
     phone: string;
     avatar_url: string | null;
   };
-}
-
-// Haversine formula
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
 }
 
 export default function NearbyTaxiMoto() {
@@ -119,23 +109,26 @@ export default function NearbyTaxiMoto() {
 
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
 
-      // Calculate distances and sort
-      const driversWithDistance = (taxiDrivers || []).map(driver => {
-        let distance: number | undefined;
-        if (driver.last_lat && driver.last_lng) {
-          distance = calculateDistance(
-            position.lat,
-            position.lng,
-            Number(driver.last_lat),
-            Number(driver.last_lng)
-          );
-        }
-        return {
-          ...driver,
-          distance,
-          profile: profileMap.get(driver.user_id) as any
-        };
-      });
+      // Calculate distances, filter by radius and sort
+      const driversWithDistance = (taxiDrivers || [])
+        .map(driver => {
+          let distance: number | undefined;
+          if (driver.last_lat && driver.last_lng) {
+            distance = calculateDistance(
+              position.lat,
+              position.lng,
+              Number(driver.last_lat),
+              Number(driver.last_lng)
+            );
+          }
+          return {
+            ...driver,
+            distance,
+            profile: profileMap.get(driver.user_id) as any
+          };
+        })
+        // Filtre: seulement les conducteurs dans un rayon de 20 km
+        .filter(driver => driver.distance !== undefined && driver.distance <= RADIUS_KM);
 
       // Sort by distance (nearest first), then by availability
       driversWithDistance.sort((a, b) => {
@@ -189,7 +182,7 @@ export default function NearbyTaxiMoto() {
                 Taxi-Moto à Proximité
               </h1>
               <p className="text-xs text-muted-foreground">
-                {drivers.length} conducteur{drivers.length !== 1 ? 's' : ''} en ligne
+                {drivers.length} conducteur{drivers.length !== 1 ? 's' : ''} dans un rayon de {RADIUS_KM} km
               </p>
             </div>
             <Button

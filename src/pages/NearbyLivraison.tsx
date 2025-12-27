@@ -26,6 +26,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import QuickFooter from "@/components/QuickFooter";
 import { motion } from "framer-motion";
+import { useGeoDistance, calculateDistance } from "@/hooks/useGeoDistance";
+
+const RADIUS_KM = 20;
 
 interface NearbyDriver {
   id: string;
@@ -47,19 +50,6 @@ interface NearbyDriver {
     avatar_url: string | null;
   };
   source: 'drivers' | 'taxi_drivers';
-}
-
-// Haversine formula
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
 }
 
 export default function NearbyLivraison() {
@@ -188,8 +178,11 @@ export default function NearbyLivraison() {
         });
       });
 
+      // Filtre: seulement les livreurs dans un rayon de 20 km
+      const filteredDrivers = allDrivers.filter(d => d.distance !== undefined && d.distance <= RADIUS_KM);
+
       // Sort by availability and distance
-      allDrivers.sort((a, b) => {
+      filteredDrivers.sort((a, b) => {
         if (a.is_online && !b.is_online) return -1;
         if (!a.is_online && b.is_online) return 1;
         if (a.distance !== undefined && b.distance !== undefined) {
@@ -198,7 +191,7 @@ export default function NearbyLivraison() {
         return 0;
       });
 
-      setDrivers(allDrivers);
+      setDrivers(filteredDrivers);
     } catch (error) {
       console.error('Error loading drivers:', error);
     } finally {
@@ -242,7 +235,7 @@ export default function NearbyLivraison() {
                 Livraison à Proximité
               </h1>
               <p className="text-xs text-muted-foreground">
-                {drivers.length} livreur{drivers.length !== 1 ? 's' : ''} disponible{drivers.length !== 1 ? 's' : ''}
+                {drivers.length} livreur{drivers.length !== 1 ? 's' : ''} dans un rayon de {RADIUS_KM} km
               </p>
             </div>
             <Button
