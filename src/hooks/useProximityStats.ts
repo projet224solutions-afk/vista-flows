@@ -133,7 +133,7 @@ export function useProximityStats() {
       const { data: taxiDrivers, error: taxiDriversError } = await supabase
         .from('taxi_drivers')
         .select('id, vehicle_type, last_lat, last_lng, is_online, status')
-        .eq('is_online', true);
+        .or('is_online.eq.true,status.eq.on_trip,status.eq.active,status.eq.online');
 
       if (taxiDriversError) throw taxiDriversError;
 
