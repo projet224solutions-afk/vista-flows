@@ -45,8 +45,8 @@ export function VendorAnalyticsDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPIs - 2 colonnes en paysage mobile, 4 en desktop */}
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {stats.map((stat) => (
           <Card key={stat.title} className="p-6">
             <div className="flex items-center justify-between">
