@@ -15698,6 +15698,7 @@ export type Database = {
             }
             Returns: undefined
           }
+      resolve_cache_errors: { Args: never; Returns: number }
       run_daily_wallet_audit: { Args: never; Returns: Json }
       set_agent_permissions: {
         Args: { p_agent_id: string; p_permissions: Json }
