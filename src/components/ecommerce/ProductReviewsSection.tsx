@@ -40,24 +40,70 @@ export const ProductReviewsSection = ({ productId }: ProductReviewsSectionProps)
   const loadReviews = async () => {
     setLoading(true);
     try {
-      // Charger les avis
+      // D'abord récupérer le vendor_id du produit
+      const { data: productData, error: productError } = await supabase
+        .from('products')
+        .select('vendor_id')
+        .eq('id', productId)
+        .single();
+
+      if (productError || !productData?.vendor_id) {
+        setReviews([]);
+        setRating({ average: 0, total: 0 });
+        setLoading(false);
+        return;
+      }
+
+      // Charger les avis depuis vendor_ratings pour ce vendeur
       const { data: reviewsData } = await supabase
-        .from('product_reviews')
+        .from('vendor_ratings')
         .select(`
-          *,
-          profiles(full_name, avatar_url)
+          id,
+          customer_id,
+          rating,
+          comment,
+          order_id,
+          created_at
         `)
-        .eq('product_id', productId)
-        .eq('is_approved', true)
+        .eq('vendor_id', productData.vendor_id)
         .order('created_at', { ascending: false })
         .limit(20);
 
-      setReviews((reviewsData as any) || []);
+      // Récupérer les profils
+      const customerIds = [...new Set((reviewsData || []).map(r => r.customer_id))];
+      let profilesMap = new Map();
+      
+      if (customerIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name, first_name, last_name, avatar_url')
+          .in('id', customerIds);
+        
+        profilesMap = new Map(
+          (profilesData || []).map(p => [p.id, p])
+        );
+      }
+
+      const formattedReviews: Review[] = (reviewsData || []).map(r => ({
+        id: r.id,
+        user_id: r.customer_id,
+        rating: r.rating,
+        title: '',
+        content: r.comment || '',
+        verified_purchase: true,
+        helpful_count: 0,
+        created_at: r.created_at,
+        profiles: profilesMap.get(r.customer_id)
+      }));
+
+      setReviews(formattedReviews);
 
       // Calculer la note moyenne
-      if (reviewsData && reviewsData.length > 0) {
-        const avg = reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length;
-        setRating({ average: Math.round(avg * 10) / 10, total: reviewsData.length });
+      if (formattedReviews.length > 0) {
+        const avg = formattedReviews.reduce((sum, r) => sum + r.rating, 0) / formattedReviews.length;
+        setRating({ average: Math.round(avg * 10) / 10, total: formattedReviews.length });
+      } else {
+        setRating({ average: 0, total: 0 });
       }
     } catch (error: any) {
       console.error('Error loading reviews:', error);
