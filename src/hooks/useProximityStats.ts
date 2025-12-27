@@ -73,6 +73,7 @@ export function useProximityStats() {
     return new Promise<UserPosition>((resolve) => {
       if (!navigator.geolocation) {
         setLocationError("Géolocalisation non supportée");
+        setUserPosition(DEFAULT_POSITION);
         resolve(DEFAULT_POSITION);
         return;
       }
@@ -81,17 +82,19 @@ export function useProximityStats() {
         (position) => {
           const pos = {
             latitude: position.coords.latitude,
-            longitude: position.coords.longitude
+            longitude: position.coords.longitude,
           };
+          setLocationError(null);
           setUserPosition(pos);
           resolve(pos);
         },
         (error) => {
           console.log("Erreur géolocalisation:", error.message);
-          setLocationError("Position non disponible, utilisation de la position par défaut");
+          setLocationError("GPS non disponible: activez la localisation pour des distances exactes");
+          setUserPosition(DEFAULT_POSITION);
           resolve(DEFAULT_POSITION);
         },
-        { timeout: 5000, enableHighAccuracy: false }
+        { timeout: 20000, enableHighAccuracy: true, maximumAge: 0 }
       );
     });
   }, []);

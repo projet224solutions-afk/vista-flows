@@ -62,6 +62,14 @@ export default function NearbyBoutiques() {
 
       const origin = overridePosition ?? userPosition;
 
+      // IMPORTANT: sans GPS réel, les distances peuvent être fausses (position par défaut).
+      // On force donc l'utilisateur à activer le GPS pour afficher les boutiques proches.
+      if (!overridePosition && !usingRealLocation) {
+        setVendors([]);
+        setError(`Activez le GPS pour voir les boutiques à moins de ${RADIUS_KM} km.`);
+        return;
+      }
+
       let list: Vendor[] = (data || []).map((v: any) => ({
         ...v,
         business_type: v.business_type as Vendor["business_type"],

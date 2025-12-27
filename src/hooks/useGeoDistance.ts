@@ -36,6 +36,7 @@ export function useGeoDistance() {
 
   const hasRealLocationRef = useRef(false);
   const lastKnownPositionRef = useRef<GeoPosition>(DEFAULT_POSITION);
+  const watchIdRef = useRef<number | null>(null);
 
   const requestPosition = useCallback((opts?: { force?: boolean }) => {
     return new Promise<GeoPosition>((resolve) => {
@@ -66,8 +67,12 @@ export function useGeoDistance() {
           // Si on a déjà eu un GPS valide, on garde la dernière position connue.
           // Sinon on retombe sur la position par défaut.
           const fallback = hasRealLocationRef.current ? lastKnownPositionRef.current : DEFAULT_POSITION;
-          setUsingRealLocation(false);
+
+          lastKnownPositionRef.current = fallback;
+          setUserPosition(fallback);
+          setUsingRealLocation(hasRealLocationRef.current);
           setPositionReady(true);
+
           resolve(fallback);
         },
         {
@@ -81,6 +86,40 @@ export function useGeoDistance() {
 
   useEffect(() => {
     void requestPosition();
+
+    if (!navigator.geolocation) return;
+
+    // Suivi en continu pour améliorer la précision (meilleures distances)
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        const next = {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        };
+
+        lastKnownPositionRef.current = next;
+        hasRealLocationRef.current = true;
+
+        setUserPosition(next);
+        setUsingRealLocation(true);
+        setPositionReady(true);
+      },
+      () => {
+        // On ignore l'erreur ici: requestPosition gère déjà un fallback.
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 0,
+      }
+    );
+
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+    };
   }, [requestPosition]);
 
   const refreshPosition = useCallback(() => requestPosition({ force: true }), [requestPosition]);
