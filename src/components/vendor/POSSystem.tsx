@@ -47,6 +47,8 @@ import {
 import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
 import { useFxRates } from '@/hooks/useFxRates';
+import { CurrencySelect } from '@/components/ui/currency-select';
+import { getCurrencyByCode, formatCurrency } from '@/data/currencies';
 import { useAuth } from '@/hooks/useAuth';
 import { useAgent } from '@/contexts/AgentContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -130,37 +132,33 @@ export function POSSystem() {
   const [categories, setCategories] = useState<Array<{id: string, name: string}>>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   
-  // Taux de change (taux exact du jour) via Edge Function (évite CORS côté navigateur)
+  // Devise sélectionnée
+  const selectedCurrency = settings?.currency || 'GNF';
+  
+  // Taux de change (taux exact du jour) via Edge Function
   const { rates: fxRates, lastUpdated: ratesLastUpdated } = useFxRates({
     base: 'GNF',
-    symbols: ['USD', 'EUR'],
-    refreshMinutes: 12 * 60, // auto: toutes les 12h
+    symbols: [selectedCurrency].filter(c => c !== 'GNF'),
+    refreshMinutes: 12 * 60,
   });
 
-  const exchangeRates = useMemo(() => {
-    const r: Record<string, number> = {};
-
-    const gnfUsd = fxRates?.USD;
-    const gnfEur = fxRates?.EUR;
-
-    if (typeof gnfUsd === 'number' && gnfUsd > 0) {
-      r['GNF_USD'] = gnfUsd;
-      r['USD_GNF'] = 1 / gnfUsd;
+  // Fonction pour convertir un prix de GNF vers la devise sélectionnée
+  const convertPrice = (priceInGNF: number): number => {
+    if (selectedCurrency === 'GNF') return priceInGNF;
+    const rate = fxRates?.[selectedCurrency];
+    if (typeof rate === 'number' && rate > 0) {
+      return priceInGNF * rate;
     }
-
-    if (typeof gnfEur === 'number' && gnfEur > 0) {
-      r['GNF_EUR'] = gnfEur;
-      r['EUR_GNF'] = 1 / gnfEur;
-    }
-
-    // Cross rates
-    if (r['GNF_USD'] && r['GNF_EUR']) {
-      r['USD_EUR'] = r['GNF_EUR'] / r['GNF_USD'];
-      r['EUR_USD'] = r['GNF_USD'] / r['GNF_EUR'];
-    }
-
-    return r;
-  }, [fxRates]);
+    return priceInGNF;
+  };
+  
+  // Formater le prix avec la devise
+  const formatPriceWithCurrency = (priceInGNF: number): string => {
+    const convertedPrice = convertPrice(priceInGNF);
+    const currencyInfo = getCurrencyByCode(selectedCurrency);
+    if (!currencyInfo) return `${convertedPrice.toLocaleString()} ${selectedCurrency}`;
+    return formatCurrency(convertedPrice, selectedCurrency);
+  };
   
   // Fonction pour convertir un prix de GNF vers la devise sélectionnée
   const convertPrice = (priceInGNF: number): number => {
@@ -1050,19 +1048,17 @@ export function POSSystem() {
                     
                     <div>
                       <label className="text-sm font-medium mb-2 block">Devise</label>
-                      <Select 
-                        value={settings?.currency || 'GNF'} 
+                      <CurrencySelect
+                        value={settings?.currency || 'GNF'}
                         onValueChange={(value) => updateSettings({ currency: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="GNF">GNF</SelectItem>
-                          <SelectItem value="EUR">EUR</SelectItem>
-                          <SelectItem value="USD">USD</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        showFlag={true}
+                        showName={false}
+                      />
+                      {ratesLastUpdated && selectedCurrency !== 'GNF' && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Taux mis à jour: {ratesLastUpdated.toLocaleString('fr-FR')}
+                        </p>
+                      )}
                     </div>
                     
                     <div>

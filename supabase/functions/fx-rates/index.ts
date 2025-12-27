@@ -14,11 +14,8 @@ type FxRatesResponse = {
   fetched_at: string;
 };
 
-let cache: {
-  key: string;
-  expires_at: number;
-  payload: FxRatesResponse;
-} | null = null;
+// Cache en mémoire (durée: 15 minutes) - clé = base currency
+const cache: Map<string, { expires_at: number; payload: FxRatesResponse }> = new Map();
 
 function isCurrencyCode(value: string) {
   return /^[A-Z]{3}$/.test(value);
@@ -53,17 +50,32 @@ serve(async (req) => {
       });
     }
 
-    const cacheKey = `${base}:${symbols.slice().sort().join(",")}`;
     const now = Date.now();
 
-    if (cache && cache.key === cacheKey && cache.expires_at > now) {
-      return new Response(JSON.stringify(cache.payload), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Vérifier le cache pour cette base
+    const cached = cache.get(base);
+    if (cached && cached.expires_at > now) {
+      // Filtrer pour ne retourner que les symbols demandés
+      const filteredRates: Record<string, number> = {};
+      for (const sym of symbols) {
+        if (typeof cached.payload.rates[sym] === "number") {
+          filteredRates[sym] = cached.payload.rates[sym];
+        }
+      }
+      
+      if (Object.keys(filteredRates).length > 0) {
+        console.log(`[fx-rates] Cache hit for ${base}, returning ${Object.keys(filteredRates).length} rates`);
+        return new Response(
+          JSON.stringify({ ...cached.payload, rates: filteredRates }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
-    // Source: Open Exchange Rates by ER-API (gratuit, sans clé)
+    // Appel API externe: Open Exchange Rates by ER-API (gratuit, sans clé)
+    // Cette API supporte TOUTES les devises mondiales
     // https://open.er-api.com/v6/latest/{BASE}
+    console.log(`[fx-rates] Fetching rates for base: ${base}`);
     const url = `https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`;
     const fxRes = await fetch(url, { headers: { accept: "application/json" } });
     const fxJson = await fxRes.json();
@@ -73,34 +85,45 @@ serve(async (req) => {
       throw new Error("Fournisseur de taux indisponible");
     }
 
-    const rates: Record<string, number> = {};
-    for (const sym of symbols) {
-      const v = fxJson.rates?.[sym];
-      if (typeof v === "number" && Number.isFinite(v) && v > 0) {
-        rates[sym] = v;
+    // Stocker TOUS les taux dans le cache (pour optimiser les requêtes futures)
+    const allRates: Record<string, number> = {};
+    for (const [sym, val] of Object.entries(fxJson.rates)) {
+      if (typeof val === "number" && Number.isFinite(val) && val > 0) {
+        allRates[sym] = val;
       }
     }
 
-    if (Object.keys(rates).length === 0) {
-      return new Response(JSON.stringify({ error: "Taux manquants" }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const payload: FxRatesResponse = {
+    const fullPayload: FxRatesResponse = {
       base,
-      rates,
+      rates: allRates,
       provider: "open-er-api",
       time_last_update_utc: typeof fxJson?.time_last_update_utc === "string" ? fxJson.time_last_update_utc : null,
       fetched_at: new Date().toISOString(),
     };
 
-    cache = { key: cacheKey, expires_at: now + 15 * 60_000, payload };
+    // Mettre en cache pour 15 minutes
+    cache.set(base, { expires_at: now + 15 * 60_000, payload: fullPayload });
+    console.log(`[fx-rates] Cached ${Object.keys(allRates).length} rates for ${base}`);
 
-    return new Response(JSON.stringify(payload), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    // Filtrer pour ne retourner que les symbols demandés
+    const requestedRates: Record<string, number> = {};
+    for (const sym of symbols) {
+      if (typeof allRates[sym] === "number") {
+        requestedRates[sym] = allRates[sym];
+      }
+    }
+
+    if (Object.keys(requestedRates).length === 0) {
+      return new Response(JSON.stringify({ error: "Taux manquants pour les devises demandées" }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(
+      JSON.stringify({ ...fullPayload, rates: requestedRates }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (error) {
     console.error("[fx-rates] error", error);
     return new Response(JSON.stringify({ error: "Erreur récupération taux" }), {
