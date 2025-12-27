@@ -188,26 +188,38 @@ serve(async (req) => {
       resourceResolvedCount = data?.length || 0;
     }
 
-    // 8. Résoudre les erreurs "fixed"
-    const { data: fixedErrorsToResolve } = await supabaseClient
+    // 8. Résoudre les erreurs "fixed" en batches (max 500 par requête)
+    const { count: fixedCount } = await supabaseClient
       .from('system_errors')
-      .select('id')
+      .select('*', { count: 'exact', head: true })
       .eq('status', 'fixed');
 
     let fixedResolvedCount = 0;
-    if (fixedErrorsToResolve && fixedErrorsToResolve.length > 0) {
-      const ids = fixedErrorsToResolve.map(e => e.id);
-      const { data, error: fixedUpdateError } = await supabaseClient
+    const BATCH_SIZE = 500;
+    const totalBatches = Math.ceil((fixedCount || 0) / BATCH_SIZE);
+    
+    for (let i = 0; i < totalBatches; i++) {
+      const { data: batch } = await supabaseClient
         .from('system_errors')
-        .update({ status: 'resolved' })
-        .in('id', ids)
-        .select('id');
+        .select('id')
+        .eq('status', 'fixed')
+        .range(0, BATCH_SIZE - 1);
+      
+      if (batch && batch.length > 0) {
+        const ids = batch.map(e => e.id);
+        const { data, error: batchError } = await supabaseClient
+          .from('system_errors')
+          .update({ status: 'resolved' })
+          .in('id', ids)
+          .select('id');
         
-      if (fixedUpdateError) {
-        console.error('Fixed update error:', fixedUpdateError);
+        if (batchError) {
+          console.error(`Batch ${i + 1} error:`, batchError);
+        }
+        fixedResolvedCount += data?.length || 0;
       }
-      fixedResolvedCount = data?.length || 0;
     }
+    console.log(`Fixed errors resolved: ${fixedResolvedCount} / ${fixedCount}`);
 
     // 9. Enregistrer ce nettoyage
     await supabaseClient
