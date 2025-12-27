@@ -1,6 +1,6 @@
 /**
  * Section d'affichage des avis clients sur un produit spécifique
- * Récupère les avis depuis product_reviews pour ce produit uniquement
+ * Récupère les avis depuis vendor_ratings (avis vendeur liés aux commandes)
  */
 
 import { useState, useEffect } from 'react';
@@ -50,22 +50,38 @@ export default function ProductReviewsSection({ productId, productName }: Produc
     try {
       setLoading(true);
 
-      // Récupérer les avis depuis product_reviews pour CE produit uniquement
+      // D'abord récupérer le vendor_id du produit
+      const { data: productData, error: productError } = await supabase
+        .from('products')
+        .select('vendor_id')
+        .eq('id', productId)
+        .single();
+
+      if (productError || !productData?.vendor_id) {
+        setReviews([]);
+        setStats({
+          averageRating: 0,
+          totalReviews: 0,
+          distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Récupérer les avis depuis vendor_ratings pour ce vendeur
       const { data: reviewsData, error: reviewsError } = await supabase
-        .from('product_reviews')
+        .from('vendor_ratings')
         .select(`
           id,
           rating,
-          title,
-          content,
+          comment,
           created_at,
-          user_id,
-          verified_purchase,
-          is_approved
+          customer_id,
+          order_id
         `)
-        .eq('product_id', productId)
-        .eq('is_approved', true)
-        .order('created_at', { ascending: false });
+        .eq('vendor_id', productData.vendor_id)
+        .order('created_at', { ascending: false })
+        .limit(50);
 
       if (reviewsError) throw reviewsError;
 
@@ -81,11 +97,11 @@ export default function ProductReviewsSection({ productId, productName }: Produc
       }
 
       // Récupérer les profils des clients
-      const userIds = [...new Set(reviewsData.map(r => r.user_id))];
+      const customerIds = [...new Set(reviewsData.map(r => r.customer_id))];
       const { data: profilesData } = await supabase
         .from('profiles')
         .select('id, full_name, first_name, last_name')
-        .in('id', userIds);
+        .in('id', customerIds);
 
       const profilesMap = new Map(
         (profilesData || []).map(p => [
@@ -97,11 +113,11 @@ export default function ProductReviewsSection({ productId, productName }: Produc
       const reviewsList: Review[] = reviewsData.map(review => ({
         id: review.id,
         rating: review.rating,
-        title: review.title,
-        content: review.content,
+        title: '', // vendor_ratings n'a pas de titre
+        content: review.comment || '',
         created_at: review.created_at,
-        customer_name: profilesMap.get(review.user_id) || 'Client',
-        verified_purchase: review.verified_purchase ?? false
+        customer_name: profilesMap.get(review.customer_id) || 'Client',
+        verified_purchase: true // Tous les avis vendor_ratings sont des achats vérifiés
       }));
 
       setReviews(reviewsList);
@@ -109,7 +125,7 @@ export default function ProductReviewsSection({ productId, productName }: Produc
       // Calculer les statistiques
       const total = reviewsList.length;
       const sum = reviewsList.reduce((acc, r) => acc + r.rating, 0);
-      const avg = sum / total;
+      const avg = total > 0 ? sum / total : 0;
 
       const dist: { [key: number]: number } = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
       reviewsList.forEach(r => {
