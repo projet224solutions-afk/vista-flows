@@ -50,36 +50,20 @@ export default function ProductReviewsSection({ productId, productName }: Produc
     try {
       setLoading(true);
 
-      // D'abord récupérer le vendor_id du produit
-      const { data: productData, error: productError } = await supabase
-        .from('products')
-        .select('vendor_id')
-        .eq('id', productId)
-        .single();
-
-      if (productError || !productData?.vendor_id) {
-        setReviews([]);
-        setStats({
-          averageRating: 0,
-          totalReviews: 0,
-          distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
-        });
-        setLoading(false);
-        return;
-      }
-
-      // Récupérer les avis depuis vendor_ratings pour ce vendeur
+      // Récupérer les avis depuis product_reviews pour ce produit spécifique
       const { data: reviewsData, error: reviewsError } = await supabase
-        .from('vendor_ratings')
+        .from('product_reviews')
         .select(`
           id,
           rating,
-          comment,
+          title,
+          content,
           created_at,
-          customer_id,
-          order_id
+          user_id,
+          verified_purchase
         `)
-        .eq('vendor_id', productData.vendor_id)
+        .eq('product_id', productId)
+        .eq('is_approved', true)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -97,11 +81,11 @@ export default function ProductReviewsSection({ productId, productName }: Produc
       }
 
       // Récupérer les profils des clients
-      const customerIds = [...new Set(reviewsData.map(r => r.customer_id))];
+      const userIds = [...new Set(reviewsData.map(r => r.user_id))];
       const { data: profilesData } = await supabase
         .from('profiles')
         .select('id, full_name, first_name, last_name')
-        .in('id', customerIds);
+        .in('id', userIds);
 
       const profilesMap = new Map(
         (profilesData || []).map(p => [
@@ -113,11 +97,11 @@ export default function ProductReviewsSection({ productId, productName }: Produc
       const reviewsList: Review[] = reviewsData.map(review => ({
         id: review.id,
         rating: review.rating,
-        title: '', // vendor_ratings n'a pas de titre
-        content: review.comment || '',
+        title: review.title || '',
+        content: review.content || '',
         created_at: review.created_at,
-        customer_name: profilesMap.get(review.customer_id) || 'Client',
-        verified_purchase: true // Tous les avis vendor_ratings sont des achats vérifiés
+        customer_name: profilesMap.get(review.user_id) || 'Client',
+        verified_purchase: review.verified_purchase || false
       }));
 
       setReviews(reviewsList);
