@@ -13221,6 +13221,134 @@ export type Database = {
         }
         Relationships: []
       }
+      waf_logs: {
+        Row: {
+          action_taken: string
+          country_code: string | null
+          created_at: string | null
+          id: string
+          ip_address: unknown
+          metadata: Json | null
+          request_method: string | null
+          request_path: string | null
+          rule_id: string | null
+          threat_type: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action_taken: string
+          country_code?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address: unknown
+          metadata?: Json | null
+          request_method?: string | null
+          request_path?: string | null
+          rule_id?: string | null
+          threat_type?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action_taken?: string
+          country_code?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          request_method?: string | null
+          request_path?: string | null
+          rule_id?: string | null
+          threat_type?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waf_logs_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "waf_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      waf_rules: {
+        Row: {
+          action: string | null
+          blocked_requests: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          pattern: string | null
+          priority: number | null
+          rule_type: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          action?: string | null
+          blocked_requests?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          pattern?: string | null
+          priority?: number | null
+          rule_type: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          action?: string | null
+          blocked_requests?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          pattern?: string | null
+          priority?: number | null
+          rule_type?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      waf_stats: {
+        Row: {
+          allowed_requests: number | null
+          blocked_requests: number | null
+          challenged_requests: number | null
+          created_at: string | null
+          date: string
+          id: string
+          top_threats: Json | null
+          total_requests: number | null
+          unique_ips: number | null
+        }
+        Insert: {
+          allowed_requests?: number | null
+          blocked_requests?: number | null
+          challenged_requests?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          top_threats?: Json | null
+          total_requests?: number | null
+          unique_ips?: number | null
+        }
+        Update: {
+          allowed_requests?: number | null
+          blocked_requests?: number | null
+          challenged_requests?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          top_threats?: Json | null
+          total_requests?: number | null
+          unique_ips?: number | null
+        }
+        Relationships: []
+      }
       wallet_fees: {
         Row: {
           created_at: string | null

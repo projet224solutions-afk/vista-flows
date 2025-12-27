@@ -1,55 +1,116 @@
 /**
  * PROGRAMME BUG BOUNTY
- * Gestion du programme de chasse aux vulnérabilités
+ * Gestion du programme de chasse aux vulnérabilités - Connecté à Supabase
  */
 
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bug, DollarSign, Users, TrendingUp } from "lucide-react";
+import { Bug, DollarSign, Users, TrendingUp, RefreshCw, ExternalLink } from "lucide-react";
 import { useResponsive } from "@/hooks/useResponsive";
 import { ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface BountyReport {
   id: string;
-  severity: 'critical' | 'high' | 'medium' | 'low';
+  severity: string;
   title: string;
-  reporter: string;
-  reward: number;
-  status: 'open' | 'in_review' | 'resolved' | 'rejected';
-  submittedAt: string;
+  reporter_name: string;
+  reward_amount: number | null;
+  status: string;
+  created_at: string;
 }
 
-const mockReports: BountyReport[] = [
-  {
-    id: '1',
-    severity: 'high',
-    title: 'SQL Injection in payment endpoint',
-    reporter: 'security_hunter',
-    reward: 5000,
-    status: 'resolved',
-    submittedAt: '2024-01-15'
-  },
-  {
-    id: '2',
-    severity: 'medium',
-    title: 'XSS vulnerability in user profile',
-    reporter: 'bug_finder',
-    reward: 2000,
-    status: 'in_review',
-    submittedAt: '2024-01-20'
-  }
-];
-
-const stats = {
-  totalReports: 47,
-  resolvedVulnerabilities: 38,
-  totalRewards: 125000,
-  activeHunters: 156
-};
+interface BugBountyStats {
+  totalReports: number;
+  resolvedVulnerabilities: number;
+  totalRewards: number;
+  activeHunters: number;
+  pendingReports: number;
+}
 
 export function BugBountyProgram() {
   const { isMobile } = useResponsive();
+  const navigate = useNavigate();
+  const [reports, setReports] = useState<BountyReport[]>([]);
+  const [stats, setStats] = useState<BugBountyStats>({
+    totalReports: 0,
+    resolvedVulnerabilities: 0,
+    totalRewards: 0,
+    activeHunters: 0,
+    pendingReports: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  const loadBugBountyData = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      // Charger les rapports récents
+      const { data: reportsData, error: reportsError } = await supabase
+        .from('bug_reports')
+        .select('id, severity, title, reporter_name, reward_amount, status, created_at')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (reportsError) {
+        console.error('Erreur chargement rapports:', reportsError);
+        setReports([]);
+      } else {
+        setReports(reportsData || []);
+      }
+
+      // Charger les statistiques
+      const { data: allReports, error: allError } = await supabase
+        .from('bug_reports')
+        .select('status, reward_amount, reporter_name');
+
+      if (allError) {
+        console.error('Erreur chargement stats:', allError);
+      } else {
+        const reports = allReports || [];
+        const uniqueReporters = new Set(reports.map(r => r.reporter_name)).size;
+        const totalRewards = reports
+          .filter(r => r.status === 'resolved' && r.reward_amount)
+          .reduce((sum, r) => sum + (r.reward_amount || 0), 0);
+
+        setStats({
+          totalReports: reports.length,
+          resolvedVulnerabilities: reports.filter(r => r.status === 'resolved').length,
+          totalRewards: totalRewards,
+          activeHunters: uniqueReporters,
+          pendingReports: reports.filter(r => r.status === 'pending').length
+        });
+      }
+
+      // Charger depuis hall of fame si disponible
+      const { data: hallOfFame } = await supabase
+        .from('bug_bounty_hall_of_fame')
+        .select('total_rewards')
+        .order('total_rewards', { ascending: false })
+        .limit(10);
+
+      if (hallOfFame && hallOfFame.length > 0) {
+        const totalFromHall = hallOfFame.reduce((sum, h) => sum + (h.total_rewards || 0), 0);
+        if (totalFromHall > stats.totalRewards) {
+          setStats(prev => ({ ...prev, totalRewards: totalFromHall }));
+        }
+      }
+
+    } catch (error) {
+      console.error('Erreur Bug Bounty:', error);
+      toast.error('Erreur lors du chargement des données Bug Bounty');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadBugBountyData();
+  }, [loadBugBountyData]);
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -61,16 +122,66 @@ export function BugBountyProgram() {
     }
   };
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'resolved': return <Badge className="bg-green-500">Résolu</Badge>;
+      case 'in_review': return <Badge className="bg-blue-500">En revue</Badge>;
+      case 'confirmed': return <Badge className="bg-purple-500">Confirmé</Badge>;
+      case 'rejected': return <Badge variant="destructive">Rejeté</Badge>;
+      default: return <Badge variant="outline">En attente</Badge>;
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bug className="w-5 h-5 text-primary animate-pulse" />
+            Programme Bug Bounty
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            Chargement des données Bug Bounty...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Bug className="w-5 h-5 text-primary" />
-          Programme Bug Bounty
-        </CardTitle>
-        <CardDescription>
-          Communauté de chercheurs en sécurité
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Bug className="w-5 h-5 text-primary" />
+              Programme Bug Bounty
+            </CardTitle>
+            <CardDescription>
+              Communauté de chercheurs en sécurité
+            </CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={loadBugBountyData}
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/bug-bounty')}
+            >
+              <ExternalLink className="w-4 h-4 mr-1" />
+              Page publique
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Statistiques */}
@@ -97,33 +208,52 @@ export function BugBountyProgram() {
           </div>
         </ResponsiveGrid>
 
+        {/* Alerte rapports en attente */}
+        {stats.pendingReports > 0 && (
+          <div className="p-3 bg-yellow-50 dark:bg-yellow-950 rounded-lg border border-yellow-200 dark:border-yellow-800">
+            <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300">
+              <Bug className="w-5 h-5" />
+              <span className="font-medium">{stats.pendingReports} rapport(s) en attente de revue</span>
+            </div>
+          </div>
+        )}
+
         {/* Rapports récents */}
         <div className="space-y-2">
           <h4 className="font-semibold text-sm">Rapports récents</h4>
-          {mockReports.map((report) => (
-            <div key={report.id} className="p-3 border rounded-lg">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge className={getSeverityColor(report.severity)}>
-                      {report.severity}
-                    </Badge>
-                    <Badge variant="outline">{report.status}</Badge>
+          {reports.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Bug className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>Aucun rapport de bug soumis</p>
+            </div>
+          ) : (
+            reports.map((report) => (
+              <div key={report.id} className="p-3 border rounded-lg">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <Badge className={getSeverityColor(report.severity)}>
+                        {report.severity}
+                      </Badge>
+                      {getStatusBadge(report.status)}
+                    </div>
+                    <h5 className="font-medium text-sm truncate">{report.title}</h5>
+                    <p className="text-xs text-muted-foreground">
+                      Par {report.reporter_name} • {new Date(report.created_at).toLocaleDateString('fr-FR')}
+                    </p>
                   </div>
-                  <h5 className="font-medium text-sm truncate">{report.title}</h5>
-                  <p className="text-xs text-muted-foreground">
-                    Par {report.reporter} • {new Date(report.submittedAt).toLocaleDateString('fr-FR')}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <div className="font-bold text-green-600">{report.reward.toLocaleString()} GNF</div>
+                  {report.reward_amount && report.reward_amount > 0 && (
+                    <div className="text-right">
+                      <div className="font-bold text-green-600">{report.reward_amount.toLocaleString()} GNF</div>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
-        <Button className="w-full">
+        <Button className="w-full" onClick={() => navigate('/bug-bounty')}>
           Voir tous les rapports
         </Button>
       </CardContent>
