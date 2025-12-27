@@ -140,15 +140,6 @@ const getProductCategories = (stats: any) => [
     count: stats.mode
   },
   {
-    id: "b4376e0a-bac5-4359-bc1f-e476655a1df2", // UUID réel de "Beauté & Santé"
-    title: "Santé & Bien-être",
-    icon: Heart,
-    color: "from-rose-500 to-rose-600",
-    bgColor: "bg-rose-50",
-    textColor: "text-rose-600",
-    count: stats.sante
-  },
-  {
     id: "ca850dd2-99f8-4dfc-bd48-cf958c90cff6", // UUID réel de "Électronique"
     title: "Électronique",
     icon: Laptop,
@@ -156,20 +147,31 @@ const getProductCategories = (stats: any) => [
     bgColor: "bg-indigo-50",
     textColor: "text-indigo-600",
     count: stats.electronique
-  },
-  {
-    id: "a50506f0-a7f3-4b3f-ad51-aef5d46a7a1a", // UUID réel de "Maison & Décoration"
-    title: "Maison & Déco",
-    icon: Home,
-    color: "from-teal-500 to-teal-600",
-    bgColor: "bg-teal-50",
-    textColor: "text-teal-600",
-    count: stats.maison
   }
 ];
 
 // Services professionnels avec stats dynamiques
 const getProfessionalServices = (stats: any) => [
+  {
+    id: "sante",
+    title: "Santé & Bien-être",
+    icon: Heart,
+    color: "from-rose-500 to-rose-600",
+    bgColor: "bg-rose-50",
+    textColor: "text-rose-600",
+    description: "Soins & consultations",
+    count: stats.sante
+  },
+  {
+    id: "maison",
+    title: "Maison & Déco",
+    icon: Home,
+    color: "from-teal-500 to-teal-600",
+    bgColor: "bg-teal-50",
+    textColor: "text-teal-600",
+    description: "Décoration & aménagement",
+    count: stats.maison
+  },
   {
     id: "immobilier",
     title: "Immobilier",
