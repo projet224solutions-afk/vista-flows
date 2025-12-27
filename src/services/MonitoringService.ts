@@ -151,7 +151,7 @@ class MonitoringService {
         .from('system_errors')
         .select('*', { count: 'exact', head: true })
         .eq('severity', 'critique')
-        .eq('status', 'detected')
+        .in('status', ['detected', 'critical', 'pending'])
         .gte('created_at', new Date(Date.now() - 3600000).toISOString()); // Dernière heure
 
       // Si erreur de table ou pas de données, considérer comme sain
@@ -266,7 +266,7 @@ class MonitoringService {
         .from('system_errors')
         .select('*', { count: 'exact', head: true })
         .eq('severity', 'critique')
-        .eq('status', 'detected')
+        .in('status', ['detected', 'critical', 'pending'])
         .gte('created_at', new Date(Date.now() - 86400000).toISOString()); // 24h
 
       if (error) return 0;
@@ -284,7 +284,7 @@ class MonitoringService {
       const { count, error } = await supabase
         .from('system_errors')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'detected')
+        .in('status', ['detected', 'pending'])
         .in('severity', ['modérée', 'mineure'])
         .gte('created_at', new Date(Date.now() - 86400000).toISOString()); // 24h
 
