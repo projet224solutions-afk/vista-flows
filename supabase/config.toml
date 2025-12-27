@@ -263,3 +263,6 @@ verify_jwt = true
 
 [functions.test-google-cloud-api]
 verify_jwt = false
+
+[functions.cleanup-cache-errors]
+verify_jwt = false

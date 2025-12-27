@@ -2961,6 +2961,39 @@ export type Database = {
           },
         ]
       }
+      deployment_logs: {
+        Row: {
+          commit_hash: string | null
+          deployed_at: string | null
+          deployed_by: string | null
+          id: string
+          metadata: Json | null
+          notes: string | null
+          status: string | null
+          version: string | null
+        }
+        Insert: {
+          commit_hash?: string | null
+          deployed_at?: string | null
+          deployed_by?: string | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          status?: string | null
+          version?: string | null
+        }
+        Update: {
+          commit_hash?: string | null
+          deployed_at?: string | null
+          deployed_by?: string | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          status?: string | null
+          version?: string | null
+        }
+        Relationships: []
+      }
       devis_requests: {
         Row: {
           budget: number | null
