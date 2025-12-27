@@ -167,7 +167,7 @@ serve(async (req) => {
 
     // Récupérer la configuration
     const serviceAccountJson = Deno.env.get('GOOGLE_CLOUD_SERVICE_ACCOUNT');
-    const bucketName = Deno.env.get('GCS_BUCKET_NAME') || '224solutions-media';
+    const bucketName = Deno.env.get('GCS_BUCKET_NAME') || '224solutions';
 
     if (!serviceAccountJson) {
       return new Response(

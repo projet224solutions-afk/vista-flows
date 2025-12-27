@@ -59,7 +59,7 @@ serve(async (req) => {
       );
     }
 
-    const bucketName = Deno.env.get('GCS_BUCKET_NAME') || '224solutions-media';
+    const bucketName = Deno.env.get('GCS_BUCKET_NAME') || '224solutions';
     const publicUrl = `https://storage.googleapis.com/${bucketName}/${objectPath}`;
 
     console.log(`[gcs-upload-complete] Recording upload: ${objectPath} by user ${user.id}`);
