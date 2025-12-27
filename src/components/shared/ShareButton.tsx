@@ -1,14 +1,28 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Share2, Copy, Check, Link2, Loader2 } from "lucide-react";
+import { Share2, Check, Link2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createShortLink } from "@/hooks/useDeepLinking";
+
+function sanitizeShareUrl(rawUrl: string): string {
+  try {
+    const u = new URL(rawUrl, window.location.origin);
+    // Retirer les paramètres internes Lovable (ex: __lovable_token) pour éviter
+    // des liens partagés qui renvoient vers l’accueil / cassent la navigation.
+    for (const key of Array.from(u.searchParams.keys())) {
+      if (key.startsWith("__lovable")) u.searchParams.delete(key);
+    }
+    return `${u.origin}${u.pathname}${u.search}`;
+  } catch {
+    return rawUrl;
+  }
+}
 
 interface ShareButtonProps {
   title: string;
@@ -18,28 +32,28 @@ interface ShareButtonProps {
   size?: "default" | "sm" | "lg" | "icon";
   className?: string;
   /** Type de ressource pour le tracking */
-  resourceType?: 'shop' | 'product' | 'service' | 'other';
+  resourceType?: "shop" | "product" | "service" | "other";
   /** ID de la ressource pour le tracking */
   resourceId?: string;
   /** Utiliser les short URLs avec tracking */
   useShortUrl?: boolean;
 }
 
-export function ShareButton({ 
-  title, 
-  text, 
-  url, 
-  variant = "outline", 
+export function ShareButton({
+  title,
+  text,
+  url,
+  variant = "outline",
   size = "icon",
   className,
-  resourceType = 'other',
+  resourceType = "other",
   resourceId,
-  useShortUrl = false
+  useShortUrl = false,
 }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const shareUrl = url || window.location.href;
+  const shareUrl = sanitizeShareUrl(url || window.location.href);
   const shareText = text || title;
 
   // Obtenir l'URL de partage (courte ou normale)
@@ -54,11 +68,11 @@ export function ShareButton({
         originalUrl: shareUrl,
         title: title,
         type: resourceType,
-        resourceId: resourceId
+        resourceId: resourceId,
       });
       return shortUrl || shareUrl;
     } catch (error) {
-      console.error('Error creating short URL:', error);
+      console.error("Error creating short URL:", error);
       return shareUrl;
     } finally {
       setLoading(false);

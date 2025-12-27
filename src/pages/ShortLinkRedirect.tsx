@@ -67,6 +67,10 @@ export default function ShortLinkRedirect() {
       // Extraire le chemin relatif de l'URL originale
       try {
         const url = new URL(data.original_url);
+        // Retirer les paramètres internes Lovable (ex: __lovable_token)
+        for (const key of Array.from(url.searchParams.keys())) {
+          if (key.startsWith('__lovable')) url.searchParams.delete(key);
+        }
         const relativePath = url.pathname + url.search;
         // Rediriger vers la page
         navigate(relativePath, { replace: true });
