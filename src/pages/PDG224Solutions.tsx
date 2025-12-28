@@ -48,6 +48,7 @@ const BankingDashboard = lazy(() => import('@/components/pdg/BankingDashboard'))
 const PDGStolenVehiclesSupervision = lazy(() => import('@/components/pdg/PDGStolenVehiclesSupervision'));
 const DriverSubscriptionManagement = lazy(() => import('@/components/pdg/DriverSubscriptionManagement'));
 const PDGServiceSubscriptions = lazy(() => import('@/components/pdg/PDGServiceSubscriptions'));
+const PDGBureauMonitoring = lazy(() => import('@/components/pdg/PDGBureauMonitoring'));
 
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
@@ -622,6 +623,12 @@ export default function PDG224Solutions() {
               {activeTab === 'service-subscriptions' && (
                 <ErrorBoundary>
                   <PDGServiceSubscriptions />
+                </ErrorBoundary>
+              )}
+
+              {activeTab === 'bureau-monitoring' && (
+                <ErrorBoundary>
+                  <PDGBureauMonitoring />
                 </ErrorBoundary>
               )}
             </Suspense>
