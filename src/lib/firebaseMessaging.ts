@@ -106,15 +106,20 @@ export async function requestNotificationPermission(): Promise<string | null> {
       return null;
     }
 
-    // Enregistrer le service worker pour FCM
-    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-    
-    // Attendre que le service worker soit actif
+    // Utiliser le Service Worker principal de l'app (un seul SW par scope)
+    let registration = await navigator.serviceWorker.getRegistration();
+
+    if (!registration) {
+      registration = await navigator.serviceWorker.register('/service-worker.js');
+    }
+
+    // Attendre que le SW soit prêt
     await navigator.serviceWorker.ready;
-    
-    // Envoyer la config Firebase au service worker AVANT de demander le token
-    if (registration.active) {
-      registration.active.postMessage({
+
+    // Envoyer la config Firebase au Service Worker AVANT de demander le token
+    const sw = registration.active || registration.waiting || registration.installing;
+    if (sw) {
+      sw.postMessage({
         type: 'FIREBASE_CONFIG',
         config: {
           apiKey: config.apiKey,
@@ -126,11 +131,13 @@ export async function requestNotificationPermission(): Promise<string | null> {
         }
       });
       console.log('✅ Config Firebase envoyée au Service Worker');
+    } else {
+      console.warn('⚠️ Service Worker non disponible pour recevoir la config');
     }
-    
+
     // Petit délai pour laisser le SW initialiser Firebase
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
+    await new Promise(resolve => setTimeout(resolve, 250));
+
     // Récupérer le token
     currentToken = await getToken(messaging!, {
       vapidKey,
