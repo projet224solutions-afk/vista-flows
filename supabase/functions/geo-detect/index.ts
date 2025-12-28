@@ -79,6 +79,8 @@ interface GeoDetectRequest {
   ip_address?: string;
   google_country?: string;
   sim_country?: string;
+  gps_latitude?: number;
+  gps_longitude?: number;
   update_profile?: boolean;
 }
 
@@ -103,7 +105,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const body: GeoDetectRequest = await req.json();
-    const { user_id, google_country, sim_country, update_profile = true } = body;
+    const { user_id, google_country, sim_country, gps_latitude, gps_longitude, update_profile = true } = body;
 
     // Obtenir l'IP depuis les headers
     const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() 
@@ -143,6 +145,26 @@ serve(async (req) => {
         }
       } catch (geoError) {
         console.error("GeoIP detection failed:", geoError);
+      }
+    }
+    // Priorité 4: GPS (reverse geocoding)
+    else if (gps_latitude && gps_longitude) {
+      try {
+        // Utiliser Nominatim (OpenStreetMap) pour le reverse geocoding gratuit
+        const geoResponse = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${gps_latitude}&lon=${gps_longitude}&format=json`,
+          { headers: { 'User-Agent': '224Solutions/1.0' } }
+        );
+        if (geoResponse.ok) {
+          const geoData = await geoResponse.json();
+          if (geoData.address?.country_code) {
+            detectedCountry = geoData.address.country_code.toUpperCase();
+            detectionMethod = "gps";
+            console.log(`📍 GPS detected country: ${detectedCountry}`);
+          }
+        }
+      } catch (gpsError) {
+        console.error("GPS reverse geocoding failed:", gpsError);
       }
     }
 
