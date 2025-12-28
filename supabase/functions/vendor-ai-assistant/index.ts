@@ -1535,15 +1535,26 @@ serve(async (req) => {
   }
 
   try {
+    console.log('[vendor-ai-assistant] request:', { method: req.method });
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('[vendor-ai-assistant] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+      return new Response(
+        JSON.stringify({ error: 'Configuration serveur incomplète (Supabase)'}),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     if (!LOVABLE_API_KEY) {
+      console.error('[vendor-ai-assistant] Missing LOVABLE_API_KEY');
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const supabaseClient = createClient(supabaseUrl!, supabaseKey!);
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
     
     // Authentification et contexte vendeur
     let userId: string | null = null;
