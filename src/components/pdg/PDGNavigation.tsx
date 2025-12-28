@@ -61,6 +61,8 @@ const categories: NavCategory[] = [
     items: [
       { value: 'agents', label: 'Agents', icon: UserCheck },
       { value: 'syndicat', label: 'Bureaux Syndicaux', icon: Building2 },
+      { value: 'bureau-monitoring', label: 'Monitoring Bureaux', icon: Car, badge: true },
+      { value: 'driver-subscriptions', label: 'Abonnements Chauffeurs', icon: Bike },
       { value: 'stolen-vehicles', label: 'Motos Volées', icon: Shield, badge: true },
       { value: 'orders', label: 'Commandes', icon: Package },
       { value: 'vendors', label: 'Vendeurs', icon: Store },
