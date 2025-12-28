@@ -3617,6 +3617,7 @@ export type Database = {
           last_location: unknown
           license_number: string
           phone_number: string | null
+          primary_vendor_id: string | null
           public_id: string | null
           rating: number | null
           status: string | null
@@ -3640,6 +3641,7 @@ export type Database = {
           last_location?: unknown
           license_number: string
           phone_number?: string | null
+          primary_vendor_id?: string | null
           public_id?: string | null
           rating?: number | null
           status?: string | null
@@ -3663,6 +3665,7 @@ export type Database = {
           last_location?: unknown
           license_number?: string
           phone_number?: string | null
+          primary_vendor_id?: string | null
           public_id?: string | null
           rating?: number | null
           status?: string | null
@@ -3674,6 +3677,27 @@ export type Database = {
           vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
         }
         Relationships: [
+          {
+            foreignKeyName: "drivers_primary_vendor_id_fkey"
+            columns: ["primary_vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "drivers_primary_vendor_id_fkey"
+            columns: ["primary_vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "drivers_primary_vendor_id_fkey"
+            columns: ["primary_vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "drivers_user_id_fkey"
             columns: ["user_id"]
@@ -11384,6 +11408,13 @@ export type Database = {
             foreignKeyName: "taxi_driver_documents_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
+            referencedRelation: "bureau_taxi_drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "taxi_driver_documents_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
             referencedRelation: "taxi_drivers"
             referencedColumns: ["id"]
           },
@@ -11413,6 +11444,13 @@ export type Database = {
             foreignKeyName: "taxi_driver_locations_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: true
+            referencedRelation: "bureau_taxi_drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "taxi_driver_locations_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: true
             referencedRelation: "taxi_drivers"
             referencedColumns: ["id"]
           },
@@ -11420,6 +11458,7 @@ export type Database = {
       }
       taxi_drivers: {
         Row: {
+          bureau_id: string | null
           can_work: boolean | null
           created_at: string | null
           id: string
@@ -11432,6 +11471,7 @@ export type Database = {
           last_speed: number | null
           rating: number | null
           status: string | null
+          syndicate_id: string | null
           total_earnings: number | null
           total_rides: number | null
           updated_at: string | null
@@ -11441,6 +11481,7 @@ export type Database = {
           vehicle_type: string | null
         }
         Insert: {
+          bureau_id?: string | null
           can_work?: boolean | null
           created_at?: string | null
           id?: string
@@ -11453,6 +11494,7 @@ export type Database = {
           last_speed?: number | null
           rating?: number | null
           status?: string | null
+          syndicate_id?: string | null
           total_earnings?: number | null
           total_rides?: number | null
           updated_at?: string | null
@@ -11462,6 +11504,7 @@ export type Database = {
           vehicle_type?: string | null
         }
         Update: {
+          bureau_id?: string | null
           can_work?: boolean | null
           created_at?: string | null
           id?: string
@@ -11474,6 +11517,7 @@ export type Database = {
           last_speed?: number | null
           rating?: number | null
           status?: string | null
+          syndicate_id?: string | null
           total_earnings?: number | null
           total_rides?: number | null
           updated_at?: string | null
@@ -11482,7 +11526,29 @@ export type Database = {
           vehicle_plate?: string | null
           vehicle_type?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "taxi_drivers_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "taxi_drivers_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_security_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "taxi_drivers_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureaus"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       taxi_locks: {
         Row: {
@@ -11576,6 +11642,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "taxi_notifications_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_taxi_drivers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "taxi_notifications_driver_id_fkey"
             columns: ["driver_id"]
@@ -11719,6 +11792,13 @@ export type Database = {
             foreignKeyName: "taxi_ratings_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
+            referencedRelation: "bureau_taxi_drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "taxi_ratings_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
             referencedRelation: "taxi_drivers"
             referencedColumns: ["id"]
           },
@@ -11808,6 +11888,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "taxi_rides_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_taxi_drivers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "taxi_rides_driver_id_fkey"
             columns: ["driver_id"]
@@ -13318,6 +13405,65 @@ export type Database = {
           },
         ]
       }
+      vendor_preferred_drivers: {
+        Row: {
+          created_at: string | null
+          driver_id: string
+          id: string
+          is_active: boolean | null
+          priority: number | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          driver_id: string
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          driver_id?: string
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_preferred_drivers_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_preferred_drivers_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_preferred_drivers_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_preferred_drivers_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_ratings: {
         Row: {
           comment: string | null
@@ -14655,6 +14801,57 @@ export type Database = {
           security_events_30d: number | null
         }
         Relationships: []
+      }
+      bureau_taxi_drivers: {
+        Row: {
+          bureau_commune: string | null
+          bureau_id: string | null
+          bureau_prefecture: string | null
+          bureau_president: string | null
+          can_work: boolean | null
+          created_at: string | null
+          id: string | null
+          is_online: boolean | null
+          kyc_verified: boolean | null
+          last_heading: number | null
+          last_lat: number | null
+          last_lng: number | null
+          last_seen: string | null
+          last_speed: number | null
+          rating: number | null
+          status: string | null
+          syndicate_id: string | null
+          total_earnings: number | null
+          total_rides: number | null
+          updated_at: string | null
+          user_id: string | null
+          vehicle: Json | null
+          vehicle_plate: string | null
+          vehicle_type: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "taxi_drivers_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_pwa_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "taxi_drivers_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureau_security_stats"
+            referencedColumns: ["bureau_id"]
+          },
+          {
+            foreignKeyName: "taxi_drivers_bureau_id_fkey"
+            columns: ["bureau_id"]
+            isOneToOne: false
+            referencedRelation: "bureaus"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       escrow_dashboard: {
         Row: {

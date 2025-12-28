@@ -30,11 +30,11 @@ interface DeliveryNotification {
   type: string;
   title: string;
   message: string;
-  read: boolean;
+  read: boolean; // La colonne s'appelle 'read' dans la DB
   created_at: string;
   delivery?: {
     customer_name: string;
-    delivery_address: string;
+    delivery_address: any; // jsonb
     delivery_fee: number;
     proof_photo_url: string | null;
     client_signature: string | null;
@@ -255,7 +255,9 @@ export function VendorDeliveryNotifications() {
                             </span>
                           </div>
                           <p className="text-xs text-muted-foreground truncate">
-                            {notif.delivery?.delivery_address}
+                            {typeof notif.delivery?.delivery_address === 'object' 
+                              ? notif.delivery?.delivery_address?.formatted || notif.delivery?.delivery_address?.street || 'Adresse'
+                              : notif.delivery?.delivery_address || 'Adresse'}
                           </p>
                           <div className="flex items-center gap-2 mt-1">
                             <Clock className="h-3 w-3 text-muted-foreground" />
@@ -305,7 +307,9 @@ export function VendorDeliveryNotifications() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Adresse</span>
                     <span className="text-sm text-right max-w-[60%]">
-                      {selectedNotification.delivery?.delivery_address}
+                      {typeof selectedNotification.delivery?.delivery_address === 'object' 
+                        ? selectedNotification.delivery?.delivery_address?.formatted || selectedNotification.delivery?.delivery_address?.street || 'Adresse'
+                        : selectedNotification.delivery?.delivery_address || 'Adresse'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
