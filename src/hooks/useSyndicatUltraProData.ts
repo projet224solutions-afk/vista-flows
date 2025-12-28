@@ -120,7 +120,7 @@ export function useSyndicatUltraProData() {
           .select('*', { count: 'exact' })
           .eq('bureau_id', currentBureauId),
         
-        // Chauffeurs avec stats
+        // Chauffeurs taxi-moto liés au bureau (utilise maintenant bureau_id)
         supabase
           .from('taxi_drivers')
           .select('*', { count: 'exact' })
