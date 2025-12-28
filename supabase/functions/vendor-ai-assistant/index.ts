@@ -1579,16 +1579,56 @@ serve(async (req) => {
       userId = user?.id || null;
       
       if (userId) {
-        const { data: vendor, error: vendorError } = await supabaseClient
+        // 1) Recherche standard par user_id
+        let vendor: any = null;
+
+        const { data: vendorByUserId, error: vendorError } = await supabaseClient
           .from('vendors')
-          .select('id, business_name, business_type, is_active, is_verified')
+          .select('id, user_id, email, business_name, business_type, is_active, is_verified')
           .eq('user_id', userId)
           .maybeSingle();
 
         if (vendorError) {
-          console.error('[vendor-ai-assistant] Error fetching vendor:', vendorError);
+          console.error('[vendor-ai-assistant] Error fetching vendor by user_id:', vendorError);
         }
-          
+
+        vendor = vendorByUserId;
+
+        // 2) Fallback: anciens comptes où vendors.user_id n'était pas rempli (association via email)
+        if (!vendor && user?.email) {
+          const { data: vendorByEmail, error: vendorByEmailError } = await supabaseClient
+            .from('vendors')
+            .select('id, user_id, email, business_name, business_type, is_active, is_verified')
+            .eq('email', user.email)
+            .maybeSingle();
+
+          if (vendorByEmailError) {
+            console.error('[vendor-ai-assistant] Error fetching vendor by email:', vendorByEmailError);
+          }
+
+          if (vendorByEmail) {
+            // Si déjà lié à un autre user -> interdit
+            if (vendorByEmail.user_id && vendorByEmail.user_id !== userId) {
+              console.warn('[vendor-ai-assistant] Vendor email matched but already linked to another user');
+              vendor = null;
+            } else {
+              // Lier automatiquement si besoin
+              if (!vendorByEmail.user_id) {
+                const { error: linkError } = await supabaseClient
+                  .from('vendors')
+                  .update({ user_id: userId })
+                  .eq('id', vendorByEmail.id);
+
+                if (linkError) {
+                  console.error('[vendor-ai-assistant] Error linking vendor to user:', linkError);
+                }
+              }
+
+              vendor = { ...vendorByEmail, user_id: userId };
+            }
+          }
+        }
+
         if (vendor) {
           // Statistiques
           const { data: products } = await supabaseClient
