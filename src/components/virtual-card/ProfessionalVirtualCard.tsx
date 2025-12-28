@@ -3,8 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useVirtualCard } from '@/hooks/useVirtualCard';
 import { toast } from 'sonner';
 import { 
   CreditCard, 
@@ -19,9 +21,14 @@ import {
   Zap,
   CheckCircle2,
   AlertTriangle,
-  Snowflake
+  Snowflake,
+  ShoppingBag,
+  Receipt,
+  Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CardTransactionsHistory } from './CardTransactionsHistory';
+import { CardPaymentDialog } from './CardPaymentDialog';
 
 interface VirtualCardData {
   id: string;
@@ -32,6 +39,10 @@ interface VirtualCardData {
   holder_name: string | null;
   daily_limit: number | null;
   monthly_limit: number | null;
+  daily_spent?: number;
+  monthly_spent?: number;
+  total_spent?: number;
+  transaction_count?: number;
 }
 
 interface WalletData {
@@ -42,6 +53,7 @@ interface WalletData {
 
 export const ProfessionalVirtualCard = () => {
   const { user, profile } = useAuth();
+  const { loadStats, toggleCardStatus, stats } = useVirtualCard();
   const [card, setCard] = useState<VirtualCardData | null>(null);
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,6 +61,8 @@ export const ProfessionalVirtualCard = () => {
   const [showDetails, setShowDetails] = useState(true);
   const [isFlipped, setIsFlipped] = useState(false);
   const [open, setOpen] = useState(false);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('card');
 
   useEffect(() => {
     if (user) loadData();
@@ -64,6 +78,11 @@ export const ProfessionalVirtualCard = () => {
       ]);
       setWallet(walletRes.data);
       setCard(cardRes.data);
+      
+      // Charger les stats si la carte existe
+      if (cardRes.data?.id) {
+        await loadStats(cardRes.data.id);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -344,42 +363,127 @@ export const ProfessionalVirtualCard = () => {
                 </Card>
               )}
 
-              {/* Limits Info */}
+              {/* Limites Info avec Stats temps réel */}
               <div className="grid grid-cols-2 gap-3">
                 <Card className="bg-white/5 border-white/10">
                   <CardContent className="p-3">
-                    <p className="text-white/60 text-xs mb-1">Limite journalière</p>
+                    <p className="text-white/60 text-xs mb-1">Dépensé aujourd'hui</p>
                     <p className="text-white font-semibold">
-                      {(card.daily_limit || 0).toLocaleString('fr-FR')} GNF
+                      {(stats?.daily_spent || card.daily_spent || 0).toLocaleString('fr-FR')} GNF
+                    </p>
+                    <div className="mt-1 h-1 bg-white/10 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-violet-500"
+                        style={{ 
+                          width: `${Math.min(100, ((stats?.daily_spent || 0) / (card.daily_limit || 1)) * 100)}%` 
+                        }}
+                      />
+                    </div>
+                    <p className="text-white/40 text-[10px] mt-1">
+                      Limite: {(card.daily_limit || 0).toLocaleString('fr-FR')} GNF
                     </p>
                   </CardContent>
                 </Card>
                 <Card className="bg-white/5 border-white/10">
                   <CardContent className="p-3">
-                    <p className="text-white/60 text-xs mb-1">Limite mensuelle</p>
+                    <p className="text-white/60 text-xs mb-1">Dépensé ce mois</p>
                     <p className="text-white font-semibold">
-                      {(card.monthly_limit || 0).toLocaleString('fr-FR')} GNF
+                      {(stats?.monthly_spent || card.monthly_spent || 0).toLocaleString('fr-FR')} GNF
+                    </p>
+                    <div className="mt-1 h-1 bg-white/10 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-indigo-500"
+                        style={{ 
+                          width: `${Math.min(100, ((stats?.monthly_spent || 0) / (card.monthly_limit || 1)) * 100)}%` 
+                        }}
+                      />
+                    </div>
+                    <p className="text-white/40 text-[10px] mt-1">
+                      Limite: {(card.monthly_limit || 0).toLocaleString('fr-FR')} GNF
                     </p>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* Stripe Integration Notice */}
-              <Card className="bg-gradient-to-r from-violet-500/10 to-indigo-500/10 border-violet-500/20">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-violet-500/20 rounded-lg">
-                      <Shield className="w-5 h-5 text-violet-400" />
-                    </div>
-                    <div>
-                      <p className="text-white font-medium text-sm">Sécurisée par Stripe</p>
-                      <p className="text-white/60 text-xs mt-1">
-                        Votre carte virtuelle utilise l'infrastructure de paiement Stripe pour des transactions sécurisées.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Boutons d'action */}
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  onClick={() => setPaymentDialogOpen(true)}
+                  className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700"
+                  disabled={card.status !== 'active'}
+                >
+                  <ShoppingBag className="w-4 h-4 mr-2" />
+                  Payer
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    const newStatus = card.status === 'active' ? 'frozen' : 'active';
+                    const success = await toggleCardStatus(card.id, newStatus);
+                    if (success) loadData();
+                  }}
+                  className="border-white/20 text-white hover:bg-white/10"
+                >
+                  {card.status === 'active' ? (
+                    <>
+                      <Snowflake className="w-4 h-4 mr-2" />
+                      Geler
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-4 h-4 mr-2" />
+                      Activer
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Onglets: Historique / Stats */}
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
+                <TabsList className="grid w-full grid-cols-2 bg-white/5">
+                  <TabsTrigger value="card" className="data-[state=active]:bg-white/10">
+                    <Receipt className="w-4 h-4 mr-2" />
+                    Historique
+                  </TabsTrigger>
+                  <TabsTrigger value="stats" className="data-[state=active]:bg-white/10">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Infos
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="card" className="mt-4">
+                  <CardTransactionsHistory cardId={card.id} />
+                </TabsContent>
+                
+                <TabsContent value="stats" className="mt-4">
+                  <Card className="bg-white/5 border-white/10">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-white/60">Total dépensé</span>
+                        <span className="text-white font-medium">
+                          {(stats?.total_spent || card.total_spent || 0).toLocaleString('fr-FR')} GNF
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-white/60">Transactions</span>
+                        <span className="text-white font-medium">
+                          {stats?.transaction_count || card.transaction_count || 0}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-white/60">Statut</span>
+                        <Badge className={cn(
+                          card.status === 'active' ? 'bg-emerald-500' : 
+                          card.status === 'frozen' ? 'bg-blue-500' : 'bg-red-500'
+                        )}>
+                          {card.status === 'active' ? 'Active' : 
+                           card.status === 'frozen' ? 'Gelée' : 'Bloquée'}
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
             </div>
           ) : (
             <div className="space-y-6">
@@ -422,7 +526,7 @@ export const ProfessionalVirtualCard = () => {
                 </div>
                 <div className="flex items-center gap-3 text-white/80">
                   <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                  <span className="text-sm">Sécurisée par Stripe</span>
+                  <span className="text-sm">Débit automatique du wallet</span>
                 </div>
               </div>
 
@@ -463,6 +567,19 @@ export const ProfessionalVirtualCard = () => {
             </div>
           )}
         </div>
+
+        {/* Payment Dialog */}
+        {card && wallet && (
+          <CardPaymentDialog
+            open={paymentDialogOpen}
+            onOpenChange={setPaymentDialogOpen}
+            cardId={card.id}
+            walletBalance={wallet.balance}
+            dailyRemaining={stats?.daily_remaining || (card.daily_limit || 0) - (card.daily_spent || 0)}
+            monthlyRemaining={stats?.monthly_remaining || (card.monthly_limit || 0) - (card.monthly_spent || 0)}
+            onSuccess={loadData}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

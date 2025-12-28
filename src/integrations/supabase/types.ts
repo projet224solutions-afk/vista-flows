@@ -1679,6 +1679,72 @@ export type Database = {
         }
         Relationships: []
       }
+      card_transactions: {
+        Row: {
+          amount: number
+          card_id: string
+          created_at: string
+          currency: string | null
+          description: string | null
+          id: string
+          merchant_category: string | null
+          merchant_name: string
+          metadata: Json | null
+          reference_code: string
+          status: string
+          transaction_type: string
+          user_id: string
+          wallet_id: string
+        }
+        Insert: {
+          amount: number
+          card_id: string
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          merchant_category?: string | null
+          merchant_name: string
+          metadata?: Json | null
+          reference_code: string
+          status?: string
+          transaction_type?: string
+          user_id: string
+          wallet_id: string
+        }
+        Update: {
+          amount?: number
+          card_id?: string
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          merchant_category?: string | null
+          merchant_name?: string
+          metadata?: Json | null
+          reference_code?: string
+          status?: string
+          transaction_type?: string
+          user_id?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_transactions_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "virtual_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_transactions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       carts: {
         Row: {
           created_at: string | null
@@ -13556,11 +13622,17 @@ export type Database = {
           created_at: string
           cvv: string
           daily_limit: number | null
+          daily_spent: number | null
           expiry_date: string
           holder_name: string | null
           id: string
+          last_daily_reset: string | null
+          last_monthly_reset: string | null
           monthly_limit: number | null
+          monthly_spent: number | null
           status: string
+          total_spent: number | null
+          transaction_count: number | null
           user_id: string
         }
         Insert: {
@@ -13568,11 +13640,17 @@ export type Database = {
           created_at?: string
           cvv: string
           daily_limit?: number | null
+          daily_spent?: number | null
           expiry_date: string
           holder_name?: string | null
           id?: string
+          last_daily_reset?: string | null
+          last_monthly_reset?: string | null
           monthly_limit?: number | null
+          monthly_spent?: number | null
           status?: string
+          total_spent?: number | null
+          transaction_count?: number | null
           user_id: string
         }
         Update: {
@@ -13580,11 +13658,17 @@ export type Database = {
           created_at?: string
           cvv?: string
           daily_limit?: number | null
+          daily_spent?: number | null
           expiry_date?: string
           holder_name?: string | null
           id?: string
+          last_daily_reset?: string | null
+          last_monthly_reset?: string | null
           monthly_limit?: number | null
+          monthly_spent?: number | null
           status?: string
+          total_spent?: number | null
+          transaction_count?: number | null
           user_id?: string
         }
         Relationships: []
@@ -15597,6 +15681,7 @@ export type Database = {
       }
       get_active_subscription: { Args: { p_user_id: string }; Returns: Json }
       get_agent_permissions: { Args: { p_agent_id: string }; Returns: Json }
+      get_card_stats: { Args: { p_card_id: string }; Returns: Json }
       get_escrow_stats: {
         Args: { p_end_date?: string; p_start_date?: string }
         Returns: {
@@ -15975,6 +16060,16 @@ export type Database = {
           p_currency?: string
           p_receiver_code: string
           p_sender_code: string
+        }
+        Returns: Json
+      }
+      process_card_payment: {
+        Args: {
+          p_amount: number
+          p_card_id: string
+          p_description?: string
+          p_merchant_category?: string
+          p_merchant_name: string
         }
         Returns: Json
       }
