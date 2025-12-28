@@ -1490,6 +1490,18 @@ async function toggleAIFeatures(supabase: any, vendorId: string, userId: string,
 // MAIN TOOL EXECUTOR
 // =====================================================
 
+// Backward-compatible wrapper: some older builds referenced this name.
+// Keeping it avoids TS compile errors if a stale reference still exists.
+async function runEnterpriseTool(
+  supabase: any,
+  vendorId: string,
+  userId: string,
+  toolName: string,
+  args: any
+) {
+  return executeTool(supabase, vendorId, userId, toolName, args);
+}
+
 async function executeTool(supabase: any, vendorId: string, userId: string, toolName: string, args: any) {
   switch (toolName) {
     case 'analyze_customer_reviews':
