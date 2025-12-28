@@ -63,20 +63,26 @@ export default function Marketplace() {
   
   const vendorId = searchParams.get('vendor') || undefined;
 
+  const [vendorSlug, setVendorSlug] = useState<string | null>(null);
+  
   // Charger le nom du vendeur si filtré par vendeur
   useEffect(() => {
     if (vendorId) {
       const loadVendorName = async () => {
         const { data } = await supabase
           .from('vendors')
-          .select('business_name')
+          .select('business_name, shop_slug')
           .eq('id', vendorId)
           .single();
-        if (data) setVendorName(data.business_name);
+        if (data) {
+          setVendorName(data.business_name);
+          setVendorSlug(data.shop_slug);
+        }
       };
       loadVendorName();
     } else {
       setVendorName(null);
+      setVendorSlug(null);
     }
   }, [vendorId]);
 
@@ -218,9 +224,10 @@ export default function Marketplace() {
                   <ShareButton
                     title={vendorName || 'Boutique'}
                     text={`Découvrez la boutique ${vendorName} sur 224 Solutions`}
-                    url={`${window.location.origin}/shop/${vendorId}`}
+                    url={`${window.location.origin}/boutique/${vendorSlug || vendorId}`}
                     variant="ghost"
                     size="icon"
+                    useShortUrl={false}
                   />
                   <Button 
                     variant="ghost" 

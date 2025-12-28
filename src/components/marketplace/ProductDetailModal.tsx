@@ -24,6 +24,7 @@ interface Product {
   vendors?: {
     business_name: string;
     user_id: string;
+    shop_slug?: string;
   };
 }
 
@@ -65,7 +66,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           is_active,
           vendors (
             business_name,
-            user_id
+            user_id,
+            shop_slug
           )
         `)
         .eq('id', productId)
@@ -279,7 +281,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                   Vendu par{" "}
                   {product.vendors?.business_name ? (
                     <Link
-                      to={`/shop/${product.vendor_id}`}
+                      to={`/boutique/${product.vendors.shop_slug || product.vendor_id}`}
                       className="font-medium text-foreground hover:text-primary inline-flex items-center gap-1"
                     >
                       <span className="truncate">{product.vendors.business_name}</span>
@@ -293,9 +295,10 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                 <ShareButton
                   title={product.vendors?.business_name || "Boutique"}
                   text={`Découvrez la boutique ${product.vendors?.business_name || ""} sur 224 Solutions`}
-                  url={`${window.location.origin}/shop/${product.vendor_id}`}
+                  url={`${window.location.origin}/boutique/${product.vendors?.shop_slug || product.vendor_id}`}
                   variant="outline"
                   size="icon"
+                  useShortUrl={false}
                 />
               </div>
             </div>

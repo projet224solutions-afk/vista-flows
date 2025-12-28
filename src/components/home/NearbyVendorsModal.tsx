@@ -43,6 +43,7 @@ interface Vendor {
   service_type?: 'wholesale' | 'retail' | 'mixed' | null;
   is_verified?: boolean | null;
   distance?: number | null;
+  shop_slug?: string | null;
 }
 
 interface NearbyVendorsModalProps {
@@ -71,7 +72,7 @@ export function NearbyVendorsModal({ open, onOpenChange }: NearbyVendorsModalPro
         let query = supabase
           .from('vendors')
           .select(
-            'id, business_name, description, address, logo_url, rating, city, neighborhood, latitude, longitude, business_type, service_type, is_verified'
+            'id, business_name, description, address, logo_url, rating, city, neighborhood, latitude, longitude, business_type, service_type, is_verified, shop_slug'
           )
           .eq('is_active', true)
           .limit(200);
@@ -160,9 +161,9 @@ export function NearbyVendorsModal({ open, onOpenChange }: NearbyVendorsModalPro
   }, [refreshPosition, loadVendors]);
 
   const handleVendorClick = useCallback(
-    (vendorId: string) => {
+    (vendorId: string, shopSlug?: string | null) => {
       onOpenChange(false);
-      navigate(`/shop/${vendorId}`);
+      navigate(`/boutique/${shopSlug || vendorId}`);
     },
     [navigate, onOpenChange]
   );

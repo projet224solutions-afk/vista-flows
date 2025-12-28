@@ -29,6 +29,7 @@ interface Vendor {
   opening_hours?: string;
   is_active: boolean;
   user_id: string;
+  shop_slug?: string;
 }
 
 interface Product {
@@ -45,34 +46,71 @@ interface Product {
 }
 
 export default function VendorShop() {
-  const { vendorId } = useParams<{ vendorId: string }>();
+  const { vendorId, slug } = useParams<{ vendorId?: string; slug?: string }>();
   const navigate = useNavigate();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (vendorId) {
+    if (vendorId || slug) {
       loadVendorData();
     }
-  }, [vendorId]);
+  }, [vendorId, slug]);
 
   const loadVendorData = async () => {
     try {
       setLoading(true);
       
-      // Charger les infos du vendeur
-      const { data: vendorData, error: vendorError } = await supabase
-        .from('vendors')
-        .select('*')
-        .eq('id', vendorId)
-        .single();
-
-      if (vendorError) throw vendorError;
+      let vendorData: Vendor | null = null;
+      
+      // Recherche par slug ou par ID
+      if (slug) {
+        // Recherche par slug
+        const { data, error } = await supabase
+          .from('vendors')
+          .select('*')
+          .eq('shop_slug', slug)
+          .single();
+        
+        if (error) throw error;
+        vendorData = data;
+      } else if (vendorId) {
+        // Recherche par ID (compatibilité ancienne)
+        // Vérifier d'abord si c'est un UUID valide
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(vendorId);
+        
+        if (isUUID) {
+          const { data, error } = await supabase
+            .from('vendors')
+            .select('*')
+            .eq('id', vendorId)
+            .single();
+          
+          if (error) throw error;
+          vendorData = data;
+        } else {
+          // C'est peut-être un slug dans l'ancienne URL
+          const { data, error } = await supabase
+            .from('vendors')
+            .select('*')
+            .eq('shop_slug', vendorId)
+            .single();
+          
+          if (error) throw error;
+          vendorData = data;
+        }
+      }
       
       if (!vendorData || !vendorData.is_active) {
         toast.error('Cette boutique n\'existe pas ou n\'est plus active');
         navigate('/marketplace');
+        return;
+      }
+
+      // Rediriger vers l'URL avec slug si on est venu via ID
+      if (vendorId && vendorData.shop_slug && !slug) {
+        navigate(`/boutique/${vendorData.shop_slug}`, { replace: true });
         return;
       }
 
@@ -91,7 +129,7 @@ export default function VendorShop() {
           category_id,
           categories:category_id(name)
         `)
-        .eq('vendor_id', vendorId)
+        .eq('vendor_id', vendorData.id)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
@@ -193,12 +231,12 @@ export default function VendorShop() {
           <ShareButton
             title={vendor.business_name}
             text={`Découvrez la boutique ${vendor.business_name} sur 224 Solutions`}
-            url={`${window.location.origin}/shop/${vendor.id}`}
+            url={`${window.location.origin}/boutique/${vendor.shop_slug || vendor.id}`}
             variant="outline"
             size="sm"
             resourceType="shop"
             resourceId={vendor.id}
-            useShortUrl={true}
+            useShortUrl={false}
           />
         </div>
       </header>
@@ -329,12 +367,12 @@ export default function VendorShop() {
             <ShareButton
               title={vendor.business_name}
               text={`Découvrez la boutique ${vendor.business_name} sur 224 Solutions`}
-              url={`${window.location.origin}/shop/${vendor.id}`}
+              url={`${window.location.origin}/boutique/${vendor.shop_slug || vendor.id}`}
               variant="outline"
               size="icon"
               resourceType="shop"
               resourceId={vendor.id}
-              useShortUrl={true}
+              useShortUrl={false}
             />
           </div>
         </div>
