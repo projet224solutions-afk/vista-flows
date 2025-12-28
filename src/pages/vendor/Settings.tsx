@@ -5,6 +5,7 @@ import VendorBusinessSettings from '@/components/vendor/settings/VendorBusinessS
 import VendorLocationSettings from '@/components/vendor/settings/VendorLocationSettings';
 import VendorDeliveryPricing from '@/components/vendor/settings/VendorDeliveryPricing';
 import VendorShopImagesSettings from '@/components/vendor/settings/VendorShopImagesSettings';
+import VendorPasswordChange from '@/components/vendor/settings/VendorPasswordChange';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, User, Bell, Truck, MapPin, ImageIcon } from 'lucide-react';
@@ -125,20 +126,24 @@ export default function VendorSettings() {
         </TabsContent>
 
         <TabsContent value="profile" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Profil personnel
-              </CardTitle>
-              <CardDescription>
-                Gérez vos informations personnelles
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-center text-muted-foreground py-8">
-              Cette fonctionnalité sera disponible prochainement.
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="w-5 h-5" />
+                  Profil personnel
+                </CardTitle>
+                <CardDescription>
+                  Gérez vos informations personnelles
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-center text-muted-foreground py-8">
+                D'autres options de profil seront disponibles prochainement.
+              </CardContent>
+            </Card>
+            
+            <VendorPasswordChange />
+          </div>
         </TabsContent>
 
         <TabsContent value="notifications" className="mt-6">
