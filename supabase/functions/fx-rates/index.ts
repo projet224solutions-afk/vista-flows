@@ -3,7 +3,7 @@ import { corsHeaders } from "../_shared/cors.ts";
 
 type FxRatesRequest = {
   base?: string;
-  symbols?: string[];
+  symbols?: string[] | string;
 };
 
 type FxRatesResponse = {
@@ -30,11 +30,18 @@ serve(async (req) => {
     const body = (await req.json().catch(() => ({}))) as FxRatesRequest;
 
     const base = String(body.base || "GNF").toUpperCase();
-    const symbols = Array.isArray(body.symbols)
-      ? body.symbols
-          .map((s) => String(s).toUpperCase())
-          .filter((s) => isCurrencyCode(s))
-      : [];
+    
+    // Parse symbols - accept array or comma-separated string
+    let rawSymbols: string[] = [];
+    if (Array.isArray(body.symbols)) {
+      rawSymbols = body.symbols;
+    } else if (typeof body.symbols === "string" && body.symbols.trim()) {
+      rawSymbols = body.symbols.split(",").map((s) => s.trim());
+    }
+    
+    const symbols = rawSymbols
+      .map((s) => String(s).toUpperCase().trim())
+      .filter((s) => s && isCurrencyCode(s));
 
     if (!isCurrencyCode(base)) {
       return new Response(JSON.stringify({ error: "Base devise invalide" }), {
@@ -43,23 +50,24 @@ serve(async (req) => {
       });
     }
 
-    if (symbols.length === 0) {
-      return new Response(JSON.stringify({ error: "Aucune devise cible" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // If no symbols, return all rates for the base currency
+    const returnAllRates = symbols.length === 0;
 
     const now = Date.now();
 
-    // Vérifier le cache pour cette base
+    // Check cache for this base
     const cached = cache.get(base);
     if (cached && cached.expires_at > now) {
-      // Filtrer pour ne retourner que les symbols demandés
-      const filteredRates: Record<string, number> = {};
-      for (const sym of symbols) {
-        if (typeof cached.payload.rates[sym] === "number") {
-          filteredRates[sym] = cached.payload.rates[sym];
+      // Filter to return only requested symbols (or all if returnAllRates)
+      let filteredRates: Record<string, number>;
+      if (returnAllRates) {
+        filteredRates = cached.payload.rates;
+      } else {
+        filteredRates = {};
+        for (const sym of symbols) {
+          if (typeof cached.payload.rates[sym] === "number") {
+            filteredRates[sym] = cached.payload.rates[sym];
+          }
         }
       }
       
@@ -105,11 +113,16 @@ serve(async (req) => {
     cache.set(base, { expires_at: now + 15 * 60_000, payload: fullPayload });
     console.log(`[fx-rates] Cached ${Object.keys(allRates).length} rates for ${base}`);
 
-    // Filtrer pour ne retourner que les symbols demandés
-    const requestedRates: Record<string, number> = {};
-    for (const sym of symbols) {
-      if (typeof allRates[sym] === "number") {
-        requestedRates[sym] = allRates[sym];
+    // Filter to return only requested symbols (or all if returnAllRates)
+    let requestedRates: Record<string, number>;
+    if (returnAllRates) {
+      requestedRates = allRates;
+    } else {
+      requestedRates = {};
+      for (const sym of symbols) {
+        if (typeof allRates[sym] === "number") {
+          requestedRates[sym] = allRates[sym];
+        }
       }
     }
 
