@@ -134,79 +134,38 @@ class CopiloteService {
     }
 
     try {
-      const { data: session } = await supabase.auth.getSession();
-      const accessToken = session?.session?.access_token;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
       if (!accessToken) throw new Error('Non authentifié');
 
-      const functionsBaseUrl = 'https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1';
-      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
-
-      const response = await fetch(`${functionsBaseUrl}/pdg-ai-assistant`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: supabaseAnonKey,
-          'Authorization': `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ action: 'chat', message })
+      // ✅ Appel fiable via supabase.functions.invoke (pas de fetch direct)
+      const { data, error } = await supabase.functions.invoke('pdg-ai-assistant', {
+        body: { action: 'chat', message, stream: false },
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Erreur inconnue' }));
+      if (error) {
         this.recordFailure();
-        await this.logAudit('send_message', { message: message.substring(0, 50) }, false, (errorData as any).error);
-        throw new Error((errorData as any).error || 'Erreur lors de l\'envoi du message');
+        await this.logAudit('send_message', { message: message.substring(0, 50) }, false, error.message);
+        throw new Error(error.message);
       }
 
-      // Gérer la réponse streaming SSE
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('Pas de réponse du serveur');
-
-      const decoder = new TextDecoder();
-      let fullContent = '';
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-
-        // Traiter ligne par ligne
-        let newlineIndex: number;
-        while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
-          let line = buffer.slice(0, newlineIndex);
-          buffer = buffer.slice(newlineIndex + 1);
-
-          if (line.endsWith('\r')) line = line.slice(0, -1);
-          if (line.startsWith(':') || line.trim() === '') continue;
-          if (!line.startsWith('data: ')) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') continue;
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) fullContent += content;
-          } catch {
-            // JSON incomplet, ignorer
-          }
-        }
-      }
+      const reply = (data as any)?.reply ?? (data as any)?.answer ?? '';
+      const timestamp = (data as any)?.timestamp ?? new Date().toISOString();
+      const user_context = (data as any)?.user_context ?? { name: 'PDG', role: 'admin', balance: 0, currency: 'GNF' };
 
       this.recordSuccess();
       await this.logAudit('send_message', { message: message.substring(0, 50) }, true);
 
-      return {
-        reply: fullContent || 'Réponse reçue',
-        timestamp: new Date().toISOString(),
-        user_context: { name: 'PDG', role: 'admin', balance: 0, currency: 'GNF' }
-      };
+      return { reply, timestamp, user_context };
     } catch (error) {
       this.recordFailure();
       console.error('Erreur CopiloteService.sendMessage:', error);
-      await this.logAudit('send_message', { message: message.substring(0, 50) }, false, error instanceof Error ? error.message : 'Unknown error');
+      await this.logAudit(
+        'send_message',
+        { message: message.substring(0, 50) },
+        false,
+        error instanceof Error ? error.message : 'Unknown error'
+      );
       throw error;
     }
   }
@@ -257,29 +216,17 @@ class CopiloteService {
 
   async getStatus(): Promise<{ status: string; version: string; uptime?: number }> {
     try {
-      const { data: session } = await supabase.auth.getSession();
-      const accessToken = session?.session?.access_token;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
       if (!accessToken) return { status: 'offline', version: '3.0' };
 
-      const functionsBaseUrl = 'https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1';
-      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
-
-      const response = await fetch(`${functionsBaseUrl}/pdg-ai-assistant`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: supabaseAnonKey,
-          'Authorization': `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ action: 'status' })
+      const { data, error } = await supabase.functions.invoke('pdg-ai-assistant', {
+        body: { action: 'status' },
       });
 
-      if (!response.ok) {
-        return { status: 'degraded', version: '3.0' };
-      }
+      if (error) return { status: 'degraded', version: '3.0' };
 
-      const data = await response.json();
-      return data || { status: 'online', version: '3.0' };
+      return (data as any) || { status: 'online', version: '3.0' };
     } catch (error) {
       console.error('Erreur CopiloteService.getStatus:', error);
       return { status: 'degraded', version: '3.0' };

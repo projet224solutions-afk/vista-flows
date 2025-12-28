@@ -1744,43 +1744,149 @@ ANALYSER → PROPOSER → FAIRE VALIDER → EXÉCUTER
 - Toujours rappeler le besoin de validation pour les actions
 - Fournir des données chiffrées et des recommandations concrètes`;
 
-    const requestBody = {
-      model: "google/gemini-2.5-flash",
-      messages: [
-        { role: "system", content: enterpriseSystemPrompt },
-        ...conversationMessages,
-      ],
-      tools: enterpriseTools,
-      stream: true,
-    };
+    const wantsStream = body.stream !== false;
 
-    console.log("Calling Lovable AI Gateway for ENTERPRISE vendor assistant...");
+    if (wantsStream) {
+      const requestBody = {
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: enterpriseSystemPrompt },
+          ...conversationMessages,
+        ],
+        tools: enterpriseTools,
+        stream: true,
+      };
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestBody),
-    });
+      console.log("Calling Lovable AI Gateway for ENTERPRISE vendor assistant (streaming)...");
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Limite de requêtes atteinte. Veuillez réessayer." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          return new Response(
+            JSON.stringify({ error: "Limite de requêtes atteinte. Veuillez réessayer." }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (response.status === 402) {
+          return new Response(
+            JSON.stringify({ error: "Crédits insuffisants." }),
+            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        const errorText = await response.text();
+        console.error("AI gateway error:", response.status, errorText);
+        throw new Error("Erreur du service IA");
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Crédits insuffisants." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+
+      // Incrémenter le compteur d'exécutions
+      await supabaseClient
+        .from('vendor_ai_control')
+        .update({ 
+          executions_today: vendorContext.executionsToday + 1,
+          updated_at: new Date().toISOString()
+        })
+        .eq('vendor_id', vendorContext.vendorId);
+
+      // Streaming: retourner directement la réponse
+      return new Response(response.body, {
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      });
+    }
+
+    // =========================
+    // Mode JSON (sans streaming)
+    // - Exécute les tool calls côté serveur
+    // - Compatible supabase.functions.invoke
+    // =========================
+
+    console.log("Calling Lovable AI Gateway for ENTERPRISE vendor assistant (json)...");
+
+    const gatewayMessages: any[] = [
+      { role: "system", content: enterpriseSystemPrompt },
+      ...conversationMessages,
+    ];
+
+    let finalReply = "";
+
+    for (let step = 0; step < 3; step++) {
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: gatewayMessages,
+          tools: enterpriseTools,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          return new Response(
+            JSON.stringify({ error: "Limite de requêtes atteinte. Veuillez réessayer." }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (response.status === 402) {
+          return new Response(
+            JSON.stringify({ error: "Crédits insuffisants." }),
+            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        const errorText = await response.text();
+        console.error("AI gateway error:", response.status, errorText);
+        throw new Error("Erreur du service IA");
       }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      throw new Error("Erreur du service IA");
+
+      const data = await response.json();
+      const msg = data?.choices?.[0]?.message;
+      const toolCalls = msg?.tool_calls || msg?.toolCalls;
+
+      if (toolCalls && Array.isArray(toolCalls) && toolCalls.length > 0) {
+        // Ajouter l'appel outil (assistant) puis répondre avec résultats outils
+        gatewayMessages.push(msg);
+
+        for (const tc of toolCalls) {
+          const toolName = tc?.function?.name;
+          const argsRaw = tc?.function?.arguments;
+          let args: any = {};
+          try {
+            args = typeof argsRaw === 'string' ? JSON.parse(argsRaw) : (argsRaw || {});
+          } catch {
+            args = {};
+          }
+
+          const toolResult = await runEnterpriseTool(
+            supabaseClient,
+            vendorContext.vendorId,
+            userId || '',
+            toolName,
+            args
+          );
+
+          gatewayMessages.push({
+            role: "tool",
+            tool_call_id: tc?.id,
+            content: JSON.stringify(toolResult),
+          });
+        }
+
+        // Relancer un tour pour obtenir une réponse finale
+        continue;
+      }
+
+      finalReply = msg?.content || "";
+      break;
     }
 
     // Incrémenter le compteur d'exécutions
@@ -1792,11 +1898,10 @@ ANALYSER → PROPOSER → FAIRE VALIDER → EXÉCUTER
       })
       .eq('vendor_id', vendorContext.vendorId);
 
-    // Pour le streaming, on retourne directement la réponse
-    // Les tool calls seront gérés par le client
-    return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-    });
+    return new Response(
+      JSON.stringify({ reply: finalReply, timestamp: new Date().toISOString() }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+    );
 
   } catch (e) {
     console.error("vendor-ai-assistant ENTERPRISE error:", e);
