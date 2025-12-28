@@ -111,16 +111,10 @@ export default function NearbyBoutiques() {
   };
 
   useEffect(() => {
-    // Charger les boutiques dès que la position est prête ou après un court délai
-    if (positionReady) {
-      loadVendors();
-    } else {
-      // Si le GPS n'est pas disponible après 2 secondes, charger avec position par défaut
-      const timer = setTimeout(() => {
-        loadVendors(FALLBACK_POSITION);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
+    // Charger les boutiques dès que la position est prête.
+    // useGeoDistance gère déjà le fallback (Coyah) en cas d'échec GPS.
+    if (!positionReady) return;
+    void loadVendors();
   }, [positionReady, businessTypeFilter, serviceTypeFilter]);
 
   const filteredVendors = useMemo(() => {

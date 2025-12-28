@@ -139,21 +139,12 @@ export function NearbyVendorsModal({ open, onOpenChange }: NearbyVendorsModalPro
     void refreshPosition();
   }, [open, refreshPosition]);
 
-  // Charger dès que la position est prête (ou fallback après 2s)
+  // Charger dès que la position est prête (useGeoDistance gère le fallback)
   useEffect(() => {
     if (!open) return;
-
-    if (positionReady) {
-      void loadVendors();
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      void loadVendors(DEFAULT_POSITION);
-    }, 2000);
-
-    return () => window.clearTimeout(timer);
-  }, [open, positionReady, usingRealLocation, businessTypeFilter, serviceTypeFilter, loadVendors, DEFAULT_POSITION]);
+    if (!positionReady) return;
+    void loadVendors();
+  }, [open, positionReady, businessTypeFilter, serviceTypeFilter, loadVendors]);
 
   const handleRefresh = useCallback(async () => {
     const pos = await refreshPosition();
