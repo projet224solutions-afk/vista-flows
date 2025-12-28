@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Fonction de recherche de produits
+// Fonction de recherche de produits avec infos boutique enrichies
 async function searchProducts(supabaseClient: any, query: string, category?: string, maxPrice?: number, minPrice?: number) {
   console.log("Searching products with:", { query, category, maxPrice, minPrice });
   
@@ -26,7 +26,21 @@ async function searchProducts(supabaseClient: any, query: string, category?: str
       is_new,
       rating,
       reviews_count,
-      vendor:vendors(business_name, logo_url),
+      vendor_id,
+      vendor:vendors(
+        id,
+        business_name,
+        logo_url,
+        description,
+        phone,
+        email,
+        address,
+        city,
+        country,
+        rating,
+        is_verified,
+        delivery_options
+      ),
       category:categories(name)
     `)
     .eq('is_active', true)
@@ -75,11 +89,160 @@ async function searchProducts(supabaseClient: any, query: string, category?: str
     price: p.price,
     oldPrice: p.compare_at_price,
     image: p.images?.[0] || null,
-    vendor: p.vendor?.business_name || 'Vendeur 224',
-    category: p.category?.name || 'Non catégorisé',
     stock: p.stock_quantity,
     rating: p.rating,
     reviewsCount: p.reviews_count,
+    isHot: p.is_hot,
+    isNew: p.is_new,
+    category: p.category?.name || 'Non catégorisé',
+    // Informations enrichies de la boutique
+    vendorId: p.vendor_id,
+    boutique: {
+      name: p.vendor?.business_name || 'Vendeur 224',
+      logo: p.vendor?.logo_url,
+      description: p.vendor?.description,
+      phone: p.vendor?.phone,
+      email: p.vendor?.email,
+      address: p.vendor?.address,
+      city: p.vendor?.city,
+      country: p.vendor?.country || 'Guinée',
+      rating: p.vendor?.rating,
+      isVerified: p.vendor?.is_verified,
+      deliveryOptions: p.vendor?.delivery_options
+    }
+  })) || [];
+}
+
+// Fonction pour obtenir les détails d'une boutique/vendeur
+async function getVendorDetails(supabaseClient: any, vendorId?: string, vendorName?: string) {
+  console.log("Getting vendor details:", { vendorId, vendorName });
+  
+  let query = supabaseClient
+    .from('vendors')
+    .select(`
+      id,
+      business_name,
+      logo_url,
+      description,
+      phone,
+      email,
+      address,
+      city,
+      country,
+      rating,
+      is_verified,
+      delivery_options,
+      opening_hours,
+      social_links,
+      created_at
+    `);
+
+  if (vendorId) {
+    query = query.eq('id', vendorId);
+  } else if (vendorName) {
+    query = query.ilike('business_name', `%${vendorName}%`);
+  } else {
+    return { error: "Veuillez fournir un ID ou nom de boutique" };
+  }
+
+  const { data: vendor, error } = await query.single();
+
+  if (error || !vendor) {
+    console.error("Vendor fetch error:", error);
+    return { error: "Boutique non trouvée" };
+  }
+
+  // Récupérer les produits de cette boutique
+  const { data: products } = await supabaseClient
+    .from('products')
+    .select('id, name, price, images, rating, reviews_count')
+    .eq('vendor_id', vendor.id)
+    .eq('is_active', true)
+    .order('rating', { ascending: false })
+    .limit(5);
+
+  // Compter le total des produits
+  const { count: totalProducts } = await supabaseClient
+    .from('products')
+    .select('id', { count: 'exact', head: true })
+    .eq('vendor_id', vendor.id)
+    .eq('is_active', true);
+
+  return {
+    id: vendor.id,
+    name: vendor.business_name,
+    logo: vendor.logo_url,
+    description: vendor.description,
+    contact: {
+      phone: vendor.phone,
+      email: vendor.email,
+      address: vendor.address,
+      city: vendor.city,
+      country: vendor.country || 'Guinée'
+    },
+    rating: vendor.rating,
+    isVerified: vendor.is_verified,
+    deliveryOptions: vendor.delivery_options,
+    openingHours: vendor.opening_hours,
+    socialLinks: vendor.social_links,
+    memberSince: vendor.created_at,
+    totalProducts: totalProducts || 0,
+    featuredProducts: products?.map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      image: p.images?.[0],
+      rating: p.rating
+    })) || []
+  };
+}
+
+// Fonction pour obtenir les produits d'une boutique spécifique
+async function getVendorProducts(supabaseClient: any, vendorId?: string, vendorName?: string, limit = 10) {
+  console.log("Getting vendor products:", { vendorId, vendorName, limit });
+
+  let vendorIdToUse = vendorId;
+
+  // Si on a le nom, chercher l'ID
+  if (!vendorIdToUse && vendorName) {
+    const { data: vendor } = await supabaseClient
+      .from('vendors')
+      .select('id')
+      .ilike('business_name', `%${vendorName}%`)
+      .limit(1)
+      .single();
+    
+    vendorIdToUse = vendor?.id;
+  }
+
+  if (!vendorIdToUse) {
+    return { error: "Boutique non trouvée" };
+  }
+
+  const { data: products } = await supabaseClient
+    .from('products')
+    .select(`
+      id, name, description, price, compare_at_price, images, 
+      rating, reviews_count, stock_quantity, is_hot, is_new,
+      category:categories(name)
+    `)
+    .eq('vendor_id', vendorIdToUse)
+    .eq('is_active', true)
+    .gt('stock_quantity', 0)
+    .order('rating', { ascending: false })
+    .limit(limit);
+
+  return products?.map((p: any) => ({
+    id: p.id,
+    name: p.name,
+    description: p.description?.substring(0, 100),
+    price: p.price,
+    oldPrice: p.compare_at_price,
+    image: p.images?.[0],
+    rating: p.rating,
+    reviewsCount: p.reviews_count,
+    stock: p.stock_quantity,
+    category: p.category?.name,
     isHot: p.is_hot,
     isNew: p.is_new
   })) || [];
@@ -128,7 +291,7 @@ const tools = [
     type: "function",
     function: {
       name: "search_products",
-      description: "Rechercher des produits dans le marketplace par nom, description ou catégorie. Utilise cette fonction quand le client demande des produits, veut acheter quelque chose, ou cherche un article spécifique.",
+      description: "Rechercher des produits dans le marketplace par nom, description ou catégorie. Utilise cette fonction quand le client demande des produits, veut acheter quelque chose, ou cherche un article spécifique. Les résultats incluent les informations de la boutique.",
       parameters: {
         type: "object",
         properties: {
@@ -150,6 +313,52 @@ const tools = [
           }
         },
         required: ["query"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_vendor_details",
+      description: "Obtenir les informations détaillées d'une boutique/vendeur: contact, adresse, horaires, produits phares, etc. Utilise cette fonction quand le client veut en savoir plus sur un vendeur ou une boutique spécifique.",
+      parameters: {
+        type: "object",
+        properties: {
+          vendor_id: {
+            type: "string",
+            description: "ID unique de la boutique (si connu)"
+          },
+          vendor_name: {
+            type: "string",
+            description: "Nom de la boutique à rechercher"
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_vendor_products",
+      description: "Obtenir tous les produits d'une boutique spécifique. Utilise cette fonction quand le client veut voir ce qu'une boutique vend.",
+      parameters: {
+        type: "object",
+        properties: {
+          vendor_id: {
+            type: "string",
+            description: "ID unique de la boutique"
+          },
+          vendor_name: {
+            type: "string",
+            description: "Nom de la boutique"
+          },
+          limit: {
+            type: "number",
+            description: "Nombre de produits à retourner (max 20)"
+          }
+        },
+        required: []
       }
     }
   },
@@ -269,7 +478,7 @@ serve(async (req) => {
 
 🎯 TON RÔLE:
 Tu aides les clients de la plateforme 224Solutions avec leurs activités d'achat et de gestion de compte.
-Tu as accès à une fonction de RECHERCHE DE PRODUITS pour trouver des articles dans le marketplace.
+Tu as accès à des fonctions de RECHERCHE DE PRODUITS et d'INFORMATIONS SUR LES BOUTIQUES.
 
 📊 CONTEXTE UTILISATEUR:
 - Nom: ${userContext.name || "Client"}
@@ -278,56 +487,51 @@ Tu as accès à une fonction de RECHERCHE DE PRODUITS pour trouver des articles 
 - Dernières commandes: ${JSON.stringify(userContext.recentOrders || [])}
 
 ✅ CE QUE TU PEUX FAIRE (DOMAINES AUTORISÉS):
-1. **🔍 RECHERCHE DE PRODUITS** (NOUVELLE CAPACITÉ):
+
+1. **🔍 RECHERCHE DE PRODUITS**:
    - Rechercher des produits par nom, description ou catégorie
    - Filtrer par prix (min/max)
    - Recommander des produits populaires
    - Montrer les catégories disponibles
-   - UTILISE TOUJOURS la fonction search_products quand un client cherche un produit!
+   - UTILISE TOUJOURS search_products quand un client cherche un produit!
 
-2. **Gestion du Wallet Client**:
+2. **🏪 INFORMATIONS BOUTIQUES** (NOUVELLE CAPACITÉ):
+   - Obtenir les détails d'une boutique (contact, adresse, horaires)
+   - Voir tous les produits d'une boutique spécifique
+   - Vérifier si une boutique est vérifiée
+   - Connaître les options de livraison d'un vendeur
+   - UTILISE get_vendor_details pour les infos boutique!
+   - UTILISE get_vendor_products pour voir les produits d'une boutique!
+
+3. **Gestion du Wallet Client**:
    - Consulter le solde
    - Expliquer l'historique des transactions
    - Aider avec les dépôts et retraits
-   - Expliquer les conversions de devises
 
-3. **Gestion des Commandes**:
+4. **Gestion des Commandes**:
    - Suivre l'état des commandes
    - Expliquer le processus de commande
-   - Aider avec les retours et réclamations
    - Historique des achats
-
-4. **Navigation et Utilisation**:
-   - Comment utiliser le tableau de bord client
-   - Fonctionnalités disponibles pour les clients
-   - Paramètres du compte
-   - Notifications et alertes
 
 5. **Communication**:
    - Contacter les vendeurs
    - Support client
-   - Messages et notifications
 
 6. **Paiements**:
    - Méthodes de paiement disponibles
    - Sécurité des transactions
-   - Problèmes de paiement
 
 ❌ CE QUE TU NE DOIS PAS FAIRE:
-- NE PAS répondre aux questions sur la gestion de boutique/vendeur
+- NE PAS répondre aux questions sur la gestion de boutique/vendeur (côté vendeur)
 - NE PAS donner d'informations sur l'administration système
 - NE PAS aider avec des fonctionnalités PDG/Admin
-- NE PAS divulguer des informations sensibles du système
-- Si on te pose des questions hors de ton domaine, réponds poliment:
-  "Cette fonctionnalité est réservée aux vendeurs/administrateurs. En tant que client, je peux vous aider avec votre compte, vos commandes et votre wallet."
 
 💡 STYLE DE RÉPONSE:
 - Sois amical et professionnel
 - Utilise des émojis pertinents
 - Fournis des réponses claires et concises
-- Propose des solutions pratiques
-- Guide l'utilisateur étape par étape si nécessaire
-- Quand tu présentes des produits, formate-les joliment avec prix, vendeur et description`;
+- Quand tu présentes des produits, inclus: nom, prix, vendeur, description
+- Quand tu parles d'une boutique, inclus: nom, contact, localisation, note, produits phares`;
 
     // Premier appel: demander à l'IA si elle veut utiliser des outils
     const initialRequest = {
@@ -387,6 +591,12 @@ Tu as accès à une fonction de RECHERCHE DE PRODUITS pour trouver des articles 
         switch (functionName) {
           case "search_products":
             result = await searchProducts(supabaseClient, args.query, args.category, args.max_price, args.min_price);
+            break;
+          case "get_vendor_details":
+            result = await getVendorDetails(supabaseClient, args.vendor_id, args.vendor_name);
+            break;
+          case "get_vendor_products":
+            result = await getVendorProducts(supabaseClient, args.vendor_id, args.vendor_name, args.limit || 10);
             break;
           case "get_categories":
             result = await getCategories(supabaseClient);
