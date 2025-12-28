@@ -62,6 +62,7 @@ export default function Marketplace() {
   const [vendorName, setVendorName] = useState<string | null>(null);
   
   const vendorId = searchParams.get('vendor') || undefined;
+  const includePhysicalVendors = searchParams.get('includePhysical') === '1';
 
   const [vendorSlug, setVendorSlug] = useState<string | null>(null);
   
@@ -103,6 +104,7 @@ export default function Marketplace() {
     vendorId,
     country: selectedCountry,
     city: selectedCity,
+    includePhysicalVendors,
     sortBy,
     autoLoad: true
   });

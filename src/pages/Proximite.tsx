@@ -383,7 +383,7 @@ export default function Proximite() {
                 <motion.button
                   key={category.id}
                   variants={itemVariants}
-                  onClick={() => navigate(`/marketplace?category=${category.id}`)}
+                  onClick={() => navigate(`/marketplace?category=${category.id}&includePhysical=1`)}
                   className="group bg-card rounded-2xl p-4 border border-border/50 hover:border-primary/30 hover:shadow-lg transition-all duration-300 text-left"
                 >
                   <div className={cn(
