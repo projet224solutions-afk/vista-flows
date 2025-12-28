@@ -553,12 +553,12 @@ async function analyzeInventory(supabase: any, vendorId: string, params: any) {
   const { analysis_type, forecast_days = 30, category_filter } = params;
   const startTime = Date.now();
 
-  // Récupérer les produits avec leur stock
+  // Récupérer les produits avec leur stock (is_active au lieu de status)
   let query = supabase
     .from('products')
-    .select('id, name, stock_quantity, price, category_id, status, created_at')
+    .select('id, name, stock_quantity, price, category_id, is_active, created_at')
     .eq('vendor_id', vendorId)
-    .eq('status', 'active');
+    .eq('is_active', true);
 
   const { data: products, error } = await query;
   if (error) return { success: false, error: error.message };
@@ -820,7 +820,7 @@ async function analyzeMarketingPerformance(supabase: any, vendorId: string, para
     .from('products')
     .select('id, name, price, stock_quantity, created_at')
     .eq('vendor_id', vendorId)
-    .eq('status', 'active');
+    .eq('is_active', true);
 
   const { data: orders } = await supabase
     .from('orders')
@@ -1261,7 +1261,7 @@ async function getAIDashboard(supabase: any, vendorId: string, params: any) {
       .from('vendor_stock_ai_alerts')
       .select('*, products(name)')
       .eq('vendor_id', vendorId)
-      .eq('status', 'active')
+      .eq('is_active', true)
       .limit(10);
     result.urgentAlerts = stockAlerts || [];
   }
@@ -1579,17 +1579,21 @@ serve(async (req) => {
       userId = user?.id || null;
       
       if (userId) {
-        const { data: vendor } = await supabaseClient
+        const { data: vendor, error: vendorError } = await supabaseClient
           .from('vendors')
-          .select('id, business_name, business_type, status')
+          .select('id, business_name, business_type, is_active, is_verified')
           .eq('user_id', userId)
-          .single();
+          .maybeSingle();
+
+        if (vendorError) {
+          console.error('[vendor-ai-assistant] Error fetching vendor:', vendorError);
+        }
           
         if (vendor) {
           // Statistiques
           const { data: products } = await supabaseClient
             .from('products')
-            .select('id, name, price, stock_quantity, status')
+            .select('id, name, price, stock_quantity, is_active')
             .eq('vendor_id', vendor.id)
             .limit(10);
             
