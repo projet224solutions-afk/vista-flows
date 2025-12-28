@@ -5,11 +5,12 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, MessageSquare, User, Calendar } from 'lucide-react';
+import { Star, MessageSquare, User, Calendar, Bot } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import VendorResponseToReview from './VendorResponseToReview';
+import AIReviewResponseCard from './AIReviewResponseCard';
 
 interface VendorRating {
   id: string;
@@ -19,6 +20,10 @@ interface VendorRating {
   vendor_response_at: string | null;
   created_at: string;
   order_id: string;
+  ai_suggested_response: string | null;
+  ai_response_status: string | null;
+  ai_sentiment: string | null;
+  ai_analyzed_at: string | null;
   orders?: {
     order_number: string;
   };
@@ -87,6 +92,10 @@ export default function VendorRatingsPanel() {
           ...rating,
           vendor_response: rating.vendor_response || null,
           vendor_response_at: rating.vendor_response_at || null,
+          ai_suggested_response: rating.ai_suggested_response || null,
+          ai_response_status: rating.ai_response_status || 'none',
+          ai_sentiment: rating.ai_sentiment || null,
+          ai_analyzed_at: rating.ai_analyzed_at || null,
           profiles: profile || { first_name: '', last_name: '' }
         };
       }));
@@ -249,12 +258,26 @@ export default function VendorRatingsPanel() {
                 </div>
               )}
 
-              {/* Composant de réponse du vendeur */}
-              <VendorResponseToReview
-                ratingId={rating.id}
-                existingResponse={rating.vendor_response || undefined}
-                onResponseSubmitted={loadRatings}
-              />
+              {/* Réponse IA proposée (si disponible et en attente de validation) */}
+              {rating.ai_suggested_response && rating.ai_response_status === 'pending' && !rating.vendor_response && (
+                <AIReviewResponseCard
+                  ratingId={rating.id}
+                  aiSuggestedResponse={rating.ai_suggested_response}
+                  aiResponseStatus={rating.ai_response_status}
+                  aiSentiment={rating.ai_sentiment || undefined}
+                  aiAnalyzedAt={rating.ai_analyzed_at || undefined}
+                  onStatusChange={loadRatings}
+                />
+              )}
+
+              {/* Composant de réponse manuelle du vendeur (si pas de réponse IA en attente) */}
+              {(!rating.ai_suggested_response || rating.ai_response_status !== 'pending') && (
+                <VendorResponseToReview
+                  ratingId={rating.id}
+                  existingResponse={rating.vendor_response || undefined}
+                  onResponseSubmitted={loadRatings}
+                />
+              )}
 
               {rating.orders && (
                 <div className="mt-3 pt-3 border-t">
