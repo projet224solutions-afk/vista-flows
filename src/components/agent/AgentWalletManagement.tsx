@@ -27,12 +27,21 @@ interface AgentWalletManagementProps {
   showTransactions?: boolean;
 }
 
+interface WalletData {
+  id: string;
+  user_id: string;
+  balance: number;
+  currency: string;
+  wallet_status: string;
+}
+
 export default function AgentWalletManagement({ 
   agentId, 
   agentCode,
   showTransactions = true 
 }: AgentWalletManagementProps) {
-  const [wallet, setWallet] = useState<any>(null);
+  const [wallet, setWallet] = useState<WalletData | null>(null);
+  const [agentUserId, setAgentUserId] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [hidden, setHidden] = useState(false);
@@ -53,25 +62,43 @@ export default function AgentWalletManagement({
     
     try {
       setLoading(true);
-      console.log('🔍 Chargement wallet agent pour agentId:', agentId);
+      console.log('🔍 Chargement wallet agent (via wallets table) pour agentId:', agentId);
 
-      // Utiliser maybeSingle() au lieu de single() pour éviter les erreurs si pas de résultat
+      // ÉTAPE 1: Récupérer le user_id de l'agent depuis agents_management
+      const { data: agentData, error: agentError } = await supabase
+        .from('agents_management')
+        .select('user_id, name')
+        .eq('id', agentId)
+        .single();
+
+      if (agentError || !agentData?.user_id) {
+        console.error('❌ Agent non trouvé ou sans user_id:', agentError);
+        toast.error('Agent non trouvé ou non lié à un compte utilisateur');
+        setLoading(false);
+        return;
+      }
+
+      const userId = agentData.user_id;
+      setAgentUserId(userId);
+      console.log('✅ Agent trouvé:', agentData.name, '| user_id:', userId);
+
+      // ÉTAPE 2: Récupérer le wallet depuis la table wallets (table standard)
       const { data: walletData, error: walletError } = await supabase
-        .from('agent_wallets')
-        .select('*')
-        .eq('agent_id', agentId)
+        .from('wallets')
+        .select('id, user_id, balance, currency, wallet_status')
+        .eq('user_id', userId)
+        .eq('wallet_status', 'active')
         .maybeSingle();
 
-      // Gérer les erreurs autres que "not found"
       if (walletError && walletError.code !== 'PGRST116') {
-        console.error('❌ Erreur chargement wallet agent:', walletError);
+        console.error('❌ Erreur chargement wallet:', walletError);
         toast.error(`Erreur d'accès au wallet: ${walletError.message}`);
         throw walletError;
       }
 
-      // Si le wallet existe, l'utiliser
+      // ÉTAPE 3: Si le wallet existe, l'utiliser
       if (walletData) {
-        console.log('✅ Wallet agent trouvé:', walletData);
+        console.log('✅ Wallet trouvé:', walletData);
         setWallet(walletData);
         
         // Charger les transactions
@@ -87,37 +114,33 @@ export default function AgentWalletManagement({
         return;
       }
 
-      // Si le wallet n'existe pas, le créer automatiquement
-      console.log('💡 Wallet non trouvé, création automatique pour agentId:', agentId);
+      // ÉTAPE 4: Si le wallet n'existe pas, le créer automatiquement
+      console.log('💡 Wallet non trouvé, création automatique pour userId:', userId);
       
-      // Utiliser la fonction RPC pour contourner les restrictions RLS
       const { data: newWallet, error: createError } = await supabase
-        .rpc('create_agent_wallet' as any, { p_agent_id: agentId }) as any;
+        .from('wallets')
+        .insert({
+          user_id: userId,
+          balance: 0,
+          currency: 'GNF',
+          wallet_status: 'active'
+        })
+        .select('id, user_id, balance, currency, wallet_status')
+        .single();
 
       if (createError) {
-        console.error('❌ Erreur création wallet agent via RPC:', createError);
-        console.error('Détails:', JSON.stringify(createError, null, 2));
+        console.error('❌ Erreur création wallet:', createError);
         toast.error(`Impossible de créer le wallet: ${createError.message}`);
         setLoading(false);
         return;
       }
 
-      if (newWallet && Array.isArray(newWallet) && newWallet.length > 0) {
-        const createdWallet = newWallet[0];
-        console.log('✅ Wallet agent créé avec succès via RPC:', createdWallet);
-        setWallet(createdWallet);
-        toast.success('Wallet créé avec succès !');
-        setLoading(false);
-        return;
-      }
-
-      // Si on arrive ici, quelque chose s'est mal passé
-      console.error('❌ Impossible de créer le wallet - raison inconnue');
-      toast.error('Impossible de créer le wallet');
+      console.log('✅ Wallet créé avec succès:', newWallet);
+      setWallet(newWallet);
+      toast.success('Wallet créé avec succès !');
       setLoading(false);
     } catch (error: any) {
       console.error('❌ Erreur critique chargement wallet agent:', error);
-      console.error('Stack:', error?.stack);
       toast.error(`Erreur: ${error?.message || 'Impossible de charger le wallet'}`);
       setWallet(null);
       setLoading(false);
@@ -127,28 +150,30 @@ export default function AgentWalletManagement({
   useEffect(() => {
     loadWallet();
 
-    // Écouter les mises à jour en temps réel
-    const channel = supabase
-      .channel(`agent-wallet-${agentId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'agent_wallets',
-          filter: `agent_id=eq.${agentId}`,
-        },
-        () => {
-          console.log('💰 Wallet agent mis à jour');
-          loadWallet();
-        }
-      )
-      .subscribe();
+    // Écouter les mises à jour en temps réel sur la table wallets
+    if (agentUserId) {
+      const channel = supabase
+        .channel(`agent-wallet-unified-${agentId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'wallets',
+            filter: `user_id=eq.${agentUserId}`,
+          },
+          () => {
+            console.log('💰 Wallet mis à jour (realtime)');
+            loadWallet();
+          }
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [agentId, loadWallet]);
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [agentId, agentUserId, loadWallet]);
 
   // Écouter l'événement personnalisé de mise à jour
   useEffect(() => {
@@ -198,9 +223,9 @@ export default function AgentWalletManagement({
 
       if (txError) throw txError;
 
-      // Mettre à jour le solde
+      // Mettre à jour le solde dans la table wallets
       const { error: updateError } = await supabase
-        .from('agent_wallets')
+        .from('wallets')
         .update({ 
           balance: wallet.balance + amount,
           updated_at: new Date().toISOString()
@@ -241,10 +266,10 @@ export default function AgentWalletManagement({
       
       const newBalance = wallet.balance - amount;
       
-      // ÉTAPE 1: Mettre à jour le solde D'ABORD
-      console.log('📝 Mise à jour du solde agent_wallets:', wallet.id, 'nouveau solde:', newBalance);
+      // ÉTAPE 1: Mettre à jour le solde dans la table wallets
+      console.log('📝 Mise à jour du solde wallets:', wallet.id, 'nouveau solde:', newBalance);
       const { data: updateData, error: updateError } = await supabase
-        .from('agent_wallets')
+        .from('wallets')
         .update({ 
           balance: newBalance,
           updated_at: new Date().toISOString()
@@ -292,7 +317,7 @@ export default function AgentWalletManagement({
         console.error('❌ Erreur création transaction:', txError);
         // Rollback: restaurer le solde original
         await supabase
-          .from('agent_wallets')
+          .from('wallets')
           .update({ balance: wallet.balance })
           .eq('id', wallet.id);
         throw new Error(`Impossible de créer la transaction: ${txError.message}`);
@@ -340,7 +365,7 @@ export default function AgentWalletManagement({
                   Agent ID: <code className="bg-muted px-2 py-1 rounded">{agentId}</code>
                 </p>
                 <p className="text-xs text-muted-foreground mb-4">
-                  Vérifiez la console pour plus de détails (F12)
+                  Vérifiez que l'agent est bien lié à un compte utilisateur (user_id)
                 </p>
               </div>
               <div className="flex flex-col gap-2 max-w-xs mx-auto">
@@ -353,6 +378,7 @@ export default function AgentWalletManagement({
                     console.log('🔍 Informations de débogage:');
                     console.log('- Agent ID:', agentId);
                     console.log('- Agent Code:', agentCode);
+                    console.log('- Agent User ID:', agentUserId);
                     console.log('- Wallet:', wallet);
                     toast.info('Informations affichées dans la console');
                   }} 
@@ -436,6 +462,7 @@ export default function AgentWalletManagement({
             currentBalance={wallet.balance}
             currency={wallet.currency}
             onTransferComplete={loadWallet}
+            senderUserId={agentUserId || undefined}
           />
         </TabsContent>
 
@@ -506,44 +533,39 @@ export default function AgentWalletManagement({
       {showTransactions && transactions.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Historique des transactions</CardTitle>
+            <CardTitle className="text-lg">Dernières transactions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {transactions.slice(0, 10).map((tx) => (
-                <div key={tx.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                <div 
+                  key={tx.id} 
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                >
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-full ${
-                      tx.transaction_type === 'deposit' || tx.transaction_type === 'commission' 
-                        ? 'bg-green-100' 
-                        : 'bg-red-100'
+                      tx.amount > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
                     }`}>
-                      {tx.transaction_type === 'deposit' || tx.transaction_type === 'commission' ? (
-                        <ArrowDownCircle className="w-4 h-4 text-green-600" />
+                      {tx.amount > 0 ? (
+                        <ArrowDownCircle className="w-4 h-4" />
                       ) : (
-                        <ArrowUpCircle className="w-4 h-4 text-red-600" />
+                        <ArrowUpCircle className="w-4 h-4" />
                       )}
                     </div>
                     <div>
-                      <p className="font-medium text-sm">
-                        {tx.description || tx.transaction_type}
-                      </p>
+                      <p className="font-medium text-sm">{tx.description || tx.transaction_type}</p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(tx.created_at).toLocaleString('fr-FR')}
+                        {new Date(tx.created_at).toLocaleDateString('fr-FR', {
+                          day: '2-digit',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className={`font-semibold ${
-                      tx.amount >= 0 ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {tx.amount >= 0 ? '+' : ''}{tx.amount.toLocaleString()} GNF
-                    </p>
-                    {tx.metadata?.balance_after && (
-                      <p className="text-xs text-muted-foreground">
-                        Solde: {tx.metadata.balance_after.toLocaleString()} GNF
-                      </p>
-                    )}
+                  <div className={`font-bold ${tx.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()} {tx.currency}
                   </div>
                 </div>
               ))}
@@ -552,13 +574,13 @@ export default function AgentWalletManagement({
         </Card>
       )}
 
-      {/* Dialog de confirmation dépôt */}
+      {/* Dialogs de confirmation */}
       <AlertDialog open={showDepositConfirm} onOpenChange={setShowDepositConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer le dépôt</AlertDialogTitle>
             <AlertDialogDescription>
-              Voulez-vous vraiment déposer {parseFloat(depositAmount || '0').toLocaleString()} {wallet?.currency || 'GNF'} ?
+              Vous êtes sur le point de déposer <strong>{parseFloat(depositAmount || '0').toLocaleString()} GNF</strong> sur votre wallet.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -570,21 +592,18 @@ export default function AgentWalletManagement({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Dialog de confirmation retrait */}
       <AlertDialog open={showWithdrawConfirm} onOpenChange={setShowWithdrawConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer le retrait des commissions</AlertDialogTitle>
+            <AlertDialogTitle>Confirmer le retrait</AlertDialogTitle>
             <AlertDialogDescription>
-              Voulez-vous vraiment retirer {parseFloat(withdrawAmount || '0').toLocaleString()} {wallet?.currency || 'GNF'} ?
-              <br />
-              <span className="text-xs mt-2 block">Cette action retirera le montant de vos commissions disponibles.</span>
+              Vous êtes sur le point de retirer <strong>{parseFloat(withdrawAmount || '0').toLocaleString()} GNF</strong> de votre wallet.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={busy}>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleWithdraw} disabled={busy}>
-              {busy ? 'Traitement...' : 'Confirmer le retrait'}
+              {busy ? 'Traitement...' : 'Confirmer'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

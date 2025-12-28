@@ -22,6 +22,7 @@ interface TransferMoneyProps {
   currentBalance: number;
   currency: string;
   onTransferComplete?: () => void;
+  senderUserId?: string; // User ID de l'agent pour les transferts
 }
 
 interface UserSearchResult {
@@ -30,9 +31,10 @@ interface UserSearchResult {
   email: string;
   type: 'bureau' | 'agent' | 'vendor' | 'user' | 'driver';
   wallet_id?: string;
+  user_id?: string; // Pour les agents, on stocke aussi le user_id
 }
 
-export default function TransferMoney({ walletId, currentBalance, currency, onTransferComplete }: TransferMoneyProps) {
+export default function TransferMoney({ walletId, currentBalance, currency, onTransferComplete, senderUserId }: TransferMoneyProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
@@ -122,10 +124,10 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
         }
       }
 
-      // 3. RECHERCHE PAR CODE AGENT (AGT...)
+      // 3. RECHERCHE PAR CODE AGENT (AGT...) - Utiliser wallets au lieu de agent_wallets
       const { data: agents, error: agentError } = await supabase
         .from('agents_management')
-        .select('id, name, email, agent_code')
+        .select('id, name, email, agent_code, user_id')
         .ilike('agent_code', `%${queryUpper}%`)
         .limit(10);
 
@@ -133,10 +135,13 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
 
       if (agents && agents.length > 0) {
         for (const agent of agents) {
+          if (!agent.user_id) continue; // Skip agents sans user_id
+          
+          // Chercher le wallet dans la table wallets standard
           const { data: agentWallet } = await supabase
-            .from('agent_wallets')
+            .from('wallets')
             .select('id')
-            .eq('agent_id', agent.id)
+            .eq('user_id', agent.user_id)
             .maybeSingle();
 
           if (agentWallet && agentWallet.id !== walletId && !results.find(r => r.wallet_id === agentWallet.id)) {
@@ -145,7 +150,8 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
               name: `${agent.agent_code} - ${agent.name}`,
               email: agent.email || '',
               type: 'agent',
-              wallet_id: agentWallet.id
+              wallet_id: agentWallet.id,
+              user_id: agent.user_id // Stocker le user_id pour le transfert
             });
           }
         }
@@ -217,20 +223,22 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
         }
       }
 
-      // 6. RECHERCHE PAR NOM AGENT (fallback si pas trouvé par code)
+      // 6. RECHERCHE PAR NOM AGENT (fallback si pas trouvé par code) - Utiliser wallets
       if (results.filter(r => r.type === 'agent').length === 0) {
         const { data: agentsByName } = await supabase
           .from('agents_management')
-          .select('id, name, email, agent_code')
+          .select('id, name, email, agent_code, user_id')
           .or(`name.ilike.%${query}%,email.ilike.%${query}%`)
           .limit(10);
 
         if (agentsByName && agentsByName.length > 0) {
           for (const agent of agentsByName) {
+            if (!agent.user_id) continue; // Skip agents sans user_id
+            
             const { data: agentWallet } = await supabase
-              .from('agent_wallets')
+              .from('wallets')
               .select('id')
-              .eq('agent_id', agent.id)
+              .eq('user_id', agent.user_id)
               .maybeSingle();
 
             if (agentWallet && agentWallet.id !== walletId && !results.find(r => r.wallet_id === agentWallet.id)) {
@@ -239,7 +247,8 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
                 name: `${agent.agent_code} - ${agent.name}`,
                 email: agent.email || '',
                 type: 'agent',
-                wallet_id: agentWallet.id
+                wallet_id: agentWallet.id,
+                user_id: agent.user_id
               });
             }
           }
@@ -286,74 +295,69 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
 
     setTransferring(true);
     try {
-      // Récupérer le user_id de l'agent depuis agent_wallets
-      const { data: agentWalletData } = await supabase
-        .from('agent_wallets')
-        .select('agent_id')
-        .eq('id', walletId)
-        .single();
+      // Déterminer le sender_id : utiliser senderUserId si fourni, sinon récupérer depuis le wallet
+      let senderId = senderUserId;
+      
+      if (!senderId) {
+        // Fallback: récupérer le user_id depuis le wallet
+        const { data: walletData } = await supabase
+          .from('wallets')
+          .select('user_id')
+          .eq('id', walletId)
+          .single();
 
-      if (!agentWalletData) {
-        throw new Error('Wallet agent non trouvé');
-      }
-
-      // Récupérer le user_id de l'agent depuis agents_management
-      const { data: agentData } = await supabase
-        .from('agents_management')
-        .select('user_id')
-        .eq('id', agentWalletData.agent_id)
-        .single();
-
-      if (!agentData?.user_id) {
-        throw new Error('Agent non lié à un utilisateur');
+        if (!walletData?.user_id) {
+          throw new Error('Wallet non trouvé ou non lié à un utilisateur');
+        }
+        senderId = walletData.user_id;
       }
 
       // Déterminer le receiver_id selon le type
       let receiverId: string;
+      let receiverType: 'bureau' | 'user' = 'user';
       
       if (selectedUser.type === 'bureau') {
         // Pour les bureaux, on utilise directement l'ID du bureau
         receiverId = selectedUser.id;
+        receiverType = 'bureau';
       } else if (selectedUser.type === 'agent') {
-        // Pour les agents, récupérer le user_id depuis agents_management
-        const { data: recipientAgent } = await supabase
-          .from('agents_management')
-          .select('user_id')
-          .eq('id', selectedUser.id)
-          .single();
-        
-        if (!recipientAgent?.user_id) {
-          throw new Error('Agent destinataire non lié à un utilisateur');
+        // Pour les agents, utiliser le user_id stocké ou le récupérer
+        if (selectedUser.user_id) {
+          receiverId = selectedUser.user_id;
+        } else {
+          const { data: recipientAgent } = await supabase
+            .from('agents_management')
+            .select('user_id')
+            .eq('id', selectedUser.id)
+            .single();
+          
+          if (!recipientAgent?.user_id) {
+            throw new Error('Agent destinataire non lié à un utilisateur');
+          }
+          receiverId = recipientAgent.user_id;
         }
-        receiverId = recipientAgent.user_id;
+        receiverType = 'user'; // Les agents utilisent la table wallets standard
       } else {
         // Pour les autres types (vendor, user, driver), utiliser directement l'ID
         receiverId = selectedUser.id;
+        receiverType = 'user';
       }
 
-      // Déterminer les types d'expéditeur et de destinataire
-      const senderType = 'user'; // L'agent utilise son user_id
-      const receiverType = selectedUser.type === 'bureau' ? 'bureau' : 
-                           selectedUser.type === 'agent' ? 'agent' : 'user';
-
-      // Pour les agents destinataires, on passe l'ID de l'agent management, pas le user_id
-      const finalReceiverId = selectedUser.type === 'agent' ? selectedUser.id : receiverId;
-
-      console.log('📤 Transfert agent:', {
-        sender: agentData.user_id,
-        receiver: finalReceiverId,
-        senderType,
+      console.log('📤 Transfert unifié:', {
+        sender: senderId,
+        receiver: receiverId,
+        senderType: 'user',
         receiverType,
         amount: transferAmount
       });
 
-      // Utiliser la fonction RPC sécurisée avec types de wallet
+      // Utiliser la fonction RPC sécurisée
       const { data, error } = await supabase.rpc('process_secure_wallet_transfer', {
-        p_sender_id: agentData.user_id,
-        p_receiver_id: finalReceiverId,
+        p_sender_id: senderId,
+        p_receiver_id: receiverId,
         p_amount: transferAmount,
         p_description: description || `Transfert vers ${selectedUser.name}`,
-        p_sender_type: senderType,
+        p_sender_type: 'user', // Tous les utilisateurs (y compris agents) utilisent 'user'
         p_receiver_type: receiverType
       });
 
