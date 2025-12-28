@@ -1866,7 +1866,7 @@ ANALYSER → PROPOSER → FAIRE VALIDER → EXÉCUTER
             args = {};
           }
 
-          const toolResult = await runEnterpriseTool(
+          const toolResult = await executeTool(
             supabaseClient,
             vendorContext.vendorId,
             userId || '',
