@@ -56,26 +56,23 @@ export const useOfflineSync = () => {
       
       switch (type) {
         case 'sale': {
-          // Stocker les ventes offline dans financial_transactions avec type 'sale'
-          // car orders nécessite un customer_id valide
+          // Utiliser la nouvelle table sales
           const { error } = await supabase
-            .from('financial_transactions')
+            .from('sales')
             .insert({
-              user_id: vendor_id,
-              transaction_type: 'sale',
-              amount: data.amount,
-              currency: 'XOF',
+              vendor_id,
+              product_name: data.product_name,
+              product_id: data.product_id || null,
+              quantity: data.quantity || 1,
+              unit_price: data.unit_price,
+              total_amount: data.amount,
+              customer_name: data.customer_name,
+              customer_phone: data.customer_phone,
+              payment_method: data.payment_method || 'cash',
+              payment_status: 'paid',
               status: 'completed',
-              metadata: {
-                product_name: data.product_name,
-                quantity: data.quantity,
-                unit_price: data.unit_price,
-                customer_name: data.customer_name,
-                customer_phone: data.customer_phone,
-                payment_method: data.payment_method,
-                offline_sync: true,
-                original_date: data.sale_date
-              },
+              offline_sync: true,
+              metadata: { original_date: data.sale_date },
               created_at: data.sale_date || new Date().toISOString()
             });
           
@@ -83,24 +80,25 @@ export const useOfflineSync = () => {
             console.error('Erreur sync sale:', error);
             return false;
           }
-          console.log('✅ Vente synchronisée vers financial_transactions');
+          console.log('✅ Vente synchronisée vers sales');
           return true;
         }
           
         case 'payment': {
-          // Utiliser financial_transactions pour les paiements
+          // Utiliser la nouvelle table vendor_transactions
           const { error } = await supabase
-            .from('financial_transactions')
+            .from('vendor_transactions')
             .insert({
-              user_id: vendor_id,
-              transaction_type: 'payment',
+              vendor_id,
+              type: 'payment',
               amount: data.amount,
               currency: 'XOF',
               status: 'completed',
+              payment_method: data.payment_method,
+              description: `Paiement ${data.payment_method}`,
+              offline_sync: true,
               metadata: {
-                payment_method: data.payment_method,
                 sale_id: data.sale_id,
-                offline_sync: true,
                 original_date: data.payment_date
               },
               created_at: data.payment_date || new Date().toISOString()
@@ -110,7 +108,7 @@ export const useOfflineSync = () => {
             console.error('Erreur sync payment:', error);
             return false;
           }
-          console.log('✅ Paiement synchronisé vers financial_transactions');
+          console.log('✅ Paiement synchronisé vers vendor_transactions');
           return true;
         }
           
