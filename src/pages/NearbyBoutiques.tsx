@@ -27,6 +27,7 @@ interface Vendor {
   service_type?: "wholesale" | "retail" | "mixed" | null;
   is_verified?: boolean | null;
   distance?: number | null;
+  shop_slug?: string | null;
 }
 
 const RADIUS_KM = 20;
@@ -52,7 +53,7 @@ export default function NearbyBoutiques() {
       let query = supabase
         .from("vendors")
         .select(
-          "id, business_name, description, address, logo_url, rating, city, neighborhood, latitude, longitude, business_type, service_type, is_verified"
+          "id, business_name, description, address, logo_url, rating, city, neighborhood, latitude, longitude, business_type, service_type, is_verified, shop_slug"
         )
         .eq("is_active", true)
         .limit(200);
@@ -136,8 +137,8 @@ export default function NearbyBoutiques() {
   }, [vendors, searchQuery]);
 
   // Handler de navigation optimisé avec useCallback pour éviter les re-créations
-  const handleVendorNavigate = useCallback((vendorId: string) => {
-    navigate(`/shop/${vendorId}`);
+  const handleVendorNavigate = useCallback((vendorId: string, shopSlug?: string | null) => {
+    navigate(`/boutique/${shopSlug || vendorId}`);
   }, [navigate]);
 
   return (

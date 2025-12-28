@@ -16,9 +16,10 @@ interface VendorCardProps {
     neighborhood?: string | null;
     is_verified?: boolean | null;
     distance?: number | null;
+    shop_slug?: string | null;
   };
   index: number;
-  onNavigate: (vendorId: string) => void;
+  onNavigate: (vendorId: string, shopSlug?: string | null) => void;
 }
 
 /**
@@ -29,9 +30,9 @@ function VendorCardComponent({ vendor, index, onNavigate }: VendorCardProps) {
   const handleClick = useCallback(() => {
     // Évite les calculs synchrones lourds dans le clic
     requestAnimationFrame(() => {
-      onNavigate(vendor.id);
+      onNavigate(vendor.id, vendor.shop_slug);
     });
-  }, [vendor.id, onNavigate]);
+  }, [vendor.id, vendor.shop_slug, onNavigate]);
 
   return (
     <button

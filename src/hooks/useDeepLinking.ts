@@ -14,10 +14,10 @@ interface DeepLinkHandler {
 
 // Patterns de deep linking supportés
 const DEEP_LINK_PATTERNS: DeepLinkHandler[] = [
-  // Boutique: /shop/:vendorId, /boutique/:vendorId, myapp://shop/:vendorId, myapp://boutique/:vendorId
+  // Boutique: /boutique/:slug, /shop/:vendorId, myapp://boutique/:slug
   {
     pattern: /(?:myapp:\/\/|.*\/)(?:shop|boutique)\/([a-zA-Z0-9-]+)/,
-    handler: (matches) => `/shop/${matches[1]}`,
+    handler: (matches) => `/boutique/${matches[1]}`,
   },
   // Produit: /product/:productId, /produit/:productId
   {

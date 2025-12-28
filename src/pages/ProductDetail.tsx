@@ -20,6 +20,7 @@ interface Product {
   vendors?: {
     business_name: string;
     id: string;
+    shop_slug?: string;
   };
   category_id?: string;
   categories?: {
@@ -89,7 +90,7 @@ export default function ProductDetail() {
         .from('products')
         .select(`
           *,
-          vendors:vendor_id(business_name, id),
+          vendors:vendor_id(business_name, id, shop_slug),
           categories:category_id(name)
         `)
         .eq('id', id)
@@ -325,7 +326,7 @@ export default function ProductDetail() {
                   <div className="min-w-0 flex-1">
                     <h3 className="font-semibold mb-2">Vendu par</h3>
                     <Link
-                      to={`/shop/${product.vendors.id}`}
+                      to={`/boutique/${product.vendors.shop_slug || product.vendors.id}`}
                       className="flex items-center justify-between gap-2 group hover:text-primary transition-colors"
                     >
                       <span className="text-foreground group-hover:text-primary truncate">
@@ -339,12 +340,12 @@ export default function ProductDetail() {
                   <ShareButton
                     title={product.vendors.business_name}
                     text={`Découvrez la boutique ${product.vendors.business_name} sur 224 Solutions`}
-                    url={`${window.location.origin}/shop/${product.vendors.id}`}
+                    url={`${window.location.origin}/boutique/${product.vendors.shop_slug || product.vendors.id}`}
                     variant="outline"
                     size="icon"
                     resourceType="shop"
                     resourceId={product.vendors.id}
-                    useShortUrl={true}
+                    useShortUrl={false}
                   />
                 </div>
               </Card>

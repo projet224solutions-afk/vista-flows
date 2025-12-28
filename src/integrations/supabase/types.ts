@@ -13465,6 +13465,7 @@ export type Database = {
           public_id: string | null
           rating: number | null
           service_type: string | null
+          shop_slug: string | null
           total_reviews: number | null
           updated_at: string | null
           user_id: string
@@ -13495,6 +13496,7 @@ export type Database = {
           public_id?: string | null
           rating?: number | null
           service_type?: string | null
+          shop_slug?: string | null
           total_reviews?: number | null
           updated_at?: string | null
           user_id: string
@@ -13525,6 +13527,7 @@ export type Database = {
           public_id?: string | null
           rating?: number | null
           service_type?: string | null
+          shop_slug?: string | null
           total_reviews?: number | null
           updated_at?: string | null
           user_id?: string
@@ -15448,6 +15451,10 @@ export type Database = {
       }
       generate_secure_token: { Args: never; Returns: string }
       generate_sequential_id: { Args: { p_prefix: string }; Returns: string }
+      generate_shop_slug: {
+        Args: { business_name: string; vendor_id: string }
+        Returns: string
+      }
       generate_standard_id: { Args: { p_prefix: string }; Returns: string }
       generate_tracking_number: { Args: never; Returns: string }
       generate_transaction_custom_id: { Args: never; Returns: string }
