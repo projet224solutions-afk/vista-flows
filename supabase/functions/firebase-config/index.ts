@@ -21,8 +21,12 @@ serve(async (req) => {
       appId: Deno.env.get('FIREBASE_APP_ID'),
     };
 
+    // VAPID Key pour les notifications push
+    const vapidKey = Deno.env.get('FIREBASE_VAPID_KEY');
+
     // Vérifier que les clés essentielles sont présentes
     if (!config.apiKey || !config.projectId) {
+      console.log('❌ Firebase config incomplete - missing apiKey or projectId');
       return new Response(
         JSON.stringify({ 
           error: 'Firebase configuration incomplete',
@@ -35,14 +39,21 @@ serve(async (req) => {
       );
     }
 
+    console.log('✅ Firebase config retrieved successfully');
+
     return new Response(
-      JSON.stringify({ ...config, configured: true }),
+      JSON.stringify({ 
+        ...config, 
+        vapidKey: vapidKey || null,
+        configured: true 
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('❌ Error in firebase-config:', message);
     return new Response(
       JSON.stringify({ error: message }),
       { 

@@ -61,20 +61,29 @@ export function useFirebaseMessaging() {
   useEffect(() => {
     const sendConfigToSW = async () => {
       if ('serviceWorker' in navigator) {
-        const registration = await navigator.serviceWorker.ready;
-        
-        // Récupérer la config Firebase
         try {
-          const response = await fetch('/api/firebase-config');
-          if (response.ok) {
-            const config = await response.json();
+          const registration = await navigator.serviceWorker.ready;
+          
+          // Récupérer la config Firebase via Supabase edge function
+          const { supabase } = await import('@/integrations/supabase/client');
+          const { data: config, error } = await supabase.functions.invoke('firebase-config');
+          
+          if (!error && config && config.configured) {
             registration.active?.postMessage({
               type: 'FIREBASE_CONFIG',
-              config
+              config: {
+                apiKey: config.apiKey,
+                authDomain: config.authDomain,
+                projectId: config.projectId,
+                storageBucket: config.storageBucket,
+                messagingSenderId: config.messagingSenderId,
+                appId: config.appId
+              }
             });
+            console.log('✅ Config Firebase envoyée au Service Worker');
           }
         } catch (error) {
-          console.warn('Impossible d\'envoyer la config au SW');
+          console.warn('Impossible d\'envoyer la config au SW:', error);
         }
       }
     };
