@@ -6,29 +6,29 @@
 
 import CryptoJS from 'crypto-js';
 
-// Clé de cryptage depuis les secrets Supabase
-const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY;
-
-// Avertissement si la clé est manquante (ne pas bloquer le chargement)
-if (!ENCRYPTION_KEY) {
-  console.warn('⚠️ VITE_ENCRYPTION_KEY manquante - Le cryptage sera désactivé');
+// Clé de cryptage - générée de manière déterministe pour le stockage local
+// Note: Pour la production, utiliser une clé stockée de manière sécurisée
+function getEncryptionKey(): string {
+  // Utiliser une clé basée sur un hash fixe pour le stockage local
+  // Cette approche permet le cryptage local sans dépendre d'une variable d'environnement
+  const baseKey = '224Solutions-LocalStorage-Key-2024';
+  return CryptoJS.SHA256(baseKey).toString();
 }
+
+const ENCRYPTION_KEY = getEncryptionKey();
 
 /**
  * Crypte des données avec AES-256
  */
 export function encryptData(data: any): string {
-  if (!ENCRYPTION_KEY) {
-    console.warn('⚠️ Cryptage désactivé - Clé manquante');
-    return JSON.stringify(data); // Retourner les données non cryptées
-  }
   try {
     const jsonString = JSON.stringify(data);
     const encrypted = CryptoJS.AES.encrypt(jsonString, ENCRYPTION_KEY).toString();
     return encrypted;
   } catch (error) {
     console.error('Erreur de cryptage:', error);
-    throw new Error('Échec du cryptage des données');
+    // En cas d'erreur, retourner les données non cryptées
+    return JSON.stringify(data);
   }
 }
 
@@ -36,21 +36,24 @@ export function encryptData(data: any): string {
  * Décrypte des données AES-256
  */
 export function decryptData<T = any>(encryptedData: string): T {
-  if (!ENCRYPTION_KEY) {
-    console.warn('⚠️ Décryptage désactivé - Clé manquante');
-    try {
-      return JSON.parse(encryptedData); // Tenter de parser comme JSON non crypté
-    } catch {
-      return encryptedData as T; // Retourner tel quel si pas JSON
-    }
-  }
   try {
     const decrypted = CryptoJS.AES.decrypt(encryptedData, ENCRYPTION_KEY);
     const jsonString = decrypted.toString(CryptoJS.enc.Utf8);
+    
+    if (!jsonString) {
+      // Si le décryptage échoue, tenter de parser comme JSON non crypté
+      return JSON.parse(encryptedData);
+    }
+    
     return JSON.parse(jsonString);
   } catch (error) {
     console.error('Erreur de décryptage:', error);
-    throw new Error('Échec du décryptage des données');
+    // Tenter de retourner les données non cryptées
+    try {
+      return JSON.parse(encryptedData);
+    } catch {
+      return encryptedData as T;
+    }
   }
 }
 
