@@ -62,6 +62,7 @@ import { SubscriptionExpiryBanner } from "@/components/vendor/SubscriptionExpiry
 import VendorQuotesInvoices from "@/pages/VendorQuotesInvoices";
 import VendorContracts from "@/pages/VendorContracts";
 import VendorSettings from "@/pages/vendor/Settings";
+import CopiloteChat from "@/components/copilot/CopiloteChat";
 // NOUVEAUX IMPORTS POUR GESTION D'ERREURS
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useVendorErrorBoundary } from "@/hooks/useVendorErrorBoundary";
@@ -610,6 +611,17 @@ export default function VendeurDashboard() {
               } />
               
               {/* Configuration - toujours accessible */}
+              <Route path="copilote" element={
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Copilote IA Vendeur</CardTitle>
+                    <CardDescription>Votre assistant intelligent pour gérer votre boutique</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <CopiloteChat userRole="vendeur" height="500px" />
+                  </CardContent>
+                </Card>
+              } />
               <Route path="settings" element={<VendorSettings />} />
               
               {/* Autres */}
