@@ -1,7 +1,7 @@
 /**
  * NEARBY VENDORS MODAL - Ultra Professional E-Commerce Design
  * Premium wide layout with VendorCard + Proximity sorting
- * Filtre à 20 km de rayon comme la page de proximité
+ * Même logique 20 km que la page /proximite/boutiques
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -10,20 +10,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Store, MapPin, RefreshCw, Search, ArrowRight,
-  Package, Navigation, Filter
+import {
+  Store,
+  MapPin,
+  RefreshCw,
+  Search,
+  ArrowRight,
+  Package,
+  Navigation,
+  Filter,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { VendorCard } from '@/components/vendor/VendorCard';
-import { calculateDistance as calcDistanceFn } from '@/hooks/useGeoDistance';
+import { useGeoDistance, calculateDistance as calcDistanceFn } from '@/hooks/useGeoDistance';
 
 // Rayon maximum en km (même logique que la page de proximité)
 const RADIUS_KM = 20;
-
-// Position par défaut: Conakry
-const FALLBACK_POSITION = { latitude: 9.6412, longitude: -13.5784 };
 
 interface Vendor {
   id: string;
@@ -49,123 +52,129 @@ interface NearbyVendorsModalProps {
 
 export function NearbyVendorsModal({ open, onOpenChange }: NearbyVendorsModalProps) {
   const navigate = useNavigate();
+  const { userPosition, positionReady, usingRealLocation, refreshPosition, DEFAULT_POSITION } = useGeoDistance();
+
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [userPosition, setUserPosition] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [usingRealLocation, setUsingRealLocation] = useState(false);
   const [businessTypeFilter, setBusinessTypeFilter] = useState<string>('all');
   const [serviceTypeFilter, setServiceTypeFilter] = useState<string>('all');
 
-  // Get user position
-  const getUserPosition = useCallback(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setUserPosition({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-          setUsingRealLocation(true);
-        },
-        () => {
-          setUserPosition(FALLBACK_POSITION);
-          setUsingRealLocation(false);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
-      );
-    } else {
-      setUserPosition(FALLBACK_POSITION);
-      setUsingRealLocation(false);
-    }
-  }, []);
+  const loadVendors = useCallback(
+    async (overridePosition?: { latitude: number; longitude: number }) => {
+      const origin = overridePosition ?? (userPosition?.latitude ? userPosition : DEFAULT_POSITION);
 
-  const loadVendors = useCallback(async () => {
-    if (!userPosition) return;
-    
-    setLoading(true);
-    setError(null);
-    try {
-      let query = supabase
-        .from('vendors')
-        .select('id, business_name, description, address, logo_url, rating, city, neighborhood, latitude, longitude, business_type, service_type, is_verified')
-        .eq('is_active', true)
-        .limit(200);
+      setLoading(true);
+      setError(null);
+      try {
+        let query = supabase
+          .from('vendors')
+          .select(
+            'id, business_name, description, address, logo_url, rating, city, neighborhood, latitude, longitude, business_type, service_type, is_verified'
+          )
+          .eq('is_active', true)
+          .limit(200);
 
-      if (businessTypeFilter !== 'all') {
-        query = query.eq('business_type', businessTypeFilter);
-      }
-      if (serviceTypeFilter !== 'all') {
-        query = query.eq('service_type', serviceTypeFilter);
-      }
+        if (businessTypeFilter !== 'all') query = query.eq('business_type', businessTypeFilter);
+        if (serviceTypeFilter !== 'all') query = query.eq('service_type', serviceTypeFilter);
 
-      const { data, error: dbError } = await query;
-      if (dbError) throw dbError;
+        const { data, error: dbError } = await query;
+        if (dbError) throw dbError;
 
-      let vendorList: Vendor[] = (data || []).map((v) => ({
-        ...v,
-        business_type: v.business_type as Vendor['business_type'],
-        service_type: v.service_type as Vendor['service_type'],
-      }));
+        let list: Vendor[] = (data || []).map((v) => ({
+          ...v,
+          business_type: v.business_type as Vendor['business_type'],
+          service_type: v.service_type as Vendor['service_type'],
+        }));
 
-      // Calculer la distance et filtrer par rayon de 20 km (comme la page de proximité)
-      vendorList = vendorList
-        .map((vendor) => {
-          // Si pas de coordonnées GPS, distance = null
-          if (vendor.latitude === null || vendor.latitude === undefined || 
-              vendor.longitude === null || vendor.longitude === undefined) {
-            return { ...vendor, distance: null };
+        const total = list.length;
+
+        // Distances + filtre rayon - EXCLURE les boutiques sans GPS
+        const withDistance = list.map((v) => {
+          if (v.latitude === null || v.latitude === undefined || v.longitude === null || v.longitude === undefined) {
+            return { ...v, distance: null };
           }
-          const distance = calcDistanceFn(
-            userPosition.latitude, userPosition.longitude,
-            Number(vendor.latitude), Number(vendor.longitude)
-          );
-          return { ...vendor, distance };
-        })
-        // FILTRE DE PROXIMITÉ: exclure les boutiques sans GPS et celles hors rayon de 20 km
-        .filter((v) => v.distance !== null && v.distance <= RADIUS_KM);
+          const distance = calcDistanceFn(origin.latitude, origin.longitude, Number(v.latitude), Number(v.longitude));
+          return { ...v, distance };
+        });
 
-      // Tri: plus proches d'abord
-      vendorList.sort((a, b) => {
-        if (a.distance === null && b.distance === null) {
-          return (b.rating || 0) - (a.rating || 0);
-        }
-        if (a.distance === null) return 1;
-        if (b.distance === null) return -1;
-        return a.distance - b.distance;
-      });
+        const withoutGps = withDistance.filter((v) => v.distance === null).length;
+        const outOfRadius = withDistance.filter((v) => v.distance !== null && v.distance > RADIUS_KM).length;
 
-      setVendors(vendorList);
-    } catch (err) {
-      console.error('Error loading vendors:', err);
-      setError('Erreur lors du chargement des boutiques');
-    } finally {
-      setLoading(false);
-    }
-  }, [userPosition, businessTypeFilter, serviceTypeFilter]);
+        list = withDistance.filter((v) => v.distance !== null && v.distance <= RADIUS_KM);
 
+        // Tri: plus proches d'abord
+        list.sort((a, b) => {
+          if (a.distance === null && b.distance === null) return (b.rating || 0) - (a.rating || 0);
+          if (a.distance === null) return 1;
+          if (b.distance === null) return -1;
+          return (a.distance ?? 0) - (b.distance ?? 0);
+        });
+
+        // Debug (pour comprendre si des boutiques passent le filtre)
+        console.debug('[NearbyVendorsModal] origin=', origin, {
+          total,
+          withoutGps,
+          outOfRadius,
+          inRadius: list.length,
+          radiusKm: RADIUS_KM,
+        });
+
+        setVendors(list);
+      } catch (err) {
+        console.error('Error loading vendors:', err);
+        setError('Erreur lors du chargement des boutiques');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [DEFAULT_POSITION, businessTypeFilter, serviceTypeFilter, userPosition]
+  );
+
+  // À l'ouverture: forcer une demande de position (même logique que proximité)
   useEffect(() => {
-    if (open) {
-      getUserPosition();
-    }
-  }, [open, getUserPosition]);
+    if (!open) return;
+    void refreshPosition();
+  }, [open, refreshPosition]);
 
+  // Charger dès que la position est prête (ou fallback après 2s)
   useEffect(() => {
-    if (open && userPosition) {
-      loadVendors();
+    if (!open) return;
+
+    if (positionReady) {
+      void loadVendors();
+      return;
     }
-  }, [open, userPosition, loadVendors]);
 
-  const handleVendorClick = useCallback((vendorId: string) => {
-    onOpenChange(false);
-    navigate(`/shop/${vendorId}`);
-  }, [navigate, onOpenChange]);
+    const timer = window.setTimeout(() => {
+      void loadVendors(DEFAULT_POSITION);
+    }, 2000);
 
-  const filteredVendors = vendors.filter(vendor => {
-    const query = searchQuery.toLowerCase();
+    return () => window.clearTimeout(timer);
+  }, [open, positionReady, usingRealLocation, businessTypeFilter, serviceTypeFilter, loadVendors, DEFAULT_POSITION]);
+
+  const handleRefresh = useCallback(async () => {
+    const pos = await refreshPosition();
+    await loadVendors(pos);
+  }, [refreshPosition, loadVendors]);
+
+  const handleVendorClick = useCallback(
+    (vendorId: string) => {
+      onOpenChange(false);
+      navigate(`/shop/${vendorId}`);
+    },
+    [navigate, onOpenChange]
+  );
+
+  const filteredVendors = vendors.filter((vendor) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
     return (
-      vendor.business_name.toLowerCase().includes(query) ||
-      vendor.city?.toLowerCase().includes(query) ||
-      vendor.neighborhood?.toLowerCase().includes(query) ||
-      vendor.description?.toLowerCase().includes(query)
+      vendor.business_name.toLowerCase().includes(q) ||
+      vendor.city?.toLowerCase().includes(q) ||
+      vendor.neighborhood?.toLowerCase().includes(q) ||
+      vendor.description?.toLowerCase().includes(q)
     );
   });
 
@@ -186,7 +195,7 @@ export function NearbyVendorsModal({ open, onOpenChange }: NearbyVendorsModalPro
               Découvrez nos boutiques
             </DialogTitle>
           </DialogHeader>
-          
+
           {/* Search Bar */}
           <div className="mt-4 relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -207,10 +216,18 @@ export function NearbyVendorsModal({ open, onOpenChange }: NearbyVendorsModalPro
                 onChange={(e) => setBusinessTypeFilter(e.target.value)}
                 className="bg-transparent text-white text-xs border-0 focus:ring-0 cursor-pointer"
               >
-                <option value="all" className="text-foreground">Tous les types</option>
-                <option value="physical" className="text-foreground">Boutique physique</option>
-                <option value="digital" className="text-foreground">Boutique en ligne</option>
-                <option value="hybrid" className="text-foreground">Hybride</option>
+                <option value="all" className="text-foreground">
+                  Tous les types
+                </option>
+                <option value="physical" className="text-foreground">
+                  Boutique physique
+                </option>
+                <option value="digital" className="text-foreground">
+                  Boutique en ligne
+                </option>
+                <option value="hybrid" className="text-foreground">
+                  Hybride
+                </option>
               </select>
             </div>
             <div className="flex items-center gap-1 bg-white/10 rounded-lg px-2 py-1">
@@ -220,10 +237,18 @@ export function NearbyVendorsModal({ open, onOpenChange }: NearbyVendorsModalPro
                 onChange={(e) => setServiceTypeFilter(e.target.value)}
                 className="bg-transparent text-white text-xs border-0 focus:ring-0 cursor-pointer"
               >
-                <option value="all" className="text-foreground">Tous les services</option>
-                <option value="wholesale" className="text-foreground">Grossiste</option>
-                <option value="retail" className="text-foreground">Détaillant</option>
-                <option value="mixed" className="text-foreground">Mixte</option>
+                <option value="all" className="text-foreground">
+                  Tous les services
+                </option>
+                <option value="wholesale" className="text-foreground">
+                  Grossiste
+                </option>
+                <option value="retail" className="text-foreground">
+                  Détaillant
+                </option>
+                <option value="mixed" className="text-foreground">
+                  Mixte
+                </option>
               </select>
             </div>
           </div>
@@ -235,16 +260,16 @@ export function NearbyVendorsModal({ open, onOpenChange }: NearbyVendorsModalPro
             <span className="text-xs sm:text-sm text-muted-foreground">
               <span className="font-semibold text-foreground">{filteredVendors.length}</span> boutiques disponibles
             </span>
-            <Badge variant={usingRealLocation ? "default" : "secondary"} className="gap-1 text-[10px]">
+            <Badge variant={usingRealLocation ? 'default' : 'secondary'} className="gap-1 text-[10px]">
               <MapPin className="w-3 h-3" />
-              {usingRealLocation ? "GPS actif" : "Position par défaut"}
+              {usingRealLocation ? 'Position GPS active' : 'GPS désactivé'}
             </Badge>
             <Badge variant="outline" className="text-[10px]">
               Rayon: {RADIUS_KM} km
             </Badge>
           </div>
-          <Button variant="ghost" size="sm" onClick={loadVendors} className="gap-1 sm:gap-2 text-xs sm:text-sm h-8">
-            <RefreshCw className={cn("w-3 h-3 sm:w-4 sm:h-4", loading && "animate-spin")} />
+          <Button variant="ghost" size="sm" onClick={handleRefresh} className="gap-1 sm:gap-2 text-xs sm:text-sm h-8">
+            <RefreshCw className={cn('w-3 h-3 sm:w-4 sm:h-4', loading && 'animate-spin')} />
             Actualiser
           </Button>
         </div>
@@ -265,7 +290,7 @@ export function NearbyVendorsModal({ open, onOpenChange }: NearbyVendorsModalPro
               </div>
               <p className="text-sm font-medium text-foreground mb-2">Erreur de chargement</p>
               <p className="text-sm text-muted-foreground mb-4">{error}</p>
-              <Button variant="outline" onClick={loadVendors} className="gap-2">
+              <Button variant="outline" onClick={handleRefresh} className="gap-2">
                 <RefreshCw className="w-4 h-4" />
                 Réessayer
               </Button>
@@ -277,9 +302,7 @@ export function NearbyVendorsModal({ open, onOpenChange }: NearbyVendorsModalPro
               </div>
               <p className="text-sm font-medium text-foreground mb-2">Aucune boutique trouvée</p>
               <p className="text-sm text-muted-foreground mb-4">
-                {searchQuery 
-                  ? 'Essayez un autre terme de recherche' 
-                  : `Aucune boutique dans un rayon de ${RADIUS_KM} km`}
+                {searchQuery ? 'Essayez un autre terme de recherche' : `Aucune boutique dans un rayon de ${RADIUS_KM} km`}
               </p>
               <Button variant="outline" onClick={() => setSearchQuery('')} className="gap-2">
                 Effacer la recherche
@@ -288,12 +311,7 @@ export function NearbyVendorsModal({ open, onOpenChange }: NearbyVendorsModalPro
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredVendors.map((vendor, index) => (
-                <VendorCard
-                  key={vendor.id}
-                  vendor={vendor}
-                  index={index}
-                  onNavigate={handleVendorClick}
-                />
+                <VendorCard key={vendor.id} vendor={vendor} index={index} onNavigate={handleVendorClick} />
               ))}
             </div>
           )}
