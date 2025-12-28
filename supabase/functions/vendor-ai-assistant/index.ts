@@ -1104,68 +1104,97 @@ async function generateProfessionalDocument(supabase: any, vendorId: string, par
     .eq('id', vendorId)
     .single();
 
-  // Générer la structure du document selon le type
-  let documentContent: any = {
-    metadata: {
-      title: custom_title || getDocumentTitle(document_type, language),
-      language,
-      generatedAt: new Date().toISOString(),
-      vendorName: vendor?.business_name || 'Vendeur',
-      vendorLogo: vendor?.logo_url,
-      period
-    },
-    coverPage: {
-      title: custom_title || getDocumentTitle(document_type, language),
-      subtitle: vendor?.business_name,
-      date: new Date().toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US'),
-      logo: vendor?.logo_url
-    },
-    tableOfContents: [],
-    sections: []
-  };
+  const documentTitle = custom_title || getDocumentTitle(document_type, language);
 
-  // Générer le contenu selon le type
+  // Générer les sections du document selon le type
+  let sections: any[] = [];
+
   switch (document_type) {
     case 'user_guide':
-      documentContent.sections = generateUserGuideContent(language);
+      sections = generateUserGuideContent(language);
       break;
     case 'operations_manual':
-      documentContent.sections = generateOperationsManualContent(language);
+      sections = generateOperationsManualContent(language);
       break;
     case 'sales_report':
       const salesData = await getSalesReportData(supabase, vendorId, period);
-      documentContent.sections = generateSalesReportContent(salesData, language, include_charts);
+      sections = generateSalesReportContent(salesData, language, include_charts);
       break;
     case 'inventory_report':
       const inventoryData = await getInventoryReportData(supabase, vendorId);
-      documentContent.sections = generateInventoryReportContent(inventoryData, language);
+      sections = generateInventoryReportContent(inventoryData, language);
       break;
     case 'marketing_report':
       const marketingData = await getMarketingReportData(supabase, vendorId, period);
-      documentContent.sections = generateMarketingReportContent(marketingData, language);
+      sections = generateMarketingReportContent(marketingData, language);
       break;
     default:
-      documentContent.sections = [{ title: 'Document personnalisé', content: 'Contenu à définir.' }];
+      sections = [{ title: 'Document personnalisé', content: 'Contenu à définir.' }];
   }
 
-  // Générer la table des matières
-  documentContent.tableOfContents = documentContent.sections.map((s: any, i: number) => ({
-    number: i + 1,
-    title: s.title,
-    page: i + 2
-  }));
+  // =====================================================
+  // APPELER L'EDGE FUNCTION generate-pdf POUR CRÉER LE VRAI PDF
+  // =====================================================
+  
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  
+  let pdfResult: any = null;
+  let pdfError: string | null = null;
 
-  // Sauvegarder le document
+  try {
+    console.log('[vendor-ai-assistant] Calling generate-pdf edge function...');
+    
+    const pdfResponse = await fetch(`${supabaseUrl}/functions/v1/generate-pdf`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseServiceKey}`
+      },
+      body: JSON.stringify({
+        document_type,
+        document_title: documentTitle,
+        vendor_id: vendorId,
+        language,
+        sections,
+        metadata: {
+          vendor_name: vendor?.business_name,
+          vendor_logo_url: vendor?.logo_url,
+          period,
+          include_charts
+        }
+      })
+    });
+
+    if (pdfResponse.ok) {
+      pdfResult = await pdfResponse.json();
+      console.log('[vendor-ai-assistant] PDF generated successfully:', pdfResult?.data?.file_url);
+    } else {
+      const errorText = await pdfResponse.text();
+      console.error('[vendor-ai-assistant] PDF generation failed:', errorText);
+      pdfError = errorText;
+    }
+  } catch (err) {
+    console.error('[vendor-ai-assistant] Error calling generate-pdf:', err);
+    pdfError = err instanceof Error ? err.message : 'Erreur inconnue';
+  }
+
+  // Sauvegarder également dans vendor_ai_documents pour historique
   const { data: doc, error } = await supabase
     .from('vendor_ai_documents')
     .insert({
       vendor_id: vendorId,
       document_type,
-      document_title: documentContent.metadata.title,
-      document_content: documentContent,
+      document_title: documentTitle,
+      document_content: { sections },
       language,
-      status: 'generated',
-      metadata: { include_charts, period }
+      status: pdfResult?.success ? 'completed' : 'generated',
+      metadata: { 
+        include_charts, 
+        period,
+        pdf_url: pdfResult?.data?.file_url,
+        pdf_document_id: pdfResult?.data?.document_id
+      }
     })
     .select()
     .single();
@@ -1176,20 +1205,47 @@ async function generateProfessionalDocument(supabase: any, vendorId: string, par
     vendor_id: vendorId,
     action_type: 'generate_professional_document',
     input_data: params,
-    output_data: { document_id: doc.id, document_type },
+    output_data: { 
+      document_id: doc.id, 
+      document_type,
+      pdf_url: pdfResult?.data?.file_url,
+      pdf_generated: pdfResult?.success || false
+    },
     execution_time_ms: Date.now() - startTime,
-    model_used: 'internal_document_generator',
+    model_used: 'generate-pdf-edge-function',
     success: true
   });
 
+  // Si le PDF a été généré, retourner l'URL de téléchargement
+  if (pdfResult?.success && pdfResult?.data?.file_url) {
+    return {
+      success: true,
+      data: {
+        document_id: doc.id,
+        pdf_document_id: pdfResult.data.document_id,
+        title: documentTitle,
+        sections_count: sections.length,
+        status: 'completed',
+        file_url: pdfResult.data.file_url,
+        download_url: pdfResult.data.download_url,
+        file_size_bytes: pdfResult.data.file_size_bytes,
+        message: `✅ Document PDF "${documentTitle}" généré avec succès ! Téléchargez-le ici: ${pdfResult.data.file_url}`
+      }
+    };
+  }
+
+  // Fallback si le PDF n'a pas été généré
   return {
     success: true,
     data: {
       document_id: doc.id,
-      title: documentContent.metadata.title,
-      sections_count: documentContent.sections.length,
+      title: documentTitle,
+      sections_count: sections.length,
       status: 'generated',
-      message: "Document généré avec succès. Le PDF peut être téléchargé depuis l'interface documents."
+      pdf_error: pdfError,
+      message: pdfError 
+        ? `⚠️ Document créé mais la génération PDF a échoué: ${pdfError}. Le contenu est disponible dans l'historique.`
+        : "Document généré avec succès. Le PDF peut être téléchargé depuis l'interface documents."
     }
   };
 }
@@ -2130,11 +2186,12 @@ ANALYSER → PROPOSER → FAIRE VALIDER → EXÉCUTER
    - Proposer des réponses professionnelles et polies
    - ❌ JAMAIS publier une réponse sans validation du vendeur
 
-2. **GÉNÉRATION DE DOCUMENTS (PDF)**:
-   - Créer des guides, manuels, rapports professionnels
-   - Inclure page de couverture, sommaire, pagination
-   - Style entreprise avec logo/nom de la boutique
-   - Disponible en français et anglais
+2. **GÉNÉRATION DE DOCUMENTS PDF (CAPACITÉ COMPLÈTE)**:
+   - ✅ TU PEUX GÉNÉRER DES FICHIERS PDF RÉELS - utilise generate_professional_document
+   - Guides d'utilisation, manuels, rapports de ventes, inventaire, marketing
+   - PDFs professionnels avec page de couverture, sommaire, sections stylisées
+   - Lien de téléchargement direct retourné après génération
+   - ❌ NE DIS JAMAIS "je ne peux pas générer de PDF" - TU LE PEUX
 
 3. **ANALYSE DES COMMANDES**:
    - Détecter retards, risques, anomalies, fraudes comportementales

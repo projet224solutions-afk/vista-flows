@@ -423,6 +423,60 @@ export type Database = {
           },
         ]
       }
+      ai_generated_documents: {
+        Row: {
+          created_at: string | null
+          document_title: string
+          document_type: string
+          download_count: number | null
+          expires_at: string | null
+          file_path: string
+          file_size_bytes: number | null
+          file_url: string
+          generation_source: string | null
+          id: string
+          language: string | null
+          last_downloaded_at: string | null
+          metadata: Json | null
+          user_id: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          document_title: string
+          document_type: string
+          download_count?: number | null
+          expires_at?: string | null
+          file_path: string
+          file_size_bytes?: number | null
+          file_url: string
+          generation_source?: string | null
+          id?: string
+          language?: string | null
+          last_downloaded_at?: string | null
+          metadata?: Json | null
+          user_id?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          document_title?: string
+          document_type?: string
+          download_count?: number | null
+          expires_at?: string | null
+          file_path?: string
+          file_size_bytes?: number | null
+          file_url?: string
+          generation_source?: string | null
+          id?: string
+          language?: string | null
+          last_downloaded_at?: string | null
+          metadata?: Json | null
+          user_id?: string | null
+          vendor_id?: string | null
+        }
+        Relationships: []
+      }
       api_alerts: {
         Row: {
           alert_type: string
@@ -16651,6 +16705,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_document_download: {
+        Args: { doc_id: string }
+        Returns: undefined
       }
       increment_driver_earnings: {
         Args: { p_amount: number; p_driver_id: string }
