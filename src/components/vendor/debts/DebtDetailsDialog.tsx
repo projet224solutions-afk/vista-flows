@@ -161,19 +161,36 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
                 <p className="text-xs text-muted-foreground mb-1">Montant Total</p>
                 <p className="text-lg font-bold">{formatAmount(debt.total_amount)}</p>
               </div>
-              <div className="text-center p-3 bg-green-50 rounded-lg">
+              <div className="text-center p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
                 <p className="text-xs text-muted-foreground mb-1">Montant Payé</p>
-                <p className="text-lg font-bold text-green-600">{formatAmount(debt.paid_amount)}</p>
+                <p className="text-lg font-bold text-green-600 dark:text-green-400">{formatAmount(debt.paid_amount)}</p>
               </div>
-              <div className="text-center p-3 bg-orange-50 rounded-lg">
+              <div className="text-center p-3 bg-orange-50 dark:bg-orange-950/30 rounded-lg">
                 <p className="text-xs text-muted-foreground mb-1">Restant</p>
-                <p className="text-lg font-bold text-orange-600">{formatAmount(debt.remaining_amount)}</p>
+                <p className="text-lg font-bold text-orange-600 dark:text-orange-400">{formatAmount(debt.remaining_amount)}</p>
               </div>
               <div className="text-center p-3 bg-muted rounded-lg">
                 <p className="text-xs text-muted-foreground mb-1">Tranche Min.</p>
                 <p className="text-lg font-bold">{formatAmount(debt.minimum_installment)}</p>
               </div>
             </div>
+            
+            {/* Barre de progression */}
+            <div className="mt-4">
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-muted-foreground">Progression</span>
+                <span className="font-medium">
+                  {Math.round((debt.paid_amount / debt.total_amount) * 100)}%
+                </span>
+              </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-green-500 transition-all duration-300"
+                  style={{ width: `${(debt.paid_amount / debt.total_amount) * 100}%` }}
+                />
+              </div>
+            </div>
+            
             {debt.due_date && (
               <div className="mt-3 text-center">
                 <span className="text-sm text-muted-foreground">Date limite: </span>

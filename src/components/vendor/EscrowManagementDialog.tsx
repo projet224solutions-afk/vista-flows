@@ -22,6 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { VendorDisputeDialog } from './VendorDisputeDialog';
 
 interface EscrowManagementDialogProps {
   open: boolean;
@@ -31,27 +32,27 @@ interface EscrowManagementDialogProps {
 const statusConfig = {
   pending: {
     label: 'En attente',
-    className: 'bg-yellow-100 text-yellow-800',
+    className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
     icon: Clock
   },
   held: {
     label: 'Bloqué',
-    className: 'bg-orange-100 text-orange-800',
+    className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
     icon: AlertCircle
   },
   released: {
     label: 'Libéré',
-    className: 'bg-green-100 text-green-800',
+    className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
     icon: CheckCircle
   },
   refunded: {
     label: 'Remboursé',
-    className: 'bg-blue-100 text-blue-800',
+    className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
     icon: XCircle
   },
   dispute: {
     label: 'Litige',
-    className: 'bg-red-100 text-red-800',
+    className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
     icon: AlertCircle
   }
 };
@@ -61,11 +62,13 @@ export default function EscrowManagementDialog({
   onOpenChange
 }: EscrowManagementDialogProps) {
   const { profile } = useAuth();
-  const { transactions, loading, releaseEscrow, refundEscrow, disputeEscrow, requestRelease } = useEscrowTransactions();
+  const { transactions, loading, releaseEscrow, refundEscrow, requestRelease, refresh } = useEscrowTransactions();
   const [selectedTransaction, setSelectedTransaction] = useState<string | null>(null);
-  const [actionType, setActionType] = useState<'release' | 'refund' | 'dispute' | 'request' | null>(null);
+  const [selectedOrderNumber, setSelectedOrderNumber] = useState<string | undefined>(undefined);
+  const [actionType, setActionType] = useState<'release' | 'refund' | 'request' | null>(null);
+  const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
   
-  const isAdmin = profile?.role === 'admin';
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'ceo';
 
   const handleAction = async () => {
     if (!selectedTransaction) return;
@@ -78,9 +81,6 @@ export default function EscrowManagementDialog({
         case 'refund':
           await refundEscrow(selectedTransaction);
           break;
-        case 'dispute':
-          await disputeEscrow(selectedTransaction);
-          break;
         case 'request':
           await requestRelease(selectedTransaction);
           break;
@@ -92,9 +92,15 @@ export default function EscrowManagementDialog({
     }
   };
 
-  const openActionDialog = (transactionId: string, action: 'release' | 'refund' | 'dispute' | 'request') => {
+  const openActionDialog = (transactionId: string, action: 'release' | 'refund' | 'request') => {
     setSelectedTransaction(transactionId);
     setActionType(action);
+  };
+
+  const openDisputeDialog = (transactionId: string, orderNumber?: string) => {
+    setSelectedTransaction(transactionId);
+    setSelectedOrderNumber(orderNumber);
+    setDisputeDialogOpen(true);
   };
 
   return (
@@ -206,7 +212,7 @@ export default function EscrowManagementDialog({
                             <Button
                               size="sm"
                               variant="destructive"
-                              onClick={() => openActionDialog(transaction.id, 'dispute')}
+                              onClick={() => openDisputeDialog(transaction.id, transaction.order?.order_number)}
                             >
                               Litige
                             </Button>
@@ -232,13 +238,11 @@ export default function EscrowManagementDialog({
               {actionType === 'release' && 'Libérer les fonds (Admin)'}
               {actionType === 'request' && 'Demander la libération'}
               {actionType === 'refund' && 'Rembourser la transaction'}
-              {actionType === 'dispute' && 'Ouvrir un litige'}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {actionType === 'release' && 'Les fonds seront transférés au vendeur avec commission. Cette action est irréversible.'}
               {actionType === 'request' && 'Une notification sera envoyée à l\'administrateur pour demander la libération des fonds. Le client peut aussi confirmer la réception pour libérer automatiquement.'}
               {actionType === 'refund' && 'Les fonds seront retournés au payeur. Cette action est irréversible.'}
-              {actionType === 'dispute' && 'Un litige sera ouvert sur cette transaction. Elle sera mise en attente.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -249,6 +253,20 @@ export default function EscrowManagementDialog({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog litige avec formulaire complet */}
+      {selectedTransaction && (
+        <VendorDisputeDialog
+          open={disputeDialogOpen}
+          onOpenChange={setDisputeDialogOpen}
+          escrowId={selectedTransaction}
+          orderNumber={selectedOrderNumber}
+          onSuccess={() => {
+            refresh();
+            setSelectedTransaction(null);
+          }}
+        />
+      )}
     </>
   );
 }
