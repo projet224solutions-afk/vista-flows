@@ -11,10 +11,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
-import { DollarSign } from 'lucide-react';
+import { DollarSign, Banknote, Smartphone, CreditCard, Wallet, Loader2 } from 'lucide-react';
 import { sendPaymentReceivedNotification, sendDebtPaidNotification } from '@/utils/debtNotifications';
 
 interface Debt {
@@ -34,10 +35,20 @@ interface RecordPaymentDialogProps {
   onSuccess: () => void;
 }
 
+type PaymentMethod = 'cash' | 'wallet' | 'mobile_money' | 'card';
+
+const paymentMethods: { value: PaymentMethod; label: string; icon: React.ReactNode }[] = [
+  { value: 'cash', label: 'Espèces', icon: <Banknote className="w-4 h-4" /> },
+  { value: 'wallet', label: 'Wallet', icon: <Wallet className="w-4 h-4" /> },
+  { value: 'mobile_money', label: 'Mobile Money', icon: <Smartphone className="w-4 h-4" /> },
+  { value: 'card', label: 'Carte Bancaire', icon: <CreditCard className="w-4 h-4" /> },
+];
+
 export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: RecordPaymentDialogProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [amount, setAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [comment, setComment] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,13 +62,13 @@ export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: Rec
     const paymentAmount = parseFloat(amount);
 
     // Validation
-    if (!amount || paymentAmount <= 0) {
+    if (!amount || isNaN(paymentAmount) || paymentAmount <= 0) {
       toast.error('Veuillez entrer un montant valide');
       return;
     }
 
-    if (paymentAmount < debt.minimum_installment) {
-      toast.error(`Le montant doit être au minimum ${debt.minimum_installment.toLocaleString('fr-FR')} GNF`);
+    if (paymentAmount < debt.minimum_installment && paymentAmount !== debt.remaining_amount) {
+      toast.error(`Le montant doit être au minimum ${debt.minimum_installment.toLocaleString('fr-FR')} GNF (sauf pour solder la dette)`);
       return;
     }
 
@@ -74,7 +85,7 @@ export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: Rec
         .insert({
           debt_id: debt.id,
           amount: paymentAmount,
-          payment_method: 'cash',
+          payment_method: paymentMethod,
           comment: comment || null,
           recorded_by: user.id
         });
@@ -92,8 +103,9 @@ export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: Rec
           debt.customer_name,
           debt.customer_phone,
           debt.total_amount,
-          'Votre vendeur' // TODO: récupérer le nom du vendeur
+          'Votre vendeur'
         );
+        toast.success('🎉 Dette entièrement soldée !');
       } else {
         // Paiement partiel
         await sendPaymentReceivedNotification(
@@ -103,15 +115,15 @@ export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: Rec
           debt.customer_phone,
           paymentAmount,
           newRemainingAmount,
-          'Votre vendeur' // TODO: récupérer le nom du vendeur
+          'Votre vendeur'
         );
+        toast.success('Paiement enregistré avec succès');
       }
-
-      toast.success('Paiement enregistré avec succès');
       
       // Reset form
       setAmount('');
       setComment('');
+      setPaymentMethod('cash');
       
       onSuccess();
       onOpenChange(false);
@@ -127,13 +139,29 @@ export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: Rec
     return new Intl.NumberFormat('fr-FR').format(amount) + ' GNF';
   };
 
+  const handleClose = () => {
+    if (!loading) {
+      setAmount('');
+      setComment('');
+      setPaymentMethod('cash');
+      onOpenChange(false);
+    }
+  };
+
+  // Boutons de montants rapides
+  const quickAmounts = [
+    debt.minimum_installment,
+    Math.min(debt.minimum_installment * 2, debt.remaining_amount),
+    debt.remaining_amount
+  ].filter((v, i, a) => a.indexOf(v) === i && v <= debt.remaining_amount);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
-          <DialogTitle>Encaisser une tranche (Cash)</DialogTitle>
+          <DialogTitle>Encaisser une tranche</DialogTitle>
           <DialogDescription>
-            Client: {debt.customer_name}
+            Client: <span className="font-medium">{debt.customer_name}</span>
           </DialogDescription>
         </DialogHeader>
 
@@ -150,6 +178,24 @@ export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: Rec
             </div>
           </div>
 
+          {/* Montants rapides */}
+          <div className="space-y-2">
+            <Label>Montants rapides</Label>
+            <div className="flex gap-2 flex-wrap">
+              {quickAmounts.map((quickAmount) => (
+                <Button
+                  key={quickAmount}
+                  type="button"
+                  variant={parseFloat(amount) === quickAmount ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setAmount(quickAmount.toString())}
+                >
+                  {quickAmount === debt.remaining_amount ? 'Solder' : formatAmount(quickAmount)}
+                </Button>
+              ))}
+            </div>
+          </div>
+
           {/* Montant */}
           <div className="space-y-2">
             <Label htmlFor="amount">Montant encaissé (GNF) *</Label>
@@ -158,7 +204,7 @@ export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: Rec
               <Input
                 id="amount"
                 type="number"
-                min={debt.minimum_installment}
+                min="1"
                 max={debt.remaining_amount}
                 step="1"
                 value={amount}
@@ -168,17 +214,33 @@ export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: Rec
                 required
               />
             </div>
-            <p className="text-xs text-muted-foreground">
-              Entre {formatAmount(debt.minimum_installment)} et {formatAmount(debt.remaining_amount)}
-            </p>
           </div>
 
           {/* Mode de paiement */}
           <div className="space-y-2">
             <Label>Mode de paiement</Label>
-            <div className="p-3 bg-muted rounded-lg">
-              <span className="font-medium">💵 Espèces (CASH)</span>
-            </div>
+            <RadioGroup
+              value={paymentMethod}
+              onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
+              className="grid grid-cols-2 gap-2"
+            >
+              {paymentMethods.map((method) => (
+                <div key={method.value}>
+                  <RadioGroupItem
+                    value={method.value}
+                    id={method.value}
+                    className="peer sr-only"
+                  />
+                  <Label
+                    htmlFor={method.value}
+                    className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground peer-data-[state=checked]:border-primary hover:bg-muted"
+                  >
+                    {method.icon}
+                    <span className="text-sm">{method.label}</span>
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
           </div>
 
           {/* Commentaire */}
@@ -189,23 +251,31 @@ export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: Rec
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Note sur ce paiement..."
-              rows={3}
+              rows={2}
+              className="resize-none"
             />
           </div>
 
           {/* Boutons */}
-          <div className="flex gap-3">
+          <div className="flex gap-3 pt-2">
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={handleClose}
               className="flex-1"
               disabled={loading}
             >
               Annuler
             </Button>
             <Button type="submit" className="flex-1" disabled={loading}>
-              {loading ? 'Enregistrement...' : 'Enregistrer le paiement'}
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Enregistrement...
+                </>
+              ) : (
+                'Enregistrer le paiement'
+              )}
             </Button>
           </div>
         </form>
