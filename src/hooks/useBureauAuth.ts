@@ -140,10 +140,20 @@ export const useBureauAuth = () => {
         return false;
       }
 
-      // Succès → Stocker session (localStorage pour persistance après refresh)
+      // Succès → Stocker session (sessionStorage pour sécurité - expire à la fermeture)
+      // On ne stocke que le minimum nécessaire et non sensible
       if (data.session_token && data.user) {
-        localStorage.setItem('bureau_session', data.session_token);
-        localStorage.setItem('bureau_user', JSON.stringify(data.user));
+        const sessionData = {
+          token: data.session_token,
+          bureauId: data.user.id,
+          bureauCode: data.user.bureau_code,
+          commune: data.user.commune,
+          prefecture: data.user.prefecture,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h max
+        };
+        
+        // Utiliser sessionStorage par défaut (plus sécurisé - session fermée = données effacées)
+        sessionStorage.setItem('bureau_session', JSON.stringify(sessionData));
         
         toast.success(`Bienvenue Bureau ${data.user.bureau_code} - ${data.user.commune} !`);
         
@@ -192,32 +202,56 @@ export const useBureauAuth = () => {
    * Logout
    */
   const logout = () => {
-    localStorage.removeItem('bureau_session');
-    localStorage.removeItem('bureau_user');
+    // Nettoyer toutes les sessions possibles
     sessionStorage.removeItem('bureau_session');
+    localStorage.removeItem('bureau_session');
+    // Anciens formats pour rétrocompatibilité
+    localStorage.removeItem('bureau_user');
     sessionStorage.removeItem('bureau_user');
     toast.success('Déconnexion réussie');
     window.location.href = '/bureau/login';
   };
 
   /**
-   * Vérifier si bureau connecté
+   * Vérifier si bureau connecté (vérifie aussi l'expiration)
    */
   const isAuthenticated = (): boolean => {
-    const session = localStorage.getItem('bureau_session') || sessionStorage.getItem('bureau_session');
-    const user = localStorage.getItem('bureau_user') || sessionStorage.getItem('bureau_user');
-    return !!session && !!user;
+    const sessionStr = sessionStorage.getItem('bureau_session') || localStorage.getItem('bureau_session');
+    if (!sessionStr) return false;
+    
+    try {
+      const session = JSON.parse(sessionStr);
+      // Vérifier expiration
+      if (session.expiresAt && new Date(session.expiresAt) < new Date()) {
+        // Session expirée, nettoyer
+        logout();
+        return false;
+      }
+      return !!session.token && !!session.bureauId;
+    } catch {
+      return false;
+    }
   };
 
   /**
    * Obtenir bureau connecté
    */
   const getCurrentBureau = () => {
-    const userStr = localStorage.getItem('bureau_user') || sessionStorage.getItem('bureau_user');
-    if (!userStr) return null;
+    const sessionStr = sessionStorage.getItem('bureau_session') || localStorage.getItem('bureau_session');
+    if (!sessionStr) return null;
     
     try {
-      return JSON.parse(userStr);
+      const session = JSON.parse(sessionStr);
+      // Vérifier expiration
+      if (session.expiresAt && new Date(session.expiresAt) < new Date()) {
+        return null;
+      }
+      return {
+        id: session.bureauId,
+        bureau_code: session.bureauCode,
+        commune: session.commune,
+        prefecture: session.prefecture
+      };
     } catch {
       return null;
     }
