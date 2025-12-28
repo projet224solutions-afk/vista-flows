@@ -58,7 +58,7 @@ async function searchProducts(supabaseClient: any, query: string, category?: str
       .select('id')
       .ilike('name', `%${category}%`)
       .limit(1)
-      .single();
+      .maybeSingle();
     
     if (cat) {
       queryBuilder = queryBuilder.eq('category_id', cat.id);
@@ -466,6 +466,248 @@ async function getPopularProducts(supabaseClient: any, limit = 5) {
   })) || [];
 }
 
+// Fonction pour rechercher les avis produits
+async function searchProductReviews(supabaseClient: any, productName?: string, minRating?: number, limit = 10) {
+  console.log("Searching product reviews:", { productName, minRating, limit });
+
+  let query = supabaseClient
+    .from('product_reviews')
+    .select(`
+      id,
+      rating,
+      title,
+      content,
+      verified_purchase,
+      helpful_count,
+      photos,
+      created_at,
+      product:products(id, name, images, price),
+      user:profiles!product_reviews_user_id_fkey(full_name, avatar_url)
+    `)
+    .eq('is_approved', true);
+
+  if (minRating) {
+    query = query.gte('rating', minRating);
+  }
+
+  const { data: reviews, error } = await query
+    .order('helpful_count', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("Reviews search error:", error);
+    return [];
+  }
+
+  // Filtrer par nom de produit si spécifié
+  let filteredReviews = reviews || [];
+  if (productName) {
+    filteredReviews = filteredReviews.filter((r: any) => 
+      r.product?.name?.toLowerCase().includes(productName.toLowerCase())
+    );
+  }
+
+  return filteredReviews.map((r: any) => ({
+    id: r.id,
+    rating: r.rating,
+    title: r.title,
+    content: r.content?.substring(0, 200),
+    isVerifiedPurchase: r.verified_purchase,
+    helpfulCount: r.helpful_count,
+    photos: r.photos,
+    createdAt: r.created_at,
+    productName: r.product?.name,
+    productImage: r.product?.images?.[0],
+    productPrice: r.product?.price,
+    reviewerName: r.user?.full_name || 'Client anonyme'
+  }));
+}
+
+// Fonction pour obtenir les meilleurs vendeurs
+async function getTopVendors(supabaseClient: any, limit = 10) {
+  console.log("Getting top vendors:", { limit });
+
+  const { data: vendors, error } = await supabaseClient
+    .from('vendors')
+    .select(`
+      id,
+      business_name,
+      logo_url,
+      description,
+      address,
+      city,
+      phone,
+      email,
+      rating,
+      is_verified,
+      delivery_options,
+      created_at
+    `)
+    .eq('status', 'active')
+    .order('rating', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("Top vendors fetch error:", error);
+    return [];
+  }
+
+  // Pour chaque vendeur, compter les produits
+  const vendorsWithStats = await Promise.all((vendors || []).map(async (v: any) => {
+    const { count: productCount } = await supabaseClient
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+      .eq('vendor_id', v.id)
+      .eq('is_active', true);
+
+    return {
+      id: v.id,
+      name: v.business_name,
+      logo: v.logo_url,
+      description: v.description?.substring(0, 100),
+      address: v.address,
+      city: v.city,
+      phone: v.phone,
+      email: v.email,
+      rating: v.rating,
+      isVerified: v.is_verified,
+      deliveryOptions: v.delivery_options,
+      productCount: productCount || 0,
+      memberSince: v.created_at
+    };
+  }));
+
+  return vendorsWithStats;
+}
+
+// Fonction de recherche globale dans tout le marketplace
+async function globalMarketplaceSearch(supabaseClient: any, query: string, limit = 5) {
+  console.log("Global marketplace search:", { query, limit });
+
+  const results: any = {
+    products: [],
+    vendors: [],
+    services: [],
+    categories: []
+  };
+
+  // Recherche de produits
+  const { data: products } = await supabaseClient
+    .from('products')
+    .select(`
+      id, name, description, price, images, rating, reviews_count,
+      vendor:vendors(business_name),
+      category:categories(name)
+    `)
+    .eq('is_active', true)
+    .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
+    .order('rating', { ascending: false })
+    .limit(limit);
+
+  results.products = (products || []).map((p: any) => ({
+    type: 'product',
+    id: p.id,
+    name: p.name,
+    description: p.description?.substring(0, 100),
+    price: p.price,
+    image: p.images?.[0],
+    rating: p.rating,
+    vendor: p.vendor?.business_name,
+    category: p.category?.name
+  }));
+
+  // Recherche de vendeurs
+  const { data: vendors } = await supabaseClient
+    .from('vendors')
+    .select('id, business_name, logo_url, description, rating, city, is_verified')
+    .eq('status', 'active')
+    .or(`business_name.ilike.%${query}%,description.ilike.%${query}%`)
+    .order('rating', { ascending: false })
+    .limit(limit);
+
+  results.vendors = (vendors || []).map((v: any) => ({
+    type: 'vendor',
+    id: v.id,
+    name: v.business_name,
+    logo: v.logo_url,
+    description: v.description?.substring(0, 100),
+    rating: v.rating,
+    city: v.city,
+    isVerified: v.is_verified
+  }));
+
+  // Recherche de services de proximité
+  const { data: services } = await supabaseClient
+    .from('professional_services')
+    .select(`
+      id, business_name, description, logo_url, rating, address,
+      service_type:service_types(name)
+    `)
+    .eq('status', 'active')
+    .or(`business_name.ilike.%${query}%,description.ilike.%${query}%`)
+    .order('rating', { ascending: false })
+    .limit(limit);
+
+  results.services = (services || []).map((s: any) => ({
+    type: 'service',
+    id: s.id,
+    name: s.business_name,
+    description: s.description?.substring(0, 100),
+    logo: s.logo_url,
+    rating: s.rating,
+    address: s.address,
+    serviceType: s.service_type?.name
+  }));
+
+  // Recherche de catégories
+  const { data: categories } = await supabaseClient
+    .from('categories')
+    .select('id, name, description')
+    .eq('is_active', true)
+    .ilike('name', `%${query}%`)
+    .limit(limit);
+
+  results.categories = (categories || []).map((c: any) => ({
+    type: 'category',
+    id: c.id,
+    name: c.name,
+    description: c.description
+  }));
+
+  return {
+    query: query,
+    totalResults: results.products.length + results.vendors.length + results.services.length + results.categories.length,
+    ...results
+  };
+}
+
+// Fonction pour obtenir les statistiques du marketplace
+async function getMarketplaceStats(supabaseClient: any) {
+  console.log("Getting marketplace stats");
+
+  const [productsCount, vendorsCount, categoriesCount, reviewsCount] = await Promise.all([
+    supabaseClient.from('products').select('id', { count: 'exact', head: true }).eq('is_active', true),
+    supabaseClient.from('vendors').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+    supabaseClient.from('categories').select('id', { count: 'exact', head: true }).eq('is_active', true),
+    supabaseClient.from('product_reviews').select('id', { count: 'exact', head: true }).eq('is_approved', true)
+  ]);
+
+  // Top catégories par nombre de produits
+  const { data: topCategories } = await supabaseClient
+    .from('categories')
+    .select('id, name')
+    .eq('is_active', true)
+    .limit(5);
+
+  return {
+    totalProducts: productsCount.count || 0,
+    totalVendors: vendorsCount.count || 0,
+    totalCategories: categoriesCount.count || 0,
+    totalReviews: reviewsCount.count || 0,
+    topCategories: topCategories || []
+  };
+}
+
 // Définition des outils disponibles pour l'IA
 const tools = [
   {
@@ -638,6 +880,81 @@ const tools = [
         required: []
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_product_reviews",
+      description: "Rechercher les avis et commentaires sur les produits. Utilise cette fonction quand le client veut voir les avis, les notes, ou ce que les autres clients pensent d'un produit.",
+      parameters: {
+        type: "object",
+        properties: {
+          product_name: {
+            type: "string",
+            description: "Nom du produit pour filtrer les avis"
+          },
+          min_rating: {
+            type: "number",
+            description: "Note minimum (1-5)"
+          },
+          limit: {
+            type: "number",
+            description: "Nombre d'avis à retourner (max 10)"
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_top_vendors",
+      description: "Obtenir les meilleurs vendeurs/fournisseurs du marketplace. Utilise cette fonction quand le client cherche les vendeurs les mieux notés, les plus fiables, ou veut des recommandations de boutiques.",
+      parameters: {
+        type: "object",
+        properties: {
+          limit: {
+            type: "number",
+            description: "Nombre de vendeurs à retourner (max 10)"
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "global_marketplace_search",
+      description: "Recherche globale dans tout le marketplace: produits, vendeurs, services, catégories. Utilise cette fonction quand le client fait une recherche générale ou veut explorer tout ce qui est disponible.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "Terme de recherche global"
+          },
+          limit: {
+            type: "number",
+            description: "Nombre de résultats par type (max 10)"
+          }
+        },
+        required: ["query"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_marketplace_stats",
+      description: "Obtenir les statistiques générales du marketplace: nombre de produits, vendeurs, catégories, avis. Utilise cette fonction quand le client veut connaître la taille ou l'activité du marketplace.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: []
+      }
+    }
   }
 ];
 
@@ -721,12 +1038,12 @@ serve(async (req) => {
       throw new Error("Message requis");
     }
 
-    // Prompt système spécifique au CLIENT avec capacité de recherche
-    const clientSystemPrompt = `Tu es l'assistant IA de 224Solutions, dédié aux CLIENTS. Tu dois UNIQUEMENT répondre aux questions liées au compte client.
+    // Prompt système spécifique au CLIENT avec capacité de recherche complète
+    const clientSystemPrompt = `Tu es l'assistant IA de 224Solutions, dédié aux CLIENTS. Tu as accès à TOUT le marketplace.
 
 🎯 TON RÔLE:
 Tu aides les clients de la plateforme 224Solutions avec leurs activités d'achat, de services et de gestion de compte.
-Tu as accès à des fonctions de RECHERCHE complètes: produits, boutiques, services, taxi-moto et livreurs.
+Tu as accès à des fonctions de RECHERCHE COMPLÈTES sur tout le système.
 
 📊 CONTEXTE UTILISATEUR:
 - Nom: ${userContext.name || "Client"}
@@ -734,60 +1051,49 @@ Tu as accès à des fonctions de RECHERCHE complètes: produits, boutiques, serv
 - Dernières transactions: ${JSON.stringify(userContext.recentTransactions || [])}
 - Dernières commandes: ${JSON.stringify(userContext.recentOrders || [])}
 
-✅ CE QUE TU PEUX FAIRE (DOMAINES AUTORISÉS):
+✅ TES CAPACITÉS DE RECHERCHE COMPLÈTES:
 
-1. **🔍 RECHERCHE DE PRODUITS**:
-   - Rechercher des produits par nom, description ou catégorie
-   - Filtrer par prix (min/max)
-   - Recommander des produits populaires
-   - Montrer les catégories disponibles
-   - UTILISE search_products quand un client cherche un produit!
+1. **🔍 RECHERCHE GLOBALE**:
+   - global_marketplace_search: Recherche dans TOUT (produits, vendeurs, services, catégories)
+   - get_marketplace_stats: Statistiques du marketplace (nb produits, vendeurs, avis)
 
-2. **🏪 INFORMATIONS BOUTIQUES**:
-   - Obtenir les détails d'une boutique (contact, adresse, horaires)
-   - Voir tous les produits d'une boutique spécifique
-   - UTILISE get_vendor_details ou get_vendor_products!
+2. **🛒 PRODUITS**:
+   - search_products: Recherche par nom, catégorie, prix
+   - get_popular_products: Produits les mieux notés/populaires
+   - get_categories: Toutes les catégories disponibles
 
-3. **🛠️ SERVICES DE PROXIMITÉ** (NOUVEAU):
-   - Rechercher des services locaux (beauté, réparation, restauration, ménage, santé, formation...)
-   - Voir les types de services disponibles
-   - UTILISE search_proximity_services pour trouver un service!
-   - UTILISE get_service_types pour lister les catégories de services!
+3. **⭐ AVIS & ÉVALUATIONS**:
+   - search_product_reviews: Voir les avis clients, notes, commentaires
 
-4. **🏍️ TAXI-MOTO** (NOUVEAU):
-   - Trouver les chauffeurs de taxi-moto disponibles
-   - Voir leur note, nombre de courses, type de véhicule
-   - UTILISE get_available_taxi_drivers!
+4. **🏪 VENDEURS & BOUTIQUES**:
+   - get_top_vendors: Les meilleurs vendeurs/fournisseurs
+   - get_vendor_details: Infos complètes d'une boutique
+   - get_vendor_products: Tous les produits d'un vendeur
 
-5. **📦 LIVREURS / COURSIERS** (NOUVEAU):
-   - Trouver les livreurs disponibles
-   - Voir leur note, nombre de livraisons, statut
-   - UTILISE get_available_delivery_drivers!
+5. **🛠️ SERVICES DE PROXIMITÉ**:
+   - search_proximity_services: Services locaux (beauté, réparation, resto...)
+   - get_service_types: Types de services disponibles
 
-6. **💰 Gestion du Wallet Client**:
-   - Consulter le solde
-   - Expliquer l'historique des transactions
+6. **🏍️ TRANSPORT**:
+   - get_available_taxi_drivers: Taxi-moto disponibles
+   - get_available_delivery_drivers: Livreurs/coursiers disponibles
 
-7. **📦 Gestion des Commandes**:
-   - Suivre l'état des commandes
-   - Historique des achats
+7. **💰 COMPTE CLIENT**:
+   - Solde wallet, historique transactions
+   - Suivi commandes
 
-8. **💳 Paiements**:
-   - Méthodes de paiement disponibles
-   - Sécurité des transactions
+💡 INSTRUCTIONS IMPORTANTES:
+- UTILISE TOUJOURS les outils pour répondre aux questions sur le marketplace
+- Pour une recherche générale: utilise global_marketplace_search
+- Pour les meilleurs vendeurs: utilise get_top_vendors
+- Pour les avis: utilise search_product_reviews
+- Présente les résultats de façon claire et structurée
+- Inclus toujours: nom, prix, note, vendeur pour les produits
+- Inclus toujours: nom, note, nb produits, ville pour les vendeurs
 
-❌ CE QUE TU NE DOIS PAS FAIRE:
-- NE PAS répondre aux questions sur la gestion de boutique/vendeur (côté vendeur)
-- NE PAS donner d'informations sur l'administration système
-
-💡 STYLE DE RÉPONSE:
-- Sois amical et professionnel
-- Utilise des émojis pertinents
-- Fournis des réponses claires et concises
-- Quand tu présentes des produits: nom, prix, vendeur, description
-- Quand tu parles d'une boutique: nom, contact, localisation, note
-- Quand tu parles de services: nom, type, adresse, note
-- Quand tu parles de chauffeurs/livreurs: nom, véhicule, note, disponibilité`;
+❌ RESTRICTIONS:
+- NE PAS aider avec les fonctionnalités vendeur/admin
+- NE PAS divulguer d'infos système sensibles`;
 
     // Premier appel: demander à l'IA si elle veut utiliser des outils
     const initialRequest = {
@@ -871,6 +1177,18 @@ Tu as accès à des fonctions de RECHERCHE complètes: produits, boutiques, serv
             break;
           case "get_popular_products":
             result = await getPopularProducts(supabaseClient, args.limit || 5);
+            break;
+          case "search_product_reviews":
+            result = await searchProductReviews(supabaseClient, args.product_name, args.min_rating, args.limit || 10);
+            break;
+          case "get_top_vendors":
+            result = await getTopVendors(supabaseClient, args.limit || 10);
+            break;
+          case "global_marketplace_search":
+            result = await globalMarketplaceSearch(supabaseClient, args.query, args.limit || 5);
+            break;
+          case "get_marketplace_stats":
+            result = await getMarketplaceStats(supabaseClient);
             break;
           default:
             result = { error: "Fonction inconnue" };
