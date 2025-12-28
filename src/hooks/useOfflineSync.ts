@@ -54,65 +54,105 @@ export const useOfflineSync = () => {
     try {
       const { type, data, vendor_id } = event;
       
-      // Mapper le type d'événement vers la table Supabase
-      let tableName: string;
-      let insertData: any;
-      
       switch (type) {
-        case 'sale':
-          tableName = 'sales';
-          insertData = {
-            ...data,
-            vendor_id,
-            created_at: data.sale_date || new Date().toISOString()
-          };
-          break;
+        case 'sale': {
+          // Stocker les ventes offline dans financial_transactions avec type 'sale'
+          // car orders nécessite un customer_id valide
+          const { error } = await supabase
+            .from('financial_transactions')
+            .insert({
+              user_id: vendor_id,
+              transaction_type: 'sale',
+              amount: data.amount,
+              currency: 'XOF',
+              status: 'completed',
+              metadata: {
+                product_name: data.product_name,
+                quantity: data.quantity,
+                unit_price: data.unit_price,
+                customer_name: data.customer_name,
+                customer_phone: data.customer_phone,
+                payment_method: data.payment_method,
+                offline_sync: true,
+                original_date: data.sale_date
+              },
+              created_at: data.sale_date || new Date().toISOString()
+            });
           
-        case 'payment':
-          tableName = 'vendor_transactions';
-          insertData = {
-            vendor_id,
-            amount: data.amount,
-            type: 'payment',
-            status: 'completed',
-            description: `Paiement ${data.payment_method}`,
-            metadata: data,
-            created_at: data.payment_date || new Date().toISOString()
-          };
-          break;
+          if (error) {
+            console.error('Erreur sync sale:', error);
+            return false;
+          }
+          console.log('✅ Vente synchronisée vers financial_transactions');
+          return true;
+        }
           
-        case 'invoice':
-          tableName = 'invoices';
-          insertData = {
-            vendor_id,
-            ...data,
-            status: 'pending',
-            created_at: data.invoice_date || new Date().toISOString()
-          };
-          break;
+        case 'payment': {
+          // Utiliser financial_transactions pour les paiements
+          const { error } = await supabase
+            .from('financial_transactions')
+            .insert({
+              user_id: vendor_id,
+              transaction_type: 'payment',
+              amount: data.amount,
+              currency: 'XOF',
+              status: 'completed',
+              metadata: {
+                payment_method: data.payment_method,
+                sale_id: data.sale_id,
+                offline_sync: true,
+                original_date: data.payment_date
+              },
+              created_at: data.payment_date || new Date().toISOString()
+            });
+          
+          if (error) {
+            console.error('Erreur sync payment:', error);
+            return false;
+          }
+          console.log('✅ Paiement synchronisé vers financial_transactions');
+          return true;
+        }
+          
+        case 'invoice': {
+          // Utiliser la bonne structure pour invoices
+          const invoiceRef = data.invoice_number || `INV-${Date.now().toString(36).toUpperCase()}`;
+          const { error } = await supabase
+            .from('invoices')
+            .insert({
+              ref: invoiceRef,
+              vendor_id,
+              client_name: data.customer_name,
+              client_email: data.customer_email,
+              client_phone: data.customer_phone,
+              items: data.items || [],
+              subtotal: data.subtotal || data.total_amount,
+              tax: data.tax_amount || 0,
+              discount: 0,
+              total: data.total_amount,
+              status: 'pending',
+              due_date: data.due_date,
+              notes: data.notes || 'Créée en mode hors-ligne'
+            });
+          
+          if (error) {
+            console.error('Erreur sync invoice:', error);
+            return false;
+          }
+          console.log('✅ Facture synchronisée vers invoices');
+          return true;
+        }
           
         case 'receipt':
-          // Les reçus sont stockés dans les metadata des ventes
-          console.log('📄 Reçu stocké localement:', data);
+        case 'upload':
+          // Ces types sont gérés séparément ou stockés localement
+          console.log(`📄 ${type} stocké localement:`, data);
           return true;
           
         default:
           console.warn('Type d\'événement non géré:', type);
           return true;
       }
-      
-      // Insérer dans Supabase
-      const { error } = await supabase
-        .from(tableName as any)
-        .insert(insertData);
-      
-      if (error) {
-        console.error(`Erreur sync ${tableName}:`, error);
-        return false;
-      }
-      
-      console.log(`✅ Synchronisé vers ${tableName}`);
-      return true;
       
     } catch (error) {
       console.error('Erreur sync événement:', error);
