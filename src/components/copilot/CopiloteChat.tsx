@@ -145,11 +145,9 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
       return;
     }
 
-    // 🔐 Copilote vendeur: nécessite un compte associé à une boutique
-    if (userRole === 'vendeur' && vendorAccess.hasVendor === false) {
-      toast.error("Non autorisé - Vendeur non trouvé. Votre compte n'est pas associé à une boutique.");
-      return;
-    }
+    // 🔐 Copilote vendeur: on laisse l'edge function décider (permet auto-association si boutique existante)
+    // (La vérification locale sert surtout à l'UX, mais ne doit pas bloquer un compte qui vient d'être lié)
+
 
     const userMessage: Message = {
       id: Date.now().toString(),
