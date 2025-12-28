@@ -518,12 +518,23 @@ serve(async (req) => {
     // Le rôle transitaire utilise uniquement le profil de base
 
     // Déterminer l'agent_id effectif pour le tracking
-    // Si c'est un PDG, on utilise l'ID fourni dans body.agentId (qui peut être un de ses agents)
-    // Si c'est un agent, on utilise son propre ID
-    const effectiveAgentId = isPdg ? (body.agentId || null) : (agent?.id || body.agentId);
+    // IMPORTANT: Toujours utiliser l'ID de l'agent authentifié s'il existe
+    // Si authentifié par token: agent.id est l'ID de l'agent
+    // Si PDG: utiliser body.agentId (l'agent choisi) ou le PDG lui-même
+    let effectiveAgentId: string | null = null;
+    
+    if (agent?.id) {
+      // Authentification par agent (token ou JWT)
+      effectiveAgentId = agent.id;
+    } else if (isPdg && body.agentId) {
+      // PDG créant pour un agent spécifique
+      effectiveAgentId = body.agentId;
+    }
+    // Si PDG sans agentId spécifié, on ne track pas vers un agent
     
     console.log('📊 Tracking création utilisateur:', {
       isPdg,
+      authenticatedVia,
       bodyAgentId: body.agentId,
       agentId: agent?.id,
       effectiveAgentId,
