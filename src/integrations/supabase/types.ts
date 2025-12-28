@@ -15896,6 +15896,17 @@ export type Database = {
       }
       get_active_subscription: { Args: { p_user_id: string }; Returns: Json }
       get_agent_permissions: { Args: { p_agent_id: string }; Returns: Json }
+      get_bureau_realtime_stats: {
+        Args: { p_bureau_id: string }
+        Returns: {
+          active_sos: number
+          on_trip_drivers: number
+          online_drivers: number
+          today_earnings: number
+          today_rides: number
+          total_drivers: number
+        }[]
+      }
       get_card_stats: { Args: { p_card_id: string }; Returns: Json }
       get_escrow_stats: {
         Args: { p_end_date?: string; p_start_date?: string }
