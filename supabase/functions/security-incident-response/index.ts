@@ -1,24 +1,48 @@
-// 🛡️ Security Incident Response - Edge Function
+// 🛡️ Security Incident Response - Edge Function (SECURED)
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface IncidentRequest {
-  action: 'create' | 'update' | 'contain' | 'resolve';
-  incidentId?: string;
-  incidentType?: string;
-  severity?: string;
-  title?: string;
-  description?: string;
-  sourceIp?: string;
-  targetService?: string;
-  indicators?: any;
-  autoActions?: boolean;
-}
+// Rôles autorisés pour la gestion des incidents
+const ALLOWED_ROLES = ['admin', 'ceo'];
+
+// Schémas de validation Zod
+const CreateIncidentSchema = z.object({
+  action: z.literal('create'),
+  incidentType: z.string().min(1).max(100),
+  severity: z.enum(['low', 'medium', 'high', 'critical']),
+  title: z.string().min(1).max(255),
+  description: z.string().max(5000).optional(),
+  sourceIp: z.string().ip().optional(),
+  targetService: z.string().max(100).optional(),
+  indicators: z.any().optional(),
+  autoActions: z.boolean().optional()
+});
+
+const UpdateIncidentSchema = z.object({
+  action: z.literal('update'),
+  incidentId: z.string().uuid(),
+  title: z.string().max(255).optional(),
+  description: z.string().max(5000).optional(),
+  severity: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+  indicators: z.any().optional()
+});
+
+const ContainResolveSchema = z.object({
+  action: z.enum(['contain', 'resolve']),
+  incidentId: z.string().uuid()
+});
+
+const IncidentRequestSchema = z.union([
+  CreateIncidentSchema,
+  UpdateIncidentSchema,
+  ContainResolveSchema
+]);
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -31,13 +55,89 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // 🔐 VALIDATION AUTHENTIFICATION
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Unauthorized');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('❌ Missing or invalid Authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Non autorisé - Token manquant' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
     }
 
-    const body: IncidentRequest = await req.json();
-    console.log('Security incident action:', body.action);
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Vérifier le token et récupérer l'utilisateur
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.error('❌ Token invalide:', authError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Non autorisé - Token invalide' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    // 🔐 VALIDATION DU RÔLE
+    const { data: profile, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile) {
+      console.error('❌ Profil non trouvé:', profileError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Profil utilisateur non trouvé' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
+    }
+
+    // Vérifier que l'utilisateur a un rôle autorisé
+    if (!ALLOWED_ROLES.includes(profile.role)) {
+      console.error('❌ Rôle non autorisé:', profile.role);
+      
+      // Log la tentative non autorisée
+      await supabaseClient.from('security_audit_logs').insert({
+        action: 'unauthorized_incident_response_access',
+        actor_id: user.id,
+        actor_type: 'user',
+        target_type: 'security_incident',
+        ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
+        details: { 
+          attempted_action: 'incident_management',
+          user_role: profile.role 
+        }
+      });
+
+      return new Response(
+        JSON.stringify({ error: 'Accès refusé - Privilèges insuffisants' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
+    }
+
+    console.log(`✅ Utilisateur autorisé: ${user.id} (rôle: ${profile.role})`);
+
+    // Validation avec Zod
+    const rawBody = await req.json();
+    const validationResult = IncidentRequestSchema.safeParse(rawBody);
+    
+    if (!validationResult.success) {
+      console.error('❌ Validation échouée:', validationResult.error.errors);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Données invalides',
+          details: validationResult.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    const body = validationResult.data;
+    console.log('✅ Security incident action:', body.action);
 
     let result: any = {};
 
@@ -49,9 +149,9 @@ serve(async (req) => {
             p_incident_type: body.incidentType,
             p_severity: body.severity,
             p_title: body.title,
-            p_description: body.description,
-            p_source_ip: body.sourceIp,
-            p_target_service: body.targetService,
+            p_description: body.description || '',
+            p_source_ip: body.sourceIp || null,
+            p_target_service: body.targetService || null,
             p_indicators: body.indicators || {}
           });
 
@@ -82,6 +182,16 @@ serve(async (req) => {
           }
         }
 
+        // Log audit
+        await supabaseClient.from('security_audit_logs').insert({
+          action: 'incident_created',
+          actor_id: user.id,
+          actor_type: 'user',
+          target_type: 'incident',
+          target_id: incident,
+          details: { severity: body.severity, title: body.title }
+        });
+
         result = { incidentId: incident, action: 'created' };
         break;
       }
@@ -101,6 +211,7 @@ serve(async (req) => {
         // Log audit
         await supabaseClient.from('security_audit_logs').insert({
           action: 'incident_contained',
+          actor_id: user.id,
           actor_type: 'user',
           target_type: 'incident',
           target_id: body.incidentId,
@@ -127,6 +238,7 @@ serve(async (req) => {
         // Log audit
         await supabaseClient.from('security_audit_logs').insert({
           action: 'incident_resolved',
+          actor_id: user.id,
           actor_type: 'user',
           target_type: 'incident',
           target_id: body.incidentId,
@@ -144,17 +256,28 @@ serve(async (req) => {
 
       case 'update': {
         // Mettre à jour un incident
+        const updateData: any = {};
+        if (body.title) updateData.title = body.title;
+        if (body.description) updateData.description = body.description;
+        if (body.severity) updateData.severity = body.severity;
+        if (body.indicators) updateData.indicators = body.indicators;
+
         const { error: updateError } = await supabaseClient
           .from('security_incidents')
-          .update({
-            title: body.title,
-            description: body.description,
-            severity: body.severity,
-            indicators: body.indicators
-          })
+          .update(updateData)
           .eq('id', body.incidentId);
 
         if (updateError) throw updateError;
+
+        // Log audit
+        await supabaseClient.from('security_audit_logs').insert({
+          action: 'incident_updated',
+          actor_id: user.id,
+          actor_type: 'user',
+          target_type: 'incident',
+          target_id: body.incidentId,
+          details: { updated_fields: Object.keys(updateData) }
+        });
 
         result = { incidentId: body.incidentId, action: 'updated' };
         break;
@@ -167,11 +290,11 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Security incident response error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('❌ Security incident response error:', error);
+    // Message d'erreur générique pour éviter la fuite d'informations
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      JSON.stringify({ error: 'Une erreur est survenue lors du traitement de la requête' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });
