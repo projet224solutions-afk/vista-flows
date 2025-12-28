@@ -6,6 +6,7 @@
 import { useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { getPublicBaseUrl } from '@/lib/site';
 
 interface DeepLinkHandler {
   pattern: RegExp;
@@ -191,7 +192,7 @@ export async function createShortLink(params: {
       return null;
     }
 
-    return `${window.location.origin}/s/${shortCode}`;
+    return `${getPublicBaseUrl()}/s/${shortCode}`;
   } catch (error) {
     console.error('Error creating short link:', error);
     return null;

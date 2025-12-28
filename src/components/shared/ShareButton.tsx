@@ -9,19 +9,12 @@ import {
 import { Share2, Check, Link2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createShortLink } from "@/hooks/useDeepLinking";
+import { toPublicShareUrl } from "@/lib/site";
 
 function sanitizeShareUrl(rawUrl: string): string {
-  try {
-    const u = new URL(rawUrl, window.location.origin);
-    // Retirer les paramètres internes Lovable (ex: __lovable_token) pour éviter
-    // des liens partagés qui renvoient vers l’accueil / cassent la navigation.
-    for (const key of Array.from(u.searchParams.keys())) {
-      if (key.startsWith("__lovable")) u.searchParams.delete(key);
-    }
-    return `${u.origin}${u.pathname}${u.search}`;
-  } catch {
-    return rawUrl;
-  }
+  // 1) retirer les params internes Lovable
+  // 2) forcer le domaine public (ex: https://224solution.net)
+  return toPublicShareUrl(rawUrl);
 }
 
 interface ShareButtonProps {
