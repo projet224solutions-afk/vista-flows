@@ -133,7 +133,8 @@ async function saveTokenToServer(token: string): Promise<void> {
     if (!user) return;
 
     // Sauvegarder dans la table user_fcm_tokens
-    const { error } = await supabase
+    // Note: using 'any' cast because types may not be regenerated yet
+    const { error } = await (supabase as any)
       .from('user_fcm_tokens')
       .upsert({
         user_id: user.id,
@@ -254,7 +255,7 @@ export async function deleteToken(): Promise<void> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      await supabase
+      await (supabase as any)
         .from('user_fcm_tokens')
         .delete()
         .eq('user_id', user.id);
