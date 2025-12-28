@@ -4090,7 +4090,10 @@ export type Database = {
           id: string
           is_active: boolean | null
           rate: number
+          rate_internal: number | null
+          security_margin: number | null
           set_by: string | null
+          source: string | null
           to_currency: string
           valid_from: string | null
           valid_until: string | null
@@ -4101,7 +4104,10 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           rate: number
+          rate_internal?: number | null
+          security_margin?: number | null
           set_by?: string | null
+          source?: string | null
           to_currency: string
           valid_from?: string | null
           valid_until?: string | null
@@ -4112,7 +4118,10 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           rate?: number
+          rate_internal?: number | null
+          security_margin?: number | null
           set_by?: string | null
+          source?: string | null
           to_currency?: string
           valid_from?: string | null
           valid_until?: string | null
@@ -7670,11 +7679,16 @@ export type Database = {
           country: string | null
           created_at: string | null
           custom_id: string | null
+          detected_country: string | null
+          detected_currency: string | null
+          detected_language: string | null
           email: string
           first_name: string | null
           full_name: string | null
+          geo_detection_method: string | null
           id: string
           is_active: boolean | null
+          last_geo_update: string | null
           last_name: string | null
           phone: string | null
           public_id: string | null
@@ -7688,11 +7702,16 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           custom_id?: string | null
+          detected_country?: string | null
+          detected_currency?: string | null
+          detected_language?: string | null
           email: string
           first_name?: string | null
           full_name?: string | null
+          geo_detection_method?: string | null
           id: string
           is_active?: boolean | null
+          last_geo_update?: string | null
           last_name?: string | null
           phone?: string | null
           public_id?: string | null
@@ -7706,11 +7725,16 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           custom_id?: string | null
+          detected_country?: string | null
+          detected_currency?: string | null
+          detected_language?: string | null
           email?: string
           first_name?: string | null
           full_name?: string | null
+          geo_detection_method?: string | null
           id?: string
           is_active?: boolean | null
+          last_geo_update?: string | null
           last_name?: string | null
           phone?: string | null
           public_id?: string | null
@@ -11899,6 +11923,54 @@ export type Database = {
           },
         ]
       }
+      transfer_fees: {
+        Row: {
+          country_from: string | null
+          country_to: string | null
+          created_at: string | null
+          created_by: string | null
+          currency_from: string | null
+          currency_to: string | null
+          fee_fixed: number | null
+          fee_percentage: number
+          id: string
+          is_active: boolean | null
+          max_amount: number | null
+          min_amount: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          country_from?: string | null
+          country_to?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          currency_from?: string | null
+          currency_to?: string | null
+          fee_fixed?: number | null
+          fee_percentage?: number
+          id?: string
+          is_active?: boolean | null
+          max_amount?: number | null
+          min_amount?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          country_from?: string | null
+          country_to?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          currency_from?: string | null
+          currency_to?: string | null
+          fee_fixed?: number | null
+          fee_percentage?: number
+          id?: string
+          is_active?: boolean | null
+          max_amount?: number | null
+          min_amount?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       transport_rides: {
         Row: {
           actual_fare: number | null
@@ -13706,6 +13778,120 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_transfers: {
+        Row: {
+          amount_after_fee: number
+          amount_received: number
+          amount_sent: number
+          completed_at: string | null
+          confirmed_at: string | null
+          created_at: string | null
+          currency_received: string
+          currency_sent: string
+          description: string | null
+          failed_at: string | null
+          failure_reason: string | null
+          fee_amount: number
+          fee_percentage: number
+          id: string
+          initiated_at: string | null
+          ip_address: string | null
+          rate_displayed: number
+          rate_used: number
+          receiver_country: string | null
+          receiver_id: string
+          receiver_wallet_id: string | null
+          security_margin_applied: number | null
+          sender_country: string | null
+          sender_id: string
+          sender_wallet_id: string | null
+          status: string | null
+          transfer_code: string
+          transfer_type: string | null
+          updated_at: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          amount_after_fee: number
+          amount_received: number
+          amount_sent: number
+          completed_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          currency_received: string
+          currency_sent: string
+          description?: string | null
+          failed_at?: string | null
+          failure_reason?: string | null
+          fee_amount?: number
+          fee_percentage?: number
+          id?: string
+          initiated_at?: string | null
+          ip_address?: string | null
+          rate_displayed?: number
+          rate_used?: number
+          receiver_country?: string | null
+          receiver_id: string
+          receiver_wallet_id?: string | null
+          security_margin_applied?: number | null
+          sender_country?: string | null
+          sender_id: string
+          sender_wallet_id?: string | null
+          status?: string | null
+          transfer_code: string
+          transfer_type?: string | null
+          updated_at?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          amount_after_fee?: number
+          amount_received?: number
+          amount_sent?: number
+          completed_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          currency_received?: string
+          currency_sent?: string
+          description?: string | null
+          failed_at?: string | null
+          failure_reason?: string | null
+          fee_amount?: number
+          fee_percentage?: number
+          id?: string
+          initiated_at?: string | null
+          ip_address?: string | null
+          rate_displayed?: number
+          rate_used?: number
+          receiver_country?: string | null
+          receiver_id?: string
+          receiver_wallet_id?: string | null
+          security_margin_applied?: number | null
+          sender_country?: string | null
+          sender_id?: string
+          sender_wallet_id?: string | null
+          status?: string | null
+          transfer_code?: string
+          transfer_type?: string | null
+          updated_at?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transfers_receiver_wallet_id_fkey"
+            columns: ["receiver_wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_transfers_sender_wallet_id_fkey"
+            columns: ["sender_wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wallets: {
         Row: {
           balance: number
@@ -14635,6 +14821,20 @@ export type Database = {
         Args: { p_amount: number; p_transaction_type: string }
         Returns: number
       }
+      calculate_transfer_fee: {
+        Args: {
+          p_amount: number
+          p_country_from?: string
+          p_country_to?: string
+          p_currency_from: string
+          p_currency_to: string
+        }
+        Returns: {
+          amount_after_fee: number
+          fee_amount: number
+          fee_percentage: number
+        }[]
+      }
       calculate_vendor_trust_score: {
         Args: { p_vendor_id: string }
         Returns: number
@@ -15189,6 +15389,18 @@ export type Database = {
         }[]
       }
       get_finance_stats: { Args: never; Returns: Json }
+      get_internal_rate: {
+        Args: {
+          p_from_currency: string
+          p_to_currency: string
+          p_transfer_type?: string
+        }
+        Returns: {
+          rate_internal: number
+          rate_public: number
+          security_margin: number
+        }[]
+      }
       get_inventory_stats: { Args: { p_vendor_id: string }; Returns: Json }
       get_or_create_wallet: {
         Args: { p_currency?: string; p_user_id: string }
