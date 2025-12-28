@@ -314,17 +314,18 @@ const enterpriseTools = [
 // =====================================================
 
 async function analyzeCustomerReviews(supabase: any, vendorId: string, params: any) {
-  const { review_type, limit = 20, filter_sentiment = "all" } = params;
+  const { review_type, limit = 20, filter_sentiment = "all", auto_generate_responses = true } = params;
   const startTime = Date.now();
 
-  // Récupérer les avis
+  // Récupérer les avis SANS réponse vendeur existante
   let reviews: any[] = [];
   
   if (review_type === "vendor_rating" || review_type === "all") {
     const { data: vendorRatings } = await supabase
       .from('vendor_ratings')
-      .select('id, rating, comment, created_at, customer_id, vendor_response')
+      .select('id, rating, comment, created_at, customer_id, vendor_response, ai_suggested_response, ai_response_status')
       .eq('vendor_id', vendorId)
+      .is('vendor_response', null) // Seulement les avis sans réponse
       .order('created_at', { ascending: false })
       .limit(limit);
     
@@ -345,6 +346,7 @@ async function analyzeCustomerReviews(supabase: any, vendorId: string, params: a
         .from('product_reviews')
         .select('id, rating, title, content, created_at, user_id, vendor_response, product_id')
         .in('product_id', productIds)
+        .is('vendor_response', null)
         .order('created_at', { ascending: false })
         .limit(limit);
       
@@ -354,8 +356,23 @@ async function analyzeCustomerReviews(supabase: any, vendorId: string, params: a
     }
   }
 
-  // Analyser les sentiments avec l'IA interne
-  const analyzedReviews = reviews.map((review: any) => {
+  if (reviews.length === 0) {
+    return {
+      success: true,
+      data: {
+        message: "✅ Aucun avis en attente de réponse. Tous les avis ont déjà été traités.",
+        stats: { total: 0, needingResponse: 0 },
+        reviews: [],
+        generatedResponses: []
+      }
+    };
+  }
+
+  // Analyser les sentiments et GÉNÉRER les réponses pour chaque avis
+  const analyzedReviews: any[] = [];
+  const generatedResponses: any[] = [];
+
+  for (const review of reviews) {
     const text = review.comment || review.content || '';
     const rating = review.rating;
     
@@ -397,22 +414,58 @@ async function analyzeCustomerReviews(supabase: any, vendorId: string, params: a
       keyTopics.push('service');
     }
 
-    return {
+    // Générer une réponse adaptée au contexte
+    let suggestedResponse = '';
+    if (rating >= 4) {
+      suggestedResponse = `Merci infiniment pour votre avis positif et votre confiance ! Nous sommes ravis que votre expérience ait été à la hauteur de vos attentes. Votre satisfaction est notre priorité et nous espérons vous revoir très bientôt !`;
+    } else if (rating === 3) {
+      suggestedResponse = `Merci pour votre retour. Nous apprécions que vous ayez pris le temps de partager votre expérience. Nous travaillons constamment à améliorer nos services. N'hésitez pas à nous contacter si nous pouvons faire quoi que ce soit pour améliorer votre prochaine expérience.`;
+    } else if (rating === 2) {
+      suggestedResponse = `Merci pour votre retour. Nous sommes désolés que votre expérience n'ait pas été entièrement satisfaisante. Nous prenons vos remarques très au sérieux et allons examiner ce qui peut être amélioré. N'hésitez pas à nous contacter directement pour que nous puissions résoudre cette situation.`;
+    } else {
+      suggestedResponse = `Nous vous présentons nos sincères excuses pour cette expérience décevante. Votre satisfaction est primordiale pour nous et nous prenons votre avis très au sérieux. Nous allons immédiatement examiner ce qui s'est passé. Notre équipe va vous contacter dans les plus brefs délais pour résoudre ce problème. Encore une fois, nous sommes vraiment désolés.`;
+    }
+
+    // Personnaliser en fonction des thèmes détectés
+    if (keyTopics.includes('livraison') && rating < 4) {
+      suggestedResponse = `Nous vous présentons nos excuses pour les désagréments liés à la livraison. Ce n'est pas le niveau de service que nous souhaitons offrir. Nous avons pris note de votre retour et allons travailler avec notre équipe logistique pour éviter que cela ne se reproduise. Merci de votre compréhension.`;
+    } else if (keyTopics.includes('qualité') && rating < 4) {
+      suggestedResponse = `Nous sommes sincèrement désolés pour le problème de qualité rencontré. La qualité de nos produits est une priorité absolue. Nous aimerions en savoir plus sur ce qui s'est passé afin de pouvoir vous proposer une solution. N'hésitez pas à nous contacter directement.`;
+    }
+
+    // Sauvegarder la réponse IA dans vendor_ratings si c'est un vendor_rating
+    if (review.type === 'vendor_rating' && auto_generate_responses && !review.ai_suggested_response) {
+      const { error: updateError } = await supabase
+        .from('vendor_ratings')
+        .update({
+          ai_suggested_response: suggestedResponse,
+          ai_response_status: 'pending',
+          ai_sentiment: sentiment,
+          ai_analyzed_at: new Date().toISOString()
+        })
+        .eq('id', review.id);
+
+      if (!updateError) {
+        generatedResponses.push({
+          review_id: review.id,
+          rating: rating,
+          comment: text,
+          sentiment: sentiment,
+          suggested_response: suggestedResponse,
+          status: 'pending_validation'
+        });
+      }
+    }
+
+    analyzedReviews.push({
       ...review,
       sentiment,
       sentimentScore,
       urgencyLevel,
       keyTopics,
-      needsResponse: !review.vendor_response && (sentiment === 'negative' || sentiment === 'critical')
-    };
-  });
-
-  // Filtrer si nécessaire
-  let filteredReviews = analyzedReviews;
-  if (filter_sentiment === 'negative') {
-    filteredReviews = analyzedReviews.filter((r: any) => r.sentiment === 'negative' || r.sentiment === 'critical');
-  } else if (filter_sentiment === 'critical') {
-    filteredReviews = analyzedReviews.filter((r: any) => r.sentiment === 'critical');
+      suggestedResponse,
+      needsResponse: !review.vendor_response
+    });
   }
 
   // Statistiques globales
@@ -422,7 +475,7 @@ async function analyzeCustomerReviews(supabase: any, vendorId: string, params: a
     neutral: analyzedReviews.filter((r: any) => r.sentiment === 'neutral').length,
     negative: analyzedReviews.filter((r: any) => r.sentiment === 'negative').length,
     critical: analyzedReviews.filter((r: any) => r.sentiment === 'critical').length,
-    needingResponse: analyzedReviews.filter((r: any) => r.needsResponse).length,
+    responsesGenerated: generatedResponses.length,
     avgRating: reviews.length > 0 ? reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length : 0,
     topicDistribution: {
       livraison: analyzedReviews.filter((r: any) => r.keyTopics.includes('livraison')).length,
@@ -435,11 +488,11 @@ async function analyzeCustomerReviews(supabase: any, vendorId: string, params: a
   // Log l'exécution
   await supabase.from('vendor_ai_execution_logs').insert({
     vendor_id: vendorId,
-    action_type: 'analyze_customer_reviews',
+    action_type: 'analyze_and_respond_reviews',
     input_data: params,
-    output_data: { stats, reviewCount: filteredReviews.length },
+    output_data: { stats, generatedCount: generatedResponses.length },
     execution_time_ms: Date.now() - startTime,
-    model_used: 'internal_sentiment_analyzer',
+    model_used: 'internal_sentiment_analyzer_v2',
     success: true
   });
 
@@ -447,12 +500,16 @@ async function analyzeCustomerReviews(supabase: any, vendorId: string, params: a
     success: true,
     data: {
       stats,
-      reviews: filteredReviews.slice(0, 10), // Limiter pour la réponse
-      urgentReviews: filteredReviews.filter((r: any) => r.urgencyLevel === 'urgent'),
+      message: generatedResponses.length > 0 
+        ? `✅ ${generatedResponses.length} réponse(s) générée(s) et en attente de validation dans votre interface.`
+        : "Aucune nouvelle réponse générée (les avis ont déjà des réponses proposées).",
+      reviews: analyzedReviews.slice(0, 10),
+      generatedResponses: generatedResponses,
+      urgentReviews: analyzedReviews.filter((r: any) => r.urgencyLevel === 'urgent'),
       recommendations: [
-        stats.critical > 0 ? `⚠️ ${stats.critical} avis critiques nécessitent une attention immédiate` : null,
-        stats.needingResponse > 0 ? `📝 ${stats.needingResponse} avis sans réponse en attente` : null,
-        stats.topicDistribution.livraison > 2 ? `🚚 Problème récurrent de livraison détecté` : null
+        stats.critical > 0 ? `🚨 ${stats.critical} avis critique(s) - réponse urgente recommandée` : null,
+        stats.negative > 0 ? `⚠️ ${stats.negative} avis négatif(s) à traiter` : null,
+        generatedResponses.length > 0 ? `📝 ${generatedResponses.length} réponse(s) prête(s) - Accédez à vos avis pour valider et publier` : null
       ].filter(Boolean)
     }
   };
@@ -505,7 +562,27 @@ async function generateReviewResponse(supabase: any, vendorId: string, params: a
         : `Merci pour votre retour. Nous regrettons que votre expérience n'ait pas été à la hauteur de vos attentes. Nous prenons vos remarques en considération et allons travailler à améliorer ce point. N'hésitez pas à nous contacter pour que nous puissions vous aider.`;
   }
 
-  // Créer une décision en attente de validation
+  // Déterminer le sentiment
+  const sentiment = rating >= 4 ? 'positive' : rating >= 3 ? 'neutral' : rating >= 2 ? 'negative' : 'critical';
+
+  // Sauvegarder DIRECTEMENT dans vendor_ratings si c'est un vendor_rating
+  if (review_type === 'vendor_rating') {
+    const { error: updateError } = await supabase
+      .from('vendor_ratings')
+      .update({
+        ai_suggested_response: responseTemplate,
+        ai_response_status: 'pending',
+        ai_sentiment: sentiment,
+        ai_analyzed_at: new Date().toISOString()
+      })
+      .eq('id', review_id);
+
+    if (updateError) {
+      console.error('Error updating vendor_ratings:', updateError);
+    }
+  }
+
+  // Créer aussi une décision pour le tracking
   const { data: decision, error } = await supabase
     .from('vendor_ai_decisions')
     .insert({
@@ -516,35 +593,23 @@ async function generateReviewResponse(supabase: any, vendorId: string, params: a
       context_data: { review_id, review_type, review_rating: rating, review_text: reviewText, tone },
       status: 'pending',
       priority: rating <= 2 ? 'high' : 'normal',
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 jours
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
     })
     .select()
     .single();
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error('Error creating decision:', error);
   }
-
-  // Sauvegarder l'analyse de sentiment
-  await supabase.from('vendor_review_sentiment_analysis').insert({
-    vendor_id: vendorId,
-    review_id: review_id,
-    review_type: review_type,
-    original_text: reviewText,
-    sentiment: rating >= 4 ? 'positive' : rating >= 3 ? 'neutral' : rating >= 2 ? 'negative' : 'critical',
-    sentiment_score: (rating - 3) / 2, // -1 à 1
-    urgency_level: rating <= 2 ? 'high' : 'normal',
-    key_topics: [],
-    ai_suggested_response: responseTemplate
-  });
 
   return {
     success: true,
     data: {
-      decision_id: decision.id,
+      review_id: review_id,
       suggested_response: responseTemplate,
-      status: 'pending_approval',
-      message: "⚠️ Cette réponse doit être VALIDÉE avant publication. Utilisez 'approve_ai_decision' pour approuver."
+      sentiment: sentiment,
+      status: 'pending_validation',
+      message: "✅ Réponse générée et sauvegardée. Rendez-vous dans votre interface 'Avis' pour valider et publier."
     }
   };
 }

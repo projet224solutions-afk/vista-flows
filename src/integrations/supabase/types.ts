@@ -13925,6 +13925,10 @@ export type Database = {
       }
       vendor_ratings: {
         Row: {
+          ai_analyzed_at: string | null
+          ai_response_status: string | null
+          ai_sentiment: string | null
+          ai_suggested_response: string | null
           comment: string | null
           created_at: string
           customer_id: string
@@ -13937,6 +13941,10 @@ export type Database = {
           vendor_response_at: string | null
         }
         Insert: {
+          ai_analyzed_at?: string | null
+          ai_response_status?: string | null
+          ai_sentiment?: string | null
+          ai_suggested_response?: string | null
           comment?: string | null
           created_at?: string
           customer_id: string
@@ -13949,6 +13957,10 @@ export type Database = {
           vendor_response_at?: string | null
         }
         Update: {
+          ai_analyzed_at?: string | null
+          ai_response_status?: string | null
+          ai_sentiment?: string | null
+          ai_suggested_response?: string | null
           comment?: string | null
           created_at?: string
           customer_id?: string
