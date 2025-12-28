@@ -79,8 +79,15 @@ export async function requestNotificationPermission(): Promise<string | null> {
       if (!initialized) return null;
     }
 
-    // Récupérer la VAPID key depuis l'edge function
-    const vapidKey = await getVapidKey();
+    // Récupérer la config Firebase et VAPID key depuis l'edge function
+    const { data: config, error: configError } = await supabase.functions.invoke('firebase-config');
+    
+    if (configError || !config?.configured) {
+      console.warn('⚠️ Config Firebase non disponible');
+      return null;
+    }
+
+    const vapidKey = config.vapidKey;
     if (!vapidKey) {
       console.warn('⚠️ VAPID key non disponible');
       return null;
@@ -89,6 +96,28 @@ export async function requestNotificationPermission(): Promise<string | null> {
     // Enregistrer le service worker pour FCM
     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
     
+    // Attendre que le service worker soit actif
+    await navigator.serviceWorker.ready;
+    
+    // Envoyer la config Firebase au service worker AVANT de demander le token
+    if (registration.active) {
+      registration.active.postMessage({
+        type: 'FIREBASE_CONFIG',
+        config: {
+          apiKey: config.apiKey,
+          authDomain: config.authDomain,
+          projectId: config.projectId,
+          storageBucket: config.storageBucket,
+          messagingSenderId: config.messagingSenderId,
+          appId: config.appId
+        }
+      });
+      console.log('✅ Config Firebase envoyée au Service Worker');
+    }
+    
+    // Petit délai pour laisser le SW initialiser Firebase
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     // Récupérer le token
     currentToken = await getToken(messaging!, {
       vapidKey,
@@ -96,7 +125,7 @@ export async function requestNotificationPermission(): Promise<string | null> {
     });
 
     if (currentToken) {
-      console.log('✅ Token FCM obtenu');
+      console.log('✅ Token FCM obtenu:', currentToken.substring(0, 20) + '...');
       // Sauvegarder le token pour l'utilisateur
       await saveTokenToServer(currentToken);
     }
@@ -111,18 +140,7 @@ export async function requestNotificationPermission(): Promise<string | null> {
 /**
  * Récupère la VAPID key depuis le serveur
  */
-async function getVapidKey(): Promise<string | null> {
-  try {
-    const { data, error } = await supabase.functions.invoke('firebase-config');
-    if (error || !data?.vapidKey) {
-      return null;
-    }
-    return data.vapidKey;
-  } catch (error) {
-    console.error('Erreur récupération VAPID key:', error);
-    return null;
-  }
-}
+// getVapidKey est maintenant intégré dans requestNotificationPermission
 
 /**
  * Sauvegarde le token FCM sur le serveur
