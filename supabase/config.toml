@@ -278,3 +278,6 @@ verify_jwt = true
 
 [functions.vendor-ai-assistant]
 verify_jwt = true
+
+[functions.generate-pdf]
+verify_jwt = true
