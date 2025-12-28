@@ -59,6 +59,7 @@ const ApiSupervision = lazy(() => import("./pages/pdg/ApiSupervision"));
 const SystemDebugPage = lazy(() => import("./pages/pdg/SystemDebugPage"));
 const SimpleDiagnostic = lazy(() => import("./pages/SimpleDiagnostic"));
 const BureauDashboard = lazy(() => import("./pages/BureauDashboard"));
+const BureauMonitoringPage = lazy(() => import("./pages/BureauMonitoringPage"));
 const WorkerDashboard = lazy(() => import("./pages/WorkerDashboard"));
 const Payment = lazy(() => import("./pages/Payment"));
 const Orders = lazy(() => import("./pages/Orders"));
@@ -394,6 +395,7 @@ function App() {
               <Route path="/agent" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentDashboard /></ProtectedRoute>} />
               <Route path="/agent-dashboard" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentDashboard /></ProtectedRoute>} />
               <Route path="/bureau" element={<ProtectedRoute allowedRoles={['syndicat', 'admin']}><BureauDashboard /></ProtectedRoute>} />
+              <Route path="/bureau/monitoring" element={<BureauMonitoringPage />} />
               <Route path="/stolen-moto-declaration" element={<StolenMotoDeclaration />} />
               <Route path="/client" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientDashboard /></ProtectedRoute>} />
               <Route path="/client/contracts" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientContracts /></ProtectedRoute>} />
