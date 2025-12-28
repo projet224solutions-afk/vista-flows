@@ -142,17 +142,18 @@ Fournis 3-5 insights avec leur type (warning/info/success) et priorité (high/me
     let assistantContent = '';
 
     try {
-      const AI_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pdg-ai-assistant`;
+      const { data: session } = await supabase.auth.getSession();
+      const accessToken = session?.session?.access_token;
       
-      const response = await fetch(AI_URL, {
+      const response = await fetch(`https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1/pdg-ai-assistant`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
-          type: 'chat',
-          messages: [...messages, userMessage]
+          action: 'chat',
+          message: content
         }),
       });
 
