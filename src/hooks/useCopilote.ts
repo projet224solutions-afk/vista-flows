@@ -90,16 +90,19 @@ export function useCopilote(): UseCopiloteReturn {
       toast.success('Réponse reçue du Copilote 224');
     } catch (error) {
       console.error('Erreur lors de l\'envoi:', error);
-      
+
+      const readableError = error instanceof Error ? error.message : null;
+      const fallbackText = 'Désolé, je rencontre une difficulté technique. Veuillez réessayer dans quelques instants.';
+
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'Désolé, je rencontre une difficulté technique. Veuillez réessayer dans quelques instants.',
+        content: readableError || fallbackText,
         timestamp: new Date().toISOString()
       };
 
       setMessages(prev => [...prev, errorMessage]);
-      toast.error('Erreur de communication avec le Copilote');
+      toast.error(readableError || 'Erreur de communication avec le Copilote');
     } finally {
       setIsLoading(false);
       setIsTyping(false);

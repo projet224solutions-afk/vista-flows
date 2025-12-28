@@ -256,6 +256,8 @@ Fournis des réponses concises, claires et actionnables. Utilise des données ch
 Tu es là pour aider le PDG à prendre de meilleures décisions stratégiques. Sois son bras droit le plus fiable.`;
     }
 
+    const wantsStream = type !== "analyze" && body.stream !== false;
+
     const requestBody: any = {
       model: "google/gemini-2.5-flash",
       messages: [
@@ -283,31 +285,31 @@ Tu es là pour aider le PDG à prendre de meilleures décisions stratégiques. S
                       type: {
                         type: "string",
                         enum: ["warning", "info", "success"],
-                        description: "Type d'insight"
+                        description: "Type d'insight",
                       },
                       message: {
                         type: "string",
-                        description: "Message de l'insight"
+                        description: "Message de l'insight",
                       },
                       priority: {
                         type: "string",
                         enum: ["high", "medium", "low"],
-                        description: "Priorité de l'insight"
-                      }
+                        description: "Priorité de l'insight",
+                      },
                     },
                     required: ["type", "message", "priority"],
-                    additionalProperties: false
-                  }
-                }
+                    additionalProperties: false,
+                  },
+                },
               },
               required: ["insights"],
-              additionalProperties: false
-            }
-          }
-        }
+              additionalProperties: false,
+            },
+          },
+        },
       ];
       requestBody.tool_choice = { type: "function", function: { name: "provide_insights" } };
-    } else {
+    } else if (wantsStream) {
       requestBody.stream = true;
     }
 
@@ -351,12 +353,12 @@ Tu es là pour aider le PDG à prendre de meilleures décisions stratégiques. S
       }
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
-      
+
       if (userId && supabaseClient) {
         await logCopilotAction(supabaseClient, userId, 'ai_gateway_error', { status: response.status, error: errorText }, false, 'Erreur du service IA');
         recordError(userId);
       }
-      
+
       return new Response(
         JSON.stringify({ error: "Erreur du service IA" }),
         {
@@ -379,10 +381,25 @@ Tu es là pour aider le PDG à prendre de meilleures décisions stratégiques. S
       });
     }
 
-    // Pour le chat, streamer la réponse
-    return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-    });
+    // Mode streaming SSE (ancien comportement)
+    if (wantsStream) {
+      return new Response(response.body, {
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      });
+    }
+
+    // Mode JSON (pour supabase.functions.invoke)
+    const data = await response.json();
+    const reply = data?.choices?.[0]?.message?.content || "";
+
+    return new Response(
+      JSON.stringify({
+        reply,
+        timestamp: new Date().toISOString(),
+        user_context: { name: 'PDG', role: 'admin', balance: 0, currency: 'GNF' },
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (e) {
     console.error("pdg-ai-assistant error:", e);
     
