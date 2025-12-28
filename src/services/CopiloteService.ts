@@ -136,13 +136,17 @@ class CopiloteService {
     try {
       const { data: session } = await supabase.auth.getSession();
       const accessToken = session?.session?.access_token;
-      
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pdg-ai-assistant`, {
+      if (!accessToken) throw new Error('Non authentifié');
+
+      const functionsBaseUrl = 'https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1';
+      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
+
+      const response = await fetch(`${functionsBaseUrl}/pdg-ai-assistant`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken || import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
+          apikey: supabaseAnonKey,
+          'Authorization': `Bearer ${accessToken}`,
         },
         body: JSON.stringify({ action: 'chat', message })
       });
@@ -150,8 +154,8 @@ class CopiloteService {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Erreur inconnue' }));
         this.recordFailure();
-        await this.logAudit('send_message', { message: message.substring(0, 50) }, false, errorData.error);
-        throw new Error(errorData.error || 'Erreur lors de l\'envoi du message');
+        await this.logAudit('send_message', { message: message.substring(0, 50) }, false, (errorData as any).error);
+        throw new Error((errorData as any).error || 'Erreur lors de l\'envoi du message');
       }
 
       // Gérer la réponse streaming SSE
@@ -165,22 +169,22 @@ class CopiloteService {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        
+
         buffer += decoder.decode(value, { stream: true });
-        
+
         // Traiter ligne par ligne
         let newlineIndex: number;
         while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
           let line = buffer.slice(0, newlineIndex);
           buffer = buffer.slice(newlineIndex + 1);
-          
+
           if (line.endsWith('\r')) line = line.slice(0, -1);
           if (line.startsWith(':') || line.trim() === '') continue;
           if (!line.startsWith('data: ')) continue;
-          
+
           const jsonStr = line.slice(6).trim();
           if (jsonStr === '[DONE]') continue;
-          
+
           try {
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content;
@@ -255,26 +259,29 @@ class CopiloteService {
     try {
       const { data: session } = await supabase.auth.getSession();
       const accessToken = session?.session?.access_token;
-      
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pdg-ai-assistant`, {
+      if (!accessToken) return { status: 'offline', version: '3.0' };
+
+      const functionsBaseUrl = 'https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1';
+      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
+
+      const response = await fetch(`${functionsBaseUrl}/pdg-ai-assistant`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken || import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
+          apikey: supabaseAnonKey,
+          'Authorization': `Bearer ${accessToken}`,
         },
         body: JSON.stringify({ action: 'status' })
       });
 
       if (!response.ok) {
-        throw new Error('Service non disponible');
+        return { status: 'degraded', version: '3.0' };
       }
 
       const data = await response.json();
       return data || { status: 'online', version: '3.0' };
     } catch (error) {
       console.error('Erreur CopiloteService.getStatus:', error);
-      // Retourner un statut par défaut en cas d'erreur pour ne pas bloquer l'UI
       return { status: 'degraded', version: '3.0' };
     }
   }

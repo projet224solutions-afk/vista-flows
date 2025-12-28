@@ -55,29 +55,39 @@ export function useNearbyServiceStats() {
     setLoading(true);
 
     try {
-      const [vendorsResult, taxiResult, livreurResult] = await Promise.all([
+      const [vendorsResult, taxiDriversResult, deliveryDriversResult] = await Promise.all([
         supabase
           .from('vendors')
           .select('id, latitude, longitude')
           .eq('is_active', true),
         supabase
-          .from('profiles')
-          .select('id, latitude, longitude')
-          .eq('role', 'taxi'),
+          .from('taxi_drivers')
+          .select('id, last_lat, last_lng')
+          .eq('is_online', true),
         supabase
-          .from('profiles')
-          .select('id, latitude, longitude')
-          .eq('role', 'livreur'),
+          .from('drivers')
+          .select('id, current_location, last_location, is_online, status')
+          .or('is_online.eq.true,status.eq.active,status.eq.online,status.eq.on_trip'),
       ]);
 
-      const countInRadius = (items: any[] | null | undefined) => {
+      const parsePoint = (value: unknown): { lat: number; lng: number } | null => {
+        if (!value) return null;
+        const s = String(value);
+        const match = s.match(/\(([^,]+),([^)]+)\)/);
+        if (!match) return null;
+        const lng = Number(match[1]);
+        const lat = Number(match[2]);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+        return { lat, lng };
+      };
+
+      const countInRadius = (items: any[] | null | undefined, getCoords: (item: any) => { lat: number; lng: number } | null) => {
         if (!items?.length) return 0;
         return items
           .map((item) => {
-            const lat = item?.latitude;
-            const lon = item?.longitude;
-            if (lat === null || lat === undefined || lon === null || lon === undefined) return null;
-            const dist = calcDistanceFn(origin.latitude, origin.longitude, Number(lat), Number(lon));
+            const coords = getCoords(item);
+            if (!coords) return null;
+            const dist = calcDistanceFn(origin.latitude, origin.longitude, coords.lat, coords.lng);
             if (!Number.isFinite(dist)) return null;
             return dist;
           })
@@ -85,9 +95,19 @@ export function useNearbyServiceStats() {
       };
 
       const newStats: NearbyStats = {
-        boutiques: countInRadius(vendorsResult.data),
-        taxi: countInRadius(taxiResult.data),
-        livraison: countInRadius(livreurResult.data),
+        boutiques: countInRadius(vendorsResult.data, (v) => {
+          const lat = v?.latitude;
+          const lng = v?.longitude;
+          if (lat === null || lat === undefined || lng === null || lng === undefined) return null;
+          return { lat: Number(lat), lng: Number(lng) };
+        }),
+        taxi: countInRadius(taxiDriversResult.data, (t) => {
+          const lat = t?.last_lat;
+          const lng = t?.last_lng;
+          if (lat === null || lat === undefined || lng === null || lng === undefined) return null;
+          return { lat: Number(lat), lng: Number(lng) };
+        }),
+        livraison: countInRadius(deliveryDriversResult.data, (d) => parsePoint(d?.current_location) || parsePoint(d?.last_location)),
       };
 
       // Cache

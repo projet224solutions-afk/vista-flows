@@ -123,9 +123,8 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
       console.log(`🤖 Calling ${functionName} for ${userRole}...`);
 
       // Appel à l'edge function avec streaming
-      const supabaseUrl = (supabase as any).supabaseUrl as string | undefined;
-      const supabaseKey = (supabase as any).supabaseKey as string | undefined;
-      const functionsBaseUrl = supabaseUrl ? `${supabaseUrl}/functions/v1` : '';
+      const functionsBaseUrl = 'https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1';
+      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
 
       const response = await fetch(
         `${functionsBaseUrl}/${functionName}`,
@@ -133,7 +132,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...(supabaseKey ? { apikey: supabaseKey } : {}),
+            apikey: supabaseAnonKey,
             'Authorization': `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
@@ -259,7 +258,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
         }
         return [...prev, errorMessage];
       });
-      toast.error('Erreur de communication avec le Copilote');
+      toast.error(error instanceof Error ? error.message : 'Erreur de communication avec le Copilote');
     } finally {
       console.log('🔄 Copilote: Fin du traitement');
       setIsLoading(false);
