@@ -16100,14 +16100,13 @@ export type Database = {
       process_secure_wallet_transfer: {
         Args: {
           p_amount: number
-          p_currency?: string
           p_description?: string
           p_receiver_id: string
           p_receiver_type?: string
           p_sender_id: string
           p_sender_type?: string
         }
-        Returns: string
+        Returns: Json
       }
       process_wallet_to_card: {
         Args: { p_amount: number; p_card_id: string; p_user_id: string }
