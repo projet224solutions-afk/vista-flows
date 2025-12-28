@@ -82,14 +82,27 @@ export async function requestNotificationPermission(): Promise<string | null> {
     // Récupérer la config Firebase et VAPID key depuis l'edge function
     const { data: config, error: configError } = await supabase.functions.invoke('firebase-config');
     
-    if (configError || !config?.configured) {
-      console.warn('⚠️ Config Firebase non disponible');
+    if (configError) {
+      console.error('❌ Erreur appel firebase-config:', configError);
+      return null;
+    }
+    
+    if (!config?.configured) {
+      console.warn('⚠️ Config Firebase non disponible:', config);
       return null;
     }
 
     const vapidKey = config.vapidKey;
     if (!vapidKey) {
-      console.warn('⚠️ VAPID key non disponible');
+      console.warn('⚠️ VAPID key non disponible - vérifiez FIREBASE_VAPID_KEY dans Supabase secrets');
+      console.warn('La VAPID key doit être la "Web Push certificates key pair" depuis Firebase Console > Project Settings > Cloud Messaging');
+      return null;
+    }
+    
+    // Vérifier le format de la VAPID key (devrait être ~87-88 caractères base64)
+    if (vapidKey.length < 80) {
+      console.error('❌ VAPID key invalide - format incorrect (trop courte). Longueur:', vapidKey.length);
+      console.error('La VAPID key doit être générée depuis Firebase Console > Project Settings > Cloud Messaging > Web Push certificates');
       return null;
     }
 
