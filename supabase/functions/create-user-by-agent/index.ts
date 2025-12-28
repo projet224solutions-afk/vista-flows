@@ -88,35 +88,6 @@ serve(async (req) => {
   }
 
   try {
-    // ✅ JWT Authentication
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Non autorisé - token JWT manquant',
-          code: 'UNAUTHORIZED'
-        }),
-        { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 401 }
-      );
-    }
-
-    const supabaseAuth = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: { user }, error: jwtAuthError } = await supabaseAuth.auth.getUser();
-    if (jwtAuthError || !user) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Non authentifié',
-          code: 'UNAUTHENTICATED'
-        }),
-        { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 401 }
-      );
-    }
-
     // Client service_role pour les opérations admin
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -150,56 +121,130 @@ serve(async (req) => {
     }
     
     const body: CreateUserRequest = validationResult.data;
-    console.log('✅ Validation réussie - Creating user by agent, authenticated as:', user.id);
 
-    // ✅ Verify authenticated user is either a PDG or an active agent
-    // Étape 1: Vérifier si c'est un PDG
-    const { data: pdg, error: pdgError } = await supabaseClient
-      .from('pdg_management')
-      .select('id, permissions')
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-      .maybeSingle();
-
+    // ==========================================
+    // ✅ DUAL AUTH: JWT Supabase OU Token Agent
+    // ==========================================
     let agent: any = null;
     let isPdg = false;
-    let effectivePdgId: string;
-    let effectivePermissions: string[];
+    let effectivePdgId: string = '';
+    let effectivePermissions: string[] = [];
     let canCreateSubAgent = false;
+    let authenticatedVia = '';
 
-    if (pdg) {
-      // L'utilisateur est un PDG
-      isPdg = true;
-      effectivePdgId = pdg.id;
-      effectivePermissions = pdg.permissions || [];
-      canCreateSubAgent = true; // PDG peut toujours créer des agents
-      console.log('✅ Utilisateur PDG trouvé:', pdg.id);
-    } else {
-      // Étape 2: Vérifier si c'est un agent
-      const { data: agentData, error: agentError } = await supabaseClient
+    const authHeader = req.headers.get('Authorization');
+
+    // MÉTHODE 1: Authentification par token d'agent (access_token dans le body)
+    if (body.access_token) {
+      console.log('🔑 Tentative auth par access_token agent...');
+      
+      // Chercher dans agents_management (seuls les agents ont access_token)
+      const { data: agentByToken, error: agentTokenError } = await supabaseClient
         .from('agents_management')
-        .select('id, permissions, pdg_id, can_create_sub_agent, agent_code')
+        .select('id, permissions, pdg_id, can_create_sub_agent, agent_code, name, is_active')
+        .eq('access_token', body.access_token)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (agentByToken) {
+        agent = agentByToken;
+        effectivePdgId = agent.pdg_id;
+        effectivePermissions = Array.isArray(agent.permissions) ? agent.permissions : ['create_users'];
+        canCreateSubAgent = agent.can_create_sub_agent || false;
+        authenticatedVia = 'agent_token';
+        console.log('✅ Agent authentifié par token:', agent.id, agent.name);
+      } else {
+        console.error('❌ Token agent invalide ou agent inactif');
+        return new Response(
+          JSON.stringify({ 
+            error: 'Token d\'authentification invalide ou agent inactif',
+            code: 'INVALID_TOKEN'
+          }),
+          { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 401 }
+        );
+      }
+    }
+    // MÉTHODE 2: Authentification par JWT Supabase
+    else if (authHeader) {
+      console.log('🔐 Tentative auth par JWT Supabase...');
+      
+      const supabaseAuth = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        { global: { headers: { Authorization: authHeader } } }
+      );
+
+      const { data: { user }, error: jwtAuthError } = await supabaseAuth.auth.getUser();
+      
+      if (jwtAuthError || !user) {
+        console.error('❌ JWT invalide:', jwtAuthError);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Non authentifié - JWT invalide',
+            code: 'UNAUTHENTICATED'
+          }),
+          { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 401 }
+        );
+      }
+
+      console.log('✅ JWT validé pour user:', user.id);
+
+      // Vérifier si c'est un PDG
+      const { data: pdg, error: pdgError } = await supabaseClient
+        .from('pdg_management')
+        .select('id, permissions')
         .eq('user_id', user.id)
         .eq('is_active', true)
         .maybeSingle();
 
-      if (agentError || !agentData) {
-        console.error('Ni PDG ni Agent trouvé:', { pdgError, agentError });
-        return new Response(
-          JSON.stringify({ 
-            error: 'Utilisateur non autorisé (ni PDG ni Agent actif)',
-            code: 'UNAUTHORIZED'
-          }),
-          { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 403 }
-        );
-      }
+      if (pdg) {
+        isPdg = true;
+        effectivePdgId = pdg.id;
+        effectivePermissions = Array.isArray(pdg.permissions) ? pdg.permissions : ['all'];
+        canCreateSubAgent = true;
+        authenticatedVia = 'jwt_pdg';
+        console.log('✅ PDG authentifié par JWT:', pdg.id);
+      } else {
+        // Vérifier si c'est un agent
+        const { data: agentData, error: agentError } = await supabaseClient
+          .from('agents_management')
+          .select('id, permissions, pdg_id, can_create_sub_agent, agent_code')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .maybeSingle();
 
-      agent = agentData;
-      effectivePdgId = agent.pdg_id;
-      effectivePermissions = agent.permissions || [];
-      canCreateSubAgent = agent.can_create_sub_agent;
-      console.log('✅ Agent trouvé:', agent.id);
+        if (agentData) {
+          agent = agentData;
+          effectivePdgId = agent.pdg_id;
+          effectivePermissions = Array.isArray(agent.permissions) ? agent.permissions : ['create_users'];
+          canCreateSubAgent = agent.can_create_sub_agent || false;
+          authenticatedVia = 'jwt_agent';
+          console.log('✅ Agent authentifié par JWT:', agent.id);
+        } else {
+          console.error('❌ Ni PDG ni Agent trouvé pour user:', user.id);
+          return new Response(
+            JSON.stringify({ 
+              error: 'Utilisateur non autorisé (ni PDG ni Agent actif)',
+              code: 'UNAUTHORIZED'
+            }),
+            { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 403 }
+          );
+        }
+      }
     }
+    // Aucune authentification
+    else {
+      console.error('❌ Aucune méthode d\'authentification fournie');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Non autorisé - authentification requise (JWT ou access_token)',
+          code: 'UNAUTHORIZED'
+        }),
+        { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    console.log('🔒 Authentification réussie via:', authenticatedVia, '| PDG:', isPdg, '| Permissions:', effectivePermissions);
 
     // Vérifier que l'utilisateur a la permission de créer des utilisateurs
     const hasCreateUsersPermission = 
@@ -487,7 +532,7 @@ serve(async (req) => {
 
     // Log de l'action
     const { error: auditError } = await supabaseClient.from('audit_logs').insert({
-      actor_id: user.id, // L'utilisateur qui fait l'action (PDG ou agent)
+      actor_id: agent?.id || effectivePdgId, // L'agent ou PDG qui fait l'action
       action: 'USER_CREATED_BY_AGENT',
       target_type: 'user',
       target_id: authUser.user.id,
