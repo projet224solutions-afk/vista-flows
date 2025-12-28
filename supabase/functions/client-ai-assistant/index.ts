@@ -248,6 +248,187 @@ async function getVendorProducts(supabaseClient: any, vendorId?: string, vendorN
   })) || [];
 }
 
+// Fonction pour rechercher les services de proximité
+async function searchProximityServices(supabaseClient: any, query?: string, serviceType?: string) {
+  console.log("Searching proximity services:", { query, serviceType });
+
+  let queryBuilder = supabaseClient
+    .from('professional_services')
+    .select(`
+      id,
+      business_name,
+      description,
+      logo_url,
+      address,
+      phone,
+      email,
+      opening_hours,
+      status,
+      verification_status,
+      rating,
+      total_reviews,
+      service_type:service_types(id, name, description)
+    `)
+    .eq('status', 'active');
+
+  // Filtre par type de service
+  if (serviceType) {
+    const { data: sType } = await supabaseClient
+      .from('service_types')
+      .select('id')
+      .ilike('name', `%${serviceType}%`)
+      .limit(1)
+      .single();
+    
+    if (sType) {
+      queryBuilder = queryBuilder.eq('service_type_id', sType.id);
+    }
+  }
+
+  // Recherche textuelle
+  if (query) {
+    queryBuilder = queryBuilder.or(`business_name.ilike.%${query}%,description.ilike.%${query}%`);
+  }
+
+  const { data: services, error } = await queryBuilder
+    .order('rating', { ascending: false })
+    .limit(10);
+
+  if (error) {
+    console.error("Service search error:", error);
+    return [];
+  }
+
+  return services?.map((s: any) => ({
+    id: s.id,
+    name: s.business_name,
+    description: s.description?.substring(0, 150),
+    logo: s.logo_url,
+    address: s.address,
+    phone: s.phone,
+    email: s.email,
+    openingHours: s.opening_hours,
+    rating: s.rating,
+    totalReviews: s.total_reviews,
+    isVerified: s.verification_status === 'verified',
+    serviceType: s.service_type?.name || 'Service'
+  })) || [];
+}
+
+// Fonction pour obtenir les types de services disponibles
+async function getServiceTypes(supabaseClient: any) {
+  const { data: types } = await supabaseClient
+    .from('service_types')
+    .select('id, name, description')
+    .eq('is_active', true)
+    .order('name');
+  
+  return types || [];
+}
+
+// Fonction pour obtenir les taxi-moto disponibles
+async function getAvailableTaxiDrivers(supabaseClient: any, vehicleType?: string) {
+  console.log("Getting available taxi drivers:", { vehicleType });
+
+  let query = supabaseClient
+    .from('taxi_drivers')
+    .select(`
+      id,
+      user_id,
+      vehicle_type,
+      vehicle_plate,
+      vehicle,
+      rating,
+      total_rides,
+      is_online,
+      status,
+      last_lat,
+      last_lng,
+      last_seen,
+      profile:user_id(full_name, phone, avatar_url)
+    `)
+    .eq('is_online', true)
+    .in('status', ['available', 'active']);
+
+  if (vehicleType) {
+    query = query.ilike('vehicle_type', `%${vehicleType}%`);
+  }
+
+  const { data: drivers, error } = await query
+    .order('rating', { ascending: false })
+    .limit(10);
+
+  if (error) {
+    console.error("Taxi drivers fetch error:", error);
+    return [];
+  }
+
+  return drivers?.map((d: any) => ({
+    id: d.id,
+    name: d.profile?.full_name || 'Chauffeur',
+    phone: d.profile?.phone,
+    avatar: d.profile?.avatar_url,
+    vehicleType: d.vehicle_type || 'Moto',
+    vehiclePlate: d.vehicle_plate,
+    vehicleInfo: d.vehicle,
+    rating: d.rating,
+    totalRides: d.total_rides,
+    isOnline: d.is_online,
+    status: d.status,
+    lastSeen: d.last_seen
+  })) || [];
+}
+
+// Fonction pour obtenir les livreurs disponibles
+async function getAvailableDeliveryDrivers(supabaseClient: any, vehicleType?: string) {
+  console.log("Getting available delivery drivers:", { vehicleType });
+
+  let query = supabaseClient
+    .from('drivers')
+    .select(`
+      id,
+      full_name,
+      phone_number,
+      email,
+      vehicle_type,
+      vehicle_info,
+      rating,
+      total_deliveries,
+      is_online,
+      is_verified,
+      status
+    `)
+    .eq('is_online', true)
+    .in('status', ['available', 'active']);
+
+  if (vehicleType) {
+    query = query.eq('vehicle_type', vehicleType);
+  }
+
+  const { data: drivers, error } = await query
+    .order('rating', { ascending: false })
+    .limit(10);
+
+  if (error) {
+    console.error("Delivery drivers fetch error:", error);
+    return [];
+  }
+
+  return drivers?.map((d: any) => ({
+    id: d.id,
+    name: d.full_name,
+    phone: d.phone_number,
+    email: d.email,
+    vehicleType: d.vehicle_type || 'Moto',
+    vehicleInfo: d.vehicle_info,
+    rating: d.rating,
+    totalDeliveries: d.total_deliveries,
+    isOnline: d.is_online,
+    isVerified: d.is_verified,
+    status: d.status
+  })) || [];
+}
+
 // Fonction pour obtenir les catégories disponibles
 async function getCategories(supabaseClient: any) {
   const { data: categories } = await supabaseClient
@@ -356,6 +537,73 @@ const tools = [
           limit: {
             type: "number",
             description: "Nombre de produits à retourner (max 20)"
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_proximity_services",
+      description: "Rechercher des services de proximité (beauté, réparation, restauration, ménage, santé, formation, etc.). Utilise cette fonction quand le client cherche un service local ou professionnel.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "Terme de recherche (nom du service, type d'activité)"
+          },
+          service_type: {
+            type: "string",
+            description: "Type de service (ex: Beauté, Réparation, Restauration, Ménage, Santé, Formation)"
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_service_types",
+      description: "Obtenir la liste des types de services de proximité disponibles. Utilise cette fonction pour montrer au client les catégories de services.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_available_taxi_drivers",
+      description: "Obtenir les chauffeurs de taxi-moto disponibles. Utilise cette fonction quand le client cherche un taxi, un moto-taxi, ou veut se déplacer.",
+      parameters: {
+        type: "object",
+        properties: {
+          vehicle_type: {
+            type: "string",
+            description: "Type de véhicule (moto, voiture, tricycle)"
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_available_delivery_drivers",
+      description: "Obtenir les livreurs disponibles. Utilise cette fonction quand le client veut faire livrer quelque chose ou cherche un coursier.",
+      parameters: {
+        type: "object",
+        properties: {
+          vehicle_type: {
+            type: "string",
+            description: "Type de véhicule (moto, vélo, voiture)"
           }
         },
         required: []
@@ -477,8 +725,8 @@ serve(async (req) => {
     const clientSystemPrompt = `Tu es l'assistant IA de 224Solutions, dédié aux CLIENTS. Tu dois UNIQUEMENT répondre aux questions liées au compte client.
 
 🎯 TON RÔLE:
-Tu aides les clients de la plateforme 224Solutions avec leurs activités d'achat et de gestion de compte.
-Tu as accès à des fonctions de RECHERCHE DE PRODUITS et d'INFORMATIONS SUR LES BOUTIQUES.
+Tu aides les clients de la plateforme 224Solutions avec leurs activités d'achat, de services et de gestion de compte.
+Tu as accès à des fonctions de RECHERCHE complètes: produits, boutiques, services, taxi-moto et livreurs.
 
 📊 CONTEXTE UTILISATEUR:
 - Nom: ${userContext.name || "Client"}
@@ -493,45 +741,53 @@ Tu as accès à des fonctions de RECHERCHE DE PRODUITS et d'INFORMATIONS SUR LES
    - Filtrer par prix (min/max)
    - Recommander des produits populaires
    - Montrer les catégories disponibles
-   - UTILISE TOUJOURS search_products quand un client cherche un produit!
+   - UTILISE search_products quand un client cherche un produit!
 
-2. **🏪 INFORMATIONS BOUTIQUES** (NOUVELLE CAPACITÉ):
+2. **🏪 INFORMATIONS BOUTIQUES**:
    - Obtenir les détails d'une boutique (contact, adresse, horaires)
    - Voir tous les produits d'une boutique spécifique
-   - Vérifier si une boutique est vérifiée
-   - Connaître les options de livraison d'un vendeur
-   - UTILISE get_vendor_details pour les infos boutique!
-   - UTILISE get_vendor_products pour voir les produits d'une boutique!
+   - UTILISE get_vendor_details ou get_vendor_products!
 
-3. **Gestion du Wallet Client**:
+3. **🛠️ SERVICES DE PROXIMITÉ** (NOUVEAU):
+   - Rechercher des services locaux (beauté, réparation, restauration, ménage, santé, formation...)
+   - Voir les types de services disponibles
+   - UTILISE search_proximity_services pour trouver un service!
+   - UTILISE get_service_types pour lister les catégories de services!
+
+4. **🏍️ TAXI-MOTO** (NOUVEAU):
+   - Trouver les chauffeurs de taxi-moto disponibles
+   - Voir leur note, nombre de courses, type de véhicule
+   - UTILISE get_available_taxi_drivers!
+
+5. **📦 LIVREURS / COURSIERS** (NOUVEAU):
+   - Trouver les livreurs disponibles
+   - Voir leur note, nombre de livraisons, statut
+   - UTILISE get_available_delivery_drivers!
+
+6. **💰 Gestion du Wallet Client**:
    - Consulter le solde
    - Expliquer l'historique des transactions
-   - Aider avec les dépôts et retraits
 
-4. **Gestion des Commandes**:
+7. **📦 Gestion des Commandes**:
    - Suivre l'état des commandes
-   - Expliquer le processus de commande
    - Historique des achats
 
-5. **Communication**:
-   - Contacter les vendeurs
-   - Support client
-
-6. **Paiements**:
+8. **💳 Paiements**:
    - Méthodes de paiement disponibles
    - Sécurité des transactions
 
 ❌ CE QUE TU NE DOIS PAS FAIRE:
 - NE PAS répondre aux questions sur la gestion de boutique/vendeur (côté vendeur)
 - NE PAS donner d'informations sur l'administration système
-- NE PAS aider avec des fonctionnalités PDG/Admin
 
 💡 STYLE DE RÉPONSE:
 - Sois amical et professionnel
 - Utilise des émojis pertinents
 - Fournis des réponses claires et concises
-- Quand tu présentes des produits, inclus: nom, prix, vendeur, description
-- Quand tu parles d'une boutique, inclus: nom, contact, localisation, note, produits phares`;
+- Quand tu présentes des produits: nom, prix, vendeur, description
+- Quand tu parles d'une boutique: nom, contact, localisation, note
+- Quand tu parles de services: nom, type, adresse, note
+- Quand tu parles de chauffeurs/livreurs: nom, véhicule, note, disponibilité`;
 
     // Premier appel: demander à l'IA si elle veut utiliser des outils
     const initialRequest = {
@@ -597,6 +853,18 @@ Tu as accès à des fonctions de RECHERCHE DE PRODUITS et d'INFORMATIONS SUR LES
             break;
           case "get_vendor_products":
             result = await getVendorProducts(supabaseClient, args.vendor_id, args.vendor_name, args.limit || 10);
+            break;
+          case "search_proximity_services":
+            result = await searchProximityServices(supabaseClient, args.query, args.service_type);
+            break;
+          case "get_service_types":
+            result = await getServiceTypes(supabaseClient);
+            break;
+          case "get_available_taxi_drivers":
+            result = await getAvailableTaxiDrivers(supabaseClient, args.vehicle_type);
+            break;
+          case "get_available_delivery_drivers":
+            result = await getAvailableDeliveryDrivers(supabaseClient, args.vehicle_type);
             break;
           case "get_categories":
             result = await getCategories(supabaseClient);
