@@ -13144,6 +13144,411 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_ai_control: {
+        Row: {
+          ai_enabled: boolean | null
+          auto_approve_marketing: boolean | null
+          auto_approve_reviews: boolean | null
+          auto_approve_stock_alerts: boolean | null
+          created_at: string | null
+          disable_reason: string | null
+          disabled_at: string | null
+          disabled_by: string | null
+          executions_today: number | null
+          id: string
+          last_reset_date: string | null
+          max_daily_executions: number | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          ai_enabled?: boolean | null
+          auto_approve_marketing?: boolean | null
+          auto_approve_reviews?: boolean | null
+          auto_approve_stock_alerts?: boolean | null
+          created_at?: string | null
+          disable_reason?: string | null
+          disabled_at?: string | null
+          disabled_by?: string | null
+          executions_today?: number | null
+          id?: string
+          last_reset_date?: string | null
+          max_daily_executions?: number | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          ai_enabled?: boolean | null
+          auto_approve_marketing?: boolean | null
+          auto_approve_reviews?: boolean | null
+          auto_approve_stock_alerts?: boolean | null
+          created_at?: string | null
+          disable_reason?: string | null
+          disabled_at?: string | null
+          disabled_by?: string | null
+          executions_today?: number | null
+          id?: string
+          last_reset_date?: string | null
+          max_daily_executions?: number | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_ai_control_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: true
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_ai_control_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: true
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_ai_control_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: true
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_ai_decisions: {
+        Row: {
+          ai_confidence: number | null
+          ai_recommendation: string
+          approved_at: string | null
+          approved_by: string | null
+          context_data: Json | null
+          created_at: string | null
+          decision_type: string
+          executed_at: string | null
+          expires_at: string | null
+          id: string
+          priority: string | null
+          rejection_reason: string | null
+          status: string
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          ai_confidence?: number | null
+          ai_recommendation: string
+          approved_at?: string | null
+          approved_by?: string | null
+          context_data?: Json | null
+          created_at?: string | null
+          decision_type: string
+          executed_at?: string | null
+          expires_at?: string | null
+          id?: string
+          priority?: string | null
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          ai_confidence?: number | null
+          ai_recommendation?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          context_data?: Json | null
+          created_at?: string | null
+          decision_type?: string
+          executed_at?: string | null
+          expires_at?: string | null
+          id?: string
+          priority?: string | null
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_ai_decisions_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_ai_decisions_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_ai_decisions_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_ai_documents: {
+        Row: {
+          created_at: string | null
+          document_content: Json
+          document_title: string
+          document_type: string
+          generated_by: string | null
+          id: string
+          language: string | null
+          metadata: Json | null
+          pdf_url: string | null
+          status: string | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          document_content: Json
+          document_title: string
+          document_type: string
+          generated_by?: string | null
+          id?: string
+          language?: string | null
+          metadata?: Json | null
+          pdf_url?: string | null
+          status?: string | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          document_content?: Json
+          document_title?: string
+          document_type?: string
+          generated_by?: string | null
+          id?: string
+          language?: string | null
+          metadata?: Json | null
+          pdf_url?: string | null
+          status?: string | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_ai_documents_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_ai_documents_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_ai_documents_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_ai_execution_logs: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          decision_id: string | null
+          error_message: string | null
+          execution_time_ms: number | null
+          id: string
+          input_data: Json | null
+          model_used: string | null
+          output_data: Json | null
+          success: boolean | null
+          tokens_used: number | null
+          vendor_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          decision_id?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          input_data?: Json | null
+          model_used?: string | null
+          output_data?: Json | null
+          success?: boolean | null
+          tokens_used?: number | null
+          vendor_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          decision_id?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          input_data?: Json | null
+          model_used?: string | null
+          output_data?: Json | null
+          success?: boolean | null
+          tokens_used?: number | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_ai_execution_logs_decision_id_fkey"
+            columns: ["decision_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_ai_decisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_ai_execution_logs_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_ai_execution_logs_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_ai_execution_logs_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_ai_marketing_campaigns: {
+        Row: {
+          ai_reasoning: string | null
+          approved_at: string | null
+          approved_by: string | null
+          campaign_name: string
+          campaign_type: string
+          created_at: string | null
+          id: string
+          message_content: string
+          predicted_conversion_rate: number | null
+          results: Json | null
+          scheduled_at: string | null
+          sent_at: string | null
+          status: string | null
+          target_customer_count: number | null
+          target_segment: string | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          ai_reasoning?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          campaign_name: string
+          campaign_type: string
+          created_at?: string | null
+          id?: string
+          message_content: string
+          predicted_conversion_rate?: number | null
+          results?: Json | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          target_customer_count?: number | null
+          target_segment?: string | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          ai_reasoning?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          campaign_name?: string
+          campaign_type?: string
+          created_at?: string | null
+          id?: string
+          message_content?: string
+          predicted_conversion_rate?: number | null
+          results?: Json | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          target_customer_count?: number | null
+          target_segment?: string | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_ai_marketing_campaigns_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_ai_marketing_campaigns_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_ai_marketing_campaigns_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_ai_prompt_versions: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          prompt_content: string
+          prompt_name: string
+          prompt_type: string
+          version: number
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          prompt_content: string
+          prompt_name: string
+          prompt_type: string
+          version?: number
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          prompt_content?: string
+          prompt_name?: string
+          prompt_type?: string
+          version?: number
+        }
+        Relationships: []
+      }
       vendor_analytics: {
         Row: {
           conversion_rate: number | null
@@ -13525,6 +13930,162 @@ export type Database = {
           },
           {
             foreignKeyName: "vendor_ratings_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_review_sentiment_analysis: {
+        Row: {
+          ai_suggested_response: string | null
+          analyzed_at: string | null
+          created_at: string | null
+          final_response: string | null
+          id: string
+          key_topics: string[] | null
+          original_text: string
+          responded_at: string | null
+          response_approved: boolean | null
+          response_approved_by: string | null
+          review_id: string | null
+          review_type: string
+          sentiment: string
+          sentiment_score: number | null
+          urgency_level: string | null
+          vendor_id: string
+        }
+        Insert: {
+          ai_suggested_response?: string | null
+          analyzed_at?: string | null
+          created_at?: string | null
+          final_response?: string | null
+          id?: string
+          key_topics?: string[] | null
+          original_text: string
+          responded_at?: string | null
+          response_approved?: boolean | null
+          response_approved_by?: string | null
+          review_id?: string | null
+          review_type: string
+          sentiment: string
+          sentiment_score?: number | null
+          urgency_level?: string | null
+          vendor_id: string
+        }
+        Update: {
+          ai_suggested_response?: string | null
+          analyzed_at?: string | null
+          created_at?: string | null
+          final_response?: string | null
+          id?: string
+          key_topics?: string[] | null
+          original_text?: string
+          responded_at?: string | null
+          response_approved?: boolean | null
+          response_approved_by?: string | null
+          review_id?: string | null
+          review_type?: string
+          sentiment?: string
+          sentiment_score?: number | null
+          urgency_level?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_review_sentiment_analysis_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_review_sentiment_analysis_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_review_sentiment_analysis_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_stock_ai_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          confidence: number | null
+          created_at: string | null
+          current_stock: number | null
+          id: string
+          predicted_stockout_date: string | null
+          product_id: string
+          recommendation_basis: string | null
+          recommended_quantity: number | null
+          status: string | null
+          vendor_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          confidence?: number | null
+          created_at?: string | null
+          current_stock?: number | null
+          id?: string
+          predicted_stockout_date?: string | null
+          product_id: string
+          recommendation_basis?: string | null
+          recommended_quantity?: number | null
+          status?: string | null
+          vendor_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          confidence?: number | null
+          created_at?: string | null
+          current_stock?: number | null
+          id?: string
+          predicted_stockout_date?: string | null
+          product_id?: string
+          recommendation_basis?: string | null
+          recommended_quantity?: number | null
+          status?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_stock_ai_alerts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_stock_ai_alerts_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_stock_ai_alerts_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_stock_ai_alerts_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "vendors"
