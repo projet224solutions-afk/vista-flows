@@ -472,26 +472,55 @@ serve(async (req) => {
 
     // Le rôle transitaire utilise uniquement le profil de base
 
+    // Déterminer l'agent_id effectif pour le tracking
+    // Si c'est un PDG, on utilise l'ID fourni dans body.agentId (qui peut être un de ses agents)
+    // Si c'est un agent, on utilise son propre ID
+    const effectiveAgentId = isPdg ? (body.agentId || null) : (agent?.id || body.agentId);
+    
+    console.log('📊 Tracking création utilisateur:', {
+      isPdg,
+      bodyAgentId: body.agentId,
+      agentId: agent?.id,
+      effectiveAgentId,
+      userId: authUser.user.id
+    });
+
     // Log de l'action
-    await supabaseClient.from('audit_logs').insert({
-      actor_id: authUser.user.id,
+    const { error: auditError } = await supabaseClient.from('audit_logs').insert({
+      actor_id: user.id, // L'utilisateur qui fait l'action (PDG ou agent)
       action: 'USER_CREATED_BY_AGENT',
       target_type: 'user',
       target_id: authUser.user.id,
       data_json: {
-        agent_id: body.agentId,
+        agent_id: effectiveAgentId,
         agent_code: body.agentCode,
         user_role: body.role,
+        created_by_pdg: isPdg,
         timestamp: new Date().toISOString()
       }
     });
 
-    // Créer la liaison agent-utilisateur
-    await supabaseClient.from('agent_created_users').insert({
-      agent_id: body.agentId,
-      user_id: authUser.user.id,
-      user_role: body.role
-    });
+    if (auditError) {
+      console.warn('⚠️ Erreur audit_logs (non bloquant):', auditError);
+    }
+
+    // Créer la liaison agent-utilisateur SEULEMENT si on a un agent_id valide
+    if (effectiveAgentId) {
+      const { error: linkError } = await supabaseClient.from('agent_created_users').insert({
+        agent_id: effectiveAgentId,
+        user_id: authUser.user.id,
+        user_role: body.role
+      });
+      
+      if (linkError) {
+        console.error('❌ Erreur création liaison agent_created_users:', linkError);
+        // Ne pas bloquer la création, juste logger l'erreur
+      } else {
+        console.log('✅ Liaison agent_created_users créée');
+      }
+    } else {
+      console.warn('⚠️ Pas d\'agent_id valide pour créer la liaison agent_created_users');
+    }
 
     console.log('✅ Utilisateur créé avec succès:', {
       id: authUser.user.id,
