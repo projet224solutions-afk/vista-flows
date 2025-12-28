@@ -301,6 +301,7 @@ export default function AgentDashboard() {
               <CreateUserForm 
                 agentId={agent.id} 
                 agentCode={agent.agent_code}
+                accessToken={agent.access_token}
                 onUserCreated={() => {
                   loadAgentData();
                   refetchStats();
