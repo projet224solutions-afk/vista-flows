@@ -574,6 +574,49 @@ serve(async (req) => {
       } else {
         console.log('✅ Liaison agent_created_users créée');
       }
+
+      // ============================================
+      // 💰 CALCUL AUTOMATIQUE DES COMMISSIONS AGENT
+      // ============================================
+      // Montant de commission par création d'utilisateur selon le rôle
+      const commissionAmounts: Record<string, number> = {
+        'client': 5000,      // 5,000 GNF par client créé
+        'vendeur': 25000,    // 25,000 GNF par vendeur créé
+        'livreur': 15000,    // 15,000 GNF par livreur créé
+        'taxi': 15000,       // 15,000 GNF par taxi créé
+        'sub_agent': 50000,  // 50,000 GNF par sous-agent créé
+        'syndicat': 100000,  // 100,000 GNF par syndicat créé
+      };
+
+      const commissionAmount = commissionAmounts[body.role] || 5000;
+      
+      console.log('💰 Calcul commission agent:', {
+        agentId: effectiveAgentId,
+        amount: commissionAmount,
+        userRole: body.role,
+        userId: authUser.user.id
+      });
+
+      try {
+        const { data: commissionResult, error: commissionError } = await supabaseClient
+          .rpc('calculate_agent_commission', {
+            p_agent_id: effectiveAgentId,
+            p_amount: commissionAmount,
+            p_source_type: `creation_${body.role}`,
+            p_related_user_id: authUser.user.id,
+            p_transaction_id: null
+          });
+
+        if (commissionError) {
+          console.error('❌ Erreur calcul commission:', commissionError);
+          // Ne pas bloquer la création, juste logger l'erreur
+        } else {
+          console.log('✅ Commission agent calculée et créditée:', commissionResult);
+        }
+      } catch (commissionErr) {
+        console.error('❌ Exception calcul commission:', commissionErr);
+        // Ne pas bloquer la création
+      }
     } else {
       console.warn('⚠️ Pas d\'agent_id valide pour créer la liaison agent_created_users');
     }
