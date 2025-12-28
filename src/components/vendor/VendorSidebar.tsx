@@ -10,7 +10,7 @@ import {
   Wallet, Receipt, Truck, Megaphone, FileText, Settings,
   Target, TrendingUp, Box, MessageSquare, HeadphonesIcon,
   Store, DollarSign, Boxes, AlertTriangle, Link, Building2,
-  LayoutDashboard, ChevronRight, Star, Smartphone
+  LayoutDashboard, ChevronRight, Star, Smartphone, Bot
 } from "lucide-react";
 
 import {
@@ -134,6 +134,7 @@ export function VendorSidebar() {
       label: "Système",
       icon: Settings,
       items: [
+        { title: "Copilote IA", icon: Bot, path: "copilote" },
         { title: "Paramètres", icon: Settings, path: "settings" },
       ]
     }
