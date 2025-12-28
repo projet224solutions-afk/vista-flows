@@ -55,6 +55,10 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
   const [userContext, setUserContext] = useState<UserContext | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [vendorAccess, setVendorAccess] = useState<{ loading: boolean; hasVendor: boolean | null }>({
+    loading: userRole === 'vendeur',
+    hasVendor: userRole === 'vendeur' ? null : true,
+  });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -77,7 +81,44 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
     if (user?.id) {
       loadHistory();
     }
-  }, [user?.id]);
+  }, [user?.id, userRole]);
+
+  // Vérifie si l'utilisateur connecté est bien associé à un vendeur (table vendors)
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkVendorAccess = async () => {
+      if (userRole !== 'vendeur') {
+        if (!cancelled) setVendorAccess({ loading: false, hasVendor: true });
+        return;
+      }
+
+      if (!user?.id) {
+        if (!cancelled) setVendorAccess({ loading: false, hasVendor: false });
+        return;
+      }
+
+      try {
+        const baseQuery = supabase.from('vendors').select('id').eq('user_id', user.id);
+        const res = (baseQuery as any).maybeSingle
+          ? await (baseQuery as any).maybeSingle()
+          : await baseQuery.single();
+
+        if (!cancelled) {
+          setVendorAccess({ loading: false, hasVendor: !!res?.data });
+        }
+      } catch {
+        if (!cancelled) setVendorAccess({ loading: false, hasVendor: false });
+      }
+    };
+
+    setVendorAccess({ loading: userRole === 'vendeur', hasVendor: userRole === 'vendeur' ? null : true });
+    checkVendorAccess();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userRole, user?.id]);
 
   const loadHistory = async () => {
     try {
@@ -101,6 +142,12 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
     const accessToken = sessionData.session?.access_token;
     if (!accessToken) {
       toast.error('Veuillez vous connecter pour utiliser le Copilote');
+      return;
+    }
+
+    // 🔐 Copilote vendeur: nécessite un compte associé à une boutique
+    if (userRole === 'vendeur' && vendorAccess.hasVendor === false) {
+      toast.error("Non autorisé - Vendeur non trouvé. Votre compte n'est pas associé à une boutique.");
       return;
     }
 
@@ -150,6 +197,14 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
         const errMsg = (errJson as any)?.error;
 
         if (response.status === 401) {
+          if (
+            userRole === 'vendeur' &&
+            typeof errMsg === 'string' &&
+            errMsg.toLowerCase().includes('vendeur non trouvé')
+          ) {
+            setVendorAccess({ loading: false, hasVendor: false });
+            throw new Error("Votre compte n'est pas associé à une boutique (vendeur introuvable). Connectez-vous avec un compte vendeur ou créez votre boutique.");
+          }
           throw new Error(errMsg || 'Non autorisé. Vérifiez que vous êtes connecté et que votre compte est bien un vendeur.');
         }
         if (response.status === 403) {
@@ -500,6 +555,15 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
       <Separator />
 
       <div className="p-4">
+        {userRole === 'vendeur' && vendorAccess.hasVendor === false && (
+          <div className="mb-3 rounded-lg border border-border bg-muted/50 p-3 text-sm">
+            <div className="font-medium">Accès vendeur requis</div>
+            <div className="text-muted-foreground">
+              Votre compte n'est pas associé à une boutique. Connectez-vous avec un compte vendeur ou créez votre boutique.
+            </div>
+          </div>
+        )}
+
         <div className="flex space-x-2">
           <Input
             ref={inputRef}
@@ -507,12 +571,19 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Tapez votre message..."
-            disabled={isLoading}
+            disabled={
+              isLoading ||
+              (userRole === 'vendeur' && (vendorAccess.loading || vendorAccess.hasVendor === false))
+            }
             className="flex-1"
           />
           <Button
             onClick={sendMessage}
-            disabled={!input.trim() || isLoading}
+            disabled={
+              !input.trim() ||
+              isLoading ||
+              (userRole === 'vendeur' && (vendorAccess.loading || vendorAccess.hasVendor === false))
+            }
             size="icon"
             className={`bg-gradient-to-r ${roleColor} hover:opacity-90`}
           >
