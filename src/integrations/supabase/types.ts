@@ -16775,7 +16775,8 @@ export type Database = {
       subscribe_driver:
         | {
             Args: {
-              p_payment_method: string
+              p_billing_cycle?: string
+              p_payment_method?: string
               p_transaction_id?: string
               p_type: string
               p_user_id: string
@@ -16784,7 +16785,6 @@ export type Database = {
           }
         | {
             Args: {
-              p_billing_cycle?: string
               p_payment_method: string
               p_transaction_id?: string
               p_type: string
