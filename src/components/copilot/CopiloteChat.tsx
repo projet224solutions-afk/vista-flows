@@ -96,6 +96,14 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
     console.log('📤 Copilote: Envoi message, isLoading =', isLoading);
     if (!input.trim() || isLoading) return;
 
+    // 🔒 Le Copilote nécessite une session (edge functions verify_jwt = true)
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+    if (!accessToken) {
+      toast.error('Veuillez vous connecter pour utiliser le Copilote');
+      return;
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -111,7 +119,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
     try {
       // Déterminer quelle edge function appeler selon le rôle
       const functionName = userRole === 'vendeur' ? 'vendor-ai-assistant' : 'client-ai-assistant';
-      
+
       console.log(`🤖 Calling ${functionName} for ${userRole}...`);
 
       // Appel à l'edge function avec streaming
@@ -121,23 +129,36 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`,
+            'Authorization': `Bearer ${accessToken}`,
           },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             message: userMessage.content,
-            messages: messages.map(m => ({ role: m.role, content: m.content })).concat([{ role: 'user', content: userMessage.content }])
+            messages: messages
+              .map(m => ({ role: m.role, content: m.content }))
+              .concat([{ role: 'user', content: userMessage.content }])
           }),
         }
       );
 
       if (!response.ok) {
+        // Essayer de remonter un message précis renvoyé par l'edge function
+        const errJson = await response.json().catch(() => null);
+        const errMsg = (errJson as any)?.error;
+
+        if (response.status === 401) {
+          throw new Error(errMsg || 'Non autorisé. Vérifiez que vous êtes connecté et que votre compte est bien un vendeur.');
+        }
+        if (response.status === 403) {
+          throw new Error(errMsg || 'Accès refusé.');
+        }
         if (response.status === 429) {
-          throw new Error('Limite de requêtes atteinte. Veuillez réessayer dans quelques instants.');
+          throw new Error(errMsg || 'Limite de requêtes atteinte. Veuillez réessayer dans quelques instants.');
         }
         if (response.status === 402) {
-          throw new Error('Crédits insuffisants pour l\'IA.');
+          throw new Error(errMsg || 'Crédits insuffisants pour l\'IA.');
         }
-        throw new Error('Erreur de communication avec l\'IA');
+
+        throw new Error(errMsg || 'Erreur de communication avec l\'IA');
       }
 
       // Parser le stream SSE
