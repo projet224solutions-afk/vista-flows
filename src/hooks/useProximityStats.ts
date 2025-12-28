@@ -140,18 +140,16 @@ export function useProximityStats() {
 
       if (taxiDriversError) throw taxiDriversError;
 
-      // Fetch products with their categories - exclude physical-only vendors
+      // Fetch products with their categories
       const { data: products, error: productsError } = await supabase
         .from('products')
         .select(`
           id, 
           category_id,
           vendor_id,
-          categories (id, name),
-          vendors!inner (business_type)
+          categories (id, name)
         `)
-        .eq('is_active', true)
-        .neq('vendors.business_type', 'physical');
+        .eq('is_active', true);
 
       if (productsError) throw productsError;
 

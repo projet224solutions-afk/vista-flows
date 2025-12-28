@@ -40,6 +40,11 @@ interface UseUniversalProductsOptions {
   vendorId?: string;
   country?: string;
   city?: string;
+  /**
+   * Quand true, inclut aussi les produits des vendeurs "physical".
+   * Par défaut (false), ils sont exclus.
+   */
+  includePhysicalVendors?: boolean;
   sortBy?: 'popular' | 'price_asc' | 'price_desc' | 'rating' | 'newest';
   autoLoad?: boolean;
 }
@@ -55,6 +60,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
     vendorId,
     country,
     city,
+    includePhysicalVendors = false,
     sortBy = 'newest',
     autoLoad = true
   } = options;
@@ -80,7 +86,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
       const to = from + pageLimit - 1;
 
       // Requête optimisée - une seule requête
-      // Exclure uniquement les produits des vendeurs "physical" (boutique physique uniquement)
+      // Par défaut, exclure les produits des vendeurs "physical" (boutique physique uniquement)
       let query = supabase
         .from('products')
         .select(`
@@ -109,8 +115,11 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
             name
           )
         `, { count: 'exact' })
-        .eq('is_active', true)
-        .neq('vendors.business_type', 'physical');
+        .eq('is_active', true);
+
+      if (!includePhysicalVendors) {
+        query = query.neq('vendors.business_type', 'physical');
+      }
 
       // Filtres
       if (vendorId) {
@@ -227,7 +236,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
       setLoading(false);
       isLoadingRef.current = false;
     }
-  }, [page, limit, category, searchQuery, minPrice, maxPrice, minRating, vendorId, country, city, sortBy]);
+  }, [page, limit, category, searchQuery, minPrice, maxPrice, minRating, vendorId, country, city, includePhysicalVendors, sortBy]);
 
   const loadMore = useCallback(() => {
     if (!loading && hasMore) {
@@ -248,7 +257,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
       // Recharger uniquement si les filtres changent après le montage
       loadProducts(true);
     }
-  }, [category, searchQuery, minPrice, maxPrice, minRating, vendorId, country, city, sortBy, autoLoad]);
+  }, [category, searchQuery, minPrice, maxPrice, minRating, vendorId, country, city, includePhysicalVendors, sortBy, autoLoad]);
 
   // Charger plus quand la page change
   useEffect(() => {
