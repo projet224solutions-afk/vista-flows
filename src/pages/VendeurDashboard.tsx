@@ -54,6 +54,7 @@ import { VendorNotificationsPanel } from "@/components/vendor/VendorNotification
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 import { VendorDeliveriesPanel } from "@/components/vendor/VendorDeliveriesPanel";
 import VendorRatingsPanel from "@/components/vendor/VendorRatingsPanel";
+import { PushNotificationButton } from "@/components/vendor/PushNotificationButton";
 import { ProtectedRoute } from "@/components/subscription/ProtectedRoute";
 import { VendorSubscriptionButton } from "@/components/vendor/VendorSubscriptionButton";
 import { VendorSubscriptionBanner } from "@/components/vendor/VendorSubscriptionBanner";
@@ -431,9 +432,7 @@ export default function VendeurDashboard() {
                     <VendorSubscriptionButton />
                   </div>
 
-                  <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10">
-                    <Bell className="w-4 h-4 md:w-5 md:h-5" />
-                  </Button>
+                  <PushNotificationButton className="h-8 w-8 md:h-10 md:w-10" />
                   <Button
                     variant="ghost"
                     size="icon"
