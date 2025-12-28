@@ -10322,6 +10322,9 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           member_name: string | null
+          recording_started_at: string | null
+          recording_stopped_at: string | null
+          recording_url: string | null
           resolved_at: string | null
           resolved_by: string | null
           severity: string | null
@@ -10346,6 +10349,9 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           member_name?: string | null
+          recording_started_at?: string | null
+          recording_stopped_at?: string | null
+          recording_url?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
           severity?: string | null
@@ -10370,6 +10376,9 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           member_name?: string | null
+          recording_started_at?: string | null
+          recording_stopped_at?: string | null
+          recording_url?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
           severity?: string | null
@@ -10410,11 +10419,14 @@ export type Database = {
           driver_name: string | null
           duration_seconds: number | null
           file_path: string
+          file_size_bytes: number | null
           file_url: string
           id: string
           is_viewed: boolean | null
           media_type: string
           sos_alert_id: string
+          thumbnail_url: string | null
+          uploaded_at: string | null
           viewed_at: string | null
           viewed_by: string | null
         }
@@ -10424,11 +10436,14 @@ export type Database = {
           driver_name?: string | null
           duration_seconds?: number | null
           file_path: string
+          file_size_bytes?: number | null
           file_url: string
           id?: string
           is_viewed?: boolean | null
           media_type: string
           sos_alert_id: string
+          thumbnail_url?: string | null
+          uploaded_at?: string | null
           viewed_at?: string | null
           viewed_by?: string | null
         }
@@ -10438,11 +10453,14 @@ export type Database = {
           driver_name?: string | null
           duration_seconds?: number | null
           file_path?: string
+          file_size_bytes?: number | null
           file_url?: string
           id?: string
           is_viewed?: boolean | null
           media_type?: string
           sos_alert_id?: string
+          thumbnail_url?: string | null
+          uploaded_at?: string | null
           viewed_at?: string | null
           viewed_by?: string | null
         }
