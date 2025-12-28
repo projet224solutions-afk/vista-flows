@@ -191,7 +191,7 @@ export class SOSMediaRecorder {
 
       console.log(`📁 Fichier: ${fileName}, Taille: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
 
-      // 2. Upload vers Supabase Storage
+      // 2. Upload vers Supabase Storage - bucket sos-recordings
       const { data, error } = await supabase.storage
         .from('sos-recordings')
         .upload(`recordings/${fileName}`, blob, {
@@ -201,7 +201,35 @@ export class SOSMediaRecorder {
         });
 
       if (error) {
-        throw error;
+        console.error('❌ Erreur upload storage:', error);
+        // Fallback vers le bucket documents si sos-recordings échoue
+        const fallbackResult = await supabase.storage
+          .from('documents')
+          .upload(`sos-media/${sosId}/${fileName}`, blob, {
+            contentType: mimeType,
+            cacheControl: '3600',
+            upsert: true
+          });
+        
+        if (fallbackResult.error) {
+          throw fallbackResult.error;
+        }
+        console.log('✅ Upload réussi (fallback documents):', fallbackResult.data?.path);
+        
+        const { data: fallbackUrl } = supabase.storage
+          .from('documents')
+          .getPublicUrl(`sos-media/${sosId}/${fileName}`);
+        
+        // Mettre à jour sos_alerts avec l'URL
+        await supabase
+          .from('sos_alerts')
+          .update({
+            recording_url: fallbackUrl.publicUrl,
+            recording_stopped_at: new Date().toISOString()
+          })
+          .eq('id', sosId);
+        
+        return;
       }
 
       console.log('✅ Upload réussi:', data.path);
@@ -211,18 +239,37 @@ export class SOSMediaRecorder {
         .from('sos-recordings')
         .getPublicUrl(data.path);
 
-      // 4. Sauvegarder référence dans table SOS
+      // 4. Sauvegarder l'URL dans sos_alerts
       const { error: updateError } = await supabase
         .from('sos_alerts')
         .update({
-          description: 'Enregistrement disponible'
-        } as any)
+          recording_url: urlData.publicUrl,
+          recording_stopped_at: new Date().toISOString()
+        })
         .eq('id', sosId);
 
       if (updateError) {
         console.error('❌ Erreur mise à jour SOS avec URL:', updateError);
       } else {
-        console.log('✅ SOS mis à jour avec URL enregistrement');
+        console.log('✅ SOS mis à jour avec URL enregistrement:', urlData.publicUrl);
+      }
+
+      // 5. Enregistrer aussi dans sos_media pour l'historique
+      try {
+        await (supabase as any)
+          .from('sos_media')
+          .insert({
+            sos_alert_id: sosId,
+            media_type: config.video ? 'video' : 'audio',
+            file_path: data.path,
+            file_url: urlData.publicUrl,
+            file_size_bytes: blob.size,
+            duration_seconds: Math.round((Date.now() - (this.activeRecordings.get(sosId)?.startTime || Date.now())) / 1000),
+            created_at: new Date().toISOString()
+          });
+        console.log('✅ Entrée sos_media créée');
+      } catch (mediaError) {
+        console.warn('⚠️ Erreur création sos_media:', mediaError);
       }
 
     } catch (error) {

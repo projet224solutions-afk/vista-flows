@@ -189,6 +189,15 @@ class TaxiMotoSOSService {
       
       if (recordingStarted) {
         console.log('✅ Enregistrement automatique démarré');
+        
+        // Mettre à jour sos_alerts avec le timestamp de début d'enregistrement
+        await supabase
+          .from('sos_alerts')
+          .update({
+            recording_started_at: new Date().toISOString()
+          })
+          .eq('id', sosRecord.id);
+        
         toast.info('🎥 Enregistrement en cours', {
           description: 'Audio et vidéo enregistrés automatiquement'
         });
