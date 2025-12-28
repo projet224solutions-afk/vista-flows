@@ -126,9 +126,9 @@ export function useSyndicatUltraProData() {
           .select('*', { count: 'exact' })
           .eq('bureau_id', currentBureauId),
         
-        // Wallet du bureau
+        // Wallet du bureau (utiliser bureau_wallets au lieu de wallets)
         supabase
-          .from('wallets')
+          .from('bureau_wallets')
           .select('balance')
           .eq('bureau_id', currentBureauId)
           .single(),
