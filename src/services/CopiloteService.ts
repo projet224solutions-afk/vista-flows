@@ -134,23 +134,70 @@ class CopiloteService {
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke('pdg-ai-assistant', {
-        body: { action: 'chat', message }
+      const { data: session } = await supabase.auth.getSession();
+      const accessToken = session?.session?.access_token;
+      
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pdg-ai-assistant`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken || import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({ action: 'chat', message })
       });
 
-      if (error) {
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Erreur inconnue' }));
         this.recordFailure();
-        await this.logAudit('send_message', { message: message.substring(0, 50) }, false, error.message);
-        throw new Error(error.message || 'Erreur lors de l\'envoi du message');
+        await this.logAudit('send_message', { message: message.substring(0, 50) }, false, errorData.error);
+        throw new Error(errorData.error || 'Erreur lors de l\'envoi du message');
+      }
+
+      // Gérer la réponse streaming SSE
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Pas de réponse du serveur');
+
+      const decoder = new TextDecoder();
+      let fullContent = '';
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        
+        // Traiter ligne par ligne
+        let newlineIndex: number;
+        while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+          let line = buffer.slice(0, newlineIndex);
+          buffer = buffer.slice(newlineIndex + 1);
+          
+          if (line.endsWith('\r')) line = line.slice(0, -1);
+          if (line.startsWith(':') || line.trim() === '') continue;
+          if (!line.startsWith('data: ')) continue;
+          
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === '[DONE]') continue;
+          
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) fullContent += content;
+          } catch {
+            // JSON incomplet, ignorer
+          }
+        }
       }
 
       this.recordSuccess();
       await this.logAudit('send_message', { message: message.substring(0, 50) }, true);
 
       return {
-        reply: data.reply || data.message || 'Réponse reçue',
+        reply: fullContent || 'Réponse reçue',
         timestamp: new Date().toISOString(),
-        user_context: data.user_context || { name: 'PDG', role: 'admin', balance: 0, currency: 'GNF' }
+        user_context: { name: 'PDG', role: 'admin', balance: 0, currency: 'GNF' }
       };
     } catch (error) {
       this.recordFailure();
@@ -206,15 +253,29 @@ class CopiloteService {
 
   async getStatus(): Promise<{ status: string; version: string; uptime?: number }> {
     try {
-      const { data, error } = await supabase.functions.invoke('pdg-ai-assistant', {
-        body: { action: 'status' }
+      const { data: session } = await supabase.auth.getSession();
+      const accessToken = session?.session?.access_token;
+      
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pdg-ai-assistant`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken || import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({ action: 'status' })
       });
 
-      if (error) throw error;
-      return data || { status: 'online', version: '2.0' };
+      if (!response.ok) {
+        throw new Error('Service non disponible');
+      }
+
+      const data = await response.json();
+      return data || { status: 'online', version: '3.0' };
     } catch (error) {
       console.error('Erreur CopiloteService.getStatus:', error);
-      throw error;
+      // Retourner un statut par défaut en cas d'erreur pour ne pas bloquer l'UI
+      return { status: 'degraded', version: '3.0' };
     }
   }
 
