@@ -8906,6 +8906,111 @@ export type Database = {
         }
         Relationships: []
       }
+      sales: {
+        Row: {
+          created_at: string | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          discount_amount: number | null
+          id: string
+          metadata: Json | null
+          notes: string | null
+          offline_sync: boolean | null
+          payment_method: string | null
+          payment_status: string | null
+          product_id: string | null
+          product_name: string
+          quantity: number
+          status: string | null
+          tax_amount: number | null
+          total_amount: number
+          unit_price: number
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          discount_amount?: number | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          offline_sync?: boolean | null
+          payment_method?: string | null
+          payment_status?: string | null
+          product_id?: string | null
+          product_name: string
+          quantity?: number
+          status?: string | null
+          tax_amount?: number | null
+          total_amount: number
+          unit_price: number
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          discount_amount?: number | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          offline_sync?: boolean | null
+          payment_method?: string | null
+          payment_status?: string | null
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          status?: string | null
+          tax_amount?: number | null
+          total_amount?: number
+          unit_price?: number
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "sales_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "sales_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       secure_logs: {
         Row: {
           category: string
@@ -13190,6 +13295,86 @@ export type Database = {
           },
           {
             foreignKeyName: "vendor_ratings_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          offline_sync: boolean | null
+          payment_method: string | null
+          reference: string | null
+          related_sale_id: string | null
+          status: string | null
+          type: string
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          offline_sync?: boolean | null
+          payment_method?: string | null
+          reference?: string | null
+          related_sale_id?: string | null
+          status?: string | null
+          type: string
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          offline_sync?: boolean | null
+          payment_method?: string | null
+          reference?: string | null
+          related_sale_id?: string | null
+          status?: string | null
+          type?: string
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_transactions_related_sale_id_fkey"
+            columns: ["related_sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_transactions_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_transactions_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_transactions_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "vendors"
