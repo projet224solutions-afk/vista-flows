@@ -123,12 +123,17 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
       console.log(`🤖 Calling ${functionName} for ${userRole}...`);
 
       // Appel à l'edge function avec streaming
+      const supabaseUrl = (supabase as any).supabaseUrl as string | undefined;
+      const supabaseKey = (supabase as any).supabaseKey as string | undefined;
+      const functionsBaseUrl = supabaseUrl ? `${supabaseUrl}/functions/v1` : '';
+
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${functionName}`,
+        `${functionsBaseUrl}/${functionName}`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            ...(supabaseKey ? { apikey: supabaseKey } : {}),
             'Authorization': `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
