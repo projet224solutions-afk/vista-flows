@@ -222,10 +222,10 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
   };
 
   /**
-   * Créer un sous-agent
+   * Créer un sous-agent via edge function
    */
   const createSubAgent = async (
-    subAgentData: CreateSubAgentData,
+    subAgentData: CreateSubAgentData & { pdgId?: string; accessToken?: string; agentType?: string },
     parentAgentId: string
   ): Promise<{ success: boolean; error?: string; subAgent?: any }> => {
     try {
@@ -238,57 +238,65 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
         return { success: false, error: 'Le taux de commission doit être entre 0 et 100%' };
       }
 
-      // Créer le compte utilisateur pour le sous-agent
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Vérifier la session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        console.error('❌ [useAgentActions] Pas de session pour createSubAgent');
+        return { 
+          success: false, 
+          error: '🔒 Session expirée. Veuillez vous reconnecter.' 
+        };
+      }
+
+      // Générer un code agent unique
+      const agentCode = `SA-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      
+      // Générer un mot de passe temporaire sécurisé
+      const tempPassword = Math.random().toString(36).slice(-8) + 'Aa1!' + Math.random().toString(36).slice(-4);
+
+      console.log('📤 [useAgentActions] Appel edge function create-sub-agent:', {
+        parentAgentId,
         email: subAgentData.email,
-        password: Math.random().toString(36).slice(-8) + 'Aa1!', // Mot de passe temporaire
-        options: {
-          data: {
-            firstName: subAgentData.name,
-            phone: subAgentData.phone,
-            role: 'agent'
-          }
-        }
+        name: subAgentData.name
       });
 
-      if (authError) {
-        console.error('[useAgentActions] Auth signup error:', authError);
-        return { success: false, error: authError.message };
-      }
-
-      if (!authData.user) {
-        return { success: false, error: 'Erreur lors de la création du compte' };
-      }
-
-      // Créer l'enregistrement agent avec les champs obligatoires
-      const { data: agent, error: agentError } = await supabase
-        .from('agents_management')
-        .insert({
-          user_id: authData.user.id,
-          agent_code: `AGT-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`,
-          pdg_id: parentAgentId, // ID du PDG ou de l'agent parent
+      // Appeler l'edge function pour créer le sous-agent
+      const { data, error } = await supabase.functions.invoke('create-sub-agent', {
+        body: {
+          pdg_id: subAgentData.pdgId || parentAgentId,
+          parent_agent_id: parentAgentId,
+          agent_code: agentCode,
           name: subAgentData.name,
           email: subAgentData.email,
           phone: subAgentData.phone,
-          parent_agent_id: parentAgentId,
-          commission_rate: subAgentData.commission_rate,
-          can_create_sub_agent: subAgentData.can_create_sub_agent,
-          permissions: subAgentData.permissions,
-          is_active: true
-        })
-        .select()
-        .single();
+          agent_type: subAgentData.agentType || 'sales',
+          password: tempPassword,
+          permissions: subAgentData.permissions || ['create_users'],
+          commission_rate: subAgentData.commission_rate || 5,
+          access_token: subAgentData.accessToken
+        }
+      });
 
-      if (agentError) {
-        console.error('[useAgentActions] Agent creation error:', agentError);
-        // Supprimer le compte auth créé
-        await supabase.auth.admin.deleteUser(authData.user.id);
-        return { success: false, error: agentError.message };
+      if (error) {
+        console.error('[useAgentActions] Edge function create-sub-agent error:', error);
+        return { 
+          success: false, 
+          error: error.message || 'Erreur lors de la création du sous-agent' 
+        };
+      }
+
+      if (!data?.success) {
+        console.error('[useAgentActions] Create sub-agent failed:', data);
+        return { 
+          success: false, 
+          error: data?.error || 'Erreur lors de la création du sous-agent' 
+        };
       }
 
       toast.success(`Sous-agent ${subAgentData.name} créé avec succès!`);
       options.onSubAgentCreated?.();
-      return { success: true, subAgent: agent };
+      return { success: true, subAgent: data.agent };
     } catch (error: any) {
       console.error('[useAgentActions] Create sub-agent error:', error);
       return { success: false, error: error.message || 'Erreur lors de la création du sous-agent' };

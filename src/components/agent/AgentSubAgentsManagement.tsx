@@ -41,6 +41,7 @@ export interface AgentProfile {
   is_active: boolean;
   can_create_sub_agent: boolean;
   commission_rate: number;
+  access_token?: string;
 }
 
 export interface SubAgentStats {
@@ -244,7 +245,17 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
     }
 
     try {
-      const agentCode = `SAG-${Date.now().toString(36).toUpperCase()}`;
+      const agentCode = `SAG-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+      
+      // Générer un mot de passe temporaire sécurisé
+      const tempPassword = `Temp${Math.random().toString(36).slice(-6)}!${Math.random().toString(36).slice(-4).toUpperCase()}`;
+
+      console.log('📤 Création sous-agent via edge function:', {
+        parentAgentId: agentProfile.id,
+        pdgId: agentProfile.pdg_id,
+        email: subAgentData.email,
+        agentCode
+      });
 
       const { data, error } = await supabase.functions.invoke('create-sub-agent', {
         body: {
@@ -254,23 +265,36 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
           name: subAgentData.name.trim(),
           email: subAgentData.email.trim().toLowerCase(),
           phone: subAgentData.phone.trim(),
+          agent_type: 'sales', // Type par défaut
+          password: tempPassword, // Mot de passe requis par l'edge function
           permissions: subAgentData.permissions,
           commission_rate: subAgentData.commission_rate || 5,
+          access_token: agentProfile.access_token // Pour l'auth via token
         }
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error) {
+        console.error('❌ Edge function error:', error);
+        throw error;
+      }
+      
+      if (data?.error) {
+        console.error('❌ Response error:', data.error);
+        throw new Error(data.error);
+      }
 
-      toast.success('Sous-agent créé avec succès');
-      // Recharger la liste
-      const loadEvent = new Event('load');
-      window.dispatchEvent(loadEvent);
-      window.location.reload();
+      console.log('✅ Sous-agent créé:', data?.agent);
+      toast.success(`Sous-agent ${subAgentData.name} créé avec succès!`);
+      
+      // Recharger la liste après un délai
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
       return data?.agent;
     } catch (error: any) {
       console.error('Erreur création sous-agent:', error);
-      toast.error(error.message || 'Erreur lors de la création');
+      toast.error(error.message || 'Erreur lors de la création du sous-agent');
       return null;
     }
   };
