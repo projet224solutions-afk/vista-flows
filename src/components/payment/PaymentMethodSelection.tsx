@@ -98,9 +98,9 @@ export function PaymentMethodSelection({
     processing;
 
   return (
-    <div className="flex flex-col h-[70vh] max-h-[70vh] min-h-0">
+    <div className="flex flex-col h-full min-h-0">
       {/* Header fixe */}
-      <div className="space-y-3 pb-3">
+      <div className="space-y-3 pb-3 flex-shrink-0">
         {/* Message Escrow */}
         {isEscrow && (
           <div className="flex items-start gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
@@ -118,7 +118,7 @@ export function PaymentMethodSelection({
         </div>
 
         {/* Solde et ID Vendeur */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="flex flex-col gap-2">
           <div className="text-sm">
             Solde disponible: <span className="font-bold text-foreground">{walletBalance.toLocaleString('fr-GN')} GNF</span>
           </div>
@@ -133,8 +133,8 @@ export function PaymentMethodSelection({
       </div>
 
       {/* Zone scrollable pour les méthodes de paiement */}
-      <ScrollArea className="flex-1 min-h-0 pr-2">
-          <div className="pb-40">
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="pb-4 pr-2">
           <RadioGroup
             value={selectedMethod || ''}
             onValueChange={(value) => setSelectedMethod(value as PaymentMethodType)}
@@ -156,15 +156,15 @@ export function PaymentMethodSelection({
                     value={method.id} 
                     id={method.id}
                     disabled={!method.available && method.id === 'wallet'}
-                    className="border-2"
+                    className="border-2 flex-shrink-0"
                   />
                   
-                  <div className={cn("flex items-center justify-center w-10 h-10 rounded-lg", method.iconBg)}>
+                  <div className={cn("flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0", method.iconBg)}>
                     {method.icon}
                   </div>
                   
-                  <div className="flex-1 min-w-0">
-                    <span className="font-medium block text-sm">{method.name}</span>
+                  <div className="flex-1 min-w-0 overflow-hidden">
+                    <span className="font-medium block text-sm truncate">{method.name}</span>
                     <span className="text-xs text-muted-foreground truncate block">{method.description}</span>
                     {method.id === 'wallet' && !isWalletSufficient && (
                       <span className="text-xs text-destructive block">Solde insuffisant</span>
@@ -208,12 +208,11 @@ export function PaymentMethodSelection({
       </ScrollArea>
 
       {/* Boutons d'action fixes en bas */}
-      <div className="sticky bottom-0 bg-background/95 supports-[backdrop-filter]:bg-background/80 backdrop-blur border-t pt-4 mt-2 pb-4">
-        <div className="flex gap-2 w-full">
+      <div className="flex-shrink-0 bg-background border-t pt-4 mt-2">
+        <div className="grid grid-cols-2 gap-3">
           <Button 
             variant="outline" 
             onClick={onCancel}
-            className="flex-1 min-w-0"
             disabled={processing}
           >
             Annuler
@@ -221,7 +220,6 @@ export function PaymentMethodSelection({
           <Button 
             onClick={handleConfirm}
             disabled={isConfirmDisabled}
-            className="flex-1 min-w-0 whitespace-nowrap"
           >
             {processing ? 'Traitement...' : 'Payer'}
           </Button>
