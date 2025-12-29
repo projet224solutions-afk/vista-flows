@@ -208,18 +208,20 @@ export function PaymentMethodSelection({
       </ScrollArea>
 
       {/* Boutons d'action fixes en bas */}
-      <div className="flex-shrink-0 bg-background border-t pt-4 mt-2">
-        <div className="grid grid-cols-2 gap-3">
+      <div className="flex-shrink-0 bg-background border-t pt-4 mt-2 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]">
+        <div className="grid grid-cols-2 gap-3 w-full">
           <Button 
             variant="outline" 
             onClick={onCancel}
             disabled={processing}
+            className="min-w-0"
           >
             Annuler
           </Button>
           <Button 
             onClick={handleConfirm}
             disabled={isConfirmDisabled}
+            className="min-w-0"
           >
             {processing ? 'Traitement...' : 'Payer'}
           </Button>
