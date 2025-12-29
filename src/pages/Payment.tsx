@@ -829,7 +829,7 @@ export default function Payment() {
                       Payer
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-md w-[calc(100%-2rem)] mx-auto max-h-[85vh] overflow-y-auto p-4 sm:p-6">
+                  <DialogContent className="max-w-md w-[calc(100vw-2.5rem)] max-h-[85vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6">
                     {paymentStep === 'form' ? (
                       <>
                         <DialogHeader>
