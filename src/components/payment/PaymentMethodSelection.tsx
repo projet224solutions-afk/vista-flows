@@ -208,12 +208,12 @@ export function PaymentMethodSelection({
       </ScrollArea>
 
       {/* Boutons d'action fixes en bas */}
-      <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+5rem)] sm:bottom-0 bg-background/95 supports-[backdrop-filter]:bg-background/80 backdrop-blur border-t pt-4 mt-2 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-        <div className="flex gap-3">
+      <div className="sticky bottom-0 bg-background/95 supports-[backdrop-filter]:bg-background/80 backdrop-blur border-t pt-4 mt-2 pb-4">
+        <div className="flex gap-2 w-full">
           <Button 
             variant="outline" 
             onClick={onCancel}
-            className="flex-1"
+            className="flex-1 min-w-0"
             disabled={processing}
           >
             Annuler
@@ -221,9 +221,9 @@ export function PaymentMethodSelection({
           <Button 
             onClick={handleConfirm}
             disabled={isConfirmDisabled}
-            className="flex-1"
+            className="flex-1 min-w-0 whitespace-nowrap"
           >
-            {processing ? 'Traitement...' : 'Payer maintenant'}
+            {processing ? 'Traitement...' : 'Payer'}
           </Button>
         </div>
       </div>
