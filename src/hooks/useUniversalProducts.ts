@@ -99,8 +99,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
       const from = (currentPage - 1) * pageLimit;
       const to = from + pageLimit - 1;
 
-      // Requête optimisée - une seule requête
-      // Par défaut, exclure les produits des vendeurs "physical" (boutique physique uniquement)
+      // Requête simple sans filtre complexe sur les relations
       let query = supabase
         .from('products')
         .select(`
@@ -118,7 +117,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
           free_shipping,
           created_at,
           is_active,
-          vendors!inner(
+          vendors(
             business_name,
             user_id,
             country,
@@ -130,11 +129,6 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
           )
         `, { count: 'exact' })
         .eq('is_active', true);
-
-      if (!filters.includePhysicalVendors) {
-        // Utiliser not.eq pour filtrer correctement sur les relations jointes
-        query = query.not('vendors.business_type', 'eq', 'physical');
-      }
 
       // Filtres - utiliser les valeurs du filters object
       if (filters.vendorId) {
@@ -208,8 +202,17 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
 
       if (error) throw error;
 
+      // Filtrer côté client les vendeurs "physical" si nécessaire
+      let filteredData = data || [];
+      if (!filters.includePhysicalVendors) {
+        filteredData = filteredData.filter(product => {
+          const vendor = product.vendors as any;
+          return vendor && vendor.business_type !== 'physical';
+        });
+      }
+
       // Transformation directe sans requête supplémentaire
-      const formattedProducts: UniversalProduct[] = (data || []).map(product => {
+      const formattedProducts: UniversalProduct[] = filteredData.map(product => {
         const vendor = product.vendors as any;
         const category = product.categories as any;
         const isNew = new Date(product.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
