@@ -199,11 +199,12 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     console.info('[WalletTx] loadTransactions v3', { effectiveUserId });
 
     try {
-      // Charger depuis enhanced_transactions
+      // Charger depuis enhanced_transactions (exclure les archivées)
       const { data: enhancedData, error: enhancedError } = await supabase
         .from('enhanced_transactions')
         .select('*')
         .or(`sender_id.eq.${effectiveUserId},receiver_id.eq.${effectiveUserId}`)
+        .neq('is_archived', true)
         .order('created_at', { ascending: false })
         .limit(10);
 
@@ -225,6 +226,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           .from('wallet_transactions')
           .select('*')
           .or(`sender_wallet_id.eq.${userWalletId},receiver_wallet_id.eq.${userWalletId}`)
+          .neq('is_archived', true)
           .order('created_at', { ascending: false })
           .limit(10);
 

@@ -131,10 +131,11 @@ export function usePDGStats() {
           .gte('created_at', firstDayOfLastMonth.toISOString())
           .lte('created_at', lastDayOfLastMonth.toISOString()),
         
-        // Transactions pour revenue
+        // Transactions pour revenue (exclure archivées)
         supabase.from('enhanced_transactions')
           .select('amount, created_at, status')
-          .eq('status', 'completed'),
+          .eq('status', 'completed')
+          .neq('is_archived', true),
         
         // Produits
         supabase.from('products').select('id, is_active', { count: 'exact' }),
