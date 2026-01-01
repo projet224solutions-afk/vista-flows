@@ -34,10 +34,10 @@ serve(async (req) => {
       throw new Error('Facture introuvable');
     }
 
-    // Récupérer les infos vendeur
+    // Récupérer les infos vendeur complètes
     const { data: vendor } = await supabase
       .from('vendors')
-      .select('business_name, logo_url')
+      .select('business_name, logo_url, address, phone, email')
       .eq('id', vendor_id)
       .single();
 
@@ -53,17 +53,35 @@ serve(async (req) => {
     const grayColor = '#666666';
     let yPos = 20;
 
-    // En-tête
-    doc.setFontSize(12);
+    // En-tête avec nom de l'entreprise
+    const businessName = vendor?.business_name || 'Mon Entreprise';
+    doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(textColor);
-    doc.text(vendor?.business_name || 'Vendeur', 20, yPos);
+    doc.setTextColor(37, 99, 235);
+    doc.text(businessName, 20, yPos);
     
+    // Informations de contact du vendeur
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(grayColor);
-    doc.text('Powered by 224Solutions', 150, yPos);
-    yPos += 15;
+    yPos += 6;
+    if (vendor?.address) {
+      doc.text(vendor.address, 20, yPos);
+      yPos += 4;
+    }
+    if (vendor?.phone) {
+      doc.text(`Tél: ${vendor.phone}`, 20, yPos);
+      yPos += 4;
+    }
+    if (vendor?.email) {
+      doc.text(vendor.email, 20, yPos);
+      yPos += 4;
+    }
+    
+    // Logo 224Solutions à droite
+    doc.setFontSize(8);
+    doc.text('Powered by 224Solutions', 150, 20);
+    yPos = Math.max(yPos, 35);
 
     // Ligne de séparation
     doc.setDrawColor(37, 99, 235);
