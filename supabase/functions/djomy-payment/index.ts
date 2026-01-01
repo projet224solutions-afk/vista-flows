@@ -102,13 +102,14 @@ serve(async (req) => {
     // - Prod: JOMY_CLIENT_ID_PROD / JOMY_CLIENT_SECRET_PROD (optionnel)
     // - Sandbox: JOMY_CLIENT_ID_SANDBOX / JOMY_CLIENT_SECRET_SANDBOX (optionnel)
     // - Fallback: JOMY_CLIENT_ID / JOMY_CLIENT_SECRET
+    // - Hardcoded fallback temporaire (si secrets Supabase non configurés)
     const clientId = useSandbox
-      ? (Deno.env.get("JOMY_CLIENT_ID_SANDBOX") ?? Deno.env.get("JOMY_CLIENT_ID"))
-      : (Deno.env.get("JOMY_CLIENT_ID_PROD") ?? Deno.env.get("JOMY_CLIENT_ID"));
+      ? (Deno.env.get("JOMY_CLIENT_ID_SANDBOX") ?? Deno.env.get("JOMY_CLIENT_ID") ?? "djomy-client-1767199801211-9c7c")
+      : (Deno.env.get("JOMY_CLIENT_ID_PROD") ?? Deno.env.get("JOMY_CLIENT_ID") ?? "djomy-client-1767199801211-9c7c");
 
     const clientSecret = useSandbox
-      ? (Deno.env.get("JOMY_CLIENT_SECRET_SANDBOX") ?? Deno.env.get("JOMY_CLIENT_SECRET"))
-      : (Deno.env.get("JOMY_CLIENT_SECRET_PROD") ?? Deno.env.get("JOMY_CLIENT_SECRET"));
+      ? (Deno.env.get("JOMY_CLIENT_SECRET_SANDBOX") ?? Deno.env.get("JOMY_CLIENT_SECRET") ?? "s3cr3t-xjnbXkJwWnET5liR4ty6rSAWnAr6PiGt")
+      : (Deno.env.get("JOMY_CLIENT_SECRET_PROD") ?? Deno.env.get("JOMY_CLIENT_SECRET") ?? "s3cr3t-xjnbXkJwWnET5liR4ty6rSAWnAr6PiGt");
 
     if (!clientId || !clientSecret) {
       throw new Error("Djomy credentials not configured");
