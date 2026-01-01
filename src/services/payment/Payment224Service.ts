@@ -174,10 +174,7 @@ export class Payment224Service {
           cancelUrl: `${origin}/payment/failed`,
           countryCode: 'GN',
           useGateway: false,
-          useSandbox:
-            window.location.hostname.endsWith('.lovable.app') ||
-            window.location.hostname.includes('lovableproject.com') ||
-            window.location.hostname === 'localhost',
+          useSandbox: false, // ⚠️ Production mode: paiements réels
         },
       });
 

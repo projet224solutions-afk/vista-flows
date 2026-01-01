@@ -39,15 +39,10 @@ export interface DjomyPaymentStatus {
   error?: string;
 }
 
+// ⚠️ Production mode: paiements réels activés
 const shouldUseSandboxByDefault = (): boolean => {
-  if (typeof window === 'undefined') return false;
-  const host = window.location.hostname;
-  return (
-    host === 'localhost' ||
-    host === '127.0.0.1' ||
-    host.endsWith('.lovable.app') ||
-    host.includes('lovableproject.com')
-  );
+  // Toujours utiliser la production - les identifiants sont configurés pour prod
+  return false;
 };
 
 export function useDjomyPayment() {
