@@ -115,7 +115,7 @@ export function SubscriptionRenewalPage() {
         body: {
           subscription_id: subscription.id,
           payment_method: paymentMethod,
-          amount_gnf: subscription.plans.price_gnf,
+          // 🔐 SÉCURITÉ: amount_gnf est calculé côté backend, pas envoyé du frontend
         }
       });
 
