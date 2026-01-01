@@ -20,17 +20,16 @@ export const useHomeProducts = (limit: number = 4) => {
       try {
         setLoading(true);
 
-        // Filtrer les produits - exclure uniquement les vendeurs "physical" (boutique physique uniquement)
+        // Requête simple sans filtre complexe
         const { data, error } = await supabase
           .from('products')
           .select(`
             id, name, price, images, category_id, rating, reviews_count,
-            vendors!inner(business_type)
+            vendors(business_type, business_name)
           `)
           .eq('is_active', true)
-          .not('vendors.business_type', 'eq', 'physical')
           .order('created_at', { ascending: false })
-          .limit(limit);
+          .limit(limit * 2);
 
         if (error) {
           console.warn('Erreur produits:', error.message);
@@ -38,7 +37,15 @@ export const useHomeProducts = (limit: number = 4) => {
           return;
         }
 
-        setProducts(data || []);
+        // Filtrer côté client pour exclure les vendeurs "physical"
+        const filteredProducts = (data || [])
+          .filter(product => {
+            const vendor = product.vendors as any;
+            return vendor && vendor.business_type !== 'physical';
+          })
+          .slice(0, limit);
+
+        setProducts(filteredProducts);
       } catch (error) {
         console.error('Erreur lors du chargement des produits:', error);
         setProducts([]);
