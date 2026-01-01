@@ -260,14 +260,24 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
-    
+    const errorMessageRaw = error instanceof Error ? error.message : String(error);
+
+    // Rendre le message lisible côté UI (Supabase invoke masque souvent les erreurs non-2xx)
+    let errorMessage = errorMessageRaw;
+    if (errorMessageRaw.includes('Authentication failed: 403')) {
+      errorMessage = "Authentification Djomy refusée (403). Vérifiez vos identifiants (clientId/clientSecret) et l'environnement (sandbox vs production).";
+    } else if (errorMessageRaw.includes('Authentication failed: 401')) {
+      errorMessage = "Authentification Djomy refusée (401). Vérifiez vos identifiants (clientId/clientSecret).";
+    }
+
+    logStep("ERROR", { message: errorMessageRaw });
+
+    // IMPORTANT: on renvoie 200 pour que le frontend reçoive le JSON d'erreur (au lieu d'un 'non-2xx status code')
     return new Response(
       JSON.stringify({ success: false, error: errorMessage }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
+        status: 200,
       }
     );
   }
