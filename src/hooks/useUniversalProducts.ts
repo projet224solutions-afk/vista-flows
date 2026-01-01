@@ -71,7 +71,6 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const isLoadingRef = useRef(false);
-  const hasMountedRef = useRef(false);
 
   const loadProducts = useCallback(async (reset = false) => {
     // Éviter les appels multiples simultanés
@@ -250,20 +249,20 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
 
   // Charger automatiquement au montage et quand les options changent
   useEffect(() => {
-    if (autoLoad && !hasMountedRef.current) {
-      hasMountedRef.current = true;
-      loadProducts(true);
-    } else if (autoLoad && hasMountedRef.current) {
-      // Recharger uniquement si les filtres changent après le montage
-      loadProducts(true);
-    }
+    if (!autoLoad) return;
+    
+    // Reset page et charger les produits quand les filtres changent
+    setPage(1);
+    loadProducts(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category, searchQuery, minPrice, maxPrice, minRating, vendorId, country, city, includePhysicalVendors, sortBy, autoLoad]);
 
-  // Charger plus quand la page change
+  // Charger plus quand la page change (pagination)
   useEffect(() => {
-    if (page > 1) {
+    if (page > 1 && autoLoad) {
       loadProducts(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
   return {
