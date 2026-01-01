@@ -118,10 +118,11 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
     logStep("ERROR", { message: errorMessage });
-    
+
+    // IMPORTANT: renvoyer 200 pour que le frontend lise le JSON d'erreur
     return new Response(
       JSON.stringify({ success: false, error: errorMessage }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

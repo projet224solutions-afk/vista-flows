@@ -46,6 +46,7 @@ async function getAccessToken(clientId: string, clientSecret: string, useSandbox
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Accept": "application/json",
       "X-API-KEY": xApiKey,
     },
     body: JSON.stringify({}),
@@ -70,33 +71,6 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const clientId = Deno.env.get("JOMY_CLIENT_ID");
-    const clientSecret = Deno.env.get("JOMY_CLIENT_SECRET");
-    
-    if (!clientId || !clientSecret) {
-      throw new Error("Djomy credentials not configured");
-    }
-    logStep("Credentials verified");
-
-    // Initialize Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
-
-    // Verify user authentication
-    const authHeader = req.headers.get("Authorization");
-    let userId: string | null = null;
-    
-    if (authHeader) {
-      const token = authHeader.replace("Bearer ", "");
-      const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-      if (!userError && userData.user) {
-        userId = userData.user.id;
-        logStep("User authenticated", { userId });
-      }
-    }
-
     const body = await req.json();
     const {
       amount,
@@ -111,13 +85,53 @@ serve(async (req) => {
       useSandbox = false,
     } = body;
 
-    logStep("Payment request received", { 
-      amount, 
-      paymentMethod, 
-      orderId, 
-      useGateway,
-      useSandbox 
+    // Choix des identifiants selon l'environnement
+    // - Prod: JOMY_CLIENT_ID_PROD / JOMY_CLIENT_SECRET_PROD (optionnel)
+    // - Sandbox: JOMY_CLIENT_ID_SANDBOX / JOMY_CLIENT_SECRET_SANDBOX (optionnel)
+    // - Fallback: JOMY_CLIENT_ID / JOMY_CLIENT_SECRET
+    const clientId = useSandbox
+      ? (Deno.env.get("JOMY_CLIENT_ID_SANDBOX") ?? Deno.env.get("JOMY_CLIENT_ID"))
+      : (Deno.env.get("JOMY_CLIENT_ID_PROD") ?? Deno.env.get("JOMY_CLIENT_ID"));
+
+    const clientSecret = useSandbox
+      ? (Deno.env.get("JOMY_CLIENT_SECRET_SANDBOX") ?? Deno.env.get("JOMY_CLIENT_SECRET"))
+      : (Deno.env.get("JOMY_CLIENT_SECRET_PROD") ?? Deno.env.get("JOMY_CLIENT_SECRET"));
+
+    if (!clientId || !clientSecret) {
+      throw new Error("Djomy credentials not configured");
+    }
+
+    logStep("Credentials verified", {
+      env: useSandbox ? "sandbox" : "production",
+      clientIdPrefix: clientId.substring(0, 8) + "...",
     });
+
+    logStep("Payment request received", {
+      amount,
+      paymentMethod,
+      orderId,
+      useGateway,
+      useSandbox,
+    });
+
+    // Initialize Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    );
+
+    // Verify user authentication (optionnel, on garde userId null si non connecté)
+    const authHeader = req.headers.get("Authorization");
+    let userId: string | null = null;
+
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+      if (!userError && userData.user) {
+        userId = userData.user.id;
+        logStep("User authenticated", { userId });
+      }
+    }
 
     // Validate required fields
     if (!amount || amount <= 0) {
