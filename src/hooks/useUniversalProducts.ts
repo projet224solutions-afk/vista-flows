@@ -71,10 +71,21 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const isLoadingRef = useRef(false);
+  const currentSortRef = useRef(sortBy);
+  const filtersRef = useRef({ category, searchQuery, minPrice, maxPrice, minRating, vendorId, country, city, includePhysicalVendors, sortBy });
 
-  const loadProducts = useCallback(async (reset = false) => {
+  // Mettre à jour les refs quand les filtres changent
+  useEffect(() => {
+    currentSortRef.current = sortBy;
+    filtersRef.current = { category, searchQuery, minPrice, maxPrice, minRating, vendorId, country, city, includePhysicalVendors, sortBy };
+  }, [category, searchQuery, minPrice, maxPrice, minRating, vendorId, country, city, includePhysicalVendors, sortBy]);
+
+  const loadProducts = useCallback(async (reset = false, currentFilters?: typeof filtersRef.current) => {
     // Éviter les appels multiples simultanés
     if (isLoadingRef.current) return;
+    
+    // Utiliser les filtres passés ou les filtres actuels
+    const filters = currentFilters || filtersRef.current;
     isLoadingRef.current = true;
     
     try {
@@ -116,54 +127,54 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
         `, { count: 'exact' })
         .eq('is_active', true);
 
-      if (!includePhysicalVendors) {
+      if (!filters.includePhysicalVendors) {
         query = query.neq('vendors.business_type', 'physical');
       }
 
-      // Filtres
-      if (vendorId) {
-        query = query.eq('vendor_id', vendorId);
+      // Filtres - utiliser les valeurs du filters object
+      if (filters.vendorId) {
+        query = query.eq('vendor_id', filters.vendorId);
       }
 
-      if (category && category !== 'all') {
+      if (filters.category && filters.category !== 'all') {
         // Vérifier si c'est un UUID valide ou un nom de catégorie
-        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category);
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(filters.category);
         if (isUUID) {
-          query = query.eq('category_id', category);
+          query = query.eq('category_id', filters.category);
         } else {
           // Filtrer par nom de catégorie (ilike pour être insensible à la casse)
-          query = query.ilike('categories.name', `%${category}%`);
+          query = query.ilike('categories.name', `%${filters.category}%`);
         }
       }
 
-      if (searchQuery && searchQuery.trim()) {
-        query = query.ilike('name', `%${searchQuery}%`);
+      if (filters.searchQuery && filters.searchQuery.trim()) {
+        query = query.ilike('name', `%${filters.searchQuery}%`);
       }
 
-      if (minPrice && minPrice > 0) {
-        query = query.gte('price', minPrice);
+      if (filters.minPrice && filters.minPrice > 0) {
+        query = query.gte('price', filters.minPrice);
       }
 
-      if (maxPrice && maxPrice > 0) {
-        query = query.lte('price', maxPrice);
+      if (filters.maxPrice && filters.maxPrice > 0) {
+        query = query.lte('price', filters.maxPrice);
       }
 
-      if (minRating && minRating > 0) {
-        query = query.gte('rating', minRating);
+      if (filters.minRating && filters.minRating > 0) {
+        query = query.gte('rating', filters.minRating);
       }
 
       // Filtre par pays
-      if (country && country !== 'all') {
-        query = query.eq('vendors.country', country);
+      if (filters.country && filters.country !== 'all') {
+        query = query.eq('vendors.country', filters.country);
       }
 
       // Filtre par ville
-      if (city && city !== 'all') {
-        query = query.eq('vendors.city', city);
+      if (filters.city && filters.city !== 'all') {
+        query = query.eq('vendors.city', filters.city);
       }
 
-      // Tri
-      switch (sortBy) {
+      // Tri - utiliser filters.sortBy
+      switch (filters.sortBy) {
         case 'price_asc':
           query = query.order('price', { ascending: true });
           break;
@@ -235,7 +246,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
       setLoading(false);
       isLoadingRef.current = false;
     }
-  }, [page, limit, category, searchQuery, minPrice, maxPrice, minRating, vendorId, country, city, includePhysicalVendors, sortBy]);
+  }, [page, limit]);
 
   const loadMore = useCallback(() => {
     if (!loading && hasMore) {
@@ -244,23 +255,27 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
   }, [loading, hasMore]);
 
   const refresh = useCallback(() => {
-    loadProducts(true);
+    loadProducts(true, filtersRef.current);
   }, [loadProducts]);
 
   // Charger automatiquement au montage et quand les options changent
   useEffect(() => {
     if (!autoLoad) return;
     
-    // Reset page et charger les produits quand les filtres changent
+    // Créer une copie des filtres actuels pour cette exécution
+    const currentFilters = { category, searchQuery, minPrice, maxPrice, minRating, vendorId, country, city, includePhysicalVendors, sortBy };
+    
+    // Reset page et charger les produits avec les nouveaux filtres
     setPage(1);
-    loadProducts(true);
+    isLoadingRef.current = false; // Reset le lock pour permettre le rechargement
+    loadProducts(true, currentFilters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category, searchQuery, minPrice, maxPrice, minRating, vendorId, country, city, includePhysicalVendors, sortBy, autoLoad]);
 
   // Charger plus quand la page change (pagination)
   useEffect(() => {
     if (page > 1 && autoLoad) {
-      loadProducts(false);
+      loadProducts(false, filtersRef.current);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
