@@ -1,9 +1,10 @@
 /**
  * MODAL PAIEMENT LIVRAISONS
  * Support: Wallet, Card (Stripe), Mobile Money (Orange, MTN, Moov), PayPal, Cash
+ * Pattern sécurisé INP < 200ms
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, startTransition, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +12,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DeliveryPaymentService } from "@/services/delivery/DeliveryPaymentService";
+import { SecureButton } from "@/components/ui/SecureButton";
 
 export type DeliveryPaymentMethod = 'wallet' | 'cash' | 'mobile_money' | 'card' | 'paypal';
 
@@ -112,103 +113,90 @@ export default function DeliveryPaymentModal({
     }
   ];
 
-  const handlePayment = async () => {
-    setProcessing(true);
+  // Action de paiement sécurisée - séparée du handler UI
+  const executePayment = useCallback(async () => {
+    console.log('[DeliveryPayment] Starting payment:', {
+      deliveryId,
+      customerId,
+      deliveryManId,
+      amount,
+      paymentMethod
+    });
 
-    try {
-      console.log('[DeliveryPayment] Starting payment:', {
-        deliveryId,
-        customerId,
-        deliveryManId,
-        amount,
-        paymentMethod
-      });
-
-      // Vérifier le solde pour wallet
-      if (paymentMethod === 'wallet') {
-        if (walletBalance !== null && walletBalance < amount) {
-          toast.error('Solde insuffisant', {
-            description: 'Veuillez recharger votre wallet'
-          });
-          setProcessing(false);
-          return;
-        }
-      }
-
-      // Validation des champs requis
-      if (paymentMethod === 'mobile_money' && (!phoneNumber || phoneNumber.length < 8)) {
-        toast.error('Numéro de téléphone requis', {
-          description: 'Veuillez entrer votre numéro Mobile Money'
+    // Vérifier le solde pour wallet
+    if (paymentMethod === 'wallet') {
+      if (walletBalance !== null && walletBalance < amount) {
+        toast.error('Solde insuffisant', {
+          description: 'Veuillez recharger votre wallet'
         });
-        setProcessing(false);
-        return;
+        throw new Error('Solde insuffisant');
       }
-
-      if (paymentMethod === 'paypal' && (!paypalEmail || !paypalEmail.includes('@'))) {
-        toast.error('Email PayPal requis', {
-          description: 'Veuillez entrer un email PayPal valide'
-        });
-        setProcessing(false);
-        return;
-      }
-
-      if (paymentMethod === 'card' && (!cardToken || cardToken.length < 10)) {
-        toast.error('Informations carte requises', {
-          description: 'Veuillez entrer les informations de votre carte'
-        });
-        setProcessing(false);
-        return;
-      }
-
-      let result;
-
-      // Appeler le service de paiement approprié
-      switch (paymentMethod) {
-        case 'wallet':
-          result = await DeliveryPaymentService.payWithWallet(deliveryId, amount, customerId);
-          break;
-        case 'mobile_money':
-          result = await DeliveryPaymentService.payWithMobileMoney(
-            deliveryId,
-            amount,
-            customerId,
-            phoneNumber,
-            mobileProvider
-          );
-          break;
-        case 'card':
-          result = await DeliveryPaymentService.payWithCard(deliveryId, amount, customerId, cardToken);
-          break;
-        case 'paypal':
-          result = await DeliveryPaymentService.payWithPayPal(deliveryId, amount, customerId, paypalEmail);
-          break;
-        case 'cash':
-          result = await DeliveryPaymentService.payWithCash(deliveryId, amount, customerId);
-          break;
-        default:
-          throw new Error('Méthode de paiement non supportée');
-      }
-
-      if (result.success) {
-        toast.success('Paiement effectué avec succès!', {
-          description: `Transaction ID: ${result.transaction_id}`
-        });
-        onPaymentSuccess();
-        onClose();
-      } else {
-        toast.error('Erreur de paiement', {
-          description: result.error || 'Une erreur est survenue'
-        });
-      }
-    } catch (error: any) {
-      console.error('[DeliveryPayment] Payment error:', error);
-      toast.error('Erreur de paiement', {
-        description: error.message || 'Une erreur est survenue'
-      });
-    } finally {
-      setProcessing(false);
     }
-  };
+
+    // Validation des champs requis
+    if (paymentMethod === 'mobile_money' && (!phoneNumber || phoneNumber.length < 8)) {
+      toast.error('Numéro de téléphone requis', {
+        description: 'Veuillez entrer votre numéro Mobile Money'
+      });
+      throw new Error('Numéro de téléphone requis');
+    }
+
+    if (paymentMethod === 'paypal' && (!paypalEmail || !paypalEmail.includes('@'))) {
+      toast.error('Email PayPal requis', {
+        description: 'Veuillez entrer un email PayPal valide'
+      });
+      throw new Error('Email PayPal requis');
+    }
+
+    if (paymentMethod === 'card' && (!cardToken || cardToken.length < 10)) {
+      toast.error('Informations carte requises', {
+        description: 'Veuillez entrer les informations de votre carte'
+      });
+      throw new Error('Informations carte requises');
+    }
+
+    let result;
+
+    // Appeler le service de paiement approprié
+    switch (paymentMethod) {
+      case 'wallet':
+        result = await DeliveryPaymentService.payWithWallet(deliveryId, amount, customerId);
+        break;
+      case 'mobile_money':
+        result = await DeliveryPaymentService.payWithMobileMoney(
+          deliveryId,
+          amount,
+          customerId,
+          phoneNumber,
+          mobileProvider
+        );
+        break;
+      case 'card':
+        result = await DeliveryPaymentService.payWithCard(deliveryId, amount, customerId, cardToken);
+        break;
+      case 'paypal':
+        result = await DeliveryPaymentService.payWithPayPal(deliveryId, amount, customerId, paypalEmail);
+        break;
+      case 'cash':
+        result = await DeliveryPaymentService.payWithCash(deliveryId, amount, customerId);
+        break;
+      default:
+        throw new Error('Méthode de paiement non supportée');
+    }
+
+    if (result.success) {
+      toast.success('Paiement effectué avec succès!', {
+        description: `Transaction ID: ${result.transaction_id}`
+      });
+      onPaymentSuccess();
+      onClose();
+    } else {
+      toast.error('Erreur de paiement', {
+        description: result.error || 'Une erreur est survenue'
+      });
+      throw new Error(result.error || 'Erreur de paiement');
+    }
+  }, [deliveryId, customerId, deliveryManId, amount, paymentMethod, walletBalance, phoneNumber, mobileProvider, paypalEmail, cardToken, onPaymentSuccess, onClose]);
 
   const insufficientBalance = paymentMethod === 'wallet' && walletBalance !== null && walletBalance < amount;
 
@@ -361,24 +349,17 @@ export default function DeliveryPaymentModal({
             </Alert>
           )}
 
-          {/* Bouton de paiement */}
-          <Button
-            onClick={handlePayment}
-            disabled={processing || insufficientBalance}
+          {/* Bouton de paiement sécurisé - INP optimisé */}
+          <SecureButton
+            onSecureClick={executePayment}
+            disabled={insufficientBalance}
             className="w-full"
             size="lg"
+            loadingText="Traitement en cours..."
+            debounceMs={1000}
           >
-            {processing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Traitement en cours...
-              </>
-            ) : (
-              <>
-                {paymentMethod === 'cash' ? 'Confirmer' : 'Payer'} {amount.toLocaleString()} GNF
-              </>
-            )}
-          </Button>
+            {paymentMethod === 'cash' ? 'Confirmer' : 'Payer'} {amount.toLocaleString()} GNF
+          </SecureButton>
         </div>
       </DialogContent>
     </Dialog>

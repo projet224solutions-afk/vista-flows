@@ -4,7 +4,7 @@
  * Inclut le calcul et la facturation des commissions
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, startTransition, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Escrow224Service } from "@/services/escrow224Service";
 import { UniversalEscrowService } from "@/services/UniversalEscrowService";
+import { SecureButton } from "@/components/ui/SecureButton";
 
 export type ProductPaymentMethod = 'wallet' | 'cash' | 'cash_on_delivery';
 
@@ -259,7 +260,8 @@ export default function ProductPaymentModal({
     }
   ];
 
-  const handlePayment = async () => {
+  // Action de paiement sécurisée - séparée du handler UI
+  const executePayment = useCallback(async () => {
     console.log('[ProductPayment] Starting payment process:', {
       userId,
       customerId,
@@ -273,13 +275,10 @@ export default function ProductPaymentModal({
     if (!userId || !customerId || cartItems.length === 0) {
       console.error('[ProductPayment] Missing information:', { userId, customerId, cartItems });
       toast.error('Informations manquantes');
-      return;
+      throw new Error('Informations manquantes');
     }
 
-    setProcessing(true);
-
-    try {
-      // Grouper les articles par vendeur
+    // Grouper les articles par vendeur
       const itemsByVendor = cartItems.reduce((acc, item) => {
         const vendorKey = item.vendorId || 'unknown';
         if (!acc[vendorKey]) {
@@ -457,16 +456,7 @@ export default function ProductPaymentModal({
 
       onPaymentSuccess();
       onClose();
-
-    } catch (error) {
-      console.error('[ProductPayment] Error:', error);
-      toast.error('Erreur de paiement', {
-        description: error instanceof Error ? error.message : 'Veuillez réessayer'
-      });
-    } finally {
-      setProcessing(false);
-    }
-  };
+  }, [userId, customerId, cartItems, paymentMethod, totalAmount, commissionFee, grandTotal, walletBalance, commissionConfig, onPaymentSuccess, onClose]);
 
   // Vérifier le solde avec le grandTotal (incluant la commission)
   const insufficientBalance = paymentMethod === 'wallet' && walletBalance !== null && walletBalance < grandTotal;
@@ -583,22 +573,15 @@ export default function ProductPaymentModal({
           >
             Annuler
           </Button>
-          <Button
-            onClick={handlePayment}
+          <SecureButton
+            onSecureClick={executePayment}
             className="flex-1"
-            disabled={processing || insufficientBalance || loadingCommission}
+            disabled={insufficientBalance || loadingCommission}
+            loadingText="Traitement..."
+            debounceMs={1000}
           >
-            {processing ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Traitement...
-              </>
-            ) : (
-              <>
-                {paymentMethod === 'wallet' ? 'Payer' : 'Confirmer'} {grandTotal.toLocaleString()} GNF
-              </>
-            )}
-          </Button>
+            {paymentMethod === 'wallet' ? 'Payer' : 'Confirmer'} {grandTotal.toLocaleString()} GNF
+          </SecureButton>
         </div>
       </DialogContent>
     </Dialog>
