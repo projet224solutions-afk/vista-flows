@@ -208,7 +208,7 @@ Course: ${currentRide.id}
 De: ${currentRide.pickupAddress}
 Vers: ${currentRide.destinationAddress}
 Conducteur: ${currentRide.driver?.name || 'En attente'}
-Suivi en temps réel: https://224solutions.com/track/${currentRide.id}`;
+Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
 
         if (navigator.share) {
             navigator.share({

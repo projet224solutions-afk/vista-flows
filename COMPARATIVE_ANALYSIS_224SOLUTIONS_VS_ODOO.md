@@ -671,7 +671,7 @@ Odoo:
 TOTAL: ~19 heures ⏱️
 
 224Solutions:
-1. S'inscrire sur 224solutions.com (2min)
+1. S'inscrire sur 224solution.net (2min)
 2. Créer compte vendeur (1min)
 3. Ajouter premiers produits (10min)
 4. Inviter équipe (2min)
@@ -1169,7 +1169,7 @@ AgentManagementDashboard.tsx:
 **📅 Document créé le** : 1er décembre 2025  
 **✍️ Auteur** : Équipe Technique 224Solutions  
 **🔄 Version** : 1.0  
-**📧 Contact** : support@224solutions.com
+**📧 Contact** : support@224solution.net
 
 ---
 

@@ -13,8 +13,8 @@ const SECURITY_CONFIG = {
   RATE_LIMIT_WINDOW: 60 * 1000, // 1 minute
   RATE_LIMIT_MAX: 50,
   ALLOWED_ORIGINS: [
-    'https://224solutions.com',
-    'https://www.224solutions.com',
+    'https://224solution.net',
+    'https://www.224solution.net',
     'http://localhost:8080',
     'http://127.0.0.1:8080'
   ]

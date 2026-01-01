@@ -27,7 +27,7 @@ Modifiez le fichier `.env` :
 # 📧 Email Configuration (Gmail)
 EMAIL_USER=votre.email@gmail.com
 EMAIL_PASSWORD=abcd efgh ijkl mnop  # Mot de passe d'application (16 caractères)
-EMAIL_FROM=224Solutions <noreply@224solutions.com>
+EMAIL_FROM=224Solutions <noreply@224solution.net>
 ```
 
 ### 2. Configuration SMTP Alternative
@@ -152,9 +152,9 @@ Les envois d'emails sont loggés dans :
 ### Variables d'environnement
 ```env
 NODE_ENV=production
-EMAIL_USER=production@224solutions.com
+EMAIL_USER=production@224solution.net
 EMAIL_PASSWORD=mot_de_passe_production_securise
-EMAIL_FROM=224Solutions <noreply@224solutions.com>
+EMAIL_FROM=224Solutions <noreply@224solution.net>
 ```
 
 ### Recommandations

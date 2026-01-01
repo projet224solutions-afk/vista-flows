@@ -192,11 +192,11 @@ ON CONFLICT DO NOTHING;
 -- SOC Analysts
 INSERT INTO public.soc_analysts (name, email, analyst_role, status, specialization, current_cases, shift_start, shift_end, is_on_call)
 VALUES 
-('Mohamed Diallo', 'mohamed.diallo@224solutions.com', 'senior_analyst', 'available', ARRAY['fraud', 'incident_response'], 2, '08:00', '17:00', false),
-('Fatou Camara', 'fatou.camara@224solutions.com', 'analyst', 'busy', ARRAY['network', 'malware'], 4, '08:00', '17:00', false),
-('Ibrahima Bah', 'ibrahima.bah@224solutions.com', 'team_lead', 'available', ARRAY['fraud', 'incident_response', 'compliance'], 1, '08:00', '17:00', true),
-('Aissatou Sow', 'aissatou.sow@224solutions.com', 'analyst', 'available', ARRAY['fraud', 'anomaly'], 3, '17:00', '01:00', false),
-('Mamadou Barry', 'mamadou.barry@224solutions.com', 'analyst', 'on_call', ARRAY['network', 'incident_response'], 0, '01:00', '08:00', true)
+('Mohamed Diallo', 'mohamed.diallo@224solution.net', 'senior_analyst', 'available', ARRAY['fraud', 'incident_response'], 2, '08:00', '17:00', false),
+('Fatou Camara', 'fatou.camara@224solution.net', 'analyst', 'busy', ARRAY['network', 'malware'], 4, '08:00', '17:00', false),
+('Ibrahima Bah', 'ibrahima.bah@224solution.net', 'team_lead', 'available', ARRAY['fraud', 'incident_response', 'compliance'], 1, '08:00', '17:00', true),
+('Aissatou Sow', 'aissatou.sow@224solution.net', 'analyst', 'available', ARRAY['fraud', 'anomaly'], 3, '17:00', '01:00', false),
+('Mamadou Barry', 'mamadou.barry@224solution.net', 'analyst', 'on_call', ARRAY['network', 'incident_response'], 0, '01:00', '08:00', true)
 ON CONFLICT DO NOTHING;
 
 -- Enable RLS

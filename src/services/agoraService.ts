@@ -239,75 +239,166 @@ class AgoraService {
    * Rejoindre un canal audio/vidéo
    */
   async joinChannel(config: CallConfig): Promise<void> {
-    if (!this.client) throw new Error('Client Agora non initialisé');
-
-    try {
-      // Rejoindre le canal
-      await this.client.join(
-        this.appId,
-        config.channel,
-        config.token || null,
-        config.uid
-      );
-
-      this.currentChannel = config.channel;
-      this.currentUid = config.uid;
-
-      // Publier audio et vidéo si rôle publisher
-      if (config.role === 'publisher') {
-        await this.publishLocalTracks();
-      }
-
-      console.log('✅ Canal rejoint:', config.channel);
-    } catch (error) {
-      console.error('❌ Erreur rejoindre canal:', error);
-      throw error;
+    if (!this.client) {
+      throw new Error('Client Agora non initialisé. Appelez initialize() d\'abord.');
     }
+
+    const maxRetries = 3;
+    let retryCount = 0;
+
+    while (retryCount < maxRetries) {
+      try {
+        console.log(`[Agora] 🔗 Tentative ${retryCount + 1}/${maxRetries} - Rejoindre canal:`, config.channel);
+
+        // Timeout pour éviter blocage infini
+        const joinPromise = this.client.join(
+          this.appId,
+          config.channel,
+          config.token || null,
+          config.uid
+        );
+
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout joinChannel (30s)')), 30000)
+        );
+
+        await Promise.race([joinPromise, timeoutPromise]);
+
+        this.currentChannel = config.channel;
+        this.currentUid = config.uid;
+        this.isConnected = true;
+
+        console.log('[Agora] ✅ Canal rejoint avec succès:', config.channel);
+
+        // Publier audio et vidéo si rôle publisher
+        if (config.role === 'publisher') {
+          await this.publishLocalTracks();
+        }
+
+        return; // Succès, sortir de la boucle
+
+      } catch (error: any) {
+        retryCount++;
+        const errorMessage = error?.message || 'Erreur inconnue';
+        
+        console.error(`[Agora] ❌ Tentative ${retryCount}/${maxRetries} échouée:`, {
+          error: errorMessage,
+          channel: config.channel,
+          uid: config.uid
+        });
+
+        // Erreurs non-retriables
+        if (errorMessage.includes('INVALID_') || errorMessage.includes('banned')) {
+          throw new Error(`Erreur Agora non-retriable: ${errorMessage}`);
+        }
+
+        if (retryCount >= maxRetries) {
+          throw new Error(`Échec rejoindre canal après ${maxRetries} tentatives: ${errorMessage}`);
+        }
+
+        // Exponential backoff avant retry
+        const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
+        console.log(`[Agora] ⏳ Retry dans ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+
+        // Cleanup avant retry
+        try {
+          if (this.client && this.isConnected) {
+            await this.client.leave();
+          }
+        } catch (cleanupErr) {
+          console.warn('[Agora] ⚠️ Erreur cleanup avant retry:', cleanupErr);
+        }
+      }
+    }
+
+    throw new Error('Nombre maximum de tentatives atteint');
   }
 
   /**
    * Publier les tracks locaux
    */
   private async publishLocalTracks(): Promise<void> {
-    if (!this.client) return;
+    if (!this.client) {
+      throw new Error('Client Agora non disponible');
+    }
 
     const tracksToPublish: (IMicrophoneAudioTrack | ICameraVideoTrack)[] = [];
+    const errors: string[] = [];
 
     try {
-      // Créer track audio
+      // Créer track audio avec timeout
       try {
-        this.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack({
+        const audioPromise = AgoraRTC.createMicrophoneAudioTrack({
           encoderConfig: 'music_standard'
         });
+
+        const audioTimeout = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout audio track (10s)')), 10000)
+        );
+
+        this.localAudioTrack = await Promise.race([audioPromise, audioTimeout]);
         tracksToPublish.push(this.localAudioTrack);
-        console.log('✅ Track audio créé');
-      } catch (audioError) {
-        console.warn('⚠️ Impossible d\'accéder au microphone:', audioError);
+        console.log('[Agora] ✅ Track audio créé');
+      } catch (audioError: any) {
+        const errorMsg = `Microphone inaccessible: ${audioError?.message || 'Erreur inconnue'}`;
+        errors.push(errorMsg);
+        console.warn('[Agora] ⚠️', errorMsg);
+        // Continuer sans audio
       }
 
-      // Créer track vidéo
+      // Créer track vidéo avec timeout
       try {
-        this.localVideoTrack = await AgoraRTC.createCameraVideoTrack({
+        const videoPromise = AgoraRTC.createCameraVideoTrack({
           encoderConfig: '720p_2'
         });
+
+        const videoTimeout = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout video track (10s)')), 10000)
+        );
+
+        this.localVideoTrack = await Promise.race([videoPromise, videoTimeout]);
         tracksToPublish.push(this.localVideoTrack);
-        console.log('✅ Track vidéo créé');
+        console.log('[Agora] ✅ Track vidéo créé');
         
         // Notifier que la vidéo locale est prête
         this.onLocalVideoReady?.(this.localVideoTrack);
-      } catch (videoError) {
-        console.warn('⚠️ Impossible d\'accéder à la caméra:', videoError);
+      } catch (videoError: any) {
+        const errorMsg = `Caméra inaccessible: ${videoError?.message || 'Erreur inconnue'}`;
+        errors.push(errorMsg);
+        console.warn('[Agora] ⚠️', errorMsg);
+        // Continuer sans vidéo
       }
 
       // Publier les tracks disponibles
       if (tracksToPublish.length > 0) {
-        await this.client.publish(tracksToPublish);
-        console.log('✅ Tracks locaux publiés:', tracksToPublish.length);
+        try {
+          await this.client.publish(tracksToPublish);
+          console.log('[Agora] ✅ Tracks locaux publiés:', tracksToPublish.length);
+        } catch (publishError: any) {
+          console.error('[Agora] ❌ Erreur publication tracks:', publishError);
+          // Cleanup les tracks créés mais non publiés
+          tracksToPublish.forEach(track => {
+            try {
+              track.close();
+            } catch (err) {
+              console.warn('[Agora] ⚠️ Erreur cleanup track:', err);
+            }
+          });
+          throw new Error(`Échec publication: ${publishError.message}`);
+        }
       } else {
-        console.warn('⚠️ Aucun track média disponible à publier');
+        const errorMessage = `Aucun track média disponible. ${errors.join(', ')}`;
+        console.error('[Agora] ❌', errorMessage);
+        throw new Error(errorMessage);
       }
-    } catch (error) {
-      console.error('❌ Erreur publication tracks:', error);
+
+      // Logger les warnings si partiellement réussi
+      if (errors.length > 0) {
+        console.warn('[Agora] ⚠️ Publication partielle:', errors.join(', '));
+      }
+    } catch (error: any) {
+      console.error('[Agora] ❌ Erreur critique publishLocalTracks:', error);
       throw error;
     }
   }
@@ -478,25 +569,74 @@ class AgoraService {
    * Nettoyer les ressources
    */
   async cleanup(): Promise<void> {
+    console.log('[Agora] 🧹 Début cleanup...');
+    const errors: string[] = [];
+
     try {
-      await this.leaveChannel();
+      // 1. Cleanup RTC tracks et channel
+      try {
+        await this.leaveChannel();
+      } catch (leaveError: any) {
+        const msg = `Erreur leave channel: ${leaveError?.message || 'Inconnue'}`;
+        errors.push(msg);
+        console.warn('[Agora] ⚠️', msg);
+      }
       
-      // Quitter les canaux RTM v2
+      // 2. Cleanup RTM canaux
       if (this.rtmClient) {
-        for (const channel of this.subscribedChannels) {
-          await this.rtmClient.unsubscribe(channel);
+        try {
+          // Unsubscribe de tous les canaux
+          for (const channel of this.subscribedChannels) {
+            try {
+              await Promise.race([
+                this.rtmClient.unsubscribe(channel),
+                new Promise<never>((_, reject) => 
+                  setTimeout(() => reject(new Error('Timeout unsubscribe')), 5000)
+                )
+              ]);
+              console.log('[Agora] ✅ Unsubscribed:', channel);
+            } catch (unsubError: any) {
+              console.warn('[Agora] ⚠️ Erreur unsubscribe:', channel, unsubError?.message);
+            }
+          }
+          this.subscribedChannels.clear();
+          
+          // Logout RTM
+          try {
+            await Promise.race([
+              this.rtmClient.logout(),
+              new Promise<never>((_, reject) => 
+                setTimeout(() => reject(new Error('Timeout logout')), 5000)
+              )
+            ]);
+            console.log('[Agora] ✅ RTM logout');
+          } catch (logoutError: any) {
+            console.warn('[Agora] ⚠️ Erreur RTM logout:', logoutError?.message);
+          }
+          
+          this.rtmClient = null;
+        } catch (rtmError: any) {
+          const msg = `Erreur cleanup RTM: ${rtmError?.message || 'Inconnue'}`;
+          errors.push(msg);
+          console.warn('[Agora] ⚠️', msg);
         }
-        this.subscribedChannels.clear();
-        
-        await this.rtmClient.logout();
-        this.rtmClient = null;
       }
 
+      // 3. Cleanup mémoire
       this.remoteUsers.clear();
       this.client = null;
-      console.log('✅ Agora nettoyé');
-    } catch (error) {
-      console.error('❌ Erreur nettoyage Agora:', error);
+      this.isConnected = false;
+      this.currentChannel = '';
+      this.currentUid = '';
+
+      if (errors.length > 0) {
+        console.warn('[Agora] ⚠️ Cleanup terminé avec warnings:', errors.join(', '));
+      } else {
+        console.log('[Agora] ✅ Cleanup complet réussi');
+      }
+    } catch (error: any) {
+      console.error('[Agora] ❌ Erreur critique cleanup:', error);
+      throw error;
     }
   }
 }

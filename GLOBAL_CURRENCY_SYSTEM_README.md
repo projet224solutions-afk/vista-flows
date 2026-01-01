@@ -240,7 +240,7 @@ console.log('Currency system debug info:', debugInfo);
 - **FAQ** : `/docs/faq`
 
 ### Contact
-- **Email** : support@224solutions.com
+- **Email** : support@224solution.net
 - **Discord** : #currency-system
 - **GitHub** : Issues et discussions
 

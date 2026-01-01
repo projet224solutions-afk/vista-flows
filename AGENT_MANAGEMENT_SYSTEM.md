@@ -440,7 +440,7 @@ await agentService.updateCommissionSettings(pdgId, {
 // 3. Créer des agents
 const agent = await agentService.createAgent(pdgId, {
   name: "Premier Agent",
-  email: "agent@224solutions.com",
+  email: "agent@224solution.net",
   phone: "+221 77 123 45 67",
   canCreateSubAgent: true
 });

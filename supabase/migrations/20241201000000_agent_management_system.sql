@@ -318,12 +318,12 @@ COMMENT ON FUNCTION generate_invite_token IS 'Génère un token unique pour les 
 
 -- Créer un PDG de test
 INSERT INTO public.pdg (id, name, email, phone) VALUES 
-('550e8400-e29b-41d4-a716-446655440000', 'PDG Test 224Solutions', 'pdg@224solutions.com', '+221 77 123 45 67');
+('550e8400-e29b-41d4-a716-446655440000', 'PDG Test 224Solutions', 'pdg@224solution.net', '+221 77 123 45 67');
 
 -- Créer un agent de test
 INSERT INTO public.agents (id, name, email, phone, pdg_id, can_create_sub_agent) VALUES 
-('550e8400-e29b-41d4-a716-446655440001', 'Agent Principal Test', 'agent@224solutions.com', '+221 77 234 56 78', '550e8400-e29b-41d4-a716-446655440000', true);
+('550e8400-e29b-41d4-a716-446655440001', 'Agent Principal Test', 'agent@224solution.net', '+221 77 234 56 78', '550e8400-e29b-41d4-a716-446655440000', true);
 
 -- Créer un sous-agent de test
 INSERT INTO public.sub_agents (id, name, email, phone, parent_agent_id) VALUES 
-('550e8400-e29b-41d4-a716-446655440002', 'Sous-Agent Test', 'subagent@224solutions.com', '+221 77 345 67 89', '550e8400-e29b-41d4-a716-446655440001');
+('550e8400-e29b-41d4-a716-446655440002', 'Sous-Agent Test', 'subagent@224solution.net', '+221 77 345 67 89', '550e8400-e29b-41d4-a716-446655440001');

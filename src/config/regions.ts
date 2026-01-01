@@ -49,9 +49,9 @@ export const REGIONS: Record<string, RegionConfig> = {
     currency: 'GNF',
     languages: ['fr', 'ff', 'sus'],
     endpoints: {
-      api: 'https://api-africa.224solutions.com',
-      cdn: 'https://cdn-africa.224solutions.com',
-      websocket: 'wss://ws-africa.224solutions.com',
+      api: 'https://api-africa.224solution.net',
+      cdn: 'https://cdn-africa.224solution.net',
+      websocket: 'wss://ws-africa.224solution.net',
       database: 'https://db-africa.supabase.co',
     },
     latency: {
@@ -73,9 +73,9 @@ export const REGIONS: Record<string, RegionConfig> = {
     currency: 'EUR',
     languages: ['fr', 'en', 'de', 'es'],
     endpoints: {
-      api: 'https://api-eu.224solutions.com',
-      cdn: 'https://cdn-eu.224solutions.com',
-      websocket: 'wss://ws-eu.224solutions.com',
+      api: 'https://api-eu.224solution.net',
+      cdn: 'https://cdn-eu.224solution.net',
+      websocket: 'wss://ws-eu.224solution.net',
       database: 'https://db-eu.supabase.co',
     },
     latency: {
@@ -97,9 +97,9 @@ export const REGIONS: Record<string, RegionConfig> = {
     currency: 'EUR',
     languages: ['de', 'en', 'fr'],
     endpoints: {
-      api: 'https://api-eu-central.224solutions.com',
-      cdn: 'https://cdn-eu-central.224solutions.com',
-      websocket: 'wss://ws-eu-central.224solutions.com',
+      api: 'https://api-eu-central.224solution.net',
+      cdn: 'https://cdn-eu-central.224solution.net',
+      websocket: 'wss://ws-eu-central.224solution.net',
       database: 'https://db-eu-central.supabase.co',
     },
     latency: {
@@ -121,9 +121,9 @@ export const REGIONS: Record<string, RegionConfig> = {
     currency: 'USD',
     languages: ['en', 'es', 'fr'],
     endpoints: {
-      api: 'https://api-us-east.224solutions.com',
-      cdn: 'https://cdn-us-east.224solutions.com',
-      websocket: 'wss://ws-us-east.224solutions.com',
+      api: 'https://api-us-east.224solution.net',
+      cdn: 'https://cdn-us-east.224solution.net',
+      websocket: 'wss://ws-us-east.224solution.net',
       database: 'https://db-us-east.supabase.co',
     },
     latency: {
@@ -145,9 +145,9 @@ export const REGIONS: Record<string, RegionConfig> = {
     currency: 'USD',
     languages: ['en', 'es'],
     endpoints: {
-      api: 'https://api-us-west.224solutions.com',
-      cdn: 'https://cdn-us-west.224solutions.com',
-      websocket: 'wss://ws-us-west.224solutions.com',
+      api: 'https://api-us-west.224solution.net',
+      cdn: 'https://cdn-us-west.224solution.net',
+      websocket: 'wss://ws-us-west.224solution.net',
       database: 'https://db-us-west.supabase.co',
     },
     latency: {
@@ -169,9 +169,9 @@ export const REGIONS: Record<string, RegionConfig> = {
     currency: 'XOF',
     languages: ['fr', 'en'],
     endpoints: {
-      api: 'https://api-africa-central.224solutions.com',
-      cdn: 'https://cdn-africa-central.224solutions.com',
-      websocket: 'wss://ws-africa-central.224solutions.com',
+      api: 'https://api-africa-central.224solution.net',
+      cdn: 'https://cdn-africa-central.224solution.net',
+      websocket: 'wss://ws-africa-central.224solution.net',
       database: 'https://db-africa-central.supabase.co',
     },
     latency: {
@@ -193,9 +193,9 @@ export const REGIONS: Record<string, RegionConfig> = {
     currency: 'USD',
     languages: ['en', 'zh', 'ms'],
     endpoints: {
-      api: 'https://api-asia.224solutions.com',
-      cdn: 'https://cdn-asia.224solutions.com',
-      websocket: 'wss://ws-asia.224solutions.com',
+      api: 'https://api-asia.224solution.net',
+      cdn: 'https://cdn-asia.224solution.net',
+      websocket: 'wss://ws-asia.224solution.net',
       database: 'https://db-asia.supabase.co',
     },
     latency: {

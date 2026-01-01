@@ -22,7 +22,7 @@ interface BureauSyndicatSOSDashboardProps {
 export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashboardProps) {
   const [sosAlerts, setSosAlerts] = useState<SOSAlert[]>([]);
   const [loading, setLoading] = useState(true);
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [autoRefresh] = useState(true); // Toujours actif pour sécurité - pas de toggle
 
   // Charger les alertes depuis Supabase
   const loadSOSAlerts = async () => {

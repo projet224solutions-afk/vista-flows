@@ -291,7 +291,7 @@ localStorage.setItem('copilote-debug', 'true');
 - **Issues** : Signalement de bugs
 
 ### Support Technique
-- **Email** : support@224solutions.com
+- **Email** : support@224solution.net
 - **Discord** : Communauté développeurs
 - **Documentation** : Guides détaillés
 

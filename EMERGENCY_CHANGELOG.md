@@ -278,12 +278,12 @@
 
 **Bugs et Feature Requests :**
 - GitHub Issues : https://github.com/224solutions/vista-flows/issues
-- Email : support@224solutions.com
+- Email : support@224solution.net
 
 **Documentation :**
 - README : `/EMERGENCY_SOS_MODULE_README.md`
 - Guide Intégration : `/EMERGENCY_INTEGRATION_GUIDE.tsx`
-- API Docs : https://docs.224solutions.com/api/emergency
+- API Docs : https://docs.224solution.net/api/emergency
 
 **Communauté :**
 - Discord : https://discord.gg/224solutions

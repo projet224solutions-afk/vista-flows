@@ -94,7 +94,7 @@ export default function DriverHelp() {
             <CardHeader className="text-center">
               <Mail className="h-8 w-8 mx-auto text-primary mb-2" />
               <CardTitle className="text-base">Email</CardTitle>
-              <CardDescription>support@224solutions.com</CardDescription>
+              <CardDescription>support@224solution.net</CardDescription>
             </CardHeader>
             <CardContent>
               <Button variant="outline" className="w-full">

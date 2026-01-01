@@ -220,7 +220,7 @@ BEGIN
     badge_code_val := generate_badge_code();
     
     -- Créer les données QR (URL vers la page de vérification du badge)
-    qr_data := 'https://224solutions.com/badge/verify?code=' || badge_code_val;
+    qr_data := 'https://224solution.net/badge/verify?code=' || badge_code_val;
     
     -- Insérer le badge
     INSERT INTO digital_badges (
@@ -263,7 +263,7 @@ BEGIN
     END IF;
     
     -- Créer l'URL du lien
-    link_url := 'https://224solutions.com/validate/' || target_type_param || '?token=' || token_val;
+    link_url := 'https://224solution.net/validate/' || target_type_param || '?token=' || token_val;
     
     -- Insérer le lien de validation
     INSERT INTO validation_links (
@@ -461,7 +461,7 @@ BEGIN
         INSERT INTO users (id, email, phone, first_name, last_name, role, is_worker)
         VALUES (
             gen_random_uuid(),
-            'admin@224solutions.com',
+            'admin@224solution.net',
             '+221 77 000 00 01',
             'Admin',
             'System',

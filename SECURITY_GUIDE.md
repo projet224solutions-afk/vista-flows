@@ -480,8 +480,8 @@ const hasPermission = await EdgeFunctionSecurity.checkUserPermission(
 - [Express Security Best Practices](https://expressjs.com/en/advanced/best-practice-security.html)
 
 ### Support
-- Email: security@224solutions.com
-- Reporting de vulnérabilité: security-report@224solutions.com
+- Email: security@224solution.net
+- Reporting de vulnérabilité: security-report@224solution.net
 
 ## ⚠️ Avertissements Importants
 
@@ -498,7 +498,7 @@ const hasPermission = await EdgeFunctionSecurity.checkUserPermission(
 ## 📞 Contact Sécurité
 
 Pour toute question ou signalement de vulnérabilité:
-- **Email**: security@224solutions.com
+- **Email**: security@224solution.net
 - **Urgent**: +224 XXX XXX XXX
 
 **Dernier audit de sécurité**: 29 novembre 2025

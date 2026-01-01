@@ -78,49 +78,86 @@ class UniversalCommunicationService {
    */
   async getConversations(userId: string): Promise<Conversation[]> {
     if (!validateUUID(userId)) {
-      throw new Error('ID utilisateur invalide');
+      const error = new Error('ID utilisateur invalide');
+      console.error('[Communication] ❌ Validation failed:', { userId });
+      throw error;
     }
 
     try {
-      console.log('[Communication] Chargement conversations pour:', userId);
+      console.log('[Communication] 📥 Chargement conversations pour:', userId);
 
-      // Récupérer les conversations avec conversation_id
-      const { data: normalConvs, error: convError } = await supabase.rpc(
-        'get_user_conversations',
-        { p_user_id: userId }
-      );
+      // Récupérer les conversations avec conversation_id (avec timeout)
+      const normalConvsPromise = Promise.race([
+        supabase.rpc('get_user_conversations', { p_user_id: userId }),
+        new Promise<{ data: null; error: any }>((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout get_user_conversations')), 10000)
+        )
+      ]);
+
+      const { data: normalConvs, error: convError } = await normalConvsPromise;
 
       if (convError) {
-        console.error('[Communication] Erreur RPC get_user_conversations:', convError);
-        throw convError;
+        console.error('[Communication] ❌ Erreur RPC get_user_conversations:', {
+          error: convError,
+          userId,
+          message: convError.message,
+          code: convError.code
+        });
+        throw new Error(`Échec chargement conversations: ${convError.message || 'Erreur inconnue'}`);
       }
 
-      // Récupérer les conversations directes (sans conversation_id)
-      const { data: directConvs, error: directError } = await supabase.rpc(
-        'get_user_direct_message_conversations',
-        { p_user_id: userId }
-      );
+      // Récupérer les conversations directes (sans conversation_id) - non bloquant
+      let directConvs: any[] = [];
+      try {
+        const directConvsPromise = Promise.race([
+          supabase.rpc('get_user_direct_message_conversations', { p_user_id: userId }),
+          new Promise<{ data: null; error: any }>((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout direct messages')), 10000)
+          )
+        ]);
 
-      if (directError) {
-        console.error('[Communication] Erreur RPC get_user_direct_message_conversations:', directError);
-        // Ne pas throw, continuer avec les conversations normales
+        const { data, error: directError } = await directConvsPromise;
+        
+        if (directError) {
+          console.warn('[Communication] ⚠️ Erreur RPC direct messages (non-bloquant):', directError.message);
+        } else {
+          directConvs = data || [];
+        }
+      } catch (directErr) {
+        console.warn('[Communication] ⚠️ Conversations directes non disponibles:', directErr);
       }
 
-      // Fusionner et trier par date
+      // Fusionner et trier par date avec validation
       const allConversations = [
-        ...(normalConvs || []),
-        ...(directConvs || [])
-      ].sort((a, b) => {
-        const dateA = new Date(a.last_message_at || a.created_at);
-        const dateB = new Date(b.last_message_at || b.created_at);
-        return dateB.getTime() - dateA.getTime();
+        ...(Array.isArray(normalConvs) ? normalConvs : []),
+        ...(Array.isArray(directConvs) ? directConvs : [])
+      ].filter(conv => conv && conv.id) // Filtrer les conversations invalides
+      .sort((a, b) => {
+        try {
+          const dateA = new Date(a.last_message_at || a.created_at);
+          const dateB = new Date(b.last_message_at || b.created_at);
+          return dateB.getTime() - dateA.getTime();
+        } catch (err) {
+          console.warn('[Communication] ⚠️ Erreur tri conversation:', err);
+          return 0;
+        }
       });
 
-      console.log('[Communication] Conversations chargées:', allConversations.length);
+      console.log('[Communication] ✅ Conversations chargées:', {
+        total: allConversations.length,
+        normal: Array.isArray(normalConvs) ? normalConvs.length : 0,
+        direct: directConvs.length
+      });
+      
       return allConversations as unknown as Conversation[];
-    } catch (error) {
-      console.error('[Communication] Erreur getConversations:', error);
-      throw error;
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Erreur inconnue';
+      console.error('[Communication] ❌ Erreur critique getConversations:', {
+        error: errorMessage,
+        userId,
+        stack: error?.stack
+      });
+      throw new Error(`Impossible de charger les conversations: ${errorMessage}`);
     }
   }
 
@@ -288,56 +325,114 @@ class UniversalCommunicationService {
     senderId: string,
     content: string
   ): Promise<Message> {
-    if (!content.trim()) {
+    // Validation stricte avec sanitization
+    const trimmedContent = content?.trim();
+    if (!trimmedContent) {
       throw new Error('Le message ne peut pas être vide');
     }
 
-    if (content.length > MAX_MESSAGE_LENGTH) {
-      throw new Error(`Le message ne peut pas dépasser ${MAX_MESSAGE_LENGTH} caractères`);
+    if (trimmedContent.length > MAX_MESSAGE_LENGTH) {
+      throw new Error(`Le message ne peut pas dépasser ${MAX_MESSAGE_LENGTH} caractères (actuellement: ${trimmedContent.length})`);
     }
 
-    try {
-      console.log('[Communication] Envoi message texte:', { conversationId, senderId });
+    if (!validateUUID(senderId)) {
+      throw new Error('ID expéditeur invalide');
+    }
 
-      let recipientId: string;
-      let dbConversationId: string | null;
+    // Sanitize content: enlever caractères dangereux
+    const sanitizedContent = trimmedContent
+      .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '') // Enlever caractères de contrôle
+      .substring(0, MAX_MESSAGE_LENGTH); // Limite stricte
 
-      if (isDirectConversation(conversationId)) {
-        recipientId = extractRecipientFromDirectId(conversationId);
-        dbConversationId = null;
-      } else {
-        const conversation = await this.getConversationById(conversationId);
-        const recipient = conversation.participants.find(p => p.user_id !== senderId);
-        recipientId = recipient?.user_id || senderId;
-        dbConversationId = conversationId;
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    while (retryCount < maxRetries) {
+      try {
+        console.log('[Communication] 📤 Envoi message texte:', { 
+          conversationId, 
+          senderId, 
+          length: sanitizedContent.length,
+          retry: retryCount 
+        });
+
+        let recipientId: string;
+        let dbConversationId: string | null;
+
+        if (isDirectConversation(conversationId)) {
+          recipientId = extractRecipientFromDirectId(conversationId);
+          if (!validateUUID(recipientId)) {
+            throw new Error('ID destinataire invalide dans conversation directe');
+          }
+          dbConversationId = null;
+        } else {
+          if (!validateUUID(conversationId)) {
+            throw new Error('ID conversation invalide');
+          }
+          const conversation = await this.getConversationById(conversationId);
+          const recipient = conversation.participants.find(p => p.user_id !== senderId);
+          if (!recipient) {
+            throw new Error('Aucun destinataire trouvé dans la conversation');
+          }
+          recipientId = recipient.user_id;
+          dbConversationId = conversationId;
+        }
+
+        const { data, error } = await supabase
+          .from('messages')
+          .insert({
+            conversation_id: dbConversationId,
+            sender_id: senderId,
+            recipient_id: recipientId,
+            content: sanitizedContent,
+            topic: 'chat',
+            extension: 'txt',
+            type: 'text',
+            status: 'sent',
+            created_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error('[Communication] ❌ Erreur insertion message:', {
+            error: error.message,
+            code: error.code,
+            retry: retryCount
+          });
+          throw error;
+        }
+
+        // Audit log non-bloquant
+        this.logAudit(senderId, 'message_sent', data.id).catch(err => 
+          console.warn('[Communication] ⚠️ Audit log failed (non-bloquant):', err)
+        );
+        
+        console.log('[Communication] ✅ Message envoyé:', { id: data.id, retry: retryCount });
+        return data as Message;
+        
+      } catch (error: any) {
+        retryCount++;
+        
+        // Erreurs non-retriables
+        if (error.message?.includes('invalide') || error.code === '23505') {
+          console.error('[Communication] ❌ Erreur non-retriable:', error.message);
+          throw error;
+        }
+        
+        if (retryCount >= maxRetries) {
+          console.error('[Communication] ❌ Échec après', maxRetries, 'tentatives:', error);
+          throw new Error(`Échec envoi message après ${maxRetries} tentatives: ${error.message}`);
+        }
+        
+        // Attendre avant retry (exponential backoff)
+        const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
+        console.log(`[Communication] ⏳ Retry ${retryCount}/${maxRetries} dans ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
-
-      const { data, error } = await supabase
-        .from('messages')
-        .insert({
-          conversation_id: dbConversationId,
-          sender_id: senderId,
-          recipient_id: recipientId,
-          content,
-          topic: 'chat',
-          extension: 'txt',
-          type: 'text',
-          status: 'sent',
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      await this.logAudit(senderId, 'message_sent', data.id);
-      
-      console.log('[Communication] Message envoyé:', data.id);
-      return data as Message;
-    } catch (error) {
-      console.error('[Communication] Erreur sendTextMessage:', error);
-      throw error;
     }
+
+    throw new Error('Échec envoi message: nombre max de tentatives atteint');
   }
 
   /**
@@ -771,10 +866,15 @@ class UniversalCommunicationService {
     conversationId: string,
     callback: (message: Message) => void
   ) {
-    console.log('[Communication] Subscription messages:', conversationId);
+    console.log('[Communication] 🔔 Subscription messages:', conversationId);
 
-    return supabase
-      .channel(`messages:${conversationId}`)
+    const channel = supabase
+      .channel(`messages:${conversationId}`, {
+        config: {
+          presence: { key: conversationId },
+          broadcast: { self: false }
+        }
+      })
       .on(
         'postgres_changes',
         {
@@ -784,24 +884,65 @@ class UniversalCommunicationService {
           filter: `conversation_id=eq.${conversationId}`
         },
         async (payload) => {
-          // Récupérer le message complet avec le profil
-          const { data } = await supabase
-            .from('messages')
-            .select(`
-              *,
-              sender:profiles!messages_sender_id_fkey (
-                id, first_name, last_name, email, avatar_url
-              )
-            `)
-            .eq('id', payload.new.id)
-            .single();
+          try {
+            console.log('[Communication] 📨 Nouveau message reçu:', payload.new.id);
+            
+            // Récupérer le message complet avec le profil (avec timeout)
+            const fetchPromise = supabase
+              .from('messages')
+              .select(`
+                *,
+                sender:profiles!messages_sender_id_fkey (
+                  id, first_name, last_name, email, avatar_url
+                )
+              `)
+              .eq('id', payload.new.id)
+              .single();
 
-          if (data) {
-            callback(data as Message);
+            const timeoutPromise = new Promise<{ data: null }>((_, reject) =>
+              setTimeout(() => reject(new Error('Timeout fetch message')), 5000)
+            );
+
+            const { data } = await Promise.race([fetchPromise, timeoutPromise]);
+
+            if (data) {
+              callback(data as Message);
+            } else {
+              console.warn('[Communication] ⚠️ Message non trouvé après insertion:', payload.new.id);
+            }
+          } catch (error: any) {
+            console.error('[Communication] ❌ Erreur traitement nouveau message:', {
+              error: error.message,
+              messageId: payload.new.id
+            });
           }
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('[Communication] ✅ Subscription active:', conversationId);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('[Communication] ❌ Erreur channel:', err);
+        } else if (status === 'TIMED_OUT') {
+          console.error('[Communication] ⏱️ Timeout subscription:', conversationId);
+        } else if (status === 'CLOSED') {
+          console.log('[Communication] 🔌 Subscription fermée:', conversationId);
+        }
+      });
+
+    // Retourner le channel avec cleanup amélioré
+    const originalUnsubscribe = channel.unsubscribe.bind(channel);
+    channel.unsubscribe = async () => {
+      console.log('[Communication] 🔌 Cleanup subscription:', conversationId);
+      try {
+        await originalUnsubscribe();
+        console.log('[Communication] ✅ Subscription nettoyée:', conversationId);
+      } catch (error) {
+        console.error('[Communication] ❌ Erreur cleanup subscription:', error);
+      }
+    };
+
+    return channel;
   }
 
   /**
@@ -837,22 +978,66 @@ class UniversalCommunicationService {
   /**
    * Enregistrer un log d'audit
    */
+  private auditFailureCount = 0;
+  private auditCircuitOpen = false;
+  private auditCircuitResetTime = 0;
+  private readonly AUDIT_CIRCUIT_THRESHOLD = 5;
+  private readonly AUDIT_CIRCUIT_RESET_MS = 60000; // 1 minute
+
   private async logAudit(
     userId: string,
     actionType: string,
     targetId?: string
   ): Promise<void> {
+    // Circuit breaker: si trop d'échecs, skip audit temporairement
+    const now = Date.now();
+    if (this.auditCircuitOpen) {
+      if (now < this.auditCircuitResetTime) {
+        console.warn('[Communication] ⚠️ Audit circuit ouvert, skip log');
+        return;
+      } else {
+        // Reset circuit
+        console.log('[Communication] 🔄 Reset audit circuit breaker');
+        this.auditCircuitOpen = false;
+        this.auditFailureCount = 0;
+      }
+    }
+
     try {
-      await supabase.from('communication_audit_logs').insert({
+      const { error } = await supabase.from('communication_audit_logs').insert({
         user_id: userId,
         action_type: actionType,
         target_id: targetId,
-        metadata: {},
+        metadata: {
+          timestamp: new Date().toISOString(),
+          user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'server'
+        },
         created_at: new Date().toISOString()
       });
-    } catch (error) {
-      // Ne pas faire échouer l'opération principale
-      console.warn('[Communication] Échec audit log:', error);
+
+      if (error) throw error;
+
+      // Reset failure count on success
+      if (this.auditFailureCount > 0) {
+        this.auditFailureCount = 0;
+        console.log('[Communication] ✅ Audit rétabli après échecs');
+      }
+    } catch (error: any) {
+      this.auditFailureCount++;
+      
+      console.warn('[Communication] ⚠️ Échec audit log:', {
+        error: error.message,
+        failureCount: this.auditFailureCount,
+        userId,
+        actionType
+      });
+
+      // Ouvrir le circuit si trop d'échecs
+      if (this.auditFailureCount >= this.AUDIT_CIRCUIT_THRESHOLD) {
+        this.auditCircuitOpen = true;
+        this.auditCircuitResetTime = now + this.AUDIT_CIRCUIT_RESET_MS;
+        console.error('[Communication] 🔴 Audit circuit breaker OUVERT pour 1 minute');
+      }
     }
   }
 }

@@ -199,7 +199,7 @@ const supabaseAdmin = createClient(
 ## 📱 Utilisation
 
 ### Accès
-**URL directe :** `https://224solutions.com/pdg/copilot`
+**URL directe :** `https://224solution.net/pdg/copilot`
 
 **Via le menu PDG :**
 Navigation → Intelligence → **Copilote Executive** (badge NEW)

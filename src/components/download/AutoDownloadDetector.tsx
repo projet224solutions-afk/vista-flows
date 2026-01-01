@@ -249,7 +249,7 @@ export default function AutoDownloadDetector() {
                 downloadUrl: window.location.origin,
                 installInstructions: [
                     'Ouvrez votre navigateur web',
-                    'Visitez 224solutions.com',
+                    'Visitez 224solution.net',
                     'Connectez-vous à votre compte',
                     'Ajoutez à l\'écran d\'accueil (optionnel)',
                     'Utilisez directement en ligne'

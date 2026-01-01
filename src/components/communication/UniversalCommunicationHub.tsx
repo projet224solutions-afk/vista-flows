@@ -93,10 +93,12 @@ export default function UniversalCommunicationHub({
     }
   }, [selectedConversationId, conversations]);
 
-  // S'abonner aux notifications
+  // S'abonner aux notifications avec cleanup proper
   useEffect(() => {
     if (!user?.id) return;
 
+    console.log('[Hub] 🔔 Subscription notifications pour:', user.id);
+    
     const channel = universalCommunicationService.subscribeToNotifications(
       user.id,
       (notification) => {
@@ -105,39 +107,74 @@ export default function UniversalCommunicationHub({
           title: notification.title,
           description: notification.body
         });
-        const audio = new Audio('/notification.mp3');
-        audio.play().catch(() => {});
-      }
-    );
-
-    return () => {
-      channel.unsubscribe();
-    };
-  }, [user]);
-
-  // S'abonner aux messages de la conversation active
-  useEffect(() => {
-    if (!selectedConversation) return;
-
-    const channel = universalCommunicationService.subscribeToMessages(
-      selectedConversation.id,
-      (message) => {
-        setMessages(prev => [...prev, message]);
-        scrollToBottom();
-
-        if (message.sender_id !== user?.id) {
-          universalCommunicationService.markMessagesAsRead(
-            selectedConversation.id,
-            user!.id
-          );
+        
+        // Son de notification avec fallback
+        try {
+          const audio = new Audio('/notification.mp3');
+          audio.play().catch(err => {
+            console.warn('[Hub] ⚠️ Impossible de jouer le son:', err);
+          });
+        } catch (err) {
+          console.warn('[Hub] ⚠️ Audio non disponible:', err);
         }
       }
     );
 
     return () => {
-      channel.unsubscribe();
+      console.log('[Hub] 🔌 Cleanup subscription notifications');
+      try {
+        channel.unsubscribe();
+      } catch (err) {
+        console.error('[Hub] ❌ Erreur cleanup notifications:', err);
+      }
     };
-  }, [selectedConversation, user]);
+  }, [user?.id, toast]);
+
+  // S'abonner aux messages de la conversation active avec cleanup proper
+  useEffect(() => {
+    if (!selectedConversation?.id) return;
+    if (!user?.id) return;
+
+    console.log('[Hub] 🔔 Subscription messages pour:', selectedConversation.id);
+
+    const channel = universalCommunicationService.subscribeToMessages(
+      selectedConversation.id,
+      (message) => {
+        console.log('[Hub] 📨 Nouveau message:', message.id);
+        
+        setMessages(prev => {
+          // Éviter les doublons
+          if (prev.some(m => m.id === message.id)) {
+            console.warn('[Hub] ⚠️ Message déjà présent:', message.id);
+            return prev;
+          }
+          return [...prev, message];
+        });
+        
+        // Scroll automatique avec délai pour le rendu
+        setTimeout(() => scrollToBottom(), 100);
+
+        // Marquer comme lu si message d'un autre utilisateur
+        if (message.sender_id !== user.id) {
+          universalCommunicationService.markMessagesAsRead(
+            selectedConversation.id,
+            user.id
+          ).catch(err => {
+            console.warn('[Hub] ⚠️ Erreur mark as read:', err);
+          });
+        }
+      }
+    );
+
+    return () => {
+      console.log('[Hub] 🔌 Cleanup subscription messages:', selectedConversation.id);
+      try {
+        channel.unsubscribe();
+      } catch (err) {
+        console.error('[Hub] ❌ Erreur cleanup messages:', err);
+      }
+    };
+  }, [selectedConversation?.id, user?.id]);
 
   const loadConversations = async () => {
     try {
@@ -150,17 +187,53 @@ export default function UniversalCommunicationHub({
   };
 
   const loadMessages = async (conversationId: string) => {
-    try {
-      const data = await universalCommunicationService.getMessages(conversationId);
-      setMessages(data);
-      scrollToBottom();
+    if (!conversationId) {
+      console.error('[Hub] ❌ Impossible de charger: conversationId manquant');
+      return;
+    }
 
+    try {
+      console.log('[Hub] 📥 Chargement messages pour:', conversationId);
+      
+      const data = await universalCommunicationService.getMessages(conversationId);
+      
+      setMessages(data);
+      console.log('[Hub] ✅ Messages chargés:', data.length);
+      
+      // Scroll avec délai pour le rendu
+      setTimeout(() => scrollToBottom(), 150);
+
+      // Marquer comme lus
       if (user?.id) {
-        await universalCommunicationService.markMessagesAsRead(conversationId, user.id);
-        loadConversations();
+        await universalCommunicationService.markMessagesAsRead(conversationId, user.id)
+          .catch(err => {
+            console.warn('[Hub] ⚠️ Erreur mark as read (non-bloquant):', err);
+          });
+        
+        // Recharger conversations pour mettre à jour le compteur
+        loadConversations().catch(err => {
+          console.warn('[Hub] ⚠️ Erreur reload conversations (non-bloquant):', err);
+        });
       }
-    } catch (error) {
-      console.error('Erreur chargement messages:', error);
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Erreur inconnue';
+      console.error('[Hub] ❌ Erreur chargement messages:', {
+        error: errorMessage,
+        conversationId,
+        stack: error?.stack
+      });
+      
+      toast({
+        title: 'Erreur de chargement',
+        description: errorMessage.includes('timeout')
+          ? 'Temps d\'attente dépassé. Vérifiez votre connexion.'
+          : `Impossible de charger les messages: ${errorMessage}`,
+        variant: 'destructive',
+        action: {
+          label: 'Réessayer',
+          onClick: () => loadMessages(conversationId)
+        }
+      });
     }
   };
 
@@ -181,39 +254,110 @@ export default function UniversalCommunicationHub({
   };
 
   const handleSendMessage = async (message: string, attachments?: File[]) => {
-    if (!selectedConversation || !user?.id) return;
-    if (!message.trim() && (!attachments || attachments.length === 0)) return;
+    if (!selectedConversation || !user?.id) {
+      console.error('[Hub] ❌ Impossible d\'envoyer: pas de conversation ou utilisateur');
+      toast({
+        title: 'Erreur',
+        description: 'Sélectionnez une conversation et connectez-vous',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Validation: au moins un message ou fichier
+    const hasMessage = message?.trim().length > 0;
+    const hasAttachments = attachments && attachments.length > 0;
+    
+    if (!hasMessage && !hasAttachments) {
+      console.warn('[Hub] ⚠️ Message et pièces jointes vides');
+      return;
+    }
 
     try {
-      if (attachments && attachments.length > 0) {
+      // Envoyer les fichiers avec timeout et validation
+      if (hasAttachments) {
         for (const file of attachments) {
-          let fileType: 'image' | 'video' | 'file' | 'audio' = 'file';
-          if (file.type.startsWith('image/')) fileType = 'image';
-          else if (file.type.startsWith('video/')) fileType = 'video';
-          else if (file.type.startsWith('audio/') || file.name.startsWith('audio_')) fileType = 'audio';
+          // Validation taille (50MB max)
+          if (file.size > 50 * 1024 * 1024) {
+            toast({
+              title: 'Fichier trop volumineux',
+              description: `${file.name} dépasse 50MB`,
+              variant: 'destructive'
+            });
+            continue;
+          }
 
-          await universalCommunicationService.sendFileMessage(
-            selectedConversation.id,
-            user.id,
-            file,
-            fileType
-          );
+          try {
+            let fileType: 'image' | 'video' | 'file' | 'audio' = 'file';
+            if (file.type.startsWith('image/')) fileType = 'image';
+            else if (file.type.startsWith('video/')) fileType = 'video';
+            else if (file.type.startsWith('audio/') || file.name.startsWith('audio_')) fileType = 'audio';
+
+            console.log('[Hub] 📤 Envoi fichier:', { name: file.name, type: fileType, size: file.size });
+            
+            await universalCommunicationService.sendFileMessage(
+              selectedConversation.id,
+              user.id,
+              file,
+              fileType
+            );
+            
+            console.log('[Hub] ✅ Fichier envoyé:', file.name);
+          } catch (fileError: any) {
+            console.error('[Hub] ❌ Erreur envoi fichier:', fileError);
+            toast({
+              title: 'Erreur fichier',
+              description: `Impossible d'envoyer ${file.name}: ${fileError.message}`,
+              variant: 'destructive'
+            });
+          }
         }
       }
 
-      if (message.trim()) {
+      // Envoyer le message texte
+      if (hasMessage) {
+        const trimmedMessage = message.trim();
+        
+        // Validation longueur (5000 chars max)
+        if (trimmedMessage.length > 5000) {
+          toast({
+            title: 'Message trop long',
+            description: `Le message ne peut pas dépasser 5000 caractères (actuellement: ${trimmedMessage.length})`,
+            variant: 'destructive'
+          });
+          return;
+        }
+
+        console.log('[Hub] 📤 Envoi message texte:', { length: trimmedMessage.length });
+        
         await universalCommunicationService.sendTextMessage(
           selectedConversation.id,
           user.id,
-          message
+          trimmedMessage
         );
+        
+        console.log('[Hub] ✅ Message texte envoyé');
       }
-    } catch (error) {
-      console.error('Erreur lors de l\'envoi:', error);
+      
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Erreur inconnue';
+      console.error('[Hub] ❌ Erreur lors de l\'envoi:', {
+        error: errorMessage,
+        stack: error?.stack,
+        conversationId: selectedConversation?.id,
+        userId: user?.id
+      });
+      
       toast({
-        title: 'Erreur',
-        description: 'Impossible d\'envoyer le message',
-        variant: 'destructive'
+        title: 'Erreur d\'envoi',
+        description: errorMessage.includes('timeout') 
+          ? 'Temps d\'attente dépassé. Vérifiez votre connexion.'
+          : `Impossible d'envoyer le message: ${errorMessage}`,
+        variant: 'destructive',
+        action: {
+          label: 'Réessayer',
+          onClick: () => handleSendMessage(message, attachments)
+        }
       });
     }
   };

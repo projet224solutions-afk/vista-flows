@@ -232,7 +232,7 @@ BEGIN
         ) VALUES (
             'SYN-2025-00001', 'Dakar', 'Plateau', 'Dakar - Plateau',
             'Mamadou Diallo', 'mamadou.diallo@email.com', '+221 77 123 45 67',
-            'https://224solutions.com/syndicat/president/abc123def456789',
+            'https://224solution.net/syndicat/president/abc123def456789',
             'abc123def456789', 'active',
             45, 42, 38, 2250000,
             3, 1, true

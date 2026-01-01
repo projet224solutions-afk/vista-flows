@@ -5,7 +5,7 @@
 - VPS Hostinger avec accès root
 - Ubuntu 20.04 ou 22.04
 - Minimum 2GB RAM, 2 CPU cores
-- Nom de domaine configuré (ex: 224solutions.com)
+- Nom de domaine configuré (ex: 224solution.net)
 
 ---
 

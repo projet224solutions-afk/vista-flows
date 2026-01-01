@@ -228,7 +228,7 @@ https://random-name-12345.netlify.app
 
 ### 8. Custom domain (optionnel)
 
-Si vous avez un domaine (ex: 224solutions.com):
+Si vous avez un domaine (ex: 224solution.net):
 - Site settings → Domain management
 - Add custom domain
 - Suivre instructions DNS

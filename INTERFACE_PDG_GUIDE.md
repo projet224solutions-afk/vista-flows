@@ -191,7 +191,7 @@
 4. **Contacter** le support technique
 
 ### **Contacts d'urgence :**
-- 📧 **Email** : support@224solutions.com
+- 📧 **Email** : support@224solution.net
 - 📞 **Téléphone** : +224 XXX XXX XXX
 - 💬 **Chat** : Support 24/7 intégré
 

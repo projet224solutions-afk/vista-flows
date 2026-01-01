@@ -426,7 +426,7 @@ WHERE user_id = 'user_id';
 ### Support Technique
 - Documentation OpenAI: https://platform.openai.com/docs
 - Supabase Edge Functions: https://supabase.com/docs/guides/functions
-- Support 224Solutions: support@224solutions.com
+- Support 224Solutions: support@224solution.net
 
 ---
 
@@ -494,4 +494,4 @@ Le système IA complet pour produits vendeurs est maintenant **prêt pour produc
 **Version:** 1.0.0  
 **Statut:** ✅ Production Ready  
 **Auteur:** GitHub Copilot  
-**Support:** support@224solutions.com
+**Support:** support@224solution.net

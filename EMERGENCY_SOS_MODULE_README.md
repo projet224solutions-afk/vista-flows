@@ -584,8 +584,8 @@ const watchId = gpsTrackingService.watchPosition(
 
 Pour toute question ou assistance :
 
-- **Email** : support@224solutions.com
-- **Documentation** : https://docs.224solutions.com/emergency-sos
+- **Email** : support@224solution.net
+- **Documentation** : https://docs.224solution.net/emergency-sos
 - **GitHub Issues** : https://github.com/224solutions/vista-flows/issues
 
 ---

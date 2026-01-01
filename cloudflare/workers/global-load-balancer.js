@@ -12,31 +12,31 @@
 // Configuration des régions backend
 const REGIONS = {
   'africa-west': {
-    origin: 'https://api-africa.224solutions.com',
+    origin: 'https://api-africa.224solution.net',
     priority: 1,
     weight: 100,
     healthCheck: '/health',
   },
   'europe-west': {
-    origin: 'https://api-eu.224solutions.com',
+    origin: 'https://api-eu.224solution.net',
     priority: 2,
     weight: 80,
     healthCheck: '/health',
   },
   'europe-central': {
-    origin: 'https://api-eu-central.224solutions.com',
+    origin: 'https://api-eu-central.224solution.net',
     priority: 3,
     weight: 70,
     healthCheck: '/health',
   },
   'us-east': {
-    origin: 'https://api-us-east.224solutions.com',
+    origin: 'https://api-us-east.224solution.net',
     priority: 4,
     weight: 60,
     healthCheck: '/health',
   },
   'us-west': {
-    origin: 'https://api-us-west.224solutions.com',
+    origin: 'https://api-us-west.224solution.net',
     priority: 5,
     weight: 50,
     healthCheck: '/health',

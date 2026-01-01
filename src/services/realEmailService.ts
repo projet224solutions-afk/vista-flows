@@ -267,7 +267,7 @@ Token: ${data.access_token}
             <li>✅ Commencez la gestion de votre bureau</li>
         </ol>
         
-        <p>Si vous avez des questions, n'hésitez pas à nous contacter à <a href="mailto:support@224solutions.com">support@224solutions.com</a></p>
+        <p>Si vous avez des questions, n'hésitez pas à nous contacter à <a href="mailto:support@224solution.net">support@224solution.net</a></p>
     </div>
     
     <div style="text-align: center; color: #666; font-size: 12px; margin-top: 30px;">
@@ -306,7 +306,7 @@ PROCHAINES ÉTAPES:
 3. Ajoutez vos premiers membres
 4. Commencez la gestion de votre bureau
 
-Pour toute question: support@224solutions.com
+Pour toute question: support@224solution.net
 
 224SOLUTIONS - Système de Gestion Syndicale Professionnel
 © 2025 - Tous droits réservés

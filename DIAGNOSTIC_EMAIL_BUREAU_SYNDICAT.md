@@ -50,7 +50,7 @@ Ouvrez la console (F12) pour voir :
 ```
 🚀 ENVOI EMAIL PRÉSIDENT - MÉTHODE GARANTIE
 📧 Destinataire: president@example.com
-🔗 Lien à envoyer: https://224solutions.com/syndicat/access/...
+🔗 Lien à envoyer: https://224solution.net/syndicat/access/...
 ✅ PROCESSUS D'ENVOI TERMINÉ AVEC SUCCÈS
 ```
 
@@ -70,7 +70,7 @@ Votre bureau syndical a été créé avec succès !
 • Préfecture: [Préfecture]
 • Commune: [Commune]
 
-🔗 LIEN D'ACCÈS: https://224solutions.com/syndicat/access/[token]
+🔗 LIEN D'ACCÈS: https://224solution.net/syndicat/access/[token]
 🔑 TOKEN: [token_sécurisé]
 
 Cliquez sur le lien et utilisez le token pour accéder à votre interface.
@@ -112,7 +112,7 @@ npm run dev
 ```bash
 EMAIL_USER=votre_email@gmail.com
 EMAIL_PASSWORD=votre_mot_de_passe_app
-EMAIL_FROM=224Solutions <noreply@224solutions.com>
+EMAIL_FROM=224Solutions <noreply@224solution.net>
 ```
 
 3. **Redémarrer le backend**

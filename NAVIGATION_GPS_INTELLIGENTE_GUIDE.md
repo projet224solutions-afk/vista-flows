@@ -736,7 +736,7 @@ function TestPage() {
 
 **Questions / Bugs:**
 - GitHub Issues
-- Email: support@224solutions.com
+- Email: support@224solution.net
 
 **Documentation:**
 - OpenRouteService: https://openrouteservice.org/dev/#/api-docs

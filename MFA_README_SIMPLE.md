@@ -219,7 +219,7 @@ Votre accès Agent 224Solutions est maintenant sécurisé avec un système
 d'authentification à 2 étapes.
 
 Pour vous connecter:
-1. Allez sur: https://224solutions.com/agent/login
+1. Allez sur: https://224solution.net/agent/login
 2. Entrez votre email (ou téléphone)
 3. Entrez votre mot de passe
 4. Un code de sécurité vous sera envoyé par email
@@ -243,7 +243,7 @@ Bonjour Monsieur le Président,
 Votre accès Bureau Syndicat 224Solutions est maintenant sécurisé.
 
 Pour vous connecter:
-1. Allez sur: https://224solutions.com/bureau/login
+1. Allez sur: https://224solution.net/bureau/login
 2. Entrez l'email du président (ou téléphone)
 3. Entrez le mot de passe fourni
 4. Un code de sécurité sera envoyé par email
@@ -251,7 +251,7 @@ Pour vous connecter:
 6. Vous êtes connecté !
 
 Le code expire après 5 minutes.
-Pour toute assistance: support@224solutions.com
+Pour toute assistance: support@224solution.net
 
 Cordialement,
 L'équipe 224Solutions
@@ -290,11 +290,11 @@ L'équipe 224Solutions
 ## 📞 CONTACT SUPPORT
 
 **Pour les utilisateurs:**
-- Email: support@224solutions.com
+- Email: support@224solution.net
 - Téléphone: (à définir)
 
 **Pour les développeurs:**
-- Email technique: dev@224solutions.com
+- Email technique: dev@224solution.net
 - Documentation: Voir fichiers MFA_*.md
 
 ---

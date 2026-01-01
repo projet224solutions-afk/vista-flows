@@ -207,7 +207,7 @@ class EmailService {
                 <li>✅ Commencez la gestion de votre bureau</li>
             </ul>
             
-            <p>Si vous avez des questions, n'hésitez pas à nous contacter à <a href="mailto:support@224solutions.com">support@224solutions.com</a></p>
+            <p>Si vous avez des questions, n'hésitez pas à nous contacter à <a href="mailto:support@224solution.net">support@224solution.net</a></p>
         </div>
         
         <div class="footer">
@@ -248,7 +248,7 @@ PROCHAINES ÉTAPES:
 3. Ajoutez vos premiers membres
 4. Commencez la gestion de votre bureau
 
-Pour toute question: support@224solutions.com
+Pour toute question: support@224solution.net
 
 224SOLUTIONS - Système de Gestion Syndicale Professionnel
 © 2025 - Tous droits réservés

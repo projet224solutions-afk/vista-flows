@@ -227,12 +227,12 @@ docker secret create backend_env .env
 
 ### Frontend
 ```
-frontend.224solutions.com → Vercel/Netlify
+frontend.224solution.net → Vercel/Netlify
 ```
 
 ### Backend Node.js
 ```
-api.224solutions.com → Railway/Render
+api.224solution.net → Railway/Render
 ```
 
 ### Certificats SSL

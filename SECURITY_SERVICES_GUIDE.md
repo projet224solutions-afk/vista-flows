@@ -577,9 +577,9 @@ CSP_CONFIG.mediaSrc.push('https://audio.trusted.com');
 ## 📞 Support
 
 **Contacts Urgence:**
-- **Technique:** tech@224solutions.com
-- **Sécurité:** security@224solutions.com
-- **Escalade:** pdg@224solutions.com
+- **Technique:** tech@224solution.net
+- **Sécurité:** security@224solution.net
+- **Escalade:** pdg@224solution.net
 
 **Documentation:**
 - Guide complet: `SECURITY_SERVICES_GUIDE.md` (ce fichier)

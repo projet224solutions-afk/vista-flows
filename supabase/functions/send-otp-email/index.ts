@@ -111,7 +111,7 @@ serve(async (req) => {
             <td style="background-color: #f8f9fa; padding: 20px 30px; border-top: 1px solid #e0e0e0;">
               <p style="color: #999999; font-size: 12px; line-height: 1.6; margin: 0; text-align: center;">
                 © 2025 224Solutions - Plateforme de Gestion Intégrée<br>
-                Conakry, Guinée | <a href="https://224solutions.com" style="color: #667eea; text-decoration: none;">224solutions.com</a>
+                Conakry, Guinée | <a href="https://224solution.net" style="color: #667eea; text-decoration: none;">224solution.net</a>
               </p>
             </td>
           </tr>
@@ -150,7 +150,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${resendApiKey}`
       },
       body: JSON.stringify({
-        from: '224Solutions <no-reply@224solutions.com>',
+        from: '224Solutions <no-reply@224solution.net>',
         to: [email],
         subject: `🔒 Code de sécurité: ${otp} - 224Solutions`,
         html: htmlTemplate

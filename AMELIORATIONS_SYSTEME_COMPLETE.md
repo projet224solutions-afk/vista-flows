@@ -250,7 +250,7 @@ interface QRCodeIdBadgeProps {
 ```
 
 **QR Code Génère:**
-- URL: `https://224solutions.com/user/USR0001`
+- URL: `https://224solution.net/user/USR0001`
 - Logo 224Solutions intégré
 - Niveau erreur: H (30% récupérable)
 - Tailles: 150px (sm), 200px (md), 250px (lg)

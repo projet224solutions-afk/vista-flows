@@ -27,7 +27,7 @@ Votre système **fonctionne parfaitement** ! Il utilise intelligemment les **don
 
 1. **🌐 Allez sur** : `http://localhost:8080/auth`
 2. **📝 Créez un compte** avec :
-   - Email : `vendeur@224solutions.com`
+   - Email : `vendeur@224solution.net`
    - Mot de passe : `VendeurTest123!`
    - Rôle : `vendeur`
 3. **🔐 Connectez-vous** avec ce compte
@@ -41,7 +41,7 @@ Votre système **fonctionne parfaitement** ! Il utilise intelligemment les **don
 3. **👤 Remplissez le formulaire** :
    - Prénom : `Amadou`
    - Nom : `Diallo`  
-   - Email : `amadou@224solutions.com`
+   - Email : `amadou@224solution.net`
    - Téléphone : `+224 123 456 789`
    - Rôle : `Vendeur`
 4. **✅ Validez l'inscription**

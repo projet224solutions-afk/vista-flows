@@ -234,13 +234,13 @@ export default {
 
 ```bash
 # Vérifier le statut du Load Balancer
-curl https://api.224solutions.com/lb-status
+curl https://api.224solution.net/lb-status
 
 # Tester la latence
-curl -w "@curl-format.txt" https://api.224solutions.com/health
+curl -w "@curl-format.txt" https://api.224solution.net/health
 
 # Vérifier la région servie
-curl -I https://api.224solutions.com/health | grep X-Served-By-Region
+curl -I https://api.224solution.net/health | grep X-Served-By-Region
 
 # Logs Cloudflare Workers
 wrangler tail 224solutions-global-lb
@@ -251,6 +251,6 @@ wrangler publish --env production
 
 ## 📞 Support
 
-- Documentation: https://docs.224solutions.com
-- Status Page: https://status.224solutions.com
-- Email: support@224solutions.com
+- Documentation: https://docs.224solution.net
+- Status Page: https://status.224solution.net
+- Email: support@224solution.net

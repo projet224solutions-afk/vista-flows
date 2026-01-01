@@ -201,9 +201,9 @@ spec:
         - containerPort: 3003
         env:
         - name: IDS_RULES_URL
-          value: "https://rules.224solutions.com/ids-rules.json"
+          value: "https://rules.224solution.net/ids-rules.json"
         - name: ML_MODEL_URL
-          value: "https://models.224solutions.com/anomaly-detection.pkl"
+          value: "https://models.224solution.net/anomaly-detection.pkl"
         resources:
           requests:
             memory: "2Gi"
@@ -236,7 +236,7 @@ spec:
         - containerPort: 3004
         env:
         - name: VAULT_ADDR
-          value: "https://vault.224solutions.com"
+          value: "https://vault.224solution.net"
         - name: VAULT_TOKEN
           valueFrom:
             secretKeyRef:
@@ -274,7 +274,7 @@ spec:
         - containerPort: 3005
         env:
         - name: WAF_RULES_URL
-          value: "https://rules.224solutions.com/waf-rules.json"
+          value: "https://rules.224solution.net/waf-rules.json"
         - name: RATE_LIMIT_RPS
           value: "10000"
         - name: BLOCK_THRESHOLD
@@ -398,7 +398,7 @@ spec:
         - containerPort: 3008
         env:
         - name: CERT_AUTHORITY_URL
-          value: "https://ca.224solutions.com"
+          value: "https://ca.224solution.net"
         - name: CERT_RENEWAL_DAYS
           value: "30"
         resources:

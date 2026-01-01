@@ -210,7 +210,7 @@ INSERT INTO security_settings (key, value) VALUES
   ('lockout_duration_minutes', '30'::jsonb),
   ('ip_whitelist', '[]'::jsonb),
   ('enable_auto_blocking', 'true'::jsonb),
-  ('alert_email', '"security@224solutions.com"'::jsonb)
+  ('alert_email', '"security@224solution.net"'::jsonb)
 ON CONFLICT (key) DO NOTHING;
 
 -- RLS Policies

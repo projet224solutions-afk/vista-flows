@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from "@/hooks/useTranslation";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import useCurrentLocation from "@/hooks/useGeolocation";
+import { useGPSLocation } from "@/hooks/useGPSLocation";
 import { useDriverSubscription } from "@/hooks/useDriverSubscription";
 import { useTaxiNotifications } from "@/hooks/useTaxiNotifications";
 import { useTaxiErrorBoundary } from "@/hooks/useTaxiErrorBoundary";
@@ -49,18 +49,37 @@ export default function TaxiMotoDriver() {
     const { user, profile, signOut } = useAuth();
     const { error, capture, clear } = useTaxiErrorBoundary();
     const { t } = useTranslation();
-    const { location: hookLocation, getCurrentLocation, watchLocation, stopWatching } = useCurrentLocation();
-    const [activeLocation, setActiveLocation] = useState<{ latitude: number; longitude: number } | null>(null);
     
-    // Location effective = soit la location du hook, soit la location obtenue manuellement
-    const location = hookLocation || activeLocation;
+    // GPS unifié avec fallback et error handling
+    const { 
+        location, 
+        loading: gpsLoading, 
+        error: gpsError, 
+        isWatching,
+        getCurrentLocation, 
+        startWatching, 
+        stopWatching,
+        refreshLocation
+    } = useGPSLocation({
+        enableHighAccuracy: true,
+        watchPosition: false,
+        onLocationChange: (loc) => {
+            console.log('📍 [GPS] Position mise à jour:', loc);
+        },
+        onError: (err) => {
+            capture('gps', err.userMessage, err);
+            toast.error(err.userMessage, {
+                description: err.suggestions[0]
+            });
+        }
+    });
+    
     const { notifications, unreadCount, markAsRead, markAllAsRead } = useTaxiNotifications();
     const { hasAccess, subscription, loading: subscriptionLoading, isExpired } = useDriverSubscription();
 
     // États UI
     const [activeTab, setActiveTab] = useState('dashboard');
     const [onlineSince, setOnlineSince] = useState<Date | null>(null);
-    const [locationWatchId, setLocationWatchId] = useState<number | null>(null);
 
     // États de navigation
     const [distanceToDestination, setDistanceToDestination] = useState(0);
@@ -200,93 +219,50 @@ export default function TaxiMotoDriver() {
         return () => clearInterval(interval);
     }, [isOnline, onlineSince]);
 
-    // Gérer le statut en ligne et le tracking
+    // Gérer le statut en ligne et le tracking GPS automatique
     useEffect(() => {
-        if (isOnline && driverId && hasAccess) {
-            startLocationTracking();
-            loadPendingRides();
-        } else if (locationWatchId !== null) {
-            navigator.geolocation.clearWatch(locationWatchId);
-            setLocationWatchId(null);
-        }
-    }, [isOnline, driverId, hasAccess]);
-
-    // ========== FONCTIONS ==========
-
-    /**
-     * Démarre le suivi de position en temps réel
-     */
-    const startLocationTracking = () => {
-        console.log('🚀 Démarrage du suivi GPS...');
-        
-        if (!navigator.geolocation) {
-            console.error('❌ Géolocalisation non disponible');
-            toast.error('GPS non disponible sur cet appareil');
-            return;
-        }
-
-        const watchId = navigator.geolocation.watchPosition(
-            (position) => {
-                console.log('📍 Position mise à jour:', {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
-                    accuracy: position.coords.accuracy
-                });
-                
-                setActiveLocation({
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude
-                });
-                
-                // Mettre à jour la position via le hook
-                if (driverId) {
-                    updateDriverLocation(position.coords.latitude, position.coords.longitude);
+        if (isOnline && driverId && hasAccess && location) {
+            // Démarrer le suivi continu avec le hook GPS unifié
+            startWatching(
+                (position) => {
+                    // Mettre à jour la position du conducteur
+                    updateDriverLocation(position.latitude, position.longitude);
 
                     // Si une course est active, tracker la position
                     if (activeRide && (activeRide.status === 'picked_up' || activeRide.status === 'in_progress')) {
                         TaxiMotoService.trackPosition(
                             activeRide.id,
                             driverId,
-                            position.coords.latitude,
-                            position.coords.longitude,
-                            position.coords.speed || undefined,
-                            position.coords.heading || undefined,
-                            position.coords.accuracy || undefined
+                            position.latitude,
+                            position.longitude,
+                            undefined, // speed
+                            undefined, // heading
+                            position.accuracy || undefined
                         ).catch(err => console.error('❌ Erreur tracking course:', err));
                     }
+                },
+                (error) => {
+                    console.error('❌ Erreur suivi GPS:', error);
+                    toast.error(error || 'Erreur suivi GPS', { duration: 5000 });
                 }
-            },
-            (error) => {
-                console.error('❌ Erreur suivi GPS:', error);
-                let errorMessage = 'Erreur suivi GPS';
-                
-                switch (error.code) {
-                    case error.PERMISSION_DENIED:
-                        errorMessage = 'Permission GPS refusée. Autorisez l\'accès dans les paramètres.';
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        errorMessage = 'Position GPS indisponible. Vérifiez que le GPS est activé.';
-                        break;
-                    case error.TIMEOUT:
-                        errorMessage = 'Délai GPS dépassé. Vérifiez votre connexion.';
-                        break;
-                }
-                
-                toast.error(errorMessage, { duration: 5000 });
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 15000,
-                maximumAge: 5000
-            }
-        );
+            );
+            
+            loadPendingRides();
+        } else if (!isOnline && isWatching) {
+            // Arrêter le suivi quand hors ligne
+            stopWatching();
+        }
         
-        setLocationWatchId(watchId);
-        console.log('✅ Suivi GPS activé avec watchId:', watchId);
-    };
+        return () => {
+            // Cleanup au démontage
+            if (isWatching) stopWatching();
+        };
+    }, [isOnline, driverId, hasAccess]);
+
+    // ========== FONCTIONS ==========
 
     /**
-     * Bascule le statut en ligne/hors ligne avec gestion GPS améliorée
+     * Bascule le statut en ligne/hors ligne avec GPS unifié
      */
     const toggleOnlineStatus = async () => {
         const next = !isOnline;
@@ -304,133 +280,51 @@ export default function TaxiMotoDriver() {
         }
 
         if (next) {
-            toast.loading('📍 Activation GPS en cours...', { id: 'gps-loading' });
+            toast.loading('📍 Activation GPS...', { id: 'gps-loading' });
             
             try {
-                if (!('geolocation' in navigator)) {
-                    toast.dismiss('gps-loading');
-                    toast.error('❌ GPS non disponible sur cet appareil');
+                // Obtenir position avec le hook GPS unifié (avec fallback automatique)
+                await enableGPS(
+                    (position) => {
+                        toast.dismiss('gps-loading');
+                        toast.success('✅ GPS activé');
+                    },
+                    (error) => {
+                        toast.dismiss('gps-loading');
+                        toast.error(error || 'Impossible d\'activer le GPS');
+                        return;
+                    }
+                );
+                
+                // Vérifier qu'on a bien une position
+                if (!location) {
+                    toast.error('Position GPS non disponible');
                     return;
                 }
-
-                const getPosition = (highAccuracy: boolean, timeout: number): Promise<GeolocationPosition> => {
-                    return new Promise((resolve, reject) => {
-                        navigator.geolocation.getCurrentPosition(resolve, reject, {
-                            enableHighAccuracy: highAccuracy,
-                            timeout: timeout,
-                            maximumAge: 10000
-                        });
-                    });
-                };
-
-                let position: GeolocationPosition;
                 
-                try {
-                    position = await getPosition(true, 15000);
-                } catch (firstError: any) {
-                    console.log('⚠️ Haute précision échouée, essai basse précision...', firstError.code);
-                    toast.loading('📍 Recherche position alternative...', { id: 'gps-loading' });
-                    
-                    try {
-                        position = await getPosition(false, 30000);
-                    } catch (secondError: any) {
-                        // Fallback: IP geolocation
-                        console.log('⚠️ GPS hardware échoué, essai géolocalisation IP...');
-                        toast.loading('📍 Localisation par IP...', { id: 'gps-loading' });
-                        
-                        try {
-                            const ipResponse = await fetch('https://ipapi.co/json/');
-                            const ipData = await ipResponse.json();
-                            
-                            if (ipData.latitude && ipData.longitude) {
-                                position = {
-                                    coords: {
-                                        latitude: ipData.latitude,
-                                        longitude: ipData.longitude,
-                                        accuracy: 5000,
-                                        altitude: null,
-                                        altitudeAccuracy: null,
-                                        heading: null,
-                                        speed: null
-                                    },
-                                    timestamp: Date.now()
-                                } as GeolocationPosition;
-                                
-                                toast.info('📍 Localisation approximative (IP)', {
-                                    description: 'Pour une meilleure précision, utilisez un appareil mobile avec GPS'
-                                });
-                            } else {
-                                throw secondError;
-                            }
-                        } catch (ipError) {
-                            throw secondError;
-                        }
-                    }
-                }
-                
-                toast.dismiss('gps-loading');
-                toast.success('✅ GPS activé avec succès');
-                
-                setActiveLocation({
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude
-                });
-                
+                // Mettre à jour le statut dans la base
                 await TaxiMotoService.updateDriverStatus(
                     driverId,
                     true,
                     true,
-                    position.coords.latitude,
-                    position.coords.longitude
+                    location.latitude,
+                    location.longitude
                 );
 
                 setIsOnline(true);
-                setOnlineSince(new Date());
+                
                 toast.success('🟢 Vous êtes maintenant en ligne');
                 
-                startLocationTracking();
-                await loadPendingRides();
-                
             } catch (error: any) {
-                capture('gps', 'Erreur GPS lors de la mise en ligne', error);
                 toast.dismiss('gps-loading');
-                
-                let errorTitle = '⚠️ Erreur GPS';
-                let errorMessage = 'Impossible d\'obtenir votre position';
-                
-                if (error?.code === 1) {
-                    errorTitle = '🚫 Permission refusée';
-                    errorMessage = 'Autorisez l\'accès GPS dans les paramètres de votre navigateur';
-                } else if (error?.code === 2) {
-                    errorTitle = '📍 Position indisponible';
-                    errorMessage = 'Activez le GPS et vérifiez votre connexion internet';
-                } else if (error?.code === 3) {
-                    errorTitle = '⏱️ Délai dépassé';
-                    errorMessage = 'La recherche GPS a pris trop de temps. Réessayez à l\'extérieur.';
-                }
-                
-                toast.error(
-                    <div className="space-y-2">
-                        <p className="font-semibold">{errorTitle}</p>
-                        <p className="text-sm">{errorMessage}</p>
-                        <div className="text-xs opacity-80 mt-2">
-                            <p>💡 Conseils:</p>
-                            <p>• Allez à l'extérieur pour un meilleur signal</p>
-                            <p>• Activez le WiFi pour une localisation plus rapide</p>
-                            <p>• Rechargez la page et réessayez</p>
-                        </div>
-                    </div>,
-                    { duration: 8000 }
-                );
+                console.error('❌ Erreur activation:', error);
                 return;
             }
         } else {
             // Passer hors ligne
             try {
-                if (locationWatchId !== null) {
-                    navigator.geolocation.clearWatch(locationWatchId);
-                    setLocationWatchId(null);
-                }
+                // Arrêter le suivi GPS
+                await disableGPS();
                 
                 await TaxiMotoService.updateDriverStatus(
                     driverId,
@@ -441,9 +335,8 @@ export default function TaxiMotoDriver() {
                 );
 
                 setIsOnline(false);
-                setOnlineSince(null);
-                setActiveLocation(null);
                 clearRideRequests();
+                
                 toast.info('🔴 Vous êtes maintenant hors ligne');
             } catch (error) {
                 capture('network', 'Erreur lors du changement de statut', error);

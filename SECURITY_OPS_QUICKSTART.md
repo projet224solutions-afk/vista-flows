@@ -222,7 +222,7 @@ const sendNotification = async (incident) => {
 
 **Urgences sécurité:**
 - Dashboard: `/pdg` → Onglet "Sécurité"
-- Email: security@224solutions.com
+- Email: security@224solution.net
 - Téléphone: +224 XXX XXX XXX
 
 **Documentation complète:**

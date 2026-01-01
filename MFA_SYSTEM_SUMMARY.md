@@ -319,7 +319,7 @@ https://votre-domaine.netlify.app/bureau/login
 
 ### Pour les Agents
 ```
-1. Accédez à: https://224solutions.com/agent/login
+1. Accédez à: https://224solution.net/agent/login
 2. Saisissez votre email OU téléphone
 3. Saisissez votre mot de passe (fourni par le PDG)
 4. Un code de sécurité vous sera envoyé par email
@@ -329,7 +329,7 @@ https://votre-domaine.netlify.app/bureau/login
 
 ### Pour les Bureaux Syndicat
 ```
-1. Accédez à: https://224solutions.com/bureau/login
+1. Accédez à: https://224solution.net/bureau/login
 2. Saisissez l'email OU téléphone du président
 3. Saisissez votre mot de passe (fourni par 224Solutions)
 4. Un code de sécurité vous sera envoyé par email
@@ -412,9 +412,9 @@ WHERE email = 'agent@example.com';
 ## 📞 SUPPORT TECHNIQUE
 
 ### Contacts
-- **Dev Lead:** dev@224solutions.com
-- **PDG:** pdg@224solutions.com
-- **Support:** support@224solutions.com
+- **Dev Lead:** dev@224solution.net
+- **PDG:** pdg@224solution.net
+- **Support:** support@224solution.net
 
 ### Logs à vérifier en cas d'erreur
 1. **Browser Console (F12)** → Erreurs JS

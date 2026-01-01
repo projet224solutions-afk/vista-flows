@@ -355,7 +355,7 @@ const BugBounty = () => {
             <div>
               <h3 className="font-semibold mb-2">✅ Scope autorisé</h3>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li>224solutions.com et tous ses sous-domaines</li>
+                <li>224solution.net et tous ses sous-domaines</li>
                 <li>Applications mobiles officielles</li>
                 <li>APIs publiques documentées</li>
               </ul>

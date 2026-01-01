@@ -321,9 +321,9 @@ SELECT * FROM auth_login_logs ORDER BY created_at DESC LIMIT 10;
 
 ### Contact
 ```
-Dev Lead: dev@224solutions.com
-PDG: pdg@224solutions.com
-Support: support@224solutions.com
+Dev Lead: dev@224solution.net
+PDG: pdg@224solution.net
+Support: support@224solution.net
 ```
 
 ---

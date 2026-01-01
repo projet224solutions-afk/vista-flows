@@ -436,9 +436,9 @@ console.log(sessionStorage.getItem('agent_user'));
 - Database: Vérifier tables auth_otp_codes, auth_login_logs
 
 **Contact:**
-- Dev: dev@224solutions.com
-- PDG: pdg@224solutions.com
-- Support: support@224solutions.com
+- Dev: dev@224solution.net
+- PDG: pdg@224solution.net
+- Support: support@224solution.net
 
 ---
 

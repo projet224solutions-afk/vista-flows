@@ -506,7 +506,7 @@ export default function AgentManagement() {
                       required
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="Ex: agent@224solutions.com"
+                      placeholder="Ex: agent@224solution.net"
                     />
                   </div>
 

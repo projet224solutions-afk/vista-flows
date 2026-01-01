@@ -347,8 +347,8 @@ FROM health_check_reports;
 ```
 
 **Contact:**
-- Technique: tech@224solutions.com
-- Sécurité: security@224solutions.com
+- Technique: tech@224solution.net
+- Sécurité: security@224solution.net
 
 ---
 

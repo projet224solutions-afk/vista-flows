@@ -497,5 +497,5 @@ La plateforme est **prête pour la production** après corrections du plan d'act
 
 **Prochaine étape recommandée:** Pentest externe par équipe sécurité professionnelle pour validation indépendante.
 
-**Contact audit:** security@224solutions.com  
+**Contact audit:** security@224solution.net  
 **Dernière mise à jour:** 7 Décembre 2025

@@ -263,7 +263,7 @@ serve(async (req) => {
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(grayColor);
-    doc.text('Devis généré par 224Solutions • www.224solutions.com', 105, 287, { align: 'center' });
+    doc.text('Devis généré par 224Solutions • www.224solution.net', 105, 287, { align: 'center' });
 
     // Convertir en ArrayBuffer
     const pdfBytes = doc.output('arraybuffer');

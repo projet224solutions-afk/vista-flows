@@ -110,9 +110,9 @@ export function useRegion(): UseRegionReturn {
   }, []);
 
   // Computed values
-  const apiEndpoint = currentRegion?.endpoints.api || 'https://api.224solutions.com';
-  const cdnEndpoint = currentRegion?.endpoints.cdn || 'https://cdn.224solutions.com';
-  const wsEndpoint = currentRegion?.endpoints.websocket || 'wss://ws.224solutions.com';
+  const apiEndpoint = currentRegion?.endpoints.api || 'https://api.224solution.net';
+  const cdnEndpoint = currentRegion?.endpoints.cdn || 'https://cdn.224solution.net';
+  const wsEndpoint = currentRegion?.endpoints.websocket || 'wss://ws.224solution.net';
   const availableRegions = getEnabledRegions();
   const isHealthy = health?.overallStatus === 'healthy';
 

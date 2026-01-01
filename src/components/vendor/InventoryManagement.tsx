@@ -8,13 +8,14 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, AlertTriangle, TrendingDown, Warehouse, Search, Filter, Plus, Edit, History, TrendingUp, DollarSign, Trash2 } from "lucide-react";
+import { Package, AlertTriangle, TrendingDown, Warehouse, Search, Filter, Plus, Edit, History, TrendingUp, DollarSign, Trash2, Wifi, WifiOff, Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from "@/hooks/use-toast";
 import { useInventoryService } from "@/hooks/useInventoryService";
 import InventoryAlerts from "./InventoryAlerts";
 import InventoryHistory from "./InventoryHistory";
 import WarehouseStockManagement from "./WarehouseStockManagement";
+import offlinePOSManager from '@/lib/offlinePOSManager';
 
 interface InventoryItem {
   id: string;
@@ -59,6 +60,9 @@ export default function InventoryManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>('all');
   const [products, setProducts] = useState<Array<{ id: string; name: string; sku?: string; price: number }>>([]);
+  
+  // États pour le mode offline
+  const [isOnline, setIsOnline] = useState(offlinePOSManager.isOnline());
 
   const fetchWarehouses = useCallback(async () => {
     try {
@@ -104,6 +108,27 @@ export default function InventoryManagement() {
     fetchProducts();
     refresh(); // Forcer le rechargement de l'inventaire
   }, [vendorId, fetchWarehouses, fetchProducts, refresh]);
+
+  // Détection du statut réseau
+  useEffect(() => {
+    const cleanup = offlinePOSManager.onNetworkChange((online) => {
+      setIsOnline(online);
+      
+      if (online) {
+        toast({ title: 'Connexion rétablie', description: 'Inventaire en ligne' });
+        // Recharger l'inventaire
+        refresh();
+      } else {
+        toast({ 
+          title: 'Mode hors ligne', 
+          description: 'Inventaire en lecture seule',
+          variant: 'default'
+        });
+      }
+    });
+    
+    return cleanup;
+  }, [refresh, toast]);
 
   // Recharger automatiquement quand on revient sur l'onglet (focus) ou qu'il redevient visible
   useEffect(() => {
@@ -398,14 +423,46 @@ export default function InventoryManagement() {
     <div className="space-y-4 md:space-y-6 px-2 md:px-0">
       {/* Header mobile optimisé */}
       <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center">
-        <div className="min-w-0">
-          <h2 className="text-lg md:text-2xl font-bold truncate">📦 Gestion des Stocks</h2>
-          <p className="text-xs md:text-sm text-muted-foreground truncate">Inventaire synchronisé en temps réel</p>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-3">
+            <div>
+              <h2 className="text-lg md:text-2xl font-bold truncate">📦 Gestion des Stocks</h2>
+              <p className="text-xs md:text-sm text-muted-foreground truncate">Inventaire synchronisé en temps réel</p>
+            </div>
+            
+            {/* Indicateur de statut réseau */}
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs ${
+              isOnline 
+                ? 'bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800' 
+                : 'bg-orange-50 border-orange-200 dark:bg-orange-950 dark:border-orange-800'
+            }`}>
+              {isOnline ? (
+                <>
+                  <Wifi className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                  <span className="font-medium text-green-700 dark:text-green-300 hidden md:inline">
+                    En ligne
+                  </span>
+                </>
+              ) : (
+                <>
+                  <WifiOff className="h-3.5 w-3.5 text-orange-600 dark:text-orange-400" />
+                  <span className="font-medium text-orange-700 dark:text-orange-300 hidden md:inline">
+                    Lecture seule
+                  </span>
+                  <Eye className="h-3.5 w-3.5 text-orange-600 dark:text-orange-400" />
+                </>
+              )}
+            </div>
+          </div>
         </div>
         <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="flex-shrink-0 h-9 px-3 text-xs md:text-sm">
+              <Button 
+                variant="outline" 
+                className="flex-shrink-0 h-9 px-3 text-xs md:text-sm"
+                disabled={!isOnline}
+              >
                 <Plus className="w-3.5 h-3.5 mr-1.5" />
                 <span className="hidden sm:inline">Ajouter</span> stock
               </Button>

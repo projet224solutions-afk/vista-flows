@@ -95,9 +95,12 @@ export default function BureauDashboard() {
       setBureau(bureauData);
 
       const [workersRes, membersRes, motosRes, alertsRes, walletRes] = await Promise.all([
-        supabase.from('syndicate_workers').select('*').eq('bureau_id', bureauData.id),
-        supabase.from('syndicate_workers').select('*').eq('bureau_id', bureauData.id), // Utiliser syndicate_workers comme source unique
-        supabase.from('vehicles').select('*').eq('bureau_id', bureauData.id), // Utiliser vehicles au lieu de registered_motos
+        // Membres du bureau (staff avec permissions)
+        supabase.from('syndicate_workers').select('*').eq('bureau_id', bureauData.id).eq('is_staff', true),
+        // Adhérents du syndicat (membres réguliers)
+        supabase.from('syndicate_workers').select('*').eq('bureau_id', bureauData.id).eq('is_staff', false),
+        // Véhicules enregistrés
+        supabase.from('vehicles').select('*').eq('bureau_id', bureauData.id),
         supabase.from('syndicate_alerts').select('*').eq('bureau_id', bureauData.id).order('created_at', { ascending: false }),
         supabase.from('bureau_wallets').select('balance').eq('bureau_id', bureauData.id).single()
       ]);
@@ -109,8 +112,15 @@ export default function BureauDashboard() {
       setWalletBalance(walletRes.data?.balance || 0);
     } catch (error: any) {
       console.error('Erreur chargement bureau:', error);
-      captureError('member_error', error.message || 'Erreur lors du chargement des données', error);
-      toast.error('Erreur lors du chargement des données');
+      const errorMessage = error.message || 'Impossible de charger les données du bureau';
+      captureError('member_error', errorMessage, error);
+      toast.error(errorMessage, {
+        description: 'Vérifiez votre connexion internet et réessayez',
+        action: {
+          label: 'Réessayer',
+          onClick: () => loadBureauData()
+        }
+      });
     } finally {
       setLoading(false);
     }
@@ -136,6 +146,22 @@ export default function BureauDashboard() {
 
   const handleAddWorker = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(workerForm.email)) {
+      toast.error('Format email invalide');
+      return;
+    }
+    
+    // Validation téléphone (Guinée: +224XXXXXXXXX ou 9 chiffres)
+    if (workerForm.telephone) {
+      const phoneRegex = /^(\+224)?[0-9]{9}$/;
+      if (!phoneRegex.test(workerForm.telephone.replace(/\s/g, ''))) {
+        toast.error('Format téléphone invalide (9 chiffres)');
+        return;
+      }
+    }
     
     try {
       setIsSubmittingWorker(true);
@@ -180,6 +206,22 @@ export default function BureauDashboard() {
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validation email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(memberForm.email)) {
+      toast.error('Format email invalide');
+      return;
+    }
+    
+    // Validation téléphone si fourni
+    if (memberForm.phone) {
+      const phoneRegex = /^(\+224)?[0-9]{9}$/;
+      if (!phoneRegex.test(memberForm.phone.replace(/\s/g, ''))) {
+        toast.error('Format téléphone invalide (9 chiffres)');
+        return;
+      }
+    }
+    
     if (memberForm.password !== memberForm.confirm_password) {
       toast.error('Les mots de passe ne correspondent pas');
       return;
@@ -187,6 +229,16 @@ export default function BureauDashboard() {
 
     if (memberForm.password.length < 8) {
       toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      return;
+    }
+    
+    // Validation force du mot de passe
+    const hasUpperCase = /[A-Z]/.test(memberForm.password);
+    const hasLowerCase = /[a-z]/.test(memberForm.password);
+    const hasNumber = /[0-9]/.test(memberForm.password);
+    
+    if (!hasUpperCase || !hasLowerCase || !hasNumber) {
+      toast.error('Le mot de passe doit contenir: majuscule, minuscule et chiffre');
       return;
     }
 

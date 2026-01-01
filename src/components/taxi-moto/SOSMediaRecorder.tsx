@@ -17,7 +17,8 @@ import {
   CheckCircle,
   X,
   Play,
-  Pause
+  Pause,
+  Volume2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -249,78 +250,102 @@ export function SOSMediaRecorder({
       <CardContent className="space-y-4">
         {/* État idle - Boutons de démarrage */}
         {recordingState === 'idle' && (
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              onClick={() => startRecording('video')}
-              className="h-16 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg"
-            >
-              <div className="flex flex-col items-center gap-1">
-                <Video className="w-6 h-6" />
-                <span className="text-xs font-medium">Filmer</span>
-              </div>
-            </Button>
-            <Button
-              onClick={() => startRecording('audio')}
-              className="h-16 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg"
-            >
-              <div className="flex flex-col items-center gap-1">
-                <Mic className="w-6 h-6" />
-                <span className="text-xs font-medium">Enregistrer Audio</span>
-              </div>
-            </Button>
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600 text-center">
+              Capturez une preuve audio ou vidéo de la situation
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                onClick={() => startRecording('video')}
+                className="h-20 bg-gradient-to-br from-red-500 via-red-600 to-red-700 hover:from-red-600 hover:via-red-700 hover:to-red-800 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 group"
+              >
+                <div className="flex flex-col items-center gap-2">
+                  <Video className="w-7 h-7 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-bold">Vidéo</span>
+                  <span className="text-[10px] opacity-80">Recommandé</span>
+                </div>
+              </Button>
+              <Button
+                onClick={() => startRecording('audio')}
+                className="h-20 bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 hover:from-orange-600 hover:via-orange-700 hover:to-orange-800 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 group"
+              >
+                <div className="flex flex-col items-center gap-2">
+                  <Mic className="w-7 h-7 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-bold">Audio</span>
+                  <span className="text-[10px] opacity-80">Plus rapide</span>
+                </div>
+              </Button>
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-xs text-blue-800 flex items-start gap-2">
+                <span className="text-blue-600 flex-shrink-0">💡</span>
+                <span>
+                  L'enregistrement sera envoyé au Bureau Syndicat en temps réel.
+                  Décrivez clairement la situation.
+                </span>
+              </p>
+            </div>
           </div>
         )}
 
         {/* État recording - En cours d'enregistrement */}
         {recordingState === 'recording' && (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {/* Preview vidéo en direct */}
             {recordingType === 'video' && (
-              <div className="relative rounded-lg overflow-hidden bg-black aspect-video">
+              <div className="relative rounded-xl overflow-hidden bg-black aspect-video shadow-2xl ring-4 ring-red-500/50 animate-pulse">
                 <video
                   ref={videoPreviewRef}
                   className="w-full h-full object-cover"
                   muted
                   playsInline
                 />
-                <div className="absolute top-2 left-2">
-                  <Badge className="bg-red-600 text-white animate-pulse flex items-center gap-1">
-                    <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                    REC
+                <div className="absolute top-3 left-3 flex items-center gap-2">
+                  <Badge className="bg-red-600 text-white flex items-center gap-2 px-3 py-1.5 shadow-lg">
+                    <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
+                    <span className="font-bold">ENREGISTREMENT</span>
                   </Badge>
+                </div>
+                <div className="absolute bottom-3 left-3 right-3 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2">
+                  <p className="text-white text-xs">📹 Filmez la situation actuelle</p>
                 </div>
               </div>
             )}
 
             {/* Indicateur audio */}
             {recordingType === 'audio' && (
-              <div className="bg-orange-100 rounded-lg p-6 flex flex-col items-center justify-center">
-                <div className="relative">
-                  <Mic className="w-12 h-12 text-orange-600" />
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse" />
+              <div className="bg-gradient-to-br from-orange-100 to-orange-50 rounded-xl p-8 flex flex-col items-center justify-center shadow-xl ring-4 ring-orange-500/50 animate-pulse">
+                <div className="relative mb-4">
+                  <div className="absolute inset-0 bg-orange-500/20 rounded-full animate-ping" />
+                  <Mic className="w-16 h-16 text-orange-600 relative z-10" />
+                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full animate-pulse shadow-lg" />
                 </div>
-                <p className="mt-2 text-sm text-orange-700 font-medium">Enregistrement en cours...</p>
+                <p className="text-orange-800 font-bold text-lg">Enregistrement audio</p>
+                <p className="text-orange-600 text-sm mt-1">Parlez clairement et décrivez la situation</p>
               </div>
             )}
 
             {/* Timer et contrôles */}
-            <div className="flex items-center justify-between">
-              <Badge variant="outline" className="text-lg font-mono px-4 py-2">
-                {formatDuration(recordingDuration)}
-              </Badge>
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+                <Badge variant="outline" className="text-xl font-mono font-bold px-4 py-2 border-2">
+                  {formatDuration(recordingDuration)}
+                </Badge>
+              </div>
               <div className="flex gap-2">
                 <Button
                   onClick={cancelRecording}
                   variant="outline"
                   size="sm"
-                  className="border-red-300 text-red-600"
+                  className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
                 >
                   <X className="w-4 h-4 mr-1" />
                   Annuler
                 </Button>
                 <Button
                   onClick={stopRecording}
-                  className="bg-red-600 hover:bg-red-700 text-white"
+                  className="bg-red-600 hover:bg-red-700 text-white font-bold shadow-lg"
                   size="sm"
                 >
                   <Square className="w-4 h-4 mr-1" />
@@ -333,10 +358,17 @@ export function SOSMediaRecorder({
 
         {/* État stopped - Preview et envoi */}
         {recordingState === 'stopped' && (
-          <div className="space-y-3">
+          <div className="space-y-4">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+              <p className="text-sm text-green-800 font-medium flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                Enregistrement terminé ! Vérifiez avant d'envoyer.
+              </p>
+            </div>
+
             {/* Preview vidéo */}
             {recordingType === 'video' && (
-              <div className="relative rounded-lg overflow-hidden bg-black aspect-video">
+              <div className="relative rounded-xl overflow-hidden bg-black aspect-video shadow-xl">
                 <video
                   ref={videoPreviewRef}
                   className="w-full h-full object-cover"
@@ -345,21 +377,38 @@ export function SOSMediaRecorder({
                 />
                 <Button
                   onClick={togglePlayback}
-                  className="absolute inset-0 bg-black/30 hover:bg-black/40 flex items-center justify-center"
+                  className="absolute inset-0 bg-black/40 hover:bg-black/50 flex items-center justify-center transition-colors"
                   variant="ghost"
                 >
-                  {isPlaying ? (
-                    <Pause className="w-12 h-12 text-white" />
-                  ) : (
-                    <Play className="w-12 h-12 text-white" />
-                  )}
+                  <div className="bg-white/90 rounded-full p-4 shadow-2xl">
+                    {isPlaying ? (
+                      <Pause className="w-10 h-10 text-gray-900" />
+                    ) : (
+                      <Play className="w-10 h-10 text-gray-900" />
+                    )}
+                  </div>
                 </Button>
+                <div className="absolute bottom-3 left-3 right-3 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center justify-between">
+                  <span className="text-white text-sm font-medium">
+                    Durée: {formatDuration(recordingDuration)}
+                  </span>
+                  <Badge className="bg-white/20 text-white">Prévisualisation</Badge>
+                </div>
               </div>
             )}
 
             {/* Preview audio */}
             {recordingType === 'audio' && (
-              <div className="bg-orange-100 rounded-lg p-4">
+              <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center">
+                    <Volume2 className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-orange-900">Enregistrement audio</p>
+                    <p className="text-sm text-orange-600">Durée: {formatDuration(recordingDuration)}</p>
+                  </div>
+                </div>
                 <audio
                   ref={audioPreviewRef}
                   controls
@@ -369,46 +418,62 @@ export function SOSMediaRecorder({
               </div>
             )}
 
-            {/* Infos et boutons */}
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
-                Durée: {formatDuration(recordingDuration)}
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  onClick={cancelRecording}
-                  variant="outline"
-                  size="sm"
-                >
-                  <X className="w-4 h-4 mr-1" />
-                  Annuler
-                </Button>
-                <Button
-                  onClick={sendRecording}
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                  size="sm"
-                >
-                  <Send className="w-4 h-4 mr-1" />
-                  Envoyer
-                </Button>
-              </div>
+            {/* Boutons d'action */}
+            <div className="flex gap-2 p-4 bg-gray-50 rounded-lg">
+              <Button
+                onClick={cancelRecording}
+                variant="outline"
+                className="flex-1 border-gray-300 hover:bg-gray-100"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Recommencer
+              </Button>
+              <Button
+                onClick={sendRecording}
+                className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold shadow-lg hover:shadow-xl transition-all"
+              >
+                <Send className="w-4 h-4 mr-2" />
+                Envoyer au Bureau
+              </Button>
             </div>
           </div>
         )}
 
         {/* État uploading */}
         {recordingState === 'uploading' && (
-          <div className="flex flex-col items-center justify-center py-6 space-y-3">
-            <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
-            <p className="text-sm text-muted-foreground">Envoi en cours...</p>
+          <div className="flex flex-col items-center justify-center py-10 space-y-4">
+            <div className="relative">
+              <Loader2 className="w-16 h-16 text-blue-600 animate-spin" />
+              <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping" />
+            </div>
+            <div className="text-center space-y-1">
+              <p className="text-lg font-bold text-blue-900">Envoi en cours...</p>
+              <p className="text-sm text-blue-600">
+                Transmission sécurisée vers le Bureau Syndicat
+              </p>
+            </div>
+            <div className="w-full max-w-xs bg-gray-200 rounded-full h-2 overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-blue-500 to-blue-600 animate-pulse" style={{ width: '100%' }} />
+            </div>
           </div>
         )}
 
         {/* État sent */}
         {recordingState === 'sent' && (
-          <div className="flex flex-col items-center justify-center py-6 space-y-3">
-            <CheckCircle className="w-10 h-10 text-green-600" />
-            <p className="text-sm font-medium text-green-700">Envoyé avec succès!</p>
+          <div className="flex flex-col items-center justify-center py-10 space-y-4">
+            <div className="relative">
+              <CheckCircle className="w-16 h-16 text-green-600" />
+              <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
+            </div>
+            <div className="text-center space-y-2">
+              <p className="text-xl font-bold text-green-800">Envoyé avec succès!</p>
+              <p className="text-sm text-green-600">
+                Le Bureau Syndicat a reçu votre enregistrement
+              </p>
+            </div>
+            <Badge className="bg-green-100 text-green-800 border-2 border-green-300 px-4 py-2">
+              ✓ Preuve enregistrée
+            </Badge>
           </div>
         )}
 

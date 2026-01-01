@@ -285,7 +285,7 @@ Si vous avez les bons credentials mais recevez toujours une erreur 403, demandez
 ```
 Adresses à whitelister:
 - Supabase Edge Functions: *.supabase.co
-- Votre domaine: 224solutions.com
+- Votre domaine: 224solution.net
 - IP de vos serveurs (si statiques)
 ```
 

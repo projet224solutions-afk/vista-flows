@@ -364,7 +364,7 @@ return new Response(JSON.stringify({
 ## 📧 EXEMPLE EMAIL OTP REÇU
 
 ```
-De: 224Solutions <noreply@224solutions.com>
+De: 224Solutions <noreply@224solution.net>
 À: jean.dupont@test.com
 Sujet: 🔐 Code de sécurité - 224Solutions
 
@@ -428,5 +428,5 @@ Votre plateforme tout-en-un
    - Database → auth_login_logs (table)
 
 **Contact urgence:**
-- Dev Lead: dev@224solutions.com
-- PDG: pdg@224solutions.com
+- Dev Lead: dev@224solution.net
+- PDG: pdg@224solution.net

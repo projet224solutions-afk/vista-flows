@@ -593,7 +593,7 @@ AGENT_MANAGEMENT_SYSTEM.md
 440:// 3. Créer des agents
 441:const agent = await agentService.createAgent(pdgId, {
 442:  name: "Premier Agent",
-443:  email: "agent@224solutions.com",
+443:  email: "agent@224solution.net",
 445:  canCreateSubAgent: true
 
 ANALYSE_CAPACITE_UTILISATEURS_ACTUELLE.md

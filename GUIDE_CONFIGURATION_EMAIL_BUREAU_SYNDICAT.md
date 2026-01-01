@@ -42,7 +42,7 @@ Toutes les informations importantes sont affichées dans la console :
 📧 DÉTAILS EMAIL ENVOYÉ:
 - Destinataire: president@example.com
 - Code Bureau: SYN-2025-00001
-- Lien d'accès: https://224solutions.com/syndicat/access/abc123...
+- Lien d'accès: https://224solution.net/syndicat/access/abc123...
 - Token d'accès: xyz789...
 ```
 
@@ -56,7 +56,7 @@ Si vous voulez configurer l'envoi via votre serveur :
 # Email Configuration
 EMAIL_USER=votre_email@gmail.com
 EMAIL_PASSWORD=votre_mot_de_passe_app
-EMAIL_FROM=224Solutions <noreply@224solutions.com>
+EMAIL_FROM=224Solutions <noreply@224solution.net>
 ```
 
 2. Démarrez le backend :
@@ -115,7 +115,7 @@ Président reçoit email → Clique sur lien → Accède à l'interface
 3. Vérifiez les logs :
 ```
 📧 Envoi email au président: president@example.com
-🔗 Lien à envoyer: https://224solutions.com/syndicat/access/...
+🔗 Lien à envoyer: https://224solution.net/syndicat/access/...
 ✅ Email envoyé avec succès
 ```
 
@@ -142,7 +142,7 @@ Votre bureau syndical a été créé avec succès.
 • Commune: [Commune]
 
 🔐 ACCÈS:
-Lien: https://224solutions.com/syndicat/access/[token]
+Lien: https://224solution.net/syndicat/access/[token]
 Token: [token_sécurisé]
 
 📝 ÉTAPES:

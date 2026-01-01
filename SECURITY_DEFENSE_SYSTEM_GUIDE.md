@@ -330,7 +330,7 @@ Le système track automatiquement :
 ## 📞 Contact
 
 Pour toute question ou incident critique :
-- **Email** : security@224solutions.com
+- **Email** : security@224solution.net
 - **Slack** : #security-ops
 - **Téléphone urgence** : +224 XXX XXX XXX
 

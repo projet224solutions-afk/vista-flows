@@ -94,7 +94,7 @@ export function QRCodeIdBadge({
     const shareData = {
       title: `224Solutions - ${userName || 'Utilisateur'}`,
       text: `Mon ID: ${id}`,
-      url: `https://224solutions.com/user/${id}`,
+      url: `https://224solution.net/user/${id}`,
     };
 
     try {
@@ -188,7 +188,7 @@ export function QRCodeIdBadge({
               <div className="p-4 bg-white rounded-lg border-2 border-orange-200">
                 <QRCodeSVG
                   id="qr-code-svg"
-                  value={`https://224solutions.com/user/${id}`}
+                  value={`https://224solution.net/user/${id}`}
                   size={currentSize.qr}
                   level="H"
                   includeMargin

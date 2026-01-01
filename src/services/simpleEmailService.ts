@@ -263,7 +263,7 @@ ${data.permanent_link}
 4. Ajoutez vos premiers membres
 5. Commencez la gestion de votre bureau
 
-Si vous avez des questions, n'hésitez pas à nous contacter à support@224solutions.com
+Si vous avez des questions, n'hésitez pas à nous contacter à support@224solution.net
 
 Cordialement,
 L'équipe 224SOLUTIONS
@@ -282,7 +282,7 @@ Système de Gestion Syndicale Professionnel
       bureau_code: 'SYN-TEST-001',
       prefecture: 'Test Préfecture',
       commune: 'Test Commune',
-      permanent_link: 'https://224solutions.com/syndicat/access/test123',
+      permanent_link: 'https://224solution.net/syndicat/access/test123',
       access_token: 'TEST_TOKEN_123456'
     };
 

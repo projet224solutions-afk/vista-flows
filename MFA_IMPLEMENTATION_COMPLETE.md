@@ -438,8 +438,8 @@ SUPABASE_SERVICE_ROLE_KEY=xxx (pour Edge Functions)
      ```
 
 **Contact:**
-- Support technique: support@224solutions.com
-- PDG: pdg@224solutions.com
+- Support technique: support@224solution.net
+- PDG: pdg@224solution.net
 
 ---
 

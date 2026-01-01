@@ -515,7 +515,7 @@ secureLogger.destroy(); // Force flush avant destroy
 **Besoin d'aide?**
 - Documentation complète: `SECURITY_SERVICES_GUIDE.md`
 - Rapport implémentation: `SECURITY_IMPLEMENTATION_REPORT.md`
-- Contact: security@224solutions.com
+- Contact: security@224solution.net
 
 ---
 
