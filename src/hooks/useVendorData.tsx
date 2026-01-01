@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
 export interface VendorStats {
+  vendorId: string;
   revenue: number;
   profit: number;
   orders_count: number;
@@ -161,6 +162,7 @@ export function useVendorStats() {
           .eq('vendor_id', vendor.id);
 
         setStats({
+          vendorId: vendor.id,
           revenue,
           profit: revenue * 0.2, // Example: 20% profit margin
           orders_count,

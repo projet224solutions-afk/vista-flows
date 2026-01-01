@@ -573,7 +573,7 @@ export default function VendeurDashboard() {
               } />
               <Route path="debts" element={
                 <ProtectedRoute feature="debt_management">
-                  <VendorDebtManagement vendorId={(stats as any)?.vendorId || ''} />
+                  <VendorDebtManagement vendorId={stats?.vendorId || ''} />
                 </ProtectedRoute>
               } />
               <Route path="contracts" element={
@@ -583,7 +583,7 @@ export default function VendeurDashboard() {
               } />
               <Route path="affiliate" element={
                 <ProtectedRoute feature="affiliate_program">
-                  <AffiliateManagement shopId={(stats as any)?.vendorId || undefined} />
+                  <AffiliateManagement shopId={stats?.vendorId || undefined} />
                 </ProtectedRoute>
               } />
               
