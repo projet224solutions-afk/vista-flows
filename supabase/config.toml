@@ -1,5 +1,14 @@
 project_id = "uakkxaibujzxdiqzpnpr"
 
+[functions.djomy-payment]
+verify_jwt = true
+
+[functions.djomy-webhook]
+verify_jwt = false
+
+[functions.djomy-verify]
+verify_jwt = true
+
 [functions.calculate-delivery-distances]
 verify_jwt = false
 
