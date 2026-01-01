@@ -70,22 +70,24 @@ export function usePDGReportsData(timeRange: '7d' | '30d' | '90d') {
       const prevStartDate = new Date(startDate);
       prevStartDate.setDate(prevStartDate.getDate() - days);
 
-      // Récupérer les transactions
+      // Récupérer les transactions (exclure archivées)
       const { data: transactions, error: transError } = await supabase
         .from('enhanced_transactions')
         .select('*')
         .gte('created_at', startDate.toISOString())
-        .eq('status', 'completed');
+        .eq('status', 'completed')
+        .neq('is_archived', true);
 
       if (transError) throw transError;
 
-      // Récupérer les transactions de la période précédente
+      // Récupérer les transactions de la période précédente (exclure archivées)
       const { data: prevTransactions } = await supabase
         .from('enhanced_transactions')
         .select('*')
         .gte('created_at', prevStartDate.toISOString())
         .lt('created_at', startDate.toISOString())
-        .eq('status', 'completed');
+        .eq('status', 'completed')
+        .neq('is_archived', true);
 
       // Calculer les stats
       const totalRevenue = transactions?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;

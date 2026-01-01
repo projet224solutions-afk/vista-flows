@@ -1741,6 +1741,7 @@ export type Database = {
           currency: string | null
           description: string | null
           id: string
+          is_archived: boolean | null
           merchant_category: string | null
           merchant_name: string
           metadata: Json | null
@@ -1757,6 +1758,7 @@ export type Database = {
           currency?: string | null
           description?: string | null
           id?: string
+          is_archived?: boolean | null
           merchant_category?: string | null
           merchant_name: string
           metadata?: Json | null
@@ -1773,6 +1775,7 @@ export type Database = {
           currency?: string | null
           description?: string | null
           id?: string
+          is_archived?: boolean | null
           merchant_category?: string | null
           merchant_name?: string
           metadata?: Json | null
@@ -2799,6 +2802,13 @@ export type Database = {
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "user_search_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deliveries_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "active_orders"
             referencedColumns: ["id"]
           },
           {
@@ -3987,6 +3997,7 @@ export type Database = {
           custom_id: string
           escrow_id: string | null
           id: string
+          is_archived: boolean | null
           metadata: Json | null
           method: string
           public_id: string | null
@@ -4002,6 +4013,7 @@ export type Database = {
           custom_id?: string
           escrow_id?: string | null
           id?: string
+          is_archived?: boolean | null
           metadata?: Json | null
           method?: string
           public_id?: string | null
@@ -4017,6 +4029,7 @@ export type Database = {
           custom_id?: string
           escrow_id?: string | null
           id?: string
+          is_archived?: boolean | null
           metadata?: Json | null
           method?: string
           public_id?: string | null
@@ -4267,7 +4280,21 @@ export type Database = {
             foreignKeyName: "escrow_transactions_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
+            referencedRelation: "active_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escrow_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escrow_transactions_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "active_transactions"
             referencedColumns: ["id"]
           },
           {
@@ -5800,6 +5827,13 @@ export type Database = {
             foreignKeyName: "international_shipments_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
+            referencedRelation: "active_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "international_shipments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
@@ -6026,6 +6060,13 @@ export type Database = {
           warehouse_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "inventory_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "active_orders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "inventory_history_order_id_fkey"
             columns: ["order_id"]
@@ -6725,6 +6766,13 @@ export type Database = {
             foreignKeyName: "order_items_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
+            referencedRelation: "active_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
@@ -6751,6 +6799,7 @@ export type Database = {
           customer_id: string
           discount_amount: number | null
           id: string
+          is_archived: boolean | null
           metadata: Json | null
           notes: string | null
           order_number: string
@@ -6773,6 +6822,7 @@ export type Database = {
           customer_id: string
           discount_amount?: number | null
           id?: string
+          is_archived?: boolean | null
           metadata?: Json | null
           notes?: string | null
           order_number: string
@@ -6795,6 +6845,7 @@ export type Database = {
           customer_id?: string
           discount_amount?: number | null
           id?: string
+          is_archived?: boolean | null
           metadata?: Json | null
           notes?: string | null
           order_number?: string
@@ -7057,6 +7108,13 @@ export type Database = {
           status?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "payment_schedules_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "active_orders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payment_schedules_order_id_fkey"
             columns: ["order_id"]
@@ -7645,6 +7703,13 @@ export type Database = {
           verified_purchase?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "product_reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "active_orders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "product_reviews_order_id_fkey"
             columns: ["order_id"]
@@ -12370,6 +12435,13 @@ export type Database = {
             foreignKeyName: "trackings_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
+            referencedRelation: "active_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trackings_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
@@ -12464,6 +12536,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "active_orders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "transactions_order_id_fkey"
             columns: ["order_id"]
@@ -14251,6 +14330,13 @@ export type Database = {
             foreignKeyName: "vendor_ratings_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
+            referencedRelation: "active_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_ratings_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
@@ -15101,6 +15187,7 @@ export type Database = {
           device_info: Json | null
           fee: number
           id: string
+          is_archived: boolean | null
           metadata: Json | null
           net_amount: number
           receiver_wallet_id: string | null
@@ -15118,6 +15205,7 @@ export type Database = {
           device_info?: Json | null
           fee?: number
           id?: string
+          is_archived?: boolean | null
           metadata?: Json | null
           net_amount: number
           receiver_wallet_id?: string | null
@@ -15135,6 +15223,7 @@ export type Database = {
           device_info?: Json | null
           fee?: number
           id?: string
+          is_archived?: boolean | null
           metadata?: Json | null
           net_amount?: number
           receiver_wallet_id?: string | null
@@ -15657,6 +15746,173 @@ export type Database = {
       }
     }
     Views: {
+      active_orders: {
+        Row: {
+          billing_address: Json | null
+          created_at: string | null
+          customer_id: string | null
+          discount_amount: number | null
+          id: string | null
+          is_archived: boolean | null
+          metadata: Json | null
+          notes: string | null
+          order_number: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"] | null
+          payment_status: Database["public"]["Enums"]["payment_status"] | null
+          public_id: string | null
+          shipping_address: Json | null
+          shipping_amount: number | null
+          source: Database["public"]["Enums"]["order_source"] | null
+          status: Database["public"]["Enums"]["order_status"] | null
+          subtotal: number | null
+          tax_amount: number | null
+          total_amount: number | null
+          updated_at: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          billing_address?: Json | null
+          created_at?: string | null
+          customer_id?: string | null
+          discount_amount?: number | null
+          id?: string | null
+          is_archived?: boolean | null
+          metadata?: Json | null
+          notes?: string | null
+          order_number?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          public_id?: string | null
+          shipping_address?: Json | null
+          shipping_amount?: number | null
+          source?: Database["public"]["Enums"]["order_source"] | null
+          status?: Database["public"]["Enums"]["order_status"] | null
+          subtotal?: number | null
+          tax_amount?: number | null
+          total_amount?: number | null
+          updated_at?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          billing_address?: Json | null
+          created_at?: string | null
+          customer_id?: string | null
+          discount_amount?: number | null
+          id?: string | null
+          is_archived?: boolean | null
+          metadata?: Json | null
+          notes?: string | null
+          order_number?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          public_id?: string | null
+          shipping_address?: Json | null
+          shipping_amount?: number | null
+          source?: Database["public"]["Enums"]["order_source"] | null
+          status?: Database["public"]["Enums"]["order_status"] | null
+          subtotal?: number | null
+          tax_amount?: number | null
+          total_amount?: number | null
+          updated_at?: string | null
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      active_transactions: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          currency: string | null
+          custom_id: string | null
+          escrow_id: string | null
+          id: string | null
+          is_archived: boolean | null
+          metadata: Json | null
+          method: string | null
+          public_id: string | null
+          receiver_id: string | null
+          sender_id: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          custom_id?: string | null
+          escrow_id?: string | null
+          id?: string | null
+          is_archived?: boolean | null
+          metadata?: Json | null
+          method?: string | null
+          public_id?: string | null
+          receiver_id?: string | null
+          sender_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          custom_id?: string | null
+          escrow_id?: string | null
+          id?: string | null
+          is_archived?: boolean | null
+          metadata?: Json | null
+          method?: string | null
+          public_id?: string | null
+          receiver_id?: string | null
+          sender_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enhanced_transactions_escrow_id_fkey"
+            columns: ["escrow_id"]
+            isOneToOne: false
+            referencedRelation: "escrow_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enhanced_transactions_escrow_id_fkey"
+            columns: ["escrow_id"]
+            isOneToOne: false
+            referencedRelation: "escrow_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_type_statistics: {
         Row: {
           active_agents: number | null
@@ -15772,6 +16028,13 @@ export type Database = {
           status: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "escrow_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "active_orders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "escrow_transactions_order_id_fkey"
             columns: ["order_id"]

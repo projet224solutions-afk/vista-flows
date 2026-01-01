@@ -74,11 +74,12 @@ export const WalletTransactionHistory = ({
         setWalletBalance(walletData.balance);
         setWalletCurrency(walletData.currency);
 
-        // Récupérer les transactions depuis enhanced_transactions
+        // Récupérer les transactions depuis enhanced_transactions (exclure archivées)
         const { data: transactionsData, error: transactionsError } = await supabase
           .from('enhanced_transactions')
           .select('id, amount, sender_id, receiver_id, method, created_at, status')
           .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+          .neq('is_archived', true)
           .order('created_at', { ascending: false })
           .limit(limit);
 
