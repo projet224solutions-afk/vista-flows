@@ -135,7 +135,7 @@ export function EscrowPaymentWrapper({
                   {transaction.payment_provider === 'wallet' && 'Wallet 224'}
                   {transaction.payment_provider === 'stripe' && 'Carte bancaire'}
                   {transaction.payment_provider === 'cash' && 'Espèces'}
-                  {transaction.payment_provider === 'moneroo' && 'Mobile Money'}
+                  {transaction.payment_provider === 'djomy' && 'Mobile Money (Djomy)'}
                 </Badge>
               </div>
 

@@ -41,7 +41,6 @@ export default function WalletDashboard() {
   const [busy, setBusy] = useState(false);
   const [showTransferPreview, setShowTransferPreview] = useState(false);
   const [transferPreview, setTransferPreview] = useState<any>(null);
-  const [showFedaPayDialog, setShowFedaPayDialog] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -358,21 +357,21 @@ export default function WalletDashboard() {
 
           <TabsContent value="deposit" className="space-y-4">
             <div className="space-y-4">
-              {/* FedaPay - Orange Money, MTN */}
-              <div className="p-4 border rounded-lg bg-gradient-to-r from-green-50 to-emerald-50">
+              {/* Djomy - Mobile Money */}
+              <div className="p-4 border rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50">
                 <div className="flex items-center gap-2 mb-3">
-                  <Smartphone className="w-5 h-5 text-green-600" />
-                  <h4 className="font-semibold">Recharger via Mobile Money</h4>
+                  <Smartphone className="w-5 h-5 text-blue-600" />
+                  <h4 className="font-semibold">Recharger via Djomy</h4>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Orange Money ou MTN Mobile Money via FedaPay
+                  Orange Money, MTN Mobile Money, Kulu via Djomy
                 </p>
                 <Button 
-                  onClick={() => setShowFedaPayDialog(true)} 
-                  className="w-full bg-green-600 hover:bg-green-700"
+                  onClick={() => {/* TODO: Ouvrir dialogue Djomy */}} 
+                  className="w-full bg-blue-600 hover:bg-blue-700"
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
-                  Recharger (Orange/MTN)
+                  Recharger Wallet
                 </Button>
               </div>
 
@@ -387,7 +386,7 @@ export default function WalletDashboard() {
                       size="sm"
                       onClick={() => {
                         setDepositAmount(amount.toString());
-                        setShowFedaPayDialog(true);
+                        /* TODO: Ouvrir dialogue Djomy */
                       }}
                     >
                       {amount.toLocaleString('fr-FR')} GNF

@@ -21,18 +21,6 @@ verify_jwt = false
 [functions.send-delivery-notification]
 verify_jwt = false
 
-[functions.moneroo-initialize-payment]
-verify_jwt = true
-
-[functions.moneroo-webhook]
-verify_jwt = false
-
-[functions.moneroo-verify-payment]
-verify_jwt = true
-
-[functions.moneroo-get-payment-methods]
-verify_jwt = true
-
 [functions.create-product]
 verify_jwt = true
 
@@ -217,12 +205,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.test-gemini-api]
-verify_jwt = false
-
-[functions.fedapay-initialize-payment]
-verify_jwt = true
-
-[functions.fedapay-webhook]
 verify_jwt = false
 
 [functions.pubsub-publish]

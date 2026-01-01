@@ -47,7 +47,6 @@ export default function Payment() {
     balance_after: number;
     receiver_id?: string;
   } | null>(null);
-  const [showFedaPayDialog, setShowFedaPayDialog] = useState(false);
   
   // États pour la sélection de méthode de paiement
   const [paymentStep, setPaymentStep] = useState<'form' | 'method'>('form');
@@ -467,24 +466,21 @@ export default function Payment() {
     }
   };
 
-  // Fonction pour paiement Mobile Money
+  // Fonction pour paiement Mobile Money via Djomy
   const handleMobileMoneyPayment = async (method: 'orange_money' | 'mtn_money', phone: string) => {
     if (!user?.id || !paymentAmount) return;
 
     setProcessing(true);
     try {
-      // Invoquer la fonction FedaPay ou mobile money selon le provider
       const provider = method === 'orange_money' ? 'orange' : 'mtn';
       
       toast({
-        title: "📱 Demande envoyée",
-        description: `Confirmez le paiement sur votre téléphone ${provider.toUpperCase()} (${phone})`
+        title: "📱 Paiement Djomy",
+        description: `Redirection vers Djomy pour paiement ${provider.toUpperCase()}`
       });
 
-      // TODO: Intégrer avec l'API FedaPay ou autre provider mobile money
-      // Pour l'instant, on ouvre le dialog FedaPay
+      // Utiliser Djomy directement
       setPaymentOpen(false);
-      setShowFedaPayDialog(true);
       
     } catch (error: any) {
       console.error('Erreur paiement mobile money:', error);
@@ -804,11 +800,11 @@ export default function Payment() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button 
-                  className="gap-2 bg-orange-500 hover:bg-orange-600 text-white"
-                  onClick={() => setShowFedaPayDialog(true)}
+                  className="gap-2 bg-blue-500 hover:bg-blue-600 text-white"
+                  onClick={() => setPaymentOpen(true)}
                 >
                   <Smartphone className="h-4 w-4" />
-                  Recharger (Orange/MTN)
+                  Recharger Wallet (Djomy)
                 </Button>
                 <ProfessionalVirtualCard />
                 <Dialog 

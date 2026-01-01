@@ -22,7 +22,6 @@ interface ImportMetaEnv {
   readonly VITE_GOOGLE_MAPS_API_KEY?: string;
   readonly VITE_AGORA_APP_ID?: string;
   readonly VITE_STRIPE_PUBLISHABLE_KEY?: string;
-  readonly VITE_MONEROO_API_KEY?: string;
   readonly VITE_MAPBOX_ACCESS_TOKEN?: string;
   [key: string]: string | undefined;
 }
