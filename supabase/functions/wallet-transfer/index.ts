@@ -1,5 +1,12 @@
+/**
+ * 🔐 WALLET TRANSFER SÉCURISÉ
+ * Avec signature HMAC, verrouillage optimiste et audit
+ * 224Solutions - Règles de sécurité financières
+ */
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { crypto } from "https://deno.land/std@0.190.0/crypto/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,6 +15,30 @@ const corsHeaders = {
 
 // Marge de sécurité invisible - JAMAIS exposée au client
 const SECURITY_MARGIN = 0.005; // 0.5%
+const TRANSACTION_SECRET = Deno.env.get("TRANSACTION_SECRET_KEY") || "secure-transaction-key-224sol";
+
+// 🔐 Génère signature HMAC
+async function generateSignature(transactionId: string, amount: number): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(`${transactionId}${amount}`);
+  const keyData = encoder.encode(TRANSACTION_SECRET);
+  const key = await crypto.subtle.importKey("raw", keyData, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const signature = await crypto.subtle.sign("HMAC", key, data);
+  return Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+// 🔐 Log audit financier
+async function logFinancialAudit(supabase: any, userId: string, action: string, data: any, isSuspicious = false) {
+  try {
+    await supabase.from("financial_audit_logs").insert({
+      user_id: userId,
+      action_type: action,
+      description: `Wallet transfer: ${action}`,
+      request_data: data,
+      is_suspicious: isSuspicious
+    });
+  } catch (e) { console.error("[Audit] Log failed:", e); }
+}
 
 interface TransferRequest {
   sender_id: string;
@@ -268,6 +299,30 @@ async function handleTransfer(supabase: any, body: TransferRequest, req: Request
                 || "unknown";
   const userAgent = req.headers.get("user-agent") || "unknown";
 
+  // 🔐 Générer signature HMAC pour cette transaction
+  const signature = await generateSignature(transferCode, amount);
+
+  // 🔐 Créer enregistrement secure_transactions AVANT toute modification
+  const { error: secureInsertError } = await supabase
+    .from("secure_transactions")
+    .insert({
+      id: transferCode,
+      user_id: sender_id,
+      requested_amount: amount,
+      fee_amount: feeData.fee_amount,
+      total_amount: amount,
+      net_amount: feeData.amount_after_fee,
+      signature: signature,
+      status: "pending",
+      transaction_type: "wallet_transfer",
+      metadata: { receiver_id, currencyFrom, currencyTo, ratePublic }
+    });
+
+  if (secureInsertError) {
+    console.error("Secure transaction insert failed:", secureInsertError);
+    throw new Error("Erreur de sécurité transaction");
+  }
+
   // Créer l'enregistrement de transfert
   const { data: transfer, error: transferError } = await supabase
     .from("wallet_transfers")
@@ -292,12 +347,14 @@ async function handleTransfer(supabase: any, body: TransferRequest, req: Request
       status: "processing",
       ip_address: clientIP,
       user_agent: userAgent,
+      signature: signature, // 🔐 Signature stockée
     })
     .select()
     .single();
 
   if (transferError) {
     console.error("Transfer record creation failed:", transferError);
+    await supabase.from("secure_transactions").update({ status: "failed" }).eq("id", transferCode);
     throw new Error("Erreur lors de la création du transfert");
   }
 
@@ -336,15 +393,26 @@ async function handleTransfer(supabase: any, body: TransferRequest, req: Request
       throw new Error("Échec du crédit du wallet destinataire");
     }
 
-    // Marquer le transfert comme complété
-    await supabase
-      .from("wallet_transfers")
-      .update({
-        status: "completed",
-        confirmed_at: new Date().toISOString(),
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", transfer.id);
+    // 🔐 Marquer le transfert ET la transaction sécurisée comme complétés
+    await Promise.all([
+      supabase
+        .from("wallet_transfers")
+        .update({
+          status: "completed",
+          confirmed_at: new Date().toISOString(),
+          completed_at: new Date().toISOString(),
+        })
+        .eq("id", transfer.id),
+      supabase
+        .from("secure_transactions")
+        .update({ status: "completed", completed_at: new Date().toISOString() })
+        .eq("id", transferCode)
+    ]);
+
+    // 🔐 Log audit succès
+    await logFinancialAudit(supabase, sender_id, 'transfer_completed', {
+      transferCode, amount, receiver_id, amountReceived: amountReceivedReal
+    });
 
     // Créer les transactions pour l'historique
     await Promise.all([

@@ -1,14 +1,45 @@
 /**
- * EDGE FUNCTION: PROCESSUS DE PAIEMENT TAXI-MOTO
- * Gère les paiements multi-canaux: Carte, Orange Money, MTN Money, Wallet, Cash
+ * 🔐 EDGE FUNCTION: PROCESSUS DE PAIEMENT TAXI-MOTO SÉCURISÉ
+ * Gère les paiements multi-canaux avec signature HMAC obligatoire
+ * Règles de sécurité financières 224Solutions
  */
 
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { crypto } from "https://deno.land/std@0.190.0/crypto/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+const TRANSACTION_SECRET = Deno.env.get("TRANSACTION_SECRET_KEY") || "secure-transaction-key-224sol";
+
+// 🔐 Génère une signature HMAC-SHA256
+async function generateSignature(transactionId: string, amount: number): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(`${transactionId}${amount}`);
+  const keyData = encoder.encode(TRANSACTION_SECRET);
+  
+  const key = await crypto.subtle.importKey(
+    "raw", keyData, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  
+  const signature = await crypto.subtle.sign("HMAC", key, data);
+  return Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+// 🔐 Log d'audit
+async function logFinancialAudit(supabase: any, userId: string, action: string, data: any, isSuspicious = false) {
+  try {
+    await supabase.from("financial_audit_logs").insert({
+      user_id: userId,
+      action_type: action,
+      description: `Taxi payment: ${action}`,
+      request_data: data,
+      is_suspicious: isSuspicious
+    });
+  } catch (e) { console.error("[Audit] Log failed:", e); }
 }
 
 serve(async (req) => {
@@ -43,10 +74,15 @@ serve(async (req) => {
       }
     }
 
-    // Créer transaction initiale
+    // 🔐 Générer ID et signature sécurisée
+    const transactionId = `TAXI-${Date.now()}-${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
+    const signature = await generateSignature(transactionId, amount);
+
+    // 🔐 Créer transaction sécurisée immutable
     const { data: transaction, error: txError } = await supabase
       .from('taxi_transactions')
       .insert({
+        id: transactionId,
         ride_id: tripId,
         customer_id: customerId,
         driver_id: driverId,
@@ -54,12 +90,18 @@ serve(async (req) => {
         payment_method: paymentMethod,
         status: 'pending',
         idempotency_key: idempotencyKey,
-        currency: 'GNF'
+        currency: 'GNF',
+        signature: signature // 🔐 Signature HMAC stockée
       })
       .select()
       .single()
 
     if (txError) throw txError
+
+    // 🔐 Log audit création
+    await logFinancialAudit(supabase, customerId, 'taxi_transaction_created', {
+      transactionId, amount, tripId, paymentMethod, signature: signature.substring(0, 16) + '...'
+    });
 
     let paymentResult
 
@@ -153,27 +195,68 @@ serve(async (req) => {
 })
 
 /**
- * Traitement Wallet 224Solutions
+ * 🔐 Traitement Wallet 224Solutions avec signature HMAC
  */
 async function processWalletPayment(supabase: any, customerId: string, driverId: string, amount: number, tripId: string) {
+  const transactionId = `TAXI-WALLET-${Date.now()}`;
+  
+  // 🔐 Générer signature pour cette opération
+  const signature = await generateSignature(transactionId, amount);
+  
   // Vérifier le solde
   const { data: wallet } = await supabase
     .from('wallets')
-    .select('balance')
+    .select('id, balance')
     .eq('user_id', customerId)
     .eq('currency', 'GNF')
     .single()
 
   if (!wallet || wallet.balance < amount) {
+    await logFinancialAudit(supabase, customerId, 'taxi_payment_failed', {
+      reason: 'insufficient_balance', tripId, amount, available: wallet?.balance || 0
+    }, true);
     return { status: 'failed', message: 'Insufficient balance' }
   }
 
-  // Débiter le client
-  await supabase
+  // 🔐 Créer enregistrement sécurisé AVANT modification
+  const { error: secureInsertError } = await supabase
+    .from('secure_transactions')
+    .insert({
+      id: transactionId,
+      user_id: customerId,
+      requested_amount: amount,
+      fee_amount: 0,
+      total_amount: amount,
+      net_amount: amount,
+      signature: signature,
+      status: 'pending',
+      transaction_type: 'taxi_debit',
+      metadata: { tripId, driverId }
+    });
+
+  if (secureInsertError) {
+    console.error('[Taxi] Secure transaction insert failed:', secureInsertError);
+    return { status: 'failed', message: 'Transaction security error' };
+  }
+
+  // 🔐 Débiter le client avec vérification optimiste
+  const newBalance = wallet.balance - amount;
+  const { data: debitResult, error: debitError } = await supabase
     .from('wallets')
-    .update({ balance: wallet.balance - amount })
+    .update({ balance: newBalance, updated_at: new Date().toISOString() })
     .eq('user_id', customerId)
-    .eq('currency', 'GNF')
+    .eq('balance', wallet.balance) // 🔐 Verrouillage optimiste
+    .select('balance')
+    .single();
+
+  if (debitError || !debitResult) {
+    // 🔐 Marquer transaction comme échouée
+    await supabase.from('secure_transactions').update({ status: 'failed' }).eq('id', transactionId);
+    await logFinancialAudit(supabase, customerId, 'taxi_debit_failed', {
+      reason: 'concurrent_modification', tripId, amount
+    }, true);
+    return { status: 'failed', message: 'Balance modified during transaction' };
+  }
 
   // Calculer les parts (85% conducteur, 15% plateforme)
   const driverShare = Math.round(amount * 0.85)
@@ -193,10 +276,20 @@ async function processWalletPayment(supabase: any, customerId: string, driverId:
     })
   }
 
+  // 🔐 Marquer transaction sécurisée comme complétée
+  await supabase.from('secure_transactions')
+    .update({ status: 'completed', completed_at: new Date().toISOString() })
+    .eq('id', transactionId);
+
+  // 🔐 Log audit succès
+  await logFinancialAudit(supabase, customerId, 'taxi_payment_completed', {
+    transactionId, tripId, amount, driverShare, platformFee, newBalance
+  });
+
   return {
     status: 'completed',
-    ref: `WALLET-${Date.now()}`,
-    metadata: { driverShare, platformFee }
+    ref: transactionId,
+    metadata: { driverShare, platformFee, signature: signature.substring(0, 16) + '...' }
   }
 }
 

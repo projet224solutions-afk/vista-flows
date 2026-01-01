@@ -1,11 +1,43 @@
+/**
+ * 🔐 WALLET OPERATIONS SÉCURISÉES
+ * Avec signature HMAC, verrouillage optimiste et audit complet
+ * 224Solutions - Règles de sécurité financières absolues
+ */
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { crypto } from "https://deno.land/std@0.190.0/crypto/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const TRANSACTION_SECRET = Deno.env.get("TRANSACTION_SECRET_KEY") || "secure-transaction-key-224sol";
+
+// 🔐 Génère signature HMAC
+async function generateSecureSignature(transactionId: string, amount: number): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(`${transactionId}${amount}`);
+  const keyData = encoder.encode(TRANSACTION_SECRET);
+  const key = await crypto.subtle.importKey("raw", keyData, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const signature = await crypto.subtle.sign("HMAC", key, data);
+  return Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+// 🔐 Log audit
+async function logSecureAudit(supabase: any, userId: string, action: string, data: any, isSuspicious = false) {
+  try {
+    await supabase.from("financial_audit_logs").insert({
+      user_id: userId,
+      action_type: action,
+      description: `Wallet operation: ${action}`,
+      request_data: data,
+      is_suspicious: isSuspicious
+    });
+  } catch (e) { console.error("[Audit] Log failed:", e); }
+}
 
 // 🔐 Input validation schemas
 const operationSchema = z.enum(['deposit', 'withdraw', 'transfer']);

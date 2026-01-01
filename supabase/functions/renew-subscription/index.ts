@@ -1,10 +1,14 @@
+/**
+ * 🔐 RENOUVELLEMENT ABONNEMENT SÉCURISÉ
+ * Avec signature HMAC et audit log
+ * 224Solutions - Règles de sécurité financières
+ */
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
+import { crypto } from "https://deno.land/std@0.190.0/crypto/mod.ts";
 
-const supabase = createClient(
-  Deno.env.get('SUPABASE_URL') ?? '',
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-);
+const TRANSACTION_SECRET = Deno.env.get("TRANSACTION_SECRET_KEY") || "secure-transaction-key-224sol";
 
 interface RenewalRequest {
   subscription_id: string;
@@ -13,11 +17,27 @@ interface RenewalRequest {
   amount_gnf: number;
 }
 
+// 🔐 Génère signature HMAC
+async function generateSignature(transactionId: string, amount: number): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(`${transactionId}${amount}`);
+  const keyData = encoder.encode(TRANSACTION_SECRET);
+  const key = await crypto.subtle.importKey("raw", keyData, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const signature = await crypto.subtle.sign("HMAC", key, data);
+  return Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // 🔐 Créer client Supabase
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
 
   try {
     const { subscription_id, payment_method, payment_reference, amount_gnf }: RenewalRequest = await req.json();
@@ -57,6 +77,10 @@ Deno.serve(async (req) => {
 
     // Process payment based on method
     if (payment_method === 'wallet') {
+      // 🔐 Générer ID de transaction sécurisé et signature
+      const transactionId = `SUB-${Date.now()}-${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
+      const signature = await generateSignature(transactionId, amount_gnf);
+
       // Deduct from wallet
       const { data: wallet } = await supabase
         .from('wallets')
@@ -66,6 +90,27 @@ Deno.serve(async (req) => {
 
       if (!wallet || wallet.balance < amount_gnf) {
         throw new Error('Insufficient wallet balance');
+      }
+
+      // 🔐 Créer enregistrement sécurisé AVANT modification
+      const { error: secureError } = await supabase
+        .from('secure_transactions')
+        .insert({
+          id: transactionId,
+          user_id: user.id,
+          requested_amount: amount_gnf,
+          fee_amount: 0,
+          total_amount: amount_gnf,
+          net_amount: amount_gnf,
+          signature: signature,
+          status: 'pending',
+          transaction_type: 'subscription_renewal',
+          metadata: { subscription_id, plan: subscription.plans.name }
+        });
+
+      if (secureError) {
+        console.error('[Subscription] Secure transaction failed:', secureError);
+        throw new Error('Transaction security error');
       }
 
       // Create wallet transaction
@@ -80,11 +125,35 @@ Deno.serve(async (req) => {
           created_at: now
         });
 
-      // Update wallet balance
-      await supabase
+      // 🔐 Update wallet balance avec verrouillage optimiste
+      const newBalance = wallet.balance - amount_gnf;
+      const { data: updateResult, error: updateWalletError } = await supabase
         .from('wallets')
-        .update({ balance: wallet.balance - amount_gnf, updated_at: now })
-        .eq('user_id', user.id);
+        .update({ balance: newBalance, updated_at: now })
+        .eq('user_id', user.id)
+        .eq('balance', wallet.balance) // 🔐 Verrouillage optimiste
+        .select('balance')
+        .single();
+
+      if (updateWalletError || !updateResult) {
+        // 🔐 Marquer transaction comme échouée
+        await supabase.from('secure_transactions').update({ status: 'failed' }).eq('id', transactionId);
+        throw new Error('Balance modified during transaction - retry required');
+      }
+
+      // 🔐 Marquer transaction comme complétée
+      await supabase.from('secure_transactions')
+        .update({ status: 'completed', completed_at: now })
+        .eq('id', transactionId);
+
+      // 🔐 Log audit
+      await supabase.from('financial_audit_logs').insert({
+        user_id: user.id,
+        action_type: 'subscription_renewed',
+        description: `Abonnement renouvelé: ${subscription.plans.name}`,
+        request_data: { transactionId, amount_gnf, newBalance, signature: signature.substring(0, 16) + '...' },
+        is_suspicious: false
+      });
     }
 
     // Calculate new period end (add plan duration to current date)
