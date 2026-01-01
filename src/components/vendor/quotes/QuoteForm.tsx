@@ -15,8 +15,9 @@ import { useVendorId } from '@/hooks/useVendorId';
 
 interface QuoteItem {
   name: string;
-  qty: number;
-  price: number;
+  quantity: number;
+  unit_price: number;
+  total: number;
 }
 
 export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
@@ -31,7 +32,7 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
   
   // Items
   const [items, setItems] = useState<QuoteItem[]>([
-    { name: '', qty: 1, price: 0 }
+    { name: '', quantity: 1, unit_price: 0, total: 0 }
   ]);
   
   // Montants
@@ -40,12 +41,14 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
   const [notes, setNotes] = useState('');
 
   const addItem = () => {
-    setItems([...items, { name: '', qty: 1, price: 0 }]);
+    setItems([...items, { name: '', quantity: 1, unit_price: 0, total: 0 }]);
   };
 
   const updateItem = (idx: number, field: keyof QuoteItem, value: string | number) => {
     const copy = [...items];
-    copy[idx][field] = value as never;
+    (copy[idx] as any)[field] = value;
+    // Recalculer le total de l'item
+    copy[idx].total = (copy[idx].quantity || 0) * (copy[idx].unit_price || 0);
     setItems(copy);
   };
 
@@ -53,7 +56,7 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
     setItems(items.filter((_, i) => i !== idx));
   };
 
-  const subtotal = items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.price) || 0), 0);
+  const subtotal = items.reduce((s, i) => s + (i.total || 0), 0);
   const total = subtotal - Number(discount) + Number(tax);
 
   const handleGenerate = async () => {
@@ -62,7 +65,7 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
       return;
     }
 
-    if (!clientName || items.some(i => !i.name || !i.qty || !i.price)) {
+    if (!clientName || items.some(i => !i.name || !i.quantity || !i.unit_price)) {
       toast.error('Veuillez remplir tous les champs requis');
       return;
     }
@@ -131,7 +134,7 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
       setClientEmail('');
       setClientPhone('');
       setClientAddress('');
-      setItems([{ name: '', qty: 1, price: 0 }]);
+      setItems([{ name: '', quantity: 1, unit_price: 0, total: 0 }]);
       setDiscount(0);
       setTax(0);
       setNotes('');
@@ -220,8 +223,8 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
                 <Input
                   type="number"
                   min="1"
-                  value={item.qty}
-                  onChange={(e) => updateItem(idx, 'qty', Number(e.target.value))}
+                  value={item.quantity}
+                  onChange={(e) => updateItem(idx, 'quantity', Number(e.target.value))}
                 />
               </div>
               <div className="col-span-3 space-y-2">
@@ -229,13 +232,13 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
                 <Input
                   type="number"
                   min="0"
-                  value={item.price}
-                  onChange={(e) => updateItem(idx, 'price', Number(e.target.value))}
+                  value={item.unit_price}
+                  onChange={(e) => updateItem(idx, 'unit_price', Number(e.target.value))}
                 />
               </div>
               <div className="col-span-2 flex items-center justify-between">
                 <span className="font-semibold">
-                  {((item.qty || 0) * (item.price || 0)).toLocaleString()} GNF
+                  {(item.total || 0).toLocaleString()} GNF
                 </span>
                 {items.length > 1 && (
                   <Button

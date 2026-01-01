@@ -138,7 +138,7 @@ export default function InvoicesList() {
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-bold text-primary">
-                      {invoice.total.toLocaleString()} GNF
+                      {(invoice.total || 0).toLocaleString()} GNF
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Échéance: {new Date(invoice.due_date).toLocaleDateString('fr-FR')}
