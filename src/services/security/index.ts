@@ -271,11 +271,15 @@ export function useSecurityServices() {
   return { initialized, status };
 }
 
+// Import WAAP Service
+import { waapService } from './WAAPService';
+
 // Export tout
 export {
   monitoringService,
   cspService,
   secureLogger,
   healthCheckService,
-  EnhancedErrorBoundary
+  EnhancedErrorBoundary,
+  waapService
 };
