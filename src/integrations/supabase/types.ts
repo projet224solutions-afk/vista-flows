@@ -3529,6 +3529,102 @@ export type Database = {
           },
         ]
       }
+      djomy_payments: {
+        Row: {
+          amount: number
+          country_code: string | null
+          created_at: string
+          currency: string | null
+          fees: number | null
+          id: string
+          order_id: string | null
+          paid_amount: number | null
+          payer_phone: string | null
+          payment_method: string | null
+          received_amount: number | null
+          redirect_url: string | null
+          response_data: Json | null
+          status: string | null
+          transaction_id: string
+          updated_at: string
+          user_id: string | null
+          webhook_event_id: string | null
+          webhook_received_at: string | null
+        }
+        Insert: {
+          amount: number
+          country_code?: string | null
+          created_at?: string
+          currency?: string | null
+          fees?: number | null
+          id?: string
+          order_id?: string | null
+          paid_amount?: number | null
+          payer_phone?: string | null
+          payment_method?: string | null
+          received_amount?: number | null
+          redirect_url?: string | null
+          response_data?: Json | null
+          status?: string | null
+          transaction_id: string
+          updated_at?: string
+          user_id?: string | null
+          webhook_event_id?: string | null
+          webhook_received_at?: string | null
+        }
+        Update: {
+          amount?: number
+          country_code?: string | null
+          created_at?: string
+          currency?: string | null
+          fees?: number | null
+          id?: string
+          order_id?: string | null
+          paid_amount?: number | null
+          payer_phone?: string | null
+          payment_method?: string | null
+          received_amount?: number | null
+          redirect_url?: string | null
+          response_data?: Json | null
+          status?: string | null
+          transaction_id?: string
+          updated_at?: string
+          user_id?: string | null
+          webhook_event_id?: string | null
+          webhook_received_at?: string | null
+        }
+        Relationships: []
+      }
+      djomy_webhook_logs: {
+        Row: {
+          created_at: string
+          event_id: string | null
+          event_type: string | null
+          id: string
+          payload: Json | null
+          processed_at: string | null
+          transaction_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_id?: string | null
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+          processed_at?: string | null
+          transaction_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string | null
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+          processed_at?: string | null
+          transaction_id?: string | null
+        }
+        Relationships: []
+      }
       driver_subscription_config: {
         Row: {
           created_at: string | null
