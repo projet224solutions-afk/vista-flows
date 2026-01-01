@@ -12,9 +12,11 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[DJOMY-PAYMENT] ${step}${detailsStr}`);
 };
 
-// Generate HMAC-SHA256 signature
+// Generate HMAC-SHA256 signature - Djomy format: HmacSHA256(clientId, clientSecret)
+// Doc Djomy: CryptoJS.HmacSHA256(key, secret) où key=clientId et secret=clientSecret
 async function generateHmacSignature(clientId: string, clientSecret: string): Promise<string> {
   const encoder = new TextEncoder();
+  // IMPORTANT: Djomy utilise clientSecret comme clé HMAC et clientId comme message
   const keyData = encoder.encode(clientSecret);
   const messageData = encoder.encode(clientId);
   
@@ -40,7 +42,12 @@ async function getAccessToken(clientId: string, clientSecret: string, useSandbox
   const signature = await generateHmacSignature(clientId, clientSecret);
   const xApiKey = `${clientId}:${signature}`;
   
-  logStep("Getting access token", { baseUrl, xApiKey: xApiKey.substring(0, 20) + "..." });
+  logStep("Getting access token", { 
+    baseUrl, 
+    clientIdLength: clientId.length,
+    signatureLength: signature.length,
+    xApiKeyPreview: xApiKey.substring(0, 30) + "..." 
+  });
   
   const response = await fetch(`${baseUrl}/v1/auth`, {
     method: "POST",
@@ -52,13 +59,18 @@ async function getAccessToken(clientId: string, clientSecret: string, useSandbox
     body: JSON.stringify({}),
   });
   
+  const responseText = await response.text();
+  logStep("Auth response", { 
+    status: response.status, 
+    statusText: response.statusText,
+    responsePreview: responseText.substring(0, 200)
+  });
+  
   if (!response.ok) {
-    const errorText = await response.text();
-    logStep("Auth error", { status: response.status, error: errorText });
-    throw new Error(`Authentication failed: ${response.status} - ${errorText}`);
+    throw new Error(`Authentication failed: ${response.status} - ${responseText}`);
   }
   
-  const data = await response.json();
+  const data = JSON.parse(responseText);
   logStep("Access token obtained", { tokenLength: data.accessToken?.length });
   return data.accessToken;
 }
