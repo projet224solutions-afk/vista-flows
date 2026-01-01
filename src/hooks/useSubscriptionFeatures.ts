@@ -286,13 +286,14 @@ const PLAN_FEATURES: Record<string, SubscriptionFeature[]> = {
 };
 
 /**
- * Limites de produits par plan
+ * Limites de produits par plan (synchronisé avec la base de données)
+ * Ces valeurs sont lues depuis la table plans via l'abonnement
  */
 export const PLAN_PRODUCT_LIMITS: Record<string, number | null> = {
   'free': 13,
   'basic': 25,
   'pro': 100,
-  'business': null, // Illimité
+  'business': 500,  // Corrigé pour correspondre à la BDD
   'premium': null,  // Illimité
 };
 
