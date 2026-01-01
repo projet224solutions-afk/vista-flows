@@ -255,18 +255,6 @@ verify_jwt = true
 [functions.ml-fraud-detection]
 verify_jwt = true
 
-[functions.pawapay-initialize-payment]
-verify_jwt = true
-
-[functions.pawapay-verify-payment]
-verify_jwt = true
-
-[functions.pawapay-webhook]
-verify_jwt = false
-
-[functions.pawapay-active-config]
-verify_jwt = true
-
 [functions.get-google-secret]
 verify_jwt = true
 
