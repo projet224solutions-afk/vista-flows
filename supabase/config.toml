@@ -299,3 +299,6 @@ verify_jwt = true
 
 [functions.waap-protect]
 verify_jwt = false
+
+[functions.stripe-create-payment-intent]
+verify_jwt = true
