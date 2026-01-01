@@ -132,7 +132,8 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
         .eq('is_active', true);
 
       if (!filters.includePhysicalVendors) {
-        query = query.neq('vendors.business_type', 'physical');
+        // Utiliser not.eq pour filtrer correctement sur les relations jointes
+        query = query.not('vendors.business_type', 'eq', 'physical');
       }
 
       // Filtres - utiliser les valeurs du filters object

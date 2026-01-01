@@ -28,7 +28,7 @@ export const useHomeProducts = (limit: number = 4) => {
             vendors!inner(business_type)
           `)
           .eq('is_active', true)
-          .neq('vendors.business_type', 'physical')
+          .not('vendors.business_type', 'eq', 'physical')
           .order('created_at', { ascending: false })
           .limit(limit);
 
