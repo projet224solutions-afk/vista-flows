@@ -281,3 +281,6 @@ verify_jwt = true
 
 [functions.generate-pdf]
 verify_jwt = true
+
+[functions.waap-protect]
+verify_jwt = false
