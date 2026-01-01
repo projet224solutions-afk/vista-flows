@@ -59,6 +59,7 @@ const CompetitiveAnalysis = lazyWithRetry(() => import("./pages/pdg/CompetitiveA
 const ApiSupervision = lazyWithRetry(() => import("./pages/pdg/ApiSupervision"));
 const SystemDebugPage = lazyWithRetry(() => import("./pages/pdg/SystemDebugPage"));
 const SimpleDiagnostic = lazyWithRetry(() => import("./pages/SimpleDiagnostic"));
+const PDGCopilotDashboard = lazyWithRetry(() => import("./components/pdg/PDGCopilotDashboard"));
 const BureauDashboard = lazyWithRetry(() => import("./pages/BureauDashboard"));
 const BureauMonitoringPage = lazyWithRetry(() => import("./pages/BureauMonitoringPage"));
 const WorkerDashboard = lazyWithRetry(() => import("./pages/WorkerDashboard"));
@@ -380,6 +381,7 @@ function App() {
                 }
               />
               <Route path="/pdg224solutionssoulbah" element={<PDG224Solutions />} />
+              <Route path="/pdg/copilot" element={<ProtectedRoute allowedRoles={['pdg', 'owner']}><PDGCopilotDashboard /></ProtectedRoute>} />
               
               {/* Agent & Bureau Login with MFA */}
               <Route path="/agent/login" element={<AgentLogin />} />

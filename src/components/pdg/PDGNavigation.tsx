@@ -92,6 +92,7 @@ const categories: NavCategory[] = [
     items: [
       { value: 'ai-assistant', label: 'Assistant IA', icon: Brain, badge: true },
       { value: 'copilot', label: 'Copilote IA', icon: MessageSquare },
+      { value: 'copilot-dashboard', label: 'Copilote Executive', icon: MessageSquare, badge: true, external: '/pdg/copilot' },
       { value: 'copilot-audit', label: 'Audit Copilote', icon: Shield },
       { value: 'reports', label: 'Rapports', icon: BarChart3 },
     ]
@@ -129,7 +130,12 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
   );
   const activeItem = categories.flatMap(c => c.items).find(item => item.value === activeTab);
 
-  const handleItemClick = (value: string) => {
+  const handleItemClick = (value: string, externalUrl?: string) => {
+    // Si c'est une URL externe, naviguer directement
+    if (externalUrl) {
+      window.location.href = externalUrl;
+      return;
+    }
     onTabChange(value);
     setMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -217,7 +223,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
                               return (
                                 <button
                                   key={item.value}
-                                  onClick={() => handleItemClick(item.value)}
+                                  onClick={() => handleItemClick(item.value, item.external)}
                                   className={cn(
                                     "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
                                     "hover:bg-muted/80 active:scale-[0.98]",
@@ -333,7 +339,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
                     return (
                       <button
                         key={item.value}
-                        onClick={() => handleItemClick(item.value)}
+                        onClick={() => handleItemClick(item.value, item.external)}
                         className={cn(
                           "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
                           "hover:bg-muted/80 hover:scale-105 group relative overflow-hidden",
