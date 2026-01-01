@@ -16388,6 +16388,7 @@ export type Database = {
       generate_unique_agent_code: { Args: never; Returns: string }
       generate_unique_agent_token: { Args: never; Returns: string }
       generate_unique_custom_id: { Args: never; Returns: string }
+      generate_unique_id: { Args: { prefix: string }; Returns: string }
       generate_unique_invitation_token: { Args: never; Returns: string }
       generate_unique_public_id: { Args: { p_scope: string }; Returns: string }
       generate_user_custom_id: { Args: never; Returns: string }
