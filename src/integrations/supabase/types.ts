@@ -6373,45 +6373,6 @@ export type Database = {
         }
         Relationships: []
       }
-      moneroo_payments: {
-        Row: {
-          amount: number
-          checkout_url: string | null
-          created_at: string
-          currency: string
-          id: string
-          metadata: Json | null
-          payment_id: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          checkout_url?: string | null
-          created_at?: string
-          currency?: string
-          id?: string
-          metadata?: Json | null
-          payment_id: string
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          checkout_url?: string | null
-          created_at?: string
-          currency?: string
-          id?: string
-          metadata?: Json | null
-          payment_id?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       moto_security_alerts: {
         Row: {
           brand: string
@@ -6688,57 +6649,6 @@ export type Database = {
           status?: string
           transaction_type?: string
           updated_at?: string
-        }
-        Relationships: []
-      }
-      pawapay_payments: {
-        Row: {
-          amount: number
-          completed_at: string | null
-          correspondent: string
-          created_at: string
-          currency: string
-          deposit_id: string
-          description: string | null
-          id: string
-          metadata: Json | null
-          pawapay_response: Json | null
-          phone_number: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          completed_at?: string | null
-          correspondent: string
-          created_at?: string
-          currency?: string
-          deposit_id: string
-          description?: string | null
-          id?: string
-          metadata?: Json | null
-          pawapay_response?: Json | null
-          phone_number: string
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          completed_at?: string | null
-          correspondent?: string
-          created_at?: string
-          currency?: string
-          deposit_id?: string
-          description?: string | null
-          id?: string
-          metadata?: Json | null
-          pawapay_response?: Json | null
-          phone_number?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
