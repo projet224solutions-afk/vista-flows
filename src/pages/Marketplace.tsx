@@ -141,7 +141,13 @@ export default function Marketplace() {
         .select('country')
         .not('country', 'is', null);
       
-      const uniqueCountries = [...new Set((countryData || []).map(v => v.country).filter(Boolean))];
+      const uniqueCountries = [
+        ...new Set(
+          (countryData || [])
+            .map(v => (v.country || '').trim().replace(/\s+/g, ' '))
+            .filter(Boolean)
+        )
+      ];
       setCountries(uniqueCountries.sort());
 
       // Charger les villes distinctes
@@ -150,7 +156,13 @@ export default function Marketplace() {
         .select('city')
         .not('city', 'is', null);
       
-      const uniqueCities = [...new Set((cityData || []).map(v => v.city).filter(Boolean))];
+      const uniqueCities = [
+        ...new Set(
+          (cityData || [])
+            .map(v => (v.city || '').trim().replace(/\s+/g, ' '))
+            .filter(Boolean)
+        )
+      ];
       setCities(uniqueCities.sort());
     } catch (error) {
       console.error('Erreur chargement localisations:', error);
