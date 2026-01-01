@@ -44,6 +44,7 @@ async function getAccessToken(clientId: string, clientSecret: string, useSandbox
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Accept": "application/json",
       "X-API-KEY": xApiKey,
     },
     body: JSON.stringify({}),
@@ -66,15 +67,21 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const clientId = Deno.env.get("JOMY_CLIENT_ID");
-    const clientSecret = Deno.env.get("JOMY_CLIENT_SECRET");
-    
+    const body = await req.json();
+    const { transactionId, useSandbox = false } = body;
+
+    // Choix des identifiants selon l'environnement
+    const clientId = useSandbox
+      ? (Deno.env.get("JOMY_CLIENT_ID_SANDBOX") ?? Deno.env.get("JOMY_CLIENT_ID"))
+      : (Deno.env.get("JOMY_CLIENT_ID_PROD") ?? Deno.env.get("JOMY_CLIENT_ID"));
+
+    const clientSecret = useSandbox
+      ? (Deno.env.get("JOMY_CLIENT_SECRET_SANDBOX") ?? Deno.env.get("JOMY_CLIENT_SECRET"))
+      : (Deno.env.get("JOMY_CLIENT_SECRET_PROD") ?? Deno.env.get("JOMY_CLIENT_SECRET"));
+
     if (!clientId || !clientSecret) {
       throw new Error("Djomy credentials not configured");
     }
-
-    const body = await req.json();
-    const { transactionId, useSandbox = false } = body;
 
     if (!transactionId) {
       throw new Error("Transaction ID is required");
@@ -84,7 +91,7 @@ serve(async (req) => {
 
     // Get access token
     const accessToken = await getAccessToken(clientId, clientSecret, useSandbox);
-    
+
     // Generate API signature
     const signature = await generateHmacSignature(clientId, clientSecret);
     const xApiKey = `${clientId}:${signature}`;
@@ -159,12 +166,13 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
-    
+
+    // IMPORTANT: renvoyer 200 pour que le frontend lise le JSON d'erreur
     return new Response(
       JSON.stringify({ success: false, error: errorMessage }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
+        status: 200,
       }
     );
   }
