@@ -1,6 +1,6 @@
 /**
  * SERVICE PAIEMENT 224SOLUTIONS
- * Intégration complète : Portefeuille + Mobile Money + Cash
+ * Intégration complète : Portefeuille + Mobile Money (Jomy) + Cash
  */
 
 import { supabase } from '@/integrations/supabase/client';
@@ -143,7 +143,7 @@ export class Payment224Service {
   }
 
   /**
-   * Initier un paiement Mobile Money via PawaPay
+   * Initier un paiement Mobile Money via Jomy
    */
   static async initiateMobileMoneyPayment(
     provider: 'orange_money' | 'mtn_money',
@@ -151,15 +151,15 @@ export class Payment224Service {
     amount: number,
     deliveryId: string,
     description?: string
-  ): Promise<{ success: boolean; paymentId?: string; depositId?: string }> {
+  ): Promise<{ success: boolean; paymentId?: string; transactionId?: string }> {
     try {
-      // Utiliser PawaPay pour les paiements Mobile Money
-      const { data, error } = await supabase.functions.invoke('pawapay-initialize-payment', {
+      // Utiliser Jomy pour les paiements Mobile Money
+      const { data, error } = await supabase.functions.invoke('djomy-payment', {
         body: {
           amount,
           currency: 'GNF',
           phone_number: phoneNumber,
-          correspondent: provider,
+          provider: provider === 'orange_money' ? 'orange' : 'mtn',
           description: description || `Paiement livraison ${deliveryId}`,
           metadata: { delivery_id: deliveryId },
         },
@@ -169,7 +169,7 @@ export class Payment224Service {
 
       if (data?.success) {
         toast.success(`Paiement ${provider === 'orange_money' ? 'Orange Money' : 'MTN Mobile Money'} initié. Confirmez sur votre téléphone.`);
-        return { success: true, paymentId: data.deposit_id, depositId: data.deposit_id };
+        return { success: true, paymentId: data.payment_id, transactionId: data.transaction_id };
       }
 
       toast.error(data?.error || 'Échec de l\'initiation du paiement');
@@ -182,19 +182,19 @@ export class Payment224Service {
   }
 
   /**
-   * Vérifier le statut d'un paiement PawaPay
+   * Vérifier le statut d'un paiement Jomy
    */
-  static async verifyPawapayPayment(depositId: string): Promise<{ status: string; completed: boolean }> {
+  static async verifyJomyPayment(transactionId: string): Promise<{ status: string; completed: boolean }> {
     try {
-      const { data, error } = await supabase.functions.invoke('pawapay-verify-payment', {
-        body: { deposit_id: depositId },
+      const { data, error } = await supabase.functions.invoke('djomy-verify', {
+        body: { transaction_id: transactionId },
       });
 
       if (error) throw error;
 
       return {
         status: data?.status || 'unknown',
-        completed: data?.mapped_status === 'completed',
+        completed: data?.status === 'completed' || data?.status === 'success',
       };
     } catch (error) {
       console.error('[Payment224Service] Error verifying payment:', error);

@@ -11,7 +11,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
-import { PawaPayPaymentDialog } from "@/components/payment/PawaPayPaymentDialog";
 import {
   AlertDialog,
   AlertDialogAction,

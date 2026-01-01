@@ -14,7 +14,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
 import { ProfessionalVirtualCard } from "@/components/virtual-card";
-import { PawaPayPaymentDialog } from "@/components/payment/PawaPayPaymentDialog";
 import WalletMonthlyStats from "@/components/WalletMonthlyStats";
 import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 import { PaymentMethodsManager } from "@/components/payment/PaymentMethodsManager";
@@ -1097,22 +1096,6 @@ export default function Payment() {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Dialog de recharge PawaPay Mobile Money */}
-        <PawaPayPaymentDialog
-          open={showFedaPayDialog}
-          onOpenChange={setShowFedaPayDialog}
-          amount={10000}
-          description="Recharge wallet via Mobile Money"
-          metadata={{ wallet_recharge: true }}
-          onPaymentSuccess={(depositId) => {
-            console.log('Paiement PawaPay réussi:', depositId);
-            toast({
-              title: 'Paiement réussi',
-              description: 'Votre wallet a été rechargé',
-            });
-            loadWalletData();
-          }}
-        />
       </div>
     </div>
   );
