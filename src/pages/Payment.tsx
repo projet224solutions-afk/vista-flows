@@ -895,6 +895,7 @@ export default function Payment() {
                         description={paymentDescription || 'Transfert'}
                         transactionType={productPaymentInfo ? 'product' : 'transfer'}
                         enableEscrow={!!(productPaymentInfo || cartPaymentInfo)}
+                        recipientId={recipientId}
                         onPaymentSuccess={(transactionId) => {
                           console.log('[Payment] Success:', transactionId);
                           toast({
