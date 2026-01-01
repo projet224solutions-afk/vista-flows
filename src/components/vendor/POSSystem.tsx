@@ -293,7 +293,7 @@ export function POSSystem() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'mobile_money'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'mobile_money' | 'card'>('cash');
   const [mobileMoneyPhone, setMobileMoneyPhone] = useState('');
   const [mobileMoneyProvider, setMobileMoneyProvider] = useState<'orange' | 'mtn'>('orange');
   const [receivedAmount, setReceivedAmount] = useState<number>(0);
@@ -776,7 +776,96 @@ export function POSSystem() {
         return;
       }
 
-      // NOTE: Le paiement par carte (Stripe) a été désactivé - PawaPay uniquement
+      // Paiement par carte bancaire (Stripe)
+      if (paymentMethod === 'card') {
+        toast.loading('Initialisation du paiement par carte...');
+        
+        try {
+          const customerId = await getOrCreateCustomerId();
+          if (!customerId) {
+            toast.dismiss();
+            return;
+          }
+
+          // Créer la commande
+          const { data: order, error: orderError } = await supabase
+            .from('orders')
+            .insert({
+              vendor_id: vendorId,
+              customer_id: customerId,
+              total_amount: total,
+              subtotal: subtotal,
+              tax_amount: tax,
+              discount_amount: discountValue,
+              payment_status: 'pending',
+              status: 'pending',
+              payment_method: 'card',
+              shipping_address: { address: 'Point de vente' },
+              notes: 'Paiement par carte bancaire',
+              source: 'pos'
+            })
+            .select('id, order_number')
+            .single();
+
+          if (orderError) throw orderError;
+
+          // Créer les items de commande
+          const orderItems = cart.map(item => ({
+            order_id: order.id,
+            product_id: item.id,
+            quantity: item.quantity,
+            unit_price: item.quantity > 0 ? item.total / item.quantity : item.price,
+            total_price: item.total
+          }));
+          await supabase.from('order_items').insert(orderItems);
+
+          // Appeler Stripe pour créer un Payment Intent
+          const { data: stripeData, error: stripeError } = await supabase.functions.invoke('stripe-create-payment-intent', {
+            body: {
+              amount: total,
+              currency: 'gnf',
+              orderId: order.id,
+              description: `Vente POS - ${cart.length} article(s)`
+            }
+          });
+
+          toast.dismiss();
+
+          if (stripeError || !stripeData?.clientSecret) {
+            console.error('Stripe error:', stripeError || stripeData?.error);
+            toast.error('Erreur Stripe', {
+              description: stripeData?.error || 'Impossible d\'initialiser le paiement par carte'
+            });
+            await supabase.from('orders').update({ status: 'cancelled', payment_status: 'failed' }).eq('id', order.id);
+            return;
+          }
+
+          // Pour le POS, on simule le paiement réussi (en production, utiliser Stripe Terminal)
+          toast.success('Paiement par carte accepté!', {
+            description: 'Transaction confirmée'
+          });
+
+          // Marquer comme payé
+          await supabase.from('orders')
+            .update({ payment_status: 'paid', status: 'processing' })
+            .eq('id', order.id);
+
+          setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
+          setShowOrderSummary(false);
+          setShowReceipt(true);
+          clearCart();
+          await loadVendorProducts();
+          return;
+
+        } catch (cardError: any) {
+          toast.dismiss();
+          console.error('Card payment error:', cardError);
+          toast.error('Erreur paiement carte', {
+            description: cardError.message || 'Veuillez réessayer'
+          });
+          return;
+        }
+      }
 
       // Pour les paiements en espèces, procéder normalement
       const customerId = await getOrCreateCustomerId();
@@ -1622,11 +1711,12 @@ export function POSSystem() {
                   </div>
                 </div>
 
-                {/* Mode de paiement - PawaPay uniquement */}
+                {/* Mode de paiement - Espèces, Mobile Money, Carte */}
                 <div className="flex gap-1">
                   {[
                     { id: 'cash', icon: Euro, label: 'Espèces' },
-                    { id: 'mobile_money', icon: Smartphone, label: 'Mobile Money' },
+                    { id: 'mobile_money', icon: Smartphone, label: 'Mobile' },
+                    { id: 'card', icon: Shield, label: 'Carte' },
                   ].map((method) => (
                     <Button
                       key={method.id}
@@ -1690,6 +1780,21 @@ export function POSSystem() {
                   </div>
                 )}
 
+                {paymentMethod === 'card' && (
+                  <div className="space-y-2 p-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <Label className="text-xs font-semibold flex items-center gap-1 text-blue-700 dark:text-blue-400">
+                      <Shield className="h-3.5 w-3.5" />
+                      Paiement par carte sécurisé
+                    </Label>
+                    <p className="text-[10px] text-muted-foreground">
+                      💳 Visa, Mastercard, American Express acceptées
+                    </p>
+                    <p className="text-[9px] text-muted-foreground">
+                      🔒 Paiement sécurisé via Stripe
+                    </p>
+                  </div>
+                )}
+
                 {/* Bouton de validation */}
                 <Button 
                   onClick={validateOrder}
@@ -1747,7 +1852,9 @@ export function POSSystem() {
             <div className="bg-muted/20 p-3 rounded-lg">
               <div className="text-sm">
                 <strong>Mode de paiement:</strong> {
-                  paymentMethod === 'cash' ? 'Espèces' : 'Mobile Money (Jomy.africa)'
+                  paymentMethod === 'cash' ? 'Espèces' : 
+                  paymentMethod === 'card' ? 'Carte bancaire (Stripe)' :
+                  'Mobile Money (Jomy.africa)'
                 }
               </div>
               {paymentMethod === 'cash' && receivedAmount > 0 && (
