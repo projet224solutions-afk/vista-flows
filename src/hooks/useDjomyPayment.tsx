@@ -6,12 +6,15 @@ export type DjomyPaymentMethod = 'OM' | 'MOMO' | 'KULU' | 'VISA' | 'MASTERCARD';
 
 export interface DjomyPaymentOptions {
   amount: number;
-  payerPhone: string;
+  payerPhone?: string;
   paymentMethod?: DjomyPaymentMethod;
   description?: string;
   orderId?: string;
   returnUrl?: string;
   cancelUrl?: string;
+  successUrl?: string;
+  failureUrl?: string;
+  callbackUrl?: string;
   countryCode?: string;
   useGateway?: boolean;
   useSandbox?: boolean;
@@ -31,6 +34,7 @@ export interface DjomyPaymentStatus {
   transactionId: string;
   status: string;
   originalStatus?: string;
+  message?: string;
   data?: unknown;
   error?: string;
 }
@@ -46,9 +50,9 @@ export function useDjomyPayment() {
     setError(null);
 
     try {
-      // Validate phone number format
-      let formattedPhone = options.payerPhone.replace(/\s/g, '');
-      if (!formattedPhone.startsWith('00') && !formattedPhone.startsWith('+')) {
+      // Validate phone number format if provided
+      let formattedPhone = options.payerPhone?.replace(/\s/g, '') || '';
+      if (formattedPhone && !formattedPhone.startsWith('00') && !formattedPhone.startsWith('+')) {
         // Assume Guinea if no country code
         if (formattedPhone.startsWith('6')) {
           formattedPhone = '00224' + formattedPhone;
@@ -63,12 +67,13 @@ export function useDjomyPayment() {
 
       const payload = {
         amount: options.amount,
-        payerPhone: formattedPhone,
+        payerPhone: formattedPhone || undefined,
         paymentMethod: options.paymentMethod,
         description: options.description || 'Paiement 224Solutions',
         orderId: options.orderId,
-        returnUrl: options.returnUrl || defaultReturnUrl,
-        cancelUrl: options.cancelUrl || defaultCancelUrl,
+        returnUrl: options.successUrl || options.returnUrl || defaultReturnUrl,
+        cancelUrl: options.failureUrl || options.cancelUrl || defaultCancelUrl,
+        callbackUrl: options.callbackUrl,
         countryCode: options.countryCode || 'GN',
         useGateway: options.useGateway ?? true,
         useSandbox: options.useSandbox ?? false,
@@ -207,7 +212,8 @@ export function useDjomyPayment() {
       }
 
       // Check if payment is in a final state
-      if (status.status === 'completed' || status.status === 'failed' || status.status === 'cancelled') {
+      const finalStatuses = ['completed', 'failed', 'cancelled', 'SUCCESS', 'FAILED', 'CANCELLED'];
+      if (finalStatuses.includes(status.status)) {
         return status;
       }
 

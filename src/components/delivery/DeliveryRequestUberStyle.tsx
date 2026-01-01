@@ -66,13 +66,13 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
     }
   };
 
-  const handleCreateDelivery = async (paymentMethodId: string, phoneNumber: string) => {
+  const handlePaymentSuccess = async (transactionId: string) => {
     if (!user || !priceEstimate) return;
 
     setLoading(true);
     try {
       toast.success('✅ Livraison créée ! Les livreurs vont recevoir la notification.');
-      onDeliveryCreated('temp-id');
+      onDeliveryCreated(transactionId || 'temp-id');
     } catch (error) {
       console.error('Error creating delivery:', error);
       toast.error('Erreur lors de la création');
@@ -251,7 +251,11 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
       {step === 'payment' && priceEstimate && (
         <PaymentMethodSelector
           amount={priceEstimate.totalPrice}
-          onPaymentMethodSelected={handleCreateDelivery}
+          orderId={`delivery-${Date.now()}`}
+          description="Paiement livraison"
+          transactionType="delivery"
+          onPaymentSuccess={handlePaymentSuccess}
+          onPaymentFailed={(error) => toast.error(error)}
           onCancel={() => setStep('confirm')}
         />
       )}
