@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -26,7 +27,9 @@ import {
   Send,
   RefreshCw,
   History,
-  AlertCircle
+  AlertCircle,
+  CreditCard,
+  Smartphone
 } from 'lucide-react';
 
 interface UniversalWalletTransactionsProps {
@@ -73,6 +76,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   
   // États pour les formulaires
   const [depositAmount, setDepositAmount] = useState('');
+  const [depositMethod, setDepositMethod] = useState<'manual' | 'mobile_money'>('mobile_money');
+  const [mobileMoneyPhone, setMobileMoneyPhone] = useState('');
+  const [mobileMoneyProvider, setMobileMoneyProvider] = useState<'orange' | 'mtn'>('orange');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
   const [recipientId, setRecipientId] = useState('');
@@ -439,8 +445,15 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       return;
     }
 
+    // Si Mobile Money, utiliser Djomy
+    if (depositMethod === 'mobile_money') {
+      await handleMobileMoneyDeposit(amount);
+      return;
+    }
+
+    // Sinon, dépôt manuel (dev mode)
     setProcessing(true);
-    console.log('🔄 Dépôt en cours:', { amount, userId: effectiveUserId });
+    console.log('🔄 Dépôt manuel en cours:', { amount, userId: effectiveUserId });
     
     try {
       // Créer ou récupérer le wallet de l'utilisateur
@@ -497,7 +510,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           fee: 0,
           currency: 'GNF',
           status: 'completed',
-          description: 'Dépôt sur le wallet',
+          description: 'Dépôt manuel sur le wallet',
           receiver_wallet_id: walletData.id
         });
 
@@ -524,6 +537,94 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     } finally {
       setProcessing(false);
     }
+  };
+
+  const handleMobileMoneyDeposit = async (amount: number) => {
+    if (!mobileMoneyPhone || mobileMoneyPhone.length !== 9) {
+      toast.error('Numéro de téléphone invalide', {
+        description: 'Veuillez entrer un numéro de 9 chiffres'
+      });
+      return;
+    }
+
+    setProcessing(true);
+    const loadingToast = toast.loading('Initialisation du paiement Mobile Money...');
+
+    try {
+      const paymentMethodCode = mobileMoneyProvider === 'orange' ? 'OM' : 'MOMO';
+      
+      const { data, error } = await supabase.functions.invoke('djomy-payment', {
+        body: {
+          amount: amount,
+          payerPhone: `224${mobileMoneyPhone}`,
+          paymentMethod: paymentMethodCode,
+          description: `Recharge wallet - ${amount.toLocaleString()} GNF`,
+          orderId: `WLT-${Date.now()}`,
+          useGateway: false,
+          useSandbox: true,
+          countryCode: 'GN',
+        }
+      });
+
+      toast.dismiss(loadingToast);
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success('Demande de paiement envoyée!', {
+          description: `Confirmez le paiement sur votre téléphone ${paymentMethodCode}`
+        });
+
+        // Polling pour vérifier le statut
+        pollPaymentStatus(data.transactionId, amount);
+      } else {
+        throw new Error(data?.message || 'Erreur initialisation paiement');
+      }
+    } catch (error: any) {
+      toast.dismiss(loadingToast);
+      console.error('❌ Erreur paiement Mobile Money:', error);
+      toast.error('Échec du paiement Mobile Money', {
+        description: error.message
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const pollPaymentStatus = async (transactionId: string, amount: number) => {
+    let attempts = 0;
+    const maxAttempts = 60; // 5 minutes
+
+    const checkStatus = setInterval(async () => {
+      attempts++;
+
+      try {
+        // Vérifier si le solde a augmenté (simple check)
+        const { data: walletData } = await supabase
+          .from('wallets')
+          .select('balance')
+          .eq('user_id', effectiveUserId)
+          .single();
+
+        if (walletData && wallet && walletData.balance > wallet.balance) {
+          clearInterval(checkStatus);
+          toast.success('✅ Paiement confirmé!', {
+            description: `${formatPrice(amount)} ajoutés à votre wallet`
+          });
+          setDepositAmount('');
+          setMobileMoneyPhone('');
+          setDepositOpen(false);
+          await Promise.all([loadWalletData(), loadTransactions()]);
+        } else if (attempts >= maxAttempts) {
+          clearInterval(checkStatus);
+          toast.warning('⏱️ Délai dépassé', {
+            description: 'Vérifiez manuellement le statut du paiement'
+          });
+        }
+      } catch (error) {
+        console.error('Erreur poll status:', error);
+      }
+    }, 5000);
   };
 
   const handleWithdraw = async () => {
@@ -1057,32 +1158,112 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                 <span className="text-xs">Dépôt</span>
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Effectuer un dépôt</DialogTitle>
                 <DialogDescription>
                   Ajoutez des fonds à votre wallet
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="deposit-amount">Montant (GNF)</Label>
-                  <Input
-                    id="deposit-amount"
-                    type="number"
-                    placeholder="10000"
-                    value={depositAmount}
-                    onChange={(e) => setDepositAmount(e.target.value)}
-                  />
-                </div>
-                <Button 
-                  onClick={handleDeposit} 
-                  disabled={processing || !depositAmount}
-                  className="w-full bg-green-600 hover:bg-green-700"
-                >
-                  {processing ? 'Traitement...' : 'Confirmer le dépôt'}
-                </Button>
-              </div>
+              <Tabs value={depositMethod} onValueChange={(v) => setDepositMethod(v as 'manual' | 'mobile_money')}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="mobile_money" className="gap-2">
+                    <Smartphone className="w-4 h-4" />
+                    Mobile Money
+                  </TabsTrigger>
+                  <TabsTrigger value="manual" className="gap-2">
+                    <CreditCard className="w-4 h-4" />
+                    Manuel (Dev)
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="mobile_money" className="space-y-4 mt-4">
+                  <div>
+                    <Label htmlFor="mobile-provider">Opérateur</Label>
+                    <Select value={mobileMoneyProvider} onValueChange={(v) => setMobileMoneyProvider(v as 'orange' | 'mtn')}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="orange">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-orange-500" />
+                            Orange Money
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="mtn">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                            MTN MoMo
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="mobile-phone">Numéro de téléphone</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value="224"
+                        disabled
+                        className="w-16"
+                      />
+                      <Input
+                        id="mobile-phone"
+                        type="tel"
+                        placeholder="621234567"
+                        maxLength={9}
+                        value={mobileMoneyPhone}
+                        onChange={(e) => setMobileMoneyPhone(e.target.value.replace(/\D/g, ''))}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">9 chiffres sans le +224</p>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="mobile-amount">Montant (GNF)</Label>
+                    <Input
+                      id="mobile-amount"
+                      type="number"
+                      placeholder="10000"
+                      min="1000"
+                      value={depositAmount}
+                      onChange={(e) => setDepositAmount(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Minimum: 1 000 GNF</p>
+                  </div>
+                  
+                  <Button 
+                    onClick={handleDeposit} 
+                    disabled={processing || !depositAmount || !mobileMoneyPhone || mobileMoneyPhone.length !== 9}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                  >
+                    {processing ? 'Traitement...' : `Recharger ${depositAmount ? parseFloat(depositAmount).toLocaleString() : '0'} GNF`}
+                  </Button>
+                </TabsContent>
+                
+                <TabsContent value="manual" className="space-y-4 mt-4">
+                  <div>
+                    <Label htmlFor="deposit-amount">Montant (GNF)</Label>
+                    <Input
+                      id="deposit-amount"
+                      type="number"
+                      placeholder="10000"
+                      value={depositAmount}
+                      onChange={(e) => setDepositAmount(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Mode développement uniquement</p>
+                  </div>
+                  <Button 
+                    onClick={handleDeposit} 
+                    disabled={processing || !depositAmount}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                  >
+                    {processing ? 'Traitement...' : 'Confirmer le dépôt'}
+                  </Button>
+                </TabsContent>
+              </Tabs>
             </DialogContent>
           </Dialog>
 

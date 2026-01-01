@@ -99,14 +99,31 @@ export default function ClientDashboard() {
     const loadCustomerId = async () => {
       if (!user?.id) return;
       
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('customers')
         .select('id')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
       
       if (data) {
         setCustomerId(data.id);
+      } else {
+        // Créer automatiquement le customer si inexistant
+        console.log('🔄 Création automatique du customer pour:', user.id);
+        const { data: newCustomer, error: createError } = await supabase
+          .from('customers')
+          .insert({ user_id: user.id })
+          .select('id')
+          .single();
+        
+        if (newCustomer) {
+          setCustomerId(newCustomer.id);
+          console.log('✅ Customer créé:', newCustomer.id);
+          toast.success('Compte client initialisé');
+        } else {
+          console.error('❌ Échec création customer:', createError);
+          toast.error('Erreur d\'initialisation du compte');
+        }
       }
     };
     
@@ -121,6 +138,35 @@ export default function ClientDashboard() {
     
     if (cartItems.length === 0) {
       toast.error(t('client.emptyCart'));
+      return;
+    }
+    
+    // Vérifier que le customer existe
+    if (!customerId) {
+      toast.error('Initialisation du compte en cours...', {
+        description: 'Veuillez patienter quelques secondes et réessayer'
+      });
+      // Forcer le rechargement du customer_id
+      const { data } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (data) {
+        setCustomerId(data.id);
+      } else {
+        // Tenter de créer le customer
+        const { data: newCustomer } = await supabase
+          .from('customers')
+          .insert({ user_id: user.id })
+          .select('id')
+          .single();
+        
+        if (newCustomer) {
+          setCustomerId(newCustomer.id);
+        }
+      }
       return;
     }
     

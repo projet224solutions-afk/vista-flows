@@ -514,6 +514,14 @@ export default function ProductPaymentModal({
                       {walletBalance?.toLocaleString() || 0} GNF
                     </span>
                   </div>
+                  {walletBalance === 0 && (
+                    <Alert variant="default" className="border-orange-200 bg-orange-50 dark:bg-orange-950">
+                      <AlertCircle className="h-4 w-4 text-orange-600" />
+                      <AlertDescription className="text-orange-900 dark:text-orange-200">
+                        Votre wallet est vide. Rechargez-le d'abord via l'onglet Wallet ou sélectionnez "Paiement à la livraison".
+                      </AlertDescription>
+                    </Alert>
+                  )}
                   {vendorCode && (
                     <div className="flex items-center gap-2 p-2 bg-primary/10 rounded-md">
                       <Wallet className="w-4 h-4 text-primary" />
