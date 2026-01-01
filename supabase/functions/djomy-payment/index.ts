@@ -118,12 +118,22 @@ serve(async (req) => {
     const cleanClientId = clientId.trim();
     const cleanClientSecret = clientSecret.trim();
 
+    // Heuristique: un Client ID "djomy-client-<timestamp>" ressemble à un identifiant de test/généré,
+    // pas à un identifiant marchand (ex: djomy-merchant-001 dans la doc).
+    // On ne bloque pas, on log juste pour aider au diagnostic.
+    if (/^djomy-client-\d{10,}/.test(cleanClientId)) {
+      logStep("Warning: suspicious Djomy clientId format", {
+        hint: "Vérifiez que le Client ID provient bien de l'espace marchand Djomy",
+        clientIdPrefix: cleanClientId.substring(0, 12) + "...",
+      });
+    }
+
     logStep("Credentials verified", {
       env: useSandbox ? "sandbox" : "production",
       clientIdPrefix: cleanClientId.substring(0, 12) + "...",
+      clientIdSuffix: cleanClientId.length >= 4 ? "..." + cleanClientId.slice(-4) : undefined,
       clientIdLength: cleanClientId.length,
       clientSecretLength: cleanClientSecret.length,
-      clientIdFull: cleanClientId, // Pour debug temporaire
     });
 
     logStep("Payment request received", {
@@ -303,9 +313,9 @@ serve(async (req) => {
     // Rendre le message lisible côté UI (Supabase invoke masque souvent les erreurs non-2xx)
     let errorMessage = errorMessageRaw;
     if (errorMessageRaw.includes('Authentication failed: 403')) {
-      errorMessage = "Authentification Djomy refusée (403). Vérifiez vos identifiants (clientId/clientSecret) et l'environnement (sandbox vs production).";
+      errorMessage = "Djomy refuse l'accès (403). Ce n'est pas un problème de sandbox: l'appel part vers l'API Djomy mais est bloqué. Vérifiez que vous utilisez le vrai Client ID/Client Secret de l'espace marchand (le Client ID ressemble souvent à 'djomy-merchant-...'), ou demandez à Djomy l'autorisation/whitelist pour les requêtes serveur.";
     } else if (errorMessageRaw.includes('Authentication failed: 401')) {
-      errorMessage = "Authentification Djomy refusée (401). Vérifiez vos identifiants (clientId/clientSecret).";
+      errorMessage = "Identifiants Djomy invalides (401). Vérifiez Client ID / Client Secret.";
     }
 
     logStep("ERROR", { message: errorMessageRaw });
