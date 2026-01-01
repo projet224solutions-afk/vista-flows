@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-// PawaPay uniquement - Suppression de carte bancaire
+// Jomy uniquement - Suppression de carte bancaire
 const PAYMENT_METHODS = [
   { value: 'orange_money', label: 'Orange Money', icon: Smartphone, color: 'text-orange-600' },
   { value: 'mtn_money', label: 'MTN Money', icon: Smartphone, color: 'text-yellow-600' },

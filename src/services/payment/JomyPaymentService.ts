@@ -1,7 +1,6 @@
 /**
  * 🔐 SERVICE DE PAIEMENT JOMY.AFRICA
- * Service centralisé unique pour tous les paiements
- * Remplace PawaPay, Stripe et tous les autres moyens de paiement
+ * Service centralisé unique pour tous les paiements Mobile Money
  */
 
 import { supabase } from '@/integrations/supabase/client';

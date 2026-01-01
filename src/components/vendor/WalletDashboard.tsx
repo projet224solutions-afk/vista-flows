@@ -513,20 +513,28 @@ export default function WalletDashboard() {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* PawaPay Mobile Money Dialog */}
-        <PawaPayPaymentDialog
-          open={showFedaPayDialog}
-          onOpenChange={setShowFedaPayDialog}
-          amount={depositAmount ? parseInt(depositAmount) : 10000}
-          description="Recharge wallet via Mobile Money"
-          metadata={{ wallet_recharge: true, user_type: 'vendor' }}
-          onPaymentSuccess={(depositId) => {
-            console.log('Paiement PawaPay réussi:', depositId);
-            toast.success('Wallet rechargé avec succès!');
-            setDepositAmount("");
-            loadWalletData();
-          }}
-        />
+        {/* Dialog Mobile Money Jomy - fonctionnalité à implémenter */}
+        <AlertDialog open={showFedaPayDialog} onOpenChange={setShowFedaPayDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-green-600" />
+                Recharge Mobile Money
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                <p className="text-center py-4">
+                  La recharge via Mobile Money (Jomy.africa) sera bientôt disponible.
+                  <br />
+                  <br />
+                  En attendant, vous pouvez effectuer des dépôts manuels ou des transferts entre utilisateurs.
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Fermer</AlertDialogCancel>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );
