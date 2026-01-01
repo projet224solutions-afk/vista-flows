@@ -267,10 +267,10 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
                     </div>
                     <div className="text-right">
                       <p className="text-2xl font-bold text-primary">
-                        {quote.total.toLocaleString()} GNF
+                        {(quote.total || 0).toLocaleString()} GNF
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Valide jusqu'au {new Date(quote.valid_until).toLocaleDateString('fr-FR')}
+                        Valide jusqu'au {quote.valid_until ? new Date(quote.valid_until).toLocaleDateString('fr-FR') : 'N/A'}
                       </p>
                     </div>
                   </div>
