@@ -1,7 +1,7 @@
 /**
  * 💳 SÉLECTEUR DE PAIEMENT JOMY.AFRICA - MOYEN UNIQUE
  * Intégration exclusive Jomy.africa pour tous les paiements
- * Orange Money, MTN MoMo, VISA, Mastercard, KULU, etc.
+ * Méthodes: Carte Bancaire, Orange Money, Mobile Money
  */
 
 import { useState } from 'react';
@@ -67,8 +67,16 @@ export function JomyPaymentSelector({
   const [processing, setProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'polling' | 'success' | 'failed'>('idle');
 
-  // Méthodes de paiement Jomy.africa disponibles
+  // Méthodes de paiement Jomy.africa disponibles (Carte, Orange Money, Mobile Money uniquement)
   const paymentMethods: PaymentMethodOption[] = [
+    {
+      id: 'VISA',
+      name: 'Carte Bancaire',
+      description: 'Paiement par carte VISA / Mastercard',
+      icon: <CreditCard className="h-5 w-5 text-blue-600" />,
+      iconBg: 'bg-blue-100',
+      requiresPhone: false
+    },
     {
       id: 'OM',
       name: 'Orange Money',
@@ -81,39 +89,13 @@ export function JomyPaymentSelector({
     },
     {
       id: 'MOMO',
-      name: 'MTN Mobile Money',
-      description: 'Paiement via MTN MoMo',
+      name: 'Mobile Money',
+      description: 'Paiement via MTN Mobile Money',
       icon: <Smartphone className="h-5 w-5 text-yellow-600" />,
       iconBg: 'bg-yellow-100',
       requiresPhone: true,
       phonePrefix: '660',
       phonePlaceholder: '660 XX XX XX'
-    },
-    {
-      id: 'VISA',
-      name: 'Carte VISA',
-      description: 'Paiement par carte VISA',
-      icon: <CreditCard className="h-5 w-5 text-blue-600" />,
-      iconBg: 'bg-blue-100',
-      requiresPhone: false
-    },
-    {
-      id: 'MASTERCARD',
-      name: 'Mastercard',
-      description: 'Paiement par Mastercard',
-      icon: <CreditCard className="h-5 w-5 text-red-600" />,
-      iconBg: 'bg-red-100',
-      requiresPhone: false
-    },
-    {
-      id: 'KULU',
-      name: 'KULU',
-      description: 'Paiement via KULU',
-      icon: <Smartphone className="h-5 w-5 text-green-600" />,
-      iconBg: 'bg-green-100',
-      requiresPhone: true,
-      phonePrefix: '',
-      phonePlaceholder: 'Numéro KULU'
     }
   ];
 
