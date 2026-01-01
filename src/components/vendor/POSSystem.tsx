@@ -697,8 +697,10 @@ export function POSSystem() {
           orderId: order.order_number || order.id,
           description: `Vente POS - ${cart.length} article(s)`,
           useGateway: false, // Paiement direct sans redirection
-          // En prévisualisation Lovable, on utilise le sandbox par défaut (souvent les creds sont sandbox)
-          useSandbox: window.location.hostname.includes('lovableproject.com'),
+          // En preview (lovable), on utilise le sandbox par défaut
+          useSandbox: window.location.hostname.endsWith('.lovable.app') ||
+            window.location.hostname.includes('lovableproject.com') ||
+            window.location.hostname === 'localhost',
         });
 
         toast.dismiss();

@@ -46,21 +46,22 @@ export class JomyPaymentService {
     console.log('[JomyPaymentService] Initializing payment:', request);
 
     try {
-      const { data, error } = await supabase.functions.invoke('djomy-payment', {
-        body: {
-          amount: request.amount,
-          currency: request.currency || 'GNF',
-          payerPhone: request.payerPhone,
-          paymentMethod: request.paymentMethod,
-          orderId: request.orderId,
-          description: request.description,
-          successUrl: request.successUrl,
-          failureUrl: request.failureUrl,
-          callbackUrl: request.callbackUrl,
-          useGateway: request.useGateway ?? false,
-          metadata: request.metadata
-        }
-      });
+        const { data, error } = await supabase.functions.invoke('djomy-payment', {
+          body: {
+            amount: request.amount,
+            currency: request.currency || 'GNF',
+            payerPhone: request.payerPhone,
+            paymentMethod: request.paymentMethod,
+            orderId: request.orderId,
+            description: request.description,
+            // 🔁 correspond aux champs attendus par l'edge function djomy-payment
+            returnUrl: request.successUrl,
+            cancelUrl: request.failureUrl,
+            callbackUrl: request.callbackUrl,
+            useGateway: request.useGateway ?? false,
+            metadata: request.metadata,
+          }
+        });
 
       if (error) {
         console.error('[JomyPaymentService] Error:', error);

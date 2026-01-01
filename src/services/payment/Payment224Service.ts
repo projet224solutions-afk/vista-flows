@@ -153,15 +153,31 @@ export class Payment224Service {
     description?: string
   ): Promise<{ success: boolean; paymentId?: string; transactionId?: string }> {
     try {
-      // Utiliser Jomy pour les paiements Mobile Money
+      const origin = window.location.origin;
+
+      // Normaliser le numéro: 9 chiffres -> 00224XXXXXXXXX
+      const compact = phoneNumber.replace(/\s/g, '');
+      const payerPhone = compact.startsWith('00') || compact.startsWith('+')
+        ? compact.replace('+', '00')
+        : `00224${compact}`;
+
+      const paymentMethod = provider === 'orange_money' ? 'OM' : 'MOMO';
+
       const { data, error } = await supabase.functions.invoke('djomy-payment', {
         body: {
           amount,
-          currency: 'GNF',
-          phone_number: phoneNumber,
-          provider: provider === 'orange_money' ? 'orange' : 'mtn',
+          payerPhone,
+          paymentMethod,
           description: description || `Paiement livraison ${deliveryId}`,
-          metadata: { delivery_id: deliveryId },
+          orderId: `DELIVERY-${deliveryId}`,
+          returnUrl: `${origin}/payment/success`,
+          cancelUrl: `${origin}/payment/failed`,
+          countryCode: 'GN',
+          useGateway: false,
+          useSandbox:
+            window.location.hostname.endsWith('.lovable.app') ||
+            window.location.hostname.includes('lovableproject.com') ||
+            window.location.hostname === 'localhost',
         },
       });
 
@@ -169,7 +185,8 @@ export class Payment224Service {
 
       if (data?.success) {
         toast.success(`Paiement ${provider === 'orange_money' ? 'Orange Money' : 'MTN Mobile Money'} initié. Confirmez sur votre téléphone.`);
-        return { success: true, paymentId: data.payment_id, transactionId: data.transaction_id };
+        const tx = data.transactionId as string | undefined;
+        return { success: true, paymentId: tx, transactionId: tx };
       }
 
       toast.error(data?.error || 'Échec de l\'initiation du paiement');
@@ -187,14 +204,14 @@ export class Payment224Service {
   static async verifyJomyPayment(transactionId: string): Promise<{ status: string; completed: boolean }> {
     try {
       const { data, error } = await supabase.functions.invoke('djomy-verify', {
-        body: { transaction_id: transactionId },
+        body: { transactionId },
       });
 
       if (error) throw error;
 
       return {
         status: data?.status || 'unknown',
-        completed: data?.status === 'completed' || data?.status === 'success',
+        completed: data?.status === 'completed' || data?.status === 'SUCCESS',
       };
     } catch (error) {
       console.error('[Payment224Service] Error verifying payment:', error);

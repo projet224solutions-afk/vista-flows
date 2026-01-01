@@ -39,6 +39,17 @@ export interface DjomyPaymentStatus {
   error?: string;
 }
 
+const shouldUseSandboxByDefault = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname;
+  return (
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host.endsWith('.lovable.app') ||
+    host.includes('lovableproject.com')
+  );
+};
+
 export function useDjomyPayment() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +87,7 @@ export function useDjomyPayment() {
         callbackUrl: options.callbackUrl,
         countryCode: options.countryCode || 'GN',
         useGateway: options.useGateway ?? true,
-        useSandbox: options.useSandbox ?? false,
+        useSandbox: options.useSandbox ?? shouldUseSandboxByDefault(),
       };
 
       console.log('[useDjomyPayment] Initializing payment:', payload);
@@ -120,7 +131,7 @@ export function useDjomyPayment() {
 
   const verifyPayment = useCallback(async (
     transactionId: string,
-    useSandbox = false
+    useSandbox = shouldUseSandboxByDefault()
   ): Promise<DjomyPaymentStatus> => {
     setIsLoading(true);
     setError(null);
@@ -195,7 +206,7 @@ export function useDjomyPayment() {
     const {
       maxAttempts = 30,
       intervalMs = 5000,
-      useSandbox = false,
+      useSandbox = shouldUseSandboxByDefault(),
       onStatusChange,
     } = options || {};
 
