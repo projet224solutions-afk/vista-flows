@@ -14,7 +14,7 @@ interface RenewalRequest {
   subscription_id: string;
   payment_method: 'wallet' | 'external';
   payment_reference?: string;
-  amount_gnf: number;
+  // 🔐 SUPPRIMÉ: amount_gnf - Le montant est TOUJOURS calculé backend
 }
 
 // 🔐 Génère signature HMAC
@@ -40,10 +40,12 @@ Deno.serve(async (req) => {
   );
 
   try {
-    const { subscription_id, payment_method, payment_reference, amount_gnf }: RenewalRequest = await req.json();
+    // 🔐 SÉCURITÉ: On accepte subscription_id et payment_method seulement
+    // Le montant est TOUJOURS calculé côté backend
+    const { subscription_id, payment_method, payment_reference }: Omit<RenewalRequest, 'amount_gnf'> = await req.json();
     const now = new Date().toISOString();
 
-    console.log('Processing subscription renewal:', { subscription_id, payment_method, amount_gnf });
+    console.log('Processing subscription renewal:', { subscription_id, payment_method });
 
     // Get auth user
     const authHeader = req.headers.get('Authorization');
@@ -58,7 +60,7 @@ Deno.serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    // Get subscription
+    // Get subscription with plan details
     const { data: subscription, error: subError } = await supabase
       .from('subscriptions')
       .select('*, plans(*)')
@@ -70,9 +72,13 @@ Deno.serve(async (req) => {
       throw new Error('Subscription not found');
     }
 
-    // Verify amount matches plan price
-    if (amount_gnf !== subscription.plans.price_gnf) {
-      throw new Error('Invalid payment amount');
+    // 🔐 RÈGLE CRITIQUE: Le montant est TOUJOURS pris du backend (prix du plan)
+    // JAMAIS du frontend - protection contre manipulation de prix
+    const amount_gnf = subscription.plans.price_gnf;
+    console.log(`[Security] Amount calculated from backend: ${amount_gnf} GNF (plan: ${subscription.plans.name})`);
+    
+    if (!amount_gnf || amount_gnf <= 0) {
+      throw new Error('Invalid plan price configuration');
     }
 
     // Process payment based on method
