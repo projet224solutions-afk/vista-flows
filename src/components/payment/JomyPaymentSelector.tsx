@@ -4,7 +4,7 @@
  * Méthodes: Carte Bancaire, Orange Money, Mobile Money
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,12 +18,14 @@ import {
   Shield, 
   Loader2, 
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Wallet
 } from 'lucide-react';
 import { useDjomyPayment, type DjomyPaymentMethod } from '@/hooks/useDjomyPayment';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface JomyPaymentSelectorProps {
   amount: number;
@@ -35,10 +37,11 @@ interface JomyPaymentSelectorProps {
   onPaymentFailed?: (error: string) => void;
   onCancel: () => void;
   enableEscrow?: boolean;
+  recipientId?: string; // Public ID du destinataire (pour les transferts wallet)
 }
 
 interface PaymentMethodOption {
-  id: DjomyPaymentMethod;
+  id: DjomyPaymentMethod | 'WALLET';
   name: string;
   description: string;
   icon: React.ReactNode;
@@ -57,20 +60,51 @@ export function JomyPaymentSelector({
   onPaymentPending,
   onPaymentFailed,
   onCancel,
-  enableEscrow = true
+  enableEscrow = true,
+  recipientId
 }: JomyPaymentSelectorProps) {
   const { user } = useAuth();
   const { initializePayment, pollPaymentStatus, isLoading, error } = useDjomyPayment();
   
-  const [selectedMethod, setSelectedMethod] = useState<DjomyPaymentMethod>('OM');
+  const [selectedMethod, setSelectedMethod] = useState<DjomyPaymentMethod | 'WALLET'>(recipientId ? 'WALLET' : 'OM');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [processing, setProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'polling' | 'success' | 'failed'>('idle');
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
 
-  // Méthodes de paiement Jomy.africa disponibles (Carte, Orange Money, Mobile Money uniquement)
+  // Charger le solde wallet si disponible
+  useEffect(() => {
+    const loadWalletBalance = async () => {
+      if (!user?.id) return;
+      try {
+        const { data } = await supabase
+          .from('wallets')
+          .select('balance')
+          .eq('user_id', user.id)
+          .single();
+        if (data) {
+          setWalletBalance(data.balance);
+        }
+      } catch (err) {
+        console.error('Error loading wallet balance:', err);
+      }
+    };
+    loadWalletBalance();
+  }, [user?.id]);
+
+  // Méthodes de paiement disponibles
   const paymentMethods: PaymentMethodOption[] = [
+    // Option Wallet en premier si recipientId est fourni
+    ...(recipientId ? [{
+      id: 'WALLET' as const,
+      name: 'Wallet 224Solutions',
+      description: `Solde: ${walletBalance !== null ? walletBalance.toLocaleString() : '...'} GNF`,
+      icon: <Wallet className="h-5 w-5 text-green-600" />,
+      iconBg: 'bg-green-100',
+      requiresPhone: false
+    }] : []),
     {
-      id: 'VISA',
+      id: 'VISA' as const,
       name: 'Carte Bancaire',
       description: 'Paiement par carte VISA / Mastercard',
       icon: <CreditCard className="h-5 w-5 text-blue-600" />,
@@ -78,7 +112,7 @@ export function JomyPaymentSelector({
       requiresPhone: false
     },
     {
-      id: 'OM',
+      id: 'OM' as const,
       name: 'Orange Money',
       description: 'Paiement instantané via Orange Money',
       icon: <Smartphone className="h-5 w-5 text-orange-500" />,
@@ -88,7 +122,7 @@ export function JomyPaymentSelector({
       phonePlaceholder: '620 XX XX XX'
     },
     {
-      id: 'MOMO',
+      id: 'MOMO' as const,
       name: 'Mobile Money',
       description: 'Paiement via MTN Mobile Money',
       icon: <Smartphone className="h-5 w-5 text-yellow-600" />,
@@ -108,6 +142,50 @@ export function JomyPaymentSelector({
       return;
     }
 
+    // Gestion du paiement par Wallet (transfert interne)
+    if (selectedMethod === 'WALLET') {
+      if (!recipientId) {
+        toast.error('ID du destinataire requis');
+        return;
+      }
+      
+      if (walletBalance !== null && walletBalance < amount) {
+        toast.error('Solde insuffisant');
+        return;
+      }
+
+      setProcessing(true);
+      setPaymentStatus('processing');
+
+      try {
+        const { data, error } = await supabase.functions.invoke('wallet-operations', {
+          body: {
+            action: 'transfer',
+            amount,
+            recipient_public_id: recipientId,
+            description: description || 'Transfert'
+          }
+        });
+
+        if (error || !data?.success) {
+          throw new Error(data?.error || error?.message || 'Échec du transfert');
+        }
+
+        setPaymentStatus('success');
+        toast.success('🎉 Transfert réussi !');
+        onPaymentSuccess(data.transaction_id || '', 'SUCCESS');
+      } catch (err) {
+        console.error('[Wallet] Transfer error:', err);
+        setPaymentStatus('failed');
+        toast.error(err instanceof Error ? err.message : 'Erreur de transfert');
+        onPaymentFailed?.(err instanceof Error ? err.message : 'Erreur inconnue');
+      } finally {
+        setProcessing(false);
+      }
+      return;
+    }
+
+    // Paiements externes (Jomy.africa)
     if (requiresPhone && (!phoneNumber || phoneNumber.length < 9)) {
       toast.error('Numéro de téléphone invalide');
       return;
@@ -120,7 +198,7 @@ export function JomyPaymentSelector({
       const result = await initializePayment({
         amount,
         payerPhone: requiresPhone ? phoneNumber : undefined,
-        paymentMethod: selectedMethod,
+        paymentMethod: selectedMethod as DjomyPaymentMethod,
         orderId: orderId || `${transactionType}-${Date.now()}`,
         description: description || `Paiement ${transactionType}`,
         successUrl: `${window.location.origin}/payment/success`,
