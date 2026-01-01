@@ -114,9 +114,16 @@ serve(async (req) => {
       throw new Error("Djomy credentials not configured");
     }
 
+    // Nettoyer les espaces éventuels dans les identifiants
+    const cleanClientId = clientId.trim();
+    const cleanClientSecret = clientSecret.trim();
+
     logStep("Credentials verified", {
       env: useSandbox ? "sandbox" : "production",
-      clientIdPrefix: clientId.substring(0, 8) + "...",
+      clientIdPrefix: cleanClientId.substring(0, 12) + "...",
+      clientIdLength: cleanClientId.length,
+      clientSecretLength: cleanClientSecret.length,
+      clientIdFull: cleanClientId, // Pour debug temporaire
     });
 
     logStep("Payment request received", {
@@ -154,12 +161,12 @@ serve(async (req) => {
       throw new Error("Payer phone number is required");
     }
 
-    // Get access token
-    const accessToken = await getAccessToken(clientId, clientSecret, useSandbox);
+    // Get access token with cleaned credentials
+    const accessToken = await getAccessToken(cleanClientId, cleanClientSecret, useSandbox);
     
-    // Generate API signature
-    const signature = await generateHmacSignature(clientId, clientSecret);
-    const xApiKey = `${clientId}:${signature}`;
+    // Generate API signature with cleaned credentials
+    const signature = await generateHmacSignature(cleanClientId, cleanClientSecret);
+    const xApiKey = `${cleanClientId}:${signature}`;
 
     const baseUrl = useSandbox 
       ? "https://sandbox-api.djomy.africa" 
