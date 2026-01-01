@@ -221,6 +221,7 @@ const PLAN_FEATURES: Record<string, SubscriptionFeature[]> = {
     'prospect_management',
     'advanced_integrations',
     'multi_user',
+    'gemini_ai', // ✅ IA Gemini ajouté au plan Business
   ],
 
   // ========== PREMIUM ==========
@@ -354,7 +355,7 @@ export const FEATURE_MIN_PLAN: Record<SubscriptionFeature, string> = {
   // Premium
   'analytics_realtime': 'premium',
   'api_premium': 'premium',
-  'gemini_ai': 'premium',
+  'gemini_ai': 'business', // ✅ Changé de premium à business
   'advanced_security': 'premium',
   'dedicated_manager': 'premium',
   'custom_branding': 'premium',
