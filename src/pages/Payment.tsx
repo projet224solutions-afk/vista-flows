@@ -18,7 +18,7 @@ import { PawaPayPaymentDialog } from "@/components/payment/PawaPayPaymentDialog"
 import WalletMonthlyStats from "@/components/WalletMonthlyStats";
 import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 import { PaymentMethodsManager } from "@/components/payment/PaymentMethodsManager";
-import { PaymentMethodSelection, type PaymentMethodType } from "@/components/payment/PaymentMethodSelection";
+import { JomyPaymentSelector } from "@/components/payment/JomyPaymentSelector";
 
 export default function Payment() {
   const navigate = useNavigate();
@@ -889,23 +889,30 @@ export default function Payment() {
                         </DialogFooter>
                       </>
                     ) : (
-                      <PaymentMethodSelection
-                        walletBalance={walletBalance}
+                      <JomyPaymentSelector
                         amount={parseFloat(paymentAmount) || 0}
-                        recipientId={recipientId}
-                        processing={processing}
-                        isEscrow={!!(productPaymentInfo || cartPaymentInfo)}
-                        onMethodSelected={(method, phone) => {
-                          setSelectedPaymentMethod(method);
-                          if (phone) setMobileMoneyPhone(phone);
-                          
-                          // Si wallet, on procède à la prévisualisation normale
-                          if (method === 'wallet') {
-                            handlePreviewPayment();
-                          } else if (method === 'orange_money' || method === 'mtn_money') {
-                            // Mobile money via PawaPay
-                            handleMobileMoneyPayment(method, phone || '');
-                          }
+                        orderId={productPaymentInfo?.productId || `transfer-${Date.now()}`}
+                        description={paymentDescription || 'Transfert'}
+                        transactionType={productPaymentInfo ? 'product' : 'transfer'}
+                        enableEscrow={!!(productPaymentInfo || cartPaymentInfo)}
+                        onPaymentSuccess={(transactionId) => {
+                          console.log('[Payment] Success:', transactionId);
+                          toast({
+                            title: "Paiement réussi",
+                            description: "Votre paiement a été effectué avec succès",
+                          });
+                          setPaymentOpen(false);
+                          setPaymentStep('form');
+                          loadWalletData();
+                          loadRecentTransactions();
+                        }}
+                        onPaymentFailed={(error) => {
+                          console.error('[Payment] Failed:', error);
+                          toast({
+                            title: "Erreur de paiement",
+                            description: error,
+                            variant: "destructive",
+                          });
                         }}
                         onCancel={() => setPaymentStep('form')}
                       />
