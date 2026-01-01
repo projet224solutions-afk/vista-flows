@@ -144,14 +144,14 @@ serve(async (req) => {
         logStep("Payment record updated");
       }
 
-      // If payment is successful, update related order/wallet
+      // If payment is successful, use secure validation system
       if (eventType === "payment.success" && data.paidAmount) {
-        logStep("Payment successful - processing completion", {
+        logStep("Payment successful - calling secure validation", {
           transactionId: data.transactionId,
           amount: data.paidAmount,
         });
 
-        // Get the payment record to find the user and order
+        // Get the payment record to find the secure transaction
         const { data: paymentRecord, error: fetchError } = await supabaseAdmin
           .from("djomy_payments")
           .select("user_id, order_id")
@@ -159,49 +159,81 @@ serve(async (req) => {
           .single();
 
         if (!fetchError && paymentRecord) {
-          // Update wallet balance if user exists
-          if (paymentRecord.user_id) {
-            const { data: wallet, error: walletError } = await supabaseAdmin
-              .from("wallets")
-              .select("id, balance")
-              .eq("user_id", paymentRecord.user_id)
-              .single();
+          // Check if there's a linked secure_transaction
+          const { data: secureTransaction } = await supabaseAdmin
+            .from("secure_transactions")
+            .select("id, total_amount, signature_hash, status")
+            .eq("external_transaction_id", data.transactionId)
+            .eq("status", "pending")
+            .single();
 
-            if (!walletError && wallet) {
-              // Create wallet transaction
-              await supabaseAdmin
-                .from("wallet_transactions")
-                .insert({
-                  wallet_id: wallet.id,
-                  user_id: paymentRecord.user_id,
-                  type: "deposit",
-                  amount: data.receivedAmount || data.paidAmount,
-                  description: `Recharge via Djomy - ${data.paymentMethod || "Mobile Money"}`,
-                  status: "completed",
-                  reference: data.transactionId,
-                  metadata: {
-                    provider: "djomy",
-                    payment_method: data.paymentMethod,
-                    fees: data.fees,
-                    payer_identifier: data.payerIdentifier,
-                  },
-                });
+          if (secureTransaction) {
+            // 🔐 Use secure validation system
+            logStep("Found linked secure transaction, validating...", {
+              secureTransactionId: secureTransaction.id
+            });
 
-              logStep("Wallet transaction created");
+            const { data: validationResult, error: validationError } = await supabaseAdmin.rpc("validate_secure_payment", {
+              p_transaction_id: secureTransaction.id,
+              p_external_transaction_id: data.transactionId,
+              p_amount_paid: data.paidAmount,
+              p_payment_status: "SUCCESS",
+              p_signature: secureTransaction.signature_hash
+            });
+
+            if (validationError) {
+              logStep("Secure validation error", { error: validationError.message });
+            } else {
+              logStep("Secure validation result", { result: validationResult });
             }
-          }
+          } else {
+            // Fallback: Legacy wallet update (for existing transactions without secure flow)
+            logStep("No secure transaction found, using legacy flow");
+            
+            if (paymentRecord.user_id) {
+              const { data: wallet, error: walletError } = await supabaseAdmin
+                .from("wallets")
+                .select("id, balance")
+                .eq("user_id", paymentRecord.user_id)
+                .single();
 
-          // Update order status if applicable
-          if (paymentRecord.order_id) {
-            await supabaseAdmin
-              .from("orders")
-              .update({
-                payment_status: "paid",
-                updated_at: new Date().toISOString(),
-              })
-              .eq("id", paymentRecord.order_id);
+              if (!walletError && wallet) {
+                // Create wallet transaction
+                await supabaseAdmin
+                  .from("wallet_transactions")
+                  .insert({
+                    wallet_id: wallet.id,
+                    user_id: paymentRecord.user_id,
+                    type: "deposit",
+                    amount: data.receivedAmount || data.paidAmount,
+                    description: `Recharge via Djomy - ${data.paymentMethod || "Mobile Money"}`,
+                    status: "completed",
+                    reference: data.transactionId,
+                    metadata: {
+                      provider: "djomy",
+                      payment_method: data.paymentMethod,
+                      fees: data.fees,
+                      payer_identifier: data.payerIdentifier,
+                      legacy_flow: true
+                    },
+                  });
 
-            logStep("Order updated to paid");
+                logStep("Legacy wallet transaction created");
+              }
+            }
+
+            // Update order status if applicable
+            if (paymentRecord.order_id) {
+              await supabaseAdmin
+                .from("orders")
+                .update({
+                  payment_status: "paid",
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("id", paymentRecord.order_id);
+
+              logStep("Order updated to paid");
+            }
           }
         }
       }
