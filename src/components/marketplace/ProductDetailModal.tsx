@@ -298,7 +298,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                   url={`${window.location.origin}/boutique/${product.vendors?.shop_slug || product.vendor_id}`}
                   variant="outline"
                   size="icon"
-                  useShortUrl={false}
+                  useShortUrl={true}
                 />
               </div>
             </div>
@@ -376,9 +376,11 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                   title={product.name}
                   text={`Découvrez ${product.name} à ${product.price.toLocaleString()} GNF sur 224 Solutions`}
                   url={`${window.location.origin}/product/${product.id}`}
-                  variant="default"
-                  size="default"
-                  className="flex-1"
+                  variant="outline"
+                  size="icon"
+                  resourceType="product"
+                  resourceId={product.id}
+                  useShortUrl={false}
                 />
               </div>
             </div>

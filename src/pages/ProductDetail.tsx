@@ -345,7 +345,7 @@ export default function ProductDetail() {
                     size="icon"
                     resourceType="shop"
                     resourceId={product.vendors.id}
-                    useShortUrl={false}
+                    useShortUrl={true}
                   />
                 </div>
               </Card>

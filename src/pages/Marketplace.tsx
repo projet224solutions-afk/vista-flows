@@ -239,9 +239,11 @@ export default function Marketplace() {
                     title={vendorName || 'Boutique'}
                     text={`Découvrez la boutique ${vendorName} sur 224 Solutions`}
                     url={`${window.location.origin}/boutique/${vendorSlug || vendorId}`}
-                    variant="ghost"
+                    variant="outline"
                     size="icon"
-                    useShortUrl={false}
+                    resourceType="shop"
+                    resourceId={vendorId}
+                    useShortUrl={true}
                   />
                   <Button 
                     variant="ghost" 

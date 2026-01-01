@@ -46,17 +46,20 @@ interface Product {
 }
 
 export default function VendorShop() {
-  const { vendorId, slug } = useParams<{ vendorId?: string; slug?: string }>();
+  const params = useParams<{ vendorId?: string; slug?: string }>();
   const navigate = useNavigate();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Le paramètre peut être 'slug' ou 'vendorId' selon la route utilisée
+  const identifier = params.slug || params.vendorId;
+
   useEffect(() => {
-    if (vendorId || slug) {
+    if (identifier) {
       loadVendorData();
     }
-  }, [vendorId, slug]);
+  }, [identifier]);
 
   const loadVendorData = async () => {
     try {
@@ -64,42 +67,38 @@ export default function VendorShop() {
       
       let vendorData: Vendor | null = null;
       
-      // Recherche par slug ou par ID
-      if (slug) {
-        // Recherche par slug
+      // Le paramètre peut être un slug ou un ID
+      const id = identifier;
+      
+      if (!id) {
+        toast.error('Identifiant boutique manquant');
+        navigate('/marketplace');
+        return;
+      }
+      
+      // Vérifier si c'est un UUID valide
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      
+      if (isUUID) {
+        // Recherche par ID
         const { data, error } = await supabase
           .from('vendors')
           .select('*')
-          .eq('shop_slug', slug)
+          .eq('id', id)
           .single();
         
         if (error) throw error;
         vendorData = data;
-      } else if (vendorId) {
-        // Recherche par ID (compatibilité ancienne)
-        // Vérifier d'abord si c'est un UUID valide
-        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(vendorId);
+      } else {
+        // Recherche par slug
+        const { data, error } = await supabase
+          .from('vendors')
+          .select('*')
+          .eq('shop_slug', id)
+          .single();
         
-        if (isUUID) {
-          const { data, error } = await supabase
-            .from('vendors')
-            .select('*')
-            .eq('id', vendorId)
-            .single();
-          
-          if (error) throw error;
-          vendorData = data;
-        } else {
-          // C'est peut-être un slug dans l'ancienne URL
-          const { data, error } = await supabase
-            .from('vendors')
-            .select('*')
-            .eq('shop_slug', vendorId)
-            .single();
-          
-          if (error) throw error;
-          vendorData = data;
-        }
+        if (error) throw error;
+        vendorData = data;
       }
       
       if (!vendorData || !vendorData.is_active) {
@@ -108,8 +107,8 @@ export default function VendorShop() {
         return;
       }
 
-      // Rediriger vers l'URL avec slug si on est venu via ID
-      if (vendorId && vendorData.shop_slug && !slug) {
+      // Rediriger vers l'URL avec slug si on est venu via ID et qu'un slug existe
+      if (isUUID && vendorData.shop_slug && params.vendorId) {
         navigate(`/boutique/${vendorData.shop_slug}`, { replace: true });
         return;
       }
@@ -236,7 +235,7 @@ export default function VendorShop() {
             size="sm"
             resourceType="shop"
             resourceId={vendor.id}
-            useShortUrl={false}
+            useShortUrl={true}
           />
         </div>
       </header>
@@ -372,7 +371,7 @@ export default function VendorShop() {
               size="icon"
               resourceType="shop"
               resourceId={vendor.id}
-              useShortUrl={false}
+              useShortUrl={true}
             />
           </div>
         </div>
