@@ -11,13 +11,13 @@
  * - Responsive premium
  */
 
-import { Star, ShoppingCart, MessageCircle, MapPin, Package, Share2 } from "lucide-react";
+import { Star, ShoppingCart, MessageCircle, MapPin, Package } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { ShareButton } from "@/components/shared/ShareButton";
 
 interface MarketplaceProductCardProps {
   id: string;
@@ -67,32 +67,8 @@ export function MarketplaceProductCard({
   const images = Array.isArray(image) ? image : [image];
   const primaryImage = images[0] || '/placeholder.svg';
 
-  const handleShare = async (e: React.MouseEvent) => {
+  const handleShareClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const shareUrl = `${window.location.origin}/product/${id}`;
-    const shareText = `Découvrez ${title} à ${formatPrice(price)} GNF sur 224 Solutions`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title,
-          text: shareText,
-          url: shareUrl,
-        });
-      } catch (error) {
-        if ((error as Error).name !== "AbortError") {
-          console.error("Erreur lors du partage:", error);
-        }
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        toast.success("Lien copié dans le presse-papier !");
-      } catch (error) {
-        console.error("Erreur lors de la copie:", error);
-        toast.error("Impossible de copier le lien");
-      }
-    }
   };
   const formatPrice = (value: number) => {
     return new Intl.NumberFormat('fr-GN', {
@@ -272,15 +248,19 @@ export function MarketplaceProductCard({
           >
             <MessageCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           </Button>
-          <Button 
-            onClick={handleShare}
-            variant="outline" 
-            size="sm"
-            className="h-7 w-7 sm:h-8 sm:w-8 p-0 border-border/60 hover:bg-accent hover:border-primary/30"
-            title="Partager"
-          >
-            <Share2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-          </Button>
+          <div onClick={handleShareClick}>
+            <ShareButton
+              title={title}
+              text={`Découvrez ${title} à ${formatPrice(price)} GNF sur 224 Solutions`}
+              url={`${window.location.origin}/product/${id}`}
+              variant="outline"
+              size="icon"
+              className="h-7 w-7 sm:h-8 sm:w-8 border-border/60 hover:bg-accent hover:border-primary/30"
+              resourceType="product"
+              resourceId={id}
+              useShortUrl={true}
+            />
+          </div>
         </div>
       </CardContent>
     </Card>

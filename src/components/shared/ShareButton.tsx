@@ -118,18 +118,21 @@ export function ShareButton({
     const urlToShare = await getShareUrl();
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${urlToShare}`)}`;
     window.open(whatsappUrl, "_blank");
+    toast.success("Ouverture de WhatsApp...");
   };
 
   const handleFacebookShare = async () => {
     const urlToShare = await getShareUrl();
     const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`;
     window.open(facebookUrl, "_blank", "width=600,height=400");
+    toast.success("Ouverture de Facebook...");
   };
 
   const handleTwitterShare = async () => {
     const urlToShare = await getShareUrl();
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(urlToShare)}`;
     window.open(twitterUrl, "_blank", "width=600,height=400");
+    toast.success("Ouverture de Twitter/X...");
   };
 
   // Bouton avec indicateur de chargement
