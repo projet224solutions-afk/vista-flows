@@ -477,7 +477,7 @@ export default function VendeurDashboard() {
               <Route index element={<DashboardHome />} />
               <Route path="dashboard" element={<DashboardHome />} />
               
-              {/* Vue d'ensemble - Analytics */}
+              {/* Vue d'ensemble - Analytics (Basic+) */}
               <Route path="analytics" element={
                 <ProtectedRoute feature="analytics_basic">
                   <VendorAnalyticsDashboard />
@@ -485,146 +485,184 @@ export default function VendeurDashboard() {
               } />
               
               {/* Ventes & Commerce */}
+              {/* POS - Basic+ */}
               <Route path="pos" element={
                 <ProtectedRoute feature="pos_system">
                   <POSSystemWrapper />
                 </ProtectedRoute>
               } />
+              {/* Produits - Free (avec limite) */}
               <Route path="products" element={
                 <ProtectedRoute feature="products_basic">
                   <ProductManagement />
                 </ProtectedRoute>
               } />
+              {/* Commandes - Free */}
               <Route path="orders" element={
                 <ProtectedRoute feature="orders_simple">
                   <OrderManagement />
                 </ProtectedRoute>
               } />
+              {/* Inventaire - Basic+ */}
               <Route path="inventory" element={
                 <ProtectedRoute feature="inventory_management">
                   <InventoryManagement />
                 </ProtectedRoute>
               } />
+              {/* Entrepôts - Business+ */}
               <Route path="warehouse" element={
                 <ProtectedRoute feature="multi_warehouse">
                   <WarehouseManagement />
                 </ProtectedRoute>
               } />
+              {/* Fournisseurs - Business+ */}
               <Route path="suppliers" element={
                 <ProtectedRoute feature="supplier_management">
                   <SupplierManagement />
                 </ProtectedRoute>
               } />
               
-              {/* Clients & Marketing */}
-              <Route path="agents" element={
-                <ProtectedRoute feature="sales_agents">
-                  <AgentManagement />
-                </ProtectedRoute>
-              } />
+              {/* CRM & Marketing */}
+              {/* Clients - Basic+ */}
               <Route path="clients" element={
                 <ProtectedRoute feature="crm_basic">
                   <ClientManagement />
                 </ProtectedRoute>
               } />
+              {/* Agents - Pro+ */}
+              <Route path="agents" element={
+                <ProtectedRoute feature="sales_agents">
+                  <AgentManagement />
+                </ProtectedRoute>
+              } />
+              {/* Prospects - Business+ */}
               <Route path="prospects" element={
                 <ProtectedRoute feature="prospect_management">
                   <ProspectManagement />
                 </ProtectedRoute>
               } />
+              {/* Marketing - Pro+ */}
               <Route path="marketing" element={
                 <ProtectedRoute feature="marketing_promotions">
                   <MarketingManagement />
                 </ProtectedRoute>
               } />
               
-              {/* Finances - Wallet toujours accessible pour voir le solde */}
-              <Route path="wallet" element={<UniversalWalletTransactions />} />
-              <Route path="virtual-card" element={
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Carte Virtuelle 224PAY</CardTitle>
-                    <CardDescription>Gérez votre carte virtuelle pour les paiements en ligne</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ProfessionalVirtualCard />
-                  </CardContent>
-                </Card>
+              {/* Finances */}
+              {/* Wallet - Free (accès basique) */}
+              <Route path="wallet" element={
+                <ProtectedRoute feature="wallet_basic">
+                  <UniversalWalletTransactions />
+                </ProtectedRoute>
               } />
+              {/* Carte virtuelle - Free */}
+              <Route path="virtual-card" element={
+                <ProtectedRoute feature="wallet_basic">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Carte Virtuelle 224PAY</CardTitle>
+                      <CardDescription>Gérez votre carte virtuelle pour les paiements en ligne</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ProfessionalVirtualCard />
+                    </CardContent>
+                  </Card>
+                </ProtectedRoute>
+              } />
+              {/* Devis & Factures - Business+ */}
               <Route path="quotes-invoices" element={
-                <ProtectedRoute feature="orders_detailed">
+                <ProtectedRoute feature="quotes_invoices">
                   <VendorQuotesInvoices />
                 </ProtectedRoute>
               } />
+              {/* Paiements - Business+ */}
               <Route path="payments" element={
-                <ProtectedRoute feature="payment_links">
+                <ProtectedRoute feature="payments">
                   <PaymentManagement />
                 </ProtectedRoute>
               } />
+              {/* Liens de paiement - Business+ */}
               <Route path="payment-links" element={
                 <ProtectedRoute feature="payment_links">
                   <PaymentLinksManager />
                 </ProtectedRoute>
               } />
+              {/* Dépenses - Business+ */}
               <Route path="expenses" element={
-                <ProtectedRoute feature="expense_management">
+                <ProtectedRoute feature="expenses">
                   <ExpenseManagementDashboard />
                 </ProtectedRoute>
               } />
+              {/* Dettes - Business+ */}
               <Route path="debts" element={
                 <ProtectedRoute feature="debt_management">
                   <VendorDebtManagement vendorId={stats?.vendorId || ''} />
                 </ProtectedRoute>
               } />
+              {/* Contrats - Business+ */}
               <Route path="contracts" element={
-                <ProtectedRoute feature="orders_detailed">
+                <ProtectedRoute feature="contracts">
                   <VendorContracts />
                 </ProtectedRoute>
               } />
+              {/* Affiliation - Pro+ */}
               <Route path="affiliate" element={
                 <ProtectedRoute feature="affiliate_program">
                   <AffiliateManagement shopId={stats?.vendorId || undefined} />
                 </ProtectedRoute>
               } />
               
-              {/* Support & Outils */}
+              {/* Services */}
+              {/* Livraison - Basic+ */}
               <Route path="delivery" element={
                 <ProtectedRoute feature="delivery_tracking">
                   <VendorDeliveriesPanel />
                 </ProtectedRoute>
               } />
-              <Route path="ratings" element={<VendorRatingsPanel />} />
+              {/* Avis clients - Free */}
+              <Route path="ratings" element={
+                <ProtectedRoute feature="ratings">
+                  <VendorRatingsPanel />
+                </ProtectedRoute>
+              } />
+              {/* Support - Basic+ */}
               <Route path="support" element={
-                <ProtectedRoute feature="support_tickets">
+                <ProtectedRoute feature="support_basic">
                   <SupportTickets />
                 </ProtectedRoute>
               } />
+              {/* Messages - Basic+ */}
               <Route path="communication" element={
                 <ProtectedRoute feature="communication_hub">
                   <UniversalCommunicationHub />
                 </ProtectedRoute>
               } />
+              {/* Rapports - Business+ */}
               <Route path="reports" element={
                 <ProtectedRoute feature="data_export">
                   <Card><CardContent className="p-6">Module Rapports - En développement</CardContent></Card>
                 </ProtectedRoute>
               } />
               
-              {/* Configuration - toujours accessible */}
+              {/* Système */}
+              {/* Copilote IA - Basic+ */}
               <Route path="copilote" element={
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Copilote IA Vendeur</CardTitle>
-                    <CardDescription>Votre assistant intelligent pour gérer votre boutique</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <CopiloteChat userRole="vendeur" height="500px" />
-                  </CardContent>
-                </Card>
+                <ProtectedRoute feature="copilot_ai">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Copilote IA Vendeur</CardTitle>
+                      <CardDescription>Votre assistant intelligent pour gérer votre boutique</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <CopiloteChat userRole="vendeur" height="500px" />
+                    </CardContent>
+                  </Card>
+                </ProtectedRoute>
               } />
+              {/* Paramètres - Toujours accessible */}
               <Route path="settings" element={<VendorSettings />} />
               
-              {/* Autres */}
+              {/* Autres - Premium */}
               <Route path="offline-sync" element={
                 <ProtectedRoute feature="offline_mode">
                   <OfflineSyncPanel />
