@@ -4644,6 +4644,71 @@ export type Database = {
           },
         ]
       }
+      financial_audit_logs: {
+        Row: {
+          action_type: string
+          audit_hash: string | null
+          created_at: string
+          description: string
+          device_info: Json | null
+          id: string
+          ip_address: unknown
+          is_suspicious: boolean | null
+          new_status: string | null
+          old_status: string | null
+          request_data: Json | null
+          response_data: Json | null
+          security_flags: string[] | null
+          transaction_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          audit_hash?: string | null
+          created_at?: string
+          description: string
+          device_info?: Json | null
+          id?: string
+          ip_address?: unknown
+          is_suspicious?: boolean | null
+          new_status?: string | null
+          old_status?: string | null
+          request_data?: Json | null
+          response_data?: Json | null
+          security_flags?: string[] | null
+          transaction_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          audit_hash?: string | null
+          created_at?: string
+          description?: string
+          device_info?: Json | null
+          id?: string
+          ip_address?: unknown
+          is_suspicious?: boolean | null
+          new_status?: string | null
+          old_status?: string | null
+          request_data?: Json | null
+          response_data?: Json | null
+          security_flags?: string[] | null
+          transaction_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_audit_logs_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "secure_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_ledger: {
         Row: {
           actor_id: string
@@ -4832,6 +4897,74 @@ export type Database = {
           version?: number | null
         }
         Relationships: []
+      }
+      financial_security_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          description: string
+          expected_value: string | null
+          id: string
+          ip_address: unknown
+          is_resolved: boolean | null
+          metadata: Json | null
+          received_value: string | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          title: string
+          transaction_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          description: string
+          expected_value?: string | null
+          id?: string
+          ip_address?: unknown
+          is_resolved?: boolean | null
+          metadata?: Json | null
+          received_value?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+          title: string
+          transaction_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          description?: string
+          expected_value?: string | null
+          id?: string
+          ip_address?: unknown
+          is_resolved?: boolean | null
+          metadata?: Json | null
+          received_value?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          title?: string
+          transaction_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_security_alerts_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "secure_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       financial_transactions: {
         Row: {
@@ -9197,6 +9330,87 @@ export type Database = {
         }
         Relationships: []
       }
+      secure_transactions: {
+        Row: {
+          amount_paid: number | null
+          completed_at: string | null
+          created_at: string
+          device_fingerprint: string | null
+          external_transaction_id: string | null
+          failed_at: string | null
+          fee_amount: number
+          fee_percentage: number
+          id: string
+          interface_type: string
+          ip_address: unknown
+          net_amount: number
+          payment_method: string | null
+          payment_provider: string | null
+          rejection_reason: string | null
+          requested_amount: number
+          signature_hash: string
+          signature_verified: boolean | null
+          status: string
+          total_amount: number
+          transaction_type: string
+          user_agent: string | null
+          user_id: string
+          validated_at: string | null
+        }
+        Insert: {
+          amount_paid?: number | null
+          completed_at?: string | null
+          created_at?: string
+          device_fingerprint?: string | null
+          external_transaction_id?: string | null
+          failed_at?: string | null
+          fee_amount: number
+          fee_percentage?: number
+          id?: string
+          interface_type: string
+          ip_address?: unknown
+          net_amount: number
+          payment_method?: string | null
+          payment_provider?: string | null
+          rejection_reason?: string | null
+          requested_amount: number
+          signature_hash: string
+          signature_verified?: boolean | null
+          status?: string
+          total_amount: number
+          transaction_type: string
+          user_agent?: string | null
+          user_id: string
+          validated_at?: string | null
+        }
+        Update: {
+          amount_paid?: number | null
+          completed_at?: string | null
+          created_at?: string
+          device_fingerprint?: string | null
+          external_transaction_id?: string | null
+          failed_at?: string | null
+          fee_amount?: number
+          fee_percentage?: number
+          id?: string
+          interface_type?: string
+          ip_address?: unknown
+          net_amount?: number
+          payment_method?: string | null
+          payment_provider?: string | null
+          rejection_reason?: string | null
+          requested_amount?: number
+          signature_hash?: string
+          signature_verified?: boolean | null
+          status?: string
+          total_amount?: number
+          transaction_type?: string
+          user_agent?: string | null
+          user_id?: string
+          validated_at?: string | null
+        }
+        Relationships: []
+      }
       security_alerts: {
         Row: {
           acknowledged: boolean | null
@@ -12764,6 +12978,60 @@ export type Database = {
           },
         ]
       }
+      user_security_flags: {
+        Row: {
+          blocked_at: string | null
+          blocked_reason: string | null
+          blocked_until: string | null
+          created_at: string
+          failed_payment_count: number | null
+          flag_reason: string | null
+          flagged_at: string | null
+          id: string
+          is_blocked: boolean | null
+          is_flagged: boolean | null
+          last_activity_at: string | null
+          modification_attempt_count: number | null
+          suspicious_activity_count: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          blocked_at?: string | null
+          blocked_reason?: string | null
+          blocked_until?: string | null
+          created_at?: string
+          failed_payment_count?: number | null
+          flag_reason?: string | null
+          flagged_at?: string | null
+          id?: string
+          is_blocked?: boolean | null
+          is_flagged?: boolean | null
+          last_activity_at?: string | null
+          modification_attempt_count?: number | null
+          suspicious_activity_count?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          blocked_at?: string | null
+          blocked_reason?: string | null
+          blocked_until?: string | null
+          created_at?: string
+          failed_payment_count?: number | null
+          flag_reason?: string | null
+          flagged_at?: string | null
+          id?: string
+          is_blocked?: boolean | null
+          is_flagged?: boolean | null
+          last_activity_at?: string | null
+          modification_attempt_count?: number | null
+          suspicious_activity_count?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vehicle_fraud_alerts: {
         Row: {
           alert_type: string
@@ -16104,6 +16372,20 @@ export type Database = {
           order_number: string
         }[]
       }
+      create_secure_transaction: {
+        Args: {
+          p_device_fingerprint?: string
+          p_interface_type: string
+          p_ip_address?: unknown
+          p_payment_method?: string
+          p_requested_amount: number
+          p_secret_key?: string
+          p_transaction_type: string
+          p_user_agent?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       create_security_incident: {
         Args: {
           p_description: string
@@ -17790,6 +18072,17 @@ export type Database = {
           table_name: string
         }
         Returns: string
+      }
+      validate_secure_payment: {
+        Args: {
+          p_amount_paid: number
+          p_external_transaction_id: string
+          p_payment_status: string
+          p_secret_key?: string
+          p_signature: string
+          p_transaction_id: string
+        }
+        Returns: Json
       }
       validate_standard_id: { Args: { p_id: string }; Returns: boolean }
       validate_transaction_integrity: {
