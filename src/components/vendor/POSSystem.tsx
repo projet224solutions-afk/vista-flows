@@ -58,6 +58,7 @@ import { QuantityKeypadPopup } from './pos/QuantityKeypadPopup';
 import { POSReceipt } from './pos/POSReceipt';
 import { BarcodeScannerModal } from './pos/BarcodeScannerModal';
 import { Scan } from 'lucide-react';
+import { useDjomyPayment, type DjomyPaymentMethod } from '@/hooks/useDjomyPayment';
 
 interface Product {
   id: string;
@@ -95,6 +96,9 @@ export function POSSystem() {
   const { vendorId: agentVendorId } = useAgent(); // Récupérer le vendor_id depuis le contexte agent
   const isMobile = useIsMobile();
   const [mobileTab, setMobileTab] = useState<'products' | 'cart'>('products');
+  
+  // Hook Jomy pour paiements sécurisés
+  const { initializePayment, pollPaymentStatus, isLoading: djomyLoading, error: djomyError } = useDjomyPayment();
   
   // Récupérer le vendor_id de l'utilisateur connecté ou du contexte agent
   const [vendorId, setVendorId] = useState<string | null>(agentVendorId || null);
@@ -633,46 +637,22 @@ export function POSSystem() {
     }
 
     try {
-      // Pour Mobile Money, utiliser PawaPay
+      // Pour Mobile Money, utiliser Jomy.africa (paiement sécurisé)
       if (paymentMethod === 'mobile_money') {
-        toast.loading('Initialisation du paiement PawaPay...');
+        toast.loading('Initialisation du paiement Jomy.africa...');
         
-        const correspondent = mobileMoneyProvider === 'orange' ? 'orange_money' : 'mtn_money';
+        // Mapper le provider vers le format Jomy
+        const jomyPaymentMethod: DjomyPaymentMethod = mobileMoneyProvider === 'orange' ? 'OM' : 'MOMO';
         
-        const { data: pawapayResult, error: pawapayError } = await supabase.functions.invoke('pawapay-initialize-payment', {
-          body: {
-            amount: total,
-            currency: 'GNF',
-            phone_number: mobileMoneyPhone,
-            correspondent: correspondent,
-            description: `Vente POS - ${cart.length} article(s)`,
-            metadata: {
-              source: 'pos',
-              vendor_id: vendorId,
-              items_count: cart.length
-            }
-          }
-        });
-
-        toast.dismiss();
-
-        if (pawapayError || !pawapayResult?.success) {
-          console.error('PawaPay error:', pawapayError || pawapayResult);
-          const detailsMessage = await getEdgeFunctionErrorMessage(pawapayError);
-
-          toast.error('Erreur lors de l\'initialisation du paiement', {
-            description: pawapayResult?.error || detailsMessage || pawapayError?.message || 'Veuillez réessayer',
-          });
+        // Formater le numéro de téléphone pour Jomy (format 00224XXXXXXXXX)
+        const formattedPhone = `00224${mobileMoneyPhone}`;
+        
+        // Créer la commande d'abord pour avoir l'orderId
+        const customerId = await getOrCreateCustomerId();
+        if (!customerId) {
+          toast.dismiss();
           return;
         }
-
-        // PawaPay envoie une notification USSD sur le téléphone
-        toast.info('Demande de paiement envoyée', {
-          description: `Confirmez le paiement sur votre téléphone ${mobileMoneyProvider === 'orange' ? 'Orange Money' : 'MTN MoMo'}.`
-        });
-        
-        const customerId = await getOrCreateCustomerId();
-        if (!customerId) return;
 
         const { data: order, error: orderError } = await supabase
           .from('orders')
@@ -687,15 +667,18 @@ export function POSSystem() {
             status: 'pending',
             payment_method: paymentMethod,
             shipping_address: { address: 'Point de vente' },
-            notes: `Paiement Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange' : 'MTN'}) - ${mobileMoneyPhone} - PawaPay: ${pawapayResult.deposit_id}`,
+            notes: `Paiement Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange Money' : 'MTN MoMo'}) - ${mobileMoneyPhone}`,
             source: 'pos'
           })
           .select('id, order_number')
           .single();
 
-        if (orderError) throw orderError;
+        if (orderError) {
+          toast.dismiss();
+          throw orderError;
+        }
 
-        // Calcul du vrai prix unitaire (important pour ventes carton)
+        // Créer les items de commande
         const orderItems = cart.map(item => ({
           order_id: order.id,
           product_id: item.id,
@@ -706,13 +689,89 @@ export function POSSystem() {
 
         await supabase.from('order_items').insert(orderItems);
 
+        // Initialiser le paiement Jomy sécurisé
+        const jomyResult = await initializePayment({
+          amount: total,
+          payerPhone: formattedPhone,
+          paymentMethod: jomyPaymentMethod,
+          orderId: order.order_number || order.id,
+          description: `Vente POS - ${cart.length} article(s)`,
+          useGateway: false, // Paiement direct sans redirection
+          useSandbox: false,
+        });
+
+        toast.dismiss();
+
+        if (!jomyResult.success) {
+          console.error('[POS] Jomy payment error:', jomyResult.error);
+          toast.error('Erreur lors de l\'initialisation du paiement', {
+            description: jomyResult.error || 'Veuillez réessayer',
+          });
+          // Annuler la commande si le paiement échoue
+          await supabase.from('orders').update({ status: 'cancelled', payment_status: 'failed' }).eq('id', order.id);
+          return;
+        }
+
+        // Mettre à jour la commande avec l'ID de transaction Jomy
+        await supabase.from('orders')
+          .update({ 
+            notes: `Paiement Jomy (${mobileMoneyProvider === 'orange' ? 'Orange Money' : 'MTN MoMo'}) - ${mobileMoneyPhone} - Transaction: ${jomyResult.transactionId}` 
+          })
+          .eq('id', order.id);
+
+        // Notification: demande de paiement envoyée
+        toast.info('Demande de paiement envoyée', {
+          description: `Confirmez le paiement sur votre téléphone ${mobileMoneyProvider === 'orange' ? 'Orange Money' : 'MTN MoMo'}.`
+        });
+
+        // Polling pour vérifier le statut du paiement
+        if (jomyResult.transactionId) {
+          toast.loading('En attente de confirmation...', { id: 'payment-polling' });
+          
+          const finalStatus = await pollPaymentStatus(jomyResult.transactionId, {
+            maxAttempts: 36, // 3 minutes max (36 x 5s)
+            intervalMs: 5000,
+            onStatusChange: async (status) => {
+              console.log('[POS] Payment status:', status);
+              
+              if (status.status === 'SUCCESS' || status.status === 'completed') {
+                toast.dismiss('payment-polling');
+                toast.success('🎉 Paiement confirmé !');
+                
+                // Mettre à jour la commande
+                await supabase.from('orders')
+                  .update({ payment_status: 'paid', status: 'processing' })
+                  .eq('id', order.id);
+                
+                setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
+                setShowOrderSummary(false);
+                setShowReceipt(true);
+                clearCart();
+                await loadVendorProducts();
+              } else if (status.status === 'FAILED' || status.status === 'failed') {
+                toast.dismiss('payment-polling');
+                toast.error('Paiement échoué ou refusé');
+                
+                // Marquer la commande comme échouée
+                await supabase.from('orders')
+                  .update({ payment_status: 'failed' })
+                  .eq('id', order.id);
+              }
+            }
+          });
+
+          toast.dismiss('payment-polling');
+
+          if (!finalStatus || (finalStatus.status !== 'SUCCESS' && finalStatus.status !== 'completed')) {
+            // Paiement non confirmé après le délai
+            toast.warning('Paiement en attente', {
+              description: 'Le statut du paiement sera mis à jour automatiquement.'
+            });
+          }
+        }
+
         setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
         setShowOrderSummary(false);
-        
-        toast.success('Commande créée - En attente de confirmation', {
-          description: `Numéro: ${order.order_number || order.id.substring(0, 8).toUpperCase()}`
-        });
-        
         setCart([]);
         return;
       }
@@ -1688,7 +1747,7 @@ export function POSSystem() {
             <div className="bg-muted/20 p-3 rounded-lg">
               <div className="text-sm">
                 <strong>Mode de paiement:</strong> {
-                  paymentMethod === 'cash' ? 'Espèces' : 'Mobile Money (PawaPay)'
+                  paymentMethod === 'cash' ? 'Espèces' : 'Mobile Money (Jomy.africa)'
                 }
               </div>
               {paymentMethod === 'cash' && receivedAmount > 0 && (
