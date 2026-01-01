@@ -178,14 +178,21 @@ export default function QuoteDetails({ quote, open, onClose, onConvert }: QuoteD
                   </tr>
                 </thead>
                 <tbody>
-                  {quote.items.map((item: any, idx: number) => (
-                    <tr key={idx} className="border-t">
-                      <td className="p-2">{item.name}</td>
-                      <td className="text-center p-2">{item.qty}</td>
-                      <td className="text-right p-2">{item.price.toLocaleString()} GNF</td>
-                      <td className="text-right p-2">{(item.qty * item.price).toLocaleString()} GNF</td>
-                    </tr>
-                  ))}
+                  {quote.items.map((item: any, idx: number) => {
+                    // Normaliser les propriétés qui peuvent avoir des noms différents
+                    const qty = item.quantity ?? item.qty ?? 0;
+                    const price = item.unit_price ?? item.price ?? 0;
+                    const itemTotal = item.total ?? (qty * price);
+                    
+                    return (
+                      <tr key={idx} className="border-t">
+                        <td className="p-2">{item.name || ''}</td>
+                        <td className="text-center p-2">{qty}</td>
+                        <td className="text-right p-2">{(price || 0).toLocaleString()} GNF</td>
+                        <td className="text-right p-2">{(itemTotal || 0).toLocaleString()} GNF</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -197,23 +204,23 @@ export default function QuoteDetails({ quote, open, onClose, onConvert }: QuoteD
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span>Sous-total :</span>
-                <span>{quote.subtotal.toLocaleString()} GNF</span>
+                <span>{(quote.subtotal || 0).toLocaleString()} GNF</span>
               </div>
-              {quote.discount > 0 && (
+              {(quote.discount || 0) > 0 && (
                 <div className="flex justify-between text-red-600">
                   <span>Remise :</span>
-                  <span>-{quote.discount.toLocaleString()} GNF</span>
+                  <span>-{(quote.discount || 0).toLocaleString()} GNF</span>
                 </div>
               )}
-              {quote.tax > 0 && (
+              {(quote.tax || 0) > 0 && (
                 <div className="flex justify-between">
                   <span>Taxe :</span>
-                  <span>+{quote.tax.toLocaleString()} GNF</span>
+                  <span>+{(quote.tax || 0).toLocaleString()} GNF</span>
                 </div>
               )}
               <div className="flex justify-between font-bold text-lg pt-2 border-t">
                 <span>TOTAL :</span>
-                <span className="text-primary">{quote.total.toLocaleString()} GNF</span>
+                <span className="text-primary">{(quote.total || 0).toLocaleString()} GNF</span>
               </div>
             </div>
           </div>
