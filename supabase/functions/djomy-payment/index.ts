@@ -54,6 +54,7 @@ async function getAccessToken(clientId: string, clientSecret: string, useSandbox
     headers: {
       "Content-Type": "application/json",
       "Accept": "application/json",
+      "User-Agent": "224solutions/1.0 (supabase-edge)",
       "X-API-KEY": xApiKey,
     },
     body: JSON.stringify({}),
@@ -186,6 +187,8 @@ serve(async (req) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json",
+          "User-Agent": "224solutions/1.0 (supabase-edge)",
           "Authorization": `Bearer ${accessToken}`,
           "X-API-KEY": xApiKey,
         },
@@ -226,6 +229,8 @@ serve(async (req) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json",
+          "User-Agent": "224solutions/1.0 (supabase-edge)",
           "Authorization": `Bearer ${accessToken}`,
           "X-API-KEY": xApiKey,
         },
