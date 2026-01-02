@@ -7,6 +7,17 @@ import {
   resetFailedAttempts,
   formatRemainingTime 
 } from '@/lib/security/accountLockout';
+import { getCSRFToken } from '@/lib/security/csrf';
+import { 
+  logSecurityEvent, 
+  detectSQLInjection, 
+  detectXSS,
+  monitorRateLimitExceeded 
+} from '@/lib/security/securityMonitoring';
+import { 
+  isValidIdentifier,
+  sanitizeNoSQLInput 
+} from '@/lib/security/inputSanitizer';
 
 interface AgentLoginResponse {
   success: boolean;
@@ -48,10 +59,50 @@ export const useAgentAuth = () => {
     setIsLoading(true);
 
     try {
+      // Validation inputs
+      if (!isValidIdentifier(identifierValue)) {
+        toast.error('Format d\'identifiant invalide');
+        setIsLoading(false);
+        return false;
+      }
+      
+      // Détection tentatives d'injection
+      if (detectSQLInjection(identifierValue) || detectSQLInjection(password)) {
+        await logSecurityEvent({
+          type: 'sql_injection_attempt',
+          severity: 'critical',
+          identifier: identifierValue,
+          details: { endpoint: 'agent-login' }
+        });
+        toast.error('Données invalides détectées');
+        setIsLoading(false);
+        return false;
+      }
+      
+      if (detectXSS(identifierValue)) {
+        await logSecurityEvent({
+          type: 'xss_attempt',
+          severity: 'high',
+          identifier: identifierValue,
+          details: { endpoint: 'agent-login' }
+        });
+        toast.error('Données invalides détectées');
+        setIsLoading(false);
+        return false;
+      }
+      
       // Vérifier si compte verrouillé AVANT tentative
       const lockStatus = isAccountLocked(identifierValue);
       if (lockStatus.locked && lockStatus.remainingTime) {
         const timeStr = formatRemainingTime(lockStatus.remainingTime);
+        
+        await logSecurityEvent({
+          type: 'account_locked',
+          severity: 'medium',
+          identifier: identifierValue,
+          details: { remainingTime: lockStatus.remainingTime }
+        });
+        
         toast.error(
           `🔒 Compte verrouillé pour ${timeStr} suite à trop de tentatives échouées`,
           { duration: 6000 }
@@ -59,13 +110,20 @@ export const useAgentAuth = () => {
         setIsLoading(false);
         return false;
       }
+      
+      // Sanitize input
+      const sanitizedIdentifier = sanitizeNoSQLInput(identifierValue);
+      
+      // Obtenir token CSRF
+      const csrfToken = getCSRFToken();
 
       const { data, error } = await supabase.functions.invoke<AgentLoginResponse>(
         'auth-agent-login',
         {
           body: {
-            identifier: identifierValue,
-            password: password
+            identifier: sanitizedIdentifier,
+            password: password,
+            csrf_token: csrfToken
           }
         }
       );
@@ -82,11 +140,33 @@ export const useAgentAuth = () => {
       }
 
       if (!data.success) {
+        // Logger échec de connexion
+        await logSecurityEvent({
+          type: 'login_failed',
+          severity: 'low',
+          identifier: identifierValue,
+          details: {
+            userType: 'agent',
+            reason: data.error || 'invalid_credentials'
+          }
+        });
+        
         // Enregistrer échec de connexion
         const lockResult = recordFailedAttempt(identifierValue);
         
         if (lockResult.locked && lockResult.lockoutDuration) {
           const lockMinutes = Math.ceil(lockResult.lockoutDuration / 60);
+          
+          await logSecurityEvent({
+            type: 'account_locked',
+            severity: 'high',
+            identifier: identifierValue,
+            details: {
+              lockoutDuration: lockResult.lockoutDuration,
+              reason: 'multiple_failed_attempts'
+            }
+          });
+          
           toast.error(
             `🔒 Trop de tentatives échouées. Compte verrouillé pour ${lockMinutes} minutes.`,
             { duration: 8000 }
