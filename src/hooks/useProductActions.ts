@@ -7,6 +7,8 @@ import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { usePublicId } from '@/hooks/usePublicId';
+import { SubscriptionService } from '@/services/subscriptionService';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ProductFormData {
   name: string;
@@ -44,6 +46,7 @@ export function useProductActions({
   onProductDeleted,
 }: UseProductActionsProps) {
   const { generatePublicId } = usePublicId();
+  const { user } = useAuth();
 
   /**
    * Upload des images vers Supabase Storage
@@ -193,7 +196,48 @@ export function useProductActions({
       return { success: false };
     }
 
+    if (!user?.id) {
+      toast.error('Utilisateur non connecté');
+      return { success: false };
+    }
+
     try {
+      // ✅ VÉRIFICATION CRITIQUE: Vérifier la limite de produits AVANT de créer
+      console.log('🔍 [ProductCreate] Vérification limite de produits...');
+      const limitCheck = await SubscriptionService.checkProductLimit(user.id);
+      
+      if (!limitCheck) {
+        toast.error('Impossible de vérifier les limites d\'abonnement');
+        return { success: false };
+      }
+
+      console.log('📊 [ProductCreate] Limite:', {
+        current: limitCheck.current_count,
+        max: limitCheck.max_products,
+        canAdd: limitCheck.can_add,
+        isUnlimited: limitCheck.is_unlimited
+      });
+
+      // ❌ BLOQUER si limite atteinte
+      if (!limitCheck.can_add) {
+        const message = limitCheck.is_unlimited
+          ? 'Erreur de vérification de limite'
+          : `🚫 Limite atteinte : ${limitCheck.current_count}/${limitCheck.max_products} produits. Mettez à jour votre abonnement pour ajouter plus de produits.`;
+        
+        toast.error(message, {
+          duration: 5000,
+          action: {
+            label: 'Voir abonnements',
+            onClick: () => window.location.href = '/subscriptions'
+          }
+        });
+        
+        return { success: false };
+      }
+
+      // ✅ Limite OK - Continuer la création
+      console.log('✅ [ProductCreate] Limite OK, création du produit...');
+
       // Upload images
       const imageUrls = await uploadImages(images);
 
@@ -256,10 +300,22 @@ export function useProductActions({
       return { success: true, product: data };
     } catch (error: any) {
       console.error('[ProductCreate] Error:', error);
-      toast.error(`Erreur création: ${error.message}`);
+      
+      // Message d'erreur personnalisé selon le type
+      let errorMessage = 'Erreur lors de la création du produit';
+      
+      if (error.message?.includes('limit') || error.message?.includes('maximum')) {
+        errorMessage = '🚫 Limite de produits atteinte. Mettez à jour votre abonnement.';
+      } else if (error.code === '23505') {
+        errorMessage = 'Un produit avec ce SKU existe déjà';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
       return { success: false };
     }
-  }, [vendorId, uploadImages, handleCategory, generatePublicId, onProductCreated, generateUniqueSKU, syncInventoryQuantity]);
+  }, [vendorId, user, uploadImages, handleCategory, generatePublicId, onProductCreated, generateUniqueSKU, syncInventoryQuantity]);
 
   /**
    * Mettre à jour un produit

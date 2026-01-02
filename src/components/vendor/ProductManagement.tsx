@@ -17,13 +17,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 import { useProductActions } from "@/hooks/useProductActions";
 import { useVendorErrorBoundary } from "@/hooks/useVendorErrorBoundary";
+import { SubscriptionService } from "@/services/subscriptionService";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PublicIdBadge } from "@/components/PublicIdBadge";
 import { 
   Package, Plus, Search, Filter, Edit, Trash2,
   ShoppingCart, TrendingUp, Camera, Save, X, Copy,
-  Sparkles, Loader2, ImagePlus, Tags, FolderOpen, Barcode
+  Sparkles, Loader2, ImagePlus, Tags, FolderOpen, Barcode, AlertCircle
 } from "lucide-react";
 
 interface Product {
@@ -105,6 +106,12 @@ export default function ProductManagement() {
   const [generatingImage, setGeneratingImage] = useState(false);
   const [categoryMode, setCategoryMode] = useState<'existing' | 'new'>('existing');
   const [saving, setSaving] = useState(false);
+  const [productLimit, setProductLimit] = useState<{
+    current_count: number;
+    max_products: number | null;
+    can_add: boolean;
+    is_unlimited: boolean;
+  } | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -133,7 +140,14 @@ export default function ProductManagement() {
   useEffect(() => {
     if (!vendorId || vendorLoading) return;
     fetchData();
+    loadProductLimit();
   }, [vendorId, vendorLoading]);
+
+  const loadProductLimit = async () => {
+    if (!user?.id) return;
+    const limit = await SubscriptionService.checkProductLimit(user.id);
+    setProductLimit(limit);
+  };
 
   const fetchData = async () => {
     if (!vendorId) return;
@@ -518,6 +532,57 @@ export default function ProductManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Product Limit Banner */}
+      {productLimit && !productLimit.can_add && (
+        <Card className="border-orange-500 bg-orange-50 dark:bg-orange-950">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-orange-900 dark:text-orange-100">
+                  🚫 Limite de produits atteinte
+                </h3>
+                <p className="text-sm text-orange-800 dark:text-orange-200 mt-1">
+                  Vous avez atteint la limite de {productLimit.max_products} produits pour votre plan actuel ({productLimit.current_count}/{productLimit.max_products}).
+                </p>
+                <Button
+                  onClick={() => navigate('/subscriptions')}
+                  size="sm"
+                  className="mt-3"
+                  variant="default"
+                >
+                  Mettre à niveau mon abonnement
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Product Limit Info (when can add) */}
+      {productLimit && productLimit.can_add && !productLimit.is_unlimited && (
+        <Card className="border-blue-500 bg-blue-50 dark:bg-blue-950">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Package className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  Produits: {productLimit.current_count}/{productLimit.max_products}
+                </span>
+              </div>
+              <Button
+                onClick={() => navigate('/subscriptions')}
+                size="sm"
+                variant="ghost"
+                className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+              >
+                Voir plans
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -531,7 +596,7 @@ export default function ProductManagement() {
             </p>
           </div>
         </div>
-        <Button onClick={() => { resetForm(); setShowDialog(true); }} className="w-full sm:w-auto">
+        <Button onClick={() => { resetForm(); setShowDialog(true); }} className="w-full sm:w-auto" disabled={productLimit && !productLimit.can_add}>
           <Plus className="h-4 w-4 mr-2" />
           Nouveau produit
         </Button>
