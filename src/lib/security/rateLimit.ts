@@ -39,11 +39,12 @@ export class RateLimiter {
         resetAt
       };
     } catch (error) {
-      console.error('Rate limit check failed:', error);
+      console.error('🔴 Rate limit check failed - BLOCKING for security:', error);
+      // Fail CLOSED pour sécurité: bloquer en cas d'erreur
       return {
-        allowed: true, // Fail open pour ne pas bloquer en cas d'erreur
-        remaining: maxRequests,
-        resetAt: new Date()
+        allowed: false,
+        remaining: 0,
+        resetAt: new Date(Date.now() + windowMinutes * 60000)
       };
     }
   }

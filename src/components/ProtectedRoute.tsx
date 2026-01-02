@@ -2,6 +2,36 @@ import { ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
+import CryptoJS from 'crypto-js';
+
+// Clé de chiffrement dérivée de l'ID utilisateur (unique par session)
+const getEncryptionKey = (): string => {
+  // Utilise une combinaison de données navigateur pour clé unique
+  return CryptoJS.SHA256(
+    navigator.userAgent + window.location.hostname
+  ).toString();
+};
+
+// Chiffrer données sensibles
+const encryptData = (data: string): string => {
+  try {
+    return CryptoJS.AES.encrypt(data, getEncryptionKey()).toString();
+  } catch (e) {
+    console.error('🔴 Erreur chiffrement');
+    return data;
+  }
+};
+
+// Déchiffrer données
+const decryptData = (encryptedData: string): string | null => {
+  try {
+    const bytes = CryptoJS.AES.decrypt(encryptedData, getEncryptionKey());
+    return bytes.toString(CryptoJS.enc.Utf8);
+  } catch (e) {
+    console.error('🔴 Erreur déchiffrement');
+    return null;
+  }
+};
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -12,8 +42,12 @@ interface ProtectedRouteProps {
 function checkCustomSession(allowedRoles: string[]): { isValid: boolean; role: string | null } {
   // Vérifier session Agent (localStorage puis sessionStorage pour compatibilité)
   if (allowedRoles.includes('agent') || allowedRoles.includes('admin')) {
-    const agentSession = localStorage.getItem('agent_session') || sessionStorage.getItem('agent_session');
-    const agentUser = localStorage.getItem('agent_user') || sessionStorage.getItem('agent_user');
+    const agentSessionRaw = localStorage.getItem('agent_session') || sessionStorage.getItem('agent_session');
+    const agentUserRaw = localStorage.getItem('agent_user') || sessionStorage.getItem('agent_user');
+    
+    // Déchiffrer si données présentes
+    const agentSession = agentSessionRaw ? (decryptData(agentSessionRaw) || agentSessionRaw) : null;
+    const agentUser = agentUserRaw ? (decryptData(agentUserRaw) || agentUserRaw) : null;
     
     if (agentSession && agentUser) {
       try {
@@ -23,9 +57,22 @@ function checkCustomSession(allowedRoles: string[]): { isValid: boolean; role: s
           console.log('✅ Session Agent valide détectée');
           return { isValid: true, role: 'agent' };
         } else if (!userData.expires_at) {
-          // Si pas d'expiration, considérer comme valide
-          console.log('✅ Session Agent détectée (sans expiration)');
+          // Ajouter expiration par défaut (24h) pour anciennes sessions
+          const defaultExpiry = new Date();
+          defaultExpiry.setHours(defaultExpiry.getHours() + 24);
+          userData.expires_at = defaultExpiry.toISOString();
+          // Sauvegarder avec expiration
+          const encrypted = encryptData(JSON.stringify(userData));
+          localStorage.setItem('agent_user', encrypted);
+          console.log('✅ Session Agent détectée (expiration ajoutée)');
           return { isValid: true, role: 'agent' };
+        } else {
+          console.warn('⚠️ Session Agent expirée');
+          // Nettoyer session expirée
+          localStorage.removeItem('agent_session');
+          localStorage.removeItem('agent_user');
+          sessionStorage.removeItem('agent_session');
+          sessionStorage.removeItem('agent_user');
         }
       } catch (e) {
         console.error('❌ Erreur parsing session agent:', e);
@@ -35,8 +82,12 @@ function checkCustomSession(allowedRoles: string[]): { isValid: boolean; role: s
 
   // Vérifier session Bureau (localStorage puis sessionStorage pour compatibilité)
   if (allowedRoles.includes('syndicat') || allowedRoles.includes('bureau') || allowedRoles.includes('admin')) {
-    const bureauSession = localStorage.getItem('bureau_session') || sessionStorage.getItem('bureau_session');
-    const bureauUser = localStorage.getItem('bureau_user') || sessionStorage.getItem('bureau_user');
+    const bureauSessionRaw = localStorage.getItem('bureau_session') || sessionStorage.getItem('bureau_session');
+    const bureauUserRaw = localStorage.getItem('bureau_user') || sessionStorage.getItem('bureau_user');
+    
+    // Déchiffrer si données présentes
+    const bureauSession = bureauSessionRaw ? (decryptData(bureauSessionRaw) || bureauSessionRaw) : null;
+    const bureauUser = bureauUserRaw ? (decryptData(bureauUserRaw) || bureauUserRaw) : null;
     
     if (bureauSession && bureauUser) {
       try {
@@ -46,8 +97,20 @@ function checkCustomSession(allowedRoles: string[]): { isValid: boolean; role: s
           console.log('✅ Session Bureau valide détectée');
           return { isValid: true, role: 'syndicat' };
         } else if (!userData.expires_at) {
-          console.log('✅ Session Bureau détectée (sans expiration)');
+          // Ajouter expiration par défaut (24h)
+          const defaultExpiry = new Date();
+          defaultExpiry.setHours(defaultExpiry.getHours() + 24);
+          userData.expires_at = defaultExpiry.toISOString();
+          const encrypted = encryptData(JSON.stringify(userData));
+          localStorage.setItem('bureau_user', encrypted);
+          console.log('✅ Session Bureau détectée (expiration ajoutée)');
           return { isValid: true, role: 'syndicat' };
+        } else {
+          console.warn('⚠️ Session Bureau expirée');
+          localStorage.removeItem('bureau_session');
+          localStorage.removeItem('bureau_user');
+          sessionStorage.removeItem('bureau_session');
+          sessionStorage.removeItem('bureau_user');
         }
       } catch (e) {
         console.error('❌ Erreur parsing session bureau:', e);

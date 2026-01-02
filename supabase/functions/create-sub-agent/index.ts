@@ -2,23 +2,41 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import * as bcrypt from 'https://deno.land/x/bcrypt@v0.4.1/mod.ts';
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+// Liste blanche des origines autorisées
+const ALLOWED_ORIGINS = [
+  'https://224solution.net',
+  'https://www.224solution.net',
+  'http://localhost:8080',
+  'http://127.0.0.1:8080'
+];
+
+const getOriginHeader = (req: Request): string => {
+  const origin = req.headers.get('origin') || '';
+  return ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
 };
 
-const securityHeaders = {
-  ...corsHeaders,
+const corsHeaders = {
+  "Access-Control-Allow-Origin": getOriginHeader,
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Credentials": "true"
+};
+
+const getSecurityHeaders = (req: Request) => ({
+  'Access-Control-Allow-Origin': getOriginHeader(req),
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Credentials': 'true',
   'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co;",
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
   'X-Frame-Options': 'DENY',
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin'
-};
+});
 
 const MIN_PASSWORD_LENGTH = 8;
 
 serve(async (req) => {
+  const securityHeaders = getSecurityHeaders(req);
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: securityHeaders });
   }
@@ -64,7 +82,7 @@ serve(async (req) => {
       
       if (user) {
         authenticatedUserId = user.id;
-        console.log('✅ User authenticated via JWT:', user.id);
+        console.log('✅ User authenticated via JWT');
       }
     }
     

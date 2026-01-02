@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
+import { 
+  isAccountLocked, 
+  recordFailedAttempt, 
+  resetFailedAttempts,
+  formatRemainingTime 
+} from '@/lib/security/accountLockout';
 
 interface AgentLoginResponse {
   success: boolean;
@@ -42,6 +48,18 @@ export const useAgentAuth = () => {
     setIsLoading(true);
 
     try {
+      // Vérifier si compte verrouillé AVANT tentative
+      const lockStatus = isAccountLocked(identifierValue);
+      if (lockStatus.locked && lockStatus.remainingTime) {
+        const timeStr = formatRemainingTime(lockStatus.remainingTime);
+        toast.error(
+          `🔒 Compte verrouillé pour ${timeStr} suite à trop de tentatives échouées`,
+          { duration: 6000 }
+        );
+        setIsLoading(false);
+        return false;
+      }
+
       const { data, error } = await supabase.functions.invoke<AgentLoginResponse>(
         'auth-agent-login',
         {
@@ -64,15 +82,31 @@ export const useAgentAuth = () => {
       }
 
       if (!data.success) {
-        toast.error(data.error || 'Identifiant ou mot de passe incorrect');
+        // Enregistrer échec de connexion
+        const lockResult = recordFailedAttempt(identifierValue);
         
-        // Afficher tentatives restantes si disponible
-        if (data.attempts_remaining !== undefined) {
-          toast.warning(`⚠️ ${data.attempts_remaining} tentative(s) restante(s)`);
+        if (lockResult.locked && lockResult.lockoutDuration) {
+          const lockMinutes = Math.ceil(lockResult.lockoutDuration / 60);
+          toast.error(
+            `🔒 Trop de tentatives échouées. Compte verrouillé pour ${lockMinutes} minutes.`,
+            { duration: 8000 }
+          );
+        } else {
+          toast.error(data.error || 'Identifiant ou mot de passe incorrect');
+          
+          if (lockResult.remainingAttempts !== undefined) {
+            toast.warning(
+              `⚠️ ${lockResult.remainingAttempts} tentative(s) restante(s) avant verrouillage`,
+              { duration: 5000 }
+            );
+          }
         }
         
         return false;
       }
+
+      // Succès étape 1 → Réinitialiser compteur échecs
+      resetFailedAttempts(identifierValue);
 
       // Succès étape 1 → OTP envoyé
       if (data.requires_otp) {
@@ -141,8 +175,17 @@ export const useAgentAuth = () => {
 
       // Succès → Stocker session (localStorage pour persistance après refresh)
       if (data.session_token && data.user) {
+        // Ajouter expiration (24 heures)
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 24);
+        
+        const userWithExpiry = {
+          ...data.user,
+          expires_at: expiresAt.toISOString()
+        };
+        
         localStorage.setItem('agent_session', data.session_token);
-        localStorage.setItem('agent_user', JSON.stringify(data.user));
+        localStorage.setItem('agent_user', JSON.stringify(userWithExpiry));
         
         toast.success(`Bienvenue ${data.user.first_name} ${data.user.last_name} !`);
         

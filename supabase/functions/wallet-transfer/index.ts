@@ -15,7 +15,13 @@ const corsHeaders = {
 
 // Marge de sécurité invisible - JAMAIS exposée au client
 const SECURITY_MARGIN = 0.005; // 0.5%
-const TRANSACTION_SECRET = Deno.env.get("TRANSACTION_SECRET_KEY") || "secure-transaction-key-224sol";
+const TRANSACTION_SECRET = (() => {
+  const secret = Deno.env.get("TRANSACTION_SECRET_KEY");
+  if (!secret) {
+    throw new Error("🔴 ERREUR CRITIQUE: TRANSACTION_SECRET_KEY non configuré");
+  }
+  return secret;
+})();
 
 // 🔐 Génère signature HMAC
 async function generateSignature(transactionId: string, amount: number): Promise<string> {

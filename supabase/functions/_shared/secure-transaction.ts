@@ -8,7 +8,11 @@ import { crypto } from "https://deno.land/std@0.190.0/crypto/mod.ts";
 
 // Secret partagé pour signature (chargé depuis env)
 export const getTransactionSecret = (): string => {
-  return Deno.env.get("TRANSACTION_SECRET_KEY") || "secure-transaction-key-224sol";
+  const secret = Deno.env.get("TRANSACTION_SECRET_KEY");
+  if (!secret) {
+    throw new Error("🔴 ERREUR CRITIQUE: TRANSACTION_SECRET_KEY non configuré - sécurité compromise");
+  }
+  return secret;
 };
 
 /**

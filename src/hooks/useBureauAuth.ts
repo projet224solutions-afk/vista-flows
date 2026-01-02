@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
+import { 
+  isAccountLocked, 
+  recordFailedAttempt, 
+  resetFailedAttempts,
+  formatRemainingTime 
+} from '@/lib/security/accountLockout';
 
 interface BureauLoginResponse {
   success: boolean;
@@ -43,6 +49,18 @@ export const useBureauAuth = () => {
     setIsLoading(true);
 
     try {
+      // Vérifier verrouillage
+      const lockStatus = isAccountLocked(identifierValue);
+      if (lockStatus.locked && lockStatus.remainingTime) {
+        const timeStr = formatRemainingTime(lockStatus.remainingTime);
+        toast.error(
+          `🔒 Compte verrouillé pour ${timeStr} suite à trop de tentatives échouées`,
+          { duration: 6000 }
+        );
+        setIsLoading(false);
+        return false;
+      }
+
       const { data, error } = await supabase.functions.invoke<BureauLoginResponse>(
         'auth-bureau-login',
         {
@@ -65,15 +83,31 @@ export const useBureauAuth = () => {
       }
 
       if (!data.success) {
-        toast.error(data.error || 'Identifiant ou mot de passe incorrect');
+        // Enregistrer échec
+        const lockResult = recordFailedAttempt(identifierValue);
         
-        // Afficher tentatives restantes si disponible
-        if (data.attempts_remaining !== undefined) {
-          toast.warning(`⚠️ ${data.attempts_remaining} tentative(s) restante(s)`);
+        if (lockResult.locked && lockResult.lockoutDuration) {
+          const lockMinutes = Math.ceil(lockResult.lockoutDuration / 60);
+          toast.error(
+            `🔒 Trop de tentatives échouées. Compte verrouillé pour ${lockMinutes} minutes.`,
+            { duration: 8000 }
+          );
+        } else {
+          toast.error(data.error || 'Identifiant ou mot de passe incorrect');
+          
+          if (lockResult.remainingAttempts !== undefined) {
+            toast.warning(
+              `⚠️ ${lockResult.remainingAttempts} tentative(s) restante(s) avant verrouillage`,
+              { duration: 5000 }
+            );
+          }
         }
         
         return false;
       }
+
+      // Succès → Réinitialiser compteur
+      resetFailedAttempts(identifierValue);
 
       // Succès étape 1 → OTP envoyé
       if (data.requires_otp) {
