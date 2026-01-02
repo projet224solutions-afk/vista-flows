@@ -208,80 +208,125 @@ export default function DriverSubscriptionManagement() {
     }
 
     const days = parseInt(offerData.days);
-    if (isNaN(days) || days <= 0) {
-      toast.error('Le nombre de jours doit être positif');
+    if (isNaN(days) || days <= 0 || days > 365) {
+      toast.error('Le nombre de jours doit être entre 1 et 365');
       return;
     }
 
     setSubmitting(true);
     try {
+      console.log('🎁 [PDG] Offre abonnement:', { userId: offerData.userId, type: offerData.type, days });
+
       // Résoudre l'ID utilisateur
-      let resolvedUserId = offerData.userId;
+      let resolvedUserId = offerData.userId.trim();
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       
-      if (!uuidRegex.test(offerData.userId)) {
+      if (!uuidRegex.test(resolvedUserId)) {
         // Chercher dans user_ids
+        console.log('🔍 [PDG] Recherche dans user_ids:', resolvedUserId.toUpperCase());
         const { data: userIdData, error: userIdError } = await supabase
           .from('user_ids')
           .select('user_id')
-          .eq('custom_id', offerData.userId.toUpperCase())
+          .eq('custom_id', resolvedUserId.toUpperCase())
           .single();
 
         if (userIdError || !userIdData) {
           // Chercher par email ou téléphone dans profiles
+          console.log('🔍 [PDG] Recherche dans profiles par email/phone');
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
-            .select('id')
-            .or(`email.ilike.%${offerData.userId}%,phone.ilike.%${offerData.userId}%`)
+            .select('id, email, phone')
+            .or(`email.ilike.%${resolvedUserId}%,phone.ilike.%${resolvedUserId}%`)
             .limit(1)
             .single();
 
           if (profileError || !profileData) {
-            throw new Error(`Utilisateur "${offerData.userId}" non trouvé`);
+            console.error('❌ [PDG] Utilisateur non trouvé');
+            throw new Error(`Utilisateur "${resolvedUserId}" non trouvé. Vérifiez l'ID, email ou téléphone.`);
           }
+          
+          console.log('✅ [PDG] Utilisateur trouvé:', profileData.email);
           resolvedUserId = profileData.id;
         } else {
+          console.log('✅ [PDG] Utilisateur trouvé via user_ids');
           resolvedUserId = userIdData.user_id;
         }
       }
 
-      // Calculer les dates
-      const startDate = new Date();
-      const endDate = new Date();
-      endDate.setDate(endDate.getDate() + days);
-
-      // Désactiver les anciens abonnements
-      await supabase
-        .from('driver_subscriptions')
-        .update({ status: 'expired', updated_at: new Date().toISOString() })
-        .eq('user_id', resolvedUserId)
-        .eq('status', 'active');
-
-      // Créer l'abonnement gratuit
-      const { error: insertError } = await supabase
-        .from('driver_subscriptions')
-        .insert({
-          user_id: resolvedUserId,
-          type: offerData.type,
-          price: 0,
-          status: 'active',
-          start_date: startDate.toISOString(),
-          end_date: endDate.toISOString(),
-          payment_method: 'pdg_gift',
-          billing_cycle: 'custom',
-          transaction_id: `GIFT-PDG-${Date.now()}`,
-          metadata: { offered_by_pdg: true, days_offered: days }
+      // Utiliser la fonction RPC pour créer l'abonnement (plus fiable)
+      console.log('📝 [PDG] Appel fonction pdg_offer_subscription');
+      const { data: subscriptionId, error: rpcError } = await supabase
+        .rpc('pdg_offer_subscription', {
+          p_user_id: resolvedUserId,
+          p_type: offerData.type,
+          p_days: days
         });
 
-      if (insertError) throw insertError;
+      if (rpcError) {
+        console.error('❌ [PDG] Erreur RPC:', rpcError);
+        
+        // Si fonction n'existe pas encore, fallback sur méthode directe
+        if (rpcError.code === 'PGRST202' || rpcError.message?.includes('function')) {
+          console.warn('⚠️ [PDG] Fonction RPC non trouvée, utilisation méthode directe');
+          
+          // Méthode fallback
+          const startDate = new Date();
+          const endDate = new Date();
+          endDate.setDate(endDate.getDate() + days);
 
-      toast.success(`Abonnement ${offerData.type} de ${days} jours offert avec succès!`);
+          await supabase
+            .from('driver_subscriptions')
+            .update({ status: 'expired', updated_at: new Date().toISOString() })
+            .eq('user_id', resolvedUserId)
+            .eq('status', 'active');
+
+          const { error: insertError } = await supabase
+            .from('driver_subscriptions')
+            .insert({
+              user_id: resolvedUserId,
+              type: offerData.type,
+              price: 0,
+              status: 'active',
+              start_date: startDate.toISOString(),
+              end_date: endDate.toISOString(),
+              payment_method: 'pdg_gift',
+              billing_cycle: 'custom',
+              transaction_id: `GIFT-PDG-${Date.now()}`,
+              metadata: { offered_by_pdg: true, days_offered: days }
+            });
+
+          if (insertError) throw insertError;
+        } else {
+          throw rpcError;
+        }
+      }
+
+      console.log('✅ [PDG] Abonnement créé:', subscriptionId);
+      toast.success(`🎁 Abonnement ${offerData.type} de ${days} jours offert avec succès!`, {
+        description: 'L\'utilisateur peut maintenant utiliser l\'application'
+      });
+      
       setIsOfferDialogOpen(false);
       setOfferData({ userId: '', type: 'taxi', days: '30', isFree: true });
       fetchData();
     } catch (error: any) {
-      console.error('Error offering subscription:', error);
-      toast.error(error.message || 'Erreur lors de l\'offre d\'abonnement');
+      console.error('❌ [PDG] Erreur offre abonnement:', error);
+      
+      // Messages d'erreur détaillés
+      let errorMessage = 'Erreur lors de l\'offre d\'abonnement';
+      if (error.message?.includes('non trouvé') || error.message?.includes('not found')) {
+        errorMessage = 'Utilisateur introuvable. Vérifiez l\'ID, email ou téléphone.';
+      } else if (error.message?.includes('Type invalide')) {
+        errorMessage = 'Type d\'abonnement invalide. Choisissez taxi ou livreur.';
+      } else if (error.message?.includes('constraint') && error.message?.includes('payment_method')) {
+        errorMessage = 'Erreur de configuration. La migration SQL doit être appliquée.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage, {
+        description: 'Vérifiez les informations et réessayez'
+      });
     } finally {
       setSubmitting(false);
     }
