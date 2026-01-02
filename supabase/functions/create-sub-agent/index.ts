@@ -1,14 +1,26 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import * as bcrypt from 'https://deno.land/x/bcrypt@v0.4.1/mod.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const securityHeaders = {
+  ...corsHeaders,
+  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co;",
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  'X-Frame-Options': 'DENY',
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin'
+};
+
+const MIN_PASSWORD_LENGTH = 8;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -69,7 +81,7 @@ serve(async (req) => {
         console.error("Token d'accès invalide:", tokenError);
         return new Response(
           JSON.stringify({ error: "Token d'accès invalide" }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 401, headers: { ...securityHeaders, "Content-Type": "application/json" } }
         );
       }
       authenticatedUserId = tokenAgent.user_id;
@@ -77,7 +89,7 @@ serve(async (req) => {
     } else if (!authenticatedUserId) {
       return new Response(
         JSON.stringify({ error: "Non authentifié" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 401, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -85,15 +97,15 @@ serve(async (req) => {
     if (!pdg_id || !parent_agent_id || !name || !email || !phone || !agent_type || !password) {
       return new Response(
         JSON.stringify({ error: "Données manquantes (pdg_id, parent_agent_id, name, email, phone, agent_type, password requis)" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Valider le mot de passe (minimum 6 caractères)
-    if (password.length < 6) {
+    // Valider le mot de passe (minimum 8 caractères)
+    if (!password || password.length < MIN_PASSWORD_LENGTH) {
       return new Response(
-        JSON.stringify({ error: "Le mot de passe doit contenir au moins 6 caractères" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: `Le mot de passe doit contenir au moins ${MIN_PASSWORD_LENGTH} caractères` }),
+        { status: 400, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -102,7 +114,7 @@ serve(async (req) => {
     if (!validAgentTypes.includes(agent_type)) {
       return new Response(
         JSON.stringify({ error: "Type d'agent invalide" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -117,7 +129,7 @@ serve(async (req) => {
       console.error("Agent parent non trouvé:", parentError);
       return new Response(
         JSON.stringify({ error: "Agent parent non trouvé" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 404, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -144,7 +156,7 @@ serve(async (req) => {
       console.error("Utilisateur non autorisé - authenticatedUserId:", authenticatedUserId, "agent.user_id:", parentAgent.user_id, "agent.pdg_id:", parentAgent.pdg_id);
       return new Response(
         JSON.stringify({ error: "Vous n'êtes pas autorisé à créer des sous-agents pour cet agent" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 403, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -152,7 +164,7 @@ serve(async (req) => {
     if (!parentAgent.can_create_sub_agent) {
       return new Response(
         JSON.stringify({ error: "Vous n'avez pas la permission de créer des sous-agents" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 403, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -160,7 +172,7 @@ serve(async (req) => {
     if (!parentAgent.is_active) {
       return new Response(
         JSON.stringify({ error: "Votre compte agent est inactif" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 403, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -174,7 +186,7 @@ serve(async (req) => {
     if (existingAgent) {
       return new Response(
         JSON.stringify({ error: "Cet email est déjà utilisé par un autre agent" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -198,7 +210,24 @@ serve(async (req) => {
       console.error("Erreur création utilisateur Auth:", authError);
       return new Response(
         JSON.stringify({ error: `Erreur création compte: ${authError?.message || 'Erreur inconnue'}` }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...securityHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Hash du mot de passe avec bcrypt pour la table agents
+    let passwordHash: string;
+    try {
+      passwordHash = await bcrypt.hash(password);
+      console.log('✅ Mot de passe hashé avec bcrypt');
+    } catch (bcryptError) {
+      console.error('❌ Erreur hashing mot de passe:', bcryptError);
+      // Supprimer l'utilisateur créé pour éviter incohérence
+      await supabaseServiceClient.auth.admin.deleteUser(authUser.user.id);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Erreur système de hashing des mots de passe'
+        }),
+        { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
 
@@ -229,14 +258,51 @@ serve(async (req) => {
       await supabaseServiceClient.auth.admin.deleteUser(authUser.user.id);
       return new Response(
         JSON.stringify({ error: insertError.message }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // Créer le profil utilisateur dans la table profiles
     const { error: profileError } = await supabaseServiceClient
       .from("profiles")
+      .Créer dans la table agents pour auth MFA (comme create-pdg-agent)
+    const { error: agentsTableError } = await supabaseServiceClient
+      .from('agents')
       .insert({
+        id: authUser.user.id,
+        email: email.toLowerCase().trim(),
+        phone: phone.trim(),
+        first_name: name.split(' ')[0]?.trim() || name,
+        last_name: name.split(' ').slice(1).join(' ').trim() || '',
+        agent_type: 'sub_agent',
+        password_hash: passwordHash,
+        is_active: true,
+        failed_login_attempts: 0,
+      });
+
+    if (agentsTableError) {
+      console.error('⚠️ Erreur création dans agents table:', agentsTableError);
+      // Ne pas bloquer la création si cette table n'existe pas
+    } else {
+      console.log('✅ Sous-agent créé dans agents table pour auth MFA');
+    }
+
+    // Créer wallet général
+    const { error: walletError } = await supabaseServiceClient
+      .from('wallets')
+      .insert({
+        user_id: authUser.user.id,
+        balance: 0,
+        currency: 'GNF'
+      });
+
+    if (walletError) {
+      console.warn('⚠️ Erreur création wallet général:', walletError);
+    } else {
+      console.log('✅ Wallet général créé');
+    }
+
+    // insert({
         id: authUser.user.id,
         email: email.trim().toLowerCase(),
         full_name: name.trim(),
@@ -276,13 +342,13 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, agent: newAgent }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...securityHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Erreur create-sub-agent:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Erreur inconnue" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...securityHeaders, "Content-Type": "application/json" } }
     );
   }
 });
