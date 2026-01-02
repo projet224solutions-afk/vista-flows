@@ -272,9 +272,19 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
         }
       });
 
+      console.log('📥 Réponse Edge Function:', { data, error });
+
       if (error) {
-        console.error('❌ Edge function error:', error);
-        throw error;
+        console.error('❌ Edge function error détaillé:', {
+          message: error.message,
+          context: error.context,
+          status: error.status,
+          fullError: error
+        });
+        
+        // Message d'erreur plus explicite
+        const errorMsg = error.context?.body?.error || error.message || 'Erreur inconnue';
+        throw new Error(`Erreur Edge Function: ${errorMsg}`);
       }
       
       if (data?.error) {
