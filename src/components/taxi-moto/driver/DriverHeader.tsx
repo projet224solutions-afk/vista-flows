@@ -102,6 +102,14 @@ export function DriverHeader({
                     GPS
                   </div>
                 )}
+                
+                {/* Driver ID Badge - Visible sur mobile */}
+                {driverId && (
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                    <Shield className="w-3 h-3" />
+                    <span className="font-mono">ID: {driverId.substring(0, 8)}</span>
+                  </div>
+                )}
               </div>
               
               <UserIdDisplay layout="horizontal" showBadge={false} className="text-[10px] text-gray-500" />

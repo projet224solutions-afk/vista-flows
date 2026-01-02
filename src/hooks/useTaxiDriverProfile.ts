@@ -42,6 +42,29 @@ export function useTaxiDriverProfile(userId: string | undefined): UseTaxiDriverP
     console.log('🔄 [useTaxiDriverProfile] Chargement profil pour user:', userId);
     
     try {
+      // 🔒 SÉCURITÉ : Vérifier si le compte est actif (non suspendu par PDG)
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('is_active, role')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) {
+        console.error('❌ [useTaxiDriverProfile] Erreur profil utilisateur:', profileError);
+        toast.error('Impossible de vérifier votre compte');
+        setLoading(false);
+        return;
+      }
+
+      if (!profileData?.is_active) {
+        console.error('❌ [useTaxiDriverProfile] Compte suspendu ou inactif');
+        toast.error('Votre compte a été suspendu par l\'administrateur. Contactez le support.');
+        setLoading(false);
+        return;
+      }
+
+      console.log('✅ [useTaxiDriverProfile] Compte actif, chargement profil conducteur...');
+
       const { data, error } = await supabase
         .from('taxi_drivers')
         .select('*')
@@ -51,7 +74,7 @@ export function useTaxiDriverProfile(userId: string | undefined): UseTaxiDriverP
       if (error) {
         console.error('❌ [useTaxiDriverProfile] Erreur:', error);
         
-        // Si pas de profil existant, essayer de créer
+        // Si pas de profil existant, essayer de créer (seulement si compte actif)
         if (error.code === 'PGRST116') {
           console.log('📝 [useTaxiDriverProfile] Création profil conducteur...');
           const { data: newDriver, error: createError } = await supabase
