@@ -12,6 +12,7 @@ import { RideRequestCard } from './RideRequestCard';
 import { Car, Sparkles, Zap, AlertCircle } from 'lucide-react';
 import { DriverTutorial } from '@/components/taxi-moto/DriverTutorial';
 import { DriverDiagnostic } from '@/components/taxi-moto/DriverDiagnostic';
+import { DriverVehicleInfo } from './DriverVehicleInfo';
 import { cn } from '@/lib/utils';
 
 interface RideRequest {
@@ -37,6 +38,9 @@ interface DriverMainDashboardProps {
     todayRides: number;
     rating: number;
     onlineTime: string;
+    vehiclePlate?: string;
+    giletNumber?: string;
+    serialNumber?: string;
   };
   rideRequests: RideRequest[];
   acceptingRideId: string | null;
@@ -70,9 +74,9 @@ export function DriverMainDashboard({
   onStatClick
 }: DriverMainDashboardProps) {
   return (
-    <div className="min-h-screen bg-gray-950 pb-24">
+    <div className="min-h-screen bg-gray-950 pb-24 overflow-x-hidden w-full max-w-full">
       {/* Background gradient */}
-      <div className="fixed inset-0 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 pointer-events-none">
+      <div className="fixed inset-0 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 pointer-events-none overflow-hidden">
         {/* Subtle pattern overlay */}
         <div className="absolute inset-0 opacity-[0.02]"
           style={{
@@ -126,12 +130,12 @@ export function DriverMainDashboard({
         />
 
         {/* Main Content */}
-        <div className="px-4 space-y-4">
+        <div className="px-4 space-y-4 w-full max-w-full">
           {/* Ride Requests - Priority Display */}
           {rideRequests.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-4 w-full">
               {/* Header with count */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
                     <Car className="w-4 h-4 text-emerald-400" />
@@ -178,6 +182,13 @@ export function DriverMainDashboard({
                 longitude={location?.longitude || null}
                 isOnline={isOnline}
                 onExpand={onExpandMap}
+              />
+
+              {/* Vehicle Information Card */}
+              <DriverVehicleInfo
+                vehiclePlate={stats.vehiclePlate}
+                giletNumber={stats.giletNumber}
+                serialNumber={stats.serialNumber}
               />
 
               {/* Status Message when Online */}

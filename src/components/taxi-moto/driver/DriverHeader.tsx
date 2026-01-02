@@ -40,14 +40,14 @@ export function DriverHeader({
   };
 
   return (
-    <header className="relative bg-gradient-to-r from-gray-900 via-gray-900 to-gray-800 text-white sticky top-0 z-40">
+    <header className="relative bg-gradient-to-r from-gray-900 via-gray-900 to-gray-800 text-white sticky top-0 z-40 w-full max-w-full overflow-hidden">
       {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 to-transparent pointer-events-none" />
       
-      <div className="relative px-4 py-3 safe-area-inset-top">
-        <div className="flex items-center justify-between">
+      <div className="relative px-4 py-3 safe-area-inset-top w-full max-w-full">
+        <div className="flex items-center justify-between gap-2 w-full min-w-0">
           {/* Left: Back Button + Driver Info */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             {/* Back to Dashboard Button */}
             <Button
               onClick={handleBackToDashboard}
@@ -60,7 +60,7 @@ export function DriverHeader({
             </Button>
             
             {/* Avatar with status ring */}
-            <div className="relative">
+            <div className="relative shrink-0">
               <div className={cn(
                 "w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold",
                 "bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600",
@@ -77,15 +77,15 @@ export function DriverHeader({
               )} />
             </div>
             
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2">
-                <h1 className="font-bold text-base tracking-tight">
+            <div className="space-y-0.5 min-w-0 flex-1">
+              <div className="flex items-center gap-2 min-w-0">
+                <h1 className="font-bold text-base tracking-tight truncate">
                   {firstName || 'Conducteur'}
                 </h1>
               </div>
               
               {/* Status badges */}
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap overflow-hidden">
                 <div className={cn(
                   "flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium",
                   isOnline 
@@ -110,7 +110,7 @@ export function DriverHeader({
           </div>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0">
             <DriverSubscriptionButton />
             
             {isOnline && driverId && (
@@ -119,6 +119,7 @@ export function DriverHeader({
                 driverName={driverName}
                 driverPhone={driverPhone}
                 variant="compact"
+                className="shrink-0"
               />
             )}
             
@@ -126,13 +127,13 @@ export function DriverHeader({
               variant="ghost" 
               size="icon" 
               showText={false}
-              className="text-gray-300 hover:text-white hover:bg-white/10 h-9 w-9 rounded-xl"
+              className="text-gray-300 hover:text-white hover:bg-white/10 h-9 w-9 rounded-xl shrink-0"
             />
             
             <Button 
               variant="ghost" 
               size="icon"
-              className="relative text-gray-300 hover:text-white hover:bg-white/10 h-9 w-9 rounded-xl"
+              className="relative text-gray-300 hover:text-white hover:bg-white/10 h-9 w-9 rounded-xl shrink-0"
             >
               <Bell className="w-5 h-5" />
               {unreadCount > 0 && (
@@ -146,7 +147,7 @@ export function DriverHeader({
               onClick={onSignOut}
               variant="ghost"
               size="icon"
-              className="text-gray-300 hover:text-white hover:bg-white/10 h-9 w-9 rounded-xl"
+              className="text-gray-300 hover:text-white hover:bg-white/10 h-9 w-9 rounded-xl shrink-0"
             >
               <LogOut className="w-5 h-5" />
             </Button>

@@ -9,6 +9,9 @@ export interface DriverStats {
   rating: number;
   totalRides: number;
   onlineTime: string;
+  vehiclePlate?: string;
+  giletNumber?: string;
+  serialNumber?: string;
 }
 
 interface UseTaxiDriverStatsReturn {
@@ -36,9 +39,27 @@ export function useTaxiDriverStats(driverId: string | null): UseTaxiDriverStatsR
       // Charger le profil conducteur complet
       const { data: driverData } = await supabase
         .from('taxi_drivers')
-        .select('rating, total_rides, total_earnings, is_online, last_seen, created_at')
+        .select('rating, total_rides, total_earnings, is_online, last_seen, created_at, user_id, vehicle')
         .eq('id', driverId)
         .single();
+
+      // Extraire les infos du véhicule depuis le JSON vehicle
+      let vehiclePlate = '';
+      let giletNumber = '';
+      let serialNumber = '';
+      
+      if (driverData?.vehicle) {
+        try {
+          const vehicleData = typeof driverData.vehicle === 'string' 
+            ? JSON.parse(driverData.vehicle) 
+            : driverData.vehicle;
+          vehiclePlate = vehicleData.vehicle_plate || '';
+          giletNumber = vehicleData.gilet_number || '';
+          serialNumber = vehicleData.moto_serial_number || '';
+        } catch (e) {
+          console.warn('⚠️ Erreur parsing vehicle JSON:', e);
+        }
+      }
 
       // Charger toutes les courses du conducteur
       const rides = await TaxiMotoService.getDriverRides(driverId, 100);
@@ -73,7 +94,10 @@ export function useTaxiDriverStats(driverId: string | null): UseTaxiDriverStatsR
         todayRides: todayRides.length,
         rating: Number(driverData?.rating) || 5.0,
         totalRides: driverData?.total_rides || 0,
-        onlineTime: `${hours}h ${mins}m`
+        onlineTime: `${hours}h ${mins}m`,
+        vehiclePlate,
+        giletNumber,
+        serialNumber
       });
     } catch (error) {
       console.error('Error loading stats:', error);

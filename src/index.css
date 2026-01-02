@@ -386,6 +386,17 @@ All colors MUST be HSL.
     touch-action: manipulation;
   }
 
+  /* Prevent horizontal scroll on all pages */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  /* Prevent horizontal scroll on all containers */
+  * {
+    box-sizing: border-box;
+  }
+
   /* Scrolling fluide sur iOS */
   .smooth-scroll {
     -webkit-overflow-scrolling: touch;

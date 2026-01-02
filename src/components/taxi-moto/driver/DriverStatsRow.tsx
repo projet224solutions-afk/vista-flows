@@ -69,8 +69,8 @@ export function DriverStatsRow({
   ];
 
   return (
-    <div className="px-3 py-4">
-      <div className="grid grid-cols-4 gap-2">
+    <div className="px-3 py-4 w-full max-w-full overflow-hidden">
+      <div className="grid grid-cols-4 gap-2 w-full">
         {stats.map((stat) => (
           <button
             key={stat.id}
@@ -84,7 +84,8 @@ export function DriverStatsRow({
               "transition-all duration-300",
               "hover:border-gray-600/50 hover:scale-[1.02]",
               "active:scale-[0.98]",
-              "group"
+              "group",
+              "min-w-0" // Prevent flex item overflow
             )}
           >
             {/* Gradient overlay on hover */}
@@ -97,18 +98,18 @@ export function DriverStatsRow({
             <div className="relative z-10 flex flex-col items-center text-center gap-1.5">
               {/* Icon */}
               <div className={cn(
-                "w-8 h-8 rounded-xl flex items-center justify-center",
+                "w-8 h-8 rounded-xl flex items-center justify-center shrink-0",
                 stat.iconBg
               )}>
                 <stat.icon className={cn("w-4 h-4", stat.iconColor)} />
               </div>
               
               {/* Value */}
-              <div className="flex flex-col">
-                <span className="text-white font-bold text-sm leading-tight">
+              <div className="flex flex-col min-w-0 w-full">
+                <span className="text-white font-bold text-sm leading-tight truncate">
                   {stat.value}
                 </span>
-                <span className="text-gray-500 text-[9px] font-medium uppercase tracking-wide">
+                <span className="text-gray-500 text-[9px] font-medium uppercase tracking-wide truncate">
                   {stat.suffix}
                 </span>
               </div>
