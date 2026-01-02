@@ -103,35 +103,7 @@ export function AgentOverviewProfessional({
     }
   ];
 
-  const recentActivity = [
-    {
-      type: 'user_created',
-      title: 'Utilisateur créé',
-      description: 'Nouveau client ajouté',
-      time: 'Il y a 5 min',
-      icon: <UserPlus className="w-4 h-4" />,
-      color: 'text-blue-500',
-      bgColor: 'bg-blue-500/10'
-    },
-    {
-      type: 'commission',
-      title: 'Commission reçue',
-      description: '+2,500 GNF',
-      time: 'Il y a 15 min',
-      icon: <DollarSign className="w-4 h-4" />,
-      color: 'text-emerald-500',
-      bgColor: 'bg-emerald-500/10'
-    },
-    {
-      type: 'transaction',
-      title: 'Transaction OK',
-      description: 'Transfert effectué',
-      time: 'Il y a 1h',
-      icon: <CheckCircle2 className="w-4 h-4" />,
-      color: 'text-violet-500',
-      bgColor: 'bg-violet-500/10'
-    }
-  ];
+
 
   if (!mounted) {
     return (
@@ -260,89 +232,48 @@ export function AgentOverviewProfessional({
         </Card>
       </div>
 
-      {/* Quick Actions & Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Quick Actions */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-gradient-to-br from-blue-500 to-violet-500 rounded-lg">
-              <Zap className="w-4 h-4 text-white" />
-            </div>
-            <h2 className="font-semibold text-slate-900">Actions Rapides</h2>
+      {/* Quick Actions */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-gradient-to-br from-blue-500 to-violet-500 rounded-lg">
+            <Zap className="w-4 h-4 text-white" />
           </div>
-          
-          <div className="grid grid-cols-2 gap-3">
-            {quickActions.map((action, index) => (
-              <Card 
-                key={index}
-                className={cn(
-                  "border-0 shadow-lg cursor-pointer transition-all duration-300",
-                  "hover:shadow-xl hover:-translate-y-1",
-                  action.shadowColor
-                )}
-                onClick={() => onNavigate(action.tab)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className={cn(
-                      "p-2.5 rounded-xl bg-gradient-to-br text-white shadow-lg",
-                      action.gradient
-                    )}>
-                      {action.icon}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-slate-900 text-sm">
-                        {action.label}
-                      </h3>
-                      <p className="text-xs text-slate-500 mt-0.5 truncate">
-                        {action.description}
-                      </p>
-                    </div>
-                    <ArrowUpRight className="w-4 h-4 text-slate-400" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <h2 className="font-semibold text-slate-900">Actions Rapides</h2>
         </div>
-
-        {/* Recent Activity */}
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Clock className="w-4 h-4 text-slate-400" />
-              Activité Récente
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {recentActivity.map((activity, index) => (
-              <div
-                key={index}
-                className="flex items-start gap-3 p-2.5 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
-              >
-                <div className={cn(
-                  "p-2 rounded-lg flex-shrink-0",
-                  activity.bgColor
-                )}>
-                  <span className={activity.color}>
-                    {activity.icon}
-                  </span>
+        
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {quickActions.map((action, index) => (
+            <Card 
+              key={index}
+              className={cn(
+                "border-0 shadow-lg cursor-pointer transition-all duration-300",
+                "hover:shadow-xl hover:-translate-y-1",
+                action.shadowColor
+              )}
+              onClick={() => onNavigate(action.tab)}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className={cn(
+                    "p-2.5 rounded-xl bg-gradient-to-br text-white shadow-lg",
+                    action.gradient
+                  )}>
+                    {action.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-slate-900 text-sm">
+                      {action.label}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5 truncate">
+                      {action.description}
+                    </p>
+                  </div>
+                  <ArrowUpRight className="w-4 h-4 text-slate-400" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-900">
-                    {activity.title}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {activity.description}
-                  </p>
-                </div>
-                <span className="text-xs text-slate-400 whitespace-nowrap">
-                  {activity.time}
-                </span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
 
       {/* Performance Section */}
