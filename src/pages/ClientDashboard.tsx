@@ -131,6 +131,12 @@ export default function ClientDashboard() {
   }, [user?.id]);
 
   const handleCheckout = async () => {
+    console.log('🛒 handleCheckout appelé', { 
+      hasUser: !!user?.id, 
+      cartItemsCount: cartItems.length,
+      customerId 
+    });
+    
     if (!user?.id) {
       toast.error(t('client.connectionRequired'));
       return;
@@ -141,35 +147,9 @@ export default function ClientDashboard() {
       return;
     }
     
-    // Vérifier que le customer existe
-    if (!customerId) {
-      toast.error('Initialisation du compte en cours...', {
-        description: 'Veuillez patienter quelques secondes et réessayer'
-      });
-      // Forcer le rechargement du customer_id
-      const { data } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (data) {
-        setCustomerId(data.id);
-      } else {
-        // Tenter de créer le customer
-        const { data: newCustomer } = await supabase
-          .from('customers')
-          .insert({ user_id: user.id })
-          .select('id')
-          .single();
-        
-        if (newCustomer) {
-          setCustomerId(newCustomer.id);
-        }
-      }
-      return;
-    }
-    
+    console.log('✅ Ouverture du modal de paiement');
+    // Ouvrir le modal même si customerId n'existe pas encore
+    // Le modal gérera la création du customer si nécessaire
     setShowPaymentModal(true);
   };
 
@@ -694,15 +674,18 @@ export default function ClientDashboard() {
       </main>
 
       {/* Modal de paiement */}
-      {user?.id && customerId && (
+      {user?.id && (
         <ProductPaymentModal
           open={showPaymentModal}
-          onClose={() => setShowPaymentModal(false)}
+          onClose={() => {
+            console.log('🔴 Fermeture du modal de paiement');
+            setShowPaymentModal(false);
+          }}
           cartItems={cartItems}
           totalAmount={cartItems.reduce((sum, item) => sum + item.price, 0)}
           onPaymentSuccess={handlePaymentSuccess}
           userId={user.id}
-          customerId={customerId}
+          customerId={customerId || ''}
         />
       )}
       

@@ -46,7 +46,7 @@ interface ProductPaymentModalProps {
   totalAmount: number;
   onPaymentSuccess: () => void;
   userId: string;
-  customerId: string;
+  customerId: string | null;
 }
 
 export default function ProductPaymentModal({
@@ -58,6 +58,14 @@ export default function ProductPaymentModal({
   userId,
   customerId
 }: ProductPaymentModalProps) {
+  console.log('💳 ProductPaymentModal render:', { 
+    open, 
+    userId, 
+    customerId, 
+    cartItemsCount: cartItems.length,
+    totalAmount 
+  });
+  
   const [paymentMethod, setPaymentMethod] = useState<ProductPaymentMethod>('wallet');
   const [processing, setProcessing] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
@@ -272,10 +280,42 @@ export default function ProductPaymentModal({
       grandTotal
     });
 
-    if (!userId || !customerId || cartItems.length === 0) {
-      console.error('[ProductPayment] Missing information:', { userId, customerId, cartItems });
+    if (!userId || cartItems.length === 0) {
+      console.error('[ProductPayment] Missing information:', { userId, cartItems });
       toast.error('Informations manquantes');
       throw new Error('Informations manquantes');
+    }
+
+    // Créer ou récupérer le customer_id si manquant
+    let effectiveCustomerId = customerId;
+    if (!effectiveCustomerId) {
+      console.log('[ProductPayment] Customer ID missing, creating...');
+      const { data: existingCustomer } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (existingCustomer) {
+        effectiveCustomerId = existingCustomer.id;
+        console.log('[ProductPayment] Found existing customer:', effectiveCustomerId);
+      } else {
+        const { data: newCustomer, error: createError } = await supabase
+          .from('customers')
+          .insert({ user_id: userId })
+          .select('id')
+          .single();
+        
+        if (createError || !newCustomer) {
+          console.error('[ProductPayment] Failed to create customer:', createError);
+          toast.error('Impossible de créer le compte client');
+          throw new Error('Customer creation failed');
+        }
+        
+        effectiveCustomerId = newCustomer.id;
+        console.log('[ProductPayment] Created new customer:', effectiveCustomerId);
+        toast.success('Compte client initialisé');
+      }
     }
 
     // Grouper les articles par vendeur
@@ -471,6 +511,15 @@ export default function ProductPaymentModal({
           </DialogTitle>
           <DialogDescription asChild>
             <div className="space-y-3 mt-2">
+              {/* Debug info - visible en dev */}
+              {!customerId && (
+                <div className="p-2 bg-yellow-50 dark:bg-yellow-950 rounded border border-yellow-200 dark:border-yellow-800">
+                  <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                    ℹ️ Customer ID: {customerId || 'null'} - Sera créé automatiquement
+                  </p>
+                </div>
+              )}
+              
               {/* Récapitulatif des montants */}
               <div className="bg-muted/50 rounded-lg p-3 space-y-2">
                 <div className="flex justify-between text-sm">
@@ -571,6 +620,15 @@ export default function ProductPaymentModal({
             })}
           </RadioGroup>
         </div>
+
+        {!customerId && (
+          <Alert variant="default" className="border-blue-200 bg-blue-50 dark:bg-blue-950">
+            <AlertCircle className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-900 dark:text-blue-200">
+              Votre compte client sera automatiquement créé lors du paiement.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="flex gap-3">
           <Button
