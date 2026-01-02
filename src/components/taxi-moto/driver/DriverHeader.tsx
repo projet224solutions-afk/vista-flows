@@ -85,7 +85,7 @@ export function DriverHeader({
               </div>
               
               {/* Status badges */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <div className={cn(
                   "flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium",
                   isOnline 
@@ -103,16 +103,9 @@ export function DriverHeader({
                   </div>
                 )}
                 
-                {/* Driver ID Badge - Visible sur mobile */}
-                {driverId && (
-                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30">
-                    <Shield className="w-3 h-3" />
-                    <span className="font-mono">ID: {driverId.substring(0, 8)}</span>
-                  </div>
-                )}
+                {/* Custom ID Badge - Le vrai ID */}
+                <UserIdDisplay layout="horizontal" showBadge={true} className="text-xs" />
               </div>
-              
-              <UserIdDisplay layout="horizontal" showBadge={false} className="text-[10px] text-gray-500" />
             </div>
           </div>
 

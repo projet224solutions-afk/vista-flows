@@ -43,7 +43,21 @@ export const UserIdDisplay = ({
         else if (userRole === 'syndicat') scope = 'syndicats';
         else if (userRole === 'transitaire') scope = 'agents';
 
-        // Vérifier si l'utilisateur a déjà un ID standardisé
+        // 1. Vérifier dans user_ids (custom_id) en priorité
+        const { data: userIdData, error: userIdError } = await supabase
+          .from('user_ids')
+          .select('custom_id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!userIdError && userIdData?.custom_id) {
+          setStandardId(userIdData.custom_id);
+          console.log('✅ Custom ID trouvé:', userIdData.custom_id);
+          setLoading(false);
+          return;
+        }
+
+        // 2. Sinon vérifier si l'utilisateur a un public_id
         const existingId = (profile as any)?.public_id;
         
         if (existingId && validateStandardId(existingId)) {
