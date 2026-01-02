@@ -94,6 +94,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
     name: '',
     email: '',
     phone: '',
+    password: '',
     commission_rate: 5,
     permissions: {
       create_users: true,
@@ -231,6 +232,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
     name: string;
     email: string;
     phone: string;
+    password: string;
     permissions: string[];
     commission_rate?: number;
   }) => {
@@ -246,9 +248,6 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
 
     try {
       const agentCode = `SAG-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
-      
-      // Générer un mot de passe temporaire sécurisé
-      const tempPassword = `Temp${Math.random().toString(36).slice(-6)}!${Math.random().toString(36).slice(-4).toUpperCase()}`;
 
       console.log('📤 Création sous-agent via edge function:', {
         parentAgentId: agentProfile.id,
@@ -266,7 +265,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
           email: subAgentData.email.trim().toLowerCase(),
           phone: subAgentData.phone.trim(),
           agent_type: 'sales', // Type par défaut
-          password: tempPassword, // Mot de passe requis par l'edge function
+          password: subAgentData.password, // Mot de passe fourni par l'utilisateur
           permissions: subAgentData.permissions,
           commission_rate: subAgentData.commission_rate || 5,
           access_token: agentProfile.access_token // Pour l'auth via token
@@ -366,6 +365,12 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
       return;
     }
 
+    // Validation du mot de passe pour la création uniquement
+    if (!editingSubAgent && (!formData.password || formData.password.length < 8)) {
+      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       
@@ -388,6 +393,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
+          password: formData.password,
           permissions,
           commission_rate: formData.commission_rate,
         });
@@ -398,6 +404,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
         name: '',
         email: '',
         phone: '',
+        password: '',
         commission_rate: 5,
         permissions: {
           create_users: true,
@@ -548,6 +555,20 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
                   placeholder="622123456"
                 />
               </div>
+
+              {!editingSubAgent && (
+                <div className="space-y-2">
+                  <Label htmlFor="password">Mot de passe * (min. 8 caractères)</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    required
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="••••••••"
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="commission">Taux Commission (%)</Label>
