@@ -210,20 +210,20 @@ export default function DigitalProducts() {
           </span>
         </div>
       )}
-Découvrez les produits numériques
-          </h2>
-          <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-            Achetez des formations, logiciels, eBooks et plus encore. 
-            {!isMerchant && ' Ou devenez marchand pour vendre vos propres produits.'}5 bg-primary/10 rounded-full mb-3">
+
+      {/* Hero Section */}
+      <section className="px-4 py-6">
+        <div className="text-center">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 rounded-full mb-3">
             <Package className="w-4 h-4 text-primary" />
             <span className="text-xs font-medium text-primary">Marketplace Digital</span>
           </div>
           <h2 className="text-xl font-bold text-foreground mb-2">
-            Vendez vos produits numériques
+            Découvrez les produits numériques
           </h2>
           <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-            Choisissez un module et commencez à vendre sur notre marketplace. 
-            Vos produits seront visibles par tous les utilisateurs.
+            Achetez des formations, logiciels, eBooks et plus encore.
+            {!isMerchant && ' Ou devenez marchand pour vendre vos propres produits.'}
           </p>
         </div>
       </section>
