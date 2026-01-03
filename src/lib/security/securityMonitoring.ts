@@ -30,8 +30,8 @@ export const logSecurityEvent = async (event: Omit<SecurityEvent, 'timestamp'>):
   console.warn(`${emoji} Security Event [${event.severity.toUpperCase()}]: ${event.type}`, event.details);
   
   try {
-    // Enregistrer dans Supabase
-    const { error } = await supabase
+    // Enregistrer dans Supabase (using any to bypass type checking for untyped table)
+    const { error } = await (supabase as any)
       .from('security_events')
       .insert({
         event_type: event.type,
@@ -233,7 +233,7 @@ export const getSecurityStats = async (timeframe: 'hour' | 'day' | 'week'): Prom
         break;
     }
     
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('security_events')
       .select('event_type, severity')
       .gte('created_at', since.toISOString());
@@ -243,9 +243,9 @@ export const getSecurityStats = async (timeframe: 'hour' | 'day' | 'week'): Prom
     }
     
     const stats = {
-      totalEvents: data.length,
-      criticalEvents: data.filter(e => e.severity === 'critical').length,
-      eventsByType: data.reduce((acc, event) => {
+      totalEvents: (data as any[]).length,
+      criticalEvents: (data as any[]).filter((e: any) => e.severity === 'critical').length,
+      eventsByType: (data as any[]).reduce((acc: any, event: any) => {
         acc[event.event_type] = (acc[event.event_type] || 0) + 1;
         return acc;
       }, {} as Record<string, number>)

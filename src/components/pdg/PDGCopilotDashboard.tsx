@@ -14,7 +14,7 @@ import { usePDGCopilot, ChatMessage } from '@/hooks/usePDGCopilot';
 import { useAuth } from '@/hooks/useAuth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-export const PDGCopilotDashboard: React.FC = () => {
+const PDGCopilotDashboard: React.FC = () => {
   const { user } = useAuth();
   const { messages, loading, error, sendMessage, analyzeVendor, analyzeCustomer, getFinancialSummary, clearMessages } = usePDGCopilot();
   
@@ -353,3 +353,5 @@ const MessageBubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
     </div>
   );
 };
+
+export default PDGCopilotDashboard;

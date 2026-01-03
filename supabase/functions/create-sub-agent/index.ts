@@ -280,10 +280,7 @@ serve(async (req) => {
       );
     }
 
-    // Créer le profil utilisateur dans la table profiles
-    const { error: profileError } = await supabaseServiceClient
-      .from("profiles")
-      .Créer dans la table agents pour auth MFA (comme create-pdg-agent)
+    // Créer dans la table agents pour auth MFA (comme create-pdg-agent)
     const { error: agentsTableError } = await supabaseServiceClient
       .from('agents')
       .insert({
@@ -320,7 +317,10 @@ serve(async (req) => {
       console.log('✅ Wallet général créé');
     }
 
-    // insert({
+    // Créer le profil utilisateur
+    const { error: profileError } = await supabaseServiceClient
+      .from('profiles')
+      .insert({
         id: authUser.user.id,
         email: email.trim().toLowerCase(),
         full_name: name.trim(),

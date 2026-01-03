@@ -228,11 +228,7 @@ export default function UniversalCommunicationHub({
         description: errorMessage.includes('timeout')
           ? 'Temps d\'attente dépassé. Vérifiez votre connexion.'
           : `Impossible de charger les messages: ${errorMessage}`,
-        variant: 'destructive',
-        action: {
-          label: 'Réessayer',
-          onClick: () => loadMessages(conversationId)
-        }
+        variant: 'destructive'
       });
     }
   };
@@ -353,11 +349,7 @@ export default function UniversalCommunicationHub({
         description: errorMessage.includes('timeout') 
           ? 'Temps d\'attente dépassé. Vérifiez votre connexion.'
           : `Impossible d'envoyer le message: ${errorMessage}`,
-        variant: 'destructive',
-        action: {
-          label: 'Réessayer',
-          onClick: () => handleSendMessage(message, attachments)
-        }
+        variant: 'destructive'
       });
     }
   };

@@ -23,6 +23,7 @@ interface NavItem {
   label: string;
   icon: React.ElementType;
   badge?: boolean;
+  external?: string;
 }
 
 interface NavCategory {
