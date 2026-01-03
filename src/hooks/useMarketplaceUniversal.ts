@@ -140,7 +140,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
   /**
    * Charge les services professionnels
    */
-  const loadProfessionalServices = async (): Promise<MarketplaceItem[]> => {
+  const loadProfessionalServices = async (categoryName?: string): Promise<MarketplaceItem[]> => {
     if (itemType !== 'all' && itemType !== 'professional_service') return [];
 
     try {
@@ -176,7 +176,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       const { data, error } = await query;
       if (error) throw error;
 
-      return (data || []).map(service => {
+      let results = (data || []).map(service => {
         const serviceType = service.service_types as any;
         const servicePrice = 0;
 
@@ -201,6 +201,16 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           created_at: service.created_at
         };
       });
+
+      // Filtre par nom de catégorie (post-query car service_types.name est une jointure)
+      if (categoryName) {
+        results = results.filter(item => 
+          item.category_name?.toLowerCase().includes(categoryName.toLowerCase()) ||
+          item.service_type?.toLowerCase().includes(categoryName.toLowerCase())
+        );
+      }
+
+      return results;
     } catch (error) {
       console.error('Erreur chargement services professionnels:', error);
       return [];
@@ -210,7 +220,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
   /**
    * Charge les produits numériques (service_products)
    */
-  const loadDigitalProducts = async (): Promise<MarketplaceItem[]> => {
+  const loadDigitalProducts = async (categoryName?: string): Promise<MarketplaceItem[]> => {
     if (itemType !== 'all' && itemType !== 'digital_product') return [];
 
     try {
@@ -253,6 +263,11 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       }
       if (minPrice && minPrice > 0) query = query.gte('price', minPrice);
       if (maxPrice && maxPrice > 0) query = query.lte('price', maxPrice);
+      
+      // Filtre par catégorie (champ texte dans service_products)
+      if (categoryName) {
+        query = query.ilike('category', `%${categoryName}%`);
+      }
 
       const { data, error } = await query;
       if (error) throw error;
@@ -289,6 +304,27 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
   };
 
   /**
+   * Récupère le nom de la catégorie à partir de son ID
+   */
+  const getCategoryName = async (categoryId: string): Promise<string | null> => {
+    if (!categoryId || categoryId === 'all') return null;
+    
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(categoryId);
+    if (!isUUID) return categoryId; // C'est déjà un nom
+    
+    try {
+      const { data } = await supabase
+        .from('categories')
+        .select('name')
+        .eq('id', categoryId)
+        .single();
+      return data?.name || null;
+    } catch {
+      return null;
+    }
+  };
+
+  /**
    * Charge tous les items (produits + services + numériques)
    */
   const loadAllItems = useCallback(async (reset = false) => {
@@ -297,19 +333,22 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
     try {
       setLoading(true);
 
+      // Récupérer le nom de la catégorie si c'est un UUID
+      const categoryName = category && category !== 'all' ? await getCategoryName(category) : null;
+
       // Optimisation: charger seulement le type filtré
       let allItems: MarketplaceItem[] = [];
       if (itemType === 'product') {
         allItems = await loadProducts();
       } else if (itemType === 'professional_service') {
-        allItems = await loadProfessionalServices();
+        allItems = await loadProfessionalServices(categoryName || undefined);
       } else if (itemType === 'digital_product') {
-        allItems = await loadDigitalProducts();
+        allItems = await loadDigitalProducts(categoryName || undefined);
       } else {
         const [products, professionalServices, digitalProducts] = await Promise.all([
           loadProducts(),
-          loadProfessionalServices(),
-          loadDigitalProducts()
+          loadProfessionalServices(categoryName || undefined),
+          loadDigitalProducts(categoryName || undefined)
         ]);
         allItems = [...products, ...professionalServices, ...digitalProducts];
       }
