@@ -18,6 +18,7 @@ import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 import { useProductActions } from "@/hooks/useProductActions";
 import { useVendorErrorBoundary } from "@/hooks/useVendorErrorBoundary";
 import { SubscriptionService } from "@/services/subscriptionService";
+import { ProductLimitService, ProductLimitStatus } from "@/services/productLimitService";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PublicIdBadge } from "@/components/PublicIdBadge";
@@ -112,6 +113,7 @@ export default function ProductManagement() {
     can_add: boolean;
     is_unlimited: boolean;
   } | null>(null);
+  const [productLimitStatus, setProductLimitStatus] = useState<ProductLimitStatus | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -164,18 +166,45 @@ export default function ProductManagement() {
 
   const fetchProducts = async () => {
     if (!vendorId) return;
-    const { data, error } = await supabase
-      .from('products')
-      .select('*, category:categories(id, name), inventory:inventory(quantity)')
-      .eq('vendor_id', vendorId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      captureError('product', 'Failed to fetch products', error);
-      return;
-    }
     
-    setProducts(data || []);
+    try {
+      // 1. Appliquer les limites d'abonnement et désactiver les produits en excès
+      const limitStatus = await ProductLimitService.enforceProductLimit(vendorId, user?.id);
+      setProductLimitStatus(limitStatus);
+      
+      // 2. Notifier le vendeur si des produits ont été désactivés
+      if (limitStatus.excess_products > 0) {
+        ProductLimitService.notifyProductDeactivation(limitStatus);
+      }
+      
+      // 3. Charger les produits mis à jour
+      const { data, error } = await supabase
+        .from('products')
+        .select('*, category:categories(id, name), inventory:inventory(quantity)')
+        .eq('vendor_id', vendorId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        captureError('product', 'Failed to fetch products', error);
+        return;
+      }
+      
+      setProducts(data || []);
+    } catch (error: any) {
+      captureError('product', 'Failed to enforce product limits', error);
+      console.error('[ProductLimit] Error:', error);
+      
+      // Charger quand même les produits même en cas d'erreur
+      const { data, error: fetchError } = await supabase
+        .from('products')
+        .select('*, category:categories(id, name), inventory:inventory(quantity)')
+        .eq('vendor_id', vendorId)
+        .order('created_at', { ascending: false });
+
+      if (!fetchError) {
+        setProducts(data || []);
+      }
+    }
   };
 
   const fetchCategories = async () => {
@@ -299,9 +328,15 @@ export default function ProductManagement() {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) return;
 
     try {
-      await deleteProduct(productId);
+      const success = await deleteProduct(productId);
+      if (success) {
+        // Recharger les produits et réappliquer les limites
+        await fetchProducts();
+        await loadProductLimit();
+      }
     } catch (error: any) {
       captureError('product', 'Failed to delete product', error);
+      toast.error('Erreur lors de la suppression');
     }
   };
 
@@ -532,6 +567,45 @@ export default function ProductManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Product Limit Exceeded Banner - Produits désactivés */}
+      {productLimitStatus && productLimitStatus.excess_products > 0 && (
+        <Card className="border-red-500 bg-red-50 dark:bg-red-950">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-red-900 dark:text-red-100">
+                  ⚠️ Produits automatiquement désactivés
+                </h3>
+                <p className="text-sm text-red-800 dark:text-red-200 mt-1">
+                  Vous avez {productLimitStatus.total_products} produits mais votre abonnement ne permet que {productLimitStatus.max_allowed} produits actifs.
+                  <br />
+                  <strong>{productLimitStatus.excess_products} produit(s)</strong> ont été automatiquement désactivés et ne sont pas visibles sur le marketplace.
+                  <br />
+                  Les produits les plus récents restent actifs, les plus anciens sont désactivés.
+                </p>
+                <div className="flex gap-2 mt-3">
+                  <Button
+                    onClick={() => navigate('/subscriptions')}
+                    size="sm"
+                    variant="default"
+                  >
+                    Mettre à niveau pour réactiver tous mes produits
+                  </Button>
+                  <Button
+                    onClick={fetchProducts}
+                    size="sm"
+                    variant="outline"
+                  >
+                    Actualiser
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Product Limit Banner */}
       {productLimit && !productLimit.can_add && (
         <Card className="border-orange-500 bg-orange-50 dark:bg-orange-950">
@@ -611,9 +685,12 @@ export default function ProductManagement() {
           </CardHeader>
           <CardContent className="p-2 md:p-6 pt-0">
             <div className="text-lg md:text-2xl font-bold">{stats.total}</div>
-            <p className="text-[10px] md:text-xs text-muted-foreground">
-              {stats.active} actifs
-            </p>
+            <div className="flex items-center gap-2 text-[10px] md:text-xs text-muted-foreground">
+              <span className="text-green-600">✓ {stats.active} actifs</span>
+              {stats.total - stats.active > 0 && (
+                <span className="text-red-600">● {stats.total - stats.active} désactivés</span>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -729,9 +806,14 @@ export default function ProductManagement() {
       {/* Products Grid */}
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4">
         {filteredProducts.map((product) => (
-          <Card key={product.id} className="overflow-hidden group hover:shadow-md transition-shadow">
+          <Card 
+            key={product.id} 
+            className={`overflow-hidden group hover:shadow-md transition-all ${
+              !product.is_active ? 'opacity-60 blur-[1px] hover:blur-[0.5px]' : ''
+            }`}
+          >
             {/* Product Image */}
-            <div className="aspect-square bg-muted relative">
+            <div className={`aspect-square bg-muted relative ${!product.is_active ? 'grayscale' : ''}`}>
               {product.images && product.images[0] ? (
                 <img
                   src={product.images[0]}
@@ -749,11 +831,13 @@ export default function ProductManagement() {
                 </div>
               )}
               {!product.is_active && (
-                <Badge className="absolute top-1 right-1 md:top-2 md:right-2 text-[10px] md:text-xs px-1 md:px-2" variant="destructive">
-                  Inactif
-                </Badge>
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center">
+                  <Badge className="text-xs md:text-sm px-3 py-1.5" variant="destructive">
+                    ❌ Produit désactivé
+                  </Badge>
+                </div>
               )}
-              {getEffectiveStock(product) <= product.low_stock_threshold && (
+              {getEffectiveStock(product) <= product.low_stock_threshold && product.is_active && (
                 <Badge className="absolute bottom-1 right-1 md:bottom-2 md:right-2 bg-orange-500 text-white text-[10px] md:text-xs px-1 md:px-2" variant="outline">
                   Stock bas
                 </Badge>
