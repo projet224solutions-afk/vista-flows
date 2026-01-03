@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_action_logs: {
+        Row: {
+          action_type: string
+          admin_id: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          new_value: Json | null
+          old_value: Json | null
+          reason: string | null
+          target_id: string
+          target_type: string
+          user_agent: string | null
+        }
+        Insert: {
+          action_type: string
+          admin_id: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          reason?: string | null
+          target_id: string
+          target_type: string
+          user_agent?: string | null
+        }
+        Update: {
+          action_type?: string
+          admin_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          reason?: string | null
+          target_id?: string
+          target_type?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       advanced_carts: {
         Row: {
           created_at: string | null
@@ -3697,6 +3739,53 @@ export type Database = {
           },
         ]
       }
+      djomy_api_logs: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          endpoint: string
+          error_message: string | null
+          id: string
+          request_payload: Json | null
+          request_type: string
+          response_payload: Json | null
+          response_status: number | null
+          transaction_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          endpoint: string
+          error_message?: string | null
+          id?: string
+          request_payload?: Json | null
+          request_type: string
+          response_payload?: Json | null
+          response_status?: number | null
+          transaction_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          endpoint?: string
+          error_message?: string | null
+          id?: string
+          request_payload?: Json | null
+          request_type?: string
+          response_payload?: Json | null
+          response_status?: number | null
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "djomy_api_logs_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "djomy_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       djomy_payments: {
         Row: {
           amount: number
@@ -3760,6 +3849,87 @@ export type Database = {
           user_id?: string | null
           webhook_event_id?: string | null
           webhook_received_at?: string | null
+        }
+        Relationships: []
+      }
+      djomy_transactions: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          country_code: string | null
+          created_at: string
+          currency: string
+          description: string | null
+          djomy_response: Json | null
+          djomy_transaction_id: string | null
+          error_message: string | null
+          fees: number | null
+          id: string
+          idempotency_key: string | null
+          ip_address: string | null
+          metadata: Json | null
+          order_id: string
+          payer_name: string | null
+          payer_phone: string
+          payment_method: string
+          received_amount: number | null
+          status: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          amount: number
+          completed_at?: string | null
+          country_code?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          djomy_response?: Json | null
+          djomy_transaction_id?: string | null
+          error_message?: string | null
+          fees?: number | null
+          id?: string
+          idempotency_key?: string | null
+          ip_address?: string | null
+          metadata?: Json | null
+          order_id: string
+          payer_name?: string | null
+          payer_phone: string
+          payment_method: string
+          received_amount?: number | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          country_code?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          djomy_response?: Json | null
+          djomy_transaction_id?: string | null
+          error_message?: string | null
+          fees?: number | null
+          id?: string
+          idempotency_key?: string | null
+          ip_address?: string | null
+          metadata?: Json | null
+          order_id?: string
+          payer_name?: string | null
+          payer_phone?: string
+          payment_method?: string
+          received_amount?: number | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+          vendor_id?: string | null
         }
         Relationships: []
       }
@@ -14737,6 +14907,59 @@ export type Database = {
           },
         ]
       }
+      vendor_blocked_funds: {
+        Row: {
+          amount: number
+          auto_release_date: string | null
+          blocked_at: string
+          currency: string
+          id: string
+          metadata: Json | null
+          release_reason: string | null
+          released_at: string | null
+          released_by: string | null
+          status: string
+          transaction_id: string
+          vendor_id: string
+        }
+        Insert: {
+          amount: number
+          auto_release_date?: string | null
+          blocked_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json | null
+          release_reason?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          status?: string
+          transaction_id: string
+          vendor_id: string
+        }
+        Update: {
+          amount?: number
+          auto_release_date?: string | null
+          blocked_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json | null
+          release_reason?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          status?: string
+          transaction_id?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_blocked_funds_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "djomy_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_employees: {
         Row: {
           created_at: string | null
@@ -18239,6 +18462,10 @@ export type Database = {
         Args: { p_amount: number; p_card_id: string; p_user_id: string }
         Returns: string
       }
+      process_djomy_success: {
+        Args: { p_djomy_response: Json; p_transaction_id: string }
+        Returns: Json
+      }
       process_secure_bureau_transfer: {
         Args: {
           p_amount: number
@@ -18416,6 +18643,14 @@ export type Database = {
             }
             Returns: undefined
           }
+      release_vendor_funds: {
+        Args: {
+          p_admin_id: string
+          p_blocked_fund_id: string
+          p_reason?: string
+        }
+        Returns: Json
+      }
       resolve_cache_errors: { Args: never; Returns: number }
       run_daily_wallet_audit: { Args: never; Returns: Json }
       set_agent_permissions: {
