@@ -180,48 +180,58 @@ export default function ServiceDetail() {
 
   const loadReviews = async () => {
     try {
+      // Charger les avis réels depuis service_reviews
       const { data, error } = await supabase
-        .from('service_reviews' as any)
+        .from('service_reviews')
         .select(`
           id,
           rating,
           comment,
           created_at,
-          user:profiles(full_name, avatar_url)
+          client_id,
+          is_verified
         `)
-        .eq('service_id', id)
+        .eq('professional_service_id', id)
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.warn('Table service_reviews non disponible:', error);
-        // Utiliser des avis factices pour le moment
-        setReviews([
-          {
-            id: '1',
-            user_name: 'Mamadou Diallo',
-            rating: 5,
-            comment: 'Excellent service ! Personnel très professionnel.',
-            created_at: new Date().toISOString()
-          },
-          {
-            id: '2',
-            user_name: 'Fatoumata Baldé',
-            rating: 4,
-            comment: 'Très bon, je recommande vivement.',
-            created_at: new Date(Date.now() - 86400000).toISOString()
-          }
-        ]);
+        console.warn('Erreur chargement avis:', error);
+        setReviews([]);
         return;
       }
 
-      const formattedReviews = (data || []).map((review: any) => ({
-        id: review.id,
-        user_name: review.user?.full_name || 'Utilisateur',
-        user_avatar: review.user?.avatar_url,
-        rating: review.rating,
-        comment: review.comment,
-        created_at: review.created_at
-      }));
+      if (!data || data.length === 0) {
+        setReviews([]);
+        return;
+      }
+
+      // Récupérer les infos des clients pour chaque avis
+      const clientIds = data.map(r => r.client_id).filter(Boolean);
+      let clientsMap: Record<string, any> = {};
+      
+      if (clientIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', clientIds);
+        
+        if (profiles) {
+          clientsMap = profiles.reduce((acc, p) => ({ ...acc, [p.id]: p }), {});
+        }
+      }
+
+      const formattedReviews = data.map((review: any) => {
+        const client = clientsMap[review.client_id];
+        return {
+          id: review.id,
+          user_name: client?.full_name || 'Client vérifié',
+          user_avatar: client?.avatar_url,
+          rating: review.rating,
+          comment: review.comment,
+          created_at: review.created_at,
+          is_verified: review.is_verified
+        };
+      });
 
       setReviews(formattedReviews);
     } catch (error) {
