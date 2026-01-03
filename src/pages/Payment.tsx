@@ -53,6 +53,23 @@ export default function Payment() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [mobileMoneyPhone, setMobileMoneyPhone] = useState('');
 
+  // Vérification d'authentification pour les achats
+  useEffect(() => {
+    const productId = searchParams.get('productId');
+    const stateData = location.state as any;
+    const hasProductIntent = productId || stateData?.productId || stateData?.fromCart;
+    
+    if (hasProductIntent && !user) {
+      toast({
+        title: "Connexion requise",
+        description: "Veuillez vous connecter pour effectuer un achat",
+        variant: "destructive"
+      });
+      navigate('/auth', { state: { returnTo: location.pathname + location.search } });
+      return;
+    }
+  }, [user, searchParams, location, navigate]);
+
   useEffect(() => {
     if (user?.id) {
       loadWalletData();
@@ -68,6 +85,7 @@ export default function Payment() {
     quantity: number;
     vendorId: string;
     vendorUserId: string;
+    productType: 'physical' | 'digital'; // Type de produit
   } | null>(null);
 
   // État pour stocker les infos du panier (multi-produits)
@@ -76,6 +94,7 @@ export default function Payment() {
     totalAmount: number;
     vendorId: string;
     vendorUserId: string;
+    productType: 'physical' | 'digital'; // Type de produit
   } | null>(null);
 
   // Charger les informations de paiement de produit ou panier
@@ -113,12 +132,13 @@ export default function Payment() {
           return;
         }
 
-        // Stocker les infos du panier
+        // Stocker les infos du panier (produits physiques par défaut)
         setCartPaymentInfo({
           items: cartItems,
           totalAmount: totalAmount,
           vendorId: vendorInfo.id,
-          vendorUserId: vendorInfo.user_id
+          vendorUserId: vendorInfo.user_id,
+          productType: 'physical' // Panier = produits physiques
         });
 
         // Récupérer le public_id / custom_id du vendeur depuis profiles
@@ -157,51 +177,103 @@ export default function Payment() {
       try {
         const id = productId || stateData?.productId;
         const qty = quantity ? parseInt(quantity) : stateData?.quantity || 1;
+        const isDigital = stateData?.productType === 'digital';
         
-        // Charger les détails du produit
-        const { data: product, error } = await supabase
-          .from('products')
-          .select(`
-            id,
-            name,
-            price,
-            vendor_id,
-            vendors!inner(user_id)
-          `)
-          .eq('id', id)
-          .single();
-
-        if (error) throw error;
-
-        if (product) {
-          const totalAmount = product.price * qty;
-          
-          // Stocker les infos produit pour créer la commande plus tard
-          setProductPaymentInfo({
-            productId: product.id,
-            productName: product.name,
-            quantity: qty,
-            vendorId: product.vendor_id,
-            vendorUserId: product.vendors.user_id
-          });
-          
-          // Récupérer le public_id / custom_id du vendeur depuis profiles
-          const { data: vendorProfile } = await supabase
-            .from('profiles')
-            .select('public_id, custom_id')
-            .eq('id', product.vendors.user_id)
+        if (isDigital) {
+          // Charger depuis service_products (produits numériques)
+          const { data: digitalProduct, error: digitalError } = await supabase
+            .from('service_products')
+            .select(`
+              id,
+              name,
+              price,
+              professional_service_id,
+              professional_services!inner(user_id, business_name)
+            `)
+            .eq('id', id)
             .single();
 
-          // Pré-remplir les champs
-          setPaymentAmount(totalAmount.toString());
-          const vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id;
-          if (vendorCode) {
-            setRecipientId(vendorCode);
+          if (digitalError) throw digitalError;
+
+          if (digitalProduct) {
+            const totalAmount = digitalProduct.price * qty;
+            const proService = digitalProduct.professional_services as any;
+            
+            // Stocker les infos produit numérique
+            setProductPaymentInfo({
+              productId: digitalProduct.id,
+              productName: digitalProduct.name,
+              quantity: qty,
+              vendorId: digitalProduct.professional_service_id,
+              vendorUserId: proService.user_id,
+              productType: 'digital' // Produit numérique
+            });
+            
+            // Récupérer le public_id / custom_id du vendeur depuis profiles
+            const { data: vendorProfile } = await supabase
+              .from('profiles')
+              .select('public_id, custom_id')
+              .eq('id', proService.user_id)
+              .single();
+
+            // Pré-remplir les champs
+            setPaymentAmount(totalAmount.toString());
+            const vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id;
+            if (vendorCode) {
+              setRecipientId(vendorCode);
+            }
+            setPaymentDescription(`Achat numérique: ${digitalProduct.name} (x${qty})`);
+            
+            // Ouvrir automatiquement le dialog de paiement
+            setPaymentOpen(true);
           }
-          setPaymentDescription(`Achat: ${product.name} (x${qty})`);
-          
-          // Ouvrir automatiquement le dialog de paiement
-          setPaymentOpen(true);
+        } else {
+          // Charger les détails du produit physique
+          const { data: product, error } = await supabase
+            .from('products')
+            .select(`
+              id,
+              name,
+              price,
+              vendor_id,
+              vendors!inner(user_id)
+            `)
+            .eq('id', id)
+            .single();
+
+          if (error) throw error;
+
+          if (product) {
+            const totalAmount = product.price * qty;
+            
+            // Stocker les infos produit pour créer la commande plus tard
+            setProductPaymentInfo({
+              productId: product.id,
+              productName: product.name,
+              quantity: qty,
+              vendorId: product.vendor_id,
+              vendorUserId: product.vendors.user_id,
+              productType: 'physical' // Produit physique
+            });
+            
+            // Récupérer le public_id / custom_id du vendeur depuis profiles
+            const { data: vendorProfile } = await supabase
+              .from('profiles')
+              .select('public_id, custom_id')
+              .eq('id', product.vendors.user_id)
+              .single();
+
+            // Pré-remplir les champs
+            setPaymentAmount(totalAmount.toString());
+            const vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id;
+            if (vendorCode) {
+              setRecipientId(vendorCode);
+            }
+            setPaymentDescription(`Achat: ${product.name} (x${qty})`);
+            
+            // Ouvrir automatiquement le dialog de paiement
+            setPaymentOpen(true);
+          }
         }
       } catch (error) {
         console.error('Erreur chargement infos produit:', error);
@@ -888,7 +960,8 @@ export default function Payment() {
                         amount={parseFloat(paymentAmount) || 0}
                         orderId={productPaymentInfo?.productId || `transfer-${Date.now()}`}
                         description={paymentDescription || 'Transfert'}
-                        transactionType={productPaymentInfo ? 'product' : 'transfer'}
+                        transactionType={productPaymentInfo || cartPaymentInfo ? 'product' : 'transfer'}
+                        productType={productPaymentInfo?.productType || cartPaymentInfo?.productType || 'physical'}
                         enableEscrow={!!(productPaymentInfo || cartPaymentInfo)}
                         recipientId={recipientId}
                         onPaymentSuccess={(transactionId) => {
@@ -901,6 +974,9 @@ export default function Payment() {
                           setPaymentStep('form');
                           loadWalletData();
                           loadRecentTransactions();
+                          if (productPaymentInfo || cartPaymentInfo) {
+                            navigate('/client');
+                          }
                         }}
                         onPaymentFailed={(error) => {
                           console.error('[Payment] Failed:', error);
@@ -909,6 +985,9 @@ export default function Payment() {
                             description: error,
                             variant: "destructive",
                           });
+                        }}
+                        onCashOnDelivery={() => {
+                          handleCashOnDeliveryPayment();
                         }}
                         onCancel={() => setPaymentStep('form')}
                       />
