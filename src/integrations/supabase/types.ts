@@ -3829,6 +3829,13 @@ export type Database = {
             referencedRelation: "djomy_transactions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "djomy_api_logs_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_core_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       djomy_payments: {
@@ -3900,6 +3907,8 @@ export type Database = {
       djomy_transactions: {
         Row: {
           amount: number
+          auto_released: boolean | null
+          blocked_until: string | null
           completed_at: string | null
           country_code: string | null
           created_at: string
@@ -3917,8 +3926,15 @@ export type Database = {
           payer_name: string | null
           payer_phone: string
           payment_method: string
+          payment_type: string | null
           received_amount: number | null
+          reference_id: string | null
+          release_type: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          score_breakdown: Json | null
           status: string
+          trust_score: number | null
           updated_at: string
           user_agent: string | null
           user_id: string | null
@@ -3926,6 +3942,8 @@ export type Database = {
         }
         Insert: {
           amount: number
+          auto_released?: boolean | null
+          blocked_until?: string | null
           completed_at?: string | null
           country_code?: string | null
           created_at?: string
@@ -3943,8 +3961,15 @@ export type Database = {
           payer_name?: string | null
           payer_phone: string
           payment_method: string
+          payment_type?: string | null
           received_amount?: number | null
+          reference_id?: string | null
+          release_type?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          score_breakdown?: Json | null
           status?: string
+          trust_score?: number | null
           updated_at?: string
           user_agent?: string | null
           user_id?: string | null
@@ -3952,6 +3977,8 @@ export type Database = {
         }
         Update: {
           amount?: number
+          auto_released?: boolean | null
+          blocked_until?: string | null
           completed_at?: string | null
           country_code?: string | null
           created_at?: string
@@ -3969,8 +3996,15 @@ export type Database = {
           payer_name?: string | null
           payer_phone?: string
           payment_method?: string
+          payment_type?: string | null
           received_amount?: number | null
+          reference_id?: string | null
+          release_type?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          score_breakdown?: Json | null
           status?: string
+          trust_score?: number | null
           updated_at?: string
           user_agent?: string | null
           user_id?: string | null
@@ -7534,6 +7568,120 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_boosts: {
+        Row: {
+          amount: number
+          boost_type: string
+          created_at: string | null
+          currency: string | null
+          expires_at: string
+          id: string
+          impressions_delivered: number | null
+          impressions_target: number | null
+          is_active: boolean | null
+          product_id: string | null
+          starts_at: string | null
+          transaction_id: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          amount: number
+          boost_type: string
+          created_at?: string | null
+          currency?: string | null
+          expires_at: string
+          id?: string
+          impressions_delivered?: number | null
+          impressions_target?: number | null
+          is_active?: boolean | null
+          product_id?: string | null
+          starts_at?: string | null
+          transaction_id?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          amount?: number
+          boost_type?: string
+          created_at?: string | null
+          currency?: string | null
+          expires_at?: string
+          id?: string
+          impressions_delivered?: number | null
+          impressions_target?: number | null
+          is_active?: boolean | null
+          product_id?: string | null
+          starts_at?: string | null
+          transaction_id?: string | null
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_boosts_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "djomy_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_boosts_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_core_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_commissions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          credited_at: string | null
+          currency: string | null
+          id: string
+          rate: number | null
+          source_id: string | null
+          source_type: string
+          transaction_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          credited_at?: string | null
+          currency?: string | null
+          id?: string
+          rate?: number | null
+          source_id?: string | null
+          source_type: string
+          transaction_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          credited_at?: string | null
+          currency?: string | null
+          id?: string
+          rate?: number | null
+          source_id?: string | null
+          source_type?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_commissions_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "djomy_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_commissions_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_core_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_corridors: {
         Row: {
           base_fee_fixed: number | null
@@ -7602,6 +7750,57 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      payment_deliveries: {
+        Row: {
+          amount: number
+          created_at: string | null
+          credited_at: string | null
+          currency: string | null
+          delivery_id: string
+          driver_id: string
+          id: string
+          status: string | null
+          transaction_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          credited_at?: string | null
+          currency?: string | null
+          delivery_id: string
+          driver_id: string
+          id?: string
+          status?: string | null
+          transaction_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          credited_at?: string | null
+          currency?: string | null
+          delivery_id?: string
+          driver_id?: string
+          id?: string
+          status?: string | null
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_deliveries_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "djomy_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_deliveries_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_core_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_links: {
         Row: {
@@ -7791,6 +7990,138 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_score_config: {
+        Row: {
+          category: string | null
+          config_key: string
+          config_value: number
+          description: string | null
+          id: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          category?: string | null
+          config_key: string
+          config_value: number
+          description?: string | null
+          id?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          category?: string | null
+          config_key?: string
+          config_value?: number
+          description?: string | null
+          id?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      payment_score_logs: {
+        Row: {
+          breakdown: Json
+          calculated_at: string | null
+          config_snapshot: Json | null
+          decision: string
+          id: string
+          total_score: number
+          transaction_id: string
+        }
+        Insert: {
+          breakdown: Json
+          calculated_at?: string | null
+          config_snapshot?: Json | null
+          decision: string
+          id?: string
+          total_score: number
+          transaction_id: string
+        }
+        Update: {
+          breakdown?: Json
+          calculated_at?: string | null
+          config_snapshot?: Json | null
+          decision?: string
+          id?: string
+          total_score?: number
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_score_logs_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "djomy_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_score_logs_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_core_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_subscriptions: {
+        Row: {
+          amount: number
+          auto_renew: boolean | null
+          created_at: string | null
+          currency: string | null
+          expires_at: string
+          id: string
+          is_active: boolean | null
+          plan_type: string
+          starts_at: string | null
+          transaction_id: string | null
+          vendor_id: string
+        }
+        Insert: {
+          amount: number
+          auto_renew?: boolean | null
+          created_at?: string | null
+          currency?: string | null
+          expires_at: string
+          id?: string
+          is_active?: boolean | null
+          plan_type: string
+          starts_at?: string | null
+          transaction_id?: string | null
+          vendor_id: string
+        }
+        Update: {
+          amount?: number
+          auto_renew?: boolean | null
+          created_at?: string | null
+          currency?: string | null
+          expires_at?: string
+          id?: string
+          is_active?: boolean | null
+          plan_type?: string
+          starts_at?: string | null
+          transaction_id?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_subscriptions_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "djomy_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_subscriptions_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_core_view"
             referencedColumns: ["id"]
           },
         ]
@@ -13869,6 +14200,13 @@ export type Database = {
             referencedRelation: "djomy_transactions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "trust_score_logs_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_core_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_addresses: {
@@ -15126,6 +15464,13 @@ export type Database = {
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "djomy_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_blocked_funds_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_core_view"
             referencedColumns: ["id"]
           },
         ]
@@ -17228,6 +17573,29 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_core_view: {
+        Row: {
+          amount: number | null
+          auto_released: boolean | null
+          created_at: string | null
+          currency: string | null
+          id: string | null
+          order_id: string | null
+          payer_phone: string | null
+          payment_method: string | null
+          payment_type: string | null
+          reference_id: string | null
+          release_type: string | null
+          status: string | null
+          trust_score: number | null
+          updated_at: string | null
+          user_id: string | null
+          user_name: string | null
+          vendor_id: string | null
+          vendor_name: string | null
+        }
+        Relationships: []
+      }
       pdg_dashboard_overview: {
         Row: {
           deliveries_24h: number | null
@@ -17615,6 +17983,10 @@ export type Database = {
       }
       calculate_expense_stats: {
         Args: { p_end_date: string; p_start_date: string; p_vendor_id: string }
+        Returns: Json
+      }
+      calculate_payment_trust_score: {
+        Args: { p_transaction_id: string }
         Returns: Json
       }
       calculate_recommendation_score: {
@@ -18655,6 +19027,10 @@ export type Database = {
       }
       process_djomy_success: {
         Args: { p_djomy_response: Json; p_transaction_id: string }
+        Returns: Json
+      }
+      process_payment_by_type: {
+        Args: { p_transaction_id: string }
         Returns: Json
       }
       process_secure_bureau_transfer: {

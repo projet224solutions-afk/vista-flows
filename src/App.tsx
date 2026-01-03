@@ -65,6 +65,7 @@ const BureauMonitoringPage = lazyWithRetry(() => import("./pages/BureauMonitorin
 const WorkerDashboard = lazyWithRetry(() => import("./pages/WorkerDashboard"));
 const Payment = lazyWithRetry(() => import("./pages/Payment"));
 const DjomyPayment = lazyWithRetry(() => import("./pages/DjomyPayment"));
+const PaymentCorePage = lazyWithRetry(() => import("./pages/PaymentCore"));
 const Orders = lazyWithRetry(() => import("./pages/Orders"));
 const ContactUserById = lazyWithRetry(() => import("./components/communication/ContactUserById"));
 const DirectConversation = lazyWithRetry(() => import("./pages/DirectConversation"));
@@ -294,6 +295,10 @@ function App() {
               <Route
                 path="/djomy-payment"
                 element={<DjomyPayment />}
+              />
+              <Route
+                path="/payment-core"
+                element={<PaymentCorePage />}
               />
               <Route path="/orders" element={<Orders />} />
               <Route
