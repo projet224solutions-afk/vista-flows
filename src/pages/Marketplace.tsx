@@ -21,6 +21,7 @@ import { ResponsiveContainer } from "@/components/responsive/ResponsiveContainer
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/hooks/useAuth";
 import { ShareButton } from "@/components/shared/ShareButton";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const PAGE_LIMIT = 24;
 
@@ -49,6 +50,7 @@ export default function Marketplace() {
   const { isMobile, isTablet } = useResponsive();
   const { user } = useAuth();
   const { addToCart, getCartCount } = useCart();
+  const { t } = useTranslation();
   const [categories, setCategories] = useState<Category[]>([]);
   const [countries, setCountries] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
@@ -126,11 +128,11 @@ export default function Marketplace() {
 
       if (error) throw error;
       
-      const allCategory = { id: 'all', name: 'Toutes', is_active: true };
+      const allCategory = { id: 'all', name: t('common.all'), is_active: true };
       setCategories([allCategory, ...(data || [])]);
     } catch (error) {
       console.error('Erreur chargement catégories:', error);
-      setCategories([{ id: 'all', name: 'Toutes', is_active: true }]);
+      setCategories([{ id: 'all', name: t('common.all'), is_active: true }]);
     }
   };
 
@@ -253,7 +255,7 @@ export default function Marketplace() {
                     onClick={() => navigate('/marketplace')}
                     className="text-xs"
                   >
-                    Voir tout
+                    {t('home.seeAll')}
                   </Button>
                 </>
               )}
@@ -286,7 +288,7 @@ export default function Marketplace() {
               <SearchBar
                 value={searchQuery}
                 onChange={setSearchQuery}
-                placeholder="Rechercher des produits..."
+                placeholder={t('marketplace.searchProducts')}
                 showFilter
                 onFilter={() => setShowFilters(!showFilters)}
               />
@@ -332,28 +334,28 @@ export default function Marketplace() {
             className="cursor-pointer whitespace-nowrap shrink-0"
             onClick={() => setSelectedItemType('all')}
           >
-            🛍️ Tout
+            🛍️ {t('common.all')}
           </Badge>
           <Badge
             variant={selectedItemType === 'product' ? "default" : "outline"}
             className="cursor-pointer whitespace-nowrap shrink-0"
             onClick={() => setSelectedItemType('product')}
           >
-            📦 Produits
+            📦 {t('marketplace.products')}
           </Badge>
           <Badge
             variant={selectedItemType === 'professional_service' ? "default" : "outline"}
             className="cursor-pointer whitespace-nowrap shrink-0"
             onClick={() => setSelectedItemType('professional_service')}
           >
-            💼 Services Pro
+            💼 {t('marketplace.professionalServices') || 'Services Pro'}
           </Badge>
           <Badge
             variant={selectedItemType === 'digital_product' ? "default" : "outline"}
             className="cursor-pointer whitespace-nowrap shrink-0"
             onClick={() => setSelectedItemType('digital_product')}
           >
-            💻 Numériques
+            💻 {t('marketplace.digitalProducts') || 'Numériques'}
           </Badge>
         </div>
       </section>

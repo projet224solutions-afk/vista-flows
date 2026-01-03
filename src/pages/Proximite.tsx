@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import QuickFooter from "@/components/QuickFooter";
 import { useProximityStats } from "@/hooks/useProximityStats";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // Catégories de services de proximité avec IDs pour mapping dynamique
 const getServiceCategories = (stats: any) => [
@@ -231,6 +232,7 @@ export default function Proximite() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const { stats, loading, userPosition, locationError, refresh, radiusKm } = useProximityStats();
+  const { t } = useTranslation();
 
   // Memoize computed categories based on real stats
   const serviceCategories = useMemo(() => getServiceCategories(stats), [stats]);
@@ -252,8 +254,8 @@ export default function Proximite() {
                 <MapPin className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">Services de Proximité</h1>
-                <p className="text-xs text-muted-foreground">Tout ce dont vous avez besoin près de chez vous</p>
+                <h1 className="text-xl font-bold text-foreground">{t('home.nearbyServices')}</h1>
+                <p className="text-xs text-muted-foreground">{t('proximity.mostRequested') || 'Tout ce dont vous avez besoin près de chez vous'}</p>
               </div>
             </div>
             <Button
@@ -280,7 +282,7 @@ export default function Proximite() {
             {loading && (
               <span className="text-muted-foreground flex items-center gap-1">
                 <Loader2 className="w-3 h-3 animate-spin" />
-                Chargement...
+                {t('common.loading')}
               </span>
             )}
           </div>
@@ -288,7 +290,7 @@ export default function Proximite() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
-              placeholder="Rechercher un service ou produit..."
+              placeholder={t('home.searchPlaceholder') || t('common.search') + '...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-12 rounded-xl bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/50"
@@ -304,9 +306,9 @@ export default function Proximite() {
             <div>
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-primary" />
-                Services Populaires
+                {t('home.popularServices') || t('proximity.popularServices')}
               </h2>
-              <p className="text-sm text-muted-foreground">Les plus demandés près de vous</p>
+              <p className="text-sm text-muted-foreground">{t('proximity.mostRequested') || 'Les plus demandés près de vous'}</p>
             </div>
           </div>
 
@@ -327,7 +329,7 @@ export default function Proximite() {
                 >
                   {service.trending && (
                     <Badge className="absolute top-2 right-2 bg-primary/10 text-primary border-0 text-[10px] px-1.5">
-                      Tendance
+                      {t('home.trending') || 'Tendance'}
                     </Badge>
                   )}
                   
@@ -344,7 +346,7 @@ export default function Proximite() {
                   <p className="text-xs text-muted-foreground mb-2">{service.description}</p>
                   
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-primary">{service.count} disponibles</span>
+                    <span className="text-xs font-medium text-primary">{service.count} {t('home.available') || 'disponibles'}</span>
                     <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                   </div>
                 </motion.button>
@@ -359,15 +361,15 @@ export default function Proximite() {
             <div>
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5 text-primary" />
-                Catégories de Produits
+                {t('home.productCategories') || t('proximity.productCategories') || 'Catégories de Produits'}
               </h2>
-              <p className="text-sm text-muted-foreground">Explorez par catégorie</p>
+              <p className="text-sm text-muted-foreground">{t('home.exploreByCategory') || t('proximity.exploreByCategory') || 'Explorez par catégorie'}</p>
             </div>
             <button 
               onClick={() => navigate('/marketplace')}
               className="text-sm text-primary font-medium flex items-center gap-1 hover:gap-2 transition-all"
             >
-              Voir tout <ArrowRight className="w-4 h-4" />
+              {t('home.seeAll')} <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
