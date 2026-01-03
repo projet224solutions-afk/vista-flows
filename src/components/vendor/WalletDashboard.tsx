@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +31,7 @@ interface WalletInfo {
 
 export default function WalletDashboard() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -77,11 +79,11 @@ export default function WalletDashboard() {
     if (!user?.id || !wallet) return;
     const amount = parseFloat(depositAmount);
     if (!amount || amount <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('wallet.invalidAmount'));
       return;
     }
     if (amount < 1000) {
-      toast.error('Montant minimum 1000 GNF');
+      toast.error(`${t('wallet.minDeposit')} 1000 ${wallet.currency}`);
       return;
     }
     try {
@@ -98,9 +100,9 @@ export default function WalletDashboard() {
           amount: amount,
           net_amount: amount,
           fee: 0,
-          currency: 'GNF',
+          currency: wallet.currency,
           status: 'completed',
-          description: 'Dépôt via interface vendeur',
+          description: t('wallet.deposit'),
           receiver_wallet_id: wallet.id
         });
 
@@ -116,29 +118,29 @@ export default function WalletDashboard() {
       if (updateError) throw updateError;
 
       setDepositAmount("");
-      toast.success(`Dépôt de ${amount.toLocaleString()} GNF effectué avec succès`);
+      toast.success(`${t('wallet.depositSuccess')}: ${amount.toLocaleString()} ${wallet.currency}`);
       await loadWalletData();
     } catch (e: any) {
       console.error('Erreur dépôt:', e);
-      toast.error(e?.message || 'Erreur lors du dépôt');
+      toast.error(e?.message || t('wallet.depositError'));
     } finally {
       setBusy(false);
     }
-  }, [depositAmount, user?.id, wallet]);
+  }, [depositAmount, user?.id, wallet, t]);
 
   const handleWithdraw = useCallback(async () => {
     if (!user?.id || !wallet) return;
     const amount = parseFloat(withdrawAmount);
     if (!amount || amount <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('wallet.invalidAmount'));
       return;
     }
     if (amount < 5000) {
-      toast.error('Montant minimum 5000 GNF');
+      toast.error(`${t('wallet.minWithdraw')} 5000 ${wallet.currency}`);
       return;
     }
     if (amount > wallet.balance) {
-      toast.error('Solde insuffisant');
+      toast.error(t('wallet.insufficientBalance'));
       return;
     }
     try {
@@ -155,9 +157,9 @@ export default function WalletDashboard() {
           amount: -amount,
           net_amount: -amount,
           fee: 0,
-          currency: 'GNF',
+          currency: wallet.currency,
           status: 'completed',
-          description: 'Retrait via interface vendeur',
+          description: t('wallet.withdraw'),
           sender_wallet_id: wallet.id
         });
 
@@ -173,25 +175,25 @@ export default function WalletDashboard() {
       if (updateError) throw updateError;
 
       setWithdrawAmount("");
-      toast.success(`Retrait de ${amount.toLocaleString()} GNF effectué avec succès`);
+      toast.success(`${t('wallet.withdrawSuccess')}: ${amount.toLocaleString()} ${wallet.currency}`);
       await loadWalletData();
     } catch (e: any) {
       console.error('Erreur retrait:', e);
-      toast.error(e?.message || 'Erreur lors du retrait');
+      toast.error(e?.message || t('wallet.withdrawError'));
     } finally {
       setBusy(false);
     }
-  }, [withdrawAmount, user?.id, wallet]);
+  }, [withdrawAmount, user?.id, wallet, t]);
 
   const handlePreviewTransfer = useCallback(async () => {
     if (!user?.id || !wallet) return;
     const amount = parseFloat(transferAmount);
     if (!amount || amount <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('wallet.invalidAmount'));
       return;
     }
     if (!receiverId) {
-      toast.error('Destinataire requis (Code utilisateur)');
+      toast.error(t('wallet.recipientRequired'));
       return;
     }
     
@@ -229,7 +231,7 @@ export default function WalletDashboard() {
       }
       
       if (!senderCode) {
-        toast.error('Votre code utilisateur est introuvable');
+        toast.error(t('wallet.senderCodeNotFound'));
         setBusy(false);
         return;
       }
@@ -253,7 +255,7 @@ export default function WalletDashboard() {
       console.log('📋 [Vendeur] Résultat prévisualisation:', data);
 
       if (!data.success) {
-        toast.error(data.error || 'Erreur lors de la prévisualisation');
+        toast.error(data.error || t('wallet.previewError'));
         setBusy(false);
         return;
       }
@@ -262,11 +264,11 @@ export default function WalletDashboard() {
       setShowTransferPreview(true);
     } catch (e: any) {
       console.error('Erreur prévisualisation:', e);
-      toast.error(e?.message || 'Erreur lors de la prévisualisation');
+      toast.error(e?.message || t('wallet.previewError'));
     } finally {
       setBusy(false);
     }
-  }, [transferAmount, receiverId, user?.id, wallet]);
+  }, [transferAmount, receiverId, user?.id, wallet, t]);
 
   const handleConfirmTransfer = useCallback(async () => {
     if (!user?.id || !transferPreview) return;
@@ -315,32 +317,32 @@ export default function WalletDashboard() {
       setTransferPreview(null);
       
       toast.success(
-        `✅ Transfert réussi\n💸 Frais appliqués : ${transferPreview.fee_amount.toLocaleString()} ${currency}\n💰 Montant transféré : ${transferPreview.amount.toLocaleString()} ${currency}`,
+        `✅ ${t('wallet.transferSuccess')}\n💸 ${t('wallet.feesApplied')}: ${transferPreview.fee_amount.toLocaleString()} ${currency}\n💰 ${t('wallet.amountTransferred')}: ${transferPreview.amount.toLocaleString()} ${currency}`,
         { duration: 5000 }
       );
       
       await loadWalletData();
     } catch (e: any) {
       console.error('Erreur transfert:', e);
-      toast.error(e?.message || 'Erreur lors du transfert');
+      toast.error(e?.message || t('wallet.transferError'));
     } finally {
       setBusy(false);
     }
-  }, [transferPreview, receiverId, transferReason, user?.id, wallet?.currency]);
+  }, [transferPreview, receiverId, transferReason, user?.id, wallet?.currency, t]);
 
   return (
     <Card className="h-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <WalletIcon className="w-5 h-5" />
-          Wallet
-          <Badge variant="outline" className="ml-2">Opérationnel</Badge>
+          {t('wallet.title')}
+          <Badge variant="outline" className="ml-2">{t('wallet.operational')}</Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex items-center justify-between p-4 rounded-lg bg-slate-50 border">
           <div>
-            <p className="text-sm text-muted-foreground">Solde actuel</p>
+            <p className="text-sm text-muted-foreground">{t('wallet.currentBalance')}</p>
             <p className="text-2xl font-bold">{balanceDisplay}</p>
           </div>
           <Button variant="outline" size="sm" onClick={loadWalletData} disabled={loading}>
@@ -350,10 +352,10 @@ export default function WalletDashboard() {
 
         <Tabs defaultValue="deposit">
           <TabsList className="grid grid-cols-4 w-full">
-            <TabsTrigger value="deposit">Dépôt</TabsTrigger>
-            <TabsTrigger value="withdraw">Retrait</TabsTrigger>
-            <TabsTrigger value="transfer">Transfert</TabsTrigger>
-            <TabsTrigger value="history">Historique</TabsTrigger>
+            <TabsTrigger value="deposit">{t('wallet.deposit')}</TabsTrigger>
+            <TabsTrigger value="withdraw">{t('wallet.withdraw')}</TabsTrigger>
+            <TabsTrigger value="transfer">{t('wallet.transfer')}</TabsTrigger>
+            <TabsTrigger value="history">{t('wallet.history')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="deposit" className="space-y-4">
@@ -362,23 +364,23 @@ export default function WalletDashboard() {
               <div className="p-4 border rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50">
                 <div className="flex items-center gap-2 mb-3">
                   <Smartphone className="w-5 h-5 text-blue-600" />
-                  <h4 className="font-semibold">Recharger via Djomy</h4>
+                  <h4 className="font-semibold">{t('wallet.rechargeViaDjomy')}</h4>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Orange Money, MTN Mobile Money, Kulu via Djomy
+                  {t('wallet.djomyDesc')}
                 </p>
                 <Button 
                   onClick={() => {/* TODO: Ouvrir dialogue Djomy */}} 
                   className="w-full bg-blue-600 hover:bg-blue-700"
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
-                  Recharger Wallet
+                  {t('wallet.rechargeWallet')}
                 </Button>
               </div>
 
               {/* Montants rapides */}
               <div className="space-y-2">
-                <Label>Montants rapides</Label>
+                <Label>{t('wallet.quickAmounts')}</Label>
                 <div className="flex flex-wrap gap-2">
                   {[5000, 10000, 25000, 50000, 100000].map((amount) => (
                     <Button
@@ -390,7 +392,7 @@ export default function WalletDashboard() {
                         /* TODO: Ouvrir dialogue Djomy */
                       }}
                     >
-                      {amount.toLocaleString('fr-FR')} GNF
+                      {amount.toLocaleString()} {wallet?.currency || 'GNF'}
                     </Button>
                   ))}
                 </div>
@@ -401,12 +403,12 @@ export default function WalletDashboard() {
           <TabsContent value="withdraw" className="space-y-4">
             <div className="grid md:grid-cols-3 gap-4">
               <div className="md:col-span-2">
-                <Label>Montant à retirer</Label>
+                <Label>{t('wallet.amountToWithdraw')}</Label>
                 <div className="flex items-center gap-2 mt-2">
                   <Input type="number" placeholder="0" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} />
                   <Button onClick={handleWithdraw} disabled={busy || !withdrawAmount} className="min-w-[140px]">
                     <ArrowUpCircle className="w-4 h-4 mr-2" />
-                    Retirer
+                    {t('wallet.withdrawBtn')}
                   </Button>
                 </div>
               </div>
@@ -417,26 +419,26 @@ export default function WalletDashboard() {
             <div className="grid md:grid-cols-3 gap-4">
               <div className="md:col-span-2 space-y-3">
                 <div>
-                  <Label>Code Destinataire</Label>
+                  <Label>{t('wallet.recipientCode')}</Label>
                   <Input 
-                    placeholder="Ex: 0002ABC" 
+                    placeholder={t('wallet.recipientCodePlaceholder')} 
                     value={receiverId} 
                     onChange={(e) => setReceiverId(e.target.value.toUpperCase())} 
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Entrez le code d'identification (format: 0002ABC)
+                    {t('wallet.recipientCodeHint')}
                   </p>
                 </div>
                 <div>
-                  <Label>Motif du transfert</Label>
-                  <Input placeholder="Ex: Paiement marchandise, Remboursement..." value={transferReason} onChange={(e) => setTransferReason(e.target.value)} />
+                  <Label>{t('wallet.transferReason')}</Label>
+                  <Input placeholder={t('wallet.transferReasonPlaceholder')} value={transferReason} onChange={(e) => setTransferReason(e.target.value)} />
                 </div>
                 <div>
-                  <Label>Montant à transférer</Label>
+                  <Label>{t('wallet.amountToTransfer')}</Label>
                   <div className="flex items-center gap-2 mt-2">
                     <Input type="number" placeholder="0" value={transferAmount} onChange={(e) => setTransferAmount(e.target.value)} />
                     <Button onClick={handlePreviewTransfer} disabled={busy || !transferAmount || !receiverId} className="min-w-[140px]">
-                      Transférer
+                      {t('wallet.transferBtn')}
                     </Button>
                   </div>
                 </div>
@@ -455,17 +457,17 @@ export default function WalletDashboard() {
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-primary" />
-                Confirmer le transfert
+                {t('wallet.confirmTransfer')}
               </AlertDialogTitle>
               <AlertDialogDescription asChild>
                 <div className="space-y-4 mt-4">
                   {/* Informations du destinataire */}
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
-                    <h4 className="font-semibold text-blue-900 mb-2">👤 Informations du destinataire</h4>
+                    <h4 className="font-semibold text-blue-900 mb-2">👤 {t('wallet.recipientInfo')}</h4>
                     <div className="space-y-1 text-sm">
-                      <p><strong>Nom:</strong> {transferPreview?.recipient_name}</p>
-                      <p><strong>Email:</strong> {transferPreview?.recipient_email}</p>
-                      <p><strong>Téléphone:</strong> {transferPreview?.recipient_phone}</p>
+                      <p><strong>{t('common.name')}:</strong> {transferPreview?.recipient_name}</p>
+                      <p><strong>{t('common.email')}:</strong> {transferPreview?.recipient_email}</p>
+                      <p><strong>{t('common.phone')}:</strong> {transferPreview?.recipient_phone}</p>
                       <p><strong>ID:</strong> {transferPreview?.recipient_code}</p>
                     </div>
                   </div>
@@ -473,41 +475,41 @@ export default function WalletDashboard() {
                   {/* Détails du transfert */}
                   <div className="p-4 bg-slate-50 rounded-lg space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">💰 Montant à transférer</span>
+                      <span className="text-sm font-medium">💰 {t('wallet.amountToSend')}</span>
                       <span className="text-lg font-bold">{transferPreview?.amount?.toLocaleString()} {wallet?.currency || 'GNF'}</span>
                     </div>
                     <div className="flex justify-between items-center text-orange-600">
-                      <span className="text-sm font-medium">💸 Frais de transfert ({transferPreview?.fee_percent}%)</span>
+                      <span className="text-sm font-medium">💸 {t('wallet.fees')} ({transferPreview?.fee_percent}%)</span>
                       <span className="text-lg font-bold">{transferPreview?.fee_amount?.toLocaleString()} {wallet?.currency || 'GNF'}</span>
                     </div>
                     <div className="border-t pt-3 flex justify-between items-center">
-                      <span className="text-sm font-medium">📉 Total débité de votre compte</span>
+                      <span className="text-sm font-medium">📉 {t('wallet.totalDeducted')}</span>
                       <span className="text-xl font-bold text-red-600">{transferPreview?.total_debit?.toLocaleString()} {wallet?.currency || 'GNF'}</span>
                     </div>
                     <div className="flex justify-between items-center text-green-600">
-                      <span className="text-sm font-medium">📈 Montant net reçu</span>
+                      <span className="text-sm font-medium">📈 {t('wallet.recipientWillReceive')}</span>
                       <span className="text-lg font-bold">{transferPreview?.amount_received?.toLocaleString()} {wallet?.currency || 'GNF'}</span>
                     </div>
                   </div>
                   
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-800">
-                      <strong>Solde actuel:</strong> {transferPreview?.current_balance?.toLocaleString()} {wallet?.currency || 'GNF'}
+                      <strong>{t('wallet.currentBalance')}:</strong> {transferPreview?.current_balance?.toLocaleString()} {wallet?.currency || 'GNF'}
                       <br />
-                      <strong>Solde après transfert:</strong> {transferPreview?.balance_after?.toLocaleString()} {wallet?.currency || 'GNF'}
+                      <strong>{t('wallet.balanceAfter')}:</strong> {transferPreview?.balance_after?.toLocaleString()} {wallet?.currency || 'GNF'}
                     </p>
                   </div>
 
                   <p className="text-sm text-muted-foreground">
-                    Souhaitez-vous confirmer ce transfert ?
+                    {t('wallet.confirmQuestion')}
                   </p>
                 </div>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={busy}>Non, annuler</AlertDialogCancel>
+              <AlertDialogCancel disabled={busy}>{t('wallet.cancelBtn')}</AlertDialogCancel>
               <AlertDialogAction onClick={handleConfirmTransfer} disabled={busy}>
-                Oui, confirmer
+                {t('wallet.confirmBtn')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -519,19 +521,16 @@ export default function WalletDashboard() {
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2">
                 <Smartphone className="w-5 h-5 text-green-600" />
-                Recharge Mobile Money
+                {t('wallet.mobileMoneyRecharge')}
               </AlertDialogTitle>
               <AlertDialogDescription>
                 <p className="text-center py-4">
-                  La recharge via Mobile Money (Jomy.africa) sera bientôt disponible.
-                  <br />
-                  <br />
-                  En attendant, vous pouvez effectuer des dépôts manuels ou des transferts entre utilisateurs.
+                  {t('wallet.mobileMoneyComingSoon')}
                 </p>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Fermer</AlertDialogCancel>
+              <AlertDialogCancel>{t('common.close')}</AlertDialogCancel>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
