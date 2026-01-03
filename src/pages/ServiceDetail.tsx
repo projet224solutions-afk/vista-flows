@@ -73,6 +73,66 @@ export default function ServiceDetail() {
   const loadServiceDetails = async () => {
     try {
       setLoading(true);
+      
+      // D'abord essayer de charger depuis professional_services (pour les services du marketplace)
+      const { data: proService, error: proError } = await supabase
+        .from('professional_services')
+        .select(`
+          id,
+          business_name,
+          description,
+          logo_url,
+          cover_image_url,
+          address,
+          phone,
+          opening_hours,
+          rating,
+          total_reviews,
+          service_types (
+            name,
+            category,
+            code
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      if (!proError && proService) {
+        // C'est un service professionnel du marketplace
+        const openingHours = proService.opening_hours as OpeningHours || {
+          monday: "08:00 - 18:00",
+          tuesday: "08:00 - 18:00",
+          wednesday: "08:00 - 18:00",
+          thursday: "08:00 - 18:00",
+          friday: "08:00 - 18:00",
+          saturday: "09:00 - 14:00",
+          sunday: "Fermé"
+        };
+
+        const serviceData: ServiceDetail = {
+          id: proService.id,
+          name: proService.business_name,
+          description: proService.description || 'Aucune description disponible',
+          category: proService.service_types?.category || 'service',
+          address: proService.address,
+          phone: proService.phone,
+          rating: Number(proService.rating) || 0,
+          reviews_count: proService.total_reviews || 0,
+          is_open: true,
+          image_url: proService.cover_image_url || proService.logo_url,
+          features: [],
+          latitude: 9.6412,
+          longitude: -13.5784,
+          opening_hours: openingHours
+        };
+
+        setService(serviceData);
+        const dist = getDistanceTo(serviceData.latitude!, serviceData.longitude!);
+        setDistance(dist);
+        return;
+      }
+
+      // Sinon, essayer depuis service_types (pour les types de services génériques)
       const { data, error } = await supabase
         .from('service_types')
         .select('*')
@@ -92,7 +152,6 @@ export default function ServiceDetail() {
         is_open: true,
         image_url: data.icon,
         features: (Array.isArray(data.features) ? data.features : []) as string[],
-        // Coordonnées par défaut (Conakry)
         latitude: 9.6412,
         longitude: -13.5784,
         opening_hours: {
@@ -107,9 +166,7 @@ export default function ServiceDetail() {
       };
 
       setService(serviceData);
-
-      // Calculer la distance avec le hook de géolocalisation
-      const dist = getDistanceTo(serviceData.latitude, serviceData.longitude);
+      const dist = getDistanceTo(serviceData.latitude!, serviceData.longitude!);
       setDistance(dist);
 
     } catch (error) {
