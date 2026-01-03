@@ -509,12 +509,40 @@ export default function Marketplace() {
           </div>
         ) : (
           <MarketplaceGrid>
-            {marketplaceItems.map((item) => (
-              <UniversalMarketplaceCard
-                key={item.id}
-                item={item}
-                onAddToCart={(itemId) => {
-                  if (item.item_type === 'product' || item.item_type === 'digital_product') {
+            {marketplaceItems.map((item) => {
+              // Pour les services professionnels, utiliser UniversalMarketplaceCard
+              if (item.item_type === 'professional_service') {
+                return (
+                  <UniversalMarketplaceCard
+                    key={item.id}
+                    item={item}
+                    onAddToCart={() => navigate(`/services-proximite/${item.id}`)}
+                    onViewDetails={() => navigate(`/services-proximite/${item.id}`)}
+                  />
+                );
+              }
+              
+              // Pour les produits physiques et numériques, utiliser MarketplaceProductCard
+              return (
+                <MarketplaceProductCard
+                  key={item.id}
+                  id={item.id}
+                  image={item.images || []}
+                  title={item.name}
+                  price={item.price}
+                  originalPrice={item.originalPrice}
+                  vendor={item.vendor_name}
+                  vendorId={item.vendor_id}
+                  vendorLocation={item.address}
+                  vendorRating={item.rating}
+                  vendorRatingCount={item.reviews_count}
+                  rating={item.rating}
+                  reviewCount={item.reviews_count}
+                  isPremium={item.is_premium || item.is_featured}
+                  stock={item.stock}
+                  category={item.category_name}
+                  onBuy={() => handleProductClick(item.id)}
+                  onAddToCart={() => {
                     addToCart({
                       id: item.id,
                       name: item.name,
@@ -524,20 +552,11 @@ export default function Marketplace() {
                       vendor_name: item.vendor_name
                     });
                     toast.success('Ajouté au panier');
-                  } else {
-                    // Pour les services professionnels, rediriger vers la page de détail
-                    navigate(`/services-proximite/${item.id}`);
-                  }
-                }}
-                onViewDetails={(itemId) => {
-                  if (item.item_type === 'professional_service') {
-                    navigate(`/services-proximite/${itemId}`);
-                  } else {
-                    handleProductClick(itemId);
-                  }
-                }}
-              />
-            ))}
+                  }}
+                  onContact={() => handleContactVendor(item.id)}
+                />
+              );
+            })}
           </MarketplaceGrid>
         )}
 

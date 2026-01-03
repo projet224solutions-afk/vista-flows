@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 interface GeoDetectionResult {
   country: string;
@@ -174,15 +174,15 @@ export function useGeoRegistration() {
     if (!user?.id) return;
 
     try {
-      const { error } = await supabase.rpc('update_user_geolocation', {
-        p_user_id: user.id,
-        p_country: detection.country,
-        p_currency: detection.currency,
-        p_language: detection.language,
-        p_method: detection.method,
-        p_accuracy: detection.accuracy || null,
-        p_metadata: detection.metadata || null
-      });
+      // Mise à jour directe du profil utilisateur avec les infos de géolocalisation
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          country: detection.country,
+          preferred_currency: detection.currency,
+          language: detection.language
+        })
+        .eq('id', user.id);
 
       if (error) {
         console.error('Error registering geolocation:', error);
