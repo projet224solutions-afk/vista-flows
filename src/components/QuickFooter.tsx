@@ -26,7 +26,7 @@ export default function QuickFooter() {
     },
     {
       id: 'proximite',
-      labelKey: 'nav.services',
+      labelKey: 'nav.proximite',
       icon: MapPin,
       path: '/proximite',
     },
