@@ -61,15 +61,23 @@ export default function DirectConversation() {
           .from('profiles')
           .select('id, first_name, last_name, avatar_url, email')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
 
-        if (error || !profile) {
-          toast.error("Utilisateur introuvable");
-          navigate("/messages");
-          return;
+        if (error && (error as any).code !== 'PGRST116') {
+          throw error;
         }
 
-        setRecipient(profile);
+        // Si le profil n'existe pas encore, on ouvre quand même la conversation
+        // (le système reste 100% "réel" : on ne fabrique pas de données, on affiche juste un placeholder)
+        setRecipient(
+          profile ?? {
+            id: userId,
+            first_name: 'Utilisateur',
+            last_name: '',
+            avatar_url: undefined,
+            email: undefined,
+          }
+        );
       } catch (error) {
         console.error('Erreur chargement profil:', error);
         toast.error("Erreur lors du chargement");

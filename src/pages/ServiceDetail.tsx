@@ -1,8 +1,17 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { 
-  ArrowLeft, MapPin, Phone, Clock, Star, Mail, 
-  Share2, Heart, MessageSquare, Calendar, Navigation
+import {
+  ArrowLeft,
+  MapPin,
+  Phone,
+  Clock,
+  Star,
+  Mail,
+  Share2,
+  Heart,
+  MessageSquare,
+  Calendar,
+  Navigation,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -63,6 +72,7 @@ export default function ServiceDetail() {
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [distance, setDistance] = useState<number | null>(null);
+
 
   useEffect(() => {
     if (id && positionReady) {
@@ -242,39 +252,25 @@ export default function ServiceDetail() {
     }
   };
 
-  const handleContact = async () => {
+  const handleContact = () => {
     if (!user) {
       toast.error('Veuillez vous connecter pour contacter ce service');
       navigate('/auth');
       return;
     }
-    
+
     if (!service?.vendor_user_id) {
       toast.error('Informations du prestataire non disponibles');
       return;
     }
 
-    try {
-      // Créer un message initial
-      const initialMessage = `Bonjour, je suis intéressé par vos services "${service.name}". Pouvez-vous me donner plus d'informations ?`;
-      
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          sender_id: user.id,
-          recipient_id: service.vendor_user_id,
-          content: initialMessage,
-          type: 'text'
-        });
-
-      if (error) throw error;
-
-      toast.success('Message envoyé au prestataire!');
-      navigate(`/messages?recipientId=${service.vendor_user_id}`);
-    } catch (error) {
-      console.error('Erreur lors du contact:', error);
-      toast.error('Impossible de contacter le prestataire');
+    if (service.vendor_user_id === user.id) {
+      toast.error("Vous ne pouvez pas vous contacter vous-même");
+      return;
     }
+
+    // Ouvrir la messagerie directe (réelle) avec le prestataire
+    navigate(`/communication/direct_${service.vendor_user_id}`);
   };
 
   const handleReservation = () => {
