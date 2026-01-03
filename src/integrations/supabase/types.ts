@@ -510,6 +510,51 @@ export type Database = {
         }
         Relationships: []
       }
+      airline_partners: {
+        Row: {
+          api_config: Json | null
+          api_type: string | null
+          code: string
+          commission_rate: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          name: string
+          updated_at: string | null
+          website_url: string | null
+        }
+        Insert: {
+          api_config?: Json | null
+          api_type?: string | null
+          code: string
+          commission_rate?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name: string
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          api_config?: Json | null
+          api_type?: string | null
+          code?: string
+          commission_rate?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name?: string
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       api_alerts: {
         Row: {
           alert_type: string
@@ -5269,6 +5314,92 @@ export type Database = {
           },
         ]
       }
+      flight_offers: {
+        Row: {
+          affiliate_commission: number | null
+          affiliate_url: string | null
+          airline_id: string | null
+          class_type: string | null
+          created_at: string | null
+          created_by: string | null
+          currency: string | null
+          departure_date: string | null
+          destination_city: string
+          destination_code: string | null
+          id: string
+          is_active: boolean | null
+          is_round_trip: boolean | null
+          offer_type: string | null
+          origin_city: string
+          origin_code: string | null
+          price_adult: number
+          price_child: number | null
+          return_date: string | null
+          seats_available: number | null
+          updated_at: string | null
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          affiliate_commission?: number | null
+          affiliate_url?: string | null
+          airline_id?: string | null
+          class_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          departure_date?: string | null
+          destination_city: string
+          destination_code?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_round_trip?: boolean | null
+          offer_type?: string | null
+          origin_city: string
+          origin_code?: string | null
+          price_adult: number
+          price_child?: number | null
+          return_date?: string | null
+          seats_available?: number | null
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          affiliate_commission?: number | null
+          affiliate_url?: string | null
+          airline_id?: string | null
+          class_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          departure_date?: string | null
+          destination_city?: string
+          destination_code?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_round_trip?: boolean | null
+          offer_type?: string | null
+          origin_city?: string
+          origin_code?: string | null
+          price_adult?: number
+          price_child?: number | null
+          return_date?: string | null
+          seats_available?: number | null
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flight_offers_airline_id_fkey"
+            columns: ["airline_id"]
+            isOneToOne: false
+            referencedRelation: "airline_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forensic_reports: {
         Row: {
           created_at: string | null
@@ -5687,6 +5818,149 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      hotel_offers: {
+        Row: {
+          affiliate_commission: number | null
+          affiliate_url: string | null
+          amenities: Json | null
+          created_at: string | null
+          created_by: string | null
+          currency: string | null
+          description: string | null
+          discount_percent: number | null
+          hotel_id: string | null
+          id: string
+          images: Json | null
+          is_active: boolean | null
+          max_guests: number | null
+          offer_type: string | null
+          price_per_night: number
+          room_type: string
+          updated_at: string | null
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          affiliate_commission?: number | null
+          affiliate_url?: string | null
+          amenities?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          description?: string | null
+          discount_percent?: number | null
+          hotel_id?: string | null
+          id?: string
+          images?: Json | null
+          is_active?: boolean | null
+          max_guests?: number | null
+          offer_type?: string | null
+          price_per_night: number
+          room_type: string
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          affiliate_commission?: number | null
+          affiliate_url?: string | null
+          amenities?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          description?: string | null
+          discount_percent?: number | null
+          hotel_id?: string | null
+          id?: string
+          images?: Json | null
+          is_active?: boolean | null
+          max_guests?: number | null
+          offer_type?: string | null
+          price_per_night?: number
+          room_type?: string
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotel_offers_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotel_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hotel_partners: {
+        Row: {
+          amenities: Json | null
+          api_config: Json | null
+          api_type: string | null
+          city: string | null
+          commission_rate: number | null
+          country: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          images: Json | null
+          is_active: boolean | null
+          latitude: number | null
+          location: string | null
+          logo_url: string | null
+          longitude: number | null
+          name: string
+          price_range: string | null
+          star_rating: number | null
+          updated_at: string | null
+          website_url: string | null
+        }
+        Insert: {
+          amenities?: Json | null
+          api_config?: Json | null
+          api_type?: string | null
+          city?: string | null
+          commission_rate?: number | null
+          country?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          images?: Json | null
+          is_active?: boolean | null
+          latitude?: number | null
+          location?: string | null
+          logo_url?: string | null
+          longitude?: number | null
+          name: string
+          price_range?: string | null
+          star_rating?: number | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          amenities?: Json | null
+          api_config?: Json | null
+          api_type?: string | null
+          city?: string | null
+          commission_rate?: number | null
+          country?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          images?: Json | null
+          is_active?: boolean | null
+          latitude?: number | null
+          location?: string | null
+          logo_url?: string | null
+          longitude?: number | null
+          name?: string
+          price_range?: string | null
+          star_rating?: number | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
       }
       id_counters: {
         Row: {
@@ -13030,6 +13304,241 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      travel_affiliate_commissions: {
+        Row: {
+          affiliate_id: string | null
+          amount: number
+          booking_id: string | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          paid_at: string | null
+          status: string | null
+        }
+        Insert: {
+          affiliate_id?: string | null
+          amount: number
+          booking_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          paid_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          affiliate_id?: string | null
+          amount?: number
+          booking_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          paid_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "travel_affiliate_commissions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "travel_affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "travel_affiliate_commissions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "travel_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      travel_affiliates: {
+        Row: {
+          affiliate_code: string
+          approved_at: string | null
+          approved_by: string | null
+          bank_details: Json | null
+          commission_rate: number | null
+          created_at: string | null
+          documents: Json | null
+          id: string
+          paid_earnings: number | null
+          pending_earnings: number | null
+          specialization: Json | null
+          status: string | null
+          total_bookings: number | null
+          total_earnings: number | null
+          total_referrals: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          affiliate_code: string
+          approved_at?: string | null
+          approved_by?: string | null
+          bank_details?: Json | null
+          commission_rate?: number | null
+          created_at?: string | null
+          documents?: Json | null
+          id?: string
+          paid_earnings?: number | null
+          pending_earnings?: number | null
+          specialization?: Json | null
+          status?: string | null
+          total_bookings?: number | null
+          total_earnings?: number | null
+          total_referrals?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          affiliate_code?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          bank_details?: Json | null
+          commission_rate?: number | null
+          created_at?: string | null
+          documents?: Json | null
+          id?: string
+          paid_earnings?: number | null
+          pending_earnings?: number | null
+          specialization?: Json | null
+          status?: string | null
+          total_bookings?: number | null
+          total_earnings?: number | null
+          total_referrals?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      travel_bookings: {
+        Row: {
+          affiliate_id: string | null
+          booking_reference: string
+          booking_type: string
+          check_in_date: string | null
+          check_out_date: string | null
+          commission_amount: number | null
+          created_at: string | null
+          currency: string | null
+          flight_offer_id: string | null
+          guests_count: number | null
+          hotel_offer_id: string | null
+          id: string
+          notes: string | null
+          payment_method: string | null
+          payment_status: string | null
+          status: string | null
+          total_amount: number
+          traveler_info: Json
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          affiliate_id?: string | null
+          booking_reference: string
+          booking_type: string
+          check_in_date?: string | null
+          check_out_date?: string | null
+          commission_amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          flight_offer_id?: string | null
+          guests_count?: number | null
+          hotel_offer_id?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
+          status?: string | null
+          total_amount: number
+          traveler_info: Json
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          affiliate_id?: string | null
+          booking_reference?: string
+          booking_type?: string
+          check_in_date?: string | null
+          check_out_date?: string | null
+          commission_amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          flight_offer_id?: string | null
+          guests_count?: number | null
+          hotel_offer_id?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
+          status?: string | null
+          total_amount?: number
+          traveler_info?: Json
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "travel_bookings_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "travel_affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "travel_bookings_flight_offer_id_fkey"
+            columns: ["flight_offer_id"]
+            isOneToOne: false
+            referencedRelation: "flight_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "travel_bookings_hotel_offer_id_fkey"
+            columns: ["hotel_offer_id"]
+            isOneToOne: false
+            referencedRelation: "hotel_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      travel_module_config: {
+        Row: {
+          affiliate_settings: Json | null
+          api_credentials: Json | null
+          api_provider: string | null
+          config_mode: string
+          created_at: string | null
+          default_currency: string | null
+          enabled_features: Json | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          affiliate_settings?: Json | null
+          api_credentials?: Json | null
+          api_provider?: string | null
+          config_mode?: string
+          created_at?: string | null
+          default_currency?: string | null
+          enabled_features?: Json | null
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          affiliate_settings?: Json | null
+          api_credentials?: Json | null
+          api_provider?: string | null
+          config_mode?: string
+          created_at?: string | null
+          default_currency?: string | null
+          enabled_features?: Json | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       user_addresses: {
         Row: {
