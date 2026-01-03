@@ -143,28 +143,7 @@ const CommunicationWidgetContent = memo(function CommunicationWidgetContent({
   );
 });
 
-export default function CommunicationWidget({ 
-  position = 'bottom-right',
-  showNotifications = true 
-}: CommunicationWidgetProps) {
-  const { user } = useAuth();
-  const { stats } = useUniversalCommunication();
-  
-  // Utiliser useDeferredValue pour éviter le blocage du thread principal
-  const deferredUnreadCount = useDeferredValue(stats.unreadCount + stats.notificationCount);
-  const deferredNotificationCount = useDeferredValue(stats.notificationCount);
-
-  // Ne pas afficher le widget si l'utilisateur n'est pas authentifié
-  if (!user) {
-    return null;
-  }
-
-  return (
-    <CommunicationWidgetContent 
-      position={position}
-      showNotifications={showNotifications}
-      unreadCount={deferredUnreadCount}
-      notificationCount={deferredNotificationCount}
-    />
-  );
+export default function CommunicationWidget(_props: CommunicationWidgetProps) {
+  // Widget désactivé
+  return null;
 }
