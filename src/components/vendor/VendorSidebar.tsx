@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSubscriptionFeatures, MODULE_FEATURE_MAP, SubscriptionFeature } from "@/hooks/useSubscriptionFeatures";
 import { UpgradeDialog } from "@/components/subscription/UpgradeDialog";
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Tooltip,
   TooltipContent,
@@ -55,6 +56,7 @@ export function VendorSidebar() {
   const { state, setOpen, isMobile } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const currentPath = location.pathname.split('/').pop() || 'dashboard';
   const collapsed = state === "collapsed" && !isMobile;
   const { badges, loading: badgesLoading } = useVendorBadges();
@@ -115,67 +117,67 @@ export function VendorSidebar() {
 
   const menuSections = [
     {
-      label: "Principal",
+      label: t('sidebar.principal'),
       icon: LayoutDashboard,
       items: [
-        { title: "Dashboard", icon: BarChart3, path: "dashboard" },
-        { title: "Analytiques", icon: TrendingUp, path: "analytics" },
-        { title: "POS", icon: Store, path: "pos", isPOS: true },
+        { title: t('sidebar.dashboard'), icon: BarChart3, path: "dashboard" },
+        { title: t('sidebar.analytics'), icon: TrendingUp, path: "analytics" },
+        { title: t('sidebar.pos'), icon: Store, path: "pos", isPOS: true },
       ]
     },
     {
-      label: "Commerce",
+      label: t('sidebar.commerce'),
       icon: Package,
       items: [
-        { title: "Produits", icon: Package, path: "products" },
-        { title: "Commandes", icon: ShoppingCart, path: "orders" },
-        { title: "Inventaire", icon: Box, path: "inventory" },
-        { title: "Entrepôts", icon: Boxes, path: "warehouse" },
-        { title: "Fournisseurs", icon: Building2, path: "suppliers" },
+        { title: t('sidebar.products'), icon: Package, path: "products" },
+        { title: t('sidebar.orders'), icon: ShoppingCart, path: "orders" },
+        { title: t('sidebar.inventory'), icon: Box, path: "inventory" },
+        { title: t('sidebar.warehouses'), icon: Boxes, path: "warehouse" },
+        { title: t('sidebar.suppliers'), icon: Building2, path: "suppliers" },
       ]
     },
     {
-      label: "CRM",
+      label: t('sidebar.crm'),
       icon: Users,
       items: [
-        { title: "Clients", icon: Users, path: "clients" },
-        { title: "Agents", icon: Users, path: "agents" },
-        { title: "Prospects", icon: Target, path: "prospects" },
-        { title: "Marketing", icon: Megaphone, path: "marketing" },
+        { title: t('sidebar.clients'), icon: Users, path: "clients" },
+        { title: t('sidebar.agents'), icon: Users, path: "agents" },
+        { title: t('sidebar.prospects'), icon: Target, path: "prospects" },
+        { title: t('sidebar.marketing'), icon: Megaphone, path: "marketing" },
       ]
     },
     {
-      label: "Finance",
+      label: t('sidebar.finance'),
       icon: Wallet,
       items: [
-        { title: "Wallet", icon: Wallet, path: "wallet" },
-        { title: "Carte Virtuelle", icon: Smartphone, path: "virtual-card" },
-        { title: "Devis & Factures", icon: FileText, path: "quotes-invoices" },
-        { title: "Paiements", icon: CreditCard, path: "payments" },
-        { title: "Liens paiement", icon: DollarSign, path: "payment-links" },
-        { title: "Dépenses", icon: Receipt, path: "expenses" },
-        { title: "Dettes", icon: AlertTriangle, path: "debts" },
-        { title: "Contrats", icon: FileText, path: "contracts" },
-        { title: "Affiliation", icon: Link, path: "affiliate" },
+        { title: t('sidebar.wallet'), icon: Wallet, path: "wallet" },
+        { title: t('sidebar.virtualCard'), icon: Smartphone, path: "virtual-card" },
+        { title: t('sidebar.quotesInvoices'), icon: FileText, path: "quotes-invoices" },
+        { title: t('sidebar.payments'), icon: CreditCard, path: "payments" },
+        { title: t('sidebar.paymentLinks'), icon: DollarSign, path: "payment-links" },
+        { title: t('sidebar.expenses'), icon: Receipt, path: "expenses" },
+        { title: t('sidebar.debts'), icon: AlertTriangle, path: "debts" },
+        { title: t('sidebar.contracts'), icon: FileText, path: "contracts" },
+        { title: t('sidebar.affiliate'), icon: Link, path: "affiliate" },
       ]
     },
     {
-      label: "Services",
+      label: t('sidebar.services'),
       icon: Truck,
       items: [
-        { title: "Livraisons", icon: Truck, path: "delivery" },
-        { title: "Avis Clients", icon: Star, path: "ratings" },
-        { title: "Support", icon: HeadphonesIcon, path: "support" },
-        { title: "Messages", icon: MessageSquare, path: "communication" },
-        { title: "Rapports", icon: FileText, path: "reports" },
+        { title: t('sidebar.deliveries'), icon: Truck, path: "delivery" },
+        { title: t('sidebar.ratings'), icon: Star, path: "ratings" },
+        { title: t('sidebar.support'), icon: HeadphonesIcon, path: "support" },
+        { title: t('sidebar.messages'), icon: MessageSquare, path: "communication" },
+        { title: t('sidebar.reports'), icon: FileText, path: "reports" },
       ]
     },
     {
-      label: "Système",
+      label: t('sidebar.system'),
       icon: Settings,
       items: [
-        { title: "Copilote IA", icon: Bot, path: "copilote" },
-        { title: "Paramètres", icon: Settings, path: "settings" },
+        { title: t('sidebar.aiCopilot'), icon: Bot, path: "copilote" },
+        { title: t('sidebar.settings'), icon: Settings, path: "settings" },
       ]
     }
   ];
@@ -327,7 +329,7 @@ export function VendorSidebar() {
                             <TooltipContent side="right">
                               <p className="font-medium">{item.title}</p>
                               <p className="text-xs text-muted-foreground">
-                                Requiert {PLAN_DISPLAY_NAMES[requiredPlan || ''] || 'un abonnement supérieur'}
+                                {t('sidebar.requires')} {PLAN_DISPLAY_NAMES[requiredPlan || ''] || 'un abonnement supérieur'}
                               </p>
                             </TooltipContent>
                           </Tooltip>
