@@ -327,37 +327,59 @@ export default function Marketplace() {
       </section>
 
       {/* Filtres de type - Boutons icônes stylés */}
-      <section className="px-4 py-3 border-b border-border bg-muted/30">
+      <section className="px-4 py-4 border-b border-border bg-gradient-to-r from-muted/50 via-background to-muted/50">
         <div className="flex justify-center gap-6">
           <button
             onClick={() => setSelectedItemType('professional_service')}
-            className={`group relative w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+            className={`group relative w-36 h-20 rounded-3xl flex flex-col items-center justify-center gap-1.5 transition-all duration-300 ${
               selectedItemType === 'professional_service' 
-                ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30 scale-110' 
-                : 'bg-card border border-border hover:border-blue-300 hover:shadow-md'
+                ? 'bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/40 scale-105 ring-2 ring-blue-300/50' 
+                : 'bg-card border-2 border-border hover:border-blue-400 hover:shadow-lg hover:scale-102'
             }`}
           >
-            <Briefcase className={`w-7 h-7 transition-transform group-hover:scale-110 ${
-              selectedItemType === 'professional_service' ? 'text-white' : 'text-blue-500'
-            }`} />
+            <div className={`p-2.5 rounded-xl transition-all ${
+              selectedItemType === 'professional_service' 
+                ? 'bg-white/20' 
+                : 'bg-blue-100'
+            }`}>
+              <Briefcase className={`w-7 h-7 transition-transform group-hover:scale-110 ${
+                selectedItemType === 'professional_service' ? 'text-white' : 'text-blue-600'
+              }`} />
+            </div>
+            <span className={`text-xs font-semibold ${
+              selectedItemType === 'professional_service' ? 'text-white' : 'text-muted-foreground'
+            }`}>
+              Services Pro
+            </span>
             {selectedItemType === 'professional_service' && (
-              <span className="absolute -bottom-1 w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+              <span className="absolute -bottom-1.5 w-3 h-3 rounded-full bg-blue-300 animate-pulse shadow-lg" />
             )}
           </button>
 
           <button
             onClick={() => setSelectedItemType('digital_product')}
-            className={`group relative w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+            className={`group relative w-36 h-20 rounded-3xl flex flex-col items-center justify-center gap-1.5 transition-all duration-300 ${
               selectedItemType === 'digital_product' 
-                ? 'bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/30 scale-110' 
-                : 'bg-card border border-border hover:border-purple-300 hover:shadow-md'
+                ? 'bg-gradient-to-br from-purple-500 via-purple-600 to-fuchsia-600 text-white shadow-xl shadow-purple-500/40 scale-105 ring-2 ring-purple-300/50' 
+                : 'bg-card border-2 border-border hover:border-purple-400 hover:shadow-lg hover:scale-102'
             }`}
           >
-            <Laptop className={`w-7 h-7 transition-transform group-hover:scale-110 ${
-              selectedItemType === 'digital_product' ? 'text-white' : 'text-purple-500'
-            }`} />
+            <div className={`p-2.5 rounded-xl transition-all ${
+              selectedItemType === 'digital_product' 
+                ? 'bg-white/20' 
+                : 'bg-purple-100'
+            }`}>
+              <Laptop className={`w-7 h-7 transition-transform group-hover:scale-110 ${
+                selectedItemType === 'digital_product' ? 'text-white' : 'text-purple-600'
+              }`} />
+            </div>
+            <span className={`text-xs font-semibold ${
+              selectedItemType === 'digital_product' ? 'text-white' : 'text-muted-foreground'
+            }`}>
+              Numériques
+            </span>
             {selectedItemType === 'digital_product' && (
-              <span className="absolute -bottom-1 w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+              <span className="absolute -bottom-1.5 w-3 h-3 rounded-full bg-purple-300 animate-pulse shadow-lg" />
             )}
           </button>
         </div>
