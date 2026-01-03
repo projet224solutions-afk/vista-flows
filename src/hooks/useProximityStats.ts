@@ -272,7 +272,7 @@ export function useProximityStats() {
         }
       });
 
-      // Map service codes to stats
+      // Map service codes to stats (aligned with database service_types.code)
       newStats.beaute = serviceTypeCounts['beaute'] || 0;
       newStats.reparation = serviceTypeCounts['reparation'] || 0;
       newStats.nettoyage = serviceTypeCounts['menage'] || 0;
@@ -280,6 +280,7 @@ export function useProximityStats() {
       newStats.formation = serviceTypeCounts['education'] || 0;
       newStats.media = serviceTypeCounts['media'] || 0;
       newStats.sante = serviceTypeCounts['sante'] || 0;
+      newStats.sport = serviceTypeCounts['sport'] || 0;
 
       // Count products by category
       const productCategoryCounts: Record<string, Set<string>> = {};
