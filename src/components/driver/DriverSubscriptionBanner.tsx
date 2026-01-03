@@ -1,8 +1,8 @@
 import { AlertTriangle, Clock, Ban } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useDriverSubscription } from '@/hooks/useDriverSubscription';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
 export function DriverSubscriptionBanner() {
   const { subscription, isExpired, isExpiringSoon, daysRemaining, hasAccess, isDriver, loading } = useDriverSubscription();
@@ -18,51 +18,69 @@ export function DriverSubscriptionBanner() {
 
   if (isExpired) {
     return (
-      <Alert className="border-destructive bg-destructive/10 mb-4">
-        <Ban className="h-5 w-5 text-destructive" />
-        <AlertTitle className="text-destructive font-bold">
-          Abonnement Expiré
-        </AlertTitle>
-        <AlertDescription className="text-destructive/90">
-          Votre abonnement est expiré. Vous ne pouvez plus recevoir de courses ou de livraisons.
-          Veuillez le renouveler pour continuer à travailler sur 224Solutions.
-          <div className="mt-3">
-            <Button 
-              onClick={handleSubscribe}
-              variant="destructive"
-              size="sm"
-            >
-              Renouveler maintenant
-            </Button>
+      <div className="mx-2 mt-2 mb-3">
+        <div className={cn(
+          "relative overflow-hidden rounded-xl",
+          "bg-gradient-to-r from-red-500/20 via-red-500/10 to-red-500/20",
+          "border border-red-500/30",
+          "p-3"
+        )}>
+          <div className="flex items-start gap-3">
+            <div className="shrink-0 w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
+              <Ban className="w-4 h-4 text-red-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-red-400 font-bold text-sm">Abonnement Expiré</h4>
+              <p className="text-red-400/80 text-xs mt-0.5 leading-relaxed">
+                Vous ne pouvez plus recevoir de courses. Veuillez renouveler pour continuer.
+              </p>
+              <Button 
+                onClick={handleSubscribe}
+                size="sm"
+                className="mt-2 h-7 px-3 text-xs bg-red-500 hover:bg-red-600 text-white"
+              >
+                Renouveler maintenant
+              </Button>
+            </div>
           </div>
-        </AlertDescription>
-      </Alert>
+        </div>
+      </div>
     );
   }
 
   if (isExpiringSoon) {
     return (
-      <Alert className="border-warning bg-warning/10 mb-4">
-        <AlertTriangle className="h-5 w-5 text-warning" />
-        <AlertTitle className="text-warning font-bold">
-          <Clock className="inline h-4 w-4 mr-1" />
-          Abonnement expire bientôt
-        </AlertTitle>
-        <AlertDescription className="text-warning/90">
-          Votre abonnement expire dans {daysRemaining} jour{daysRemaining > 1 ? 's' : ''}.
-          Pensez à le renouveler pour éviter toute interruption de service.
-          <div className="mt-3">
-            <Button 
-              onClick={handleSubscribe}
-              variant="outline"
-              size="sm"
-              className="border-warning text-warning hover:bg-warning/20"
-            >
-              Renouveler maintenant
-            </Button>
+      <div className="mx-2 mt-2 mb-3">
+        <div className={cn(
+          "relative overflow-hidden rounded-xl",
+          "bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20",
+          "border border-amber-500/30",
+          "p-3"
+        )}>
+          <div className="flex items-start gap-3">
+            <div className="shrink-0 w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
+              <Clock className="w-4 h-4 text-amber-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-amber-400 font-bold text-sm flex items-center gap-1">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                Expire dans {daysRemaining} jour{daysRemaining > 1 ? 's' : ''}
+              </h4>
+              <p className="text-amber-400/80 text-xs mt-0.5">
+                Pensez à renouveler pour éviter toute interruption.
+              </p>
+              <Button 
+                onClick={handleSubscribe}
+                size="sm"
+                variant="outline"
+                className="mt-2 h-7 px-3 text-xs border-amber-500/50 text-amber-400 hover:bg-amber-500/20"
+              >
+                Renouveler
+              </Button>
+            </div>
           </div>
-        </AlertDescription>
-      </Alert>
+        </div>
+      </div>
     );
   }
 

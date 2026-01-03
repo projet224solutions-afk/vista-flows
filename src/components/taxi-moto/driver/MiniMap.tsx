@@ -19,9 +19,9 @@ export function MiniMap({ latitude, longitude, isOnline, onExpand }: MiniMapProp
 
   return (
     <div className="relative">
-      {/* Map Container */}
+      {/* Map Container - hauteur réduite pour mobile */}
       <div className={cn(
-        "relative h-48 rounded-2xl overflow-hidden",
+        "relative h-36 sm:h-44 rounded-xl overflow-hidden",
         "bg-gradient-to-br from-gray-800 to-gray-900",
         "border border-gray-700/50",
         "shadow-xl shadow-black/20"
@@ -48,48 +48,48 @@ export function MiniMap({ latitude, longitude, isOnline, onExpand }: MiniMapProp
             {/* Pulse rings */}
             {isOnline && (
               <>
-                <div className="absolute w-24 h-24 rounded-full bg-emerald-500/10 animate-ping" style={{ animationDuration: '2s' }} />
-                <div className="absolute w-16 h-16 rounded-full bg-emerald-500/20 animate-pulse" />
+                <div className="absolute w-20 h-20 rounded-full bg-emerald-500/10 animate-ping" style={{ animationDuration: '2s' }} />
+                <div className="absolute w-14 h-14 rounded-full bg-emerald-500/20 animate-pulse" />
               </>
             )}
             
-            {/* Marker */}
+            {/* Marker - plus petit */}
             <div className={cn(
-              "relative z-10 w-12 h-12 rounded-full flex items-center justify-center",
+              "relative z-10 w-10 h-10 rounded-full flex items-center justify-center",
               "shadow-xl",
               isOnline 
                 ? "bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-emerald-500/30" 
                 : "bg-gradient-to-br from-gray-600 to-gray-700 shadow-black/30"
             )}>
               <Navigation2 className={cn(
-                "w-6 h-6",
+                "w-5 h-5",
                 isOnline ? "text-white" : "text-gray-400"
               )} />
             </div>
           </div>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
-            <Loader2 className="w-8 h-8 animate-spin mb-2" />
-            <span className="text-sm">Recherche GPS...</span>
+            <Loader2 className="w-6 h-6 animate-spin mb-1" />
+            <span className="text-xs">Recherche GPS...</span>
           </div>
         )}
 
-        {/* Coordinates display */}
+        {/* Coordinates display - plus compact */}
         {hasLocation && (
-          <div className="absolute bottom-3 left-3 right-3">
-            <div className="bg-gray-900/80 backdrop-blur-sm rounded-xl px-3 py-2 border border-gray-700/50">
+          <div className="absolute bottom-2 left-2 right-2">
+            <div className="bg-gray-900/80 backdrop-blur-sm rounded-lg px-2.5 py-1.5 border border-gray-700/50">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <MapPin className={cn(
-                    "w-4 h-4",
+                    "w-3.5 h-3.5",
                     isOnline ? "text-emerald-400" : "text-gray-400"
                   )} />
-                  <span className="text-gray-300 text-xs font-mono">
+                  <span className="text-gray-300 text-[10px] font-mono">
                     {latitude?.toFixed(4)}, {longitude?.toFixed(4)}
                   </span>
                 </div>
                 <div className={cn(
-                  "w-2 h-2 rounded-full",
+                  "w-1.5 h-1.5 rounded-full",
                   isOnline ? "bg-emerald-400 animate-pulse" : "bg-gray-500"
                 )} />
               </div>
@@ -103,9 +103,9 @@ export function MiniMap({ latitude, longitude, isOnline, onExpand }: MiniMapProp
             variant="ghost"
             size="icon"
             onClick={onExpand}
-            className="absolute top-3 right-3 h-8 w-8 bg-gray-900/80 backdrop-blur-sm border border-gray-700/50 text-gray-300 hover:text-white hover:bg-gray-800/80 rounded-lg"
+            className="absolute top-2 right-2 h-7 w-7 bg-gray-900/80 backdrop-blur-sm border border-gray-700/50 text-gray-300 hover:text-white hover:bg-gray-800/80 rounded-lg"
           >
-            <Maximize2 className="w-4 h-4" />
+            <Maximize2 className="w-3.5 h-3.5" />
           </Button>
         )}
       </div>

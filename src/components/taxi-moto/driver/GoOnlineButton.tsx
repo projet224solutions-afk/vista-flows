@@ -20,14 +20,14 @@ export function GoOnlineButton({
   onToggle 
 }: GoOnlineButtonProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-8 space-y-6">
-      {/* Main Button Container */}
+    <div className="flex flex-col items-center justify-center py-4 space-y-4">
+      {/* Main Button Container - plus compact */}
       <div className="relative">
         {/* Outer pulsing ring when online */}
         {isOnline && !isLoading && (
           <>
             <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping" style={{ animationDuration: '2s' }} />
-            <div className="absolute -inset-3 rounded-full bg-emerald-500/10 animate-pulse" />
+            <div className="absolute -inset-2 rounded-full bg-emerald-500/10 animate-pulse" />
           </>
         )}
         
@@ -39,14 +39,14 @@ export function GoOnlineButton({
             : "bg-gray-500/20 opacity-50"
         )} />
         
-        {/* Main Button */}
+        {/* Main Button - taille réduite pour mobile */}
         <button
           onClick={onToggle}
           disabled={isLoading || !hasSubscription}
           className={cn(
-            "relative w-36 h-36 rounded-full",
-            "flex flex-col items-center justify-center gap-2",
-            "font-bold text-lg uppercase tracking-wider",
+            "relative w-28 h-28 sm:w-32 sm:h-32 rounded-full",
+            "flex flex-col items-center justify-center gap-1.5",
+            "font-bold text-base uppercase tracking-wider",
             "transition-all duration-300 transform",
             "shadow-2xl",
             "disabled:opacity-60 disabled:cursor-not-allowed",
@@ -68,47 +68,47 @@ export function GoOnlineButton({
           {/* Icon */}
           <div className="relative z-10">
             {isLoading ? (
-              <Loader2 className="w-12 h-12 animate-spin" />
+              <Loader2 className="w-10 h-10 animate-spin" />
             ) : isOnline ? (
-              <Zap className="w-12 h-12 drop-shadow-lg" />
+              <Zap className="w-10 h-10 drop-shadow-lg" />
             ) : (
-              <Power className="w-12 h-12" />
+              <Power className="w-10 h-10" />
             )}
           </div>
           
           {/* Text */}
-          <span className="relative z-10 text-sm font-black tracking-widest">
-            {isLoading ? 'CHARGEMENT' : isOnline ? 'EN LIGNE' : 'GO'}
+          <span className="relative z-10 text-xs font-black tracking-widest">
+            {isLoading ? '...' : isOnline ? 'EN LIGNE' : 'GO'}
           </span>
         </button>
       </div>
 
-      {/* Status indicator */}
+      {/* Status indicator - plus compact */}
       <div className={cn(
-        "flex items-center gap-2 px-4 py-2 rounded-full",
-        "text-sm font-medium transition-all duration-300",
+        "flex items-center gap-2 px-3 py-1.5 rounded-full",
+        "text-xs font-medium transition-all duration-300",
         isOnline 
           ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
           : "bg-gray-800/50 text-gray-400 border border-gray-700/50"
       )}>
         {isOnline ? (
           <>
-            <Wifi className="w-4 h-4 animate-pulse" />
+            <Wifi className="w-3.5 h-3.5 animate-pulse" />
             <span>Prêt à recevoir des courses</span>
           </>
         ) : (
           <>
-            <WifiOff className="w-4 h-4" />
+            <WifiOff className="w-3.5 h-3.5" />
             <span>Appuyez pour commencer</span>
           </>
         )}
       </div>
 
-      {/* Subscription warning */}
+      {/* Subscription warning - plus compact */}
       {!hasSubscription && (
-        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs">
-          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-          <span>Abonnement requis pour recevoir des courses</span>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[11px]">
+          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+          <span>Abonnement requis</span>
         </div>
       )}
     </div>
