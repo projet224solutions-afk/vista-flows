@@ -130,12 +130,12 @@ const getServiceCategories = (stats: any) => [
   }
 ];
 
-// Interface pour les catégories chargées
-interface Category {
+// Interface pour les catégories avec comptage de produits
+interface CategoryWithCount {
   id: string;
   name: string;
   image_url?: string;
-  is_active: boolean;
+  product_count: number;
 }
 
 // Services professionnels avec stats dynamiques
@@ -220,28 +220,53 @@ export default function Proximite() {
   const [searchQuery, setSearchQuery] = useState("");
   const { stats, loading, userPosition, locationError, refresh, radiusKm } = useProximityStats();
   const { t } = useTranslation();
-  const [productCategories, setProductCategories] = useState<Category[]>([]);
+  const [productCategories, setProductCategories] = useState<CategoryWithCount[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
 
-  // Charger toutes les catégories depuis la base de données
+  // Charger uniquement les catégories qui contiennent des produits avec comptage
   useEffect(() => {
-    const loadCategories = async () => {
+    const loadCategoriesWithProducts = async () => {
       try {
-        const { data, error } = await supabase
-          .from('categories')
-          .select('id, name, image_url, is_active')
+        // Récupérer les produits groupés par catégorie avec comptage
+        const { data: products, error } = await supabase
+          .from('products')
+          .select('category_id, categories(id, name, image_url)')
           .eq('is_active', true)
-          .order('name');
+          .not('category_id', 'is', null);
 
         if (error) throw error;
-        setProductCategories(data || []);
+
+        // Compter les produits par catégorie
+        const categoryMap = new Map<string, CategoryWithCount>();
+        
+        (products || []).forEach((product: any) => {
+          if (product.categories) {
+            const catId = product.categories.id;
+            if (categoryMap.has(catId)) {
+              categoryMap.get(catId)!.product_count++;
+            } else {
+              categoryMap.set(catId, {
+                id: catId,
+                name: product.categories.name,
+                image_url: product.categories.image_url,
+                product_count: 1
+              });
+            }
+          }
+        });
+
+        // Convertir en tableau et trier par nombre de produits (décroissant)
+        const categoriesWithProducts = Array.from(categoryMap.values())
+          .sort((a, b) => b.product_count - a.product_count);
+
+        setProductCategories(categoriesWithProducts);
       } catch (error) {
         console.error('Erreur chargement catégories:', error);
       } finally {
         setLoadingCategories(false);
       }
     };
-    loadCategories();
+    loadCategoriesWithProducts();
   }, []);
 
   // Memoize computed categories based on real stats
@@ -382,18 +407,24 @@ export default function Proximite() {
             </button>
           </div>
 
-          <motion.div 
-            className="grid grid-cols-2 sm:grid-cols-4 gap-3"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {loadingCategories ? (
-              <div className="col-span-full flex justify-center py-4">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
-              </div>
-            ) : (
-              productCategories.slice(0, 8).map((category) => (
+          {loadingCategories ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          ) : productCategories.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              <p className="text-sm">Aucune catégorie avec des produits pour le moment</p>
+              <p className="text-xs mt-1">Les catégories apparaîtront ici dès que des produits seront ajoutés</p>
+            </div>
+          ) : (
+            <motion.div 
+              className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {productCategories.slice(0, 8).map((category) => (
                 <motion.button
                   key={category.id}
                   variants={itemVariants}
@@ -409,31 +440,11 @@ export default function Proximite() {
                   </h3>
                   
                   <div className="flex items-center gap-1">
-                    <span className="text-xs text-muted-foreground">{t('home.seeAll')}</span>
+                    <span className="text-xs font-medium text-primary">{category.product_count}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {category.product_count > 1 ? 'articles' : 'article'}
+                    </span>
                   </div>
-                </motion.button>
-              ))
-            )}
-          </motion.div>
-          
-          {/* Afficher plus de catégories si disponibles */}
-          {productCategories.length > 8 && (
-            <motion.div 
-              className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              {productCategories.slice(8, 16).map((category) => (
-                <motion.button
-                  key={category.id}
-                  variants={itemVariants}
-                  onClick={() => navigate(`/marketplace?category=${category.id}&includePhysical=1`)}
-                  className="group bg-card rounded-2xl p-3 border border-border/50 hover:border-primary/30 hover:shadow-lg transition-all duration-300 text-left"
-                >
-                  <h3 className="font-medium text-foreground text-xs group-hover:text-primary transition-colors line-clamp-1">
-                    {category.name}
-                  </h3>
                 </motion.button>
               ))}
             </motion.div>
