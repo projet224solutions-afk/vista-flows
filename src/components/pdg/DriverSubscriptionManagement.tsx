@@ -255,7 +255,7 @@ export default function DriverSubscriptionManagement() {
 
       // Utiliser la fonction RPC pour créer l'abonnement (plus fiable)
       console.log('📝 [PDG] Appel fonction pdg_offer_subscription');
-      const { data: subscriptionId, error: rpcError } = await supabase
+      const { data: subscriptionId, error: rpcError } = await (supabase as any)
         .rpc('pdg_offer_subscription', {
           p_user_id: resolvedUserId,
           p_type: offerData.type,

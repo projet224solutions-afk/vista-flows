@@ -932,13 +932,15 @@ class UniversalCommunicationService {
 
     // Retourner le channel avec cleanup amélioré
     const originalUnsubscribe = channel.unsubscribe.bind(channel);
-    channel.unsubscribe = async () => {
+    channel.unsubscribe = async (): Promise<"error" | "ok" | "timed out"> => {
       console.log('[Communication] 🔌 Cleanup subscription:', conversationId);
       try {
-        await originalUnsubscribe();
+        const result = await originalUnsubscribe();
         console.log('[Communication] ✅ Subscription nettoyée:', conversationId);
+        return result;
       } catch (error) {
         console.error('[Communication] ❌ Erreur cleanup subscription:', error);
+        return 'error';
       }
     };
 

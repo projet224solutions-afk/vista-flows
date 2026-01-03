@@ -439,6 +439,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
       name: subAgent.name,
       email: subAgent.email,
       phone: subAgent.phone || '',
+      password: '',
       commission_rate: subAgent.commission_rate,
       permissions: {
         create_users: subAgent.permissions.includes('create_users'),
@@ -507,6 +508,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
               name: '',
               email: '',
               phone: '',
+              password: '',
               commission_rate: 5,
               permissions: {
                 create_users: true,
