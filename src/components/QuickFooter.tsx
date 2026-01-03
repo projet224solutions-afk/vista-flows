@@ -2,48 +2,45 @@ import { Home, ShoppingBag, MapPin, MessageSquare, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function QuickFooter() {
   const navigate = useNavigate();
   const location = useLocation();
   const { profile } = useAuth();
+  const { t } = useTranslation();
 
   // Navigation basée sur les fonctionnalités réelles de 224Solutions
   const navigationItems = [
     {
       id: 'home',
-      label: 'Accueil',
+      labelKey: 'nav.home',
       icon: Home,
       path: '/home',
-      description: 'Accueil 224Solutions - Services à proximité'
     },
     {
       id: 'marketplace',
-      label: 'Marketplace',
+      labelKey: 'nav.marketplace',
       icon: ShoppingBag,
       path: '/marketplace',
-      description: 'Achats en ligne - Produits et vendeurs'
     },
     {
       id: 'proximite',
-      label: 'Proximité',
+      labelKey: 'nav.services',
       icon: MapPin,
       path: '/proximite',
-      description: 'Services de proximité - Boutiques, taxi, livraison'
     },
     {
       id: 'messages',
-      label: 'Messages',
+      labelKey: 'nav.messages',
       icon: MessageSquare,
       path: '/messages',
-      description: 'Messagerie - Communication entre utilisateurs'
     },
     {
       id: 'profil',
-      label: 'Profil',
+      labelKey: 'nav.profile',
       icon: User,
       path: profile ? '/profil' : '/auth',
-      description: profile ? 'Mon profil et paramètres' : 'Connexion'
     },
   ];
 
@@ -65,7 +62,6 @@ export default function QuickFooter() {
                   ? "text-primary bg-accent scale-105"
                   : "text-muted-foreground hover:text-primary hover:bg-accent/50 hover:scale-105"
               )}
-              title={item.description}
             >
               <div className={cn(
                 "p-1.5 rounded-full transition-all duration-300",
@@ -79,7 +75,7 @@ export default function QuickFooter() {
                 "text-[10px] font-medium mt-0.5 leading-tight",
                 isActive ? "text-primary font-semibold" : "text-muted-foreground group-hover:text-primary"
               )}>
-                {item.label}
+                {t(item.labelKey)}
               </span>
             </button>
           );

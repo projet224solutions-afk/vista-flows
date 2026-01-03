@@ -27,12 +27,13 @@ import QuickFooter from '@/components/QuickFooter';
 import { MerchantActivationDialog } from '@/components/digital-products/MerchantActivationDialog';
 import { CategoryProductsList } from '@/components/digital-products/CategoryProductsList';
 import { TravelModule } from '@/components/travel/TravelModule';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface ProductModule {
   id: string;
   icon: React.ReactNode;
-  title: string;
-  description: string;
+  titleKey: string;
+  descriptionKey: string;
   gradient: string;
   category: 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom' | 'ai';
 }
@@ -42,40 +43,40 @@ const productModules: ProductModule[] = [
   {
     id: 'voyage',
     icon: <Plane className="w-7 h-7" />,
-    title: 'Vol/Hôtel',
-    description: 'Billets d\'avion, hôtels',
+    titleKey: 'digital.modules.flight',
+    descriptionKey: 'digital.modules.flightDesc',
     gradient: 'from-blue-500 to-cyan-500',
     category: 'voyage'
   },
   {
     id: 'logiciel',
     icon: <Monitor className="w-7 h-7" />,
-    title: 'Logiciel',
-    description: 'Antivirus, SaaS, applications',
+    titleKey: 'digital.modules.software',
+    descriptionKey: 'digital.modules.softwareDesc',
     gradient: 'from-purple-500 to-pink-500',
     category: 'logiciel'
   },
   {
     id: 'formation',
     icon: <GraduationCap className="w-7 h-7" />,
-    title: 'Formation',
-    description: 'Créez et vendez vos formations vidéo/PDF',
+    titleKey: 'digital.modules.training',
+    descriptionKey: 'digital.modules.trainingDesc',
     gradient: 'from-green-500 to-emerald-500',
     category: 'formation'
   },
   {
     id: 'livre',
     icon: <BookOpen className="w-7 h-7" />,
-    title: 'Livres',
-    description: 'eBooks PDF, EPUB ou affiliation',
+    titleKey: 'digital.modules.books',
+    descriptionKey: 'digital.modules.booksDesc',
     gradient: 'from-amber-500 to-yellow-500',
     category: 'livre'
   },
   {
     id: 'ai',
     icon: <Bot className="w-7 h-7" />,
-    title: 'AI',
-    description: 'Outils et services IA',
+    titleKey: 'digital.modules.ai',
+    descriptionKey: 'digital.modules.aiDesc',
     gradient: 'from-violet-500 to-fuchsia-500',
     category: 'ai'
   }
@@ -84,6 +85,7 @@ const productModules: ProductModule[] = [
 export default function DigitalProducts() {
   const navigate = useNavigate();
   const { user, profile, loading } = useAuth();
+  const { t } = useTranslation();
   const [showActivationDialog, setShowActivationDialog] = useState(false);
   const [selectedModule, setSelectedModule] = useState<ProductModule | null>(null);
   const [showCategoryProducts, setShowCategoryProducts] = useState(false);
@@ -107,7 +109,7 @@ export default function DigitalProducts() {
   const handleBecomeMerchant = () => {
     // Si pas connecté, rediriger vers auth
     if (!user) {
-      toast.info('Connexion requise pour devenir marchand');
+      toast.info(t('digital.loginRequired'));
       navigate('/auth', { state: { redirectTo: '/digital-products' } });
       return;
     }
@@ -119,7 +121,7 @@ export default function DigitalProducts() {
     }
 
     // Si déjà marchand, rediriger vers la création de produit
-    toast.info('Vous êtes déjà marchand. Cliquez sur un module pour créer un produit.');
+    toast.info(t('digital.alreadyMerchant'));
   };
 
   const handleActivationSuccess = () => {
@@ -147,8 +149,8 @@ export default function DigitalProducts() {
     return (
       <CategoryProductsList
         category={selectedModule.category}
-        title={selectedModule.title}
-        description={selectedModule.description}
+        title={t(selectedModule.titleKey)}
+        description={t(selectedModule.descriptionKey)}
         gradient={selectedModule.gradient}
         onBack={() => {
           setShowCategoryProducts(false);
@@ -173,9 +175,9 @@ export default function DigitalProducts() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1">
-              <h1 className="text-lg font-bold text-foreground">Produits Numériques</h1>
+              <h1 className="text-lg font-bold text-foreground">{t('digital.title')}</h1>
               <p className="text-xs text-muted-foreground">
-                Créez et vendez sur le marketplace
+                {t('digital.subtitle')}
               </p>
             </div>
             {user && (
@@ -186,7 +188,7 @@ export default function DigitalProducts() {
                 className="shrink-0"
               >
                 <Store className="w-4 h-4 mr-1.5" />
-                Marketplace
+                {t('nav.marketplace')}
               </Button>
             )}
           </div>
@@ -200,8 +202,8 @@ export default function DigitalProducts() {
             <div className="flex items-center gap-2 flex-1">
               <Store className="w-4 h-4 text-primary shrink-0" />
               <div className="text-xs">
-                <p className="font-medium text-foreground">Vous voulez vendre ?</p>
-                <p className="text-muted-foreground">Activez votre statut Marchand</p>
+                <p className="font-medium text-foreground">{t('digital.wantToSell')}</p>
+                <p className="text-muted-foreground">{t('digital.activateMerchant')}</p>
               </div>
             </div>
             <Button
@@ -209,7 +211,7 @@ export default function DigitalProducts() {
               onClick={handleBecomeMerchant}
               className="shrink-0 h-8 text-xs"
             >
-              Devenir marchand
+              {t('digital.becomeMerchant')}
             </Button>
           </div>
         </div>
@@ -219,7 +221,7 @@ export default function DigitalProducts() {
         <div className="px-4 py-2.5 bg-green-500/10 text-green-600 border-b border-green-500/20 text-center text-sm">
           <span className="flex items-center justify-center gap-2">
             <Store className="w-4 h-4" />
-            Statut Marchand actif - Cliquez sur un module pour créer vos produits
+            {t('digital.merchantActive')}
           </span>
         </div>
       )}
@@ -229,14 +231,14 @@ export default function DigitalProducts() {
         <div className="text-center">
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 rounded-full mb-3">
             <Package className="w-4 h-4 text-primary" />
-            <span className="text-xs font-medium text-primary">Marketplace Digital</span>
+            <span className="text-xs font-medium text-primary">{t('digital.marketplaceDigital')}</span>
           </div>
           <h2 className="text-xl font-bold text-foreground mb-2">
-            Découvrez les produits numériques
+            {t('digital.discover')}
           </h2>
           <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-            Achetez des formations, logiciels, eBooks et plus encore.
-            {!isMerchant && ' Ou devenez marchand pour vendre vos propres produits.'}
+            {t('digital.discoverDesc')}
+            {!isMerchant && ` ${t('digital.becomeSellerPrompt')}`}
           </p>
         </div>
       </section>
@@ -263,10 +265,10 @@ export default function DigitalProducts() {
                   {module.icon}
                 </div>
                 <h3 className="font-semibold text-foreground text-sm mb-1">
-                  {module.title}
+                  {t(module.titleKey)}
                 </h3>
                 <p className="text-xs text-muted-foreground line-clamp-2">
-                  {module.description}
+                  {t(module.descriptionKey)}
                 </p>
               </CardContent>
             </Card>
