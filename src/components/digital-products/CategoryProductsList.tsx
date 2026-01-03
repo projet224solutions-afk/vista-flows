@@ -106,14 +106,14 @@ export function CategoryProductsList({
               <h1 className="text-lg font-bold text-foreground">{title}</h1>
               <p className="text-xs text-muted-foreground">{description}</p>
             </div>
-            {user && isMerchant && (
+            {user && (
               <Button
                 size="sm"
                 onClick={handleAddProduct}
                 className={cn('bg-gradient-to-r text-white', gradient)}
               >
                 <Plus className="w-4 h-4 mr-1" />
-                Ajouter
+                {isMerchant ? 'Ajouter' : 'Vendre'}
               </Button>
             )}
           </div>
@@ -137,18 +137,18 @@ export function CategoryProductsList({
             </div>
             <h3 className="font-semibold text-foreground mb-2">Aucun produit disponible</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Soyez le premier à ajouter un produit dans cette catégorie!
+              {isMerchant 
+                ? 'Soyez le premier à ajouter un produit dans cette catégorie!'
+                : 'Devenez marchand pour être le premier à vendre dans cette catégorie!'
+              }
             </p>
-            {user ? (
-              <Button onClick={handleAddProduct} className={cn('bg-gradient-to-r text-white', gradient)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Ajouter un produit
-              </Button>
-            ) : (
-              <Button onClick={() => navigate('/auth', { state: { redirectTo: '/digital-products' } })}>
-                Se connecter pour ajouter
-              </Button>
-            )}
+            <Button onClick={handleAddProduct} className={cn('bg-gradient-to-r text-white', gradient)}>
+              <Plus className="w-4 h-4 mr-2" />
+              {user 
+                ? (isMerchant ? 'Ajouter un produit' : 'Devenir marchand')
+                : 'Se connecter pour vendre'
+              }
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
@@ -219,24 +219,13 @@ export function CategoryProductsList({
         )}
       </section>
 
-      {/* Add Product FAB for non-merchants */}
-      {user && !isMerchant && products.length > 0 && (
+      {/* Add Product FAB - Intelligent pour tous les utilisateurs */}
+      {products.length > 0 && (
         <div className="fixed bottom-24 right-4 z-50">
           <Button
             onClick={handleAddProduct}
             className={cn('rounded-full w-14 h-14 shadow-lg bg-gradient-to-r text-white', gradient)}
-          >
-            <Plus className="w-6 h-6" />
-          </Button>
-        </div>
-      )}
-
-      {/* Merchant Add FAB */}
-      {user && isMerchant && products.length > 0 && (
-        <div className="fixed bottom-24 right-4 z-50">
-          <Button
-            onClick={handleAddProduct}
-            className={cn('rounded-full w-14 h-14 shadow-lg bg-gradient-to-r text-white', gradient)}
+            title={user ? (isMerchant ? 'Ajouter un produit' : 'Devenir marchand pour vendre') : 'Se connecter'}
           >
             <Plus className="w-6 h-6" />
           </Button>

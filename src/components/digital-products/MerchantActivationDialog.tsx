@@ -82,11 +82,11 @@ export function MerchantActivationDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Store className="w-5 h-5 text-primary" />
-            Activer le statut Marchand
+            Devenir Marchand
           </DialogTitle>
           <DialogDescription>
-            Pour créer et vendre des produits numériques sur le marketplace, 
-            vous devez activer votre statut de Marchand.
+            Pour vendre et créer vos propres produits numériques sur le marketplace, 
+            vous devez activer votre statut de Marchand. La consultation des produits reste gratuite.
           </DialogDescription>
         </DialogHeader>
 
@@ -98,25 +98,36 @@ export function MerchantActivationDialog({
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
-                Créer des produits numériques
+                Vendre vos propres produits numériques
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
-                Vendre sur le marketplace public
+                Créer des formations, eBooks, logiciels, etc.
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
-                Recevoir des paiements sur votre wallet
+                Visibilité sur le marketplace public
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
-                Accéder aux statistiques de vente
+                Recevoir des paiements directs sur votre wallet
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
-                Activation gratuite et instantanée
+                Statistiques de vente en temps réel
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                Activation 100% gratuite et instantanée
               </li>
             </ul>
+          </div>
+
+          <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+            <p className="text-xs text-blue-900 dark:text-blue-100">
+              ℹ️ <strong>Note :</strong> Vous pouvez toujours acheter et consulter les produits sans être marchand. 
+              Le statut marchand est uniquement pour <strong>vendre</strong> vos propres créations.
+            </p>
           </div>
 
           <Button
@@ -132,7 +143,7 @@ export function MerchantActivationDialog({
             ) : (
               <>
                 <Store className="w-4 h-4 mr-2" />
-                Activer maintenant
+                Devenir marchand maintenant
               </>
             )}
           </Button>

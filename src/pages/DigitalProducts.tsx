@@ -90,23 +90,28 @@ export default function DigitalProducts() {
   const isMerchant = profile?.role === 'vendeur';
 
   const handleModuleClick = (module: ProductModule) => {
+    // Afficher directement les produits de la catégorie
+    // Que l'utilisateur soit connecté ou non, il peut consulter
+    setSelectedModule(module);
+    setShowCategoryProducts(true);
+  };
+
+  const handleBecomeMerchant = () => {
     // Si pas connecté, rediriger vers auth
     if (!user) {
-      toast.info('Connexion requise pour accéder à ce module');
+      toast.info('Connexion requise pour devenir marchand');
       navigate('/auth', { state: { redirectTo: '/digital-products' } });
       return;
     }
 
     // Si connecté mais pas marchand, afficher dialog d'activation
     if (!isMerchant) {
-      setSelectedModule(module);
       setShowActivationDialog(true);
       return;
     }
 
-    // Si marchand, afficher les produits de la catégorie
-    setSelectedModule(module);
-    setShowCategoryProducts(true);
+    // Si déjà marchand, rediriger vers la création de produit
+    toast.info('Vous êtes déjà marchand. Cliquez sur un module pour créer un produit.');
   };
 
   const handleActivationSuccess = () => {
@@ -176,31 +181,40 @@ export default function DigitalProducts() {
       </header>
 
       {/* Status Banner */}
-      {user && (
-        <div className={cn(
-          'px-4 py-2 text-center text-sm',
-          isMerchant 
-            ? 'bg-green-500/10 text-green-600 border-b border-green-500/20' 
-            : 'bg-amber-500/10 text-amber-600 border-b border-amber-500/20'
-        )}>
-          {isMerchant ? (
-            <span className="flex items-center justify-center gap-2">
-              <Store className="w-4 h-4" />
-              Statut Marchand actif - Vous pouvez créer des produits
-            </span>
-          ) : (
-            <span className="flex items-center justify-center gap-2">
-              <Lock className="w-4 h-4" />
-              Activez votre statut Marchand pour vendre
-            </span>
-          )}
+      {user && !isMerchant && (
+        <div className="px-4 py-3 bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10 border-b border-primary/20">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 flex-1">
+              <Store className="w-4 h-4 text-primary shrink-0" />
+              <div className="text-xs">
+                <p className="font-medium text-foreground">Vous voulez vendre ?</p>
+                <p className="text-muted-foreground">Activez votre statut Marchand</p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              onClick={handleBecomeMerchant}
+              className="shrink-0 h-8 text-xs"
+            >
+              Devenir marchand
+            </Button>
+          </div>
         </div>
       )}
 
-      {/* Hero Section */}
-      <section className="px-4 py-6">
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full mb-3">
+      {user && isMerchant && (
+        <div className="px-4 py-2.5 bg-green-500/10 text-green-600 border-b border-green-500/20 text-center text-sm">
+          <span className="flex items-center justify-center gap-2">
+            <Store className="w-4 h-4" />
+            Statut Marchand actif - Cliquez sur un module pour créer vos produits
+          </span>
+        </div>
+      )}
+Découvrez les produits numériques
+          </h2>
+          <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+            Achetez des formations, logiciels, eBooks et plus encore. 
+            {!isMerchant && ' Ou devenez marchand pour vendre vos propres produits.'}5 bg-primary/10 rounded-full mb-3">
             <Package className="w-4 h-4 text-primary" />
             <span className="text-xs font-medium text-primary">Marketplace Digital</span>
           </div>
