@@ -28,31 +28,35 @@ export function DriverStatsRow({
       suffix: "GNF",
       icon: Wallet,
       iconBg: "bg-emerald-500/20",
-      iconColor: "text-emerald-400"
+      iconColor: "text-emerald-400",
+      clickable: true
     },
     {
       id: 'rides',
       value: (todayRides || 0).toString(),
-      suffix: "AUJOURD'HUI",
+      suffix: "COURSES",
       icon: Car,
       iconBg: "bg-blue-500/20",
-      iconColor: "text-blue-400"
+      iconColor: "text-blue-400",
+      clickable: false
     },
     {
       id: 'rating',
-      value: (rating || 5.0).toFixed(1),
-      suffix: "/5.0",
+      value: rating > 0 ? rating.toFixed(1) : '—',
+      suffix: "NOTE",
       icon: Star,
       iconBg: "bg-amber-500/20",
-      iconColor: "text-amber-400"
+      iconColor: "text-amber-400",
+      clickable: true
     },
     {
       id: 'time',
-      value: onlineTime || '0h 0m',
+      value: onlineTime || '0m',
       suffix: "EN LIGNE",
       icon: Clock,
       iconBg: "bg-purple-500/20",
-      iconColor: "text-purple-400"
+      iconColor: "text-purple-400",
+      clickable: false
     }
   ];
 
@@ -62,7 +66,8 @@ export function DriverStatsRow({
         {stats.map((stat) => (
           <button
             key={stat.id}
-            onClick={() => onStatClick?.(stat.id)}
+            onClick={() => stat.clickable && onStatClick?.(stat.id)}
+            disabled={!stat.clickable}
             className={cn(
               "relative overflow-hidden",
               "bg-gradient-to-br from-gray-800/80 to-gray-900/80",
@@ -70,7 +75,8 @@ export function DriverStatsRow({
               "rounded-xl p-2",
               "border border-gray-700/50",
               "transition-all duration-200",
-              "active:scale-[0.97]",
+              stat.clickable && "active:scale-[0.97] cursor-pointer hover:border-gray-600/50",
+              !stat.clickable && "cursor-default",
               "group"
             )}
           >

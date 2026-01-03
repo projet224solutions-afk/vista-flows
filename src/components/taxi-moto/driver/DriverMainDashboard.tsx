@@ -184,6 +184,7 @@ export function DriverMainDashboard({
 
               {/* Vehicle Information Card */}
               <DriverVehicleInfo
+                driverId={driverId}
                 vehiclePlate={stats.vehiclePlate}
                 giletNumber={stats.giletNumber}
                 serialNumber={stats.serialNumber}
