@@ -281,3 +281,6 @@ verify_jwt = false
 
 [functions.stripe-create-payment-intent]
 verify_jwt = true
+
+[functions.payment-core]
+verify_jwt = true
