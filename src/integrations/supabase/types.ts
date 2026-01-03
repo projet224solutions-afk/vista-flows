@@ -260,7 +260,11 @@ export type Database = {
           balance: number | null
           created_at: string | null
           currency: string | null
+          exchange_rates_cache: Json | null
           id: string
+          last_exchange_update: string | null
+          preferred_display_currency: string | null
+          secondary_currencies: Json | null
           updated_at: string | null
           wallet_status: string | null
         }
@@ -269,7 +273,11 @@ export type Database = {
           balance?: number | null
           created_at?: string | null
           currency?: string | null
+          exchange_rates_cache?: Json | null
           id?: string
+          last_exchange_update?: string | null
+          preferred_display_currency?: string | null
+          secondary_currencies?: Json | null
           updated_at?: string | null
           wallet_status?: string | null
         }
@@ -278,7 +286,11 @@ export type Database = {
           balance?: number | null
           created_at?: string | null
           currency?: string | null
+          exchange_rates_cache?: Json | null
           id?: string
+          last_exchange_update?: string | null
+          preferred_display_currency?: string | null
+          secondary_currencies?: Json | null
           updated_at?: string | null
           wallet_status?: string | null
         }
@@ -335,11 +347,17 @@ export type Database = {
           commission_agent_principal: number | null
           commission_rate: number | null
           commission_sous_agent: number | null
+          country_code: string | null
           created_at: string | null
+          detected_country: string | null
+          detected_currency: string | null
+          detection_accuracy: string | null
+          detection_method: string | null
           email: string
           full_name: string | null
           id: string
           is_active: boolean | null
+          last_location_update: string | null
           last_login_at: string | null
           locked_until: string | null
           login_attempts: number | null
@@ -350,6 +368,7 @@ export type Database = {
           permissions: Json | null
           phone: string | null
           role: string | null
+          timezone: string | null
           type_agent: string | null
           updated_at: string | null
           user_id: string | null
@@ -361,11 +380,17 @@ export type Database = {
           commission_agent_principal?: number | null
           commission_rate?: number | null
           commission_sous_agent?: number | null
+          country_code?: string | null
           created_at?: string | null
+          detected_country?: string | null
+          detected_currency?: string | null
+          detection_accuracy?: string | null
+          detection_method?: string | null
           email: string
           full_name?: string | null
           id?: string
           is_active?: boolean | null
+          last_location_update?: string | null
           last_login_at?: string | null
           locked_until?: string | null
           login_attempts?: number | null
@@ -376,6 +401,7 @@ export type Database = {
           permissions?: Json | null
           phone?: string | null
           role?: string | null
+          timezone?: string | null
           type_agent?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -387,11 +413,17 @@ export type Database = {
           commission_agent_principal?: number | null
           commission_rate?: number | null
           commission_sous_agent?: number | null
+          country_code?: string | null
           created_at?: string | null
+          detected_country?: string | null
+          detected_currency?: string | null
+          detection_accuracy?: string | null
+          detection_method?: string | null
           email?: string
           full_name?: string | null
           id?: string
           is_active?: boolean | null
+          last_location_update?: string | null
           last_login_at?: string | null
           locked_until?: string | null
           login_attempts?: number | null
@@ -402,6 +434,7 @@ export type Database = {
           permissions?: Json | null
           phone?: string | null
           role?: string | null
+          timezone?: string | null
           type_agent?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -2336,6 +2369,53 @@ export type Database = {
         }
         Relationships: []
       }
+      corridor_fee_history: {
+        Row: {
+          amount: number
+          corridor_id: string | null
+          created_at: string | null
+          destination_currency: string
+          exchange_rate_used: number | null
+          fee_applied: number
+          fee_percentage_used: number | null
+          id: string
+          source_currency: string
+          transaction_id: string | null
+        }
+        Insert: {
+          amount: number
+          corridor_id?: string | null
+          created_at?: string | null
+          destination_currency: string
+          exchange_rate_used?: number | null
+          fee_applied: number
+          fee_percentage_used?: number | null
+          id?: string
+          source_currency: string
+          transaction_id?: string | null
+        }
+        Update: {
+          amount?: number
+          corridor_id?: string | null
+          created_at?: string | null
+          destination_currency?: string
+          exchange_rate_used?: number | null
+          fee_applied?: number
+          fee_percentage_used?: number | null
+          id?: string
+          source_currency?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "corridor_fee_history_corridor_id_fkey"
+            columns: ["corridor_id"]
+            isOneToOne: false
+            referencedRelation: "payment_corridors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       currencies: {
         Row: {
           code: string
@@ -2363,6 +2443,39 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           symbol?: string
+        }
+        Relationships: []
+      }
+      currency_exchange_rates: {
+        Row: {
+          created_at: string | null
+          effective_date: string
+          from_currency: string
+          id: string
+          rate: number
+          source: string | null
+          to_currency: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          effective_date?: string
+          from_currency: string
+          id?: string
+          rate: number
+          source?: string | null
+          to_currency: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          effective_date?: string
+          from_currency?: string
+          id?: string
+          rate?: number
+          source?: string | null
+          to_currency?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -6929,6 +7042,75 @@ export type Database = {
           status?: string
           transaction_type?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      payment_corridors: {
+        Row: {
+          base_fee_fixed: number | null
+          base_fee_percentage: number | null
+          corridor_name: string
+          created_at: string | null
+          daily_limit: number | null
+          description: string | null
+          destination_country: string
+          destination_currency: string
+          estimated_processing_time: number | null
+          fee_tiers: Json | null
+          id: string
+          is_active: boolean | null
+          max_amount: number | null
+          min_amount: number | null
+          payment_methods: Json | null
+          priority: number | null
+          source_country: string
+          source_currency: string
+          terms_conditions: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          base_fee_fixed?: number | null
+          base_fee_percentage?: number | null
+          corridor_name: string
+          created_at?: string | null
+          daily_limit?: number | null
+          description?: string | null
+          destination_country: string
+          destination_currency: string
+          estimated_processing_time?: number | null
+          fee_tiers?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_amount?: number | null
+          min_amount?: number | null
+          payment_methods?: Json | null
+          priority?: number | null
+          source_country: string
+          source_currency: string
+          terms_conditions?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          base_fee_fixed?: number | null
+          base_fee_percentage?: number | null
+          corridor_name?: string
+          created_at?: string | null
+          daily_limit?: number | null
+          description?: string | null
+          destination_country?: string
+          destination_currency?: string
+          estimated_processing_time?: number | null
+          fee_tiers?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_amount?: number | null
+          min_amount?: number | null
+          payment_methods?: Json | null
+          priority?: number | null
+          source_country?: string
+          source_currency?: string
+          terms_conditions?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -16490,6 +16672,16 @@ export type Database = {
           config_id: string
           total_amount: number
         }[]
+      }
+      calculate_corridor_fee: {
+        Args: {
+          p_amount: number
+          p_destination_country: string
+          p_destination_currency: string
+          p_source_country: string
+          p_source_currency: string
+        }
+        Returns: Json
       }
       calculate_delivery_price: {
         Args: {
