@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon, Camera, MapPin, Globe, Share2, Filter } from "lucide-react";
+import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon, Camera, MapPin, Globe, Share2, Filter, Package, Briefcase, Laptop } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -326,37 +326,56 @@ export default function Marketplace() {
         </div>
       </section>
 
-      {/* Filtres de type (Produits / Services Pro / Numériques) */}
-      <section className="px-4 py-2 border-b border-border bg-muted/30">
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
-          <Badge
-            variant={selectedItemType === 'all' ? "default" : "outline"}
-            className="cursor-pointer whitespace-nowrap shrink-0"
-            onClick={() => setSelectedItemType('all')}
-          >
-            🛍️ {t('common.all')}
-          </Badge>
-          <Badge
-            variant={selectedItemType === 'product' ? "default" : "outline"}
-            className="cursor-pointer whitespace-nowrap shrink-0"
+      {/* Filtres de type - Boutons icônes stylés */}
+      <section className="px-4 py-3 border-b border-border bg-muted/30">
+        <div className="flex justify-center gap-4">
+          <button
             onClick={() => setSelectedItemType('product')}
+            className={`group relative w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+              selectedItemType === 'product' 
+                ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30 scale-110' 
+                : 'bg-card border border-border hover:border-orange-300 hover:shadow-md'
+            }`}
           >
-            📦 {t('marketplace.products')}
-          </Badge>
-          <Badge
-            variant={selectedItemType === 'professional_service' ? "default" : "outline"}
-            className="cursor-pointer whitespace-nowrap shrink-0"
+            <Package className={`w-6 h-6 transition-transform group-hover:scale-110 ${
+              selectedItemType === 'product' ? 'text-white' : 'text-orange-500'
+            }`} />
+            {selectedItemType === 'product' && (
+              <span className="absolute -bottom-1 w-2 h-2 rounded-full bg-orange-400 animate-pulse" />
+            )}
+          </button>
+
+          <button
             onClick={() => setSelectedItemType('professional_service')}
+            className={`group relative w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+              selectedItemType === 'professional_service' 
+                ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30 scale-110' 
+                : 'bg-card border border-border hover:border-blue-300 hover:shadow-md'
+            }`}
           >
-            💼 {t('marketplace.professionalServices') || 'Services Pro'}
-          </Badge>
-          <Badge
-            variant={selectedItemType === 'digital_product' ? "default" : "outline"}
-            className="cursor-pointer whitespace-nowrap shrink-0"
+            <Briefcase className={`w-6 h-6 transition-transform group-hover:scale-110 ${
+              selectedItemType === 'professional_service' ? 'text-white' : 'text-blue-500'
+            }`} />
+            {selectedItemType === 'professional_service' && (
+              <span className="absolute -bottom-1 w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+            )}
+          </button>
+
+          <button
             onClick={() => setSelectedItemType('digital_product')}
+            className={`group relative w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+              selectedItemType === 'digital_product' 
+                ? 'bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/30 scale-110' 
+                : 'bg-card border border-border hover:border-purple-300 hover:shadow-md'
+            }`}
           >
-            💻 {t('marketplace.digitalProducts') || 'Numériques'}
-          </Badge>
+            <Laptop className={`w-6 h-6 transition-transform group-hover:scale-110 ${
+              selectedItemType === 'digital_product' ? 'text-white' : 'text-purple-500'
+            }`} />
+            {selectedItemType === 'digital_product' && (
+              <span className="absolute -bottom-1 w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+            )}
+          </button>
         </div>
       </section>
 
