@@ -1,11 +1,10 @@
 /**
  * CONTEXTE DE LANGUE GLOBAL
- * Gère la langue de l'application avec détection automatique et stockage
+ * Gère la langue de l'application avec détection automatique basée sur le pays
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { translations, supportedLanguages, defaultLanguage } from './translations';
-import { supabase } from '@/integrations/supabase/client';
 
 interface LanguageContextType {
   language: string;
@@ -20,6 +19,45 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 const STORAGE_KEY = 'app_language';
 const COUNTRY_KEY = 'user_country';
+const GEO_LANG_KEY = 'geo_detected_language';
+
+// Mapping pays -> langue par défaut
+const COUNTRY_TO_LANGUAGE: Record<string, string> = {
+  // Europe
+  DE: 'de', AT: 'de', CH: 'de', // Allemand
+  FR: 'fr', BE: 'fr', LU: 'fr', MC: 'fr', // Français
+  ES: 'es', MX: 'es', AR: 'es', CO: 'es', CL: 'es', // Espagnol
+  PT: 'pt', BR: 'pt', // Portugais
+  IT: 'it', // Italien
+  NL: 'nl', // Néerlandais
+  PL: 'pl', // Polonais
+  GB: 'en', US: 'en', CA: 'en', AU: 'en', NZ: 'en', IE: 'en', // Anglais
+  RU: 'ru', BY: 'ru', // Russe
+  UA: 'uk', // Ukrainien
+  TR: 'tr', // Turc
+  
+  // Asie
+  CN: 'zh', TW: 'zh', HK: 'zh', // Chinois
+  JP: 'ja', // Japonais
+  KR: 'ko', // Coréen
+  IN: 'hi', // Hindi
+  TH: 'th', // Thaï
+  VN: 'vi', // Vietnamien
+  ID: 'id', // Indonésien
+  
+  // Moyen-Orient
+  SA: 'ar', AE: 'ar', EG: 'ar', MA: 'ar', DZ: 'ar', TN: 'ar', // Arabe
+  IL: 'he', // Hébreu
+  IR: 'fa', // Persan
+  
+  // Afrique
+  GN: 'fr', SN: 'fr', ML: 'fr', CI: 'fr', BF: 'fr', NE: 'fr', // Afrique francophone
+  NG: 'en', GH: 'en', ZA: 'en', // Afrique anglophone
+  TZ: 'sw', KE: 'sw', // Swahili (Kenya, Tanzanie)
+  
+  // Bangladesh
+  BD: 'bn',
+};
 
 // Détecte la langue du navigateur
 const detectBrowserLanguage = (): string => {
@@ -27,7 +65,6 @@ const detectBrowserLanguage = (): string => {
     const browserLang = navigator.language || (navigator as any).userLanguage || '';
     const langCode = browserLang.split('-')[0].toLowerCase();
     
-    // Vérifier si la langue est supportée
     const isSupported = supportedLanguages.some(l => l.code === langCode);
     return isSupported ? langCode : defaultLanguage;
   } catch {
@@ -35,12 +72,16 @@ const detectBrowserLanguage = (): string => {
   }
 };
 
-// Détecte le pays via IP (utilise un service gratuit)
-const detectCountry = async (): Promise<string | null> => {
+// Détecte le pays via IP et retourne aussi la langue suggérée
+const detectCountryAndLanguage = async (): Promise<{ country: string | null; language: string | null }> => {
   try {
     // Vérifier le cache d'abord
-    const cached = localStorage.getItem(COUNTRY_KEY);
-    if (cached) return cached;
+    const cachedCountry = localStorage.getItem(COUNTRY_KEY);
+    const cachedLang = localStorage.getItem(GEO_LANG_KEY);
+    
+    if (cachedCountry && cachedLang) {
+      return { country: cachedCountry, language: cachedLang };
+    }
 
     // Utiliser ipapi.co (gratuit, fiable)
     const response = await fetch('https://ipapi.co/json/', {
@@ -51,15 +92,27 @@ const detectCountry = async (): Promise<string | null> => {
     if (response.ok) {
       const data = await response.json();
       const country = data.country_code || data.country || null;
+      
       if (country) {
         localStorage.setItem(COUNTRY_KEY, country);
+        
+        // Déterminer la langue basée sur le pays
+        const suggestedLang = COUNTRY_TO_LANGUAGE[country.toUpperCase()];
+        const language = suggestedLang && supportedLanguages.some(l => l.code === suggestedLang) 
+          ? suggestedLang 
+          : null;
+        
+        if (language) {
+          localStorage.setItem(GEO_LANG_KEY, language);
+        }
+        
+        return { country, language };
       }
-      return country;
     }
-    return null;
+    return { country: null, language: null };
   } catch (error) {
     console.warn('Détection du pays échouée:', error);
-    return null;
+    return { country: null, language: null };
   }
 };
 
@@ -69,7 +122,7 @@ interface LanguageProviderProps {
 
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
   const [language, setLanguageState] = useState<string>(() => {
-    // Priorité: localStorage > navigateur > défaut
+    // Priorité: localStorage (choix manuel) > navigateur > défaut
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored && supportedLanguages.some(l => l.code === stored)) {
       return stored;
@@ -78,11 +131,25 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
   });
   
   const [userCountry, setUserCountry] = useState<string | null>(null);
+  const [hasAutoDetected, setHasAutoDetected] = useState(false);
 
-  // Détection du pays au chargement
+  // Détection du pays et langue au chargement
   useEffect(() => {
-    detectCountry().then(setUserCountry);
-  }, []);
+    const detect = async () => {
+      const { country, language: detectedLang } = await detectCountryAndLanguage();
+      setUserCountry(country);
+      
+      // Si l'utilisateur n'a pas de préférence manuelle ET qu'on a une langue détectée
+      const hasManualPref = localStorage.getItem(STORAGE_KEY);
+      if (!hasManualPref && detectedLang && !hasAutoDetected) {
+        console.log(`🌍 Auto-détection: pays=${country}, langue=${detectedLang}`);
+        setLanguageState(detectedLang);
+        setHasAutoDetected(true);
+      }
+    };
+    
+    detect();
+  }, [hasAutoDetected]);
 
   // Mise à jour de la direction du document
   useEffect(() => {
@@ -98,7 +165,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     }
 
     setLanguageState(lang);
-    localStorage.setItem(STORAGE_KEY, lang);
+    localStorage.setItem(STORAGE_KEY, lang); // Enregistrer le choix manuel
   }, []);
 
   // Fonction de traduction
@@ -139,8 +206,6 @@ const defaultContextValue: LanguageContextType = {
 export const useLanguage = (): LanguageContextType => {
   const context = useContext(LanguageContext);
   
-  // Retourner un fallback silencieux au lieu de throw pour éviter les erreurs
-  // lors du rendu initial ou en dehors du provider
   if (!context) {
     console.warn('⚠️ useLanguage utilisé hors du LanguageProvider, fallback activé');
     return defaultContextValue;
