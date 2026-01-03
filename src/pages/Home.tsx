@@ -33,24 +33,8 @@ export default function Home() {
   const { user, profile, loading: authLoading, profileLoading } = useAuth();
   const { addToCart, getCartCount } = useCart();
 
-  // ⚡ Vérifier si on doit rediriger avant de rendre la page
-  const shouldRedirect = user && profile && profile.role && 
-    !authLoading && !profileLoading;
-
   // Redirect authenticated users to appropriate dashboard
   useRoleRedirect();
-
-  // ⚡ Si on doit rediriger, afficher un loader au lieu de la page
-  if (shouldRedirect) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">Chargement de votre espace...</p>
-        </div>
-      </div>
-    );
-  }
 
   // Stats des services à proximité (filtrés par distance 20km)
   const { stats: serviceStats } = useNearbyServiceStats();
@@ -69,6 +53,22 @@ export default function Home() {
   }), []);
   
   const { products: universalProducts, loading: productsLoading } = useUniversalProducts(productOptions);
+
+  // ⚡ Vérifier si on doit rediriger - APRÈS tous les hooks
+  const shouldRedirect = user && profile && profile.role && 
+    !authLoading && !profileLoading;
+
+  // ⚡ Si on doit rediriger, afficher un loader au lieu de la page
+  if (shouldRedirect) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
+          <p className="text-sm text-muted-foreground">Chargement de votre espace...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Load notifications - seulement si user existe
   useEffect(() => {
