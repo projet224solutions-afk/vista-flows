@@ -162,8 +162,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           created_at,
           service_types(code, name, category, commission_rate)
         `)
-        .eq('status', 'active')
-        .eq('verification_status', 'verified');
+        .in('status', ['active', 'pending']); // Afficher les services actifs ET en attente
 
       // Filtres
       if (vendorId) {
