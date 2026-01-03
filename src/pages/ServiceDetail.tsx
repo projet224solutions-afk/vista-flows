@@ -31,6 +31,7 @@ interface ServiceDetail {
   latitude?: number;
   longitude?: number;
   features?: string[];
+  vendor_user_id?: string;
 }
 
 interface OpeningHours {
@@ -79,6 +80,7 @@ export default function ServiceDetail() {
         .from('professional_services')
         .select(`
           id,
+          user_id,
           business_name,
           description,
           logo_url,
@@ -123,7 +125,8 @@ export default function ServiceDetail() {
           features: [],
           latitude: 9.6412,
           longitude: -13.5784,
-          opening_hours: openingHours
+          opening_hours: openingHours,
+          vendor_user_id: proService.user_id
         };
 
         setService(serviceData);
@@ -239,14 +242,39 @@ export default function ServiceDetail() {
     }
   };
 
-  const handleContact = () => {
+  const handleContact = async () => {
     if (!user) {
       toast.error('Veuillez vous connecter pour contacter ce service');
       navigate('/auth');
       return;
     }
     
-    toast.success('Système de messagerie à venir');
+    if (!service?.vendor_user_id) {
+      toast.error('Informations du prestataire non disponibles');
+      return;
+    }
+
+    try {
+      // Créer un message initial
+      const initialMessage = `Bonjour, je suis intéressé par vos services "${service.name}". Pouvez-vous me donner plus d'informations ?`;
+      
+      const { error } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: user.id,
+          recipient_id: service.vendor_user_id,
+          content: initialMessage,
+          type: 'text'
+        });
+
+      if (error) throw error;
+
+      toast.success('Message envoyé au prestataire!');
+      navigate(`/messages?recipientId=${service.vendor_user_id}`);
+    } catch (error) {
+      console.error('Erreur lors du contact:', error);
+      toast.error('Impossible de contacter le prestataire');
+    }
   };
 
   const handleReservation = () => {
