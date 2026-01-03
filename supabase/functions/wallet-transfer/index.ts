@@ -215,6 +215,17 @@ async function handleTransfer(supabase: any, body: TransferRequest, req: Request
   // Générer le code de transfert unique
   const transferCode = `TRF-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
+  // 🌍 DÉTECTION PAYS: Obtenir pays expéditeur et destinataire
+  const [senderCountryResult, receiverCountryResult] = await Promise.all([
+    supabase.rpc("detect_user_country", { p_user_id: sender_id }),
+    supabase.rpc("detect_user_country", { p_user_id: receiver_id })
+  ]);
+
+  const senderCountry = senderCountryResult.data?.[0]?.country || "GN";
+  const receiverCountry = receiverCountryResult.data?.[0]?.country || "GN";
+
+  console.log(`🌍 Countries: ${senderCountry} → ${receiverCountry}`);
+
   // Obtenir les wallets avec verrouillage
   const [senderResult, receiverResult] = await Promise.all([
     supabase.from("wallets").select("*").eq("user_id", sender_id).single(),
@@ -351,6 +362,8 @@ async function handleTransfer(supabase: any, body: TransferRequest, req: Request
       transfer_type: "WALLET_TO_WALLET",
       description,
       status: "processing",
+      sender_country: senderCountry, // 🌍 Pays expéditeur
+      receiver_country: receiverCountry, // 🌍 Pays destinataire
       ip_address: clientIP,
       user_agent: userAgent,
       signature: signature, // 🔐 Signature stockée
