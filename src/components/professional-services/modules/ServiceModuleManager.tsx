@@ -18,7 +18,18 @@ import { RealEstateModule } from './RealEstateModule';
 import { CoachModule } from './CoachModule';
 import { FitnessModule } from './FitnessModule';
 import { HairdresserModule } from './HairdresserModule';
-import { CateringModule, FashionModule } from './stubs';
+// Nouveaux modules professionnels
+import { VTCModule } from './VTCModule';
+import { RepairModule } from './RepairModule';
+import { CleaningModule } from './CleaningModule';
+import { FashionModule } from './FashionModule';
+import { ElectronicsModule } from './ElectronicsModule';
+import { HomeDecorModule } from './HomeDecorModule';
+import { FreelanceModule } from './FreelanceModule';
+import { AgricultureModule } from './AgricultureModule';
+import { ConstructionModule } from './ConstructionModule';
+import { DropshippingModule } from './DropshippingModule';
+import { CateringModule } from './stubs';
 
 interface ServiceModuleManagerProps {
   serviceId: string;
@@ -30,46 +41,45 @@ interface ServiceModuleManagerProps {
 
 // Mapping des codes de service_types vers les modules
 const MODULE_MAP: Record<string, React.FC<{ serviceId: string; businessName?: string }>> = {
-  // Food & Restaurant
-  'restaurant': RestaurantModule,
-  
-  // Commerce
+  // Services de Proximité
   'ecommerce': EcommerceModule,
-  
-  // Beauté & Bien-être
-  'beaute': BeautyModule,
-  
-  // Transport & Livraison
-  'voyage': TransportModule,
+  'restaurant': RestaurantModule,
   'livraison': DeliveryModule,
-  
-  // Santé
-  'sante': HealthModule,
-  
-  // Éducation
-  'education': EducationModule,
-  
-  // Créatif & Média
-  'media': PhotoStudioModule,
-  
-  // Services techniques
+  'beaute': BeautyModule,
+  'vtc': VTCModule,
+  'reparation': RepairModule,
+  'menage': CleaningModule,
   'informatique': DeveloperModule,
-  'reparation': DeveloperModule,
   
-  // Immobilier
+  // Catégories de Produits
+  'mode': FashionModule,
+  'sante': HealthModule,
+  'electronique': ElectronicsModule,
+  'maison': HomeDecorModule,
+  
+  // Services Professionnels
   'location': RealEstateModule,
+  'education': EducationModule,
+  'media': PhotoStudioModule,
+  'sport': FitnessModule,
   
-  // Construction
-  'construction': RealEstateModule,
+  // Produits Numériques (géré par système digital-products)
+  'digital_voyage': TransportModule,
+  'digital_logiciel': DeveloperModule,
+  'digital_formation': EducationModule,
+  'digital_livre': EducationModule,
+  'digital_custom': EcommerceModule,
   
-  // Services ménagers
-  'menage': CateringModule,
+  // Autres Services
+  'freelance': FreelanceModule,
+  'agriculture': AgricultureModule,
+  'construction': ConstructionModule,
+  'dropshipping': DropshippingModule,
   
-  // Agriculture
-  'agriculture': CateringModule,
-  
-  // Freelance & Admin
-  'freelance': DeveloperModule,
+  // Legacy mappings
+  'voyage': TransportModule,
+  'coiff': HairdresserModule,
+  'coach': CoachModule,
 };
 
 export function ServiceModuleManager({
