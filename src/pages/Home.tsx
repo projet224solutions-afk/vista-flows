@@ -54,26 +54,13 @@ export default function Home() {
   
   const { products: universalProducts, loading: productsLoading } = useUniversalProducts(productOptions);
 
-  // ⚡ Vérifier si on doit rediriger - APRÈS tous les hooks
-  const shouldRedirect = user && profile && profile.role && 
-    !authLoading && !profileLoading;
-
-  // ⚡ Si on doit rediriger, afficher un loader au lieu de la page
-  if (shouldRedirect) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">Chargement de votre espace...</p>
-        </div>
-      </div>
-    );
-  }
+  // ⚡ Vérifier si on doit rediriger - basé sur l'état auth chargé
+  const shouldRedirect = Boolean(user && profile && profile.role && !authLoading && !profileLoading);
 
   // Load notifications - seulement si user existe
   useEffect(() => {
     if (!user?.id) return;
-    
+
     const loadNotifications = async () => {
       try {
         const { count } = await supabase
@@ -87,13 +74,16 @@ export default function Home() {
         console.error('Error loading notifications:', error);
       }
     };
-    
+
     loadNotifications();
   }, [user?.id]);
 
-  const handleProductClick = useCallback((productId: string) => {
-    navigate(`/marketplace?product=${productId}`);
-  }, [navigate]);
+  const handleProductClick = useCallback(
+    (productId: string) => {
+      navigate(`/marketplace?product=${productId}`);
+    },
+    [navigate]
+  );
 
   const handleServiceClick = useCallback((serviceId: string) => {
     switch (serviceId) {
@@ -109,17 +99,32 @@ export default function Home() {
     }
   }, []);
 
-  const handleAddToCart = useCallback((product: any) => {
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: typeof product.images === 'string' ? product.images : product.images?.[0],
-      vendor_id: product.vendor_id,
-      vendor_name: product.vendor_name,
-    });
-    toast.success('Produit ajouté au panier');
-  }, [addToCart]);
+  const handleAddToCart = useCallback(
+    (product: any) => {
+      addToCart({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: typeof product.images === 'string' ? product.images : product.images?.[0],
+        vendor_id: product.vendor_id,
+        vendor_name: product.vendor_name,
+      });
+      toast.success('Produit ajouté au panier');
+    },
+    [addToCart]
+  );
+
+  // ⚠️ IMPORTANT: on fait le return APRÈS tous les hooks pour éviter l'erreur React (#300)
+  if (shouldRedirect) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
+          <p className="text-sm text-muted-foreground">Chargement de votre espace...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-24">
