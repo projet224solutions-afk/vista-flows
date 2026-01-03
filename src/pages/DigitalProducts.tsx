@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 import QuickFooter from '@/components/QuickFooter';
 import { MerchantActivationDialog } from '@/components/digital-products/MerchantActivationDialog';
 import { CategoryProductsList } from '@/components/digital-products/CategoryProductsList';
+import { TravelModule } from '@/components/travel/TravelModule';
 
 interface ProductModule {
   id: string;
@@ -86,10 +87,17 @@ export default function DigitalProducts() {
   const [showActivationDialog, setShowActivationDialog] = useState(false);
   const [selectedModule, setSelectedModule] = useState<ProductModule | null>(null);
   const [showCategoryProducts, setShowCategoryProducts] = useState(false);
+  const [showTravelModule, setShowTravelModule] = useState(false);
 
   const isMerchant = profile?.role === 'vendeur';
 
   const handleModuleClick = (module: ProductModule) => {
+    // Pour le module voyage, afficher le module dédié
+    if (module.category === 'voyage') {
+      setShowTravelModule(true);
+      return;
+    }
+    
     // Afficher directement les produits de la catégorie
     // Que l'utilisateur soit connecté ou non, il peut consulter
     setSelectedModule(module);
@@ -127,6 +135,11 @@ export default function DigitalProducts() {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
+  }
+
+  // Affichage du module voyage
+  if (showTravelModule) {
+    return <TravelModule onBack={() => setShowTravelModule(false)} />;
   }
 
   // Affichage des produits par catégorie
