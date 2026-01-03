@@ -53,7 +53,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
     
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // D'abord essayer de charger depuis products (produits physiques)
+      const { data: physicalProduct, error: physicalError } = await supabase
         .from('products')
         .select(`
           id,
@@ -71,11 +72,55 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           )
         `)
         .eq('id', productId)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
-      setProduct(data);
-      setSelectedImage(0);
+      if (physicalProduct) {
+        setProduct(physicalProduct);
+        setSelectedImage(0);
+        return;
+      }
+
+      // Si pas trouvé, essayer service_products (produits numériques)
+      const { data: digitalProduct, error: digitalError } = await supabase
+        .from('service_products')
+        .select(`
+          id,
+          name,
+          price,
+          description,
+          images,
+          professional_service_id,
+          professional_services (
+            business_name,
+            user_id
+          )
+        `)
+        .eq('id', productId)
+        .maybeSingle();
+
+      if (digitalProduct) {
+        const proService = digitalProduct.professional_services as any;
+        setProduct({
+          id: digitalProduct.id,
+          name: digitalProduct.name,
+          price: digitalProduct.price,
+          description: digitalProduct.description,
+          images: Array.isArray(digitalProduct.images) ? digitalProduct.images as string[] : [],
+          vendor_id: digitalProduct.professional_service_id,
+          category_id: undefined,
+          is_active: true,
+          vendors: proService ? {
+            business_name: proService.business_name || 'Vendeur',
+            user_id: proService.user_id,
+            shop_slug: undefined
+          } : undefined
+        });
+        setSelectedImage(0);
+        return;
+      }
+
+      // Aucun produit trouvé
+      throw new Error('Produit introuvable');
     } catch (error) {
       console.error('Erreur chargement produit:', error);
       toast.error('Impossible de charger le produit');
