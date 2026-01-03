@@ -1,17 +1,19 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon, Camera, MapPin, Globe, Share2 } from "lucide-react";
+import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon, Camera, MapPin, Globe, Share2, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import SearchBar from "@/components/SearchBar";
 import { MarketplaceGrid } from "@/components/marketplace/MarketplaceGrid";
 import { MarketplaceProductCard } from "@/components/marketplace/MarketplaceProductCard";
+import { UniversalMarketplaceCard } from "@/components/marketplace/UniversalMarketplaceCard";
 import QuickFooter from "@/components/QuickFooter";
 import ProductDetailModal from "@/components/marketplace/ProductDetailModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useUniversalProducts } from "@/hooks/useUniversalProducts";
+import { useMarketplaceUniversal } from "@/hooks/useMarketplaceUniversal";
 import { toast } from "sonner";
 import { useResponsive } from "@/hooks/useResponsive";
 import { ResponsiveContainer } from "@/components/responsive/ResponsiveContainer";
@@ -53,6 +55,7 @@ export default function Marketplace() {
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || "all");
   const [selectedCountry, setSelectedCountry] = useState("all");
   const [selectedCity, setSelectedCity] = useState("all");
+  const [selectedItemType, setSelectedItemType] = useState<'all' | 'product' | 'professional_service' | 'digital_product'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'popular' | 'price_asc' | 'price_desc' | 'rating' | 'newest'>("newest");
   const [showFilters, setShowFilters] = useState(false);
@@ -65,7 +68,26 @@ export default function Marketplace() {
   const includePhysicalVendors = searchParams.get('includePhysical') === '1';
 
   const [vendorSlug, setVendorSlug] = useState<string | null>(null);
-  
+
+  // 🔥 UTILISER LE HOOK UNIVERSEL pour charger TOUT (produits + services pro + numériques)
+  const { 
+    items: marketplaceItems,
+    loading: marketplaceLoading,
+    total: marketplaceTotal,
+    hasMore: marketplaceHasMore,
+    loadMore: marketplaceLoadMore
+  } = useMarketplaceUniversal({
+    limit: 24,
+    category: selectedCategory,
+    searchQuery,
+    minPrice: filters.minPrice,
+    maxPrice: filters.maxPrice,
+    minRating: filters.minRating,
+    vendorId,
+    itemType: selectedItemType,
+    sortBy,
+    autoLoad: true
+  });
   // Charger le nom du vendeur si filtré par vendeur
   useEffect(() => {
     if (vendorId) {
@@ -86,28 +108,6 @@ export default function Marketplace() {
       setVendorSlug(null);
     }
   }, [vendorId]);
-
-  // Utiliser le hook universel pour les produits
-  const { 
-    products, 
-    loading, 
-    total, 
-    hasMore, 
-    loadMore 
-  } = useUniversalProducts({
-    limit: 24,
-    category: selectedCategory,
-    searchQuery,
-    minPrice: filters.minPrice,
-    maxPrice: filters.maxPrice,
-    minRating: filters.minRating,
-    vendorId,
-    country: selectedCountry,
-    city: selectedCity,
-    includePhysicalVendors,
-    sortBy,
-    autoLoad: true
-  });
 
   // Charger les catégories et les localisations
   useEffect(() => {
@@ -169,20 +169,20 @@ export default function Marketplace() {
     }
   };
 
-  const handleProductClick = (productId: string) => {
-    setSelectedProductId(productId);
+  const handleProductClick = (itemId: string) => {
+    setSelectedProductId(itemId);
     setShowProductModal(true);
   };
 
-  const handleContactVendor = async (productId: string) => {
-    // Trouver le produit dans la liste
-    const product = products.find(p => p.id === productId);
-    if (!product) {
-      toast.error('Produit introuvable');
+  const handleContactVendor = async (itemId: string) => {
+    // Trouver l'item dans la liste
+    const item = marketplaceItems.find(p => p.id === itemId);
+    if (!item) {
+      toast.error('Item introuvable');
       return;
     }
 
-    if (!product.vendor_user_id) {
+    if (!item.vendor_user_id) {
       toast.error('Informations du vendeur non disponibles');
       return;
     }
@@ -195,13 +195,13 @@ export default function Marketplace() {
       }
 
       // Créer un message initial
-      const initialMessage = `Bonjour, je suis intéressé par votre produit "${product.name}". Pouvez-vous me donner plus d'informations ?`;
+      const initialMessage = `Bonjour, je suis intéressé par "${item.name}". Pouvez-vous me donner plus d'informations ?`;
       
       const { error } = await supabase
         .from('messages')
         .insert({
           sender_id: user.id,
-          recipient_id: product.vendor_user_id,
+          recipient_id: item.vendor_user_id,
           content: initialMessage,
           type: 'text'
         });
@@ -209,7 +209,7 @@ export default function Marketplace() {
       if (error) throw error;
 
       toast.success('Message envoyé au vendeur!');
-      navigate(`/messages?recipientId=${product.vendor_user_id}`);
+      navigate(`/messages?recipientId=${item.vendor_user_id}`);
     } catch (error) {
       console.error('Erreur lors du contact:', error);
       toast.error('Impossible de contacter le vendeur');
@@ -224,11 +224,11 @@ export default function Marketplace() {
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1 min-w-0">
               <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">
-                {vendorName ? vendorName : 'Marketplace'}
+                {vendorName ? vendorName : 'Marketplace 224'}
               </h1>
               {vendorName && (
                 <p className="text-xs text-muted-foreground">
-                  {total} produit{total > 1 ? 's' : ''} disponible{total > 1 ? 's' : ''}
+                  {marketplaceTotal} article{marketplaceTotal > 1 ? 's' : ''} disponible{marketplaceTotal > 1 ? 's' : ''}
                 </p>
               )}
             </div>
@@ -319,6 +319,40 @@ export default function Marketplace() {
               {category.name}
             </Badge>
           ))}
+        </div>
+      </section>
+
+      {/* Filtres de type (Produits / Services Pro / Numériques) */}
+      <section className="px-4 py-2 border-b border-border bg-muted/30">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
+          <Badge
+            variant={selectedItemType === 'all' ? "default" : "outline"}
+            className="cursor-pointer whitespace-nowrap shrink-0"
+            onClick={() => setSelectedItemType('all')}
+          >
+            🛍️ Tout
+          </Badge>
+          <Badge
+            variant={selectedItemType === 'product' ? "default" : "outline"}
+            className="cursor-pointer whitespace-nowrap shrink-0"
+            onClick={() => setSelectedItemType('product')}
+          >
+            📦 Produits
+          </Badge>
+          <Badge
+            variant={selectedItemType === 'professional_service' ? "default" : "outline"}
+            className="cursor-pointer whitespace-nowrap shrink-0"
+            onClick={() => setSelectedItemType('professional_service')}
+          >
+            💼 Services Pro
+          </Badge>
+          <Badge
+            variant={selectedItemType === 'digital_product' ? "default" : "outline"}
+            className="cursor-pointer whitespace-nowrap shrink-0"
+            onClick={() => setSelectedItemType('digital_product')}
+          >
+            💻 Numériques
+          </Badge>
         </div>
       </section>
 
@@ -434,11 +468,18 @@ export default function Marketplace() {
       <section className="px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <p className="text-xs text-muted-foreground">
-            {products.length} / {total} résultats
+            {marketplaceItems.length} / {marketplaceTotal} résultats
+            {selectedItemType !== 'all' && (
+              <span className="ml-2">
+                ({selectedItemType === 'product' ? 'Produits' : 
+                  selectedItemType === 'professional_service' ? 'Services professionnels' : 
+                  'Produits numériques'})
+              </span>
+            )}
           </p>
         </div>
 
-        {loading ? (
+        {marketplaceLoading ? (
           <div className="marketplace-grid">
             {/* Skeleton Loading */}
             {Array.from({ length: 12 }).map((_, i) => (
@@ -452,56 +493,60 @@ export default function Marketplace() {
               </div>
             ))}
           </div>
-        ) : products.length === 0 ? (
+        ) : marketplaceItems.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Aucun produit trouvé</p>
+            <p className="text-muted-foreground mb-2">
+              {selectedItemType === 'all' ? 'Aucun article trouvé' :
+               selectedItemType === 'product' ? 'Aucun produit trouvé' :
+               selectedItemType === 'professional_service' ? 'Aucun service professionnel trouvé' :
+               'Aucun produit numérique trouvé'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Essayez de modifier vos filtres de recherche
+            </p>
           </div>
         ) : (
           <MarketplaceGrid>
-            {products.map((product) => (
-              <MarketplaceProductCard 
-                key={product.id} 
-                id={product.id}
-                image={product.images || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop'}
-                title={product.name}
-                price={product.price}
-                originalPrice={product.original_price}
-                vendor={product.vendor_name}
-                vendorLocation={product.vendor_location}
-                vendorRating={product.vendor_rating}
-                vendorRatingCount={product.vendor_rating_count}
-                rating={product.rating || 0}
-                reviewCount={product.reviews_count || 0}
-                stock={product.stock_quantity}
-                category={product.category_name}
-                deliveryTime={product.delivery_time}
-                onBuy={() => handleProductClick(product.id)}
-                onAddToCart={() => {
-                  addToCart({
-                    id: product.id,
-                    name: product.name,
-                    price: product.price,
-                    image: product.images?.[0],
-                    vendor_id: product.vendor_id,
-                    vendor_name: product.vendor_name
-                  });
-                  toast.success('Produit ajouté au panier');
+            {marketplaceItems.map((item) => (
+              <UniversalMarketplaceCard
+                key={item.id}
+                item={item}
+                onAddToCart={(itemId) => {
+                  if (item.item_type === 'product' || item.item_type === 'digital_product') {
+                    addToCart({
+                      id: item.id,
+                      name: item.name,
+                      price: item.price,
+                      image: item.images?.[0],
+                      vendor_id: item.vendor_id,
+                      vendor_name: item.vendor_name
+                    });
+                    toast.success('Ajouté au panier');
+                  } else {
+                    // Pour les services professionnels, rediriger vers la page de détail
+                    navigate(`/services-proximite/${item.id}`);
+                  }
                 }}
-                onContact={() => handleContactVendor(product.id)}
-                isPremium={product.is_hot}
+                onViewDetails={(itemId) => {
+                  if (item.item_type === 'professional_service') {
+                    navigate(`/services-proximite/${itemId}`);
+                  } else {
+                    handleProductClick(itemId);
+                  }
+                }}
               />
             ))}
           </MarketplaceGrid>
         )}
 
-        {hasMore && !loading && (
+        {marketplaceHasMore && !marketplaceLoading && (
           <div className="text-center mt-4 md:mt-6">
             <Button 
-              onClick={loadMore} 
-              disabled={loading}
+              onClick={marketplaceLoadMore} 
+              disabled={marketplaceLoading}
               size={isMobile ? "sm" : "default"}
             >
-              {loading ? 'Chargement...' : 'Voir plus'}
+              {marketplaceLoading ? 'Chargement...' : 'Voir plus'}
             </Button>
           </div>
         )}
