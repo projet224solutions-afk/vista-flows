@@ -92,6 +92,7 @@ export default function TaxiMotoDriver() {
     // Hook profil conducteur
     const {
         driverId,
+        driverDisplayId: hookDriverDisplayId,
         driverProfile,
         loading: driverLoading,
         isOnline,
@@ -109,8 +110,8 @@ export default function TaxiMotoDriver() {
         updateLocalStats
     } = useTaxiDriverStats(driverId);
 
-    // ID affichable (code métier) : priorité à custom_id / public_id du profil
-    const driverDisplayId = profile?.custom_id || profile?.public_id || driverId;
+    // ID affichable (code métier) : priorité à hookDriverDisplayId (custom_id format DRV0001)
+    const driverDisplayId = hookDriverDisplayId || profile?.custom_id || profile?.public_id || driverId;
 
     // Fonction de démarrage de navigation (passée aux hooks)
     const startNavigation = useCallback(async (destination: { latitude: number; longitude: number }) => {

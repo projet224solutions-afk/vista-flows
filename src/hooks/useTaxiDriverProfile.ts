@@ -17,6 +17,7 @@ interface TaxiDriverProfile {
 
 interface UseTaxiDriverProfileReturn {
   driverId: string | null;
+  driverDisplayId: string | null; // ID d'affichage format DRV0001
   driverProfile: TaxiDriverProfile | null;
   loading: boolean;
   isOnline: boolean;
@@ -27,6 +28,7 @@ interface UseTaxiDriverProfileReturn {
 
 export function useTaxiDriverProfile(userId: string | undefined): UseTaxiDriverProfileReturn {
   const [driverId, setDriverId] = useState<string | null>(null);
+  const [driverDisplayId, setDriverDisplayId] = useState<string | null>(null);
   const [driverProfile, setDriverProfile] = useState<TaxiDriverProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(false);
@@ -42,10 +44,10 @@ export function useTaxiDriverProfile(userId: string | undefined): UseTaxiDriverP
     console.log('🔄 [useTaxiDriverProfile] Chargement profil pour user:', userId);
     
     try {
-      // 🔒 SÉCURITÉ : Vérifier si le compte est actif (non suspendu par PDG)
+      // 🔒 SÉCURITÉ : Vérifier si le compte est actif et récupérer le custom_id
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('is_active, role')
+        .select('is_active, role, custom_id, public_id')
         .eq('id', userId)
         .single();
 
@@ -62,6 +64,11 @@ export function useTaxiDriverProfile(userId: string | undefined): UseTaxiDriverP
         setLoading(false);
         return;
       }
+
+      // Récupérer l'ID d'affichage (custom_id prioritaire, sinon public_id)
+      const displayId = profileData.custom_id || profileData.public_id || null;
+      setDriverDisplayId(displayId);
+      console.log('✅ [useTaxiDriverProfile] ID d\'affichage:', displayId);
 
       console.log('✅ [useTaxiDriverProfile] Compte actif, chargement profil conducteur...');
 
@@ -150,6 +157,7 @@ export function useTaxiDriverProfile(userId: string | undefined): UseTaxiDriverP
 
   return {
     driverId,
+    driverDisplayId,
     driverProfile,
     loading,
     isOnline,
