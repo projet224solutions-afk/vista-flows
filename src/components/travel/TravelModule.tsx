@@ -19,6 +19,7 @@ import { HotelsSection } from './HotelsSection';
 import { AffiliateRegistration } from './AffiliateRegistration';
 import { AffiliateDashboard } from './AffiliateDashboard';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface TravelModuleProps {
   onBack: () => void;
@@ -28,6 +29,7 @@ export function TravelModule({ onBack }: TravelModuleProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const { t } = useTranslation();
   
   const [currentMode, setCurrentMode] = useState<TravelMode>('affiliate');
   const [activeTab, setActiveTab] = useState('flights');
@@ -125,7 +127,7 @@ export function TravelModule({ onBack }: TravelModuleProps) {
               >
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h1 className="text-lg font-bold text-foreground">Configuration</h1>
+              <h1 className="text-lg font-bold text-foreground">{t('travel.configuration')}</h1>
             </div>
           </div>
         </header>
@@ -153,7 +155,7 @@ export function TravelModule({ onBack }: TravelModuleProps) {
               >
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h1 className="text-lg font-bold text-foreground">Inscription Affilié</h1>
+              <h1 className="text-lg font-bold text-foreground">{t('travel.affiliateRegistration')}</h1>
             </div>
           </div>
         </header>
@@ -181,7 +183,7 @@ export function TravelModule({ onBack }: TravelModuleProps) {
               >
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h1 className="text-lg font-bold text-foreground">Mon Espace Affilié</h1>
+              <h1 className="text-lg font-bold text-foreground">{t('travel.myAffiliateSpace')}</h1>
             </div>
           </div>
         </header>
@@ -208,11 +210,11 @@ export function TravelModule({ onBack }: TravelModuleProps) {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1">
-              <h1 className="text-lg font-bold text-foreground">Vol / Hôtel</h1>
+              <h1 className="text-lg font-bold text-foreground">{t('travel.title')}</h1>
               <p className="text-xs text-muted-foreground">
-                {currentMode === 'api' ? 'Réservation en temps réel' :
-                 currentMode === 'affiliate' ? 'Programme d\'affiliation' : 
-                 'Partenaires voyage'}
+                {currentMode === 'api' ? t('travel.realtimeBooking') :
+                 currentMode === 'affiliate' ? t('travel.affiliateProgram') : 
+                 t('travel.travelPartners')}
               </p>
             </div>
             <Button 
@@ -234,7 +236,7 @@ export function TravelModule({ onBack }: TravelModuleProps) {
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-purple-500" />
                 <span className="text-sm text-foreground">
-                  Affilié: <span className="font-mono font-bold">{affiliateCode}</span>
+                  {t('travel.affiliate')}: <span className="font-mono font-bold">{affiliateCode}</span>
                 </span>
               </div>
               <Button 
@@ -242,24 +244,24 @@ export function TravelModule({ onBack }: TravelModuleProps) {
                 variant="outline"
                 onClick={() => setShowAffiliateDashboard(true)}
               >
-                Mon Dashboard
+                {t('travel.myDashboard')}
               </Button>
             </div>
           ) : (
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-foreground">
-                  Gagnez des commissions!
+                  {t('travel.earnCommissions')}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Inscrivez-vous comme affilié voyage
+                  {t('travel.registerAsAffiliate')}
                 </p>
               </div>
               <Button 
                 size="sm"
                 onClick={() => setShowAffiliateRegistration(true)}
               >
-                Devenir affilié
+                {t('travel.becomeAffiliate')}
               </Button>
             </div>
           )}
@@ -271,11 +273,11 @@ export function TravelModule({ onBack }: TravelModuleProps) {
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="flights" className="gap-2">
             <Plane className="w-4 h-4" />
-            Vols
+            {t('travel.flights')}
           </TabsTrigger>
           <TabsTrigger value="hotels" className="gap-2">
             <Hotel className="w-4 h-4" />
-            Hôtels
+            {t('travel.hotels')}
           </TabsTrigger>
         </TabsList>
 
