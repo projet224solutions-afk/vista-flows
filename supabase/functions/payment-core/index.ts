@@ -6,7 +6,6 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { crypto } from "https://deno.land/std@0.190.0/crypto/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -36,61 +35,90 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[${timestamp}] [PAYMENT-CORE] ${step}${detailsStr}`);
 };
 
-// Generate HMAC-SHA256 signature for Djomy API
-async function generateHmacSignature(clientId: string, clientSecret: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const keyData = encoder.encode(clientSecret);
-  const messageData = encoder.encode(clientId);
-  
-  const key = await crypto.subtle.importKey(
-    "raw",
-    keyData,
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  
-  const signature = await crypto.subtle.sign("HMAC", key, messageData);
-  const hashArray = Array.from(new Uint8Array(signature));
-  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+// ============= DJOMY TOKEN MANAGER =============
+// Gère l'authentification par token OAuth2 avec régénération automatique
+
+interface DjomyTokenData {
+  accessToken: string;
+  expiresAt: number; // timestamp en ms
 }
 
-// Get Djomy access token
-async function getDjomyAccessToken(clientId: string, clientSecret: string, useSandbox: boolean): Promise<string> {
+// Cache du token en mémoire (par environnement)
+const tokenCache: Record<string, DjomyTokenData> = {};
+
+// Génère un nouveau token via l'endpoint officiel Djomy
+async function generateDjomyToken(clientId: string, clientSecret: string, useSandbox: boolean): Promise<DjomyTokenData> {
   const baseUrl = useSandbox 
     ? "https://sandbox-api.djomy.africa" 
     : "https://api.djomy.africa";
   
-  const signature = await generateHmacSignature(clientId, clientSecret);
-  const xApiKey = `${clientId}:${signature}`;
+  logStep("🔐 Generating new Djomy token", { baseUrl, useSandbox });
   
-  logStep("Getting Djomy access token", { baseUrl });
-  
-  const response = await fetch(`${baseUrl}/v1/auth`, {
+  const response = await fetch(`${baseUrl}/v1/auth/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Accept": "application/json",
       "User-Agent": "224solutions-payment-core/1.0",
-      "X-API-KEY": xApiKey,
     },
-    body: JSON.stringify({}),
+    body: JSON.stringify({
+      client_id: clientId,
+      client_secret: clientSecret,
+      grant_type: "client_credentials"
+    }),
   });
   
+  const responseText = await response.text();
+  logStep("Token response", { status: response.status, bodyPreview: responseText.substring(0, 200) });
+  
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Djomy auth failed: ${response.status} - ${errorText}`);
+    throw new Error(`Djomy token generation failed: ${response.status} - ${responseText}`);
   }
   
-  const data = await response.json();
-  return data.accessToken;
+  const data = JSON.parse(responseText);
+  
+  // Calcule l'expiration (default 1h moins 5min de marge)
+  const expiresIn = data.expires_in || 3600;
+  const expiresAt = Date.now() + (expiresIn - 300) * 1000; // -5min de marge
+  
+  const tokenData: DjomyTokenData = {
+    accessToken: data.access_token || data.accessToken,
+    expiresAt
+  };
+  
+  logStep("✅ Token generated successfully", { 
+    expiresIn, 
+    expiresAt: new Date(expiresAt).toISOString() 
+  });
+  
+  return tokenData;
 }
 
-// Initiate Djomy payment
+// Récupère un token valide (depuis cache ou génère un nouveau)
+async function getDjomyAccessToken(clientId: string, clientSecret: string, useSandbox: boolean): Promise<string> {
+  const cacheKey = `${useSandbox ? 'sandbox' : 'prod'}_${clientId}`;
+  const cachedToken = tokenCache[cacheKey];
+  
+  // Vérifie si le token en cache est encore valide
+  if (cachedToken && cachedToken.expiresAt > Date.now()) {
+    const remainingMinutes = Math.round((cachedToken.expiresAt - Date.now()) / 60000);
+    logStep("♻️ Using cached token", { remainingMinutes, cacheKey });
+    return cachedToken.accessToken;
+  }
+  
+  // Token expiré ou inexistant → génère un nouveau
+  logStep("🔄 Token expired or missing, generating new one", { cacheKey });
+  const newToken = await generateDjomyToken(clientId, clientSecret, useSandbox);
+  
+  // Met en cache
+  tokenCache[cacheKey] = newToken;
+  
+  return newToken.accessToken;
+}
+
+// Initiate Djomy payment avec token Bearer
 async function initiateDjomyPayment(
   accessToken: string,
-  clientId: string,
-  clientSecret: string,
   payload: {
     paymentMethod: string;
     payerIdentifier: string;
@@ -105,10 +133,7 @@ async function initiateDjomyPayment(
     ? "https://sandbox-api.djomy.africa" 
     : "https://api.djomy.africa";
   
-  const signature = await generateHmacSignature(clientId, clientSecret);
-  const xApiKey = `${clientId}:${signature}`;
-  
-  logStep("Initiating Djomy payment", { payload });
+  logStep("💳 Initiating Djomy payment", { payload, baseUrl });
   
   const response = await fetch(`${baseUrl}/v1/payments`, {
     method: "POST",
@@ -117,16 +142,19 @@ async function initiateDjomyPayment(
       "Accept": "application/json",
       "User-Agent": "224solutions-payment-core/1.0",
       "Authorization": `Bearer ${accessToken}`,
-      "X-API-KEY": xApiKey,
     },
     body: JSON.stringify(payload),
   });
   
   const responseText = await response.text();
-  logStep("Djomy response", { status: response.status, body: responseText.substring(0, 200) });
+  logStep("Djomy response", { status: response.status, body: responseText.substring(0, 300) });
   
   if (!response.ok) {
-    return { success: false, error: responseText };
+    // Si 401/403, le token pourrait être invalide
+    if (response.status === 401 || response.status === 403) {
+      logStep("⚠️ Token potentially invalid", { status: response.status });
+    }
+    return { success: false, error: `${response.status}: ${responseText}` };
   }
   
   const data = JSON.parse(responseText);
@@ -298,8 +326,6 @@ serve(async (req) => {
 
     const djomyResult = await initiateDjomyPayment(
       accessToken,
-      clientId,
-      clientSecret,
       djomyPayload,
       useSandbox
     );

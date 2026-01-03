@@ -57,26 +57,64 @@ interface TrustScoreResult {
   autoReleased: boolean;
 }
 
-// Generate HMAC signature for Djomy API
-async function generateHmacSignature(clientId: string, clientSecret: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const keyData = encoder.encode(clientSecret);
-  const messageData = encoder.encode(clientId);
-  
-  const key = await crypto.subtle.importKey(
-    "raw",
-    keyData,
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  
-  const signature = await crypto.subtle.sign("HMAC", key, messageData);
-  const hashArray = Array.from(new Uint8Array(signature));
-  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+// ============= DJOMY TOKEN MANAGER =============
+interface DjomyTokenData {
+  accessToken: string;
+  expiresAt: number;
 }
 
-// Secondary verification with Djomy API
+const tokenCache: Record<string, DjomyTokenData> = {};
+
+// Génère un nouveau token via l'endpoint officiel Djomy OAuth2
+async function generateDjomyToken(clientId: string, clientSecret: string, useSandbox: boolean): Promise<DjomyTokenData> {
+  const baseUrl = useSandbox 
+    ? "https://sandbox-api.djomy.africa" 
+    : "https://api.djomy.africa";
+  
+  logStep("🔐 Generating new Djomy token for verification", { baseUrl });
+  
+  const response = await fetch(`${baseUrl}/v1/auth/token`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+    },
+    body: JSON.stringify({
+      client_id: clientId,
+      client_secret: clientSecret,
+      grant_type: "client_credentials"
+    }),
+  });
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Djomy token generation failed: ${response.status} - ${errorText}`);
+  }
+  
+  const data = await response.json();
+  const expiresIn = data.expires_in || 3600;
+  
+  return {
+    accessToken: data.access_token || data.accessToken,
+    expiresAt: Date.now() + (expiresIn - 300) * 1000
+  };
+}
+
+// Récupère un token valide
+async function getDjomyAccessToken(clientId: string, clientSecret: string, useSandbox: boolean): Promise<string> {
+  const cacheKey = `webhook_${useSandbox ? 'sandbox' : 'prod'}_${clientId}`;
+  const cachedToken = tokenCache[cacheKey];
+  
+  if (cachedToken && cachedToken.expiresAt > Date.now()) {
+    return cachedToken.accessToken;
+  }
+  
+  const newToken = await generateDjomyToken(clientId, clientSecret, useSandbox);
+  tokenCache[cacheKey] = newToken;
+  return newToken.accessToken;
+}
+
+// Secondary verification with Djomy API (utilise token OAuth2)
 async function verifyTransactionWithDjomy(
   transactionId: string,
   clientId: string,
@@ -84,43 +122,30 @@ async function verifyTransactionWithDjomy(
   useSandbox: boolean
 ): Promise<{ verified: boolean; status: string; data: unknown }> {
   try {
-    logStep("Secondary verification with Djomy API", { transactionId });
+    logStep("🔍 Secondary verification with Djomy API", { transactionId });
     
     const baseUrl = useSandbox 
       ? "https://sandbox-api.djomy.africa" 
       : "https://api.djomy.africa";
     
-    const signature = await generateHmacSignature(clientId, clientSecret);
-    const xApiKey = `${clientId}:${signature}`;
-    
-    // Get access token
-    const authResponse = await fetch(`${baseUrl}/v1/auth`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "X-API-KEY": xApiKey,
-      },
-      body: JSON.stringify({}),
-    });
-    
-    if (!authResponse.ok) {
-      return { verified: false, status: "AUTH_FAILED", data: null };
-    }
-    
-    const authData = await authResponse.json();
-    const accessToken = authData.accessToken;
+    // Get access token (avec cache)
+    const accessToken = await getDjomyAccessToken(clientId, clientSecret, useSandbox);
     
     // Verify transaction
     const verifyResponse = await fetch(`${baseUrl}/v1/payments/${transactionId}`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${accessToken}`,
-        "X-API-KEY": xApiKey,
+        "Accept": "application/json",
       },
     });
     
     const verifyData = await verifyResponse.json();
+    
+    logStep("Verification response", { 
+      status: verifyResponse.status, 
+      transactionStatus: verifyData.status 
+    });
     
     return {
       verified: verifyResponse.ok && verifyData.status === "SUCCESS",
