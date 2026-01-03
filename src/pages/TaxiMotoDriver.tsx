@@ -109,6 +109,9 @@ export default function TaxiMotoDriver() {
         updateLocalStats
     } = useTaxiDriverStats(driverId);
 
+    // ID affichable (code métier) : priorité à custom_id / public_id du profil
+    const driverDisplayId = profile?.custom_id || profile?.public_id || driverId;
+
     // Fonction de démarrage de navigation (passée aux hooks)
     const startNavigation = useCallback(async (destination: { latitude: number; longitude: number }) => {
         setNextInstruction('📍 Calcul de l\'itinéraire...');
@@ -415,6 +418,7 @@ export default function TaxiMotoDriver() {
                     isLoading={driverLoading}
                     hasSubscription={hasAccess}
                     driverId={driverId}
+                    driverDisplayId={driverDisplayId}
                     userId={user?.id}
                     location={location}
                     stats={driverStats}

@@ -30,7 +30,17 @@ interface DriverMainDashboardProps {
   isOnline: boolean;
   isLoading: boolean;
   hasSubscription: boolean;
+
+  /**
+   * ID technique du conducteur (UUID taxi_drivers.id) utilisé pour les opérations (SOS, DB, etc.)
+   */
   driverId: string | null;
+
+  /**
+   * ID “métier” affichable (ex: custom_id / public_id). Si absent, on retombe sur driverId.
+   */
+  driverDisplayId?: string | null;
+
   userId: string | undefined;
   location: { latitude: number; longitude: number } | null;
   stats: {
@@ -59,6 +69,7 @@ export function DriverMainDashboard({
   isLoading,
   hasSubscription,
   driverId,
+  driverDisplayId,
   userId,
   location,
   stats,
@@ -184,7 +195,7 @@ export function DriverMainDashboard({
 
               {/* Vehicle Information Card */}
               <DriverVehicleInfo
-                driverId={driverId}
+                driverId={driverDisplayId ?? driverId}
                 vehiclePlate={stats.vehiclePlate}
                 giletNumber={stats.giletNumber}
                 serialNumber={stats.serialNumber}

@@ -28,8 +28,15 @@ export function DriverVehicleInfo({
     return null;
   }
 
-  // Formater l'ID du chauffeur pour l'affichage (8 premiers caractères)
-  const displayDriverId = driverId ? driverId.substring(0, 8).toUpperCase() : null;
+  // Formater l'ID du chauffeur pour l'affichage
+  // - si c'est un UUID, on affiche une version courte (8 premiers caractères)
+  // - sinon (custom_id / public_id), on affiche l'identifiant complet
+  const isUuid = (value: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
+  const displayDriverId = driverId
+    ? (isUuid(driverId) ? driverId.substring(0, 8).toUpperCase() : driverId)
+    : null;
 
   return (
     <div className={cn(
@@ -59,7 +66,12 @@ export function DriverVehicleInfo({
             <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 col-span-2">
               <User className="w-3 h-3 text-emerald-400" />
               <span className="text-emerald-400 text-[10px] font-medium">ID:</span>
-              <span className="text-white text-xs font-mono font-bold tracking-wider">{displayDriverId}</span>
+              <span
+                className="text-white text-xs font-mono font-bold tracking-wider"
+                title={driverId ?? undefined}
+              >
+                {displayDriverId}
+              </span>
             </div>
           )}
 
