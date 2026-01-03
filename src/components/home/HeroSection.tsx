@@ -17,29 +17,29 @@ interface QuickAction {
   gradient: string;
 }
 
-const quickActions: QuickAction[] = [
+const getQuickActions = (t: (key: string) => string): QuickAction[] => [
   { 
     id: 'restaurant', 
     icon: <Utensils className="w-5 h-5" />, 
-    label: 'Restaurant',
+    label: t('home.restaurant'),
     gradient: 'from-orange-500 to-red-500'
   },
   { 
     id: 'boutique', 
     icon: <Store className="w-5 h-5" />, 
-    label: 'Boutique',
+    label: t('home.boutique'),
     gradient: 'from-blue-500 to-indigo-500'
   },
   { 
     id: 'livraison', 
     icon: <Truck className="w-5 h-5" />, 
-    label: 'Livraison',
+    label: t('home.delivery'),
     gradient: 'from-emerald-500 to-teal-500'
   },
   { 
     id: 'transport', 
     icon: <Car className="w-5 h-5" />, 
-    label: 'Transport',
+    label: t('home.transport'),
     gradient: 'from-violet-500 to-purple-500'
   },
 ];
@@ -51,6 +51,7 @@ interface HeroSectionProps {
 export function HeroSection({ className }: HeroSectionProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const quickActions = getQuickActions(t);
 
   return (
     <section className={cn('relative', className)}>
@@ -71,7 +72,7 @@ export function HeroSection({ className }: HeroSectionProps) {
         
         {/* Subtitle - Short */}
         <p className="text-sm text-muted-foreground mb-5">
-          15 services professionnels • Outils complets
+          {t('home.professionalCategories')} • {t('home.completeTools') || t('home.withCompleteTools')}
         </p>
 
         {/* CTA Button - Primary */}
@@ -102,19 +103,19 @@ export function HeroSection({ className }: HeroSectionProps) {
           )}
         >
           <GraduationCap className="w-5 h-5" />
-          Formation & Produits numériques
+          {t('home.digitalProducts') || 'Formation & Produits numériques'}
         </Button>
       </div>
 
       {/* Quick Actions Grid - Compact Cards */}
       <div className="px-4 pb-4">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-foreground">Services populaires</h2>
+          <h2 className="text-sm font-semibold text-foreground">{t('home.popularServices') || t('home.nearbyServices')}</h2>
           <button 
             onClick={() => navigate('/services')}
             className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
           >
-            Voir tout
+            {t('home.seeAll')}
             <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -157,7 +158,7 @@ export function HeroSection({ className }: HeroSectionProps) {
         >
           <Sparkles className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium text-muted-foreground">
-            +11 autres services
+            {t('home.andMore')}
           </span>
           <ChevronRight className="w-4 h-4 text-muted-foreground" />
         </button>
