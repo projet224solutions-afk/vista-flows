@@ -227,41 +227,66 @@ export default function Proximite() {
   useEffect(() => {
     const loadCategoriesWithProducts = async () => {
       try {
-        // Récupérer les produits groupés par catégorie avec comptage
-        const { data: products, error } = await supabase
+        console.log('📦 Chargement des catégories avec produits...');
+        
+        // D'abord récupérer tous les produits actifs avec leur category_id
+        const { data: products, error: productsError } = await supabase
           .from('products')
-          .select('category_id, categories(id, name, image_url)')
+          .select('id, category_id')
           .eq('is_active', true)
           .not('category_id', 'is', null);
 
-        if (error) throw error;
+        if (productsError) {
+          console.error('Erreur produits:', productsError);
+          throw productsError;
+        }
 
-        // Compter les produits par catégorie
-        const categoryMap = new Map<string, CategoryWithCount>();
-        
-        (products || []).forEach((product: any) => {
-          if (product.categories) {
-            const catId = product.categories.id;
-            if (categoryMap.has(catId)) {
-              categoryMap.get(catId)!.product_count++;
-            } else {
-              categoryMap.set(catId, {
-                id: catId,
-                name: product.categories.name,
-                image_url: product.categories.image_url,
-                product_count: 1
-              });
-            }
+        console.log('📦 Produits trouvés:', products?.length || 0);
+
+        if (!products || products.length === 0) {
+          setProductCategories([]);
+          setLoadingCategories(false);
+          return;
+        }
+
+        // Compter les produits par category_id
+        const categoryCountMap = new Map<string, number>();
+        products.forEach((product) => {
+          if (product.category_id) {
+            const count = categoryCountMap.get(product.category_id) || 0;
+            categoryCountMap.set(product.category_id, count + 1);
           }
         });
 
-        // Convertir en tableau et trier par nombre de produits (décroissant)
-        const categoriesWithProducts = Array.from(categoryMap.values())
-          .sort((a, b) => b.product_count - a.product_count);
+        console.log('📦 Catégories avec produits:', categoryCountMap.size);
 
+        // Récupérer les infos des catégories qui ont des produits
+        const categoryIds = Array.from(categoryCountMap.keys());
+        
+        const { data: categories, error: categoriesError } = await supabase
+          .from('categories')
+          .select('id, name, image_url')
+          .in('id', categoryIds);
+
+        if (categoriesError) {
+          console.error('Erreur catégories:', categoriesError);
+          throw categoriesError;
+        }
+
+        console.log('📦 Catégories récupérées:', categories?.length || 0);
+
+        // Combiner les données
+        const categoriesWithProducts: CategoryWithCount[] = (categories || []).map((cat) => ({
+          id: cat.id,
+          name: cat.name,
+          image_url: cat.image_url,
+          product_count: categoryCountMap.get(cat.id) || 0
+        })).sort((a, b) => b.product_count - a.product_count);
+
+        console.log('📦 Catégories finales:', categoriesWithProducts);
         setProductCategories(categoriesWithProducts);
       } catch (error) {
-        console.error('Erreur chargement catégories:', error);
+        console.error('❌ Erreur chargement catégories:', error);
       } finally {
         setLoadingCategories(false);
       }
