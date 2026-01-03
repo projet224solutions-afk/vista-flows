@@ -15,6 +15,15 @@ verify_jwt = false
 [functions.djomy-verify]
 verify_jwt = true
 
+[functions.djomy-init-payment]
+verify_jwt = true
+
+[functions.djomy-secure-webhook]
+verify_jwt = false
+
+[functions.admin-release-funds]
+verify_jwt = true
+
 [functions.calculate-delivery-distances]
 verify_jwt = false
 
