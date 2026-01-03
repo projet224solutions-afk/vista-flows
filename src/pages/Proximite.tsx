@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
@@ -33,6 +33,7 @@ import QuickFooter from "@/components/QuickFooter";
 import { useProximityStats } from "@/hooks/useProximityStats";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
+import { supabase } from "@/integrations/supabase/client";
 
 // Catégories de services de proximité avec IDs pour mapping dynamique
 const getServiceCategories = (stats: any) => [
@@ -129,27 +130,13 @@ const getServiceCategories = (stats: any) => [
   }
 ];
 
-// Catégories de produits avec stats dynamiques - utilisation des vrais UUIDs de la base
-const getProductCategories = (stats: any) => [
-  {
-    id: "aa251121-4721-4f5c-a3e0-c3336f4093ed", // UUID réel de "Mode & Vêtements"
-    title: "Mode & Vêtements",
-    icon: ShoppingBag,
-    color: "from-purple-500 to-purple-600",
-    bgColor: "bg-purple-50",
-    textColor: "text-purple-600",
-    count: stats.mode
-  },
-  {
-    id: "ca850dd2-99f8-4dfc-bd48-cf958c90cff6", // UUID réel de "Électronique"
-    title: "Électronique",
-    icon: Laptop,
-    color: "from-indigo-500 to-indigo-600",
-    bgColor: "bg-indigo-50",
-    textColor: "text-indigo-600",
-    count: stats.electronique
-  }
-];
+// Interface pour les catégories chargées
+interface Category {
+  id: string;
+  name: string;
+  image_url?: string;
+  is_active: boolean;
+}
 
 // Services professionnels avec stats dynamiques
 const getProfessionalServices = (stats: any) => [
@@ -233,10 +220,32 @@ export default function Proximite() {
   const [searchQuery, setSearchQuery] = useState("");
   const { stats, loading, userPosition, locationError, refresh, radiusKm } = useProximityStats();
   const { t } = useTranslation();
+  const [productCategories, setProductCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  // Charger toutes les catégories depuis la base de données
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('id, name, image_url, is_active')
+          .eq('is_active', true)
+          .order('name');
+
+        if (error) throw error;
+        setProductCategories(data || []);
+      } catch (error) {
+        console.error('Erreur chargement catégories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    loadCategories();
+  }, []);
 
   // Memoize computed categories based on real stats
   const serviceCategories = useMemo(() => getServiceCategories(stats), [stats]);
-  const productCategories = useMemo(() => getProductCategories(stats), [stats]);
   const professionalServices = useMemo(() => getProfessionalServices(stats), [stats]);
 
   const handleServiceClick = (path: string) => {
@@ -379,33 +388,56 @@ export default function Proximite() {
             initial="hidden"
             animate="visible"
           >
-            {productCategories.map((category) => {
-              const Icon = category.icon;
-              return (
+            {loadingCategories ? (
+              <div className="col-span-full flex justify-center py-4">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : (
+              productCategories.slice(0, 8).map((category) => (
                 <motion.button
                   key={category.id}
                   variants={itemVariants}
                   onClick={() => navigate(`/marketplace?category=${category.id}&includePhysical=1`)}
                   className="group bg-card rounded-2xl p-4 border border-border/50 hover:border-primary/30 hover:shadow-lg transition-all duration-300 text-left"
                 >
-                  <div className={cn(
-                    "w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-transform group-hover:scale-110",
-                    category.bgColor
-                  )}>
-                    <Icon className={cn("w-5 h-5", category.textColor)} />
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-transform group-hover:scale-110 bg-primary/10">
+                    <ShoppingBag className="w-5 h-5 text-primary" />
                   </div>
                   
-                  <h3 className="font-semibold text-foreground text-sm mb-1 group-hover:text-primary transition-colors">
-                    {category.title}
+                  <h3 className="font-semibold text-foreground text-sm mb-1 group-hover:text-primary transition-colors line-clamp-1">
+                    {category.name}
                   </h3>
                   
                   <div className="flex items-center gap-1">
-                    <span className="text-xs text-muted-foreground">{category.count} articles</span>
+                    <span className="text-xs text-muted-foreground">{t('home.seeAll')}</span>
                   </div>
                 </motion.button>
-              );
-            })}
+              ))
+            )}
           </motion.div>
+          
+          {/* Afficher plus de catégories si disponibles */}
+          {productCategories.length > 8 && (
+            <motion.div 
+              className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {productCategories.slice(8, 16).map((category) => (
+                <motion.button
+                  key={category.id}
+                  variants={itemVariants}
+                  onClick={() => navigate(`/marketplace?category=${category.id}&includePhysical=1`)}
+                  className="group bg-card rounded-2xl p-3 border border-border/50 hover:border-primary/30 hover:shadow-lg transition-all duration-300 text-left"
+                >
+                  <h3 className="font-medium text-foreground text-xs group-hover:text-primary transition-colors line-clamp-1">
+                    {category.name}
+                  </h3>
+                </motion.button>
+              ))}
+            </motion.div>
+          )}
         </section>
 
         {/* Services professionnels */}
