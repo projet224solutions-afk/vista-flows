@@ -166,6 +166,9 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         .eq('verification_status', 'verified');
 
       // Filtres
+      if (vendorId) {
+        query = query.eq('user_id', vendorId);
+      }
       if (searchQuery?.trim()) {
         query = query.or(`business_name.ilike.%${searchQuery.trim()}%,description.ilike.%${searchQuery.trim()}%`);
       }
@@ -176,13 +179,12 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
 
       return (data || []).map(service => {
         const serviceType = service.service_types as any;
-        // Prix estimé basé sur la commission (pour affichage)
-        const estimatedPrice = 50; // Prix de base pour les services
+        const servicePrice = 0;
 
         return {
           id: service.id,
           name: service.business_name,
-          price: estimatedPrice,
+          price: servicePrice,
           description: service.description || '',
           images: [service.cover_image_url, service.logo_url].filter(Boolean) as string[],
           vendor_id: service.user_id,
@@ -235,6 +237,18 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         .eq('is_available', true);
 
       // Filtres
+      if (vendorId) {
+        const { data: services } = await supabase
+          .from('professional_services')
+          .select('id')
+          .eq('user_id', vendorId);
+        const serviceIds = services?.map(s => s.id) || [];
+        if (serviceIds.length > 0) {
+          query = query.in('professional_service_id', serviceIds);
+        } else {
+          return [];
+        }
+      }
       if (searchQuery?.trim()) {
         query = query.ilike('name', `%${searchQuery.trim()}%`);
       }
@@ -284,19 +298,22 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
     try {
       setLoading(true);
 
-      // Charger en parallèle tous les types d'items
-      const [products, professionalServices, digitalProducts] = await Promise.all([
-        loadProducts(),
-        loadProfessionalServices(),
-        loadDigitalProducts()
-      ]);
-
-      // Combiner tous les items
-      let allItems = [
-        ...products,
-        ...professionalServices,
-        ...digitalProducts
-      ];
+      // Optimisation: charger seulement le type filtré
+      let allItems: MarketplaceItem[] = [];
+      if (itemType === 'product') {
+        allItems = await loadProducts();
+      } else if (itemType === 'professional_service') {
+        allItems = await loadProfessionalServices();
+      } else if (itemType === 'digital_product') {
+        allItems = await loadDigitalProducts();
+      } else {
+        const [products, professionalServices, digitalProducts] = await Promise.all([
+          loadProducts(),
+          loadProfessionalServices(),
+          loadDigitalProducts()
+        ]);
+        allItems = [...products, ...professionalServices, ...digitalProducts];
+      }
 
       // Filtrage global par prix
       if (minPrice && minPrice > 0) {
@@ -387,6 +404,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
     if (!autoLoad) return;
 
     setPage(1);
+    setItems([]);
     loadAllItems(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [

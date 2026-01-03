@@ -43,7 +43,7 @@ export function UniversalMarketplaceCard({
       ? 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=400' // Numérique
       : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400'; // Produit
 
-  const mainImage = item.images && item.images.length > 0 && !imageError
+  const mainImage = item.images && item.images.length > 0 && !imageError && item.images[0]?.trim()
     ? item.images[0]
     : defaultImage;
 
@@ -194,13 +194,19 @@ export function UniversalMarketplaceCard({
         {/* Prix */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-primary">
-              {item.price.toLocaleString('fr-GN')} GNF
-            </span>
-            {item.originalPrice && item.originalPrice > item.price && (
-              <span className="text-xs text-muted-foreground line-through">
-                {item.originalPrice.toLocaleString('fr-GN')} GNF
-              </span>
+            {item.item_type === 'professional_service' && item.price === 0 ? (
+              <span className="text-lg font-bold text-primary">Sur devis</span>
+            ) : (
+              <>
+                <span className="text-lg font-bold text-primary">
+                  {item.price.toLocaleString('fr-GN')} GNF
+                </span>
+                {item.originalPrice && item.originalPrice > item.price && (
+                  <span className="text-xs text-muted-foreground line-through">
+                    {item.originalPrice.toLocaleString('fr-GN')} GNF
+                  </span>
+                )}
+              </>
             )}
           </div>
         </div>
