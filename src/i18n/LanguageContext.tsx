@@ -133,15 +133,43 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
   const [userCountry, setUserCountry] = useState<string | null>(null);
   const [hasAutoDetected, setHasAutoDetected] = useState(false);
 
-  // Détection du pays et langue au chargement
+  // Détection du pays et langue au chargement - SYNCHRO avec useGeoDetection
   useEffect(() => {
     const detect = async () => {
+      // Vérifier si une langue a déjà été choisie manuellement
+      const hasManualPref = localStorage.getItem(STORAGE_KEY);
+      if (hasManualPref) {
+        console.log('🌍 Langue manuelle trouvée:', hasManualPref);
+        return;
+      }
+
+      // Essayer de récupérer depuis le cache de géo-détection (synchronisation avec useGeoDetection)
+      const geoCacheRaw = localStorage.getItem('geo_detection_cache');
+      if (geoCacheRaw) {
+        try {
+          const geoCache = JSON.parse(geoCacheRaw);
+          if (geoCache?.data?.country && geoCache?.data?.language) {
+            const country = geoCache.data.country;
+            const detectedLang = geoCache.data.language;
+            
+            // Vérifier si la langue est supportée
+            if (supportedLanguages.some(l => l.code === detectedLang)) {
+              console.log(`🌍 Auto-détection (via geo-cache): pays=${country}, langue=${detectedLang}`);
+              setUserCountry(country);
+              setLanguageState(detectedLang);
+              setHasAutoDetected(true);
+              return;
+            }
+          }
+        } catch {}
+      }
+
+      // Fallback: détection classique
       const { country, language: detectedLang } = await detectCountryAndLanguage();
       setUserCountry(country);
       
-      // Si l'utilisateur n'a pas de préférence manuelle ET qu'on a une langue détectée
-      const hasManualPref = localStorage.getItem(STORAGE_KEY);
-      if (!hasManualPref && detectedLang && !hasAutoDetected) {
+      // Si on a une langue détectée et pas encore auto-détecté
+      if (detectedLang && !hasAutoDetected) {
         console.log(`🌍 Auto-détection: pays=${country}, langue=${detectedLang}`);
         setLanguageState(detectedLang);
         setHasAutoDetected(true);

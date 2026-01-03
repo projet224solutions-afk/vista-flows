@@ -242,7 +242,7 @@ export default function WalletDashboard() {
         p_sender_code: senderCode,
         p_receiver_code: recipientCodeUpper,
         p_amount: amount,
-        p_currency: 'GNF'
+        p_currency: wallet?.currency || 'GNF'
       });
 
       if (error) {
@@ -298,12 +298,13 @@ export default function WalletDashboard() {
       }
 
       // Exécuter le transfert avec la nouvelle fonction
+      const currency = wallet?.currency || 'GNF';
       const { data, error } = await supabase.rpc('process_wallet_transfer_with_fees', {
         p_sender_code: senderCode,
         p_receiver_code: transferPreview.receiver.custom_id,
         p_amount: transferPreview.amount,
-        p_currency: 'GNF',
-        p_description: transferReason || `Transfert de ${transferPreview.amount.toLocaleString()} GNF`
+        p_currency: currency,
+        p_description: transferReason || `Transfert de ${transferPreview.amount.toLocaleString()} ${currency}`
       });
 
       if (error) throw error;
@@ -314,7 +315,7 @@ export default function WalletDashboard() {
       setTransferPreview(null);
       
       toast.success(
-        `✅ Transfert réussi\n💸 Frais appliqués : ${transferPreview.fee_amount.toLocaleString()} GNF\n💰 Montant transféré : ${transferPreview.amount.toLocaleString()} GNF`,
+        `✅ Transfert réussi\n💸 Frais appliqués : ${transferPreview.fee_amount.toLocaleString()} ${currency}\n💰 Montant transféré : ${transferPreview.amount.toLocaleString()} ${currency}`,
         { duration: 5000 }
       );
       
@@ -325,7 +326,7 @@ export default function WalletDashboard() {
     } finally {
       setBusy(false);
     }
-  }, [transferPreview, receiverId, transferReason, user?.id]);
+  }, [transferPreview, receiverId, transferReason, user?.id, wallet?.currency]);
 
   return (
     <Card className="h-full">
@@ -473,27 +474,27 @@ export default function WalletDashboard() {
                   <div className="p-4 bg-slate-50 rounded-lg space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium">💰 Montant à transférer</span>
-                      <span className="text-lg font-bold">{transferPreview?.amount?.toLocaleString()} GNF</span>
+                      <span className="text-lg font-bold">{transferPreview?.amount?.toLocaleString()} {wallet?.currency || 'GNF'}</span>
                     </div>
                     <div className="flex justify-between items-center text-orange-600">
                       <span className="text-sm font-medium">💸 Frais de transfert ({transferPreview?.fee_percent}%)</span>
-                      <span className="text-lg font-bold">{transferPreview?.fee_amount?.toLocaleString()} GNF</span>
+                      <span className="text-lg font-bold">{transferPreview?.fee_amount?.toLocaleString()} {wallet?.currency || 'GNF'}</span>
                     </div>
                     <div className="border-t pt-3 flex justify-between items-center">
                       <span className="text-sm font-medium">📉 Total débité de votre compte</span>
-                      <span className="text-xl font-bold text-red-600">{transferPreview?.total_debit?.toLocaleString()} GNF</span>
+                      <span className="text-xl font-bold text-red-600">{transferPreview?.total_debit?.toLocaleString()} {wallet?.currency || 'GNF'}</span>
                     </div>
                     <div className="flex justify-between items-center text-green-600">
                       <span className="text-sm font-medium">📈 Montant net reçu</span>
-                      <span className="text-lg font-bold">{transferPreview?.amount_received?.toLocaleString()} GNF</span>
+                      <span className="text-lg font-bold">{transferPreview?.amount_received?.toLocaleString()} {wallet?.currency || 'GNF'}</span>
                     </div>
                   </div>
                   
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-800">
-                      <strong>Solde actuel:</strong> {transferPreview?.current_balance?.toLocaleString()} GNF
+                      <strong>Solde actuel:</strong> {transferPreview?.current_balance?.toLocaleString()} {wallet?.currency || 'GNF'}
                       <br />
-                      <strong>Solde après transfert:</strong> {transferPreview?.balance_after?.toLocaleString()} GNF
+                      <strong>Solde après transfert:</strong> {transferPreview?.balance_after?.toLocaleString()} {wallet?.currency || 'GNF'}
                     </p>
                   </div>
 

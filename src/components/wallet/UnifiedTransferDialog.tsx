@@ -1,9 +1,10 @@
 /**
  * COMPOSANT UNIFIÉ DE TRANSFERT WALLET
  * Utilise les fonctions RPC standardisées avec codes ID
+ * SUPPORTE LES TRANSFERTS MULTI-DEVISES
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,10 +26,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Send, Loader2, Wallet, AlertCircle, CheckCircle } from "lucide-react";
+import { Send, Loader2, Wallet, AlertCircle, CheckCircle, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 
 interface UnifiedTransferDialogProps {
   senderCode: string; // Le code de l'expéditeur (USR0001, etc.)
@@ -37,6 +39,8 @@ interface UnifiedTransferDialogProps {
   className?: string;
   showText?: boolean;
   onSuccess?: () => void;
+  /** Devise par défaut du wallet */
+  currency?: string;
 }
 
 interface TransferPreview {
@@ -71,8 +75,10 @@ export function UnifiedTransferDialog({
   size = "default",
   className = "",
   showText = true,
-  onSuccess
+  onSuccess,
+  currency: propCurrency
 }: UnifiedTransferDialogProps) {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [amount, setAmount] = useState('');
@@ -80,6 +86,35 @@ export function UnifiedTransferDialog({
   const [description, setDescription] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [preview, setPreview] = useState<TransferPreview | null>(null);
+  const [walletCurrency, setWalletCurrency] = useState(propCurrency || 'GNF');
+
+  // Charger la devise du wallet de l'utilisateur
+  useEffect(() => {
+    if (propCurrency) {
+      setWalletCurrency(propCurrency);
+      return;
+    }
+    
+    const loadWalletCurrency = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data } = await supabase
+          .from('wallets')
+          .select('currency')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (data?.currency) {
+          setWalletCurrency(data.currency);
+        }
+      } catch (error) {
+        console.error('Erreur chargement devise wallet:', error);
+      }
+    };
+    
+    loadWalletCurrency();
+  }, [user?.id, propCurrency]);
 
   const handlePreview = async () => {
     if (!amount || !recipientCode || !description) {
@@ -108,7 +143,7 @@ export function UnifiedTransferDialog({
         p_sender_code: senderCode.toUpperCase(),
         p_receiver_code: recipientCode.toUpperCase(),
         p_amount: transferAmount,
-        p_currency: 'GNF'
+        p_currency: walletCurrency
       });
 
       if (error) {
@@ -149,7 +184,7 @@ export function UnifiedTransferDialog({
         p_sender_code: senderCode.toUpperCase(),
         p_receiver_code: recipientCode.toUpperCase(),
         p_amount: preview.amount,
-        p_currency: 'GNF',
+        p_currency: walletCurrency,
         p_description: description
       });
 
@@ -168,7 +203,7 @@ export function UnifiedTransferDialog({
       }
 
       toast.success(
-        `✅ Transfert réussi !\n💸 Frais : ${preview.fee_amount.toLocaleString()} GNF\n💰 Montant transféré : ${preview.amount.toLocaleString()} GNF`,
+        `✅ Transfert réussi !\n💸 Frais : ${preview.fee_amount.toLocaleString()} ${walletCurrency}\n💰 Montant transféré : ${preview.amount.toLocaleString()} ${walletCurrency}`,
         { duration: 5000 }
       );
       
@@ -240,17 +275,24 @@ export function UnifiedTransferDialog({
               </p>
             </div>
 
-            {/* Montant */}
             <div className="space-y-2">
-              <Label htmlFor="amount">Montant (GNF) *</Label>
-              <Input
-                id="amount"
-                type="number"
-                placeholder="Ex: 50000"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                disabled={loading}
-              />
+              <Label htmlFor="amount">Montant ({walletCurrency}) *</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="amount"
+                  type="number"
+                  placeholder="Ex: 50000"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  disabled={loading}
+                />
+                {walletCurrency !== 'GNF' && (
+                  <Badge variant="secondary" className="shrink-0">
+                    <Globe className="w-3 h-3 mr-1" />
+                    {walletCurrency}
+                  </Badge>
+                )}
+              </div>
             </div>
 
             {/* Description */}
@@ -305,27 +347,27 @@ export function UnifiedTransferDialog({
                 <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">💰 Montant à transférer</span>
-                    <span className="text-lg font-bold">{preview?.amount?.toLocaleString()} GNF</span>
+                    <span className="text-lg font-bold">{preview?.amount?.toLocaleString()} {walletCurrency}</span>
                   </div>
                   <div className="flex justify-between items-center text-orange-600 dark:text-orange-400">
                     <span className="text-sm font-medium">💸 Frais de transfert ({preview?.fee_percent}%)</span>
-                    <span className="text-lg font-bold">{preview?.fee_amount?.toLocaleString()} GNF</span>
+                    <span className="text-lg font-bold">{preview?.fee_amount?.toLocaleString()} {walletCurrency}</span>
                   </div>
                   <div className="border-t pt-3 flex justify-between items-center">
                     <span className="text-sm font-medium">📉 Total débité de votre compte</span>
-                    <span className="text-xl font-bold text-red-600 dark:text-red-400">{preview?.total_debit?.toLocaleString()} GNF</span>
+                    <span className="text-xl font-bold text-red-600 dark:text-red-400">{preview?.total_debit?.toLocaleString()} {walletCurrency}</span>
                   </div>
                   <div className="flex justify-between items-center text-green-600 dark:text-green-400">
                     <span className="text-sm font-medium">📈 Montant net reçu par le destinataire</span>
-                    <span className="text-lg font-bold">{preview?.amount_received?.toLocaleString()} GNF</span>
+                    <span className="text-lg font-bold">{preview?.amount_received?.toLocaleString()} {walletCurrency}</span>
                   </div>
                 </div>
                 
                 <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                   <p className="text-sm">
-                    <strong>Solde actuel:</strong> {preview?.current_balance?.toLocaleString()} GNF
+                    <strong>Solde actuel:</strong> {preview?.current_balance?.toLocaleString()} {walletCurrency}
                     <br />
-                    <strong>Solde après transfert:</strong> {preview?.balance_after?.toLocaleString()} GNF
+                    <strong>Solde après transfert:</strong> {preview?.balance_after?.toLocaleString()} {walletCurrency}
                   </p>
                 </div>
 
