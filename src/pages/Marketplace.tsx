@@ -9,6 +9,7 @@ import SearchBar from "@/components/SearchBar";
 import { MarketplaceGrid } from "@/components/marketplace/MarketplaceGrid";
 import { MarketplaceProductCard } from "@/components/marketplace/MarketplaceProductCard";
 import { UniversalMarketplaceCard } from "@/components/marketplace/UniversalMarketplaceCard";
+import { CurrencyIndicator } from "@/components/marketplace/CurrencyIndicator";
 import QuickFooter from "@/components/QuickFooter";
 import ProductDetailModal from "@/components/marketplace/ProductDetailModal";
 import { supabase } from "@/integrations/supabase/client";
@@ -233,6 +234,7 @@ export default function Marketplace() {
               )}
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
+              <CurrencyIndicator variant="compact" />
               {vendorId && (
                 <>
                   <ShareButton

@@ -19,6 +19,10 @@ import {
 import { cn } from '@/lib/utils';
 import type { MarketplaceItem } from '@/hooks/useMarketplaceUniversal';
 import { useState } from 'react';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
+import { useTranslation } from '@/hooks/useTranslation';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useDisplayCurrency } from './CurrencyIndicator';
 
 interface UniversalMarketplaceCardProps {
   item: MarketplaceItem;
@@ -34,6 +38,9 @@ export function UniversalMarketplaceCard({
   className
 }: UniversalMarketplaceCardProps) {
   const [imageError, setImageError] = useState(false);
+  const { convert, userCurrency, loading: priceLoading } = usePriceConverter();
+  const { t } = useTranslation();
+  const { displayCurrency } = useDisplayCurrency();
 
   // Image par défaut selon le type
   const defaultImage = 
@@ -54,20 +61,20 @@ export function UniversalMarketplaceCard({
         return (
           <Badge className="absolute top-2 left-2 bg-blue-500 text-white">
             <Briefcase className="w-3 h-3 mr-1" />
-            Service Pro
+            {t('marketplace.card.badge.service') || 'Service Pro'}
           </Badge>
         );
       case 'digital_product':
         return (
           <Badge className="absolute top-2 left-2 bg-purple-500 text-white">
             <Download className="w-3 h-3 mr-1" />
-            Numérique
+            {t('marketplace.card.badge.digital') || 'Numérique'}
           </Badge>
         );
       default:
         return item.free_shipping ? (
           <Badge className="absolute top-2 left-2 bg-green-500 text-white">
-            Livraison gratuite
+            {t('marketplace.card.badge.freeShipping') || 'Livraison gratuite'}
           </Badge>
         ) : null;
     }
@@ -85,11 +92,11 @@ export function UniversalMarketplaceCard({
   const getMainActionLabel = () => {
     switch (item.item_type) {
       case 'professional_service':
-        return 'Voir le service';
+        return t('marketplace.card.action.viewService') || 'Voir le service';
       case 'digital_product':
-        return 'Acheter';
+        return t('marketplace.card.action.buy') || 'Acheter';
       default:
-        return 'Ajouter au panier';
+        return t('marketplace.card.action.addToCart') || 'Ajouter au panier';
     }
   };
 
@@ -170,7 +177,7 @@ export function UniversalMarketplaceCard({
             {item.opening_hours && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Clock className="w-3 h-3" />
-                <span>Horaires disponibles</span>
+                <span>{t('marketplace.card.hoursAvailable') || 'Horaires disponibles'}</span>
               </div>
             )}
           </div>
@@ -180,7 +187,7 @@ export function UniversalMarketplaceCard({
           <div className="space-y-1 mb-3">
             {item.file_size && (
               <p className="text-xs text-muted-foreground">
-                Taille: {item.file_size}
+                {t('marketplace.card.fileSize') || 'Taille'}: {item.file_size}
               </p>
             )}
             {item.license_type && (
@@ -193,20 +200,53 @@ export function UniversalMarketplaceCard({
 
         {/* Prix */}
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {item.item_type === 'professional_service' && item.price === 0 ? (
-              <span className="text-lg font-bold text-primary">Sur devis</span>
+              <span className="text-lg font-bold text-primary">
+                {t('marketplace.card.onQuote') || 'Sur devis'}
+              </span>
             ) : (
-              <>
-                <span className="text-lg font-bold text-primary">
-                  {item.price.toLocaleString('fr-GN')} GNF
-                </span>
-                {item.originalPrice && item.originalPrice > item.price && (
-                  <span className="text-xs text-muted-foreground line-through">
-                    {item.originalPrice.toLocaleString('fr-GN')} GNF
-                  </span>
-                )}
-              </>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex flex-col">
+                      <span className="text-lg font-bold text-primary">
+                        {priceLoading ? (
+                          `${item.price.toLocaleString('fr-GN')} GNF`
+                        ) : displayCurrency !== 'GNF' ? (
+                          convert(item.price, 'GNF').formatted
+                        ) : (
+                          `${item.price.toLocaleString('fr-GN')} GNF`
+                        )}
+                      </span>
+                      {item.originalPrice && item.originalPrice > item.price && (
+                        <span className="text-xs text-muted-foreground line-through">
+                          {priceLoading || displayCurrency === 'GNF' ? (
+                            `${item.originalPrice.toLocaleString('fr-GN')} GNF`
+                          ) : (
+                            convert(item.originalPrice, 'GNF').formatted
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {displayCurrency !== 'GNF' && !priceLoading && (
+                      <div className="text-xs">
+                        <p className="font-semibold">
+                          {t('marketplace.card.originalPrice') || 'Prix original'}:
+                        </p>
+                        <p>{item.price.toLocaleString('fr-GN')} GNF</p>
+                        {item.originalPrice && item.originalPrice > item.price && (
+                          <p className="text-muted-foreground line-through">
+                            {item.originalPrice.toLocaleString('fr-GN')} GNF
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
         </div>
@@ -214,10 +254,12 @@ export function UniversalMarketplaceCard({
         {/* Vendeur et avis */}
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
           <span className="line-clamp-1">
-            {item.item_type === 'professional_service' ? 'Par' : 'Vendu par'} {item.vendor_name}
+            {item.item_type === 'professional_service' 
+              ? t('marketplace.card.by') || 'Par' 
+              : t('marketplace.card.soldBy') || 'Vendu par'} {item.vendor_name}
           </span>
           {item.reviews_count > 0 && (
-            <span>({item.reviews_count} avis)</span>
+            <span>({item.reviews_count} {t('marketplace.card.reviews') || 'avis'})</span>
           )}
         </div>
 
