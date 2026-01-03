@@ -19,7 +19,8 @@ import {
   Loader2, 
   AlertCircle,
   CheckCircle,
-  Wallet
+  Wallet,
+  Truck
 } from 'lucide-react';
 import { useDjomyPayment, type DjomyPaymentMethod } from '@/hooks/useDjomyPayment';
 import { useAuth } from '@/hooks/useAuth';
@@ -32,16 +33,18 @@ interface JomyPaymentSelectorProps {
   orderId?: string;
   description?: string;
   transactionType?: 'product' | 'taxi' | 'delivery' | 'service' | 'transfer';
+  productType?: 'physical' | 'digital'; // Type de produit pour filtrer les options
   onPaymentSuccess: (transactionId: string, status: string) => void;
   onPaymentPending?: (transactionId: string) => void;
   onPaymentFailed?: (error: string) => void;
+  onCashOnDelivery?: () => void; // Callback pour paiement à la livraison
   onCancel: () => void;
   enableEscrow?: boolean;
   recipientId?: string; // Public ID du destinataire (pour les transferts wallet)
 }
 
 interface PaymentMethodOption {
-  id: DjomyPaymentMethod | 'WALLET';
+  id: DjomyPaymentMethod | 'WALLET' | 'CASH_ON_DELIVERY';
   name: string;
   description: string;
   icon: React.ReactNode;
@@ -56,9 +59,11 @@ export function JomyPaymentSelector({
   orderId,
   description,
   transactionType = 'product',
+  productType = 'physical', // Par défaut produit physique
   onPaymentSuccess,
   onPaymentPending,
   onPaymentFailed,
+  onCashOnDelivery,
   onCancel,
   enableEscrow = true,
   recipientId
@@ -66,7 +71,7 @@ export function JomyPaymentSelector({
   const { user } = useAuth();
   const { initializePayment, pollPaymentStatus, isLoading, error } = useDjomyPayment();
   
-  const [selectedMethod, setSelectedMethod] = useState<DjomyPaymentMethod | 'WALLET'>(recipientId ? 'WALLET' : 'OM');
+  const [selectedMethod, setSelectedMethod] = useState<DjomyPaymentMethod | 'WALLET' | 'CASH_ON_DELIVERY'>(recipientId ? 'WALLET' : 'OM');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [processing, setProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'polling' | 'success' | 'failed'>('idle');
@@ -92,7 +97,7 @@ export function JomyPaymentSelector({
     loadWalletBalance();
   }, [user?.id]);
 
-  // Méthodes de paiement disponibles
+  // Méthodes de paiement disponibles (filtrées selon le type de produit)
   const paymentMethods: PaymentMethodOption[] = [
     // Option Wallet en premier si recipientId est fourni
     ...(recipientId ? [{
@@ -130,7 +135,16 @@ export function JomyPaymentSelector({
       requiresPhone: true,
       phonePrefix: '660',
       phonePlaceholder: '660 XX XX XX'
-    }
+    },
+    // Paiement à la livraison - uniquement pour produits physiques
+    ...(productType === 'physical' && transactionType === 'product' && onCashOnDelivery ? [{
+      id: 'CASH_ON_DELIVERY' as const,
+      name: 'Paiement à la livraison',
+      description: 'Payez en espèces à la réception',
+      icon: <Truck className="h-5 w-5 text-emerald-600" />,
+      iconBg: 'bg-emerald-100',
+      requiresPhone: false
+    }] : [])
   ];
 
   const selectedOption = paymentMethods.find(m => m.id === selectedMethod);
@@ -139,6 +153,14 @@ export function JomyPaymentSelector({
   const handlePayment = async () => {
     if (!user) {
       toast.error('Vous devez être connecté pour effectuer un paiement');
+      return;
+    }
+
+    // Gestion du paiement à la livraison
+    if (selectedMethod === 'CASH_ON_DELIVERY') {
+      if (onCashOnDelivery) {
+        onCashOnDelivery();
+      }
       return;
     }
 
