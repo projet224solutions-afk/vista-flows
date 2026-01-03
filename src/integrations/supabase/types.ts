@@ -17457,6 +17457,10 @@ export type Database = {
           vendor_id: string
         }[]
       }
+      pdg_offer_subscription: {
+        Args: { p_days: number; p_type: string; p_user_id: string }
+        Returns: Json
+      }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
         | { Args: { use_typmod?: boolean }; Returns: string }
