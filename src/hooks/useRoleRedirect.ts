@@ -40,6 +40,8 @@ const PUBLIC_ROUTES = [
  * Hook pour rediriger automatiquement l'utilisateur vers son dashboard
  * en fonction de son rôle après connexion
  * NE redirige PAS si l'utilisateur est sur une route publique ou déjà sur son dashboard
+ * 
+ * ⚡ OPTIMISÉ: Redirection immédiate dès que le profil est chargé (pas d'attente du rendu)
  */
 export const useRoleRedirect = () => {
   const { profile, user, loading, profileLoading } = useAuth();
@@ -47,11 +49,11 @@ export const useRoleRedirect = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Attendre la fin du chargement complet (session ET profil)
-    if (loading || profileLoading) return;
+    // ⚡ Ne pas attendre si on est déjà en train de charger - empêche le rendu de la page Home
+    if (loading) return;
 
-    // Si utilisateur connecté avec profil chargé
-    if (user && profile && profile.role) {
+    // Si utilisateur connecté avec profil chargé OU en cours de chargement du profil
+    if (user && profile && profile.role && !profileLoading) {
       const currentPath = location.pathname;
 
       // Ne pas rediriger si l'utilisateur est sur une route publique
@@ -82,6 +84,7 @@ export const useRoleRedirect = () => {
           return;
         }
         
+        // ⚡ Redirection immédiate avec replace pour éviter l'historique
         console.log(`🔄 Redirection automatique vers ${targetRoute} (rôle: ${profile.role})`);
         navigate(targetRoute, { replace: true });
       }
