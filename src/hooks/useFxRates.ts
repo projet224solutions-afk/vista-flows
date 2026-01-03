@@ -55,25 +55,47 @@ export function useFxRates({ base, symbols, refreshMinutes = 12 * 60 }: UseFxRat
       } catch (_err) {
         // Fallback local (si API externe indisponible): taux configurés en DB
         try {
-          const { data: dbRates, error: dbError } = await supabase
+          // Essayer d'abord currency_exchange_rates (nouvelle table)
+          const { data: dbRates, error: dbError } = await (supabase as any)
+            .from("currency_exchange_rates")
+            .select("from_currency,to_currency,rate")
+            .eq("is_active", true)
+            .eq("from_currency", base.toUpperCase())
+            .in("to_currency", symbols.map((s) => s.toUpperCase()));
+
+          if (!dbError && dbRates && Array.isArray(dbRates) && dbRates.length > 0) {
+            const nextRates: RatesBySymbol = {};
+            for (const r of dbRates) {
+              if (typeof r.rate === "number" && r.rate > 0) {
+                nextRates[String(r.to_currency).toUpperCase()] = r.rate;
+              }
+            }
+            if (Object.keys(nextRates).length > 0) {
+              setRates(nextRates);
+              setLastUpdated(new Date());
+              return;
+            }
+          }
+
+          // Fallback sur exchange_rates (ancienne table si existe)
+          const { data: legacyRates, error: legacyError } = await (supabase as any)
             .from("exchange_rates")
             .select("from_currency,to_currency,rate")
             .eq("is_active", true)
             .eq("from_currency", base.toUpperCase())
             .in("to_currency", symbols.map((s) => s.toUpperCase()));
 
-          if (dbError) throw dbError;
-
-          const nextRates: RatesBySymbol = {};
-          for (const r of dbRates || []) {
-            if (typeof r.rate === "number" && r.rate > 0) {
-              nextRates[String(r.to_currency).toUpperCase()] = r.rate;
+          if (!legacyError && legacyRates && Array.isArray(legacyRates)) {
+            const nextRates: RatesBySymbol = {};
+            for (const r of legacyRates) {
+              if (typeof r.rate === "number" && r.rate > 0) {
+                nextRates[String(r.to_currency).toUpperCase()] = r.rate;
+              }
             }
-          }
-
-          if (Object.keys(nextRates).length > 0) {
-            setRates(nextRates);
-            setLastUpdated(new Date());
+            if (Object.keys(nextRates).length > 0) {
+              setRates(nextRates);
+              setLastUpdated(new Date());
+            }
           }
         } catch {
           // garder les taux actuels
