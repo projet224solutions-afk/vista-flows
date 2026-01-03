@@ -56,6 +56,51 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          metadata: Json | null
+          notification_type: string
+          priority: string | null
+          read_at: string | null
+          read_by: string | null
+          related_entity_id: string | null
+          related_entity_type: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          metadata?: Json | null
+          notification_type: string
+          priority?: string | null
+          read_at?: string | null
+          read_by?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          metadata?: Json | null
+          notification_type?: string
+          priority?: string | null
+          read_at?: string | null
+          read_by?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       advanced_carts: {
         Row: {
           created_at: string | null
@@ -8013,6 +8058,45 @@ export type Database = {
           },
         ]
       }
+      phone_history: {
+        Row: {
+          failed_count: number | null
+          first_used_at: string | null
+          fraud_reports: number | null
+          id: string
+          is_blacklisted: boolean | null
+          last_used_at: string | null
+          phone_number: string
+          success_count: number | null
+          usage_count: number | null
+          user_id: string | null
+        }
+        Insert: {
+          failed_count?: number | null
+          first_used_at?: string | null
+          fraud_reports?: number | null
+          id?: string
+          is_blacklisted?: boolean | null
+          last_used_at?: string | null
+          phone_number: string
+          success_count?: number | null
+          usage_count?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          failed_count?: number | null
+          first_used_at?: string | null
+          fraud_reports?: number | null
+          id?: string
+          is_blacklisted?: boolean | null
+          last_used_at?: string | null
+          phone_number?: string
+          success_count?: number | null
+          usage_count?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       plan_price_history: {
         Row: {
           changed_at: string | null
@@ -13710,6 +13794,83 @@ export type Database = {
         }
         Relationships: []
       }
+      trust_score_config: {
+        Row: {
+          config_key: string
+          config_value: number
+          created_at: string | null
+          description: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          config_key: string
+          config_value: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          config_key?: string
+          config_value?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      trust_score_logs: {
+        Row: {
+          auto_released: boolean | null
+          created_at: string | null
+          decision: string
+          djomy_verification_result: Json | null
+          id: string
+          score_breakdown: Json
+          threshold_used: number
+          total_score: number
+          transaction_id: string | null
+          user_id: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          auto_released?: boolean | null
+          created_at?: string | null
+          decision: string
+          djomy_verification_result?: Json | null
+          id?: string
+          score_breakdown: Json
+          threshold_used: number
+          total_score: number
+          transaction_id?: string | null
+          user_id?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          auto_released?: boolean | null
+          created_at?: string | null
+          decision?: string
+          djomy_verification_result?: Json | null
+          id?: string
+          score_breakdown?: Json
+          threshold_used?: number
+          total_score?: number
+          transaction_id?: string | null
+          user_id?: string | null
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trust_score_logs_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "djomy_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_addresses: {
         Row: {
           city: string
@@ -14911,43 +15072,52 @@ export type Database = {
         Row: {
           amount: number
           auto_release_date: string | null
+          auto_released: boolean | null
           blocked_at: string
           currency: string
           id: string
           metadata: Json | null
           release_reason: string | null
+          release_type: string | null
           released_at: string | null
           released_by: string | null
           status: string
           transaction_id: string
+          trust_score: number | null
           vendor_id: string
         }
         Insert: {
           amount: number
           auto_release_date?: string | null
+          auto_released?: boolean | null
           blocked_at?: string
           currency?: string
           id?: string
           metadata?: Json | null
           release_reason?: string | null
+          release_type?: string | null
           released_at?: string | null
           released_by?: string | null
           status?: string
           transaction_id: string
+          trust_score?: number | null
           vendor_id: string
         }
         Update: {
           amount?: number
           auto_release_date?: string | null
+          auto_released?: boolean | null
           blocked_at?: string
           currency?: string
           id?: string
           metadata?: Json | null
           release_reason?: string | null
+          release_type?: string | null
           released_at?: string | null
           released_by?: string | null
           status?: string
           transaction_id?: string
+          trust_score?: number | null
           vendor_id?: string
         }
         Relationships: [
@@ -15623,10 +15793,13 @@ export type Database = {
           delivery_price_per_km: number | null
           delivery_rush_bonus: number | null
           description: string | null
+          dispute_count: number | null
           email: string | null
           id: string
           is_active: boolean | null
           is_verified: boolean | null
+          kyc_status: string | null
+          kyc_verified_at: string | null
           latitude: number | null
           logo_url: string | null
           longitude: number | null
@@ -15654,10 +15827,13 @@ export type Database = {
           delivery_price_per_km?: number | null
           delivery_rush_bonus?: number | null
           description?: string | null
+          dispute_count?: number | null
           email?: string | null
           id?: string
           is_active?: boolean | null
           is_verified?: boolean | null
+          kyc_status?: string | null
+          kyc_verified_at?: string | null
           latitude?: number | null
           logo_url?: string | null
           longitude?: number | null
@@ -15685,10 +15861,13 @@ export type Database = {
           delivery_price_per_km?: number | null
           delivery_rush_bonus?: number | null
           description?: string | null
+          dispute_count?: number | null
           email?: string | null
           id?: string
           is_active?: boolean | null
           is_verified?: boolean | null
+          kyc_status?: string | null
+          kyc_verified_at?: string | null
           latitude?: number | null
           logo_url?: string | null
           longitude?: number | null
@@ -17543,6 +17722,18 @@ export type Database = {
         }
         Returns: number
       }
+      create_admin_notification: {
+        Args: {
+          p_entity_id?: string
+          p_entity_type?: string
+          p_message: string
+          p_metadata?: Json
+          p_priority?: string
+          p_title: string
+          p_type: string
+        }
+        Returns: string
+      }
       create_agent_wallet: {
         Args: { p_agent_id: string }
         Returns: {
@@ -19290,6 +19481,10 @@ export type Database = {
           p_phone?: string
         }
         Returns: Json
+      }
+      update_phone_history: {
+        Args: { p_phone: string; p_success: boolean; p_user_id: string }
+        Returns: undefined
       }
       update_syndicate_worker_secure: {
         Args: {
