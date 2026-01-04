@@ -146,11 +146,17 @@ const queryClient = new QueryClient({
 function App() {
   // Debug log immédiat
   console.log('🎯 App component rendering...');
-  
+
   useEffect(() => {
     console.log('✅ App component mounted successfully');
+
+    // Important: éviter la perte de session OAuth entre http/https sur le domaine production
+    if (window.location.hostname.includes('224solution.net') && window.location.protocol === 'http:') {
+      const httpsUrl = `https://${window.location.host}${window.location.pathname}${window.location.search}${window.location.hash}`;
+      window.location.replace(httpsUrl);
+    }
   }, []);
-  
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>

@@ -51,10 +51,13 @@ export default function Auth() {
   const handleGoogleLogin = async () => {
     setOauthLoading('google');
     setError(null);
-    
+
     try {
-      const redirectUrl = `${window.location.origin}/`;
-      
+      // Forcer HTTPS sur le domaine production (sinon session perdue entre http/https)
+      const origin = window.location.origin;
+      const safeOrigin = origin.includes('224solution.net') ? origin.replace('http://', 'https://') : origin;
+      const redirectUrl = `${safeOrigin}/`;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -65,7 +68,7 @@ export default function Auth() {
           }
         }
       });
-      
+
       if (error) throw error;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur de connexion Google';
@@ -79,17 +82,19 @@ export default function Auth() {
   const handleFacebookLogin = async () => {
     setOauthLoading('facebook');
     setError(null);
-    
+
     try {
-      const redirectUrl = `${window.location.origin}/`;
-      
+      const origin = window.location.origin;
+      const safeOrigin = origin.includes('224solution.net') ? origin.replace('http://', 'https://') : origin;
+      const redirectUrl = `${safeOrigin}/`;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'facebook',
         options: {
           redirectTo: redirectUrl,
         }
       });
-      
+
       if (error) throw error;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur de connexion Facebook';
