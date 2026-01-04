@@ -79,6 +79,8 @@ export function VendorSidebar() {
     if (badgesLoading) return null;
     
     switch (path) {
+      case 'pos':
+        return 'HOT'; // Badge HOT permanent pour le POS
       case 'products':
         return badges.totalProducts > 0 ? badges.totalProducts.toString() : null;
       case 'inventory':
@@ -189,8 +191,8 @@ export function VendorSidebar() {
         collapsed ? "w-12" : "w-44",
         "border-r border-border/40 shadow-lg"
       )} collapsible="icon">
-        <ScrollArea className="h-full pr-1">
-          <SidebarContent className="bg-gradient-to-b from-background via-background to-muted/20 py-2">
+        <ScrollArea className="h-full pr-2">
+          <SidebarContent className="bg-gradient-to-b from-background via-background to-muted/20 py-2 pr-1">
             {menuSections.map((section, sectionIndex) => (
               <SidebarGroup key={section.label} className="py-1">
                 {!collapsed && (
@@ -272,7 +274,7 @@ export function VendorSidebar() {
                                   <Badge 
                                     variant={badgeValue === "HOT" ? "destructive" : "secondary"}
                                     className={cn(
-                                      "text-[9px] px-1 py-0 h-4 min-w-[16px] flex items-center justify-center flex-shrink-0 mr-1",
+                                      "text-[9px] px-1.5 py-0 h-4 min-w-[20px] flex items-center justify-center flex-shrink-0 mr-2",
                                       isPOS && "bg-gradient-to-r from-orange-500 to-red-500 text-white border-0 animate-pulse"
                                     )}
                                   >
