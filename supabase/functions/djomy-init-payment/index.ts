@@ -12,8 +12,8 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[${timestamp}] [DJOMY-INIT] ${step}${detailsStr}`);
 };
 
-// ============= DJOMY TOKEN MANAGER =============
-// Gère l'authentification par token OAuth2 avec régénération automatique
+// ============= DJOMY AUTHENTICATION =============
+// Documentation: https://developers.djomy.africa
 
 interface DjomyTokenData {
   accessToken: string;
@@ -22,37 +22,59 @@ interface DjomyTokenData {
 
 const tokenCache: Record<string, DjomyTokenData> = {};
 
-// Génère un nouveau token via l'endpoint officiel Djomy
+// Génère la signature HMAC-SHA256 pour X-API-KEY
+async function generateHmacSignature(clientId: string, clientSecret: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(clientSecret);
+  const messageData = encoder.encode(clientId);
+  
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  
+  const signature = await crypto.subtle.sign("HMAC", cryptoKey, messageData);
+  const hashArray = Array.from(new Uint8Array(signature));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  return hashHex;
+}
+
+// Génère un Bearer token via /v1/auth avec X-API-KEY
 async function generateDjomyToken(clientId: string, clientSecret: string, useSandbox: boolean): Promise<DjomyTokenData> {
   const baseUrl = useSandbox 
     ? "https://sandbox-api.djomy.africa" 
     : "https://api.djomy.africa";
   
-  logStep("🔐 Generating new Djomy token", { baseUrl, useSandbox });
+  logStep("🔐 Generating HMAC signature", { clientId });
+  const hmacSignature = await generateHmacSignature(clientId, clientSecret);
+  const xApiKey = `${clientId}:${hmacSignature}`;
   
-  const response = await fetch(`${baseUrl}/v1/auth/token`, {
+  logStep("🔑 Requesting Bearer token from /v1/auth", { baseUrl });
+  
+  const response = await fetch(`${baseUrl}/v1/auth`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Accept": "application/json",
-      "User-Agent": "224solutions/2.0",
+      "X-API-KEY": xApiKey,
+      "User-Agent": "224Solutions/2.0",
     },
-    body: JSON.stringify({
-      client_id: clientId,
-      client_secret: clientSecret,
-      grant_type: "client_credentials"
-    }),
+    body: JSON.stringify({}),
   });
   
   const responseText = await response.text();
   logStep("Token response", { status: response.status, bodyPreview: responseText.substring(0, 200) });
   
   if (!response.ok) {
-    throw new Error(`Djomy token generation failed: ${response.status} - ${responseText}`);
+    throw new Error(`Djomy authentication failed: ${response.status} - ${responseText}`);
   }
   
   const data = JSON.parse(responseText);
-  const expiresIn = data.expires_in || 3600;
+  const expiresIn = data.expires_in || data.expiresIn || 3600;
   const expiresAt = Date.now() + (expiresIn - 300) * 1000;
   
   return {
@@ -61,7 +83,7 @@ async function generateDjomyToken(clientId: string, clientSecret: string, useSan
   };
 }
 
-// Récupère un token valide (depuis cache ou génère un nouveau)
+// Récupère un token valide (cache ou génère nouveau)
 async function getAccessToken(clientId: string, clientSecret: string, useSandbox: boolean): Promise<string> {
   const cacheKey = `${useSandbox ? 'sandbox' : 'prod'}_${clientId}`;
   const cachedToken = tokenCache[cacheKey];
@@ -203,6 +225,10 @@ serve(async (req) => {
 
     // Get Djomy access token (avec régénération automatique)
     const accessToken = await getAccessToken(clientId, clientSecret, useSandbox);
+    
+    // Generate X-API-KEY header (required for all API calls)
+    const hmacSignature = await generateHmacSignature(clientId, clientSecret);
+    const xApiKey = `${clientId}:${hmacSignature}`;
 
     const baseUrl = useSandbox 
       ? "https://sandbox-api.djomy.africa" 
@@ -238,8 +264,9 @@ serve(async (req) => {
       headers: {
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "User-Agent": "224solutions/2.0",
+        "User-Agent": "224Solutions/2.0",
         "Authorization": `Bearer ${accessToken}`,
+        "X-API-KEY": xApiKey,
       },
       body: JSON.stringify(djomyPayload),
     });
