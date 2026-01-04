@@ -343,12 +343,13 @@ export default function Profil() {
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-foreground">Mon Profil</h1>
             <Button
-              variant="ghost"
-              size="icon"
+              variant="outline"
+              size="sm"
               onClick={handleGoBack}
-              className="ml-auto"
+              className="ml-auto gap-2 px-4 py-2 rounded-lg border-border hover:bg-accent hover:text-accent-foreground transition-all duration-200 shadow-sm"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
+              <span className="font-medium">Retour</span>
             </Button>
           </div>
         </div>
