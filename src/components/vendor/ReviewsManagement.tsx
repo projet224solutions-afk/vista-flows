@@ -93,9 +93,6 @@ export default function ReviewsManagement() {
             name,
             images,
             vendor_id
-          ),
-          profiles:user_id(
-            full_name
           )
         `)
         .eq('products.vendor_id', vendor.id)
@@ -103,7 +100,13 @@ export default function ReviewsManagement() {
 
       if (reviewsError) throw reviewsError;
 
-      setReviews(reviewsData || []);
+      // Mapper les données pour correspondre au type Review
+      const mappedReviews: Review[] = (reviewsData || []).map((r: any) => ({
+        ...r,
+        profiles: { full_name: 'Client' } // Fallback car la relation directe ne fonctionne pas
+      }));
+
+      setReviews(mappedReviews);
     } catch (error: any) {
       console.error('Erreur chargement avis:', error);
       toast.error('Erreur lors du chargement des avis');

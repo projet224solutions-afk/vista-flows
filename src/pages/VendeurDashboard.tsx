@@ -88,6 +88,7 @@ export default function VendeurDashboard() {
     total_amount: number;
     created_at: string;
   }[]>([]);
+  const [showAllOrders, setShowAllOrders] = useState(false);
 
   // Stats dynamiques réelles (dérivées de useVendorStats)
   const mainStats = useMemo(() => {
@@ -287,11 +288,11 @@ export default function VendeurDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>{t('vendor.recentOrders')}</CardTitle>
-            <CardDescription>{t('vendor.last5Orders')}</CardDescription>
+            <CardDescription>Vos 2 dernières commandes</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentOrders.map((o) => (
+              {(showAllOrders ? recentOrders : recentOrders.slice(0, 2)).map((o) => (
                 <div key={o.order_number} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -310,6 +311,16 @@ export default function VendeurDashboard() {
               ))}
               {recentOrders.length === 0 && (
                 <div className="text-sm text-muted-foreground">{t('vendor.noRecentOrders')}</div>
+              )}
+              {recentOrders.length > 2 && (
+                <Button 
+                  variant="ghost" 
+                  className="w-full text-primary" 
+                  onClick={() => setShowAllOrders(!showAllOrders)}
+                >
+                  {showAllOrders ? 'Voir moins' : `Voir plus (${recentOrders.length - 2} autres)`}
+                  <ChevronRight className={`ml-1 h-4 w-4 transition-transform ${showAllOrders ? 'rotate-90' : ''}`} />
+                </Button>
               )}
             </div>
           </CardContent>
