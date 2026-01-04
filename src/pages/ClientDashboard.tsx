@@ -685,7 +685,7 @@ export default function ClientDashboard() {
           totalAmount={cartItems.reduce((sum, item) => sum + item.price, 0)}
           onPaymentSuccess={handlePaymentSuccess}
           userId={user.id}
-          customerId={customerId || ''}
+          customerId={customerId}
         />
       )}
       

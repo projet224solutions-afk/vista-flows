@@ -381,7 +381,7 @@ export default function ProductPaymentModal({
           payment_method: paymentMethod
         });
 
-        const isCOD = paymentMethod === 'cash_on_delivery';
+        const isCOD = paymentMethod === 'cash' || paymentMethod === 'cash_on_delivery';
         const normalizedPaymentMethod = isCOD ? 'cash' : paymentMethod;
 
         const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
