@@ -1474,7 +1474,7 @@ export function POSSystem() {
                                     if (qty > 0) updateQuantity(product.id, qty - 1);
                                   }}
                                   disabled={!cart.find(item => item.id === product.id && item.saleType !== 'carton')}
-                                  className="h-5 w-5 p-0"
+                                  className="h-4 w-4 p-0"
                                 >
                                   <Minus className="h-3 w-3" />
                                 </Button>
@@ -1488,7 +1488,7 @@ export function POSSystem() {
                                     setSelectedProductForQuantity(product);
                                     setShowQuantityKeypad(true);
                                   }}
-                                  className="h-5 w-5 p-0 border-primary/30 hover:border-primary hover:bg-primary/10"
+                                  className="h-4 w-4 p-0 border-primary/30 hover:border-primary hover:bg-primary/10"
                                   title="Saisir quantité"
                                 >
                                   <Calculator className="h-3 w-3 text-primary" />
@@ -1501,7 +1501,7 @@ export function POSSystem() {
                                     e.stopPropagation();
                                     addToCart(product);
                                   }}
-                                  className="flex-1 h-5 text-[10px] md:text-xs font-semibold"
+                                  className="flex-1 h-4 text-[8px] md:text-xs font-semibold"
                                 >
                                   <Plus className="h-3 w-3 mr-0.5" />
                                   Unité
@@ -1518,7 +1518,7 @@ export function POSSystem() {
                                     if (cartonsAvailable > 0) addToCartByCarton(product);
                                   }}
                                   disabled={cartonsAvailable <= 0}
-                                  className="w-full h-5 text-[10px] md:text-xs font-semibold bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:text-green-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  className="w-full h-4 text-[8px] md:text-xs font-semibold bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:text-green-400 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   📦 +1 Carton ({cartonsAvailable > 0 ? product.units_per_carton : 0}u)
                                 </Button>
@@ -1920,7 +1920,7 @@ export function POSSystem() {
           receivedAmount,
           change,
           currency: settings?.currency || 'GNF',
-          companyName: settings?.company_name || 'Vista Commerce Pro',
+          companyName: companyName,
           logoUrl: settings?.logo_url,
           receiptFooter: settings?.receipt_footer
         }}
