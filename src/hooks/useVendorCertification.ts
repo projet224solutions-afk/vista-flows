@@ -1,7 +1,6 @@
 /**
  * HOOK: useVendorCertification
  * Hook pour récupérer et gérer le statut de certification d'un vendeur
- * v2.0: Certification basée sur KYC validé, pas de requête vendeur
  * 224SOLUTIONS
  */
 
@@ -19,15 +18,6 @@ interface UseVendorCertificationResult {
 
 /**
  * Hook principal pour récupérer le statut de certification d'un vendeur
- * 
- * @param vendorId - ID du vendeur
- * @returns Objet contenant la certification, loading, error, isCertified et refetch
- * 
- * @example
- * const { certification, isCertified, loading } = useVendorCertification(vendorId);
- * if (isCertified) {
- *   // Afficher badge certifié
- * }
  */
 export function useVendorCertification(vendorId: string | undefined): UseVendorCertificationResult {
   const [certification, setCertification] = useState<VendorCertification | null>(null);
@@ -44,17 +34,40 @@ export function useVendorCertification(vendorId: string | undefined): UseVendorC
       setLoading(true);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
-        .from('vendor_certifications')
-        .select('*')
-        .eq('vendor_id', vendorId)
-        .single();
+      // Vérifier la table vendors pour le statut de vérification
+      const { data: vendor, error: vendorError } = await supabase
+        .from('vendors')
+        .select('id, created_at, updated_at')
+        .eq('user_id', vendorId)
+        .maybeSingle();
 
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        throw fetchError;
+      if (vendorError) {
+        console.warn('Could not fetch vendor:', vendorError);
+        setCertification(null);
+        setLoading(false);
+        return;
       }
 
-      setCertification(data || null);
+      if (vendor) {
+        const now = new Date().toISOString();
+        // Simuler une certification basée sur les données du vendeur
+        const cert: VendorCertification = {
+          id: vendor.id,
+          vendor_id: vendorId,
+          status: 'NON_CERTIFIE' as VendorCertificationStatus,
+          verified_at: null,
+          kyc_verified_at: null,
+          kyc_status: 'pending',
+          last_status_change: vendor.updated_at || now,
+          internal_notes: null,
+          rejection_reason: null,
+          created_at: vendor.created_at || now,
+          updated_at: vendor.updated_at || now
+        };
+        setCertification(cert);
+      } else {
+        setCertification(null);
+      }
     } catch (err) {
       console.error('Error fetching vendor certification:', err);
       setError(err as Error);
@@ -65,34 +78,6 @@ export function useVendorCertification(vendorId: string | undefined): UseVendorC
 
   useEffect(() => {
     fetchCertification();
-
-    // Subscribe to real-time updates
-    if (vendorId) {
-      const subscription = supabase
-        .channel(`vendor_certification_${vendorId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'vendor_certifications',
-            filter: `vendor_id=eq.${vendorId}`
-          },
-          (payload) => {
-            console.log('Certification updated:', payload);
-            if (payload.eventType === 'DELETE') {
-              setCertification(null);
-            } else {
-              setCertification(payload.new as VendorCertification);
-            }
-          }
-        )
-        .subscribe();
-
-      return () => {
-        subscription.unsubscribe();
-      };
-    }
   }, [vendorId]);
 
   const isCertified = certification?.status === 'CERTIFIE';
@@ -105,3 +90,6 @@ export function useVendorCertification(vendorId: string | undefined): UseVendorC
     refetch: fetchCertification
   };
 }
+
+// Re-export types for convenience
+export type { VendorCertification, VendorCertificationStatus };

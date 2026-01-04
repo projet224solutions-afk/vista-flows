@@ -12092,6 +12092,187 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_wallet_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          id: string
+          reference_id: string | null
+          stripe_wallet_id: string
+          transaction_type: Database["public"]["Enums"]["stripe_transaction_type"]
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          stripe_wallet_id: string
+          transaction_type: Database["public"]["Enums"]["stripe_transaction_type"]
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          balance_before?: number
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          stripe_wallet_id?: string
+          transaction_type?: Database["public"]["Enums"]["stripe_transaction_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_wallet_transactions_stripe_wallet_id_fkey"
+            columns: ["stripe_wallet_id"]
+            isOneToOne: false
+            referencedRelation: "stripe_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stripe_wallets: {
+        Row: {
+          available_balance: number | null
+          created_at: string | null
+          currency: string | null
+          frozen_balance: number | null
+          id: string
+          is_verified: boolean | null
+          pending_balance: number | null
+          status: Database["public"]["Enums"]["stripe_wallet_status"] | null
+          total_earned: number | null
+          total_withdrawn: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          available_balance?: number | null
+          created_at?: string | null
+          currency?: string | null
+          frozen_balance?: number | null
+          id?: string
+          is_verified?: boolean | null
+          pending_balance?: number | null
+          status?: Database["public"]["Enums"]["stripe_wallet_status"] | null
+          total_earned?: number | null
+          total_withdrawn?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          available_balance?: number | null
+          created_at?: string | null
+          currency?: string | null
+          frozen_balance?: number | null
+          id?: string
+          is_verified?: boolean | null
+          pending_balance?: number | null
+          status?: Database["public"]["Enums"]["stripe_wallet_status"] | null
+          total_earned?: number | null
+          total_withdrawn?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_wallets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stripe_wallets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_search_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stripe_withdrawals: {
+        Row: {
+          amount: number
+          bank_account_name: string | null
+          bank_account_number: string | null
+          created_at: string | null
+          currency: string | null
+          fee: number | null
+          id: string
+          net_amount: number
+          status: Database["public"]["Enums"]["stripe_withdrawal_status"] | null
+          stripe_payout_id: string | null
+          stripe_wallet_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          bank_account_name?: string | null
+          bank_account_number?: string | null
+          created_at?: string | null
+          currency?: string | null
+          fee?: number | null
+          id?: string
+          net_amount: number
+          status?:
+            | Database["public"]["Enums"]["stripe_withdrawal_status"]
+            | null
+          stripe_payout_id?: string | null
+          stripe_wallet_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          bank_account_name?: string | null
+          bank_account_number?: string | null
+          created_at?: string | null
+          currency?: string | null
+          fee?: number | null
+          id?: string
+          net_amount?: number
+          status?:
+            | Database["public"]["Enums"]["stripe_withdrawal_status"]
+            | null
+          stripe_payout_id?: string | null
+          stripe_wallet_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_withdrawals_stripe_wallet_id_fkey"
+            columns: ["stripe_wallet_id"]
+            isOneToOne: false
+            referencedRelation: "stripe_wallets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stripe_withdrawals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stripe_withdrawals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           auto_renew: boolean | null
@@ -20073,6 +20254,27 @@ export type Database = {
         | "in_progress"
         | "completed"
         | "cancelled"
+      stripe_payment_status:
+        | "PENDING"
+        | "PROCESSING"
+        | "SUCCEEDED"
+        | "FAILED"
+        | "CANCELED"
+        | "REFUNDED"
+        | "DISPUTED"
+      stripe_transaction_type:
+        | "PAYMENT"
+        | "COMMISSION"
+        | "WITHDRAWAL"
+        | "REFUND"
+        | "CHARGEBACK"
+      stripe_wallet_status: "ACTIVE" | "FROZEN" | "SUSPENDED"
+      stripe_withdrawal_status:
+        | "PENDING"
+        | "PROCESSING"
+        | "COMPLETED"
+        | "FAILED"
+        | "CANCELED"
       tracking_status_type:
         | "waiting"
         | "in_progress"
@@ -20284,6 +20486,30 @@ export const Constants = {
         "in_progress",
         "completed",
         "cancelled",
+      ],
+      stripe_payment_status: [
+        "PENDING",
+        "PROCESSING",
+        "SUCCEEDED",
+        "FAILED",
+        "CANCELED",
+        "REFUNDED",
+        "DISPUTED",
+      ],
+      stripe_transaction_type: [
+        "PAYMENT",
+        "COMMISSION",
+        "WITHDRAWAL",
+        "REFUND",
+        "CHARGEBACK",
+      ],
+      stripe_wallet_status: ["ACTIVE", "FROZEN", "SUSPENDED"],
+      stripe_withdrawal_status: [
+        "PENDING",
+        "PROCESSING",
+        "COMPLETED",
+        "FAILED",
+        "CANCELED",
       ],
       tracking_status_type: [
         "waiting",

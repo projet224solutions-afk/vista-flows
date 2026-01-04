@@ -9,9 +9,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { 
   CreatePaymentIntentRequest, 
-  CreatePaymentIntentResponse,
-  StripeTransaction 
+  CreatePaymentIntentResponse 
 } from '@/types/stripePayment';
+import type { Database } from '@/integrations/supabase/types';
+
+// Use the database type for stripe transactions
+type StripeTransactionRow = Database['public']['Tables']['stripe_transactions']['Row'];
 
 interface UseStripePaymentOptions {
   onSuccess?: (paymentIntentId: string, transactionId: string) => void;
@@ -73,7 +76,7 @@ export function useStripePayment(options: UseStripePaymentOptions = {}) {
    */
   const getTransaction = useCallback(async (
     transactionId: string
-  ): Promise<StripeTransaction | null> => {
+  ): Promise<StripeTransactionRow | null> => {
     try {
       const { data, error: queryError } = await supabase
         .from('stripe_transactions')
@@ -98,7 +101,7 @@ export function useStripePayment(options: UseStripePaymentOptions = {}) {
   const getUserTransactions = useCallback(async (
     userId: string,
     limit = 20
-  ): Promise<StripeTransaction[]> => {
+  ): Promise<StripeTransactionRow[]> => {
     try {
       const { data, error: queryError } = await supabase
         .from('stripe_transactions')
@@ -125,7 +128,7 @@ export function useStripePayment(options: UseStripePaymentOptions = {}) {
     sellerId: string,
     status?: string,
     limit = 50
-  ): Promise<StripeTransaction[]> => {
+  ): Promise<StripeTransactionRow[]> => {
     try {
       let query = supabase
         .from('stripe_transactions')

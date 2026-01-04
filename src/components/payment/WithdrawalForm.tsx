@@ -13,8 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useWallet } from '@/hooks/useWallet';
-import { supabase } from '@/integrations/supabase/client';
-import { formatAmount, canRequestWithdrawal, isValidAmount } from '@/types/stripePayment';
 import { toast } from 'sonner';
 import { 
   ArrowDownLeft, 
@@ -24,21 +22,17 @@ import {
   CreditCard,
   Smartphone
 } from 'lucide-react';
-import type { Wallet } from '@/types/stripePayment';
 
 interface WithdrawalFormProps {
-  userId: string;
+  userId?: string;
   onSuccess?: (withdrawalId: string) => void;
   onCancel?: () => void;
 }
 
 type WithdrawalMethod = 'BANK_TRANSFER' | 'MOBILE_MONEY' | 'STRIPE_PAYOUT';
 
-export function WithdrawalForm({ userId, onSuccess, onCancel }: WithdrawalFormProps) {
-  const { wallet, fetchWallet, canWithdraw, getAvailableBalance } = useWallet({ 
-    userId, 
-    autoFetch: true 
-  });
+export function WithdrawalForm({ onSuccess, onCancel }: WithdrawalFormProps) {
+  const { wallet, balance, currency, isBlocked, withdraw, processing, refresh } = useWallet();
 
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState<WithdrawalMethod>('BANK_TRANSFER');
@@ -56,8 +50,17 @@ export function WithdrawalForm({ userId, onSuccess, onCancel }: WithdrawalFormPr
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const availableBalance = getAvailableBalance();
+  const formatAmount = (amt: number, curr: string = 'GNF'): string => {
+    return new Intl.NumberFormat('fr-GN', {
+      style: 'currency',
+      currency: curr,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amt);
+  };
+
   const numAmount = parseFloat(amount) || 0;
+  const minWithdrawal = 10000; // GNF
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,18 +71,23 @@ export function WithdrawalForm({ userId, onSuccess, onCancel }: WithdrawalFormPr
     }
 
     // Validations
-    if (!isValidAmount(numAmount)) {
+    if (numAmount <= 0 || !Number.isInteger(numAmount)) {
       setError('Montant invalide');
       return;
     }
 
-    if (!canWithdraw(numAmount)) {
-      setError(`Solde insuffisant. Disponible: ${formatAmount(availableBalance, wallet.currency)}`);
+    if (numAmount > balance) {
+      setError(`Solde insuffisant. Disponible: ${formatAmount(balance, currency)}`);
       return;
     }
 
-    if (!canRequestWithdrawal(wallet, numAmount)) {
-      setError('Impossible de demander un retrait pour le moment');
+    if (numAmount < minWithdrawal) {
+      setError(`Montant minimum: ${formatAmount(minWithdrawal, currency)}`);
+      return;
+    }
+
+    if (isBlocked) {
+      setError('Impossible de demander un retrait: portefeuille bloqué');
       return;
     }
 
@@ -106,40 +114,29 @@ export function WithdrawalForm({ userId, onSuccess, onCancel }: WithdrawalFormPr
         method,
       });
 
-      const withdrawalData = {
-        wallet_id: wallet.id,
-        amount: numAmount,
-        currency: wallet.currency,
+      const metadata = {
         method,
         bank_details: method === 'BANK_TRANSFER' ? bankDetails : null,
         mobile_money_details: method === 'MOBILE_MONEY' ? mobileDetails : null,
         notes: notes || null,
-        status: 'PENDING',
+        description: `Retrait via ${method}`
       };
 
-      const { data, error: insertError } = await supabase
-        .from('withdrawals')
-        .insert(withdrawalData)
-        .select()
-        .single();
+      const success = await withdraw(numAmount, method, metadata);
 
-      if (insertError) {
-        throw insertError;
+      if (success) {
+        console.log('✅ Withdrawal request created');
+        await refresh();
+        onSuccess?.('withdrawal-completed');
+
+        // Reset form
+        setAmount('');
+        setBankDetails({ account_name: '', account_number: '', bank_name: '', swift_code: '' });
+        setMobileDetails({ phone_number: '', provider: 'MTN' });
+        setNotes('');
+      } else {
+        setError('Erreur lors du retrait');
       }
-
-      console.log('✅ Withdrawal request created:', data.id);
-      toast.success('Demande de retrait envoyée avec succès');
-      
-      // Rafraîchir le wallet
-      await fetchWallet(userId);
-      
-      onSuccess?.(data.id);
-
-      // Reset form
-      setAmount('');
-      setBankDetails({ account_name: '', account_number: '', bank_name: '', swift_code: '' });
-      setMobileDetails({ phone_number: '', provider: 'MTN' });
-      setNotes('');
 
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur lors de la demande de retrait';
@@ -163,8 +160,7 @@ export function WithdrawalForm({ userId, onSuccess, onCancel }: WithdrawalFormPr
     );
   }
 
-  const minWithdrawal = 10000; // GNF
-  const canProceed = numAmount >= minWithdrawal && canWithdraw(numAmount);
+  const canProceed = numAmount >= minWithdrawal && numAmount <= balance && !isBlocked;
 
   return (
     <Card className="w-full max-w-2xl">
@@ -184,7 +180,7 @@ export function WithdrawalForm({ userId, onSuccess, onCancel }: WithdrawalFormPr
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription>
-              <strong>Solde disponible:</strong> {formatAmount(availableBalance, wallet.currency)}
+              <strong>Solde disponible:</strong> {formatAmount(balance, currency)}
             </AlertDescription>
           </Alert>
 
@@ -201,18 +197,18 @@ export function WithdrawalForm({ userId, onSuccess, onCancel }: WithdrawalFormPr
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 min={minWithdrawal}
-                max={availableBalance}
+                max={balance}
                 step="1000"
                 required
-                disabled={loading}
+                disabled={loading || processing}
                 className="pr-16"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                {wallet.currency.toUpperCase()}
+                {currency.toUpperCase()}
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
-              Montant minimum: {formatAmount(minWithdrawal, wallet.currency)}
+              Montant minimum: {formatAmount(minWithdrawal, currency)}
             </p>
           </div>
 
@@ -224,7 +220,7 @@ export function WithdrawalForm({ userId, onSuccess, onCancel }: WithdrawalFormPr
             <Select
               value={method}
               onValueChange={(value) => setMethod(value as WithdrawalMethod)}
-              disabled={loading}
+              disabled={loading || processing}
             >
               <SelectTrigger id="method">
                 <SelectValue />
@@ -268,7 +264,7 @@ export function WithdrawalForm({ userId, onSuccess, onCancel }: WithdrawalFormPr
                     onChange={(e) => setBankDetails({ ...bankDetails, account_name: e.target.value })}
                     placeholder="Ex: DIALLO Mohamed"
                     required
-                    disabled={loading}
+                    disabled={loading || processing}
                   />
                 </div>
 
@@ -282,7 +278,7 @@ export function WithdrawalForm({ userId, onSuccess, onCancel }: WithdrawalFormPr
                     onChange={(e) => setBankDetails({ ...bankDetails, account_number: e.target.value })}
                     placeholder="Ex: GN123456789"
                     required
-                    disabled={loading}
+                    disabled={loading || processing}
                   />
                 </div>
 
@@ -296,7 +292,7 @@ export function WithdrawalForm({ userId, onSuccess, onCancel }: WithdrawalFormPr
                     onChange={(e) => setBankDetails({ ...bankDetails, bank_name: e.target.value })}
                     placeholder="Ex: Ecobank Guinée"
                     required
-                    disabled={loading}
+                    disabled={loading || processing}
                   />
                 </div>
 
@@ -307,7 +303,7 @@ export function WithdrawalForm({ userId, onSuccess, onCancel }: WithdrawalFormPr
                     value={bankDetails.swift_code}
                     onChange={(e) => setBankDetails({ ...bankDetails, swift_code: e.target.value })}
                     placeholder="Ex: ECOCGNGX"
-                    disabled={loading}
+                    disabled={loading || processing}
                   />
                 </div>
               </div>
@@ -327,7 +323,7 @@ export function WithdrawalForm({ userId, onSuccess, onCancel }: WithdrawalFormPr
                   <Select
                     value={mobileDetails.provider}
                     onValueChange={(value) => setMobileDetails({ ...mobileDetails, provider: value })}
-                    disabled={loading}
+                    disabled={loading || processing}
                   >
                     <SelectTrigger id="provider">
                       <SelectValue />
@@ -351,7 +347,7 @@ export function WithdrawalForm({ userId, onSuccess, onCancel }: WithdrawalFormPr
                     onChange={(e) => setMobileDetails({ ...mobileDetails, phone_number: e.target.value })}
                     placeholder="Ex: +224 621 234 567"
                     required
-                    disabled={loading}
+                    disabled={loading || processing}
                   />
                 </div>
               </div>
@@ -367,7 +363,7 @@ export function WithdrawalForm({ userId, onSuccess, onCancel }: WithdrawalFormPr
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Ajoutez des informations supplémentaires si nécessaire..."
               rows={3}
-              disabled={loading}
+              disabled={loading || processing}
             />
           </div>
 
@@ -386,7 +382,7 @@ export function WithdrawalForm({ userId, onSuccess, onCancel }: WithdrawalFormPr
                 type="button"
                 variant="outline"
                 onClick={onCancel}
-                disabled={loading}
+                disabled={loading || processing}
                 className="flex-1"
               >
                 Annuler
@@ -394,10 +390,10 @@ export function WithdrawalForm({ userId, onSuccess, onCancel }: WithdrawalFormPr
             )}
             <Button
               type="submit"
-              disabled={!canProceed || loading}
+              disabled={!canProceed || loading || processing}
               className="flex-1"
             >
-              {loading ? (
+              {loading || processing ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Traitement...
