@@ -126,7 +126,7 @@ export function VendorSidebar() {
       items: [
         { title: t('sidebar.dashboard'), icon: BarChart3, path: "dashboard" },
         { title: t('sidebar.analytics'), icon: TrendingUp, path: "analytics" },
-        { title: profile?.business_name || t('sidebar.pos'), icon: Store, path: "pos", isPOS: true },
+        { title: t('sidebar.pos'), icon: Store, path: "pos", isPOS: true },
       ]
     },
     {
