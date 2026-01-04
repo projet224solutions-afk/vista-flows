@@ -296,6 +296,15 @@ export const getWalletStatusLabel = (status: WalletStatus): string => {
   return labels[status] || status;
 };
 
+export const getWalletStatusColor = (status: WalletStatus): string => {
+  const colors: Record<WalletStatus, string> = {
+    ACTIVE: 'default',
+    FROZEN: 'destructive',
+    SUSPENDED: 'secondary'
+  };
+  return colors[status] || 'default';
+};
+
 export const getWithdrawalStatusLabel = (status: WithdrawalStatus): string => {
   const labels: Record<WithdrawalStatus, string> = {
     PENDING: 'En attente',
