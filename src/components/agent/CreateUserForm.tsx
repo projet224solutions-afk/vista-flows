@@ -27,6 +27,19 @@ const USER_ROLES = [
   { value: 'syndicat', label: 'Syndicat', icon: Building2, description: 'Organisation syndicale', color: 'text-pink-600' },
 ];
 
+const VENDOR_SERVICE_TYPES = [
+  { value: 'boutique', label: 'Boutique / Commerce général' },
+  { value: 'restaurant', label: 'Restaurant / Alimentation' },
+  { value: 'salon_coiffure', label: 'Salon de coiffure / Beauté' },
+  { value: 'garage_auto', label: 'Garage auto / Mécanique' },
+  { value: 'immobilier', label: 'Immobilier / Location' },
+  { value: 'services_pro', label: 'Services professionnels' },
+  { value: 'photographe', label: 'Photographe / Vidéaste' },
+  { value: 'education', label: 'Éducation / Formation' },
+  { value: 'sante', label: 'Santé / Pharmacie' },
+  { value: 'voyage', label: 'Voyage / Tourisme' },
+  { value: 'autre', label: 'Autre service' },
+] as const;
 interface CreateUserFormProps {
   agentId: string;
   agentCode: string;
@@ -56,6 +69,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
     business_name: '',
     business_description: '',
     business_address: '',
+    service_type: '',
     // Données taxi/livreur
     license_number: '',
     vehicle_type: 'moto',
@@ -93,7 +107,8 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
         userData.vendeurData = {
           business_name: formData.business_name,
           business_description: formData.business_description,
-          business_address: formData.business_address
+          business_address: formData.business_address,
+          service_type: formData.service_type,
         };
       } else if (formData.role === 'taxi' || formData.role === 'livreur') {
         userData.driverData = {
@@ -137,6 +152,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
           business_name: '',
           business_description: '',
           business_address: '',
+          service_type: '',
           license_number: '',
           vehicle_type: 'moto',
           vehicle_brand: '',
@@ -369,7 +385,23 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                 <h3 className="font-semibold text-blue-900 dark:text-blue-100">Informations de l'Entreprise</h3>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="service_type" className="text-sm">Type de service *</Label>
+                  <select
+                    id="service_type"
+                    className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
+                    value={formData.service_type}
+                    onChange={(e) => setFormData({ ...formData, service_type: e.target.value })}
+                    required
+                  >
+                    <option value="">Sélectionnez…</option>
+                    {VENDOR_SERVICE_TYPES.map((t) => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="space-y-1.5">
                   <Label htmlFor="business_name" className="text-sm">Nom de l'entreprise *</Label>
                   <Input
@@ -381,7 +413,8 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                     className="h-9"
                   />
                 </div>
-                <div className="space-y-1.5">
+
+                <div className="space-y-1.5 md:col-span-2">
                   <Label htmlFor="business_description" className="text-sm">Description de l'activité</Label>
                   <Input
                     id="business_description"
@@ -391,7 +424,8 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                     className="h-9"
                   />
                 </div>
-                <div className="space-y-1.5">
+
+                <div className="space-y-1.5 md:col-span-2">
                   <Label htmlFor="business_address" className="text-sm">Adresse de l'entreprise</Label>
                   <Input
                     id="business_address"
