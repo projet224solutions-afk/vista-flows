@@ -64,7 +64,6 @@ import VendorContracts from "@/pages/VendorContracts";
 import VendorSettings from "@/pages/vendor/Settings";
 import CopiloteChat from "@/components/copilot/CopiloteChat";
 import ReviewsManagement from "@/components/vendor/ReviewsManagement";
-// NOUVEAUX IMPORTS POUR GESTION D'ERREURS
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useVendorErrorBoundary } from "@/hooks/useVendorErrorBoundary";
 
