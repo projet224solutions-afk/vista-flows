@@ -87,8 +87,17 @@ export function useDjomyPayment() {
 
       console.log('[useDjomyPayment] Initializing payment:', payload);
 
-      const { data, error: fnError } = await supabase.functions.invoke('djomy-payment', {
-        body: payload,
+      const { data, error: fnError } = await supabase.functions.invoke('djomy-init-payment', {
+        body: {
+          amount: options.amount,
+          payerPhone: options.phoneNumber,
+          paymentMethod: options.paymentMethod,
+          description: options.description,
+          orderId: options.orderId,
+          vendorId: options.vendorId,
+          useSandbox: options.useSandbox ?? shouldUseSandboxByDefault(),
+          countryCode: options.countryCode || 'GN',
+        },
       });
 
       if (fnError) {

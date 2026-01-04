@@ -553,15 +553,14 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     try {
       const paymentMethodCode = mobileMoneyProvider === 'orange' ? 'OM' : 'MOMO';
       
-      const { data, error } = await supabase.functions.invoke('djomy-payment', {
+      const { data, error } = await supabase.functions.invoke('djomy-init-payment', {
         body: {
           amount: amount,
           payerPhone: `224${mobileMoneyPhone}`,
           paymentMethod: paymentMethodCode,
           description: `Recharge wallet - ${amount.toLocaleString()} GNF`,
           orderId: `WLT-${Date.now()}`,
-          useGateway: false,
-          useSandbox: true,
+          useSandbox: false, // ✅ MODE PRODUCTION
           countryCode: 'GN',
         }
       });
