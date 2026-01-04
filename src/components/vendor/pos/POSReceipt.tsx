@@ -125,130 +125,130 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md max-h-[95vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0 mx-2">
         {/* Header avec actions */}
-        <div className="sticky top-0 z-10 bg-gradient-to-r from-green-600 to-green-500 text-white p-4 rounded-t-lg">
+        <div className="sticky top-0 z-10 bg-gradient-to-r from-green-600 to-green-500 text-white p-3 rounded-t-lg">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                <Check className="h-6 w-6" />
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <Check className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-lg font-bold">Paiement réussi!</h2>
-                <p className="text-sm text-white/80">Commande #{orderData.orderNumber}</p>
+                <h2 className="text-base font-bold">Paiement réussi!</h2>
+                <p className="text-xs text-white/80">#{orderData.orderNumber}</p>
               </div>
             </div>
             <Button 
               variant="ghost" 
               size="icon" 
               onClick={onClose}
-              className="text-white hover:bg-white/20"
+              className="text-white hover:bg-white/20 h-8 w-8"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
         {/* Reçu imprimable */}
-        <div className="p-4">
+        <div className="p-3">
           <div 
             ref={receiptRef} 
-            className="bg-white border-2 border-dashed border-border rounded-lg p-5 font-mono text-base"
+            className="bg-white border-2 border-dashed border-border rounded-lg p-3 font-mono text-sm"
             style={{ fontFamily: "'Courier New', monospace" }}
           >
             {/* En-tête reçu */}
-            <div className="text-center border-b border-dashed border-muted-foreground/30 pb-4 mb-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-primary to-primary/80 rounded-xl mx-auto mb-3 flex items-center justify-center overflow-hidden">
+            <div className="text-center border-b border-dashed border-muted-foreground/30 pb-3 mb-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-xl mx-auto mb-2 flex items-center justify-center overflow-hidden">
                 {orderData.logoUrl ? (
                   <img src={orderData.logoUrl} alt="Logo" className="w-full h-full object-contain" />
                 ) : (
-                  <Store className="h-7 w-7 text-primary-foreground" />
+                  <Store className="h-6 w-6 text-primary-foreground" />
                 )}
               </div>
-              <h3 className="text-xl font-bold text-foreground">{orderData.companyName}</h3>
-              <p className="text-sm text-muted-foreground mt-1">REÇU DE CAISSE</p>
-              <div className="flex items-center justify-center gap-2 mt-2 text-xs text-muted-foreground">
+              <h3 className="text-lg font-bold text-foreground">{orderData.companyName}</h3>
+              <p className="text-xs text-muted-foreground mt-1">REÇU DE CAISSE</p>
+              <div className="flex items-center justify-center gap-1 mt-1 text-[10px] text-muted-foreground">
                 <Calendar className="h-3 w-3" />
                 <span>{new Date().toLocaleString('fr-FR')}</span>
               </div>
             </div>
 
             {/* Numéro de commande */}
-            <div className="bg-muted/30 rounded-lg p-4 mb-4 text-center">
-              <p className="text-sm text-muted-foreground">N° Commande</p>
-              <p className="text-xl font-bold text-primary">#{orderData.orderNumber}</p>
+            <div className="bg-muted/30 rounded-lg p-2 mb-3 text-center">
+              <p className="text-xs text-muted-foreground">N° Commande</p>
+              <p className="text-lg font-bold text-primary">#{orderData.orderNumber}</p>
             </div>
 
             {/* Articles */}
-            <div className="space-y-2 mb-4">
-              <p className="text-sm text-muted-foreground font-semibold uppercase tracking-wider">Articles</p>
+            <div className="space-y-1 mb-3">
+              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Articles</p>
               {orderData.items.map((item, index) => (
                 <div key={`${item.id}-${item.saleType || 'unit'}`} className="flex justify-between items-start py-1">
                   <div className="flex-1">
-                    <p className="font-semibold text-foreground text-base">
+                    <p className="font-semibold text-foreground text-sm">
                       {item.saleType === 'carton' && '📦 '}
                       {item.name}
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       {item.saleType === 'carton' && item.displayQuantity 
                         ? item.displayQuantity
                         : `${item.quantity} unité(s)`
                       } × {item.price.toLocaleString()} {orderData.currency}
                     </p>
                     {item.saleType === 'carton' && (
-                      <p className="text-xs text-green-600 font-medium">Vente par carton</p>
+                      <p className="text-[10px] text-green-600 font-medium">Vente par carton</p>
                     )}
                   </div>
-                  <p className="font-bold text-foreground text-base">
+                  <p className="font-bold text-foreground text-sm">
                     {item.total.toLocaleString()} {orderData.currency}
                   </p>
                 </div>
               ))}
             </div>
 
-            <Separator className="my-4" />
+            <Separator className="my-3" />
 
             {/* Totaux */}
-            <div className="space-y-3">
-              <div className="flex justify-between text-base">
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Sous-total</span>
                 <span className="font-medium">{orderData.subtotal.toLocaleString()} {orderData.currency}</span>
               </div>
-              <div className="flex justify-between text-base">
+              <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
                   TVA ({orderData.taxEnabled ? `${(orderData.taxRate * 100).toFixed(1)}%` : 'désactivée'})
                 </span>
                 <span className="font-medium">{orderData.tax.toLocaleString()} {orderData.currency}</span>
               </div>
               {orderData.discount > 0 && (
-                <div className="flex justify-between text-base text-green-600 font-medium">
+                <div className="flex justify-between text-sm text-green-600 font-medium">
                   <span>Remise ({orderData.discount}%)</span>
                   <span>-{((orderData.subtotal + orderData.tax) * orderData.discount / 100).toLocaleString()} {orderData.currency}</span>
                 </div>
               )}
               
-              <div className="flex justify-between text-2xl font-bold pt-3 border-t-2 border-foreground">
+              <div className="flex justify-between text-xl font-bold pt-2 border-t-2 border-foreground">
                 <span>TOTAL</span>
                 <span className="text-primary">{orderData.total.toLocaleString()} {orderData.currency}</span>
               </div>
             </div>
 
-            <Separator className="my-4" />
+            <Separator className="my-3" />
 
             {/* Mode de paiement */}
-            <div className="bg-muted/20 rounded-lg p-3">
+            <div className="bg-muted/20 rounded-lg p-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {getPaymentIcon()}
-                  <span className="font-medium">{getPaymentLabel()}</span>
+                  <span className="font-medium text-sm">{getPaymentLabel()}</span>
                 </div>
-                <Badge variant="secondary" className="bg-green-100 text-green-700">
+                <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
                   Payé
                 </Badge>
               </div>
               
               {orderData.paymentMethod === 'cash' && orderData.receivedAmount > 0 && (
-                <div className="mt-2 pt-2 border-t border-muted-foreground/20 text-sm">
+                <div className="mt-2 pt-2 border-t border-muted-foreground/20 text-xs">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Reçu</span>
                     <span>{orderData.receivedAmount.toLocaleString()} {orderData.currency}</span>
@@ -262,32 +262,32 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
             </div>
 
             {/* Pied de page */}
-            <div className="text-center mt-6 pt-4 border-t border-dashed border-muted-foreground/30">
-              <p className="text-sm text-muted-foreground">
+            <div className="text-center mt-4 pt-3 border-t border-dashed border-muted-foreground/30">
+              <p className="text-xs text-muted-foreground">
                 {orderData.receiptFooter || 'Merci pour votre achat!'}
               </p>
-              <p className="text-xs text-muted-foreground/60 mt-2">
+              <p className="text-[10px] text-muted-foreground/60 mt-1">
                 Powered by 224Solutions
               </p>
             </div>
           </div>
 
-          {/* Actions téléchargement/impression */}
-          <div className="grid grid-cols-2 gap-3 mt-4">
+          {/* Actions téléchargement/impression - Optimisé mobile */}
+          <div className="grid grid-cols-2 gap-2 mt-3 pb-2">
             <Button
               variant="outline"
               onClick={printReceipt}
-              className="h-12 shadow-md"
+              className="h-10 text-sm shadow-md"
             >
-              <Printer className="h-4 w-4 mr-2" />
+              <Printer className="h-4 w-4 mr-1" />
               Imprimer
             </Button>
             <Button
               onClick={downloadReceipt}
-              className="h-12 bg-gradient-to-r from-primary to-primary/80 shadow-md"
+              className="h-10 text-sm bg-gradient-to-r from-primary to-primary/80 shadow-md"
             >
-              <Download className="h-4 w-4 mr-2" />
-              Télécharger PDF
+              <Download className="h-4 w-4 mr-1" />
+              PDF
             </Button>
           </div>
 
@@ -295,7 +295,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
           <Button
             variant="ghost"
             onClick={onClose}
-            className="w-full mt-3 text-muted-foreground"
+            className="w-full mt-1 text-muted-foreground text-sm h-9"
           >
             Nouvelle vente
           </Button>
