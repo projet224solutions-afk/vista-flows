@@ -105,10 +105,11 @@ export function useFirebaseMessaging() {
     setStatus(prev => ({ ...prev, isLoading: true }));
 
     try {
-      // Initialiser Firebase Messaging
+      // Initialiser Firebase Messaging (silencieux si non configuré)
       const initialized = await firebaseMessaging.initializeMessaging();
       if (!initialized) {
-        toast.error('Impossible d\'initialiser les notifications');
+        console.log('Firebase Messaging non configuré - utilisation des notifications locales');
+        setStatus(prev => ({ ...prev, isLoading: false }));
         return false;
       }
 
