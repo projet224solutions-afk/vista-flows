@@ -67,6 +67,7 @@ const CreateUserSchema = z.object({
   }).optional(),
   vendeurData: z.object({
     business_name: z.string().max(200).trim(),
+    service_type: z.string().max(50).trim().optional(),
     business_description: z.string().max(1000).trim().optional(),
     business_address: z.string().max(500).trim().optional(),
   }).optional(),
@@ -387,6 +388,7 @@ serve(async (req) => {
       console.log('📦 Création profil vendeur pour:', authUser.user.id);
       const vendorData = (body.vendeurData || {}) as {
         business_name?: string;
+        service_type?: string;
         business_description?: string;
         business_address?: string;
       };
@@ -397,6 +399,11 @@ serve(async (req) => {
           business_name: vendorData.business_name || `${body.firstName} ${body.lastName || ''}`.trim(),
           description: vendorData.business_description,
           address: vendorData.business_address, // Correction: 'address' au lieu de 'business_address'
+          service_type: vendorData.service_type || null,
+          phone: body.phone,
+          email: body.email,
+          city: body.city || null,
+          is_active: true,
           is_verified: false
         });
 

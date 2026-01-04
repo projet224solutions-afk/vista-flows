@@ -23,6 +23,7 @@ export interface CreateUserData {
   };
   vendeurData?: {
     business_name: string;
+    service_type?: string;
     business_description?: string;
     business_address?: string;
   };
@@ -90,8 +91,8 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
           return { success: false, error: 'Veuillez remplir tous les champs du bureau syndical' };
         }
       } else if (userData.role === 'vendeur') {
-        if (!userData.vendeurData?.business_name) {
-          return { success: false, error: "Veuillez remplir le nom de l'entreprise" };
+        if (!userData.vendeurData?.business_name || !userData.vendeurData?.service_type) {
+          return { success: false, error: "Veuillez renseigner le type de service et le nom de l'entreprise" };
         }
       } else if (userData.role === 'taxi' || userData.role === 'livreur') {
         if (!userData.driverData?.license_number) {
