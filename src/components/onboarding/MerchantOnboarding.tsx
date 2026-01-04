@@ -22,12 +22,35 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Loader2, Store } from "lucide-react";
+import { Loader2, Store, Utensils, ShoppingBag, Scissors, Car, Home, Wrench, Camera, GraduationCap, Stethoscope, Plane, Package } from "lucide-react";
+
+// Types de services disponibles pour les marchands
+const SERVICE_TYPES = [
+  { value: "boutique", label: "Boutique / Commerce général", icon: ShoppingBag },
+  { value: "restaurant", label: "Restaurant / Alimentation", icon: Utensils },
+  { value: "salon_coiffure", label: "Salon de coiffure / Beauté", icon: Scissors },
+  { value: "garage_auto", label: "Garage auto / Mécanique", icon: Car },
+  { value: "immobilier", label: "Immobilier / Location", icon: Home },
+  { value: "services_pro", label: "Services professionnels", icon: Wrench },
+  { value: "photographe", label: "Photographe / Vidéaste", icon: Camera },
+  { value: "education", label: "Éducation / Formation", icon: GraduationCap },
+  { value: "sante", label: "Santé / Pharmacie", icon: Stethoscope },
+  { value: "voyage", label: "Voyage / Tourisme", icon: Plane },
+  { value: "autre", label: "Autre service", icon: Package },
+] as const;
 
 const merchantSetupSchema = z.object({
+  service_type: z.string().min(1, "Veuillez sélectionner un type de service"),
   business_name: z.string().min(3, "Le nom doit contenir au moins 3 caractères"),
   phone: z
     .string()
@@ -57,6 +80,7 @@ export default function MerchantOnboarding() {
   const form = useForm<MerchantSetupFormData>({
     resolver: zodResolver(merchantSetupSchema),
     defaultValues: {
+      service_type: "",
       business_name: "",
       phone: profile?.phone || "",
       city: profile?.city || "",
@@ -91,7 +115,7 @@ export default function MerchantOnboarding() {
 
       const { data, error } = await supabase
         .from("vendors")
-        .select("id,business_name,phone,email,address,description,city")
+        .select("id,business_name,phone,email,address,description,city,service_type")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -106,6 +130,7 @@ export default function MerchantOnboarding() {
         // Nouveau marchand : ouvrir automatiquement
         setVendorId(null);
         form.reset({
+          service_type: "",
           business_name: "",
           phone: profile.phone || "",
           city: profile.city || "",
@@ -119,6 +144,7 @@ export default function MerchantOnboarding() {
 
       setVendorId(data.id);
       form.reset({
+        service_type: (data as any).service_type || "",
         business_name: data.business_name || "",
         phone: data.phone || profile.phone || "",
         city: data.city || profile.city || "",
@@ -127,8 +153,13 @@ export default function MerchantOnboarding() {
         email: data.email || defaultEmail,
       });
 
-      // Critères “profil complet” (simple et efficace)
-      const isComplete = Boolean(data.business_name && (data.city || profile.city) && (data.phone || profile.phone));
+      // Critères "profil complet" : service_type + business_name + city + phone
+      const isComplete = Boolean(
+        (data as any).service_type && 
+        data.business_name && 
+        (data.city || profile.city) && 
+        (data.phone || profile.phone)
+      );
       setOpen(!isComplete);
     };
 
@@ -144,6 +175,7 @@ export default function MerchantOnboarding() {
         const { error } = await supabase
           .from("vendors")
           .update({
+            service_type: values.service_type,
             business_name: values.business_name,
             phone: values.phone || null,
             email: values.email || null,
@@ -159,6 +191,7 @@ export default function MerchantOnboarding() {
           .from("vendors")
           .insert({
             user_id: user.id,
+            service_type: values.service_type,
             business_name: values.business_name,
             phone: values.phone || null,
             email: values.email || null,
@@ -174,7 +207,7 @@ export default function MerchantOnboarding() {
         setVendorId(data.id);
       }
 
-      toast.success("Profil marchand enregistré.");
+      toast.success("Profil marchand enregistré avec succès !");
       setOpen(false);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erreur lors de l'enregistrement";
@@ -188,27 +221,66 @@ export default function MerchantOnboarding() {
 
   return (
     <Dialog open={open} onOpenChange={(v) => setOpen(v)}>
-      <DialogContent className="sm:max-w-[680px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[720px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Store className="h-5 w-5" />
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Store className="h-5 w-5 text-primary" />
+            </div>
             Finalisez votre compte marchand
           </DialogTitle>
           <DialogDescription>
-            Quelques informations professionnelles pour activer votre boutique (vous pourrez les modifier plus tard).
+            Complétez ces informations pour activer votre boutique et commencer à vendre.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            {/* Type de service - Champ principal */}
+            <FormField
+              control={form.control}
+              name="service_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base font-semibold">Type de service *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={submitting}>
+                    <FormControl>
+                      <SelectTrigger className="h-12">
+                        <SelectValue placeholder="Sélectionnez votre type de service" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {SERVICE_TYPES.map((type) => {
+                        const IconComponent = type.icon;
+                        return (
+                          <SelectItem key={type.value} value={type.value}>
+                            <div className="flex items-center gap-2">
+                              <IconComponent className="h-4 w-4 text-muted-foreground" />
+                              <span>{type.label}</span>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="business_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nom de la boutique *</FormLabel>
+                  <FormLabel>Nom de la boutique / entreprise *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Boutique Diallo" {...field} disabled={submitting} />
+                    <Input 
+                      placeholder="Ex: Boutique Diallo, Restaurant Chez Mamou..." 
+                      {...field} 
+                      disabled={submitting}
+                      className="h-11"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -223,7 +295,12 @@ export default function MerchantOnboarding() {
                   <FormItem>
                     <FormLabel>Téléphone *</FormLabel>
                     <FormControl>
-                      <Input placeholder="+224 6xx xxx xxx" {...field} disabled={submitting} />
+                      <Input 
+                        placeholder="+224 6xx xxx xxx" 
+                        {...field} 
+                        disabled={submitting}
+                        className="h-11"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -237,7 +314,12 @@ export default function MerchantOnboarding() {
                   <FormItem>
                     <FormLabel>Ville *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Conakry" {...field} disabled={submitting} />
+                      <Input 
+                        placeholder="Conakry, Kindia, Labé..." 
+                        {...field} 
+                        disabled={submitting}
+                        className="h-11"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -250,9 +332,14 @@ export default function MerchantOnboarding() {
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Adresse</FormLabel>
+                  <FormLabel>Adresse complète</FormLabel>
                   <FormControl>
-                    <Input placeholder="Quartier, Commune" {...field} disabled={submitting} />
+                    <Input 
+                      placeholder="Quartier, Commune, Repères..." 
+                      {...field} 
+                      disabled={submitting}
+                      className="h-11"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -264,9 +351,14 @@ export default function MerchantOnboarding() {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Description de votre activité</FormLabel>
                   <FormControl>
-                    <Textarea rows={3} placeholder="Décrivez votre activité..." {...field} disabled={submitting} />
+                    <Textarea 
+                      rows={3} 
+                      placeholder="Décrivez vos produits ou services..." 
+                      {...field} 
+                      disabled={submitting} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -278,22 +370,33 @@ export default function MerchantOnboarding() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Email professionnel</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="contact@exemple.com" {...field} disabled={submitting} />
+                    <Input 
+                      type="email" 
+                      placeholder="contact@votreboutique.com" 
+                      {...field} 
+                      disabled={submitting}
+                      className="h-11"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={submitting}>
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setOpen(false)} 
+                disabled={submitting}
+              >
                 Plus tard
               </Button>
-              <Button type="submit" disabled={submitting}>
+              <Button type="submit" disabled={submitting} className="min-w-[140px]">
                 {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Enregistrer
+                Activer ma boutique
               </Button>
             </div>
           </form>
