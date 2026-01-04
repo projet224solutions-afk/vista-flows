@@ -52,6 +52,7 @@ import { getCurrencyByCode, formatCurrency } from '@/data/currencies';
 import { useAuth } from '@/hooks/useAuth';
 import { useAgent } from '@/contexts/AgentContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useVendorOptimized } from '@/hooks/useVendorOptimized';
 import { getEdgeFunctionErrorMessage } from '@/utils/supabaseFunctionsError';
 import { NumericKeypadPopup } from './pos/NumericKeypadPopup';
 import { QuantityKeypadPopup } from './pos/QuantityKeypadPopup';
@@ -313,8 +314,9 @@ export function POSSystem() {
   const [keypadMode, setKeypadMode] = useState<'quantity' | 'amount'>('quantity');
   const [selectedCartItemForQuantity, setSelectedCartItemForQuantity] = useState<CartItem | null>(null);
   
-  // États pour personnalisation
-  const [companyName] = useState('Vista Commerce Pro');
+  // États pour personnalisation - Récupérer le nom de l'entreprise depuis le profil vendor
+  const { profile: vendorProfile } = useVendorOptimized();
+  const companyName = vendorProfile?.business_name || 'Point de Vente';
   const [currentTime, setCurrentTime] = useState(new Date());
   
   // Historique des 3 derniers produits sélectionnés
