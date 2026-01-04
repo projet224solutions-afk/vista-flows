@@ -188,11 +188,11 @@ export function VendorSidebar() {
   return (
     <TooltipProvider>
       <Sidebar className={cn(
-        collapsed ? "w-12" : "w-44",
+        collapsed ? "w-12" : "w-48",
         "border-r border-border/40 shadow-lg"
       )} collapsible="icon">
-        <ScrollArea className="h-full pr-2">
-          <SidebarContent className="bg-gradient-to-b from-background via-background to-muted/20 py-2 pr-1">
+        <ScrollArea className="h-full pr-3 overflow-visible">
+          <SidebarContent className="bg-gradient-to-b from-background via-background to-muted/20 py-2 pr-2">
             {menuSections.map((section, sectionIndex) => (
               <SidebarGroup key={section.label} className="py-1">
                 {!collapsed && (
@@ -274,8 +274,8 @@ export function VendorSidebar() {
                                   <Badge 
                                     variant={badgeValue === "HOT" ? "destructive" : "secondary"}
                                     className={cn(
-                                      "text-[9px] px-1.5 py-0 h-4 min-w-[20px] flex items-center justify-center flex-shrink-0 mr-2",
-                                      isPOS && "bg-gradient-to-r from-orange-500 to-red-500 text-white border-0 animate-pulse"
+                                      "text-[10px] px-2 py-0.5 h-5 min-w-[24px] flex items-center justify-center flex-shrink-0 mr-3 font-bold",
+                                      isPOS && "bg-gradient-to-r from-orange-500 to-red-500 text-white border-0 animate-pulse shadow-md"
                                     )}
                                   >
                                     {badgeValue}
