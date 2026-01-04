@@ -92,7 +92,7 @@ export function useDjomyPayment() {
       const { data, error: fnError } = await supabase.functions.invoke('djomy-init-payment', {
         body: {
           amount: options.amount,
-          payerPhone: options.phoneNumber,
+          payerPhone: formattedPhone || options.phoneNumber,
           paymentMethod: options.paymentMethod,
           description: options.description,
           orderId: options.orderId,
