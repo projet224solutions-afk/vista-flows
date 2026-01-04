@@ -540,9 +540,12 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   };
 
   const handleMobileMoneyDeposit = async (amount: number) => {
-    if (!mobileMoneyPhone || mobileMoneyPhone.length !== 9) {
+    // Nettoyer et valider le numéro
+    const cleanPhone = mobileMoneyPhone.replace(/[^0-9]/g, '').replace(/^(224|00224)/, '');
+    
+    if (!cleanPhone || cleanPhone.length !== 9) {
       toast.error('Numéro de téléphone invalide', {
-        description: 'Veuillez entrer un numéro de 9 chiffres'
+        description: `Entrez 9 chiffres (ex: 621234567). Vous avez entré: ${cleanPhone.length} chiffres`
       });
       return;
     }
@@ -556,7 +559,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       const { data, error } = await supabase.functions.invoke('djomy-init-payment', {
         body: {
           amount: amount,
-          payerPhone: `224${mobileMoneyPhone}`,
+          payerPhone: `224${cleanPhone}`,
           paymentMethod: paymentMethodCode,
           description: `Recharge wallet - ${amount.toLocaleString()} GNF`,
           orderId: `WLT-${Date.now()}`,
