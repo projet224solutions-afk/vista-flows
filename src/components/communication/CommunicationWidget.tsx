@@ -63,8 +63,8 @@ const CommunicationWidgetContent = memo(function CommunicationWidgetContent({
 
   return (
     <>
-      {/* Widget flottant - z-[9999] pour s'assurer qu'il est toujours visible */}
-      <div className={`fixed ${positionClasses[position]} z-[9999] flex flex-col gap-2 pointer-events-none`}>
+      {/* Widget flottant - z-50 pour bonne visibilité sans masquer les dialogues */}
+      <div className={`fixed ${positionClasses[position]} z-50 flex flex-col gap-2 pointer-events-none`}>
         {/* Bouton principal - pointer-events-auto pour réactiver les clics sur le bouton */}
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
           <DialogTrigger asChild>

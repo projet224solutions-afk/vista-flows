@@ -481,8 +481,8 @@ export default function VendeurDashboard() {
             </div>
           )}
 
-          {/* Contenu principal - padding augmenté pour éviter coupures */}
-          <main className="flex-1 p-2 sm:p-3 md:p-6 overflow-x-hidden overflow-y-auto pt-4 pb-36 md:pb-6 w-full max-w-full">
+          {/* Contenu principal - padding optimisé pour éviter coupures */}
+          <main className="flex-1 p-2 sm:p-3 md:p-6 overflow-x-hidden overflow-y-auto pt-4 pb-24 md:pb-8 w-full max-w-full">
             <Routes>
               {/* Route par défaut - toujours accessible */}
               <Route index element={<DashboardHome />} />
