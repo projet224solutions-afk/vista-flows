@@ -1,12 +1,13 @@
-// Service Worker v5 - PWA + Firebase Cloud Messaging
-const CACHE_VERSION = "v5";
+// Service Worker v6 - PWA + Firebase Cloud Messaging (Unifié)
+const CACHE_VERSION = "v6";
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
 
 // --- Firebase Cloud Messaging (FCM) ---
 // IMPORTANT: Un seul Service Worker par scope, on intègre FCM ici.
-importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
+// Utiliser Firebase 10.x pour compatibilité avec version moderne
+importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js');
 
 let firebaseConfig = null;
 let fcmInitialized = false;
@@ -76,7 +77,7 @@ const PRECACHE_ASSETS = ["/manifest.json", "/favicon.png"];
 
 // INSTALL - Ne jamais bloquer
 self.addEventListener("install", (event) => {
-  console.log("[SW] Installation v5");
+  console.log("[SW] Installation v6");
   self.skipWaiting();
 
   event.waitUntil(
@@ -89,7 +90,7 @@ self.addEventListener("install", (event) => {
 
 // ACTIVATE - Nettoyer anciens caches et prendre le contrôle
 self.addEventListener("activate", (event) => {
-  console.log("[SW] Activation v5");
+  console.log("[SW] Activation v6");
 
   event.waitUntil(
     Promise.all([
@@ -243,4 +244,4 @@ self.addEventListener("notificationclose", (event) => {
   console.log("[FCM SW] Notification fermée:", event.notification.tag);
 });
 
-console.log("[SW] Service Worker chargé (v5)");
+console.log("[SW] Service Worker chargé (v6 - Firebase 10.13.0)");
