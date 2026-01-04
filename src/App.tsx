@@ -99,6 +99,7 @@ const StolenMotoDeclaration = lazyWithRetry(() => import("./pages/StolenMotoDecl
 const VisualSearch = lazyWithRetry(() => import("./pages/VisualSearch"));
 const Categories = lazyWithRetry(() => import("./pages/Categories"));
 const StripePaymentTest = lazyWithRetry(() => import("./pages/StripePaymentTest"));
+const StripeDiagnostic = lazyWithRetry(() => import("./pages/StripeDiagnostic"));
 const DigitalProducts = lazyWithRetry(() => import("./pages/DigitalProducts"));
 const ShortLinkRedirect = lazyWithRetry(() => import("./pages/ShortLinkRedirect"));
 // Ultra-simple loading component - Pure CSS inline (no Tailwind dependency)
@@ -312,6 +313,9 @@ function App() {
               
               {/* Test Stripe Payment */}
               <Route path="/test-stripe-payment" element={<StripePaymentTest />} />
+              
+              {/* Diagnostic Stripe */}
+              <Route path="/stripe-diagnostic" element={<StripeDiagnostic />} />
               
               <Route path="/orders" element={<Orders />} />
               <Route
