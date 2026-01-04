@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import MerchantOnboarding from "@/components/onboarding/MerchantOnboarding";
 import { CartProvider } from "@/contexts/CartContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -167,6 +168,7 @@ function App() {
                 <Toaster />
                 <Sonner />
                 <DeepLinkInitializer />
+                <MerchantOnboarding />
                 <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>
               <Routes>

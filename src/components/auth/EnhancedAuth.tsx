@@ -111,20 +111,45 @@ export default function EnhancedAuth() {
   const handleSocialLogin = async (provider: 'google' | 'facebook') => {
     setSocialLoading(provider);
     setError(null);
-    
+
     try {
-      const redirectUrl = `${window.location.origin}/`;
-      
+      // Persister l'intention (rôle) pour le callback OAuth (création/ajustement du profil)
+      if (accountType) {
+        const mapAccountTypeToRole = (type: AccountType) => {
+          switch (type) {
+            case 'marchand':
+              return 'vendeur';
+            case 'livreur':
+              return 'livreur';
+            case 'taxi_moto':
+              return 'taxi';
+            case 'transitaire':
+              return 'transitaire';
+            case 'client':
+            default:
+              return 'client';
+          }
+        };
+
+        localStorage.setItem('oauth_intent_role', mapAccountTypeToRole(accountType));
+      }
+
+      const origin = window.location.origin;
+      const safeOrigin = origin.includes('224solution.net') ? origin.replace('http://', 'https://') : origin;
+      const redirectUrl = `${safeOrigin}/`;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: redirectUrl,
-          queryParams: accountType ? {
-            account_type: accountType
-          } : undefined
-        }
+          queryParams: accountType
+            ? {
+                account_type: accountType,
+              }
+            : undefined,
+        },
       });
-      
+
       if (error) throw error;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur de connexion';

@@ -49,6 +49,17 @@ export default function Auth() {
 
   // === OAUTH HANDLERS (Google & Facebook) ===
   const handleGoogleLogin = async () => {
+    // Si l'utilisateur est en mode inscription mais n'a pas choisi de rôle, on force un choix
+    if (showSignup && !selectedRole) {
+      setShowRoleSelectionModal(true);
+      return;
+    }
+
+    // Persister l'intention (rôle) pour que le callback OAuth crée/ajuste le profil correctement
+    if (selectedRole) {
+      localStorage.setItem('oauth_intent_role', selectedRole);
+    }
+
     setOauthLoading('google');
     setError(null);
 
@@ -65,8 +76,8 @@ export default function Auth() {
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
-          }
-        }
+          },
+        },
       });
 
       if (error) throw error;
@@ -80,6 +91,15 @@ export default function Auth() {
   };
 
   const handleFacebookLogin = async () => {
+    if (showSignup && !selectedRole) {
+      setShowRoleSelectionModal(true);
+      return;
+    }
+
+    if (selectedRole) {
+      localStorage.setItem('oauth_intent_role', selectedRole);
+    }
+
     setOauthLoading('facebook');
     setError(null);
 
@@ -92,7 +112,7 @@ export default function Auth() {
         provider: 'facebook',
         options: {
           redirectTo: redirectUrl,
-        }
+        },
       });
 
       if (error) throw error;
