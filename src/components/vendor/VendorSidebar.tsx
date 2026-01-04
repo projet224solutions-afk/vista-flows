@@ -167,6 +167,7 @@ export function VendorSidebar() {
       items: [
         { title: t('sidebar.deliveries'), icon: Truck, path: "delivery" },
         { title: t('sidebar.ratings'), icon: Star, path: "ratings" },
+        { title: "Avis Clients", icon: MessageSquare, path: "reviews" },
         { title: t('sidebar.support'), icon: HeadphonesIcon, path: "support" },
         { title: t('sidebar.messages'), icon: MessageSquare, path: "communication" },
         { title: t('sidebar.reports'), icon: FileText, path: "reports" },
