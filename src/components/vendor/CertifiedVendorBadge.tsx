@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { Shield, CheckCircle2, Clock, AlertTriangle, XCircle } from 'lucide-react';
+import { Shield, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { VendorCertificationStatus, getCertificationStatusLabel } from '@/types/vendorCertification';
@@ -45,14 +45,6 @@ export function CertifiedVendorBadge({
             ? `Vendeur certifié le ${new Date(verifiedAt).toLocaleDateString('fr-FR')}`
             : 'Vendeur certifié par 224Solutions'
         };
-      case 'EN_ATTENTE':
-        return {
-          icon: Clock,
-          label: 'En attente',
-          color: 'bg-yellow-500 text-white border-yellow-600',
-          iconColor: 'text-white',
-          tooltipText: 'Certification en cours de vérification'
-        };
       case 'SUSPENDU':
         return {
           icon: AlertTriangle,
@@ -68,7 +60,7 @@ export function CertifiedVendorBadge({
           label: 'Non certifié',
           color: 'bg-gray-400 text-white border-gray-500',
           iconColor: 'text-white',
-          tooltipText: 'Vendeur non certifié'
+          tooltipText: 'Vendeur non certifié - KYC requis'
         };
     }
   };

@@ -1,13 +1,13 @@
 -- =====================================================
--- VENDOR CERTIFICATION SYSTEM
+-- VENDOR CERTIFICATION SYSTEM v2.0
 -- Système de certification vendeur contrôlé par PDG/Admin
+-- ⚠️ EXIGENCE: KYC VALIDÉ OBLIGATOIRE
 -- 224SOLUTIONS
 -- =====================================================
 
--- Type ENUM pour statut certification
+-- Type ENUM pour statut certification (simplifié, sans EN_ATTENTE)
 CREATE TYPE vendor_certification_status AS ENUM (
   'NON_CERTIFIE',
-  'EN_ATTENTE',
   'CERTIFIE',
   'SUSPENDU'
 );
@@ -26,8 +26,11 @@ CREATE TABLE IF NOT EXISTS vendor_certifications (
   verified_by UUID REFERENCES profiles(id) ON DELETE SET NULL,
   verified_at TIMESTAMPTZ,
   
+  -- ✅ KYC validation (OBLIGATOIRE pour certification)
+  kyc_verified_at TIMESTAMPTZ, -- Date validation KYC
+  kyc_status TEXT, -- pending | verified | rejected (copie pour traçabilité)
+  
   -- Historique
-  requested_at TIMESTAMPTZ DEFAULT NOW(),
   last_status_change TIMESTAMPTZ DEFAULT NOW(),
   
   -- Notes internes (visibles uniquement par admins)
@@ -92,6 +95,7 @@ CREATE POLICY "Admins can view all certifications"
   );
 
 -- Policy 4: CEO/SUPER_ADMIN peuvent créer/modifier certifications
+-- ⚠️ MAIS SEULEMENT SI KYC VALIDÉ
 CREATE POLICY "Admins can manage certifications"
   ON vendor_certifications
   FOR ALL
@@ -110,14 +114,65 @@ CREATE POLICY "Admins can manage certifications"
     )
   );
 
--- Policy 5: Vendeurs peuvent demander certification (INSERT seulement)
-CREATE POLICY "Vendors can request certification"
+-- Policy 5: Interdiction totale pour vendeurs de modifier leur certification
+CREATE POLICY "Vendors cannot modify certifications"
   ON vendor_certifications
-  FOR INSERT
-  WITH CHECK (
-    auth.uid() = vendor_id
-    AND status = 'EN_ATTENTE'
-  );
+  FOR UPDATE
+  USING (false); -- Aucun vendeur ne peut UPDATE
+
+-- =====================================================
+-- FONCTION: Vérifier KYC avant certification
+-- =====================================================
+
+CREATE OR REPLACE FUNCTION check_vendor_kyc_before_certification()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_kyc_status TEXT;
+  v_kyc_verified_at TIMESTAMPTZ;
+BEGIN
+  -- Si tentative de certification (statut = CERTIFIE)
+  IF NEW.status = 'CERTIFIE' THEN
+    
+    -- Vérifier KYC dans vendor_kyc (si table existe)
+    BEGIN
+      SELECT status, verified_at 
+      INTO v_kyc_status, v_kyc_verified_at
+      FROM vendor_kyc
+      WHERE vendor_id = NEW.vendor_id;
+      
+      IF v_kyc_status IS NULL OR v_kyc_status != 'verified' THEN
+        RAISE EXCEPTION 'KYC non validé. Le vendeur doit avoir un KYC vérifié (status=verified) avant certification.';
+      END IF;
+      
+      -- Stocker infos KYC dans certification pour traçabilité
+      NEW.kyc_status := v_kyc_status;
+      NEW.kyc_verified_at := v_kyc_verified_at;
+      
+    EXCEPTION
+      WHEN undefined_table THEN
+        -- Fallback: vérifier vendors.kyc_status
+        SELECT kyc_status
+        INTO v_kyc_status
+        FROM vendors
+        WHERE user_id = NEW.vendor_id;
+        
+        IF v_kyc_status IS NULL OR v_kyc_status != 'verified' THEN
+          RAISE EXCEPTION 'KYC non validé (vendors.kyc_status). Le vendeur doit avoir un KYC vérifié avant certification.';
+        END IF;
+        
+        NEW.kyc_status := v_kyc_status;
+    END;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger KYC validation AVANT certification
+CREATE TRIGGER verify_kyc_before_certification
+  BEFORE INSERT OR UPDATE ON vendor_certifications
+  FOR EACH ROW
+  EXECUTE FUNCTION check_vendor_kyc_before_certification();
 
 -- =====================================================
 -- FONCTION: Auto-créer certification pour nouveaux vendeurs
@@ -218,8 +273,10 @@ ON CONFLICT (vendor_id) DO NOTHING;
 -- COMMENTAIRES
 -- =====================================================
 
-COMMENT ON TABLE vendor_certifications IS 'Système de certification vendeur contrôlé par PDG/Admin';
-COMMENT ON COLUMN vendor_certifications.status IS 'NON_CERTIFIE | EN_ATTENTE | CERTIFIE | SUSPENDU';
+COMMENT ON TABLE vendor_certifications IS 'Système de certification vendeur contrôlé par PDG/Admin - KYC OBLIGATOIRE';
+COMMENT ON COLUMN vendor_certifications.status IS 'NON_CERTIFIE | CERTIFIE | SUSPENDU (EN_ATTENTE retiré - workflow direct)';
 COMMENT ON COLUMN vendor_certifications.verified_by IS 'Admin qui a certifié (CEO/SUPER_ADMIN uniquement)';
+COMMENT ON COLUMN vendor_certifications.kyc_verified_at IS 'Date validation KYC (copie traçabilité)';
+COMMENT ON COLUMN vendor_certifications.kyc_status IS 'Statut KYC au moment certification (verified requis)';
 COMMENT ON COLUMN vendor_certifications.payment_score IS 'Score 0-100 basé sur historique paiements (extension future)';
 COMMENT ON COLUMN vendor_certifications.internal_notes IS 'Notes internes visibles uniquement par admins';

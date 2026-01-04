@@ -86,7 +86,7 @@ serve(async (req) => {
       );
     }
 
-    // Verify vendor exists
+    // Verify vendor exists and has VERIFIED KYC
     const { data: vendorProfile, error: vendorError } = await supabase
       .from('profiles')
       .select('id, full_name, role')
@@ -105,6 +105,61 @@ serve(async (req) => {
         JSON.stringify({ error: 'Target user is not a vendor' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // ✅ CRITICAL: Verify KYC is VERIFIED before certification
+    if (action === 'CERTIFY') {
+      let kycVerified = false;
+      let kycStatus = null;
+
+      // Try vendor_kyc table first
+      try {
+        const { data: kycData, error: kycError } = await supabase
+          .from('vendor_kyc')
+          .select('status, verified_at')
+          .eq('vendor_id', vendor_id)
+          .single();
+
+        if (kycData && kycData.status === 'verified') {
+          kycVerified = true;
+          kycStatus = kycData.status;
+        }
+      } catch (error) {
+        console.log('vendor_kyc table not found, trying vendors.kyc_status');
+      }
+
+      // Fallback: check vendors.kyc_status
+      if (!kycVerified) {
+        try {
+          const { data: vendorData } = await supabase
+            .from('vendors')
+            .select('kyc_status')
+            .eq('user_id', vendor_id)
+            .single();
+
+          if (vendorData && vendorData.kyc_status === 'verified') {
+            kycVerified = true;
+            kycStatus = vendorData.kyc_status;
+          }
+        } catch (error) {
+          console.log('vendors.kyc_status check failed');
+        }
+      }
+
+      // Reject certification if KYC not verified
+      if (!kycVerified) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'KYC non vérifié',
+            message: 'Le vendeur doit avoir un KYC validé (status=verified) avant de pouvoir être certifié.',
+            kyc_status: kycStatus || 'unknown',
+            action_required: 'Valider le KYC du vendeur avant certification'
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`✅ KYC verified for vendor ${vendor_id}, proceeding with certification`);
     }
 
     // Determine new status based on action
@@ -140,9 +195,10 @@ serve(async (req) => {
         break;
 
       case 'REQUEST_INFO':
-        newStatus = 'EN_ATTENTE';
+        // Note: EN_ATTENTE removed from enum, this becomes a NON_CERTIFIE with notes
+        newStatus = 'NON_CERTIFIE';
         updateData.status = newStatus;
-        if (internal_notes) updateData.internal_notes = internal_notes;
+        if (internal_notes) updateData.internal_notes = `[INFO REQUESTED] ${internal_notes}`;
         break;
 
       default:

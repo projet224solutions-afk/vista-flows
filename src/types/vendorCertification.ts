@@ -1,12 +1,12 @@
 /**
- * VENDOR CERTIFICATION TYPES
+ * VENDOR CERTIFICATION TYPES v2.0
  * Types TypeScript pour le système de certification vendeur
+ * ⚠️ KYC VALIDÉ OBLIGATOIRE pour certification
  * 224SOLUTIONS
  */
 
 export type VendorCertificationStatus = 
   | 'NON_CERTIFIE'
-  | 'EN_ATTENTE'
   | 'CERTIFIE'
   | 'SUSPENDU';
 
@@ -19,8 +19,11 @@ export interface VendorCertification {
   verified_by: string | null;
   verified_at: string | null;
   
+  // ✅ KYC (OBLIGATOIRE pour certification)
+  kyc_verified_at: string | null;
+  kyc_status: string | null; // pending | verified | rejected
+  
   // Historique
-  requested_at: string;
   last_status_change: string;
   
   // Notes
@@ -71,8 +74,6 @@ export const getCertificationStatusLabel = (status: VendorCertificationStatus): 
   switch (status) {
     case 'NON_CERTIFIE':
       return 'Non certifié';
-    case 'EN_ATTENTE':
-      return 'En attente';
     case 'CERTIFIE':
       return 'Certifié';
     case 'SUSPENDU':
@@ -86,8 +87,6 @@ export const getCertificationStatusColor = (status: VendorCertificationStatus): 
   switch (status) {
     case 'NON_CERTIFIE':
       return 'gray';
-    case 'EN_ATTENTE':
-      return 'yellow';
     case 'CERTIFIE':
       return 'green';
     case 'SUSPENDU':

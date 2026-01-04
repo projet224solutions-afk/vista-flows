@@ -1,17 +1,29 @@
 /**
  * GUIDE DÉPLOIEMENT: Système de Certification Vendeur
+ * VERSION 2.0 - Avec validation KYC
  * 224SOLUTIONS
  */
 
-# 🎯 Système de Certification Vendeur
+# 🎯 Système de Certification Vendeur v2.0
+
+## ⚠️ IMPORTANTE: Version 2.0
+**Migration majeure**: La certification nécessite désormais un KYC validé.
+- Voir `VENDOR_CERTIFICATION_V2_MIGRATION.md` pour les détails de migration
+- Statut `EN_ATTENTE` supprimé
+- Vendeurs ne peuvent plus demander certification
+- Validation KYC automatique (trigger + edge function)
+
+---
 
 ## ✅ Fichiers créés
 
 ### 1. Base de données
 - `supabase/migrations/20260104_vendor_certifications.sql`
   - Table `vendor_certifications`
-  - Enum `vendor_certification_status`
-  - RLS policies (CEO/SUPER_ADMIN uniquement)
+  - Enum `vendor_certification_status` (3 statuts: NON_CERTIFIE, CERTIFIE, SUSPENDU)
+  - **Champs KYC**: `kyc_verified_at`, `kyc_status`
+  - **Trigger**: `check_vendor_kyc_before_certification()` (validation auto)
+  - RLS policies (CEO/SUPER_ADMIN uniquement, vendeurs lecture seule)
   - Triggers auto-création pour nouveaux vendeurs
   - Vue `certified_vendors` pour affichage public
 
@@ -19,31 +31,36 @@
 - `supabase/functions/verify-vendor/index.ts`
   - Sécurisée: CEO/SUPER_ADMIN uniquement
   - Actions: CERTIFY, SUSPEND, REJECT, REQUEST_INFO
+  - **Vérification KYC**: Double check (vendor_kyc + vendors.kyc_status)
+  - Bloque certification si KYC non validé (status != 'verified')
   - Validation stricte des permissions
 
 ### 3. Types TypeScript
 - `src/types/vendorCertification.ts`
-  - Types complets pour certifications
+  - Types complets pour certifications (sans EN_ATTENTE)
   - Helpers pour labels et couleurs
+  - Interface avec champs KYC
 
 ### 4. Composants React
 - `src/components/vendor/CertifiedVendorBadge.tsx`
   - Badge visuel avec 3 variantes (default, compact, detailed)
   - Icons et tooltips
   - Support Tailwind CSS
+  - **v2.0**: Retiré badge "En attente" jaune
   
 - `src/components/ceo/VendorCertificationManager.tsx`
   - Interface PDG complète
-  - Stats dashboard
+  - Stats dashboard (sans stats "En attente")
   - Filtres et recherche
   - Gestion individuelle des certifications
   - Dialog de confirmation
+  - **v2.0**: Affichage statut KYC
 
 ### 5. Hooks
 - `src/hooks/useVendorCertification.ts`
   - Hook pour récupérer certification d'un vendeur
   - Real-time subscriptions
-  - Hook pour demander certification (vendeur)
+  - **v2.0**: Hook `useRequestCertification` SUPPRIMÉ (plus de demande vendeur)
 
 ---
 

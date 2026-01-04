@@ -10,7 +10,6 @@ import {
   Shield, 
   CheckCircle2, 
   XCircle, 
-  Clock, 
   AlertTriangle,
   Search,
   Filter,
@@ -65,7 +64,6 @@ export function VendorCertificationManager() {
   const [stats, setStats] = useState({
     total: 0,
     certified: 0,
-    pending: 0,
     suspended: 0,
     nonCertified: 0
   });
@@ -104,7 +102,6 @@ export function VendorCertificationManager() {
       const newStats = {
         total: vendorsWithCerts.length,
         certified: vendorsWithCerts.filter(v => v.certification?.status === 'CERTIFIE').length,
-        pending: vendorsWithCerts.filter(v => v.certification?.status === 'EN_ATTENTE').length,
         suspended: vendorsWithCerts.filter(v => v.certification?.status === 'SUSPENDU').length,
         nonCertified: vendorsWithCerts.filter(v => !v.certification || v.certification.status === 'NON_CERTIFIE').length
       };
@@ -219,7 +216,7 @@ export function VendorCertificationManager() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -244,20 +241,6 @@ export function VendorCertificationManager() {
             <div className="text-2xl font-bold flex items-center gap-2 text-green-600">
               <CheckCircle2 className="w-5 h-5" />
               {stats.certified}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              En attente
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold flex items-center gap-2 text-yellow-600">
-              <Clock className="w-5 h-5" />
-              {stats.pending}
             </div>
           </CardContent>
         </Card>
@@ -320,13 +303,6 @@ export function VendorCertificationManager() {
                 size="sm"
               >
                 Certifiés
-              </Button>
-              <Button
-                variant={statusFilter === 'EN_ATTENTE' ? 'default' : 'outline'}
-                onClick={() => setStatusFilter('EN_ATTENTE')}
-                size="sm"
-              >
-                En attente
               </Button>
               <Button
                 variant={statusFilter === 'SUSPENDU' ? 'default' : 'outline'}

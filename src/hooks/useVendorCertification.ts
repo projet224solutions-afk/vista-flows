@@ -1,6 +1,7 @@
 /**
  * HOOK: useVendorCertification
  * Hook pour récupérer et gérer le statut de certification d'un vendeur
+ * v2.0: Certification basée sur KYC validé, pas de requête vendeur
  * 224SOLUTIONS
  */
 
@@ -16,6 +17,18 @@ interface UseVendorCertificationResult {
   refetch: () => Promise<void>;
 }
 
+/**
+ * Hook principal pour récupérer le statut de certification d'un vendeur
+ * 
+ * @param vendorId - ID du vendeur
+ * @returns Objet contenant la certification, loading, error, isCertified et refetch
+ * 
+ * @example
+ * const { certification, isCertified, loading } = useVendorCertification(vendorId);
+ * if (isCertified) {
+ *   // Afficher badge certifié
+ * }
+ */
 export function useVendorCertification(vendorId: string | undefined): UseVendorCertificationResult {
   const [certification, setCertification] = useState<VendorCertification | null>(null);
   const [loading, setLoading] = useState(true);
@@ -90,70 +103,5 @@ export function useVendorCertification(vendorId: string | undefined): UseVendorC
     error,
     isCertified,
     refetch: fetchCertification
-  };
-}
-
-/**
- * Hook pour demander une certification (vendeur uniquement)
- */
-export function useRequestCertification() {
-  const [requesting, setRequesting] = useState(false);
-
-  const requestCertification = async () => {
-    try {
-      setRequesting(true);
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Non authentifié');
-
-      // Vérifier si certification existe déjà
-      const { data: existing } = await supabase
-        .from('vendor_certifications')
-        .select('id, status')
-        .eq('vendor_id', user.id)
-        .single();
-
-      if (existing) {
-        if (existing.status === 'EN_ATTENTE') {
-          throw new Error('Demande déjà en attente');
-        }
-        if (existing.status === 'CERTIFIE') {
-          throw new Error('Déjà certifié');
-        }
-
-        // Update to EN_ATTENTE
-        const { error: updateError } = await supabase
-          .from('vendor_certifications')
-          .update({ 
-            status: 'EN_ATTENTE',
-            requested_at: new Date().toISOString()
-          })
-          .eq('vendor_id', user.id);
-
-        if (updateError) throw updateError;
-      } else {
-        // Create new
-        const { error: insertError } = await supabase
-          .from('vendor_certifications')
-          .insert({
-            vendor_id: user.id,
-            status: 'EN_ATTENTE'
-          });
-
-        if (insertError) throw insertError;
-      }
-
-      return true;
-    } catch (err) {
-      console.error('Error requesting certification:', err);
-      throw err;
-    } finally {
-      setRequesting(false);
-    }
-  };
-
-  return {
-    requestCertification,
-    requesting
   };
 }
