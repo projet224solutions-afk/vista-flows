@@ -113,8 +113,8 @@ export default function EnhancedAuth() {
     setError(null);
 
     try {
-      // Persister l'intention (rôle) pour le callback OAuth (création/ajustement du profil)
-      if (accountType) {
+      // Persister l'intention (rôle) UNIQUEMENT pour les nouvelles inscriptions
+      if (accountType && mode === 'signup') {
         const mapAccountTypeToRole = (type: AccountType) => {
           switch (type) {
             case 'marchand':
@@ -132,6 +132,12 @@ export default function EnhancedAuth() {
         };
 
         localStorage.setItem('oauth_intent_role', mapAccountTypeToRole(accountType));
+        // Marquer explicitement que c'est une nouvelle inscription
+        localStorage.setItem('oauth_is_new_signup', 'true');
+      } else {
+        // Connexion existante - ne pas modifier le rôle
+        localStorage.removeItem('oauth_intent_role');
+        localStorage.removeItem('oauth_is_new_signup');
       }
 
       const origin = window.location.origin;
