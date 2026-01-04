@@ -11945,6 +11945,42 @@ export type Database = {
           },
         ]
       }
+      stripe_config: {
+        Row: {
+          created_at: string
+          currency: string
+          id: string
+          is_test_mode: boolean
+          platform_commission_rate: number
+          stripe_publishable_key: string
+          stripe_secret_key: string | null
+          updated_at: string
+          webhook_secret: string | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          id?: string
+          is_test_mode?: boolean
+          platform_commission_rate?: number
+          stripe_publishable_key: string
+          stripe_secret_key?: string | null
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          id?: string
+          is_test_mode?: boolean
+          platform_commission_rate?: number
+          stripe_publishable_key?: string
+          stripe_secret_key?: string | null
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Relationships: []
+      }
       stripe_payments: {
         Row: {
           amount: number
@@ -11981,6 +12017,78 @@ export type Database = {
           status?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      stripe_transactions: {
+        Row: {
+          amount: number
+          buyer_id: string
+          commission_amount: number
+          commission_rate: number
+          created_at: string
+          currency: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          order_id: string | null
+          paid_at: string | null
+          payment_intent_id: string | null
+          payment_method: string | null
+          product_id: string | null
+          refunded_at: string | null
+          seller_id: string
+          seller_net_amount: number
+          service_id: string | null
+          status: string
+          stripe_payment_intent_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          buyer_id: string
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          currency?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          order_id?: string | null
+          paid_at?: string | null
+          payment_intent_id?: string | null
+          payment_method?: string | null
+          product_id?: string | null
+          refunded_at?: string | null
+          seller_id: string
+          seller_net_amount?: number
+          service_id?: string | null
+          status?: string
+          stripe_payment_intent_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          buyer_id?: string
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          currency?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          order_id?: string | null
+          paid_at?: string | null
+          payment_intent_id?: string | null
+          payment_method?: string | null
+          product_id?: string | null
+          refunded_at?: string | null
+          seller_id?: string
+          seller_net_amount?: number
+          service_id?: string | null
+          status?: string
+          stripe_payment_intent_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
