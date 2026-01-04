@@ -122,7 +122,7 @@ function checkCustomSession(allowedRoles: string[]): { isValid: boolean; role: s
 }
 
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, profileLoading } = useAuth();
   const navigate = useNavigate();
   const [customAuth, setCustomAuth] = useState<{ checked: boolean; isValid: boolean; role: string | null }>({
     checked: false,
@@ -145,7 +145,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   }, [user, loading, navigate, customAuth]);
 
   // Attendre que les vérifications soient terminées
-  if (loading || !customAuth.checked || (user && !profile && !customAuth.isValid)) {
+  if (loading || profileLoading || !customAuth.checked) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex items-center space-x-2">
@@ -158,7 +158,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
 
   // Vérifier si l'utilisateur est authentifié via Supabase OU session custom
   const isAuthenticated = !!user || customAuth.isValid;
-  const effectiveRole = profile?.role || customAuth.role;
+  const effectiveRole = profile?.role || customAuth.role || 'client';
 
   // Vérification des rôles
   if (!isAuthenticated || (effectiveRole && !allowedRoles.includes(effectiveRole))) {

@@ -1,7 +1,7 @@
 import { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase, startSessionMonitor, stopSessionMonitor, refreshSession } from '@/integrations/supabase/client';
+import { supabase, startSessionMonitor, stopSessionMonitor } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export interface Profile {
@@ -61,15 +61,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (needsVirtualCard) missing.push('Carte virtuelle');
 
         console.log('⚠️ Éléments manquants:', missing);
-        // Ne plus afficher de toast info pour éviter les notifications répétées
 
         let customId = '';
 
         // Créer ID utilisateur si manquant avec le format basé sur le rôle
         if (needsUserId) {
-          // Utiliser la fonction RPC pour générer un ID avec le bon préfixe
+          // Utiliser le rôle du profil (si dispo), sinon client
           const userRole = profile?.role || 'client';
-          
+
           const { data: generatedId, error: generateError } = await supabase
             .rpc('generate_custom_id_with_role', { p_role: userRole });
 
@@ -78,7 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             // Fallback sur ancien système
             customId = 'TMP' + Math.random().toString(36).substring(2, 6).toUpperCase();
           } else {
-            customId = generatedId;
+            customId = generatedId as string;
           }
 
           const { error: idError } = await supabase
@@ -102,11 +101,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (needsWallet) {
           console.log('⚠️ Wallet manquant pour:', user.id);
           console.log('📝 Initialisation via RPC...');
-          
+
           try {
             const { data: initResult, error: rpcError } = await supabase
               .rpc('initialize_user_wallet', { p_user_id: user.id });
-            
+
             if (rpcError) {
               console.error('❌ Erreur RPC:', rpcError);
             } else if (initResult) {
@@ -125,16 +124,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Générer un numéro de carte au format "4*** **** **** 1234" (19 caractères max)
           const last4Digits = Math.floor(Math.random() * 9999).toString().padStart(4, '0');
           const cardNumber = `4*** **** **** ${last4Digits}`;
-          
+
           // Nom du titulaire
           const holderName = `${profile?.first_name || ''} ${profile?.last_name || customId}`.trim();
-          
+
           // Générer date d'expiration au format MM/YY (5 caractères)
           const futureDate = new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000);
           const month = (futureDate.getMonth() + 1).toString().padStart(2, '0');
           const year = futureDate.getFullYear().toString().slice(-2);
           const expiryDate = `${month}/${year}`;
-          
+
           const { error: cardError } = await supabase
             .from('virtual_cards')
             .upsert({
@@ -149,13 +148,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           if (cardError) {
             console.error('❌ Erreur création carte virtuelle:', cardError);
-            // Ne pas afficher de toast d'erreur pour éviter les notifications répétées
           } else {
             console.log('✅ Carte virtuelle créée:', cardNumber);
           }
         }
 
-        // Afficher le toast de succès seulement une fois, silencieusement en logs
         if (missing.length > 0) {
           console.log('✅ Configuration client complétée !');
         }
@@ -166,7 +163,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('❌ Erreur setup utilisateur:', error);
       toast.error('Erreur lors de la configuration utilisateur');
     }
-  }, [user]);
+  }, [user, profile]);
 
   const refreshProfile = useCallback(async () => {
     if (!user) {
@@ -177,21 +174,70 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     setProfileLoading(true);
     console.log('🔄 Chargement profil pour:', user.email);
+
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('❌ Erreur chargement profil:', error);
-        setProfileLoading(false);
         return;
       }
 
-      console.log('✅ Profil chargé:', data.role, data.email);
-      setProfile(data);
+      // Profil existant
+      if (data) {
+        console.log('✅ Profil chargé:', data.role, data.email);
+        setProfile(data as Profile);
+        return;
+      }
+
+      // Profil manquant (cas fréquent après OAuth) → créer un profil minimal
+      const meta: any = (user as any).user_metadata || {};
+      const fullName = (meta.full_name || meta.name || '').toString().trim();
+      const firstName = (meta.first_name || (fullName ? fullName.split(' ')[0] : '') || '').toString().trim();
+      const lastName = (meta.last_name || (fullName ? fullName.split(' ').slice(1).join(' ') : '') || '').toString().trim();
+
+      const roleRaw = (meta.role || 'client').toString();
+      const roleSafe = (['admin', 'ceo', 'vendeur', 'livreur', 'taxi', 'syndicat', 'transitaire', 'client', 'agent'] as const).includes(roleRaw as any)
+        ? (roleRaw as Profile['role'])
+        : 'client';
+
+      const profileToUpsert = {
+        id: user.id,
+        email: user.email || '',
+        first_name: firstName || null,
+        last_name: lastName || null,
+        role: roleSafe,
+        avatar_url: (meta.avatar_url || meta.picture || null) as string | null,
+        is_active: true
+      };
+
+      const { error: upsertError } = await supabase
+        .from('profiles')
+        .upsert(profileToUpsert);
+
+      if (upsertError) {
+        console.error('❌ Impossible de créer le profil:', upsertError);
+        return;
+      }
+
+      // Recharger pour avoir la version DB
+      const { data: createdProfile, error: reloadError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (reloadError) {
+        console.error('❌ Erreur reload profil:', reloadError);
+        setProfile(profileToUpsert as any);
+      } else {
+        console.log('✅ Profil créé/chargé');
+        setProfile((createdProfile || profileToUpsert) as any);
+      }
     } catch (error) {
       console.error('❌ Erreur dans refreshProfile:', error);
     } finally {
@@ -200,105 +246,72 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   useEffect(() => {
-    // Get initial session - avec timeout pour éviter blocage
-    const getInitialSession = async () => {
+    // IMPORTANT: on écoute d'abord les changements auth, puis on lit la session.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      console.log('🔔 Auth state change:', event, nextSession?.user?.email || 'no user');
+
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+
+      if (event === 'SIGNED_OUT') {
+        setProfile(null);
+        stopSessionMonitor();
+      } else {
+        startSessionMonitor();
+      }
+
+      setLoading(false);
+    });
+
+    const init = async () => {
       console.log('🔍 Vérification session...');
-      
-      // Timeout de sécurité - ne pas bloquer plus de 3s
+
+      // Timeout de sécurité - ne pas bloquer plus de 5s
       const timeoutId = setTimeout(() => {
         console.log('⚠️ Timeout session - continuer sans auth');
         setLoading(false);
-      }, 3000);
-      
+      }, 5000);
+
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         clearTimeout(timeoutId);
-        
+
         if (error) {
           console.error('❌ Erreur session:', error);
           setSession(null);
           setUser(null);
+          setProfile(null);
           setLoading(false);
           return;
         }
-        
-        if (session) {
-          console.log('✅ Session restaurée:', session.user.email);
-          setSession(session);
-          setUser(session.user);
+
+        if (initialSession) {
+          console.log('✅ Session restaurée:', initialSession.user.email);
+          setSession(initialSession);
+          setUser(initialSession.user);
+          startSessionMonitor();
         } else {
           console.log('ℹ️ Pas de session active');
           setSession(null);
           setUser(null);
+          setProfile(null);
         }
       } catch (error) {
         clearTimeout(timeoutId);
         console.error('❌ Erreur inattendue:', error);
         setSession(null);
         setUser(null);
+        setProfile(null);
       } finally {
         setLoading(false);
       }
     };
 
-    getInitialSession();
-
-    // Démarrer le moniteur de session
-    startSessionMonitor();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('🔔 Auth state change:', event, session?.user?.email || 'no user');
-        
-        if (event === 'SIGNED_OUT') {
-          console.log('👋 Utilisateur déconnecté');
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-          stopSessionMonitor();
-        } else if (event === 'TOKEN_REFRESHED') {
-          console.log('🔄 Token rafraîchi');
-          setSession(session);
-          setUser(session?.user ?? null);
-        } else {
-          setSession(session);
-          setUser(session?.user ?? null);
-        }
-        
-        setLoading(false);
-      }
-    );
-
-    // Gérer la visibilité de la page pour rafraîchir la session
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible') {
-        console.log('👁️ Page redevenue visible, vérification session...');
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        
-        if (!currentSession && user) {
-          console.log('⚠️ Session perdue, tentative de rafraîchissement...');
-          const newSession = await refreshSession();
-          if (!newSession) {
-            console.log('❌ Impossible de restaurer la session');
-            setSession(null);
-            setUser(null);
-            setProfile(null);
-          }
-        } else if (currentSession) {
-          console.log('✅ Session toujours active');
-          setSession(currentSession);
-          setUser(currentSession.user);
-        }
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    init();
 
     return () => {
       subscription.unsubscribe();
       stopSessionMonitor();
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
