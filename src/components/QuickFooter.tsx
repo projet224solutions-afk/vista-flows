@@ -45,8 +45,8 @@ export default function QuickFooter() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border z-[100] shadow-elegant" role="navigation" aria-label="Navigation principale">
-      <div className="flex items-center justify-around px-2 py-2 max-w-screen-xl mx-auto">
+    <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border z-[100] shadow-elegant pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]" role="navigation" aria-label="Navigation principale">
+      <div className="flex items-center justify-around px-2 max-w-screen-xl mx-auto">
         {navigationItems.map((item) => {
           const isActive = location.pathname === item.path ||
             (item.id === 'profil' && !profile && location.pathname === '/auth');
