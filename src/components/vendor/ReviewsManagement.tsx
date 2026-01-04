@@ -132,20 +132,17 @@ export default function ReviewsManagement() {
       const functionsBaseUrl = 'https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1';
       const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
 
-      const prompt = `Tu es un assistant IA pour un vendeur sur 224Solutions. 
-      
-Un client a laissé cet avis sur le produit "${review.products?.name || 'Produit'}" :
+      const prompt = `Génère une réponse professionnelle pour cet avis client sur le produit "${review.products?.name || 'Produit'}" :
 
 **Note:** ${review.rating}/5 étoiles
 **Titre:** ${review.title}
 **Commentaire:** ${review.content}
 
-Génère une réponse professionnelle, courtoise et personnalisée de la part du vendeur. La réponse doit :
-- Remercier le client pour son avis
-- Être adaptée à la note (positive, neutre ou négative)
-- Rester concise (2-3 phrases maximum)
-- Être chaleureuse et professionnelle
-- En français
+La réponse doit :
+- Remercier le client
+- Être adaptée à la note (${review.rating >= 4 ? 'positive' : review.rating === 3 ? 'neutre' : 'négative'})
+- Rester concise (2-3 phrases)
+- Être en français
 
 Réponse:`;
 
@@ -158,7 +155,15 @@ Réponse:`;
         },
         body: JSON.stringify({
           message: prompt,
-          messages: []
+          messages: [],
+          review_id: review.id,
+          review_type: 'product_review',
+          context: {
+            product_name: review.products?.name,
+            rating: review.rating,
+            review_title: review.title,
+            review_content: review.content
+          }
         }),
       });
 
@@ -288,7 +293,7 @@ Réponse:`;
         </CardHeader>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Liste des avis */}
         <Card className="lg:col-span-2">
           <CardContent className="p-0">
@@ -424,13 +429,16 @@ Réponse:`;
 
         {/* Panneau de réponse */}
         <Card className="lg:col-span-1">
-          <CardHeader>
+          <CardHeader className="pb-4">
             <CardTitle className="text-base flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
+              <Sparkles className="h-4 w-4 text-orange-500" />
               Répondre avec l'IA
             </CardTitle>
+            <CardDescription className="text-xs">
+              Copilote Vendeur
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-2">
             {!selectedReview ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
@@ -461,14 +469,14 @@ Réponse:`;
                 <Separator />
 
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-2">
                     <label className="text-sm font-medium">Votre réponse</label>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => generateAIResponse(selectedReview)}
                       disabled={generatingAI}
-                      className="gap-2"
+                      className="gap-2 border-orange-500/50 hover:bg-orange-50 hover:text-orange-600"
                     >
                       {generatingAI ? (
                         <>
@@ -477,7 +485,7 @@ Réponse:`;
                         </>
                       ) : (
                         <>
-                          <Sparkles className="h-3 w-3" />
+                          <Sparkles className="h-3 w-3 text-orange-500" />
                           Générer avec l'IA
                         </>
                       )}
