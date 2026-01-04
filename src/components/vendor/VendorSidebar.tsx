@@ -31,6 +31,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSubscriptionFeatures, MODULE_FEATURE_MAP, SubscriptionFeature } from "@/hooks/useSubscriptionFeatures";
 import { UpgradeDialog } from "@/components/subscription/UpgradeDialog";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useVendorOptimized } from "@/hooks/useVendorOptimized";
 import {
   Tooltip,
   TooltipContent,
@@ -61,6 +62,7 @@ export function VendorSidebar() {
   const collapsed = state === "collapsed" && !isMobile;
   const { badges, loading: badgesLoading } = useVendorBadges();
   const { canAccessModule, getMinPlanForFeature, loading: subscriptionLoading } = useSubscriptionFeatures();
+  const { profile } = useVendorOptimized();
   
   // State pour le dialog d'upgrade
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
@@ -124,7 +126,7 @@ export function VendorSidebar() {
       items: [
         { title: t('sidebar.dashboard'), icon: BarChart3, path: "dashboard" },
         { title: t('sidebar.analytics'), icon: TrendingUp, path: "analytics" },
-        { title: t('sidebar.pos'), icon: Store, path: "pos", isPOS: true },
+        { title: profile?.business_name || t('sidebar.pos'), icon: Store, path: "pos", isPOS: true },
       ]
     },
     {
