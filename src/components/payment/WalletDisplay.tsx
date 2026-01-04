@@ -4,17 +4,15 @@
  * 224SOLUTIONS
  */
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useWallet } from '@/hooks/useWallet';
-import { formatAmount, getWalletStatusColor, getWalletStatusLabel } from '@/types/stripePayment';
 import { 
   Wallet, 
   TrendingUp, 
-  TrendingDown, 
   Clock, 
   Lock, 
   RefreshCw,
@@ -23,17 +21,15 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { WalletStatus } from '@/types/stripePayment';
 
 interface WalletDisplayProps {
-  userId: string;
+  userId?: string;
   showActions?: boolean;
   onWithdraw?: () => void;
   compact?: boolean;
 }
 
 export function WalletDisplay({ 
-  userId, 
   showActions = true,
   onWithdraw,
   compact = false 
@@ -41,23 +37,25 @@ export function WalletDisplay({
   const { 
     wallet, 
     loading, 
-    error,
-    fetchWallet,
-    getAvailableBalance,
-    getTotalBalance,
-    subscribeToWallet
-  } = useWallet({ userId, autoFetch: true });
+    balance,
+    currency,
+    isBlocked,
+    refresh
+  } = useWallet();
 
   const [showBalance, setShowBalance] = React.useState(true);
 
-  // S'abonner aux mises à jour en temps réel
-  useEffect(() => {
-    const unsubscribe = subscribeToWallet(userId);
-    return unsubscribe;
-  }, [userId, subscribeToWallet]);
+  const formatAmount = (amount: number, curr: string = 'GNF'): string => {
+    return new Intl.NumberFormat('fr-GN', {
+      style: 'currency',
+      currency: curr,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
   const handleRefresh = async () => {
-    await fetchWallet(userId);
+    await refresh();
   };
 
   if (loading && !wallet) {
@@ -74,12 +72,12 @@ export function WalletDisplay({
     );
   }
 
-  if (error || !wallet) {
+  if (!wallet) {
     return (
       <Card className="w-full border-destructive">
         <CardContent className="pt-6">
           <p className="text-sm text-destructive">
-            {error || 'Impossible de charger le portefeuille'}
+            Impossible de charger le portefeuille
           </p>
           <Button onClick={handleRefresh} variant="outline" size="sm" className="mt-4">
             <RefreshCw className="w-4 h-4 mr-2" />
@@ -90,10 +88,8 @@ export function WalletDisplay({
     );
   }
 
-  const availableBalance = getAvailableBalance();
-  const totalBalance = getTotalBalance();
-  const statusColor = getWalletStatusColor(wallet.status as WalletStatus);
-  const statusLabel = getWalletStatusLabel(wallet.status as WalletStatus);
+  const walletStatus = wallet.wallet_status || 'active';
+  const isActive = walletStatus === 'active' && !isBlocked;
 
   if (compact) {
     return (
@@ -105,7 +101,7 @@ export function WalletDisplay({
           <div>
             <p className="text-sm font-medium">Solde disponible</p>
             <p className="text-2xl font-bold">
-              {showBalance ? formatAmount(availableBalance, wallet.currency) : '••••••'}
+              {showBalance ? formatAmount(balance, currency) : '••••••'}
             </p>
           </div>
         </div>
@@ -134,8 +130,8 @@ export function WalletDisplay({
             </CardDescription>
           </div>
           <div className="flex items-center space-x-2">
-            <Badge variant={statusColor as any}>
-              {statusLabel}
+            <Badge variant={isActive ? 'default' : 'destructive'}>
+              {isActive ? 'Actif' : isBlocked ? 'Bloqué' : 'Inactif'}
             </Badge>
             <Button
               variant="ghost"
@@ -153,10 +149,10 @@ export function WalletDisplay({
         <div className="space-y-2">
           <div className="flex items-baseline space-x-2">
             <h3 className="text-4xl font-bold tracking-tight">
-              {showBalance ? formatAmount(availableBalance, wallet.currency) : '••••••'}
+              {showBalance ? formatAmount(balance, currency) : '••••••'}
             </h3>
             <span className="text-sm text-muted-foreground">
-              {wallet.currency.toUpperCase()}
+              {currency.toUpperCase()}
             </span>
           </div>
           <p className="text-sm text-muted-foreground">Solde disponible</p>
@@ -166,45 +162,45 @@ export function WalletDisplay({
 
         {/* Détails des soldes */}
         <div className="grid grid-cols-3 gap-4">
-          {/* En attente */}
-          <div className="space-y-1">
-            <div className="flex items-center space-x-1 text-muted-foreground">
-              <Clock className="w-4 h-4" />
-              <span className="text-xs">En attente</span>
-            </div>
-            <p className="text-lg font-semibold">
-              {showBalance ? formatAmount(wallet.pending_balance, wallet.currency) : '•••'}
-            </p>
-          </div>
-
-          {/* Bloqué */}
-          <div className="space-y-1">
-            <div className="flex items-center space-x-1 text-muted-foreground">
-              <Lock className="w-4 h-4" />
-              <span className="text-xs">Bloqué</span>
-            </div>
-            <p className="text-lg font-semibold">
-              {showBalance ? formatAmount(wallet.frozen_balance, wallet.currency) : '•••'}
-            </p>
-          </div>
-
-          {/* Total */}
+          {/* Reçu */}
           <div className="space-y-1">
             <div className="flex items-center space-x-1 text-muted-foreground">
               <TrendingUp className="w-4 h-4" />
-              <span className="text-xs">Total</span>
+              <span className="text-xs">Reçu</span>
             </div>
             <p className="text-lg font-semibold">
-              {showBalance ? formatAmount(totalBalance, wallet.currency) : '•••'}
+              {showBalance ? formatAmount(wallet.total_received || 0, currency) : '•••'}
+            </p>
+          </div>
+
+          {/* Envoyé */}
+          <div className="space-y-1">
+            <div className="flex items-center space-x-1 text-muted-foreground">
+              <Clock className="w-4 h-4" />
+              <span className="text-xs">Envoyé</span>
+            </div>
+            <p className="text-lg font-semibold">
+              {showBalance ? formatAmount(wallet.total_sent || 0, currency) : '•••'}
+            </p>
+          </div>
+
+          {/* Solde */}
+          <div className="space-y-1">
+            <div className="flex items-center space-x-1 text-muted-foreground">
+              <Lock className="w-4 h-4" />
+              <span className="text-xs">Solde</span>
+            </div>
+            <p className="text-lg font-semibold">
+              {showBalance ? formatAmount(balance, currency) : '•••'}
             </p>
           </div>
         </div>
 
-        {/* Statut de vérification */}
-        {!wallet.is_verified && (
+        {/* Statut bloqué */}
+        {isBlocked && (
           <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
             <p className="text-sm text-yellow-700 dark:text-yellow-400">
-              ⚠️ Votre portefeuille n'est pas encore vérifié. Certaines fonctionnalités sont limitées.
+              ⚠️ Votre portefeuille est bloqué. {wallet.blocked_reason || ''}
             </p>
           </div>
         )}
@@ -214,7 +210,7 @@ export function WalletDisplay({
           <div className="flex space-x-2 pt-2">
             <Button 
               onClick={onWithdraw}
-              disabled={availableBalance === 0 || wallet.status !== 'ACTIVE'}
+              disabled={balance === 0 || !isActive}
               className="flex-1"
             >
               <ArrowUpRight className="w-4 h-4 mr-2" />
@@ -232,7 +228,7 @@ export function WalletDisplay({
 
         {/* Dernière mise à jour */}
         <p className="text-xs text-muted-foreground text-center">
-          Dernière mise à jour : {new Date(wallet.updated_at).toLocaleString('fr-FR')}
+          Dernière mise à jour : {new Date(wallet.created_at).toLocaleString('fr-FR')}
         </p>
       </CardContent>
     </Card>

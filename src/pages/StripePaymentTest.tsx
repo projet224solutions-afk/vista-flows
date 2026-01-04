@@ -73,7 +73,7 @@ export default function StripePaymentTest() {
       const { data: vendors, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('role', 'VENDOR')
+        .eq('role', 'vendeur')
         .limit(1);
 
       if (error) throw error;

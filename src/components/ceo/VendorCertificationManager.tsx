@@ -73,26 +73,20 @@ export function VendorCertificationManager() {
     try {
       setLoading(true);
 
-      // Fetch vendors
+      // Fetch vendors - utilise 'vendeur' au lieu de 'VENDOR'
       const { data: vendorsData, error: vendorsError } = await supabase
         .from('profiles')
         .select('id, full_name, email, avatar_url, created_at')
-        .eq('role', 'VENDOR')
+        .eq('role', 'vendeur')
         .order('created_at', { ascending: false });
 
       if (vendorsError) throw vendorsError;
 
-      // Fetch certifications
-      const { data: certificationsData, error: certificationsError } = await supabase
-        .from('vendor_certifications')
-        .select('*');
-
-      if (certificationsError) throw certificationsError;
-
-      // Merge data
-      const vendorsWithCerts: VendorWithCertification[] = vendorsData.map(vendor => ({
+      // Pour l'instant, pas de table vendor_certifications
+      // On génère des certifications fictives basées sur les vendeurs
+      const vendorsWithCerts: VendorWithCertification[] = (vendorsData || []).map(vendor => ({
         ...vendor,
-        certification: certificationsData.find(cert => cert.vendor_id === vendor.id) || null
+        certification: null // Pas encore de système de certification
       }));
 
       setVendors(vendorsWithCerts);
@@ -350,7 +344,6 @@ export function VendorCertificationManager() {
                         {vendor.certification && (
                           <CertifiedVendorBadge 
                             status={vendor.certification.status}
-                            verifiedAt={vendor.certification.verified_at}
                           />
                         )}
                       </div>
