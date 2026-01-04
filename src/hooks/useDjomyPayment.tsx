@@ -7,9 +7,11 @@ export type DjomyPaymentMethod = 'OM' | 'MOMO' | 'KULU' | 'VISA' | 'MASTERCARD';
 export interface DjomyPaymentOptions {
   amount: number;
   payerPhone?: string;
+  phoneNumber?: string;
   paymentMethod?: DjomyPaymentMethod;
   description?: string;
   orderId?: string;
+  vendorId?: string;
   returnUrl?: string;
   cancelUrl?: string;
   successUrl?: string;
