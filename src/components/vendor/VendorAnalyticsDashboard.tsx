@@ -37,7 +37,7 @@ export function VendorAnalyticsDashboard() {
     },
     {
       title: "Produits Actifs",
-      value: analytics.topProducts.length,
+      value: analytics.activeProductsCount,
       icon: Package,
       color: 'text-orange-600'
     }

@@ -18,6 +18,7 @@ export interface AnalyticsSummary {
     name: string;
     sales: number;
   }>;
+  activeProductsCount: number;
 }
 
 export const useVendorAnalytics = () => {
@@ -73,6 +74,13 @@ export const useVendorAnalytics = () => {
         .eq('status', 'completed')
         .limit(5);
 
+      // Récupérer le nombre de produits actifs
+      const { count: activeProductsCount } = await supabase
+        .from('products')
+        .select('id', { count: 'exact', head: true })
+        .eq('vendor_id', vendorId)
+        .eq('is_active', true);
+
       const todayAnalytics: VendorAnalytics = {
         date: (todayData as any)?.date || new Date().toISOString().split('T')[0],
         totalSales: (todayData as any)?.total_sales || 0,
@@ -88,7 +96,8 @@ export const useVendorAnalytics = () => {
           id: p.id,
           name: p.produit,
           sales: 0
-        })) || []
+        })) || [],
+        activeProductsCount: activeProductsCount || 0
       });
     } catch (error) {
       console.error('Erreur chargement analytics:', error);
