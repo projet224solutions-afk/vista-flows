@@ -1014,7 +1014,7 @@ export function POSSystem() {
             </div>
             <div>
               <h1 className="text-base md:text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent truncate max-w-[140px] md:max-w-none">
-                {settings?.company_name || companyName}
+                {companyName}
               </h1>
               <p className="text-[10px] md:text-sm text-muted-foreground font-medium hidden sm:block">Point de Vente</p>
             </div>
