@@ -196,109 +196,133 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log('🔄 Chargement profil pour:', user.email);
 
     try {
-      // Récupérer l'intention de rôle UNIQUEMENT pour les nouveaux comptes
+      // Récupérer les flags OAuth
       const intendedRoleRaw = localStorage.getItem('oauth_intent_role') || '';
       const intendedRole = intendedRoleRaw ? mapAccountTypeToRole(intendedRoleRaw) : null;
-      
-      // Flag pour savoir si c'est une première connexion OAuth (nouveau compte)
       const isNewOAuthSignup = localStorage.getItem('oauth_is_new_signup') === 'true';
 
-      const { data, error } = await supabase
+      // 1. Vérifier si un profil existe déjà pour cet utilisateur
+      const { data: existingProfile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .maybeSingle();
 
-      if (error) {
-        console.error('❌ Erreur chargement profil:', error);
-        return;
-      }
-
-      // Profil existant - NE PAS écraser le rôle !
-      if (data) {
-        const current = data as Profile;
-        console.log('✅ Profil existant trouvé, rôle actuel:', current.role);
-
-        // IMPORTANT: Ne modifier le rôle QUE si c'est explicitement une nouvelle inscription
-        // ET que le profil n'a pas encore de rôle valide (cas rare de profil corrompu)
-        if (isNewOAuthSignup && intendedRole && !current.role) {
-          console.log('📝 Nouvelle inscription OAuth, attribution du rôle:', intendedRole);
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ role: intendedRole })
-            .eq('id', user.id);
-
-          if (updateError) {
-            console.error('❌ Impossible de mettre à jour le rôle:', updateError);
-            setProfile(current);
-          } else {
-            setProfile({ ...current, role: intendedRole });
-          }
-        } else {
-          // Profil existant avec un rôle - on le garde tel quel
-          setProfile(current);
-        }
-
-        // Nettoyer les flags OAuth
+      if (profileError) {
+        console.error('❌ Erreur chargement profil:', profileError);
         localStorage.removeItem('oauth_intent_role');
         localStorage.removeItem('oauth_is_new_signup');
         return;
       }
 
-      // Profil manquant (cas fréquent après OAuth) → créer un profil minimal
+      // 2. Profil existant trouvé
+      if (existingProfile) {
+        const current = existingProfile as Profile;
+        console.log('✅ Profil existant trouvé:', current.email, '| Rôle:', current.role);
+
+        // Si l'utilisateur essayait de créer un compte (isNewOAuthSignup=true)
+        // mais le profil existe déjà → AVERTIR et garder le rôle existant
+        if (isNewOAuthSignup) {
+          console.log('⚠️ Tentative d\'inscription mais compte existe déjà');
+          toast.info(`Bienvenue ! Vous êtes connecté en tant que ${current.role}.`);
+        }
+
+        // NE JAMAIS modifier le rôle d'un profil existant
+        setProfile(current);
+
+        // Nettoyer immédiatement les flags
+        localStorage.removeItem('oauth_intent_role');
+        localStorage.removeItem('oauth_is_new_signup');
+        return;
+      }
+
+      // 3. Vérifier si l'email existe déjà dans un AUTRE profil (cas rare mais possible)
+      if (user.email) {
+        const { data: emailCheck } = await supabase
+          .from('profiles')
+          .select('id, email, role')
+          .eq('email', user.email)
+          .neq('id', user.id)
+          .maybeSingle();
+
+        if (emailCheck) {
+          console.log('⚠️ Email déjà utilisé par un autre compte:', emailCheck.email);
+          toast.warning('Cet email est déjà associé à un autre compte.');
+          // Ne pas créer de doublon
+          localStorage.removeItem('oauth_intent_role');
+          localStorage.removeItem('oauth_is_new_signup');
+          setProfileLoading(false);
+          return;
+        }
+      }
+
+      // 4. Aucun profil existant → Créer un nouveau profil (vraie nouvelle inscription)
+      console.log('📝 Création nouveau profil pour:', user.email);
+
       const meta: any = (user as any).user_metadata || {};
       const fullName = (meta.full_name || meta.name || '').toString().trim();
       const firstName = (meta.first_name || (fullName ? fullName.split(' ')[0] : '') || '').toString().trim();
       const lastName = (meta.last_name || (fullName ? fullName.split(' ').slice(1).join(' ') : '') || '').toString().trim();
 
-      const roleCandidate = (
-        meta.role ||
-        meta.account_type ||
-        intendedRoleRaw ||
-        'client'
-      ).toString();
+      // Utiliser le rôle choisi lors de l'inscription OU client par défaut
+      const roleToUse = intendedRole || mapAccountTypeToRole(meta.account_type || '') || 'client';
 
-      const roleFromCandidate = mapAccountTypeToRole(roleCandidate) || 'client';
-
-      const profileToUpsert = {
+      const profileToCreate = {
         id: user.id,
         email: user.email || '',
         first_name: firstName || null,
         last_name: lastName || null,
-        role: roleFromCandidate,
+        role: roleToUse,
         avatar_url: (meta.avatar_url || meta.picture || null) as string | null,
         is_active: true,
       };
 
-      const { error: upsertError } = await supabase
-        .from('profiles')
-        .upsert(profileToUpsert);
+      console.log('📝 Nouveau profil avec rôle:', roleToUse);
 
-      if (upsertError) {
-        console.error('❌ Impossible de créer le profil:', upsertError);
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert(profileToCreate);
+
+      if (insertError) {
+        console.error('❌ Erreur création profil:', insertError);
+        // Si erreur de duplicat (conflit), essayer de récupérer le profil existant
+        if (insertError.code === '23505') {
+          const { data: conflictProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .maybeSingle();
+          if (conflictProfile) {
+            setProfile(conflictProfile as Profile);
+          }
+        }
+        localStorage.removeItem('oauth_intent_role');
+        localStorage.removeItem('oauth_is_new_signup');
         return;
       }
 
-      // Recharger pour avoir la version DB
-      const { data: createdProfile, error: reloadError } = await supabase
+      // Recharger le profil créé
+      const { data: createdProfile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .maybeSingle();
 
-      if (reloadError) {
-        console.error('❌ Erreur reload profil:', reloadError);
-        setProfile(profileToUpsert as any);
+      if (createdProfile) {
+        console.log('✅ Nouveau profil créé avec succès:', createdProfile.role);
+        toast.success(`Compte créé ! Vous êtes inscrit en tant que ${createdProfile.role}.`);
+        setProfile(createdProfile as Profile);
       } else {
-        console.log('✅ Profil créé/chargé');
-        setProfile((createdProfile || profileToUpsert) as any);
+        setProfile(profileToCreate as any);
       }
 
-      // Nettoyer les flags OAuth après création du profil
+      // Nettoyer les flags
       localStorage.removeItem('oauth_intent_role');
       localStorage.removeItem('oauth_is_new_signup');
     } catch (error) {
       console.error('❌ Erreur dans refreshProfile:', error);
+      localStorage.removeItem('oauth_intent_role');
+      localStorage.removeItem('oauth_is_new_signup');
     } finally {
       setProfileLoading(false);
     }

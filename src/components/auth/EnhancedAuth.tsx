@@ -113,8 +113,8 @@ export default function EnhancedAuth() {
     setError(null);
 
     try {
-      // Persister l'intention (rôle) UNIQUEMENT pour les nouvelles inscriptions
-      if (accountType && mode === 'signup') {
+      // En mode inscription, on configure les flags OAuth
+      if (mode === 'signup' && accountType) {
         const mapAccountTypeToRole = (type: AccountType) => {
           switch (type) {
             case 'marchand':
@@ -131,11 +131,11 @@ export default function EnhancedAuth() {
           }
         };
 
+        // Marquer comme nouvelle inscription UNIQUEMENT en mode signup
         localStorage.setItem('oauth_intent_role', mapAccountTypeToRole(accountType));
-        // Marquer explicitement que c'est une nouvelle inscription
         localStorage.setItem('oauth_is_new_signup', 'true');
       } else {
-        // Connexion existante - ne pas modifier le rôle
+        // Mode connexion - nettoyer les flags pour ne pas modifier le rôle existant
         localStorage.removeItem('oauth_intent_role');
         localStorage.removeItem('oauth_is_new_signup');
       }
