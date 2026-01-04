@@ -196,8 +196,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log('🔄 Chargement profil pour:', user.email);
 
     try {
+      // Récupérer l'intention de rôle UNIQUEMENT pour les nouveaux comptes
       const intendedRoleRaw = localStorage.getItem('oauth_intent_role') || '';
       const intendedRole = intendedRoleRaw ? mapAccountTypeToRole(intendedRoleRaw) : null;
+      
+      // Flag pour savoir si c'est une première connexion OAuth (nouveau compte)
+      const isNewOAuthSignup = localStorage.getItem('oauth_is_new_signup') === 'true';
 
       const { data, error } = await supabase
         .from('profiles')
@@ -210,12 +214,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      // Profil existant
+      // Profil existant - NE PAS écraser le rôle !
       if (data) {
         const current = data as Profile;
+        console.log('✅ Profil existant trouvé, rôle actuel:', current.role);
 
-        // Si l'utilisateur vient de choisir un rôle avant OAuth, on l'applique une seule fois.
-        if (intendedRole && current.role !== intendedRole) {
+        // IMPORTANT: Ne modifier le rôle QUE si c'est explicitement une nouvelle inscription
+        // ET que le profil n'a pas encore de rôle valide (cas rare de profil corrompu)
+        if (isNewOAuthSignup && intendedRole && !current.role) {
+          console.log('📝 Nouvelle inscription OAuth, attribution du rôle:', intendedRole);
           const { error: updateError } = await supabase
             .from('profiles')
             .update({ role: intendedRole })
@@ -228,10 +235,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setProfile({ ...current, role: intendedRole });
           }
         } else {
+          // Profil existant avec un rôle - on le garde tel quel
           setProfile(current);
         }
 
-        if (intendedRoleRaw) localStorage.removeItem('oauth_intent_role');
+        // Nettoyer les flags OAuth
+        localStorage.removeItem('oauth_intent_role');
+        localStorage.removeItem('oauth_is_new_signup');
         return;
       }
 
@@ -284,7 +294,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setProfile((createdProfile || profileToUpsert) as any);
       }
 
-      if (intendedRoleRaw) localStorage.removeItem('oauth_intent_role');
+      // Nettoyer les flags OAuth après création du profil
+      localStorage.removeItem('oauth_intent_role');
+      localStorage.removeItem('oauth_is_new_signup');
     } catch (error) {
       console.error('❌ Erreur dans refreshProfile:', error);
     } finally {
