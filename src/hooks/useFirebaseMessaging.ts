@@ -97,7 +97,10 @@ export function useFirebaseMessaging() {
    * Demande la permission et active les notifications
    */
   const enableNotifications = useCallback(async () => {
+    console.log('[Hook FCM] 🔔 enableNotifications appelé');
+    
     if (!status.isSupported) {
+      console.warn('[Hook FCM] Notifications non supportées');
       toast.error('Les notifications ne sont pas supportées sur ce navigateur');
       return false;
     }
@@ -105,14 +108,18 @@ export function useFirebaseMessaging() {
     setStatus(prev => ({ ...prev, isLoading: true }));
 
     try {
+      console.log('[Hook FCM] 🚀 Initialisation Firebase Messaging...');
       // Initialiser Firebase Messaging (silencieux si non configuré)
       const initialized = await firebaseMessaging.initializeMessaging();
+      console.log('[Hook FCM] Initialized:', initialized);
+      
       if (!initialized) {
         console.log('Firebase Messaging non configuré - utilisation des notifications locales');
         setStatus(prev => ({ ...prev, isLoading: false }));
         return false;
       }
 
+      console.log('[Hook FCM] 📢 Demande permission...');
       // Demander la permission et obtenir le token
       const token = await firebaseMessaging.requestNotificationPermission();
 
