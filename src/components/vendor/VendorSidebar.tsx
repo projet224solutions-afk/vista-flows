@@ -192,7 +192,7 @@ export function VendorSidebar() {
         "border-r border-border/40 shadow-lg"
       )} collapsible="icon">
         <ScrollArea className="h-full pr-4 overflow-visible">
-          <SidebarContent className="bg-gradient-to-b from-background via-background to-muted/20 py-2 pr-3 pb-32">
+          <SidebarContent className="bg-gradient-to-b from-background via-background to-muted/20 py-2 pr-3 pb-40">
             {menuSections.map((section, sectionIndex) => (
               <SidebarGroup key={section.label} className="py-1">
                 {!collapsed && (
