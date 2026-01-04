@@ -24,6 +24,8 @@ import { usePriceConverter } from "@/hooks/usePriceConverter";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useDisplayCurrency } from "./CurrencyIndicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { CertifiedIcon } from "@/components/vendor/CertifiedVendorBadge";
+import { useVendorCertification } from "@/hooks/useVendorCertification";
 
 interface MarketplaceProductCardProps {
   id: string;
@@ -77,6 +79,9 @@ export function MarketplaceProductCard({
   const { convert, loading: priceLoading } = usePriceConverter();
   const { t } = useTranslation();
   const { displayCurrency } = useDisplayCurrency();
+  
+  // Hook pour certification vendeur
+  const { certification } = useVendorCertification(vendorId);
 
   const handleShareClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -202,7 +207,12 @@ export function MarketplaceProductCard({
         
         {/* Vendor Info avec localisation */}
         <div className="marketplace-card-vendor">
-          <span className="truncate flex-1">{vendor}</span>
+          <span className="truncate flex-1 flex items-center gap-1">
+            {vendor}
+            {certification && (
+              <CertifiedIcon status={certification.status} className="w-3.5 h-3.5" />
+            )}
+          </span>
           {vendorLocation && (
             <>
               <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
