@@ -73,42 +73,41 @@ export function VendorCertificationManager() {
     try {
       setLoading(true);
 
-      // Fetch vendors avec leurs certifications en une seule requête (JOIN optimisé)
+      // Fetch vendors first
       const { data: vendorsData, error: vendorsError } = await supabase
         .from('profiles')
-        .select(`
-          id, full_name, email, avatar_url, created_at,
-          vendor_certifications!vendor_certifications_vendor_id_fkey (
-            id, status, verified_at, kyc_verified_at, kyc_status,
-            last_status_change, internal_notes, rejection_reason,
-            created_at, updated_at
-          )
-        `)
+        .select('id, full_name, email, avatar_url, created_at')
         .eq('role', 'vendeur')
         .order('created_at', { ascending: false });
 
-      if (vendorsError) throw vendorsError;
+      if (vendorsError) {
+        console.error('Error fetching vendors:', vendorsError);
+        throw vendorsError;
+      }
 
-      // Mapper les résultats avec les certifications déjà attachées
+      // Fetch certifications separately (may fail due to RLS - that's ok)
+      let certificationsMap: Record<string, any> = {};
+      try {
+        const { data: certsData, error: certsError } = await supabase
+          .from('vendor_certifications')
+          .select('*');
+        
+        if (!certsError && certsData) {
+          certsData.forEach(cert => {
+            certificationsMap[cert.vendor_id] = cert;
+          });
+        }
+      } catch (certError) {
+        console.log('Could not fetch certifications (RLS may restrict access):', certError);
+      }
+
+      // Mapper les résultats
       const vendorsWithCerts: VendorWithCertification[] = (vendorsData || []).map(vendor => {
-        // Cast the vendor_certifications to the expected type
-        const certifications = vendor.vendor_certifications as unknown as Array<{
-          id: string;
-          status: string;
-          verified_at: string | null;
-          kyc_verified_at: string | null;
-          kyc_status: string | null;
-          last_status_change: string | null;
-          internal_notes: string | null;
-          rejection_reason: string | null;
-          created_at: string;
-          updated_at: string;
-        }> | null;
-        const cert = certifications?.[0];
+        const cert = certificationsMap[vendor.id];
         return {
           id: vendor.id,
-          full_name: vendor.full_name,
-          email: vendor.email,
+          full_name: vendor.full_name || 'Nom inconnu',
+          email: vendor.email || '',
           avatar_url: vendor.avatar_url,
           created_at: vendor.created_at,
           certification: cert ? {
@@ -139,9 +138,9 @@ export function VendorCertificationManager() {
       };
       setStats(newStats);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading vendors:', error);
-      toast.error('Erreur lors du chargement des vendeurs');
+      toast.error('Erreur lors du chargement des vendeurs: ' + (error.message || 'Erreur inconnue'));
     } finally {
       setLoading(false);
     }
