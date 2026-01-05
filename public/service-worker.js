@@ -6,14 +6,25 @@ const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
 // --- Firebase Cloud Messaging (FCM) ---
 // IMPORTANT: Un seul Service Worker par scope, on intègre FCM ici.
 // Utiliser Firebase 10.x pour compatibilité avec version moderne
-importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js');
+let firebaseAvailable = false;
+try {
+  importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js');
+  importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js');
+  firebaseAvailable = true;
+} catch (e) {
+  // Ne pas casser le SW si Firebase est bloqué (CSP/adblock/réseau)
+  console.warn('[FCM SW] Firebase scripts non chargés — notifications désactivées', e);
+}
 
 let firebaseConfig = null;
 let fcmInitialized = false;
 
 function initFCM() {
   if (fcmInitialized) return;
+  if (!firebaseAvailable) {
+    console.log('[FCM SW] Firebase indisponible, init FCM ignorée');
+    return;
+  }
   if (!firebaseConfig) {
     console.log('[FCM SW] Config Firebase non disponible');
     return;

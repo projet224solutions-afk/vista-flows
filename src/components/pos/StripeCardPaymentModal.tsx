@@ -1,22 +1,15 @@
 /**
  * STRIPE CARD PAYMENT MODAL - Modal de paiement carte POS
  * Utilise Stripe Elements pour un paiement sécurisé
- * 
+ *
  * LOGIQUE MARKETPLACE:
- * - L'argent est encaissé par Stripe (compte 224Solutions)
- * - La commission est retenue
- * - Le wallet vendeur est crédité du montant NET après confirmation webhook
- * - Le payout réel se fait plus tard
+ * - Le client paye (montant produit + commission)
+ * - Le vendeur reçoit le montant produit (net vendeur)
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
-import {
-  Elements,
-  PaymentElement,
-  useStripe,
-  useElements,
-} from '@stripe/react-stripe-js';
+import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import {
   Dialog,
   DialogContent,
@@ -27,20 +20,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
-import { 
-  Loader2, 
-  Shield, 
-  CreditCard, 
-  CheckCircle2, 
-  XCircle,
-  Info
-} from 'lucide-react';
+import { Loader2, Shield, CreditCard, CheckCircle2, XCircle, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface StripeCardPaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Montant produit (base) */
   amount: number;
   currency?: string;
   orderId: string;
@@ -51,7 +38,8 @@ interface StripeCardPaymentModalProps {
 }
 
 // Clé publique Stripe (sécuritaire - c'est une clé PUBLIQUE)
-const STRIPE_PUBLISHABLE_KEY = 'pk_live_51RdKJzRxqizQJVjLFseVlmZ7qOJmOIx9PlsGPY600C0CifOqNyNlbfTb2NZAbW1cyVgk8hUt6vGAD3KQqMCIc7NB00F0KjYCqc';
+const STRIPE_PUBLISHABLE_KEY =
+  'pk_live_51RdKJzRxqizQJVjLFseVlmZ7qOJmOIx9PlsGPY600C0CifOqNyNlbfTb2NZAbW1cyVgk8hUt6vGAD3KQqMCIc7NB00F0KjYCqc';
 
 // Charger Stripe une seule fois
 let stripePromise: Promise<Stripe | null> | null = null;
@@ -64,9 +52,9 @@ const getStripe = async (): Promise<Stripe | null> => {
   return stripePromise;
 };
 
-// Composant de formulaire de paiement
 function PaymentForm({
-  amount,
+  productAmount,
+  totalAmount,
   currency,
   commissionRate,
   commissionAmount,
@@ -75,7 +63,8 @@ function PaymentForm({
   onError,
   onClose,
 }: {
-  amount: number;
+  productAmount: number;
+  totalAmount: number;
   currency: string;
   commissionRate: number;
   commissionAmount: number;
@@ -91,17 +80,21 @@ function PaymentForm({
   const [succeeded, setSucceeded] = useState(false);
 
   const formatAmount = (value: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-    }).format(value) + ' ' + currency;
+    return (
+      new Intl.NumberFormat('fr-GN', {
+        style: 'decimal',
+        minimumFractionDigits: 0,
+      }).format(value) +
+      ' ' +
+      currency
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!stripe || !elements) {
-      setError('Stripe n\'est pas chargé. Veuillez rafraîchir la page.');
+      setError("Stripe n'est pas chargé. Veuillez rafraîchir la page.");
       return;
     }
 
@@ -109,7 +102,6 @@ function PaymentForm({
     setError(null);
 
     try {
-      // Confirmer le paiement
       const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
@@ -128,13 +120,12 @@ function PaymentForm({
         if (paymentIntent.status === 'succeeded') {
           setSucceeded(true);
           toast.success('Paiement accepté!', {
-            description: `${formatAmount(amount)} encaissé`,
+            description: `${formatAmount(totalAmount)} encaissé`,
           });
           onSuccess(paymentIntent.id);
         } else if (paymentIntent.status === 'processing') {
           toast.info('Paiement en cours de traitement...');
         } else if (paymentIntent.status === 'requires_action') {
-          // 3D Secure en cours
           toast.info('Authentification 3D Secure requise...');
         }
       }
@@ -158,7 +149,7 @@ function PaymentForm({
         <div>
           <h3 className="text-2xl font-bold text-green-600">Paiement réussi!</h3>
           <p className="text-muted-foreground mt-2">
-            <strong>{formatAmount(amount)}</strong> encaissé
+            <strong>{formatAmount(totalAmount)}</strong> encaissé
           </p>
           <p className="text-sm text-muted-foreground mt-1">
             Montant net vendeur: <strong>{formatAmount(sellerNetAmount)}</strong>
@@ -173,19 +164,25 @@ function PaymentForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Récapitulatif */}
       <Card className="bg-primary/5 border-primary/20">
         <CardContent className="pt-4">
           <div className="space-y-2">
             <div className="flex justify-between text-lg">
               <span>Total à payer</span>
-              <span className="font-bold text-primary">{formatAmount(amount)}</span>
+              <span className="font-bold text-primary">{formatAmount(totalAmount)}</span>
             </div>
+
             <div className="border-t pt-2 space-y-1 text-sm text-muted-foreground">
               <div className="flex justify-between">
                 <span>Commission plateforme ({commissionRate}%)</span>
-                <span>-{formatAmount(commissionAmount)}</span>
+                <span>+{formatAmount(commissionAmount)}</span>
               </div>
+
+              <div className="flex justify-between font-medium">
+                <span>Montant produit</span>
+                <span>{formatAmount(productAmount)}</span>
+              </div>
+
               <div className="flex justify-between font-medium">
                 <span>Net vendeur</span>
                 <span className="text-green-600">{formatAmount(sellerNetAmount)}</span>
@@ -195,18 +192,16 @@ function PaymentForm({
         </CardContent>
       </Card>
 
-      {/* Info sécurité */}
       <div className="flex items-start gap-2 text-xs text-muted-foreground bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
         <Info className="w-4 h-4 mt-0.5 text-blue-500" />
         <div>
           <p className="font-medium text-blue-700 dark:text-blue-300">Logique Marketplace</p>
           <p className="mt-1">
-            L'argent est sécurisé sur Stripe. Le vendeur recevra le montant net sur son wallet interne après confirmation.
+            Le client paye le total (produit + commission). Le vendeur reçoit le montant produit sur son wallet interne après confirmation.
           </p>
         </div>
       </div>
 
-      {/* Stripe Payment Element */}
       <div className="space-y-2">
         <div className="flex items-center gap-2 mb-2">
           <CreditCard className="w-4 h-4 text-muted-foreground" />
@@ -220,7 +215,6 @@ function PaymentForm({
         />
       </div>
 
-      {/* Erreur */}
       {error && (
         <Alert variant="destructive">
           <XCircle className="h-4 w-4" />
@@ -228,33 +222,19 @@ function PaymentForm({
         </Alert>
       )}
 
-      {/* Sécurité */}
       <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
         <Shield className="w-4 h-4 mt-0.5" />
         <div>
           <p className="font-medium">Paiement 100% sécurisé</p>
-          <p className="mt-1">
-            Cryptage SSL. Compatible 3D Secure. Données protégées par Stripe.
-          </p>
+          <p className="mt-1">Cryptage SSL. Compatible 3D Secure. Données protégées par Stripe.</p>
         </div>
       </div>
 
-      {/* Boutons */}
       <div className="flex gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onClose}
-          disabled={processing}
-          className="flex-1"
-        >
+        <Button type="button" variant="outline" onClick={onClose} disabled={processing} className="flex-1">
           Annuler
         </Button>
-        <Button
-          type="submit"
-          disabled={!stripe || processing}
-          className="flex-1"
-        >
+        <Button type="submit" disabled={!stripe || processing} className="flex-1">
           {processing ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -263,13 +243,12 @@ function PaymentForm({
           ) : (
             <>
               <CreditCard className="mr-2 h-4 w-4" />
-              Payer {formatAmount(amount)}
+              Payer {formatAmount(totalAmount)}
             </>
           )}
         </Button>
       </div>
 
-      {/* Logos */}
       <div className="flex items-center justify-center gap-3 pt-2">
         <span className="text-xs text-muted-foreground">Cartes acceptées:</span>
         <div className="flex gap-2">
@@ -307,9 +286,10 @@ export function StripeCardPaymentModal({
     commissionRate: 2.5,
     commissionAmount: 0,
     sellerNetAmount: 0,
+    productAmount: amount,
+    totalAmount: amount,
   });
 
-  // Charger Stripe et créer le Payment Intent
   useEffect(() => {
     if (!isOpen) return;
 
@@ -318,14 +298,12 @@ export function StripeCardPaymentModal({
       setError(null);
 
       try {
-        // Charger Stripe
         const stripeInstance = await getStripe();
         if (!stripeInstance) {
           throw new Error('Clé Stripe non configurée');
         }
         setStripe(stripeInstance);
 
-        // Créer le Payment Intent via edge function
         const { data, error: fnError } = await supabase.functions.invoke('stripe-pos-payment', {
           body: {
             amount,
@@ -345,8 +323,9 @@ export function StripeCardPaymentModal({
           commissionRate: data.commissionRate,
           commissionAmount: data.commissionAmount,
           sellerNetAmount: data.sellerNetAmount,
+          productAmount: data.productAmount ?? amount,
+          totalAmount: data.totalAmount ?? amount,
         });
-
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Erreur inconnue';
         setError(message);
@@ -357,9 +336,8 @@ export function StripeCardPaymentModal({
     };
 
     initPayment();
-  }, [isOpen, amount, currency, orderId, sellerId, description]);
+  }, [isOpen, amount, currency, orderId, sellerId, description, onError]);
 
-  // Reset quand on ferme
   const handleClose = () => {
     setClientSecret(null);
     setError(null);
@@ -374,9 +352,7 @@ export function StripeCardPaymentModal({
             <Shield className="w-5 h-5 text-primary" />
             <DialogTitle>Paiement par carte</DialogTitle>
           </div>
-          <DialogDescription>
-            Paiement sécurisé via Stripe
-          </DialogDescription>
+          <DialogDescription>Paiement sécurisé via Stripe</DialogDescription>
         </DialogHeader>
 
         {loading && (
@@ -409,7 +385,8 @@ export function StripeCardPaymentModal({
             }}
           >
             <PaymentForm
-              amount={amount}
+              productAmount={paymentDetails.productAmount}
+              totalAmount={paymentDetails.totalAmount}
               currency={currency}
               commissionRate={paymentDetails.commissionRate}
               commissionAmount={paymentDetails.commissionAmount}

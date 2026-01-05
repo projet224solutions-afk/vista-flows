@@ -20,6 +20,9 @@ const QuickFooter = lazyWithRetry(() => import("@/components/QuickFooter"));
 const CommunicationWidget = lazyWithRetry(() => import("@/components/communication/CommunicationWidget"));
 const DeepLinkInitializer = lazyWithRetry(() => import("@/components/DeepLinkInitializer"));
 const PWAInstallPrompt = lazyWithRetry(() => import("@/components/pwa/PWAInstallPrompt"));
+const InstallPromptBanner = lazyWithRetry(() =>
+  import("@/components/pwa/InstallPromptBanner").then((m) => ({ default: m.InstallPromptBanner }))
+);
 
 // Lazy loading des pages - regroupées par priorité
 const Auth = lazyWithRetry(() => import("./pages/Auth"));
@@ -161,19 +164,8 @@ function App() {
       window.location.replace(httpsUrl);
     }
 
-    // Enregistrer le Service Worker pour PWA
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker
-          .register('/service-worker.js')
-          .then((registration) => {
-            console.log('✅ [PWA] Service Worker enregistré:', registration.scope);
-          })
-          .catch((error) => {
-            console.error('❌ [PWA] Erreur Service Worker:', error);
-          });
-      });
-    }
+    // Enregistrement du Service Worker pour PWA (centralisé dans src/main.tsx)
+
   }, []);
 
   return (
@@ -185,9 +177,11 @@ function App() {
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
+                <InstallPromptBanner />
                 <PWAInstallPrompt />
                 <DeepLinkInitializer />
                 <MerchantOnboarding />
+
                 <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>
               <Routes>
