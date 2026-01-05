@@ -34,26 +34,27 @@ export function ManageCommissionsSection({
   const loadCommissions = async () => {
     try {
       setLoading(true);
-      
-      // Charger vraies commissions depuis agent_commissions
+
+      // Charger vraies commissions depuis agent_commissions_log
+      // (table typée dans Supabase; évite aussi les types trop profonds avec select('*'))
       const { data, error } = await supabase
-        .from('agent_commissions')
-        .select('*')
-        .eq('recipient_id', agentId)
+        .from('agent_commissions_log')
+        .select('id, amount, created_at, source_type, description')
+        .eq('agent_id', agentId)
         .order('created_at', { ascending: false })
         .limit(50);
-      
+
       if (error) throw error;
-      
+
       // Mapper vers format Commission
-      const mappedCommissions: Commission[] = (data || []).map(c => ({
+      const mappedCommissions: Commission[] = (data || []).map((c: any) => ({
         id: c.id,
-        amount: c.amount,
+        amount: Number(c.amount || 0),
         date: c.created_at,
-        status: c.status,
-        description: `Commission ${c.source_type} - ${c.commission_code}`
+        status: 'paid',
+        description: c.description || `Commission - ${c.source_type}`,
       }));
-      
+
       setCommissions(mappedCommissions);
     } catch (error) {
       console.error('Erreur chargement commissions:', error);

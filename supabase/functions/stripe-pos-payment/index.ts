@@ -74,16 +74,22 @@ serve(async (req) => {
       throw new Error("Seller ID requis");
     }
 
-    // Calculer la commission et le montant net
+    // ✅ Commission payée par le CLIENT
+    // - amount = montant produit (base)
+    // - commissionAmount = frais plateforme
+    // - totalAmount = montant total facturé au client
+    // - sellerNetAmount = montant reversé au vendeur (montant produit)
     const commissionAmount = Math.round(amount * (commissionRate / 100));
-    const sellerNetAmount = amount - commissionAmount;
+    const totalAmount = amount + commissionAmount;
+    const sellerNetAmount = amount;
 
-    logStep("Payment details", { 
-      amount, 
+    logStep("Payment details", {
+      productAmount: amount,
       commissionRate,
-      commissionAmount, 
+      commissionAmount,
+      totalAmount,
       sellerNetAmount,
-      orderId 
+      orderId,
     });
 
     // Initialiser Stripe
@@ -94,7 +100,7 @@ serve(async (req) => {
 
     // Créer le Payment Intent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount), // GNF n'a pas de centimes
+      amount: Math.round(totalAmount), // GNF n'a pas de centimes
       currency: currency.toLowerCase(),
       automatic_payment_methods: {
         enabled: true,
@@ -103,8 +109,10 @@ serve(async (req) => {
         order_id: orderId || '',
         buyer_id: user.id,
         seller_id: sellerId,
+        product_amount: amount.toString(),
         commission_rate: commissionRate.toString(),
         commission_amount: commissionAmount.toString(),
+        total_amount: totalAmount.toString(),
         seller_net_amount: sellerNetAmount.toString(),
         source: 'pos',
         description: description || 'Paiement POS 224Solutions',
@@ -128,11 +136,11 @@ serve(async (req) => {
         stripe_payment_intent_id: paymentIntent.id,
         buyer_id: user.id,
         seller_id: sellerId,
-        amount: amount,
+        amount: totalAmount, // ✅ total facturé au client
         currency: currency.toUpperCase(),
         commission_rate: commissionRate,
         commission_amount: commissionAmount,
-        seller_net_amount: sellerNetAmount,
+        seller_net_amount: sellerNetAmount, // ✅ montant reversé au vendeur
         status: 'PENDING',
         order_id: orderId || null,
         payment_method: 'card',
@@ -140,6 +148,8 @@ serve(async (req) => {
           description: description || 'Paiement POS',
           source: 'pos',
           created_by: user.id,
+          product_amount: amount,
+          total_amount: totalAmount,
         },
       })
       .select('id')
@@ -158,10 +168,15 @@ serve(async (req) => {
         clientSecret: paymentIntent.client_secret,
         paymentIntentId: paymentIntent.id,
         transactionId: transaction?.id,
-        amount: amount,
-        commissionAmount: commissionAmount,
-        sellerNetAmount: sellerNetAmount,
-        commissionRate: commissionRate,
+
+        // Compat UI
+        commissionRate,
+        commissionAmount,
+        sellerNetAmount,
+
+        // Infos supplémentaires
+        productAmount: amount,
+        totalAmount,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

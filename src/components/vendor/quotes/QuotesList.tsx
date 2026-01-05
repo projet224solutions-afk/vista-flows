@@ -106,11 +106,13 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
 
   const downloadPDF = async (pdfUrl: string, ref: string) => {
     try {
-      // Récupérer le fichier via fetch pour contourner les bloqueurs
+      // Tentative téléchargement "forcé" (peut échouer si CORS / bucket privé)
       const response = await fetch(pdfUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
       const blob = await response.blob();
-      
-      // Créer un lien de téléchargement temporaire
+
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -119,11 +121,18 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       toast.success('Téléchargement démarré');
     } catch (error) {
       console.error('Erreur téléchargement:', error);
-      toast.error('Erreur lors du téléchargement');
+
+      // Fallback fiable (évite CORS): ouvrir le PDF dans un nouvel onglet
+      const opened = window.open(pdfUrl, '_blank', 'noopener,noreferrer');
+      if (opened) {
+        toast.success('PDF ouvert dans un nouvel onglet');
+      } else {
+        toast.error("Téléchargement bloqué: autorisez les popups puis réessayez.");
+      }
     }
   };
 
