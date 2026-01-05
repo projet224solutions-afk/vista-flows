@@ -1,0 +1,8 @@
+feat(agent): Intégration commission agents sur paiements Stripe
+
+Corrections complètes système commission agents:
+- process_successful_payment() crédite désormais wallets agents
+- ManageCommissionsSection charge vraies données BDD
+- useAgentSystem.updateSetting() implémenté
+
+Agent reçoit 20% commission sur achats de ses clients créés

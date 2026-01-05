@@ -507,39 +507,139 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
 
         {/* Onglet Commissions */}
         <TabsContent value="commissions" className="space-y-4">
+          {/* Alerte informative */}
+          <Alert className="border-blue-200 bg-blue-50">
+            <DollarSign className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-900">
+              🎯 <strong>Impact direct sur les paiements Stripe :</strong> Les modifications de commission s'appliquent immédiatement aux prochains achats.
+              Les agents reçoivent automatiquement leur commission dans leur wallet.
+            </AlertDescription>
+          </Alert>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <DollarSign className="w-5 h-5" />
-                Paramètres de Commission
+                Paramètres de Commission Agent
               </CardTitle>
+              <p className="text-sm text-muted-foreground mt-2">
+                Configuration du taux de commission versé aux agents créateurs lors des achats de leurs clients
+              </p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {settings && settings.length > 0 && settings.map((setting: unknown) => (
-                <div key={setting.id || Math.random()} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <h4 className="font-medium">{setting.description || 'Configuration'}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Clé: {setting.setting_key || 'N/A'}
-                    </p>
+            <CardContent className="space-y-6">
+              {settings && settings.length > 0 ? (
+                settings.map((setting: unknown) => (
+                  <div key={setting.id || Math.random()} className="space-y-4">
+                    <div className="flex items-center justify-between p-6 border rounded-lg bg-gradient-to-r from-blue-50 to-purple-50">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-semibold text-lg">
+                            {setting.setting_key === 'base_user_commission' 
+                              ? '💰 Commission Agent sur Achats' 
+                              : setting.description || 'Configuration'}
+                          </h4>
+                          {setting.setting_key === 'base_user_commission' && (
+                            <Badge className="bg-green-500">Actif</Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          {setting.setting_key === 'base_user_commission'
+                            ? 'Pourcentage du montant net vendeur versé à l\'agent créateur du client acheteur'
+                            : `Clé: ${setting.setting_key || 'N/A'}`}
+                        </p>
+                        
+                        {/* Exemple de calcul */}
+                        <div className="bg-white p-3 rounded border border-blue-200 text-sm">
+                          <p className="font-medium text-blue-900 mb-1">📊 Exemple de calcul :</p>
+                          <div className="space-y-1 text-xs">
+                            <p>• Client achète: <strong>50,000 GNF</strong></p>
+                            <p>• Agent reçoit: <strong>{Math.round(50000 * (setting.setting_value || 0))} GNF</strong> ({((setting.setting_value || 0) * 100).toFixed(1)}%)</p>
+                            <p className="text-muted-foreground mt-2">La commission est créditée automatiquement dans le wallet de l'agent</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3 ml-6">
+                        <div className="text-right">
+                          <p className="text-3xl font-bold text-blue-600">
+                            {((setting.setting_value || 0) * 100).toFixed(1)}
+                          </p>
+                          <p className="text-sm text-muted-foreground">pour cent</p>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Input
+                            type="number"
+                            value={((setting.setting_value || 0) * 100).toFixed(1)}
+                            onChange={(e) => {
+                              const newValue = parseFloat(e.target.value) / 100;
+                              if (newValue >= 0 && newValue <= 0.5) {
+                                handleUpdateCommissionSetting(setting.setting_key || '', newValue);
+                              }
+                            }}
+                            className="w-24 text-right font-bold"
+                            step="0.5"
+                            min="0"
+                            max="50"
+                          />
+                          <span className="text-xs text-center text-muted-foreground">0-50%</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Statistiques d'impact */}
+                    {setting.setting_key === 'base_user_commission' && (
+                      <div className="grid grid-cols-3 gap-4">
+                        <Card className="border-green-200">
+                          <CardContent className="p-4">
+                            <p className="text-sm text-muted-foreground">Taux Actuel</p>
+                            <p className="text-2xl font-bold text-green-600">
+                              {((setting.setting_value || 0) * 100).toFixed(1)}%
+                            </p>
+                          </CardContent>
+                        </Card>
+                        <Card className="border-blue-200">
+                          <CardContent className="p-4">
+                            <p className="text-sm text-muted-foreground">Commission sur 100k</p>
+                            <p className="text-2xl font-bold text-blue-600">
+                              {Math.round(100000 * (setting.setting_value || 0))} GNF
+                            </p>
+                          </CardContent>
+                        </Card>
+                        <Card className="border-purple-200">
+                          <CardContent className="p-4">
+                            <p className="text-sm text-muted-foreground">Commission sur 1M</p>
+                            <p className="text-2xl font-bold text-purple-600">
+                              {Math.round(1000000 * (setting.setting_value || 0)).toLocaleString()} GNF
+                            </p>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      value={(setting.setting_value || 0) * 100}
-                      onChange={(e) => {
-                        const newValue = parseFloat(e.target.value) / 100;
-                        handleUpdateCommissionSetting(setting.setting_key || '', newValue);
-                      }}
-                      className="w-20 text-right"
-                      step="0.1"
-                      min="0"
-                      max="50"
-                    />
-                    <span className="text-sm">%</span>
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <Alert>
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    Aucun paramètre de commission trouvé. Vérifiez la configuration de la base de données.
+                  </AlertDescription>
+                </Alert>
+              )}
+              
+              {/* Aide contextuelle */}
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
+                <h5 className="font-medium mb-2 flex items-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  Comment ça fonctionne ?
+                </h5>
+                <ul className="text-sm text-muted-foreground space-y-2">
+                  <li>✅ Un agent crée un client utilisateur</li>
+                  <li>✅ Le client effectue un achat sur la plateforme</li>
+                  <li>✅ L'agent reçoit automatiquement sa commission dans son wallet</li>
+                  <li>✅ La commission est enregistrée dans l'historique de l'agent</li>
+                  <li>⚙️ Les modifications s'appliquent aux <strong>prochains achats uniquement</strong></li>
+                </ul>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
