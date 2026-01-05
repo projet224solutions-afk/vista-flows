@@ -151,13 +151,24 @@ export function JomyPaymentSelector({
   const requiresPhone = selectedOption?.requiresPhone || false;
 
   const handlePayment = async () => {
+    console.log('🔵 [JomyPaymentSelector] handlePayment called');
+    console.log('🔵 [JomyPaymentSelector] user:', user?.id);
+    console.log('🔵 [JomyPaymentSelector] selectedMethod:', selectedMethod);
+    console.log('🔵 [JomyPaymentSelector] amount:', amount);
+    console.log('🔵 [JomyPaymentSelector] orderId:', orderId);
+    console.log('🔵 [JomyPaymentSelector] recipientId:', recipientId);
+    console.log('🔵 [JomyPaymentSelector] requiresPhone:', requiresPhone);
+    console.log('🔵 [JomyPaymentSelector] phoneNumber:', phoneNumber);
+    
     if (!user) {
+      console.error('❌ [JomyPaymentSelector] No user logged in');
       toast.error('Vous devez être connecté pour effectuer un paiement');
       return;
     }
 
     // Gestion du paiement à la livraison
     if (selectedMethod === 'CASH_ON_DELIVERY') {
+      console.log('🟢 [JomyPaymentSelector] Processing CASH_ON_DELIVERY');
       if (onCashOnDelivery) {
         onCashOnDelivery();
       }
@@ -217,7 +228,8 @@ export function JomyPaymentSelector({
     setPaymentStatus('processing');
 
     try {
-      const result = await initializePayment({
+      console.log('🔵 [JomyPaymentSelector] Calling initializePayment...');
+      const paymentPayload = {
         amount,
         payerPhone: requiresPhone ? phoneNumber : undefined,
         paymentMethod: selectedMethod as DjomyPaymentMethod,
@@ -227,9 +239,15 @@ export function JomyPaymentSelector({
         failureUrl: `${window.location.origin}/payment/failed`,
         callbackUrl: `${window.location.origin}/payment/callback`,
         useGateway: !requiresPhone // Utiliser le gateway pour les cartes
-      });
+      };
+      console.log('🔵 [JomyPaymentSelector] Payment payload:', paymentPayload);
+      
+      const result = await initializePayment(paymentPayload);
+      
+      console.log('🔵 [JomyPaymentSelector] initializePayment result:', result);
 
       if (!result.success) {
+        console.error('❌ [JomyPaymentSelector] Payment failed:', result.error);
         throw new Error(result.error || 'Échec du paiement');
       }
 
