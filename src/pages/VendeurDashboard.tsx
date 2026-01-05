@@ -64,6 +64,7 @@ import VendorContracts from "@/pages/VendorContracts";
 import VendorSettings from "@/pages/vendor/Settings";
 import CopiloteChat from "@/components/copilot/CopiloteChat";
 import ReviewsManagement from "@/components/vendor/ReviewsManagement";
+import VendorServiceModule from "@/components/vendor/VendorServiceModule";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useVendorErrorBoundary } from "@/hooks/useVendorErrorBoundary";
 
@@ -500,6 +501,12 @@ export default function VendeurDashboard() {
               <Route path="pos" element={
                 <ProtectedRoute feature="pos_system">
                   <POSSystemWrapper />
+                </ProtectedRoute>
+              } />
+              {/* Module Métier - Charge le module spécialisé selon le service_type */}
+              <Route path="service-module" element={
+                <ProtectedRoute feature="pos_system">
+                  <VendorServiceModule />
                 </ProtectedRoute>
               } />
               {/* Produits - Free (avec limite) */}
