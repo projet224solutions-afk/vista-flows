@@ -181,6 +181,9 @@ export default function InvoicesList() {
                       // Télécharger le PDF
                       try {
                         const response = await fetch(invoice.pdf_url);
+                        if (!response.ok) {
+                          throw new Error(`HTTP ${response.status}`);
+                        }
                         const blob = await response.blob();
                         const url = window.URL.createObjectURL(blob);
                         const link = document.createElement('a');
@@ -193,7 +196,12 @@ export default function InvoicesList() {
                         toast.success('Téléchargement démarré');
                       } catch (error) {
                         console.error('Erreur téléchargement:', error);
-                        toast.error('Erreur lors du téléchargement');
+                        const opened = window.open(invoice.pdf_url, '_blank', 'noopener,noreferrer');
+                        if (opened) {
+                          toast.success('PDF ouvert dans un nouvel onglet');
+                        } else {
+                          toast.error("Téléchargement bloqué: autorisez les popups puis réessayez.");
+                        }
                       }
                     }}
                   >
