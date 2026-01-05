@@ -82,12 +82,31 @@ export function VendorCertificationManager() {
 
       if (vendorsError) throw vendorsError;
 
-      // Pour l'instant, pas de table vendor_certifications
-      // On génère des certifications fictives basées sur les vendeurs
-      const vendorsWithCerts: VendorWithCertification[] = (vendorsData || []).map(vendor => ({
-        ...vendor,
-        certification: null // Pas encore de système de certification
-      }));
+      // Fetch certifications for all vendors
+      const { data: certificationsData } = await supabase
+        .from('vendor_certifications')
+        .select('*');
+
+      // Map certifications to vendors
+      const vendorsWithCerts: VendorWithCertification[] = (vendorsData || []).map(vendor => {
+        const cert = certificationsData?.find(c => c.vendor_id === vendor.id);
+        return {
+          ...vendor,
+          certification: cert ? {
+            id: cert.id,
+            vendor_id: cert.vendor_id,
+            status: cert.status as VendorCertificationStatus,
+            verified_at: cert.verified_at,
+            kyc_verified_at: cert.kyc_verified_at,
+            kyc_status: cert.kyc_status,
+            last_status_change: cert.last_status_change,
+            internal_notes: cert.internal_notes,
+            rejection_reason: cert.rejection_reason,
+            created_at: cert.created_at,
+            updated_at: cert.updated_at
+          } : null
+        };
+      });
 
       setVendors(vendorsWithCerts);
       setFilteredVendors(vendorsWithCerts);

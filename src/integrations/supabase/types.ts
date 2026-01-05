@@ -15772,6 +15772,51 @@ export type Database = {
           },
         ]
       }
+      vendor_certifications: {
+        Row: {
+          created_at: string
+          id: string
+          internal_notes: string | null
+          kyc_status: string | null
+          kyc_verified_at: string | null
+          last_status_change: string
+          rejection_reason: string | null
+          status: string
+          updated_at: string
+          vendor_id: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          kyc_status?: string | null
+          kyc_verified_at?: string | null
+          last_status_change?: string
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          vendor_id: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          kyc_status?: string | null
+          kyc_verified_at?: string | null
+          last_status_change?: string
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          vendor_id?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
       vendor_employees: {
         Row: {
           created_at: string | null
