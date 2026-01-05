@@ -114,18 +114,23 @@ export function useEcommerceStats() {
         lowStock: products.filter(p => (p.stock_quantity || 0) <= 5 && p.is_active).length,
       };
 
-      // Load clients stats
-      const { data: clientsData, error: clientsError } = await supabase
-        .from('clients')
-        .select('id, created_at')
-        .eq('vendor_id', vendorId);
+      // Load clients stats - basé sur les customers des commandes du vendeur
+      const { data: ordersCustomersData } = await supabase
+        .from('orders')
+        .select('customer_id, created_at')
+        .eq('vendor_id', vendorId)
+        .not('customer_id', 'is', null);
 
-      if (clientsError) throw clientsError;
+      // Compter les clients uniques
+      const uniqueCustomerIds = new Set((ordersCustomersData || []).map(o => o.customer_id));
+      const clientsThisMonth = (ordersCustomersData || []).filter(o => 
+        new Date(o.created_at) >= startOfMonth
+      );
+      const uniqueCustomersThisMonth = new Set(clientsThisMonth.map(o => o.customer_id));
 
-      const clients = clientsData || [];
       const clientStats = {
-        total: clients.length,
-        newThisMonth: clients.filter(c => new Date(c.created_at) >= startOfMonth).length,
+        total: uniqueCustomerIds.size,
+        newThisMonth: uniqueCustomersThisMonth.size,
       };
 
       setStats({
