@@ -2157,6 +2157,42 @@ export type Database = {
         }
         Relationships: []
       }
+      commission_settings: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          max_value: number | null
+          min_value: number | null
+          setting_key: string
+          setting_value: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_value?: number | null
+          min_value?: number | null
+          setting_key: string
+          setting_value?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_value?: number | null
+          min_value?: number | null
+          setting_key?: string
+          setting_value?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       communication_audit_logs: {
         Row: {
           action_type: string
