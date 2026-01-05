@@ -142,27 +142,31 @@ export default function Payment() {
         });
 
         // Récupérer le public_id / custom_id du vendeur depuis profiles
+        const vendorUserId = vendorInfo.user_id;
+        console.log('🔍 Recherche profil panier pour user_id:', vendorUserId);
+        
         const { data: vendorProfile, error: profileError } = await supabase
           .from('profiles')
           .select('public_id, custom_id')
-          .eq('id', vendorInfo.user_id)
+          .eq('id', vendorUserId)
           .maybeSingle();
 
-        if (profileError) {
-          console.error('Erreur chargement profil vendeur:', profileError);
-        }
+        console.log('📋 Profil vendeur panier trouvé:', vendorProfile, 'Erreur:', profileError);
 
         // Pré-remplir les champs
         setPaymentAmount(totalAmount.toString());
         
-        // Utiliser custom_id en priorité (format VND0001), puis public_id, puis générer un fallback lisible
-        let vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id;
-        if (!vendorCode || vendorCode.length > 15) {
-          // Si c'est un UUID ou trop long, essayer de créer un code plus lisible
-          vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id || `VEN-${vendorInfo.user_id.substring(0, 8).toUpperCase()}`;
+        // Utiliser custom_id en priorité (format VND0001), puis public_id
+        let vendorCode: string;
+        if (vendorProfile?.custom_id) {
+          vendorCode = vendorProfile.custom_id;
+        } else if (vendorProfile?.public_id && vendorProfile.public_id.length <= 15) {
+          vendorCode = vendorProfile.public_id;
+        } else {
+          vendorCode = `VEN-${vendorUserId.substring(0, 8).toUpperCase()}`;
         }
         setRecipientId(vendorCode);
-        console.log('✅ RecipientId panier défini:', vendorCode, 'from profile:', vendorProfile);
+        console.log('✅ RecipientId panier défini:', vendorCode);
         
         const itemNames = cartItems.map((item: any) => `${item.name} (x${item.quantity})`).join(', ');
         setPaymentDescription(`Achat panier: ${itemNames}`);
@@ -219,26 +223,31 @@ export default function Payment() {
             });
             
             // Récupérer le public_id / custom_id du vendeur depuis profiles
+            const proUserId = proService.user_id;
+            console.log('🔍 Recherche profil digital pour user_id:', proUserId);
+            
             const { data: vendorProfile, error: profileError } = await supabase
               .from('profiles')
               .select('public_id, custom_id')
-              .eq('id', proService.user_id)
+              .eq('id', proUserId)
               .maybeSingle();
 
-            if (profileError) {
-              console.error('Erreur chargement profil vendeur digital:', profileError);
-            }
+            console.log('📋 Profil vendeur digital trouvé:', vendorProfile, 'Erreur:', profileError);
 
             // Pré-remplir les champs
             setPaymentAmount(totalAmount.toString());
             
             // Utiliser custom_id en priorité (format VND0001), puis public_id
-            let vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id;
-            if (!vendorCode || vendorCode.length > 15) {
-              vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id || `VEN-${proService.user_id.substring(0, 8).toUpperCase()}`;
+            let vendorCode: string;
+            if (vendorProfile?.custom_id) {
+              vendorCode = vendorProfile.custom_id;
+            } else if (vendorProfile?.public_id && vendorProfile.public_id.length <= 15) {
+              vendorCode = vendorProfile.public_id;
+            } else {
+              vendorCode = `VEN-${proUserId.substring(0, 8).toUpperCase()}`;
             }
             setRecipientId(vendorCode);
-            console.log('✅ RecipientId digital défini:', vendorCode, 'from profile:', vendorProfile);
+            console.log('✅ RecipientId digital défini:', vendorCode);
             
             setPaymentDescription(`Achat numérique: ${digitalProduct.name} (x${qty})`);
             
@@ -275,26 +284,33 @@ export default function Payment() {
             });
             
             // Récupérer le public_id / custom_id du vendeur depuis profiles
+            const vendorUserId = product.vendors.user_id;
+            console.log('🔍 Recherche profil pour user_id:', vendorUserId);
+            
             const { data: vendorProfile, error: profileError } = await supabase
               .from('profiles')
               .select('public_id, custom_id')
-              .eq('id', product.vendors.user_id)
+              .eq('id', vendorUserId)
               .maybeSingle();
 
-            if (profileError) {
-              console.error('Erreur chargement profil vendeur:', profileError);
-            }
+            console.log('📋 Profil vendeur trouvé:', vendorProfile, 'Erreur:', profileError);
 
             // Pré-remplir les champs
             setPaymentAmount(totalAmount.toString());
             
             // Utiliser custom_id en priorité (format VND0001), puis public_id
-            let vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id;
-            if (!vendorCode || vendorCode.length > 15) {
-              vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id || `VEN-${product.vendors.user_id.substring(0, 8).toUpperCase()}`;
+            // IMPORTANT: Si vendorProfile existe et contient custom_id, l'utiliser directement
+            let vendorCode: string;
+            if (vendorProfile?.custom_id) {
+              vendorCode = vendorProfile.custom_id;
+            } else if (vendorProfile?.public_id && vendorProfile.public_id.length <= 15) {
+              vendorCode = vendorProfile.public_id;
+            } else {
+              // Fallback seulement si vraiment aucun ID trouvé
+              vendorCode = `VEN-${vendorUserId.substring(0, 8).toUpperCase()}`;
             }
             setRecipientId(vendorCode);
-            console.log('✅ RecipientId défini:', vendorCode, 'from profile:', vendorProfile);
+            console.log('✅ RecipientId défini:', vendorCode);
             
             setPaymentDescription(`Achat: ${product.name} (x${qty})`);
             
