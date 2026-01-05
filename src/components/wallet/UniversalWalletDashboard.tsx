@@ -5,11 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Wallet as WalletIcon, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { Wallet as WalletIcon, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertCircle, Eye, EyeOff, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
 import { UnifiedTransferDialog } from "./UnifiedTransferDialog";
+import StripeWalletTopup from "./StripeWalletTopup";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -368,12 +369,25 @@ export default function UniversalWalletDashboard({
       </Card>
 
       {/* Actions */}
-      <Tabs defaultValue="deposit" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="card" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="card" className="flex items-center gap-1">
+            <CreditCard className="w-3 h-3" />
+            Carte
+          </TabsTrigger>
           <TabsTrigger value="deposit">Dépôt</TabsTrigger>
           <TabsTrigger value="withdraw">Retrait</TabsTrigger>
           <TabsTrigger value="transfer">Transfert</TabsTrigger>
         </TabsList>
+
+        {/* Recharge par carte bancaire Stripe */}
+        <TabsContent value="card">
+          <StripeWalletTopup
+            userId={userId}
+            walletId={wallet.id}
+            onSuccess={loadWallet}
+          />
+        </TabsContent>
 
         <TabsContent value="deposit">
           <Card>

@@ -1,6 +1,6 @@
 /**
  * MODAL PAIEMENT TAXI-MOTO
- * Support: Wallet, Card (Stripe), Mobile Money (Orange, MTN, Moov), PayPal, Cash
+ * Support: Wallet, Card (Stripe), Mobile Money (Orange, MTN, Moov), Cash
  */
 
 import { useState, useEffect } from 'react';
@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 import { supabase } from "@/integrations/supabase/client";
+import { StripeCardPaymentModal } from "@/components/pos/StripeCardPaymentModal";
 
 interface TaxiMotoPaymentModalProps {
   open: boolean;
@@ -45,8 +46,7 @@ export default function TaxiMotoPaymentModal({
   const [processing, setProcessing] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [paypalEmail, setPaypalEmail] = useState('');
-  const [cardToken, setCardToken] = useState('');
+  const [showStripeModal, setShowStripeModal] = useState(false);
 
   useEffect(() => {
     if (open && customerId) {
@@ -81,24 +81,17 @@ export default function TaxiMotoPaymentModal({
     },
     {
       id: 'card' as PaymentMethod,
-      name: 'Carte bancaire',
-      description: 'Visa, Mastercard',
+      name: 'Carte bancaire (Stripe)',
+      description: 'Visa, Mastercard - Paiement sécurisé',
       icon: CreditCard,
       color: 'text-blue-600'
     },
     {
-      id: 'mobile_money' as PaymentMethod,
+      id: 'orange_money' as PaymentMethod,
       name: 'Mobile Money',
       description: 'Orange Money, MTN Money, Moov Money',
       icon: Smartphone,
       color: 'text-orange-600'
-    },
-    {
-      id: 'paypal' as PaymentMethod,
-      name: 'PayPal',
-      description: 'Paiement via PayPal',
-      icon: CreditCard,
-      color: 'text-blue-500'
     },
     {
       id: 'cash' as PaymentMethod,
@@ -110,6 +103,12 @@ export default function TaxiMotoPaymentModal({
   ];
 
   const handlePayment = async () => {
+    // Si carte bancaire sélectionnée, ouvrir le modal Stripe
+    if (paymentMethod === 'card') {
+      setShowStripeModal(true);
+      return;
+    }
+
     setProcessing(true);
 
     try {
@@ -141,16 +140,6 @@ export default function TaxiMotoPaymentModal({
         return;
       }
 
-      // Validation email paypal désactivée (non supporté dans PaymentMethod)
-
-      if (paymentMethod === 'card' && (!cardToken || cardToken.length < 15)) {
-        toast.error('Carte bancaire requise', {
-          description: 'Veuillez entrer un numéro de carte valide'
-        });
-        setProcessing(false);
-        return;
-      }
-
       // Créer l'escrow pour sécuriser le paiement
       const escrowResult = await UniversalEscrowService.createEscrow({
         buyer_id: customerId,
@@ -160,18 +149,15 @@ export default function TaxiMotoPaymentModal({
         currency: 'GNF',
         transaction_type: 'taxi',
         payment_provider: paymentMethod === 'wallet' ? 'wallet' : 
-                         paymentMethod === 'card' ? 'stripe' :
                          paymentMethod === 'orange_money' ? 'orange_money' :
                          paymentMethod === 'cash' ? 'cash' : 'wallet',
         metadata: {
           ride_id: rideId,
           description: 'Paiement course taxi-moto',
           phone_number: phoneNumber,
-          paypal_email: paypalEmail,
-          card_token: cardToken
         },
         escrow_options: {
-          auto_release_days: 1, // Libération auto après 1 jour pour taxi
+          auto_release_days: 1,
           commission_percent: 2.5
         }
       });
@@ -182,9 +168,6 @@ export default function TaxiMotoPaymentModal({
 
       console.log('[TaxiPayment] ✅ Escrow created:', escrowResult.escrow_id);
 
-      // Note: L'escrow_id est stocké dans escrow_transactions.order_id
-      // Pas besoin de mettre à jour taxi_rides car la relation existe via order_id
-
       // Messages selon la méthode
       if (paymentMethod === 'wallet') {
         toast.success('Paiement sécurisé effectué !', {
@@ -194,16 +177,10 @@ export default function TaxiMotoPaymentModal({
         toast.success('Course confirmée !', {
           description: 'Vous paierez en espèces au chauffeur'
         });
-      } else if (paymentMethod === 'card') {
-        toast.info('Redirection vers le paiement sécurisé...');
-        // TODO: Intégrer Stripe
       } else if (paymentMethod === 'orange_money') {
         toast.success('Paiement Mobile Money initié !', {
           description: `Confirmez sur votre téléphone ${phoneNumber}`
         });
-      } else if (paymentMethod === 'paypal') {
-        toast.info('Redirection vers PayPal...');
-        // TODO: Intégrer PayPal SDK
       }
 
       onPaymentSuccess();
@@ -219,127 +196,172 @@ export default function TaxiMotoPaymentModal({
     }
   };
 
+  const handleStripeSuccess = async (paymentIntentId: string) => {
+    console.log('[TaxiPayment] Stripe payment success:', paymentIntentId);
+    
+    // Créer l'escrow après paiement Stripe réussi
+    try {
+      const escrowResult = await UniversalEscrowService.createEscrow({
+        buyer_id: customerId,
+        seller_id: driverId,
+        order_id: rideId,
+        amount,
+        currency: 'GNF',
+        transaction_type: 'taxi',
+        payment_provider: 'stripe',
+        metadata: {
+          ride_id: rideId,
+          description: 'Paiement course taxi-moto par carte',
+          stripe_payment_intent_id: paymentIntentId
+        },
+        escrow_options: {
+          auto_release_days: 1,
+          commission_percent: 2.5
+        }
+      });
+
+      if (escrowResult.success) {
+        toast.success('Paiement par carte réussi !', {
+          description: `${amount.toLocaleString()} GNF payés par carte`
+        });
+      }
+    } catch (error) {
+      console.error('[TaxiPayment] Escrow error after Stripe:', error);
+    }
+
+    setShowStripeModal(false);
+    onPaymentSuccess();
+    onClose();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-primary" />
-            Paiement Sécurisé (Escrow)
-          </DialogTitle>
-          <DialogDescription>
-            <div className="space-y-2">
-              <div>
-                Montant: <span className="font-bold text-lg">{amount.toLocaleString()} GNF</span>
-              </div>
-              {paymentMethod === 'wallet' && walletBalance !== null && (
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground">Solde disponible:</span>
-                  <span className="font-semibold">{walletBalance.toLocaleString()} GNF</span>
+    <>
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-primary" />
+              Paiement Sécurisé (Escrow)
+            </DialogTitle>
+            <DialogDescription>
+              <div className="space-y-2">
+                <div>
+                  Montant: <span className="font-bold text-lg">{amount.toLocaleString()} GNF</span>
                 </div>
-              )}
-              {(paymentMethod === 'wallet' || paymentMethod === 'card') && (
-                <Alert>
-                  <Shield className="h-4 w-4" />
-                  <AlertDescription className="text-xs">
-                    Vos fonds sont protégés par notre système Escrow jusqu'à la fin de la course
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 py-4">
-          <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}>
-            {paymentMethods.map((method) => {
-              const Icon = method.icon;
-              return (
-                <div key={method.id} className="flex items-center space-x-3 rounded-lg border p-4 cursor-pointer hover:bg-accent"
-                     onClick={() => setPaymentMethod(method.id)}>
-                  <RadioGroupItem value={method.id} id={method.id} />
-                  <Icon className={`w-6 h-6 ${method.color}`} />
-                  <div className="flex-1">
-                    <Label htmlFor={method.id} className="font-medium cursor-pointer">
-                      {method.name}
-                    </Label>
-                    <p className="text-sm text-muted-foreground">{method.description}</p>
+                {paymentMethod === 'wallet' && walletBalance !== null && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">Solde disponible:</span>
+                    <span className="font-semibold">{walletBalance.toLocaleString()} GNF</span>
                   </div>
-                </div>
-              );
-            })}
-          </RadioGroup>
+                )}
+                {(paymentMethod === 'wallet' || paymentMethod === 'card') && (
+                  <Alert>
+                    <Shield className="h-4 w-4" />
+                    <AlertDescription className="text-xs">
+                      Vos fonds sont protégés par notre système Escrow jusqu'à la fin de la course
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            </DialogDescription>
+          </DialogHeader>
 
-          {/* Champs spécifiques selon la méthode */}
-          {paymentMethod === 'orange_money' && (
-            <div className="space-y-2 mt-3">
-              <Label htmlFor="phone">Numéro de téléphone</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="Ex: 620 00 00 00"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                className="w-full"
-              />
-              <p className="text-xs text-muted-foreground">
-                Orange Money, MTN Money ou Moov Money
-              </p>
-            </div>
-          )}
+          <div className="space-y-4 py-4">
+            <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}>
+              {paymentMethods.map((method) => {
+                const Icon = method.icon;
+                return (
+                  <div key={method.id} className="flex items-center space-x-3 rounded-lg border p-4 cursor-pointer hover:bg-accent"
+                       onClick={() => setPaymentMethod(method.id)}>
+                    <RadioGroupItem value={method.id} id={method.id} />
+                    <Icon className={`w-6 h-6 ${method.color}`} />
+                    <div className="flex-1">
+                      <Label htmlFor={method.id} className="font-medium cursor-pointer">
+                        {method.name}
+                      </Label>
+                      <p className="text-sm text-muted-foreground">{method.description}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </RadioGroup>
 
-          {/* PayPal non supporté dans PaymentMethod type */}
-
-          {paymentMethod === 'card' && (
-            <div className="space-y-2 mt-3">
-              <Label htmlFor="card">Numéro de carte</Label>
-              <Input
-                id="card"
-                type="text"
-                placeholder="•••• •••• •••• ••••"
-                value={cardToken}
-                onChange={(e) => setCardToken(e.target.value)}
-                className="w-full"
-                maxLength={19}
-              />
-              <p className="text-xs text-muted-foreground">
-                Visa ou Mastercard
-              </p>
-            </div>
-          )}
-        </div>
-
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="flex-1"
-            disabled={processing}
-          >
-            Annuler
-          </Button>
-          <Button
-            onClick={handlePayment}
-            className="flex-1"
-            disabled={processing || 
-              (paymentMethod === 'wallet' && walletBalance !== null && walletBalance < amount) ||
-              (paymentMethod === 'orange_money' && phoneNumber.length < 8) ||
-              (paymentMethod === 'card' && cardToken.length < 15)
-            }
-          >
-            {processing ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Sécurisation...
-              </>
-            ) : (
-              paymentMethod === 'wallet' || paymentMethod === 'card' ? 'Payer en sécurité' : 
-              paymentMethod === 'orange_money' ? 'Payer par Mobile Money' :
-              paymentMethod === 'cash' ? 'Confirmer la course' : 'Payer maintenant'
+            {/* Champs spécifiques selon la méthode */}
+            {paymentMethod === 'orange_money' && (
+              <div className="space-y-2 mt-3">
+                <Label htmlFor="phone">Numéro de téléphone</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="Ex: 620 00 00 00"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Orange Money, MTN Money ou Moov Money
+                </p>
+              </div>
             )}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+
+            {paymentMethod === 'card' && (
+              <Alert className="bg-blue-50 border-blue-200">
+                <CreditCard className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-sm text-blue-700">
+                  Vous serez redirigé vers le formulaire de paiement Stripe sécurisé
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="flex-1"
+              disabled={processing}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handlePayment}
+              className="flex-1"
+              disabled={processing || 
+                (paymentMethod === 'wallet' && walletBalance !== null && walletBalance < amount) ||
+                (paymentMethod === 'orange_money' && phoneNumber.length < 8)
+              }
+            >
+              {processing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Sécurisation...
+                </>
+              ) : (
+                paymentMethod === 'card' ? 'Payer par carte' :
+                paymentMethod === 'wallet' ? 'Payer en sécurité' : 
+                paymentMethod === 'orange_money' ? 'Payer par Mobile Money' :
+                'Confirmer la course'
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Stripe pour paiement par carte */}
+      <StripeCardPaymentModal
+        isOpen={showStripeModal}
+        onClose={() => setShowStripeModal(false)}
+        amount={amount}
+        currency="GNF"
+        orderId={rideId}
+        sellerId={driverId}
+        description={`Course taxi-moto #${rideId.slice(0, 8)}`}
+        onSuccess={handleStripeSuccess}
+        onError={(error) => {
+          toast.error('Erreur paiement carte', { description: error });
+          setShowStripeModal(false);
+        }}
+      />
+    </>
   );
 }
