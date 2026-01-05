@@ -83,6 +83,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   const [showStripeModal, setShowStripeModal] = useState(false);
   const [mobileMoneyProvider, setMobileMoneyProvider] = useState<'orange' | 'mtn'>('orange');
   const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawMethod, setWithdrawMethod] = useState<'card' | 'mobile_money'>('mobile_money');
+  const [withdrawPhone, setWithdrawPhone] = useState('');
+  const [withdrawProvider, setWithdrawProvider] = useState<'orange' | 'mtn'>('orange');
   const [transferAmount, setTransferAmount] = useState('');
   const [recipientId, setRecipientId] = useState('');
   const [transferDescription, setTransferDescription] = useState('');
@@ -655,12 +658,21 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     }
 
     if (!wallet || wallet.balance < amount) {
-      toast.error(`INSUFFICIENT_FUNDS: Solde insuffisant (${formatPrice(wallet.balance)} disponible)`);
+      toast.error(`INSUFFICIENT_FUNDS: Solde insuffisant (${formatPrice(wallet?.balance || 0)} disponible)`);
       return;
     }
 
+    // Validation spécifique à la méthode
+    if (withdrawMethod === 'mobile_money') {
+      const cleanPhone = withdrawPhone.replace(/[^0-9]/g, '').replace(/^(224|00224)/, '');
+      if (!cleanPhone || cleanPhone.length !== 9) {
+        toast.error('Numéro de téléphone invalide (9 chiffres requis)');
+        return;
+      }
+    }
+
     setProcessing(true);
-    console.log('🔄 Retrait en cours:', { amount, userId: effectiveUserId });
+    console.log('🔄 Retrait en cours:', { amount, method: withdrawMethod, userId: effectiveUserId });
     
     try {
       // Récupérer le wallet de l'utilisateur
@@ -673,8 +685,18 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       if (walletError) throw walletError;
       if (!walletData) throw new Error('Wallet introuvable');
 
-      // Créer une transaction de retrait
+      // Déterminer la description selon la méthode
+      let description = 'Retrait du wallet';
+      if (withdrawMethod === 'mobile_money') {
+        const providerLabel = withdrawProvider === 'orange' ? 'Orange Money' : 'MTN MoMo';
+        description = `Retrait via ${providerLabel} vers +224${withdrawPhone}`;
+      } else if (withdrawMethod === 'card') {
+        description = 'Retrait vers carte bancaire';
+      }
+
+      // Créer une transaction de retrait (statut pending pour les vraies méthodes de paiement)
       const referenceNumber = `WDR${Date.now()}${Math.floor(Math.random() * 1000)}`;
+      const isPending = withdrawMethod === 'card' || withdrawMethod === 'mobile_money';
       
       const { error: transactionError } = await supabase
         .from('wallet_transactions')
@@ -685,9 +707,14 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           net_amount: -amount,
           fee: 0,
           currency: 'GNF',
-          status: 'completed',
-          description: 'Retrait du wallet',
-          sender_wallet_id: walletData.id
+          status: isPending ? 'pending' : 'completed',
+          description,
+          sender_wallet_id: walletData.id,
+          metadata: {
+            method: withdrawMethod,
+            provider: withdrawMethod === 'mobile_money' ? withdrawProvider : 'stripe',
+            phone: withdrawMethod === 'mobile_money' ? `224${withdrawPhone}` : null
+          }
         });
 
       if (transactionError) throw transactionError;
@@ -703,8 +730,16 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
       console.log('✅ Retrait effectué avec succès');
 
-      toast.success(`Retrait de ${formatPrice(amount)} effectué avec succès !`);
+      if (isPending) {
+        toast.success(`Demande de retrait de ${formatPrice(amount)} enregistrée !`, {
+          description: 'Votre retrait sera traité sous 24-48h'
+        });
+      } else {
+        toast.success(`Retrait de ${formatPrice(amount)} effectué avec succès !`);
+      }
+      
       setWithdrawAmount('');
+      setWithdrawPhone('');
       setWithdrawOpen(false);
       await Promise.all([loadWalletData(), loadTransactions()]);
     } catch (error: any) {
@@ -1353,35 +1388,200 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                 <span className="text-xs">Retrait</span>
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Effectuer un retrait</DialogTitle>
                 <DialogDescription>
-                  Retirez des fonds de votre wallet
+                  Retirez des fonds de votre wallet vers votre compte
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="withdraw-amount">Montant (GNF)</Label>
-                  <Input
-                    id="withdraw-amount"
-                    type="number"
-                    placeholder="10000"
-                    value={withdrawAmount}
-                    onChange={(e) => setWithdrawAmount(e.target.value)}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Solde disponible: {wallet ? formatPrice(wallet.balance) : '0 GNF'}
-                  </p>
-                </div>
-                <Button 
-                  onClick={handleWithdraw} 
-                  disabled={processing || !withdrawAmount}
-                  className="w-full bg-orange-600 hover:bg-orange-700"
-                >
-                  {processing ? 'Traitement...' : 'Confirmer le retrait'}
-                </Button>
+              
+              <div className="p-3 bg-orange-50 rounded-lg border border-orange-200 mb-2">
+                <p className="text-sm text-orange-800">
+                  Solde disponible: <span className="font-bold">{wallet ? formatPrice(wallet.balance) : '0 GNF'}</span>
+                </p>
               </div>
+              
+              <Tabs value={withdrawMethod} onValueChange={(v) => setWithdrawMethod(v as 'card' | 'mobile_money')}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="mobile_money" className="gap-2">
+                    <Smartphone className="w-4 h-4" />
+                    Mobile Money
+                  </TabsTrigger>
+                  <TabsTrigger value="card" className="gap-2">
+                    <CreditCard className="w-4 h-4" />
+                    Carte
+                  </TabsTrigger>
+                </TabsList>
+                
+                {/* Retrait Mobile Money */}
+                <TabsContent value="mobile_money" className="space-y-4 mt-4">
+                  <div>
+                    <Label htmlFor="withdraw-provider">Opérateur</Label>
+                    <Select value={withdrawProvider} onValueChange={(v) => setWithdrawProvider(v as 'orange' | 'mtn')}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="orange">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-orange-500" />
+                            Orange Money
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="mtn">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                            MTN MoMo
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="withdraw-phone">Numéro de téléphone</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value="224"
+                        disabled
+                        className="w-16"
+                      />
+                      <Input
+                        id="withdraw-phone"
+                        type="tel"
+                        placeholder="621234567"
+                        maxLength={9}
+                        value={withdrawPhone}
+                        onChange={(e) => setWithdrawPhone(e.target.value.replace(/\D/g, ''))}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">9 chiffres sans le +224</p>
+                  </div>
+                  
+                  <div>
+                    <Label>Montants rapides</Label>
+                    <div className="grid grid-cols-3 gap-2 mt-1">
+                      {[10000, 25000, 50000, 100000, 200000, 500000].map((amt) => (
+                        <Button
+                          key={amt}
+                          type="button"
+                          variant={withdrawAmount === amt.toString() ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setWithdrawAmount(amt.toString())}
+                          className="text-xs"
+                          disabled={wallet && wallet.balance < amt}
+                        >
+                          {amt.toLocaleString()}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="withdraw-amount-mm">Montant personnalisé (GNF)</Label>
+                    <Input
+                      id="withdraw-amount-mm"
+                      type="number"
+                      placeholder="Ex: 100000"
+                      min="5000"
+                      max={wallet?.balance || 0}
+                      value={withdrawAmount}
+                      onChange={(e) => setWithdrawAmount(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Minimum: 5,000 GNF</p>
+                  </div>
+                  
+                  <Button 
+                    onClick={handleWithdraw} 
+                    disabled={processing || !withdrawAmount || !withdrawPhone || withdrawPhone.length !== 9 || parseFloat(withdrawAmount) < 5000}
+                    className="w-full bg-orange-600 hover:bg-orange-700"
+                  >
+                    {processing ? 'Traitement...' : `Retirer ${withdrawAmount ? parseFloat(withdrawAmount).toLocaleString() : '0'} GNF`}
+                  </Button>
+                  
+                  <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+                    <AlertCircle className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                    <p className="text-xs text-blue-700">Le retrait sera traité sous 24-48h</p>
+                  </div>
+                </TabsContent>
+                
+                {/* Retrait Carte bancaire */}
+                <TabsContent value="card" className="space-y-4 mt-4">
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-start gap-3">
+                      <CreditCard className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-800">Retrait vers carte bancaire</p>
+                        <p className="text-xs text-blue-700 mt-1">
+                          Le montant sera transféré sur votre carte bancaire enregistrée. Délai: 3-5 jours ouvrés.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label>Montants rapides</Label>
+                    <div className="grid grid-cols-3 gap-2 mt-1">
+                      {[50000, 100000, 200000, 500000, 1000000, 2000000].map((amt) => (
+                        <Button
+                          key={amt}
+                          type="button"
+                          variant={withdrawAmount === amt.toString() ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setWithdrawAmount(amt.toString())}
+                          className="text-xs"
+                          disabled={wallet && wallet.balance < amt}
+                        >
+                          {amt >= 1000000 ? `${(amt/1000000).toFixed(0)}M` : `${(amt/1000).toFixed(0)}k`}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="withdraw-amount-card">Montant à retirer (GNF)</Label>
+                    <Input
+                      id="withdraw-amount-card"
+                      type="number"
+                      placeholder="Ex: 500000"
+                      min="50000"
+                      max={wallet?.balance || 0}
+                      value={withdrawAmount}
+                      onChange={(e) => setWithdrawAmount(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Minimum: 50,000 GNF pour les retraits par carte</p>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
+                    <Shield className="w-4 h-4 text-green-600 flex-shrink-0" />
+                    <p className="text-xs text-green-700">Transaction sécurisée via Stripe</p>
+                  </div>
+                  
+                  <Button 
+                    onClick={handleWithdraw} 
+                    disabled={processing || !withdrawAmount || parseFloat(withdrawAmount) < 50000}
+                    className="w-full"
+                  >
+                    {processing ? 'Traitement...' : `Demander le retrait de ${withdrawAmount ? parseFloat(withdrawAmount).toLocaleString() : '0'} GNF`}
+                  </Button>
+                  
+                  <div className="flex items-center justify-center gap-3 pt-2">
+                    <span className="text-xs text-muted-foreground">Cartes supportées:</span>
+                    <div className="flex gap-2">
+                      <div className="w-8 h-5 bg-gradient-to-r from-blue-600 to-blue-400 rounded flex items-center justify-center text-white text-[6px] font-bold">
+                        VISA
+                      </div>
+                      <div className="w-8 h-5 bg-gradient-to-r from-red-600 to-orange-500 rounded flex items-center justify-center">
+                        <div className="flex gap-0.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-white opacity-80"></div>
+                          <div className="w-1.5 h-1.5 rounded-full bg-white opacity-60"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </DialogContent>
           </Dialog>
 
