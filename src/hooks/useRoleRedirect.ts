@@ -7,7 +7,6 @@ import { useAuth } from './useAuth';
  * sans redirection vers leur dashboard
  */
 const PUBLIC_ROUTES = [
-  '/home',
   '/marketplace',
   '/tracking',
   '/client-tracking',
@@ -35,6 +34,27 @@ const PUBLIC_ROUTES = [
   '/digital-products',
   '/boutiques',
 ];
+
+/**
+ * Retourne la route du dashboard selon le rôle
+ */
+export const getDashboardRoute = (role: string | null | undefined): string => {
+  if (!role) return '/home';
+  
+  const roleRoutes: Record<string, string> = {
+    admin: '/pdg',
+    ceo: '/pdg',
+    vendeur: '/vendeur',
+    livreur: '/livreur',
+    taxi: '/taxi-moto/driver',
+    syndicat: '/syndicat',
+    transitaire: '/transitaire',
+    client: '/client',
+    agent: '/agent',
+  };
+
+  return roleRoutes[role] || '/home';
+};
 
 /**
  * Hook pour rediriger automatiquement l'utilisateur vers son dashboard
@@ -82,7 +102,7 @@ export const useRoleRedirect = () => {
         console.log('📝 [useRoleRedirect] Profil incomplet - demande de complétion');
       }
 
-      // Ne pas rediriger si l'utilisateur est sur une route publique
+      // Ne pas rediriger si l'utilisateur est sur une route publique (sauf /home)
       const isOnPublicRoute = PUBLIC_ROUTES.some(route => 
         currentPath === route || currentPath.startsWith(route + '/')
       );
@@ -92,33 +112,22 @@ export const useRoleRedirect = () => {
         return;
       }
 
-      const roleRoutes: Record<string, string> = {
-        admin: '/pdg',
-        ceo: '/pdg',
-        vendeur: '/vendeur',
-        livreur: '/livreur',
-        taxi: '/taxi-moto/driver',
-        syndicat: '/syndicat',
-        transitaire: '/transitaire',
-        client: '/client',
-        agent: '/agent',
-      };
-
-      const targetRoute = roleRoutes[profile.role];
+      const targetRoute = getDashboardRoute(profile.role);
       
-      if (targetRoute) {
-        // Ne pas rediriger si l'utilisateur est déjà sur la bonne route
-        if (currentPath.startsWith(targetRoute)) {
-          console.log('✅ [useRoleRedirect] Déjà sur la bonne route:', currentPath);
-          return;
-        }
-        
-        // ⚡ REDIRECTION IMMÉDIATE vers le dashboard approprié
-        console.log(`🚀 [useRoleRedirect] Redirection vers ${targetRoute} (rôle: ${profile.role})`);
+      // ⚡ Rediriger depuis /home ou / vers le dashboard approprié
+      if (currentPath === '/' || currentPath === '/home') {
+        console.log(`🚀 [useRoleRedirect] Redirection depuis ${currentPath} vers ${targetRoute} (rôle: ${profile.role})`);
         navigate(targetRoute, { replace: true });
-      } else {
-        console.log('⚠️ [useRoleRedirect] Aucune route définie pour le rôle:', profile.role);
+        return;
       }
+      
+      // Ne pas rediriger si l'utilisateur est déjà sur la bonne route
+      if (currentPath.startsWith(targetRoute)) {
+        console.log('✅ [useRoleRedirect] Déjà sur la bonne route:', currentPath);
+        return;
+      }
+      
+      console.log('📍 [useRoleRedirect] Sur une autre route autorisée:', currentPath);
     } else if (user && !profile && !profileLoading) {
       // L'utilisateur est connecté mais n'a pas de profil (rare)
       console.log('⚠️ [useRoleRedirect] Utilisateur sans profil détecté');
