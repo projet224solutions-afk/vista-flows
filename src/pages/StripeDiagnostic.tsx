@@ -302,8 +302,11 @@ export default function StripeDiagnostic() {
     const tables = [
       'stripe_config',
       'stripe_transactions',
+      'stripe_wallets',
+      'stripe_wallet_transactions',
+      'stripe_withdrawals',
       'wallets'
-    ] as const;
+    ];
 
     for (const table of tables) {
       try {

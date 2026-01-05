@@ -102,6 +102,7 @@ const StripePaymentTest = lazyWithRetry(() => import("./pages/StripePaymentTest"
 const StripeDiagnostic = lazyWithRetry(() => import("./pages/StripeDiagnostic"));
 const DigitalProducts = lazyWithRetry(() => import("./pages/DigitalProducts"));
 const ShortLinkRedirect = lazyWithRetry(() => import("./pages/ShortLinkRedirect"));
+const Custom224PaymentDemo = lazyWithRetry(() => import("./pages/demos/Custom224PaymentDemo"));
 // Ultra-simple loading component - Pure CSS inline (no Tailwind dependency)
 const PageLoader = memo(() => (
   <div style={{ 
@@ -212,6 +213,10 @@ function App() {
               <Route path="/categories" element={<Categories />} />
               <Route path="/digital-products" element={<DigitalProducts />} />
               <Route path="/boutiques" element={<NearbyBoutiques />} />
+              
+              {/* Demo Pages */}
+              <Route path="/demos/custom-payment" element={<Custom224PaymentDemo />} />
+              
               <Route path="/services-proximite" element={<ServicesProximite />} />
               <Route path="/services-proximite/:id" element={<ServiceDetail />} />
               <Route path="/devis" element={<Devis />} />

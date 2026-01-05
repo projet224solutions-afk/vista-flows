@@ -117,7 +117,7 @@ export default function StripePaymentTest() {
         const { data, error } = await supabase
           .from('stripe_transactions')
           .select('*')
-          .eq('payment_intent_id', paymentIntentId)
+          .eq('stripe_payment_intent_id', paymentIntentId)
           .single();
 
         if (error) throw error;
