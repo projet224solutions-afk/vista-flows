@@ -72,7 +72,7 @@ export default function ContactUserById({
 
     if (showNavigation) {
       // Rediriger vers la conversation directe
-      navigate(`/communication/direct_${foundUser.id}`);
+      navigate(`/communication/direct/${foundUser.id}`);
       toast.success(`Conversation avec ${foundUser.first_name} ${foundUser.last_name}`);
     }
   };
