@@ -29,8 +29,10 @@ import {
   History,
   AlertCircle,
   CreditCard,
-  Smartphone
+  Smartphone,
+  Shield
 } from 'lucide-react';
+import { StripeCardPaymentModal } from '@/components/pos/StripeCardPaymentModal';
 
 interface UniversalWalletTransactionsProps {
   userId?: string;
@@ -76,8 +78,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   
   // États pour les formulaires
   const [depositAmount, setDepositAmount] = useState('');
-  const [depositMethod, setDepositMethod] = useState<'manual' | 'mobile_money'>('mobile_money');
+  const [depositMethod, setDepositMethod] = useState<'card' | 'manual' | 'mobile_money'>('card');
   const [mobileMoneyPhone, setMobileMoneyPhone] = useState('');
+  const [showStripeModal, setShowStripeModal] = useState(false);
   const [mobileMoneyProvider, setMobileMoneyProvider] = useState<'orange' | 'mtn'>('orange');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
@@ -1104,6 +1107,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   }
 
   return (
+    <>
     <Card className="shadow-elegant">
       <CardHeader>
         <div className="flex items-center justify-between">
@@ -1167,17 +1171,89 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   Ajoutez des fonds à votre wallet
                 </DialogDescription>
               </DialogHeader>
-              <Tabs value={depositMethod} onValueChange={(v) => setDepositMethod(v as 'manual' | 'mobile_money')}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="mobile_money" className="gap-2">
-                    <Smartphone className="w-4 h-4" />
-                    Mobile Money
+              <Tabs value={depositMethod} onValueChange={(v) => setDepositMethod(v as 'card' | 'manual' | 'mobile_money')}>
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="card" className="gap-1 text-xs">
+                    <CreditCard className="w-3 h-3" />
+                    Carte
                   </TabsTrigger>
-                  <TabsTrigger value="manual" className="gap-2">
-                    <CreditCard className="w-4 h-4" />
-                    Manuel (Dev)
+                  <TabsTrigger value="mobile_money" className="gap-1 text-xs">
+                    <Smartphone className="w-3 h-3" />
+                    Mobile
+                  </TabsTrigger>
+                  <TabsTrigger value="manual" className="gap-1 text-xs">
+                    Manuel
                   </TabsTrigger>
                 </TabsList>
+                
+                {/* Onglet Carte Bancaire - Stripe */}
+                <TabsContent value="card" className="space-y-4 mt-4">
+                  <div className="space-y-3">
+                    <Label>Montants rapides</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[10000, 25000, 50000, 100000, 250000, 500000].map((amt) => (
+                        <Button
+                          key={amt}
+                          variant={depositAmount === amt.toString() ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setDepositAmount(amt.toString())}
+                          className="text-xs"
+                        >
+                          {amt.toLocaleString()}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="card-deposit-amount">Montant personnalisé (GNF)</Label>
+                    <Input
+                      id="card-deposit-amount"
+                      type="number"
+                      placeholder="Ex: 100000"
+                      min="5000"
+                      value={depositAmount}
+                      onChange={(e) => setDepositAmount(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Minimum: 5,000 GNF</p>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+                    <Shield className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                    <p className="text-xs text-blue-700">Paiement 100% sécurisé via Stripe</p>
+                  </div>
+                  
+                  <Button 
+                    onClick={() => {
+                      const numAmount = parseFloat(depositAmount);
+                      if (!numAmount || numAmount < 5000) {
+                        toast.error('Montant minimum: 5,000 GNF');
+                        return;
+                      }
+                      setShowStripeModal(true);
+                    }}
+                    disabled={processing || !depositAmount || parseFloat(depositAmount) < 5000}
+                    className="w-full"
+                  >
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Payer {depositAmount ? `${parseFloat(depositAmount).toLocaleString()} GNF` : ''}
+                  </Button>
+                  
+                  <div className="flex items-center justify-center gap-3 pt-2">
+                    <span className="text-xs text-muted-foreground">Cartes acceptées:</span>
+                    <div className="flex gap-2">
+                      <div className="w-8 h-5 bg-gradient-to-r from-blue-600 to-blue-400 rounded flex items-center justify-center text-white text-[6px] font-bold">
+                        VISA
+                      </div>
+                      <div className="w-8 h-5 bg-gradient-to-r from-red-600 to-orange-500 rounded flex items-center justify-center">
+                        <div className="flex gap-0.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-white opacity-80"></div>
+                          <div className="w-1.5 h-1.5 rounded-full bg-white opacity-60"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
                 
                 <TabsContent value="mobile_money" className="space-y-4 mt-4">
                   <div>
@@ -1513,6 +1589,74 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         </div>
       </CardContent>
     </Card>
+    
+    {/* Modal Stripe pour paiement par carte */}
+    <StripeCardPaymentModal
+      isOpen={showStripeModal}
+      onClose={() => setShowStripeModal(false)}
+      amount={parseFloat(depositAmount) || 0}
+      currency="GNF"
+      orderId={`TOPUP-${Date.now()}`}
+      sellerId={effectiveUserId || ''} 
+      description="Recharge wallet par carte bancaire"
+      onSuccess={async (paymentIntentId) => {
+        setProcessing(true);
+        try {
+          const numAmount = parseFloat(depositAmount);
+          const referenceNumber = `TOP${Date.now()}${Math.floor(Math.random() * 1000)}`;
+          
+          // Créer la transaction de dépôt
+          const { error: transactionError } = await supabase
+            .from('wallet_transactions')
+            .insert({
+              transaction_id: referenceNumber,
+              transaction_type: 'deposit',
+              amount: numAmount,
+              net_amount: numAmount,
+              fee: 0,
+              currency: 'GNF',
+              status: 'completed',
+              description: 'Recharge wallet par carte bancaire (Stripe)',
+              receiver_wallet_id: wallet?.id,
+              metadata: { stripe_payment_intent_id: paymentIntentId }
+            });
+
+          if (transactionError) throw transactionError;
+
+          // Mettre à jour le solde du wallet
+          const newBalance = (wallet?.balance || 0) + numAmount;
+          
+          const { error: updateError } = await supabase
+            .from('wallets')
+            .update({ balance: newBalance })
+            .eq('id', wallet?.id);
+
+          if (updateError) throw updateError;
+
+          toast.success('Recharge réussie !', {
+            description: `${numAmount.toLocaleString()} GNF ajoutés à votre wallet`
+          });
+
+          setDepositAmount('');
+          setShowStripeModal(false);
+          setDepositOpen(false);
+          window.dispatchEvent(new Event('wallet-updated'));
+          await loadWalletData(isAgent, agentInfo);
+          await loadTransactions();
+          
+        } catch (error) {
+          console.error('[StripeTopup] Error:', error);
+          toast.error('Erreur lors de la recharge');
+        } finally {
+          setProcessing(false);
+        }
+      }}
+      onError={(error) => {
+        toast.error('Erreur paiement carte', { description: error });
+        setShowStripeModal(false);
+      }}
+    />
+  </>
   );
 };
 
