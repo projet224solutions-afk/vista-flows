@@ -19367,6 +19367,10 @@ export type Database = {
         Args: { p_amount: number; p_card_id: string; p_user_id: string }
         Returns: string
       }
+      process_deposit_payment: {
+        Args: { p_transaction_id: string }
+        Returns: Json
+      }
       process_djomy_success: {
         Args: { p_djomy_response: Json; p_transaction_id: string }
         Returns: Json
@@ -19399,6 +19403,10 @@ export type Database = {
       }
       process_successful_payment: {
         Args: { p_transaction_id: string }
+        Returns: Json
+      }
+      process_taxi_card_payment: {
+        Args: { p_stripe_payment_intent_id: string }
         Returns: Json
       }
       process_wallet_to_card: {

@@ -1,11 +1,12 @@
 /**
  * TAXI-MOTO: Payment processing
  * Supporte: Card (Stripe), Orange Money, Wallet 224Solutions
+ * 224SOLUTIONS
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Stripe from "https://esm.sh/stripe@18";
+import Stripe from "https://esm.sh/stripe@14.10.0?target=deno";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,6 +16,9 @@ const corsHeaders = {
 const logStep = (step: string, details?: unknown) => {
   console.log(`[TAXI-PAYMENT] ${step}`, details ? JSON.stringify(details) : '');
 };
+
+// Commission plateforme taxi (15%)
+const PLATFORM_FEE_RATE = 15;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -69,7 +73,17 @@ serve(async (req) => {
 
     if (rideError || !ride) throw new Error('Ride not found');
 
-    logStep('Ride found', { price: ride.price_total, driverId: ride.driver_id });
+    // Calculer la commission plateforme et la part chauffeur
+    const totalAmount = ride.price_total;
+    const platformFee = Math.round(totalAmount * (PLATFORM_FEE_RATE / 100));
+    const driverShare = totalAmount - platformFee;
+
+    logStep('Ride found', { 
+      price: totalAmount, 
+      platformFee,
+      driverShare,
+      driverId: ride.driver_id 
+    });
 
     // Create transaction record
     const { data: transaction, error: txError } = await supabaseClient
@@ -78,14 +92,14 @@ serve(async (req) => {
         ride_id: rideId,
         customer_id: ride.customer_id,
         driver_id: ride.driver_id,
-        amount: ride.price_total,
+        amount: totalAmount,
         currency: 'GNF',
         payment_method: paymentMethod,
-        driver_share: ride.driver_share,
-        platform_fee: ride.platform_fee,
+        driver_share: driverShare,
+        platform_fee: platformFee,
         status: 'processing',
         idempotency_key: idempotencyKey,
-        metadata: { user_id: user.id }
+        metadata: { user_id: user.id, platform_fee_rate: PLATFORM_FEE_RATE }
       })
       .select()
       .single();
@@ -109,20 +123,44 @@ serve(async (req) => {
           .eq('currency', 'GNF')
           .single();
 
-        if (!wallet || wallet.balance < ride.price_total) {
-          throw new Error('Insufficient wallet balance');
+        if (!wallet || wallet.balance < totalAmount) {
+          throw new Error('Solde wallet insuffisant');
         }
 
-        // Process transaction via wallet service
+        // Débiter le wallet client
+        await supabaseClient
+          .from('wallets')
+          .update({
+            balance: wallet.balance - totalAmount,
+            last_transaction_at: new Date().toISOString(),
+          })
+          .eq('user_id', ride.customer_id)
+          .eq('currency', 'GNF');
+
+        // Créditer le wallet chauffeur (via RPC pour atomicité)
         const { error: walletError } = await supabaseClient.rpc('process_wallet_transaction', {
           p_sender_id: ride.customer_id,
           p_receiver_id: ride.driver_id,
-          p_amount: ride.driver_share,
+          p_amount: driverShare,
           p_currency: 'GNF',
-          p_description: `Taxi ride ${rideId}`
+          p_description: `Course taxi ${rideId} - Commission plateforme: ${platformFee} GNF`
         });
 
         if (walletError) throw walletError;
+
+        // Marquer transaction comme complétée
+        await supabaseClient
+          .from('taxi_transactions')
+          .update({ 
+            status: 'completed', 
+            completed_at: new Date().toISOString() 
+          })
+          .eq('id', transaction.id);
+
+        await supabaseClient
+          .from('taxi_trips')
+          .update({ payment_status: 'paid' })
+          .eq('id', rideId);
 
         paymentResult = { success: true, method: 'wallet' };
         break;
@@ -131,18 +169,29 @@ serve(async (req) => {
       case 'card': {
         logStep('Processing card payment via Stripe');
         
-        const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-          apiVersion: "2025-08-27.basil",
+        const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+        if (!stripeSecretKey) throw new Error("Stripe not configured");
+
+        const stripe = new Stripe(stripeSecretKey, {
+          apiVersion: '2023-10-16',
+          httpClient: Stripe.createFetchHttpClient(),
         });
 
-        // Create payment intent
+        // Créer Payment Intent avec metadata pour le webhook
         const paymentIntent = await stripe.paymentIntents.create({
-          amount: Math.round(ride.price_total),
+          amount: Math.round(totalAmount),
           currency: 'gnf',
+          automatic_payment_methods: {
+            enabled: true,
+          },
           metadata: {
+            source: 'taxi',
             ride_id: rideId,
             customer_id: ride.customer_id,
-            driver_id: ride.driver_id
+            driver_id: ride.driver_id,
+            driver_share: driverShare.toString(),
+            platform_fee: platformFee.toString(),
+            transaction_id: transaction.id,
           }
         });
 
@@ -152,7 +201,11 @@ serve(async (req) => {
           .update({
             payment_provider: 'stripe',
             provider_tx_id: paymentIntent.id,
-            metadata: { ...transaction.metadata, payment_intent_id: paymentIntent.id }
+            metadata: { 
+              ...transaction.metadata, 
+              payment_intent_id: paymentIntent.id,
+              client_secret: paymentIntent.client_secret 
+            }
           })
           .eq('id', transaction.id);
 
@@ -160,7 +213,10 @@ serve(async (req) => {
           success: true, 
           method: 'card',
           client_secret: paymentIntent.client_secret,
-          payment_intent_id: paymentIntent.id
+          payment_intent_id: paymentIntent.id,
+          amount: totalAmount,
+          platformFee: platformFee,
+          driverShare: driverShare
         };
         break;
       }
@@ -193,26 +249,13 @@ serve(async (req) => {
       }
 
       default:
-        throw new Error('Invalid payment method');
-    }
-
-    // Mark transaction completed (except card which waits for confirmation)
-    if (paymentMethod === 'wallet') {
-      await supabaseClient
-        .from('taxi_transactions')
-        .update({ status: 'completed', completed_at: new Date().toISOString() })
-        .eq('id', transaction.id);
-
-      await supabaseClient
-        .from('taxi_trips')
-        .update({ payment_status: 'paid' })
-        .eq('id', rideId);
+        throw new Error('Méthode de paiement invalide');
     }
 
     logStep('Payment processed', paymentResult);
 
     // Notify driver
-    if (ride.driver_id) {
+    if (ride.driver_id && paymentMethod !== 'card') {
       const { data: driver } = await supabaseClient
         .from('taxi_drivers')
         .select('user_id')
@@ -224,8 +267,8 @@ serve(async (req) => {
           p_user_id: driver.user_id,
           p_type: 'payment_received',
           p_title: 'Paiement reçu',
-          p_body: `Paiement de ${ride.price_total} GNF confirmé`,
-          p_data: { rideId, amount: ride.driver_share },
+          p_body: `Paiement de ${driverShare} GNF confirmé (${totalAmount} GNF - ${platformFee} GNF commission)`,
+          p_data: { rideId, amount: driverShare, platformFee },
           p_ride_id: rideId
         });
       }

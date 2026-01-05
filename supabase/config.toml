@@ -60,6 +60,9 @@ verify_jwt = true
 [functions.taxi-payment]
 verify_jwt = true
 
+[functions.taxi-payment-process]
+verify_jwt = true
+
 [functions.pdg-ai-assistant]
 verify_jwt = true
 
@@ -292,4 +295,10 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.stripe-pos-payment]
+verify_jwt = true
+
+[functions.stripe-deposit]
+verify_jwt = true
+
+[functions.stripe-withdrawal]
 verify_jwt = true
