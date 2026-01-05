@@ -41,45 +41,51 @@ interface ServiceModuleManagerProps {
 
 // Mapping des codes de service_types vers les modules
 const MODULE_MAP: Record<string, React.FC<{ serviceId: string; businessName?: string }>> = {
-  // Services de Proximité
+  // ===== Codes actuels de service_types (BDD) =====
   'ecommerce': EcommerceModule,
   'restaurant': RestaurantModule,
-  'livraison': DeliveryModule,
   'beaute': BeautyModule,
-  'vtc': VTCModule,
   'reparation': RepairModule,
+  'location': RealEstateModule,
   'menage': CleaningModule,
+  'livraison': DeliveryModule,
+  'media': PhotoStudioModule,
+  'education': EducationModule,
+  'sante': HealthModule,
+  'voyage': TransportModule,
+  'freelance': FreelanceModule,
+  'construction': ConstructionModule,
+  'agriculture': AgricultureModule,
   'informatique': DeveloperModule,
   
-  // Catégories de Produits
+  // ===== Legacy service_type des vendors =====
+  'retail': EcommerceModule,
+  'wholesale': EcommerceModule,
+  'mixed': EcommerceModule,
+  'boutique': EcommerceModule,
+  'salon_coiffure': BeautyModule,
+  'garage_auto': RepairModule,
+  'immobilier': RealEstateModule,
+  'services_pro': FreelanceModule,
+  'photographe': PhotoStudioModule,
+  'autre': EcommerceModule,
+  
+  // ===== Extensions / Alias =====
+  'vtc': VTCModule,
   'mode': FashionModule,
-  'sante': HealthModule,
   'electronique': ElectronicsModule,
   'maison': HomeDecorModule,
-  
-  // Services Professionnels
-  'location': RealEstateModule,
-  'education': EducationModule,
-  'media': PhotoStudioModule,
   'sport': FitnessModule,
+  'dropshipping': DropshippingModule,
+  'coiff': HairdresserModule,
+  'coach': CoachModule,
   
-  // Produits Numériques (géré par système digital-products)
+  // Produits numériques
   'digital_voyage': TransportModule,
   'digital_logiciel': DeveloperModule,
   'digital_formation': EducationModule,
   'digital_livre': EducationModule,
   'digital_custom': EcommerceModule,
-  
-  // Autres Services
-  'freelance': FreelanceModule,
-  'agriculture': AgricultureModule,
-  'construction': ConstructionModule,
-  'dropshipping': DropshippingModule,
-  
-  // Legacy mappings
-  'voyage': TransportModule,
-  'coiff': HairdresserModule,
-  'coach': CoachModule,
 };
 
 export function ServiceModuleManager({
@@ -147,19 +153,19 @@ export function ServiceModuleManager({
     return <FashionModule {...props} />;
   }
   if (nameLower.includes('agricole') || nameLower.includes('agriculture')) {
-    return <CateringModule {...props} />;
+    return <AgricultureModule {...props} />;
   }
   if (nameLower.includes('ménage') || nameLower.includes('entretien') || nameLower.includes('nettoyage')) {
-    return <CateringModule {...props} />;
+    return <CleaningModule {...props} />;
   }
-  if (nameLower.includes('réparation') || nameLower.includes('repair')) {
-    return <DeveloperModule {...props} />;
+  if (nameLower.includes('réparation') || nameLower.includes('repair') || nameLower.includes('mécanique')) {
+    return <RepairModule {...props} />;
   }
   if (nameLower.includes('coach')) {
     return <CoachModule {...props} />;
   }
-  if (nameLower.includes('admin') || nameLower.includes('freelance')) {
-    return <DeveloperModule {...props} />;
+  if (nameLower.includes('admin') || nameLower.includes('freelance') || nameLower.includes('administratif')) {
+    return <FreelanceModule {...props} />;
   }
   
   // Module par défaut
