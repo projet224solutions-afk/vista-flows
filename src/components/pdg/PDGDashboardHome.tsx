@@ -5,9 +5,22 @@
  */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  TrendingUp, TrendingDown, Users, DollarSign, Package, 
-  Activity, AlertCircle, CheckCircle, Clock, Zap, RefreshCw, UserCheck, Building2, Wallet
+import {
+  TrendingUp,
+  TrendingDown,
+  Users,
+  DollarSign,
+  Package,
+  Activity,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Zap,
+  RefreshCw,
+  UserCheck,
+  Building2,
+  Wallet,
+  Shield,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -295,37 +308,45 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
             {[
-              { 
-                label: 'Utilisateurs', 
+              {
+                label: 'Utilisateurs',
                 labelFull: 'Valider Utilisateurs',
-                icon: Users, 
+                icon: Users,
                 color: 'from-blue-500 to-blue-600',
                 action: 'users',
-                count: stats.totalUsers || 0
+                count: stats.totalUsers || 0,
               },
-              { 
-                label: 'Finances', 
+              {
+                label: 'Certif',
+                labelFull: 'Certifier Vendeurs',
+                icon: Shield,
+                color: 'from-indigo-500 to-indigo-600',
+                action: 'vendor-certification',
+                count: stats.totalVendors || 0,
+              },
+              {
+                label: 'Finances',
                 labelFull: 'Gérer Finances',
-                icon: DollarSign, 
+                icon: DollarSign,
                 color: 'from-green-500 to-green-600',
                 action: 'finance',
-                count: stats.totalRevenue || '0 GNF'
+                count: stats.totalRevenue || '0 GNF',
               },
-              { 
-                label: 'Sécurité', 
+              {
+                label: 'Sécurité',
                 labelFull: 'Vérifier Sécurité',
-                icon: AlertCircle, 
+                icon: AlertCircle,
                 color: 'from-red-500 to-red-600',
                 action: 'security',
-                count: stats.criticalAlerts || 0
+                count: stats.criticalAlerts || 0,
               },
-              { 
-                label: 'Rapports', 
+              {
+                label: 'Rapports',
                 labelFull: 'Voir Rapports',
-                icon: Activity, 
+                icon: Activity,
                 color: 'from-purple-500 to-purple-600',
                 action: 'reports',
-                count: stats.totalOrders || 0
+                count: stats.totalOrders || 0,
               },
             ].map((action) => {
               const ActionIcon = action.icon;
