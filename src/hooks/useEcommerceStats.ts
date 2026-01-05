@@ -64,7 +64,7 @@ export function useEcommerceStats() {
       // Load orders stats
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
-        .select('id, status, total_amount, created_at')
+        .select('id, status, total_amount, created_at, payment_status')
         .eq('vendor_id', vendorId);
 
       if (ordersError) throw ordersError;
@@ -79,23 +79,24 @@ export function useEcommerceStats() {
       const orderStats = {
         total: orders.length,
         pending: orders.filter(o => o.status === 'pending').length,
-        confirmed: orders.filter(o => ['confirmed', 'preparing', 'ready'].includes(o.status)).length,
+        confirmed: orders.filter(o => ['confirmed', 'processing', 'preparing', 'ready', 'shipped', 'in_transit'].includes(o.status)).length,
         delivered: orders.filter(o => ['delivered', 'completed'].includes(o.status)).length,
         cancelled: orders.filter(o => o.status === 'cancelled').length,
       };
 
-      const deliveredOrders = orders.filter(o => ['delivered', 'completed'].includes(o.status));
-      const totalRevenue = deliveredOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
-      const todayOrders = deliveredOrders.filter(o => new Date(o.created_at) >= startOfDay);
-      const weekOrders = deliveredOrders.filter(o => new Date(o.created_at) >= startOfWeek);
-      const monthOrders = deliveredOrders.filter(o => new Date(o.created_at) >= startOfMonth);
+      // Chiffre d'affaires basé sur payment_status = 'paid' (synchronisé avec OrderManagement)
+      const paidOrders = orders.filter(o => o.payment_status === 'paid');
+      const totalRevenue = paidOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+      const todayOrders = paidOrders.filter(o => new Date(o.created_at) >= startOfDay);
+      const weekOrders = paidOrders.filter(o => new Date(o.created_at) >= startOfWeek);
+      const monthOrders = paidOrders.filter(o => new Date(o.created_at) >= startOfMonth);
 
       const salesStats = {
         totalRevenue,
         todayRevenue: todayOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0),
         weekRevenue: weekOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0),
         monthRevenue: monthOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0),
-        averageOrderValue: deliveredOrders.length > 0 ? totalRevenue / deliveredOrders.length : 0,
+        averageOrderValue: paidOrders.length > 0 ? totalRevenue / paidOrders.length : 0,
       };
 
       // Load products stats
