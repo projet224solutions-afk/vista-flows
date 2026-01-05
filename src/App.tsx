@@ -202,7 +202,9 @@ function App() {
               <Route path="/cart" element={<Cart />} />
               <Route path="/messages" element={<Messages />} />
               <Route path="/contact-user" element={<ContactUserById />} />
+              {/* Messagerie directe: supporte les deux formats (legacy direct_ + nouveau direct/) */}
               <Route path="/communication/direct/:userId" element={<DirectConversation />} />
+              <Route path="/communication/direct_:userId" element={<DirectConversation />} />
               <Route path="/proximite" element={<Proximite />} />
               <Route path="/proximite/taxi-moto" element={<NearbyTaxiMoto />} />
               <Route path="/proximite/livraison" element={<NearbyLivraison />} />
