@@ -73,28 +73,34 @@ export function VendorCertificationManager() {
     try {
       setLoading(true);
 
-      // Fetch vendors - utilise 'vendeur' au lieu de 'VENDOR'
+      // Fetch vendors avec leurs certifications en une seule requête (JOIN optimisé)
       const { data: vendorsData, error: vendorsError } = await supabase
         .from('profiles')
-        .select('id, full_name, email, avatar_url, created_at')
+        .select(`
+          id, full_name, email, avatar_url, created_at,
+          vendor_certifications!vendor_certifications_vendor_id_fkey (
+            id, status, verified_at, kyc_verified_at, kyc_status,
+            last_status_change, internal_notes, rejection_reason,
+            created_at, updated_at
+          )
+        `)
         .eq('role', 'vendeur')
         .order('created_at', { ascending: false });
 
       if (vendorsError) throw vendorsError;
 
-      // Fetch certifications for all vendors
-      const { data: certificationsData } = await supabase
-        .from('vendor_certifications')
-        .select('*');
-
-      // Map certifications to vendors
+      // Mapper les résultats avec les certifications déjà attachées
       const vendorsWithCerts: VendorWithCertification[] = (vendorsData || []).map(vendor => {
-        const cert = certificationsData?.find(c => c.vendor_id === vendor.id);
+        const cert = vendor.vendor_certifications?.[0];
         return {
-          ...vendor,
+          id: vendor.id,
+          full_name: vendor.full_name,
+          email: vendor.email,
+          avatar_url: vendor.avatar_url,
+          created_at: vendor.created_at,
           certification: cert ? {
             id: cert.id,
-            vendor_id: cert.vendor_id,
+            vendor_id: vendor.id,
             status: cert.status as VendorCertificationStatus,
             verified_at: cert.verified_at,
             kyc_verified_at: cert.kyc_verified_at,

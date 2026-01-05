@@ -34,37 +34,36 @@ export function useVendorCertification(vendorId: string | undefined): UseVendorC
       setLoading(true);
       setError(null);
 
-      // Vérifier la table vendors pour le statut de vérification
-      const { data: vendor, error: vendorError } = await supabase
-        .from('vendors')
-        .select('id, created_at, updated_at')
-        .eq('user_id', vendorId)
+      // Récupérer la vraie certification depuis vendor_certifications
+      const { data: certification, error: certError } = await supabase
+        .from('vendor_certifications')
+        .select('*')
+        .eq('vendor_id', vendorId)
         .maybeSingle();
 
-      if (vendorError) {
-        console.warn('Could not fetch vendor:', vendorError);
+      if (certError && certError.code !== 'PGRST116') {
+        console.warn('Could not fetch vendor certification:', certError);
+        setError(certError);
         setCertification(null);
         setLoading(false);
         return;
       }
 
-      if (vendor) {
-        const now = new Date().toISOString();
-        // Simuler une certification basée sur les données du vendeur
-        const cert: VendorCertification = {
-          id: vendor.id,
-          vendor_id: vendorId,
-          status: 'NON_CERTIFIE' as VendorCertificationStatus,
-          verified_at: null,
-          kyc_verified_at: null,
-          kyc_status: 'pending',
-          last_status_change: vendor.updated_at || now,
-          internal_notes: null,
-          rejection_reason: null,
-          created_at: vendor.created_at || now,
-          updated_at: vendor.updated_at || now
-        };
-        setCertification(cert);
+      // Si pas de certification trouvée (PGRST116 = not found), c'est OK
+      if (certification) {
+        setCertification({
+          id: certification.id,
+          vendor_id: certification.vendor_id,
+          status: certification.status as VendorCertificationStatus,
+          verified_at: certification.verified_at,
+          kyc_verified_at: certification.kyc_verified_at,
+          kyc_status: certification.kyc_status,
+          last_status_change: certification.last_status_change,
+          internal_notes: certification.internal_notes,
+          rejection_reason: certification.rejection_reason,
+          created_at: certification.created_at,
+          updated_at: certification.updated_at
+        });
       } else {
         setCertification(null);
       }
