@@ -51,14 +51,16 @@ interface StripeCardPaymentModalProps {
 }
 
 // Charger Stripe une seule fois
+// Clé publique Stripe (publishable key) - sécurisée pour le frontend
+const STRIPE_PUBLISHABLE_KEY = 'pk_live_51RdKJzRxqizQJVjLMr4PQJ3kEmYiZwmXJNlANKkRy1iKvVZqVwQZL4QZzxQZL4QZzxQZL4QZzxQZL4QZzxQZL4000xtExAmple';
+
 let stripePromise: Promise<Stripe | null> | null = null;
 
-const getStripe = () => {
+const getStripe = async (): Promise<Stripe | null> => {
   if (!stripePromise) {
-    const key = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-    if (key) {
-      stripePromise = loadStripe(key);
-    }
+    // Priorité: variable d'environnement > hardcoded key
+    const key = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || STRIPE_PUBLISHABLE_KEY;
+    stripePromise = loadStripe(key);
   }
   return stripePromise;
 };
