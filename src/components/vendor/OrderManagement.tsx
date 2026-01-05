@@ -824,13 +824,15 @@ export default function OrderManagement() {
                             <span className="ml-2 font-semibold">
                               {order.customers?.profiles?.full_name 
                                 || `${order.customers?.profiles?.first_name || ''} ${order.customers?.profiles?.last_name || ''}`.trim()
-                                || 'Non renseigné'}
+                                || 'Client'}
                             </span>
                           </div>
                           <div>
                             <span className="text-muted-foreground">ID Client:</span>
                             <span className="ml-2 font-mono text-xs font-semibold bg-muted px-2 py-0.5 rounded">
-                              {order.customers?.id || 'N/A'}
+                              {order.customers?.id 
+                                ? `CLI${order.customers.id.slice(-4).toUpperCase()}`
+                                : 'N/A'}
                             </span>
                           </div>
                           <div>
@@ -1047,13 +1049,15 @@ export default function OrderManagement() {
                               <span className="ml-2 font-semibold">
                                 {order.customers?.profiles?.full_name 
                                   || `${order.customers?.profiles?.first_name || ''} ${order.customers?.profiles?.last_name || ''}`.trim()
-                                  || 'Non renseigné'}
+                                  || 'Client'}
                               </span>
                             </div>
                             <div>
                               <span className="text-muted-foreground">ID Client:</span>
                               <span className="ml-2 font-mono text-xs font-semibold bg-muted px-2 py-0.5 rounded">
-                                {order.customers?.id || 'N/A'}
+                                {order.customers?.id 
+                                  ? `CLI${order.customers.id.slice(-4).toUpperCase()}`
+                                  : 'N/A'}
                               </span>
                             </div>
                             <div>
