@@ -50,18 +50,16 @@ interface StripeCardPaymentModalProps {
   onError: (error: string) => void;
 }
 
+// Clé publique Stripe (sécuritaire - c'est une clé PUBLIQUE)
+const STRIPE_PUBLISHABLE_KEY = 'pk_live_51RdKJzRxqizQJVjLFseVlmZ7qOJmOIx9PlsGPY600C0CifOqNyNlbfTb2NZAbW1cyVgk8hUt6vGAD3KQqMCIc7NB00F0KjYCqc';
+
 // Charger Stripe une seule fois
 let stripePromise: Promise<Stripe | null> | null = null;
 
 const getStripe = async (): Promise<Stripe | null> => {
   if (!stripePromise) {
-    const key = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-    if (!key) {
-      console.error('❌ VITE_STRIPE_PUBLISHABLE_KEY non configurée');
-      return null;
-    }
     console.log('✅ Chargement Stripe avec clé publique');
-    stripePromise = loadStripe(key);
+    stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
   }
   return stripePromise;
 };
