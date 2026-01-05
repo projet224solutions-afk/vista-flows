@@ -378,41 +378,179 @@ export default function PDGRevenueAnalytics() {
 
         {/* Configuration */}
         <TabsContent value="settings">
-          <Card>
-            <CardHeader>
-              <CardTitle>⚙️ Configuration des Taux</CardTitle>
-              <CardDescription>
-                Modifier les pourcentages de commission appliqués sur la plateforme
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {settings.map((setting) => (
-                <div key={setting.id} className="space-y-2">
-                  <Label>{setting.description}</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="number"
-                      step="0.1"
-                      defaultValue={setting.setting_value?.value || 0}
-                      id={`setting-${setting.setting_key}`}
-                      className="max-w-xs"
-                    />
-                    <Button
-                      onClick={() => {
-                        const input = document.getElementById(`setting-${setting.setting_key}`) as HTMLInputElement;
-                        handleUpdateSetting(setting.setting_key, parseFloat(input.value));
-                      }}
-                    >
-                      Enregistrer
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Dernière mise à jour: {format(new Date(setting.updated_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
-                  </p>
+          <div className="space-y-6">
+            {/* Aperçu des taux actuels */}
+            <div className="grid gap-4 md:grid-cols-3">
+              {settings.map((setting) => {
+                const value = setting.setting_value?.value || 0;
+                const iconConfig: Record<string, { icon: React.ReactNode; color: string; bg: string }> = {
+                  wallet_transaction_fee_percentage: { 
+                    icon: <Wallet className="h-5 w-5" />, 
+                    color: 'text-purple-600', 
+                    bg: 'bg-purple-100 dark:bg-purple-900/30' 
+                  },
+                  purchase_commission_percentage: { 
+                    icon: <ShoppingBag className="h-5 w-5" />, 
+                    color: 'text-pink-600', 
+                    bg: 'bg-pink-100 dark:bg-pink-900/30' 
+                  },
+                  service_commissions: { 
+                    icon: <Settings className="h-5 w-5" />, 
+                    color: 'text-blue-600', 
+                    bg: 'bg-blue-100 dark:bg-blue-900/30' 
+                  },
+                };
+                const config = iconConfig[setting.setting_key] || { 
+                  icon: <Settings className="h-5 w-5" />, 
+                  color: 'text-gray-600', 
+                  bg: 'bg-gray-100 dark:bg-gray-800' 
+                };
+
+                return (
+                  <Card key={setting.id} className={`border-2 hover:shadow-lg transition-shadow`}>
+                    <CardContent className="pt-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className={`p-3 rounded-xl ${config.bg} ${config.color}`}>
+                          {config.icon}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-muted-foreground">{setting.description}</p>
+                          <p className={`text-3xl font-bold ${config.color}`}>{value}%</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Mis à jour le {format(new Date(setting.updated_at), 'dd MMM yyyy', { locale: fr })}
+                      </p>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Formulaire de modification */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Modifier les Taux de Commission
+                </CardTitle>
+                <CardDescription>
+                  Ajustez les pourcentages prélevés sur chaque type de transaction
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {settings.map((setting) => {
+                    const currentValue = setting.setting_value?.value || 0;
+                    const settingLabels: Record<string, { title: string; desc: string; min: number; max: number; example: number }> = {
+                      wallet_transaction_fee_percentage: {
+                        title: '💳 Frais Wallet',
+                        desc: 'Appliqué sur transferts, retraits et recharges',
+                        min: 0,
+                        max: 10,
+                        example: 100000
+                      },
+                      purchase_commission_percentage: {
+                        title: '🛒 Commission Achats',
+                        desc: 'Prélevé sur les paiements de commandes',
+                        min: 0,
+                        max: 30,
+                        example: 500000
+                      },
+                      service_commissions: {
+                        title: '⚙️ Commission Services',
+                        desc: 'Appliqué sur les services professionnels',
+                        min: 0,
+                        max: 20,
+                        example: 200000
+                      },
+                    };
+                    const labelConfig = settingLabels[setting.setting_key] || {
+                      title: setting.setting_key,
+                      desc: setting.description || '',
+                      min: 0,
+                      max: 100,
+                      example: 100000
+                    };
+
+                    return (
+                      <div key={setting.id} className="space-y-4 p-4 border rounded-xl bg-accent/30">
+                        <div>
+                          <Label className="text-base font-semibold">{labelConfig.title}</Label>
+                          <p className="text-xs text-muted-foreground mt-1">{labelConfig.desc}</p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              step="0.1"
+                              min={labelConfig.min}
+                              max={labelConfig.max}
+                              defaultValue={currentValue}
+                              id={`setting-${setting.setting_key}`}
+                              className="text-lg font-semibold"
+                            />
+                            <span className="text-lg font-bold">%</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <span>Min: {labelConfig.min}%</span>
+                            <span>•</span>
+                            <span>Max: {labelConfig.max}%</span>
+                          </div>
+                        </div>
+
+                        {/* Exemple de calcul en temps réel */}
+                        <div className="p-3 bg-background rounded-lg border">
+                          <p className="text-xs text-muted-foreground mb-1">Exemple sur {PdgRevenueService.formatAmount(labelConfig.example)}:</p>
+                          <p className="font-semibold text-green-600">
+                            Revenu PDG: {PdgRevenueService.formatAmount(labelConfig.example * currentValue / 100)}
+                          </p>
+                        </div>
+
+                        <Button
+                          className="w-full"
+                          onClick={() => {
+                            const input = document.getElementById(`setting-${setting.setting_key}`) as HTMLInputElement;
+                            const newValue = parseFloat(input.value);
+                            if (newValue < labelConfig.min || newValue > labelConfig.max) {
+                              toast({
+                                title: '❌ Valeur invalide',
+                                description: `Le taux doit être entre ${labelConfig.min}% et ${labelConfig.max}%`,
+                                variant: 'destructive'
+                              });
+                              return;
+                            }
+                            handleUpdateSetting(setting.setting_key, newValue);
+                          }}
+                        >
+                          <Settings className="mr-2 h-4 w-4" />
+                          Appliquer
+                        </Button>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            {/* Note d'information */}
+            <Card className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
+              <CardContent className="pt-6">
+                <div className="flex gap-4">
+                  <div className="text-2xl">💡</div>
+                  <div>
+                    <p className="font-medium text-amber-800 dark:text-amber-200">Important</p>
+                    <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                      Les modifications de taux s'appliquent immédiatement à toutes les nouvelles transactions. 
+                      Les transactions en cours conservent leur taux d'origine. L'historique des modifications 
+                      est conservé pour audit.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
