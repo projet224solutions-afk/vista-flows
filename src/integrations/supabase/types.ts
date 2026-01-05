@@ -12163,6 +12163,7 @@ export type Database = {
           id: string
           is_verified: boolean | null
           pending_balance: number | null
+          status: string
           total_earned: number | null
           total_withdrawn: number | null
           updated_at: string | null
@@ -12176,6 +12177,7 @@ export type Database = {
           id?: string
           is_verified?: boolean | null
           pending_balance?: number | null
+          status?: string
           total_earned?: number | null
           total_withdrawn?: number | null
           updated_at?: string | null
@@ -12189,6 +12191,7 @@ export type Database = {
           id?: string
           is_verified?: boolean | null
           pending_balance?: number | null
+          status?: string
           total_earned?: number | null
           total_withdrawn?: number | null
           updated_at?: string | null
