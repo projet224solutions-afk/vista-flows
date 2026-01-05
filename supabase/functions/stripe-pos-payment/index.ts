@@ -23,8 +23,38 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[STRIPE-POS] ${step}${detailsStr}`);
 };
 
-// Taux de commission par défaut (2.5%)
+// Taux de commission par défaut (2.5%) - utilisé si commission_config est vide
 const DEFAULT_COMMISSION_RATE = 2.5;
+
+// Récupérer le taux de commission actif depuis la base de données
+async function getActiveCommissionRate(supabaseAdmin: any): Promise<number> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('commission_config')
+      .select('commission_type, commission_value')
+      .in('service_name', ['marketplace', 'ecommerce', 'pos'])
+      .eq('is_active', true)
+      .order('service_name', { ascending: true })
+      .limit(1);
+
+    if (error || !data || data.length === 0) {
+      console.log('[STRIPE-POS] No active commission config found, using default:', DEFAULT_COMMISSION_RATE);
+      return DEFAULT_COMMISSION_RATE;
+    }
+
+    const config = data[0];
+    if (config.commission_type === 'percentage') {
+      console.log('[STRIPE-POS] Using commission rate from config:', config.commission_value);
+      return Number(config.commission_value);
+    }
+    
+    // Si c'est un montant fixe, on retourne le défaut (le calcul sera différent)
+    return DEFAULT_COMMISSION_RATE;
+  } catch (err) {
+    console.error('[STRIPE-POS] Error fetching commission config:', err);
+    return DEFAULT_COMMISSION_RATE;
+  }
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -63,7 +93,7 @@ serve(async (req) => {
       orderId, 
       description,
       sellerId: rawSellerId,
-      commissionRate = DEFAULT_COMMISSION_RATE
+      commissionRate: requestedCommissionRate
     } = await req.json();
 
     if (!amount || amount <= 0) {
@@ -77,15 +107,16 @@ serve(async (req) => {
     // Résoudre le sellerId - il peut être un user_id UUID ou un public_id/custom_id
     let sellerId = rawSellerId;
     
+    // Créer un client admin pour les opérations DB
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     // Si ce n'est pas un UUID valide, chercher par public_id ou custom_id
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(rawSellerId)) {
       logStep("Resolving seller by public_id/custom_id", { rawSellerId });
-      
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
       
       const normalizedId = rawSellerId.trim().toUpperCase();
       const { data: profileData, error: profileError } = await supabaseAdmin
@@ -102,6 +133,12 @@ serve(async (req) => {
       sellerId = profileData.id;
       logStep("Seller resolved", { originalId: rawSellerId, resolvedId: sellerId });
     }
+
+    // ✅ Récupérer le taux de commission depuis la base de données
+    // Si un taux est passé en paramètre, l'utiliser, sinon récupérer depuis commission_config
+    const commissionRate = requestedCommissionRate !== undefined 
+      ? requestedCommissionRate 
+      : await getActiveCommissionRate(supabaseAdmin);
 
     // ✅ Commission payée par le CLIENT
     // - amount = montant produit (base)
@@ -153,11 +190,7 @@ serve(async (req) => {
       status: paymentIntent.status 
     });
 
-    // Enregistrer dans stripe_transactions avec admin client
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    // Enregistrer dans stripe_transactions avec le client admin déjà créé
 
     const { data: transaction, error: insertError } = await supabaseAdmin
       .from('stripe_transactions')
