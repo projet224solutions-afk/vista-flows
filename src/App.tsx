@@ -412,7 +412,9 @@ function App() {
               
               {/* Agent & Bureau Login with MFA */}
               <Route path="/agent/login" element={<AgentLogin />} />
+              <Route path="/agent-login" element={<Navigate to="/agent/login" replace />} />
               <Route path="/bureau/login" element={<BureauLogin />} />
+              <Route path="/bureau-login" element={<Navigate to="/bureau/login" replace />} />
               <Route path="/agent/change-password" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentChangePassword /></ProtectedRoute>} />
               <Route path="/bureau/change-password" element={<ProtectedRoute allowedRoles={['syndicat', 'admin']}><BureauChangePassword /></ProtectedRoute>} />
               
