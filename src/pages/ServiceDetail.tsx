@@ -270,7 +270,7 @@ export default function ServiceDetail() {
     }
 
     // Ouvrir la messagerie directe (réelle) avec le prestataire
-    navigate(`/communication/direct_${service.vendor_user_id}`);
+    navigate(`/communication/direct/${service.vendor_user_id}`);
   };
 
   const handleReservation = () => {
