@@ -1,13 +1,12 @@
 /**
- * 💳 SÉLECTEUR DE PAIEMENT JOMY.AFRICA - MOYEN UNIQUE
- * Intégration exclusive Jomy.africa pour tous les paiements
- * Méthodes: Carte Bancaire, Orange Money, Mobile Money
+ * 💳 SÉLECTEUR DE PAIEMENT - MULTI-PROVIDERS
+ * Stripe pour les cartes bancaires, Jomy pour Mobile Money
+ * Méthodes: Carte Bancaire (Stripe), Orange Money, Mobile Money (Jomy)
  */
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -27,24 +26,28 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { StripeCardPaymentModal } from '@/components/pos/StripeCardPaymentModal';
 
 interface JomyPaymentSelectorProps {
   amount: number;
   orderId?: string;
   description?: string;
   transactionType?: 'product' | 'taxi' | 'delivery' | 'service' | 'transfer';
-  productType?: 'physical' | 'digital'; // Type de produit pour filtrer les options
+  productType?: 'physical' | 'digital';
   onPaymentSuccess: (transactionId: string, status: string) => void;
   onPaymentPending?: (transactionId: string) => void;
   onPaymentFailed?: (error: string) => void;
-  onCashOnDelivery?: () => void; // Callback pour paiement à la livraison
+  onCashOnDelivery?: () => void;
   onCancel: () => void;
   enableEscrow?: boolean;
-  recipientId?: string; // Public ID du destinataire (pour les transferts wallet)
+  recipientId?: string;
+  sellerId?: string; // ID vendeur pour Stripe
 }
 
+type PaymentMethodId = 'STRIPE_CARD' | 'WALLET' | 'CASH_ON_DELIVERY' | DjomyPaymentMethod;
+
 interface PaymentMethodOption {
-  id: DjomyPaymentMethod | 'WALLET' | 'CASH_ON_DELIVERY';
+  id: PaymentMethodId;
   name: string;
   description: string;
   icon: React.ReactNode;
@@ -59,23 +62,25 @@ export function JomyPaymentSelector({
   orderId,
   description,
   transactionType = 'product',
-  productType = 'physical', // Par défaut produit physique
+  productType = 'physical',
   onPaymentSuccess,
   onPaymentPending,
   onPaymentFailed,
   onCashOnDelivery,
   onCancel,
   enableEscrow = true,
-  recipientId
+  recipientId,
+  sellerId
 }: JomyPaymentSelectorProps) {
   const { user } = useAuth();
   const { initializePayment, pollPaymentStatus, isLoading, error } = useDjomyPayment();
   
-  const [selectedMethod, setSelectedMethod] = useState<DjomyPaymentMethod | 'WALLET' | 'CASH_ON_DELIVERY'>(recipientId ? 'WALLET' : 'OM');
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>(recipientId ? 'WALLET' : 'STRIPE_CARD');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [processing, setProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'polling' | 'success' | 'failed'>('idle');
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [showStripeModal, setShowStripeModal] = useState(false);
 
   // Charger le solde wallet si disponible
   useEffect(() => {
@@ -97,7 +102,7 @@ export function JomyPaymentSelector({
     loadWalletBalance();
   }, [user?.id]);
 
-  // Méthodes de paiement disponibles (filtrées selon le type de produit)
+  // Méthodes de paiement disponibles
   const paymentMethods: PaymentMethodOption[] = [
     // Option Wallet en premier si recipientId est fourni
     ...(recipientId ? [{
@@ -109,9 +114,9 @@ export function JomyPaymentSelector({
       requiresPhone: false
     }] : []),
     {
-      id: 'VISA' as const,
+      id: 'STRIPE_CARD' as const,
       name: 'Carte Bancaire',
-      description: 'Paiement par carte VISA / Mastercard',
+      description: 'Paiement sécurisé VISA / Mastercard via Stripe',
       icon: <CreditCard className="h-5 w-5 text-blue-600" />,
       iconBg: 'bg-blue-100',
       requiresPhone: false
@@ -152,30 +157,29 @@ export function JomyPaymentSelector({
 
   const handlePayment = async () => {
     console.log('🔵 [JomyPaymentSelector] handlePayment called');
-    console.log('🔵 [JomyPaymentSelector] user:', user?.id);
     console.log('🔵 [JomyPaymentSelector] selectedMethod:', selectedMethod);
-    console.log('🔵 [JomyPaymentSelector] amount:', amount);
-    console.log('🔵 [JomyPaymentSelector] orderId:', orderId);
-    console.log('🔵 [JomyPaymentSelector] recipientId:', recipientId);
-    console.log('🔵 [JomyPaymentSelector] requiresPhone:', requiresPhone);
-    console.log('🔵 [JomyPaymentSelector] phoneNumber:', phoneNumber);
     
     if (!user) {
-      console.error('❌ [JomyPaymentSelector] No user logged in');
       toast.error('Vous devez être connecté pour effectuer un paiement');
       return;
     }
 
-    // Gestion du paiement à la livraison
+    // Paiement à la livraison
     if (selectedMethod === 'CASH_ON_DELIVERY') {
-      console.log('🟢 [JomyPaymentSelector] Processing CASH_ON_DELIVERY');
       if (onCashOnDelivery) {
         onCashOnDelivery();
       }
       return;
     }
 
-    // Gestion du paiement par Wallet (transfert interne)
+    // Paiement par carte Stripe
+    if (selectedMethod === 'STRIPE_CARD') {
+      console.log('🔵 [JomyPaymentSelector] Opening Stripe modal');
+      setShowStripeModal(true);
+      return;
+    }
+
+    // Paiement par Wallet
     if (selectedMethod === 'WALLET') {
       if (!recipientId) {
         toast.error('ID du destinataire requis');
@@ -218,7 +222,7 @@ export function JomyPaymentSelector({
       return;
     }
 
-    // Paiements externes (Jomy.africa)
+    // Paiements Mobile Money (Jomy.africa)
     if (requiresPhone && (!phoneNumber || phoneNumber.length < 9)) {
       toast.error('Numéro de téléphone invalide');
       return;
@@ -228,33 +232,22 @@ export function JomyPaymentSelector({
     setPaymentStatus('processing');
 
     try {
-      console.log('🔵 [JomyPaymentSelector] Calling initializePayment...');
       const paymentPayload = {
         amount,
-        payerPhone: requiresPhone ? phoneNumber : undefined,
+        payerPhone: phoneNumber,
         paymentMethod: selectedMethod as DjomyPaymentMethod,
         orderId: orderId || `${transactionType}-${Date.now()}`,
         description: description || `Paiement ${transactionType}`,
         successUrl: `${window.location.origin}/payment/success`,
         failureUrl: `${window.location.origin}/payment/failed`,
         callbackUrl: `${window.location.origin}/payment/callback`,
-        useGateway: !requiresPhone // Utiliser le gateway pour les cartes
+        useGateway: false
       };
-      console.log('🔵 [JomyPaymentSelector] Payment payload:', paymentPayload);
       
       const result = await initializePayment(paymentPayload);
-      
-      console.log('🔵 [JomyPaymentSelector] initializePayment result:', result);
 
       if (!result.success) {
-        console.error('❌ [JomyPaymentSelector] Payment failed:', result.error);
         throw new Error(result.error || 'Échec du paiement');
-      }
-
-      // Pour les cartes, rediriger vers l'URL Jomy
-      if (result.redirectUrl && !requiresPhone) {
-        window.open(result.redirectUrl, '_blank');
-        toast.info('Complétez le paiement dans la fenêtre ouverte');
       }
 
       // Polling pour vérifier le statut
@@ -262,10 +255,9 @@ export function JomyPaymentSelector({
         setPaymentStatus('polling');
         
         const finalStatus = await pollPaymentStatus(result.transactionId, {
-          maxAttempts: 60, // 5 minutes max
+          maxAttempts: 60,
           intervalMs: 5000,
           onStatusChange: (status) => {
-            console.log('[Jomy] Payment status:', status);
             if (status.status === 'SUCCESS' || status.status === 'completed') {
               setPaymentStatus('success');
               toast.success('🎉 Paiement réussi !');
@@ -302,6 +294,20 @@ export function JomyPaymentSelector({
     }
   };
 
+  const handleStripeSuccess = (paymentIntentId: string) => {
+    console.log('✅ [JomyPaymentSelector] Stripe payment success:', paymentIntentId);
+    setShowStripeModal(false);
+    setPaymentStatus('success');
+    onPaymentSuccess(paymentIntentId, 'SUCCESS');
+  };
+
+  const handleStripeError = (errorMsg: string) => {
+    console.error('❌ [JomyPaymentSelector] Stripe payment error:', errorMsg);
+    setShowStripeModal(false);
+    setPaymentStatus('failed');
+    onPaymentFailed?.(errorMsg);
+  };
+
   const isConfirmDisabled = 
     processing || 
     isLoading || 
@@ -326,141 +332,150 @@ export function JomyPaymentSelector({
   }
 
   return (
-    <Card className="w-full max-w-lg mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center justify-center gap-2">
-          <Shield className="h-5 w-5 text-primary" />
-          Paiement sécurisé Jomy.africa
-        </CardTitle>
-        <div className="text-center mt-2">
-          <p className="text-3xl font-bold text-primary">
-            {amount.toLocaleString()} GNF
-          </p>
-          <p className="text-sm text-muted-foreground">Montant à payer</p>
-          
-          {/* Badge Jomy.africa */}
-          <div className="flex items-center justify-center gap-1 mt-2">
-            <Shield className="h-3 w-3 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">Powered by Jomy.africa</span>
+    <>
+      <Card className="w-full max-w-lg mx-auto">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-center gap-2">
+            <Shield className="h-5 w-5 text-primary" />
+            Paiement sécurisé
+          </CardTitle>
+          <div className="text-center mt-2">
+            <p className="text-3xl font-bold text-primary">
+              {amount.toLocaleString()} GNF
+            </p>
+            <p className="text-sm text-muted-foreground">Montant à payer</p>
+            
+            {enableEscrow && transactionType !== 'transfer' && (
+              <Alert className="mt-3">
+                <Shield className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  Vos fonds sont protégés jusqu'à confirmation de la transaction
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
-          
-          {enableEscrow && transactionType !== 'transfer' && (
-            <Alert className="mt-3">
-              <Shield className="h-4 w-4" />
-              <AlertDescription className="text-xs">
-                Vos fonds sont protégés jusqu'à confirmation de la transaction
+        </CardHeader>
+        
+        <CardContent className="space-y-4">
+          {/* Erreur */}
+          {(error || paymentStatus === 'failed') && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error || 'Paiement échoué'}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Méthodes de paiement */}
+          <RadioGroup
+            value={selectedMethod}
+            onValueChange={(value) => setSelectedMethod(value as PaymentMethodId)}
+            className="space-y-2"
+            disabled={processing}
+          >
+            {paymentMethods.map((method) => (
+              <div key={method.id}>
+                <Label
+                  htmlFor={method.id}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all",
+                    selectedMethod === method.id
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "border-border hover:border-primary/50 hover:bg-muted/30",
+                    processing && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <RadioGroupItem 
+                    value={method.id} 
+                    id={method.id}
+                    disabled={processing}
+                    className="border-2 flex-shrink-0"
+                  />
+                  
+                  <div className={cn("flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0", method.iconBg)}>
+                    {method.icon}
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <span className="font-medium block text-sm">{method.name}</span>
+                    <span className="text-xs text-muted-foreground block">{method.description}</span>
+                  </div>
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
+
+          {/* Champ téléphone pour Mobile Money */}
+          {requiresPhone && (
+            <div className="space-y-2 p-3 bg-muted/50 rounded-lg border animate-in slide-in-from-top-2">
+              <Label htmlFor="phone-number" className="flex items-center gap-2 text-sm">
+                <Smartphone className="h-4 w-4" />
+                Numéro {selectedOption?.name}
+              </Label>
+              <Input
+                id="phone-number"
+                type="tel"
+                placeholder={selectedOption?.phonePlaceholder || '6XX XX XX XX'}
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                disabled={processing}
+              />
+              <p className="text-xs text-muted-foreground">
+                Une demande de confirmation sera envoyée sur ce numéro
+              </p>
+            </div>
+          )}
+
+          {/* Info statut */}
+          {paymentStatus === 'polling' && (
+            <Alert>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <AlertDescription>
+                En attente de confirmation du paiement...
               </AlertDescription>
             </Alert>
           )}
-        </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-4">
-        {/* Erreur */}
-        {(error || paymentStatus === 'failed') && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error || 'Paiement échoué'}</AlertDescription>
-          </Alert>
-        )}
 
-        {/* Méthodes de paiement */}
-        <RadioGroup
-          value={selectedMethod}
-          onValueChange={(value) => setSelectedMethod(value as DjomyPaymentMethod)}
-          className="space-y-2"
-          disabled={processing}
-        >
-          {paymentMethods.map((method) => (
-            <div key={method.id}>
-              <Label
-                htmlFor={method.id}
-                className={cn(
-                  "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all",
-                  selectedMethod === method.id
-                    ? "border-primary bg-primary/5 ring-1 ring-primary"
-                    : "border-border hover:border-primary/50 hover:bg-muted/30",
-                  processing && "opacity-50 cursor-not-allowed"
-                )}
-              >
-                <RadioGroupItem 
-                  value={method.id} 
-                  id={method.id}
-                  disabled={processing}
-                  className="border-2 flex-shrink-0"
-                />
-                
-                <div className={cn("flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0", method.iconBg)}>
-                  {method.icon}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <span className="font-medium block text-sm">{method.name}</span>
-                  <span className="text-xs text-muted-foreground block">{method.description}</span>
-                </div>
-              </Label>
-            </div>
-          ))}
-        </RadioGroup>
-
-        {/* Champ téléphone */}
-        {requiresPhone && (
-          <div className="space-y-2 p-3 bg-muted/50 rounded-lg border animate-in slide-in-from-top-2">
-            <Label htmlFor="phone-number" className="flex items-center gap-2 text-sm">
-              <Smartphone className="h-4 w-4" />
-              Numéro {selectedOption?.name}
-            </Label>
-            <Input
-              id="phone-number"
-              type="tel"
-              placeholder={selectedOption?.phonePlaceholder || '6XX XX XX XX'}
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
+          {/* Boutons */}
+          <div className="pt-4 flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={onCancel} 
+              className="flex-1"
               disabled={processing}
-            />
-            <p className="text-xs text-muted-foreground">
-              Une demande de confirmation sera envoyée sur ce numéro
-            </p>
+            >
+              Annuler
+            </Button>
+            <Button 
+              onClick={handlePayment} 
+              disabled={isConfirmDisabled}
+              className="flex-1"
+            >
+              {processing || isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Traitement...
+                </>
+              ) : (
+                'Payer maintenant'
+              )}
+            </Button>
           </div>
-        )}
+        </CardContent>
+      </Card>
 
-        {/* Info statut */}
-        {paymentStatus === 'polling' && (
-          <Alert>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <AlertDescription>
-              En attente de confirmation du paiement...
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Boutons */}
-        <div className="pt-4 flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={onCancel} 
-            className="flex-1"
-            disabled={processing}
-          >
-            Annuler
-          </Button>
-          <Button 
-            onClick={handlePayment} 
-            disabled={isConfirmDisabled}
-            className="flex-1"
-          >
-            {processing || isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Traitement...
-              </>
-            ) : (
-              'Payer maintenant'
-            )}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      {/* Modal Stripe pour paiement par carte */}
+      <StripeCardPaymentModal
+        isOpen={showStripeModal}
+        onClose={() => setShowStripeModal(false)}
+        amount={amount}
+        currency="GNF"
+        orderId={orderId || `order-${Date.now()}`}
+        sellerId={sellerId || recipientId || ''}
+        description={description}
+        onSuccess={handleStripeSuccess}
+        onError={handleStripeError}
+      />
+    </>
   );
 }
 
