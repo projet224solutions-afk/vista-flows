@@ -60,6 +60,7 @@ import { POSReceipt } from './pos/POSReceipt';
 import { BarcodeScannerModal } from './pos/BarcodeScannerModal';
 import { Scan } from 'lucide-react';
 import { useDjomyPayment, type DjomyPaymentMethod } from '@/hooks/useDjomyPayment';
+import { StripeCardPaymentModal } from '@/components/pos/StripeCardPaymentModal';
 
 interface Product {
   id: string;
@@ -313,6 +314,10 @@ export function POSSystem() {
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [keypadMode, setKeypadMode] = useState<'quantity' | 'amount'>('quantity');
   const [selectedCartItemForQuantity, setSelectedCartItemForQuantity] = useState<CartItem | null>(null);
+  
+  // État pour le modal de paiement Stripe
+  const [showStripeModal, setShowStripeModal] = useState(false);
+  const [pendingStripeOrder, setPendingStripeOrder] = useState<{id: string, order_number: string} | null>(null);
   
   // États pour personnalisation - Récupérer le nom de l'entreprise depuis le profil vendor
   const { profile: vendorProfile } = useVendorOptimized();
@@ -778,18 +783,15 @@ export function POSSystem() {
         return;
       }
 
-      // Paiement par carte bancaire (Stripe)
+      // Paiement par carte bancaire (Stripe) - Ouvrir le modal
       if (paymentMethod === 'card') {
-        toast.loading('Initialisation du paiement par carte...');
-        
         try {
           const customerId = await getOrCreateCustomerId();
           if (!customerId) {
-            toast.dismiss();
             return;
           }
 
-          // Créer la commande
+          // Créer la commande en attente
           const { data: order, error: orderError } = await supabase
             .from('orders')
             .insert({
@@ -803,7 +805,7 @@ export function POSSystem() {
               status: 'pending',
               payment_method: 'card',
               shipping_address: { address: 'Point de vente' },
-              notes: 'Paiement par carte bancaire',
+              notes: 'Paiement par carte bancaire - En attente',
               source: 'pos'
             })
             .select('id, order_number')
@@ -821,46 +823,13 @@ export function POSSystem() {
           }));
           await supabase.from('order_items').insert(orderItems);
 
-          // Appeler Stripe pour créer un Payment Intent
-          const { data: stripeData, error: stripeError } = await supabase.functions.invoke('stripe-create-payment-intent', {
-            body: {
-              amount: total,
-              currency: 'gnf',
-              orderId: order.id,
-              description: `Vente POS - ${cart.length} article(s)`
-            }
-          });
-
-          toast.dismiss();
-
-          if (stripeError || !stripeData?.clientSecret) {
-            console.error('Stripe error:', stripeError || stripeData?.error);
-            toast.error('Erreur Stripe', {
-              description: stripeData?.error || 'Impossible d\'initialiser le paiement par carte'
-            });
-            await supabase.from('orders').update({ status: 'cancelled', payment_status: 'failed' }).eq('id', order.id);
-            return;
-          }
-
-          // Pour le POS, on simule le paiement réussi (en production, utiliser Stripe Terminal)
-          toast.success('Paiement par carte accepté!', {
-            description: 'Transaction confirmée'
-          });
-
-          // Marquer comme payé
-          await supabase.from('orders')
-            .update({ payment_status: 'paid', status: 'processing' })
-            .eq('id', order.id);
-
-          setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
+          // Sauvegarder la commande et ouvrir le modal Stripe
+          setPendingStripeOrder({ id: order.id, order_number: order.order_number || order.id.substring(0, 8).toUpperCase() });
+          setShowStripeModal(true);
           setShowOrderSummary(false);
-          setShowReceipt(true);
-          clearCart();
-          await loadVendorProducts();
           return;
 
         } catch (cardError: any) {
-          toast.dismiss();
           console.error('Card payment error:', cardError);
           toast.error('Erreur paiement carte', {
             description: cardError.message || 'Veuillez réessayer'
@@ -1945,6 +1914,55 @@ export function POSSystem() {
         onAddToCart={addToCart}
         onAddToCartByCarton={addToCartByCarton}
       />
+
+      {/* Modal Paiement Stripe - Vrai paiement carte bancaire */}
+      {pendingStripeOrder && vendorId && (
+        <StripeCardPaymentModal
+          isOpen={showStripeModal}
+          onClose={() => {
+            setShowStripeModal(false);
+            // Annuler la commande si le modal est fermé sans paiement
+            if (pendingStripeOrder) {
+              supabase.from('orders')
+                .update({ status: 'cancelled', payment_status: 'cancelled' })
+                .eq('id', pendingStripeOrder.id);
+              setPendingStripeOrder(null);
+            }
+          }}
+          amount={total}
+          currency="GNF"
+          orderId={pendingStripeOrder.id}
+          sellerId={vendorId}
+          description={`Vente POS - ${cart.length} article(s)`}
+          onSuccess={async (paymentIntentId) => {
+            // Paiement réussi - le webhook Stripe mettra à jour le wallet vendeur
+            console.log('✅ Paiement Stripe réussi:', paymentIntentId);
+            
+            // Ne PAS marquer comme payé ici - le webhook s'en charge
+            // Juste mettre à jour le statut pour indiquer que le paiement est en cours de traitement
+            await supabase.from('orders')
+              .update({ 
+                payment_status: 'processing',
+                status: 'processing',
+                notes: `Paiement Stripe confirmé - Intent: ${paymentIntentId}`
+              })
+              .eq('id', pendingStripeOrder.id);
+            
+            setLastOrderNumber(pendingStripeOrder.order_number);
+            setShowStripeModal(false);
+            setPendingStripeOrder(null);
+            setShowReceipt(true);
+            clearCart();
+            await loadVendorProducts();
+          }}
+          onError={(error) => {
+            console.error('❌ Erreur paiement Stripe:', error);
+            toast.error('Paiement échoué', {
+              description: error
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

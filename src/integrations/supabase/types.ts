@@ -12024,12 +12024,15 @@ export type Database = {
         Row: {
           amount: number
           buyer_id: string
+          card_brand: string | null
           commission_amount: number
           commission_rate: number
           created_at: string
           currency: string
+          error_code: string | null
           error_message: string | null
           id: string
+          last4: string | null
           metadata: Json | null
           order_id: string | null
           paid_at: string | null
@@ -12037,22 +12040,28 @@ export type Database = {
           payment_method: string | null
           product_id: string | null
           refunded_at: string | null
+          requires_3ds: boolean | null
           seller_id: string
           seller_net_amount: number
           service_id: string | null
           status: string
+          stripe_charge_id: string | null
           stripe_payment_intent_id: string
+          three_ds_status: string | null
           updated_at: string
         }
         Insert: {
           amount: number
           buyer_id: string
+          card_brand?: string | null
           commission_amount?: number
           commission_rate?: number
           created_at?: string
           currency?: string
+          error_code?: string | null
           error_message?: string | null
           id?: string
+          last4?: string | null
           metadata?: Json | null
           order_id?: string | null
           paid_at?: string | null
@@ -12060,22 +12069,28 @@ export type Database = {
           payment_method?: string | null
           product_id?: string | null
           refunded_at?: string | null
+          requires_3ds?: boolean | null
           seller_id: string
           seller_net_amount?: number
           service_id?: string | null
           status?: string
+          stripe_charge_id?: string | null
           stripe_payment_intent_id: string
+          three_ds_status?: string | null
           updated_at?: string
         }
         Update: {
           amount?: number
           buyer_id?: string
+          card_brand?: string | null
           commission_amount?: number
           commission_rate?: number
           created_at?: string
           currency?: string
+          error_code?: string | null
           error_message?: string | null
           id?: string
+          last4?: string | null
           metadata?: Json | null
           order_id?: string | null
           paid_at?: string | null
@@ -12083,11 +12098,14 @@ export type Database = {
           payment_method?: string | null
           product_id?: string | null
           refunded_at?: string | null
+          requires_3ds?: boolean | null
           seller_id?: string
           seller_net_amount?: number
           service_id?: string | null
           status?: string
+          stripe_charge_id?: string | null
           stripe_payment_intent_id?: string
+          three_ds_status?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -19342,6 +19360,10 @@ export type Database = {
           p_sender_id: string
           p_sender_type?: string
         }
+        Returns: Json
+      }
+      process_successful_payment: {
+        Args: { p_transaction_id: string }
         Returns: Json
       }
       process_wallet_to_card: {
