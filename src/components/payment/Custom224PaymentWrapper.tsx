@@ -13,6 +13,14 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Clé publique Stripe depuis les variables d'environnement
 const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_live_51RdKJzRxqizQJVjLFseVlmZ7qOJmOIx9PlsGPY600C0CifOqNyNlbfTb2NZAbW1cyVgk8hUt6vGAD3KQqMCIc7NB00F0KjYCqc';
+
+// Debug: afficher la clé chargée (masquée partiellement pour sécurité)
+if (stripePublicKey) {
+  console.log('✅ Clé Stripe configurée:', stripePublicKey.substring(0, 20) + '...' + stripePublicKey.substring(stripePublicKey.length - 10));
+} else {
+  console.error('❌ Clé Stripe non configurée');
+}
+
 const stripePromise = loadStripe(stripePublicKey);
 
 interface Custom224PaymentWrapperProps {
