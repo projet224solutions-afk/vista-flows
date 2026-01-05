@@ -19,6 +19,7 @@ import Index from "./pages/Index";
 const QuickFooter = lazyWithRetry(() => import("@/components/QuickFooter"));
 const CommunicationWidget = lazyWithRetry(() => import("@/components/communication/CommunicationWidget"));
 const DeepLinkInitializer = lazyWithRetry(() => import("@/components/DeepLinkInitializer"));
+const PWAInstallPrompt = lazyWithRetry(() => import("@/components/pwa/PWAInstallPrompt"));
 
 // Lazy loading des pages - regroupées par priorité
 const Auth = lazyWithRetry(() => import("./pages/Auth"));
@@ -159,6 +160,20 @@ function App() {
       const httpsUrl = `https://${window.location.host}${window.location.pathname}${window.location.search}${window.location.hash}`;
       window.location.replace(httpsUrl);
     }
+
+    // Enregistrer le Service Worker pour PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker
+          .register('/sw.js')
+          .then((registration) => {
+            console.log('✅ [PWA] Service Worker enregistré:', registration.scope);
+          })
+          .catch((error) => {
+            console.error('❌ [PWA] Erreur Service Worker:', error);
+          });
+      });
+    }
   }, []);
 
   return (
@@ -170,6 +185,7 @@ function App() {
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
+                <PWAInstallPrompt />
                 <DeepLinkInitializer />
                 <MerchantOnboarding />
                 <ErrorBoundary>

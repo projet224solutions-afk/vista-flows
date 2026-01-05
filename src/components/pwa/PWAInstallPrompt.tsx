@@ -1,0 +1,121 @@
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Download, X, Smartphone, Monitor, Chrome } from 'lucide-react';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
+import { toast } from 'sonner';
+
+export default function PWAInstallPrompt() {
+  const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
+  const [isVisible, setIsVisible] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
+
+  useEffect(() => {
+    // Vérifier si l'utilisateur a déjà refusé
+    const dismissed = localStorage.getItem('pwa-install-dismissed');
+    if (dismissed) {
+      setIsDismissed(true);
+      return;
+    }
+
+    // Afficher après 5 secondes si installable et pas déjà installé
+    const timer = setTimeout(() => {
+      if (isInstallable && !isInstalled) {
+        setIsVisible(true);
+      }
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [isInstallable, isInstalled]);
+
+  const handleInstall = async () => {
+    const installed = await promptInstall();
+    
+    if (installed) {
+      toast.success('🎉 Application installée avec succès!', {
+        description: 'Vous pouvez maintenant utiliser 224Solutions depuis votre écran d\'accueil'
+      });
+      setIsVisible(false);
+    } else {
+      toast.error('Installation annulée', {
+        description: 'Vous pourrez installer l\'application plus tard'
+      });
+    }
+  };
+
+  const handleDismiss = () => {
+    setIsVisible(false);
+    setIsDismissed(true);
+    localStorage.setItem('pwa-install-dismissed', 'true');
+    
+    toast.info('Invitation masquée', {
+      description: 'Vous pourrez installer l\'application depuis les paramètres de votre navigateur'
+    });
+  };
+
+  // Ne pas afficher si installé, pas installable, ou refusé
+  if (!isVisible || isInstalled || isDismissed) {
+    return null;
+  }
+
+  return (
+    <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:max-w-md animate-in slide-in-from-bottom-5 duration-500">
+      <Card className="border-2 border-primary shadow-2xl bg-gradient-to-br from-blue-50 to-purple-50">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            {/* Icône */}
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+              <Download className="w-6 h-6 text-white animate-bounce" />
+            </div>
+
+            {/* Contenu */}
+            <div className="flex-1 space-y-2">
+              <h3 className="font-bold text-lg text-gray-900">
+                📱 Installer 224Solutions
+              </h3>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Installez notre application pour un accès rapide depuis votre écran d'accueil !
+              </p>
+
+              {/* Avantages */}
+              <div className="space-y-1 text-xs text-gray-500 mt-2">
+                <div className="flex items-center gap-2">
+                  <Smartphone className="w-3 h-3 text-blue-600" />
+                  <span>Accès instantané sans ouvrir le navigateur</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Monitor className="w-3 h-3 text-purple-600" />
+                  <span>Fonctionne hors ligne</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Chrome className="w-3 h-3 text-green-600" />
+                  <span>0 Mo d'espace, léger et rapide</span>
+                </div>
+              </div>
+
+              {/* Boutons */}
+              <div className="flex gap-2 mt-3">
+                <Button 
+                  onClick={handleInstall}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-md"
+                  size="sm"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Installer maintenant
+                </Button>
+                <Button 
+                  onClick={handleDismiss}
+                  variant="ghost"
+                  size="sm"
+                  className="px-3"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
