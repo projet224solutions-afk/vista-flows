@@ -823,9 +823,8 @@ export default function OrderManagement() {
                             <span className="text-muted-foreground">Nom:</span>
                             <span className="ml-2 font-semibold">
                               {order.customers?.profiles?.full_name 
-                                || (order.customers?.profiles?.first_name || order.customers?.profiles?.last_name
-                                  ? `${order.customers.profiles.first_name || ''} ${order.customers.profiles.last_name || ''}`.trim()
-                                  : 'Client POS')}
+                                || `${order.customers?.profiles?.first_name || ''} ${order.customers?.profiles?.last_name || ''}`.trim()
+                                || 'Non renseigné'}
                             </span>
                           </div>
                           <div>
@@ -1047,9 +1046,8 @@ export default function OrderManagement() {
                               <span className="text-muted-foreground">Nom:</span>
                               <span className="ml-2 font-semibold">
                                 {order.customers?.profiles?.full_name 
-                                  || (order.customers?.profiles?.first_name || order.customers?.profiles?.last_name
-                                    ? `${order.customers.profiles.first_name || ''} ${order.customers.profiles.last_name || ''}`.trim()
-                                    : 'Client')}
+                                  || `${order.customers?.profiles?.first_name || ''} ${order.customers?.profiles?.last_name || ''}`.trim()
+                                  || 'Non renseigné'}
                               </span>
                             </div>
                             <div>
