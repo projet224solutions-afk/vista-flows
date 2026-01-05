@@ -652,8 +652,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       return;
     }
 
-    if (amount < 5000) {
-      toast.error('INVALID_AMOUNT: Montant minimum 5000 GNF');
+    const minAmount = withdrawMethod === 'card' ? 50000 : 5000;
+    if (amount < minAmount) {
+      toast.error(`INVALID_AMOUNT: Montant minimum ${formatPrice(minAmount)}`);
       return;
     }
 
@@ -675,67 +676,51 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     console.log('🔄 Retrait en cours:', { amount, method: withdrawMethod, userId: effectiveUserId });
     
     try {
-      // Récupérer le wallet de l'utilisateur
-      const { data: walletData, error: walletError } = await supabase
-        .from('wallets')
-        .select('*')
-        .eq('user_id', effectiveUserId)
-        .single();
-
-      if (walletError) throw walletError;
-      if (!walletData) throw new Error('Wallet introuvable');
-
-      // Déterminer la description selon la méthode
-      let description = 'Retrait du wallet';
       if (withdrawMethod === 'mobile_money') {
-        const providerLabel = withdrawProvider === 'orange' ? 'Orange Money' : 'MTN MoMo';
-        description = `Retrait via ${providerLabel} vers +224${withdrawPhone}`;
-      } else if (withdrawMethod === 'card') {
-        description = 'Retrait vers carte bancaire';
-      }
-
-      // Créer une transaction de retrait (statut pending pour les vraies méthodes de paiement)
-      const referenceNumber = `WDR${Date.now()}${Math.floor(Math.random() * 1000)}`;
-      const isPending = withdrawMethod === 'card' || withdrawMethod === 'mobile_money';
-      
-      const { error: transactionError } = await supabase
-        .from('wallet_transactions')
-        .insert({
-          transaction_id: referenceNumber,
-          transaction_type: 'withdraw',
-          amount: -amount,
-          net_amount: -amount,
-          fee: 0,
-          currency: 'GNF',
-          status: isPending ? 'pending' : 'completed',
-          description,
-          sender_wallet_id: walletData.id,
-          metadata: {
-            method: withdrawMethod,
-            provider: withdrawMethod === 'mobile_money' ? withdrawProvider : 'stripe',
-            phone: withdrawMethod === 'mobile_money' ? `224${withdrawPhone}` : null
+        // Appeler l'edge function Mobile Money Withdrawal
+        const cleanPhone = withdrawPhone.replace(/[^0-9]/g, '').replace(/^(224|00224)/, '');
+        
+        const { data, error } = await supabase.functions.invoke('mobile-money-withdrawal', {
+          body: {
+            amount,
+            phoneNumber: cleanPhone,
+            provider: withdrawProvider,
           }
         });
 
-      if (transactionError) throw transactionError;
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Erreur lors du retrait');
 
-      // Mettre à jour le solde du wallet
-      const newBalance = walletData.balance - amount;
-      const { error: updateError } = await supabase
-        .from('wallets')
-        .update({ balance: newBalance })
-        .eq('user_id', effectiveUserId);
+        console.log('✅ Retrait Mobile Money:', data);
+        
+        const providerLabel = withdrawProvider === 'orange' ? 'Orange Money' : 'MTN MoMo';
+        if (data.status === 'completed') {
+          toast.success(`Retrait ${providerLabel} effectué !`, {
+            description: `${formatPrice(data.netAmount)} envoyés vers +224${cleanPhone}`
+          });
+        } else {
+          toast.success(`Demande de retrait ${providerLabel} enregistrée !`, {
+            description: `${formatPrice(data.netAmount)} seront envoyés sous 24-48h`
+          });
+        }
 
-      if (updateError) throw updateError;
-
-      console.log('✅ Retrait effectué avec succès');
-
-      if (isPending) {
-        toast.success(`Demande de retrait de ${formatPrice(amount)} enregistrée !`, {
-          description: 'Votre retrait sera traité sous 24-48h'
+      } else if (withdrawMethod === 'card') {
+        // Appeler l'edge function Stripe Withdrawal
+        const { data, error } = await supabase.functions.invoke('stripe-withdrawal', {
+          body: {
+            amount,
+            currency: 'gnf',
+          }
         });
-      } else {
-        toast.success(`Retrait de ${formatPrice(amount)} effectué avec succès !`);
+
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Erreur lors du retrait');
+
+        console.log('✅ Retrait Stripe:', data);
+        
+        toast.success(`Demande de retrait de ${formatPrice(amount)} enregistrée !`, {
+          description: `Montant net: ${formatPrice(data.netAmount)} (frais: ${formatPrice(data.withdrawalFee)}). Virement sous 24-48h.`
+        });
       }
       
       setWithdrawAmount('');
