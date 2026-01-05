@@ -55,6 +55,9 @@ interface Order {
       first_name?: string;
       last_name?: string;
       phone?: string;
+      email?: string;
+      city?: string;
+      country?: string;
     };
   };
   order_items?: {
@@ -208,7 +211,7 @@ export default function OrderManagement() {
           customers(
             id, 
             user_id,
-            profiles(first_name, last_name, phone)
+            profiles(first_name, last_name, phone, email, city, country)
           ),
           order_items(
             id,
@@ -776,36 +779,40 @@ export default function OrderManagement() {
                       </div>
                       
                       {/* Informations Client */}
-                      {order.customers && (
-                        <div className="bg-muted/50 rounded-lg p-4 mb-4 space-y-2">
-                          <h4 className="font-semibold text-sm text-primary mb-2 flex items-center gap-2">
-                            <User className="w-4 h-4" />
-                            Informations Client
-                          </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                            <div>
-                              <span className="text-muted-foreground">Nom:</span>
-                              <span className="ml-2 font-semibold">
-                                {order.customers?.profiles?.first_name || order.customers?.profiles?.last_name
-                                  ? `${order.customers.profiles.first_name || ''} ${order.customers.profiles.last_name || ''}`
-                                  : 'Client POS'}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">ID Client:</span>
-                              <span className="ml-2 font-mono text-xs font-semibold bg-muted px-2 py-0.5 rounded">
-                                {order.customers?.id.slice(0, 8)}...
-                              </span>
-                            </div>
-                            {order.customers?.profiles?.phone && (
-                              <div>
-                                <span className="text-muted-foreground">Téléphone:</span>
-                                <span className="ml-2 font-semibold">{order.customers.profiles.phone}</span>
-                              </div>
-                            )}
+                      <div className="bg-muted/50 rounded-lg p-4 mb-4 space-y-2">
+                        <h4 className="font-semibold text-sm text-primary mb-2 flex items-center gap-2">
+                          <User className="w-4 h-4" />
+                          Informations Client
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Nom:</span>
+                            <span className="ml-2 font-semibold">
+                              {order.customers?.profiles?.first_name || order.customers?.profiles?.last_name
+                                ? `${order.customers.profiles.first_name || ''} ${order.customers.profiles.last_name || ''}`.trim()
+                                : 'Client POS'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">ID Client:</span>
+                            <span className="ml-2 font-mono text-xs font-semibold bg-muted px-2 py-0.5 rounded">
+                              {order.customers?.id || 'N/A'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Téléphone:</span>
+                            <span className="ml-2 font-semibold">
+                              {order.customers?.profiles?.phone || 'Non renseigné'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Email:</span>
+                            <span className="ml-2 font-semibold">
+                              {order.customers?.profiles?.email || 'Non renseigné'}
+                            </span>
                           </div>
                         </div>
-                      )}
+                      </div>
 
                       {/* Date de vente */}
                       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
@@ -1000,27 +1007,33 @@ export default function OrderManagement() {
                             <User className="w-4 h-4" />
                             Informations Client
                           </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                             <div>
                               <span className="text-muted-foreground">Nom:</span>
                               <span className="ml-2 font-semibold">
                                 {order.customers?.profiles?.first_name || order.customers?.profiles?.last_name
-                                  ? `${order.customers.profiles.first_name || ''} ${order.customers.profiles.last_name || ''}`
+                                  ? `${order.customers.profiles.first_name || ''} ${order.customers.profiles.last_name || ''}`.trim()
                                   : 'Client'}
                               </span>
                             </div>
                             <div>
                               <span className="text-muted-foreground">ID Client:</span>
                               <span className="ml-2 font-mono text-xs font-semibold bg-muted px-2 py-0.5 rounded">
-                                {order.customers?.id.slice(0, 8)}...
+                                {order.customers?.id || 'N/A'}
                               </span>
                             </div>
-                            {order.customers?.profiles?.phone && (
-                              <div>
-                                <span className="text-muted-foreground">Téléphone:</span>
-                                <span className="ml-2 font-semibold">{order.customers.profiles.phone}</span>
-                              </div>
-                            )}
+                            <div>
+                              <span className="text-muted-foreground">Téléphone:</span>
+                              <span className="ml-2 font-semibold">
+                                {order.customers?.profiles?.phone || 'Non renseigné'}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Email:</span>
+                              <span className="ml-2 font-semibold">
+                                {order.customers?.profiles?.email || 'Non renseigné'}
+                              </span>
+                            </div>
                           </div>
                           {/* Adresse de livraison géolocalisée */}
                           <div className="mt-3 pt-3 border-t border-border/50">
