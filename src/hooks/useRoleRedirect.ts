@@ -49,20 +49,37 @@ export const useRoleRedirect = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // ⚡ Ne pas attendre si on est déjà en train de charger - empêche le rendu de la page Home
-    if (loading) return;
+    const currentPath = location.pathname;
+    
+    console.log('🔍 [useRoleRedirect] État:', {
+      loading,
+      profileLoading,
+      hasUser: !!user,
+      hasProfile: !!profile,
+      role: profile?.role,
+      currentPath
+    });
 
-    // Si utilisateur connecté avec profil chargé OU en cours de chargement du profil
-    if (user && profile && profile.role && !profileLoading) {
-      const currentPath = location.pathname;
+    // ⚡ Attendre que l'auth soit chargée
+    if (loading) {
+      console.log('⏳ [useRoleRedirect] Auth en cours de chargement...');
+      return;
+    }
 
+    // ⚡ Attendre que le profil soit chargé si l'utilisateur est connecté
+    if (user && profileLoading) {
+      console.log('⏳ [useRoleRedirect] Profil en cours de chargement...');
+      return;
+    }
+
+    // Si utilisateur connecté avec profil et rôle
+    if (user && profile && profile.role) {
       // Vérifier si le profil doit être complété (nouveau compte)
       const needsProfileCompletion = localStorage.getItem('needs_profile_completion') === 'true';
       const isProfileIncomplete = !profile.first_name || !profile.last_name || !profile.phone;
       
       if (needsProfileCompletion && isProfileIncomplete) {
-        // Stocker l'info pour afficher un banner de complétion
-        console.log('📝 Profil incomplet - demande de complétion');
+        console.log('📝 [useRoleRedirect] Profil incomplet - demande de complétion');
       }
 
       // Ne pas rediriger si l'utilisateur est sur une route publique
@@ -71,32 +88,40 @@ export const useRoleRedirect = () => {
       );
       
       if (isOnPublicRoute) {
+        console.log('📍 [useRoleRedirect] Route publique, pas de redirection:', currentPath);
         return;
       }
 
       const roleRoutes: Record<string, string> = {
         admin: '/pdg',
-        ceo: '/pdg', // Alias pour PDG
+        ceo: '/pdg',
         vendeur: '/vendeur',
         livreur: '/livreur',
         taxi: '/taxi-moto/driver',
         syndicat: '/syndicat',
         transitaire: '/transitaire',
         client: '/client',
-        agent: '/agent', // Pour les agents
+        agent: '/agent',
       };
 
       const targetRoute = roleRoutes[profile.role];
+      
       if (targetRoute) {
-        // Ne pas rediriger si l'utilisateur est déjà sur la bonne route de base
+        // Ne pas rediriger si l'utilisateur est déjà sur la bonne route
         if (currentPath.startsWith(targetRoute)) {
+          console.log('✅ [useRoleRedirect] Déjà sur la bonne route:', currentPath);
           return;
         }
         
-        // ⚡ Redirection immédiate avec replace pour éviter l'historique
-        console.log(`🔄 Redirection automatique vers ${targetRoute} (rôle: ${profile.role})`);
+        // ⚡ REDIRECTION IMMÉDIATE vers le dashboard approprié
+        console.log(`🚀 [useRoleRedirect] Redirection vers ${targetRoute} (rôle: ${profile.role})`);
         navigate(targetRoute, { replace: true });
+      } else {
+        console.log('⚠️ [useRoleRedirect] Aucune route définie pour le rôle:', profile.role);
       }
+    } else if (user && !profile && !profileLoading) {
+      // L'utilisateur est connecté mais n'a pas de profil (rare)
+      console.log('⚠️ [useRoleRedirect] Utilisateur sans profil détecté');
     }
   }, [user, profile, loading, profileLoading, navigate, location.pathname]);
 };
