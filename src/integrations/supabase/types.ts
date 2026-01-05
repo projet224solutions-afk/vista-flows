@@ -12121,7 +12121,6 @@ export type Database = {
           id: string
           reference_id: string | null
           stripe_wallet_id: string
-          transaction_type: Database["public"]["Enums"]["stripe_transaction_type"]
         }
         Insert: {
           amount: number
@@ -12133,7 +12132,6 @@ export type Database = {
           id?: string
           reference_id?: string | null
           stripe_wallet_id: string
-          transaction_type: Database["public"]["Enums"]["stripe_transaction_type"]
         }
         Update: {
           amount?: number
@@ -12145,7 +12143,6 @@ export type Database = {
           id?: string
           reference_id?: string | null
           stripe_wallet_id?: string
-          transaction_type?: Database["public"]["Enums"]["stripe_transaction_type"]
         }
         Relationships: [
           {
@@ -12166,7 +12163,6 @@ export type Database = {
           id: string
           is_verified: boolean | null
           pending_balance: number | null
-          status: Database["public"]["Enums"]["stripe_wallet_status"] | null
           total_earned: number | null
           total_withdrawn: number | null
           updated_at: string | null
@@ -12180,7 +12176,6 @@ export type Database = {
           id?: string
           is_verified?: boolean | null
           pending_balance?: number | null
-          status?: Database["public"]["Enums"]["stripe_wallet_status"] | null
           total_earned?: number | null
           total_withdrawn?: number | null
           updated_at?: string | null
@@ -12194,7 +12189,6 @@ export type Database = {
           id?: string
           is_verified?: boolean | null
           pending_balance?: number | null
-          status?: Database["public"]["Enums"]["stripe_wallet_status"] | null
           total_earned?: number | null
           total_withdrawn?: number | null
           updated_at?: string | null
@@ -12227,7 +12221,6 @@ export type Database = {
           fee: number | null
           id: string
           net_amount: number
-          status: Database["public"]["Enums"]["stripe_withdrawal_status"] | null
           stripe_payout_id: string | null
           stripe_wallet_id: string
           updated_at: string | null
@@ -12242,9 +12235,6 @@ export type Database = {
           fee?: number | null
           id?: string
           net_amount: number
-          status?:
-            | Database["public"]["Enums"]["stripe_withdrawal_status"]
-            | null
           stripe_payout_id?: string | null
           stripe_wallet_id: string
           updated_at?: string | null
@@ -12259,9 +12249,6 @@ export type Database = {
           fee?: number | null
           id?: string
           net_amount?: number
-          status?:
-            | Database["public"]["Enums"]["stripe_withdrawal_status"]
-            | null
           stripe_payout_id?: string | null
           stripe_wallet_id?: string
           updated_at?: string | null
