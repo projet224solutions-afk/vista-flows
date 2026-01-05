@@ -310,25 +310,31 @@ export default function StripeDiagnostic() {
 
     for (const table of tables) {
       try {
-        const { error, count } = await supabase
-          .from(table)
-          .select('*', { count: 'exact', head: true });
+        // Check table existence by making a simple fetch request to Supabase REST API
+        const tableCheckUrl = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/${table}?select=count&limit=0`;
+        const response = await fetch(tableCheckUrl, {
+          method: 'HEAD',
+          headers: {
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ''}`
+          }
+        });
 
-        if (error) {
-          addResult({
-            category: 'Base de données',
-            name: `Table ${table}`,
-            status: 'error',
-            message: 'Table non trouvée',
-            details: error.message
-          });
-        } else {
+        if (response.ok) {
           addResult({
             category: 'Base de données',
             name: `Table ${table}`,
             status: 'success',
             message: 'Table existe',
-            details: `${count || 0} enregistrements`
+            details: 'Table accessible via API'
+          });
+        } else {
+          addResult({
+            category: 'Base de données',
+            name: `Table ${table}`,
+            status: 'error',
+            message: 'Table non trouvée',
+            details: `HTTP ${response.status}`
           });
         }
       } catch (error) {
