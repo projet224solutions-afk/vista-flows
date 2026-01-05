@@ -302,3 +302,6 @@ verify_jwt = true
 
 [functions.stripe-withdrawal]
 verify_jwt = true
+
+[functions.mobile-money-withdrawal]
+verify_jwt = true
