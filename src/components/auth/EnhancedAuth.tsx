@@ -3,6 +3,7 @@
  * - Parcours en étapes fluide
  * - Connexion sociale (Google, Facebook)
  * - Détection intelligente du type de compte
+ * - Vérification email existant AVANT OAuth
  */
 
 import { useState, useEffect } from 'react';
@@ -13,10 +14,18 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { 
   UserCheck, Store, Truck, Bike, Ship, ArrowLeft, ArrowRight,
   Lock, Mail, Phone, Loader2, Eye, EyeOff, AlertCircle, Check,
-  ChevronRight, User
+  ChevronRight, User, LogIn, UserPlus
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -96,46 +105,123 @@ export default function EnhancedAuth() {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Handle OAuth callback
+  // État pour le modal "Email déjà existant"
+  const [existingEmailModal, setExistingEmailModal] = useState<{
+    open: boolean;
+    email: string;
+    role: string;
+    provider: 'google' | 'facebook' | null;
+  }>({ open: false, email: '', role: '', provider: null });
+
+  // Handle OAuth callback - avec redirection intelligente selon le profil
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        toast.success('Connexion réussie !');
-        navigate('/');
+        const isNewSignup = localStorage.getItem('oauth_is_new_signup') === 'true';
+        
+        // Attendre un peu pour que le profil soit créé
+        setTimeout(async () => {
+          // Vérifier si le profil est complet
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('first_name, last_name, phone, role')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+          if (profile) {
+            const isProfileIncomplete = !profile.first_name || !profile.last_name || !profile.phone;
+            
+            if (isNewSignup && isProfileIncomplete) {
+              // Nouveau compte avec profil incomplet → rediriger vers complétion
+              toast.info('Bienvenue ! Veuillez compléter votre profil.');
+              localStorage.setItem('needs_profile_completion', 'true');
+            } else {
+              toast.success('Connexion réussie !');
+            }
+          }
+          
+          localStorage.removeItem('oauth_is_new_signup');
+          navigate('/');
+        }, 500);
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  // Vérifier si un email existe déjà dans le système
+  const checkEmailExists = async (emailToCheck: string): Promise<{ exists: boolean; role?: string }> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('email, role')
+        .eq('email', emailToCheck)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Erreur vérification email:', error);
+        return { exists: false };
+      }
+
+      return data ? { exists: true, role: data.role } : { exists: false };
+    } catch (err) {
+      console.error('Erreur:', err);
+      return { exists: false };
+    }
+  };
+
+  // Procéder à la connexion OAuth (sans création de compte)
+  const proceedWithOAuthLogin = async (provider: 'google' | 'facebook') => {
+    // Mode connexion - nettoyer les flags
+    localStorage.removeItem('oauth_intent_role');
+    localStorage.removeItem('oauth_is_new_signup');
+
+    const origin = window.location.origin;
+    const safeOrigin = origin.includes('224solution.net') ? origin.replace('http://', 'https://') : origin;
+    const redirectUrl = `${safeOrigin}/`;
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: redirectUrl,
+      },
+    });
+
+    if (error) {
+      setError(error.message);
+      toast.error(error.message);
+    }
+  };
+
   const handleSocialLogin = async (provider: 'google' | 'facebook') => {
     setSocialLoading(provider);
     setError(null);
 
     try {
-      // En mode inscription, on configure les flags OAuth
-      if (mode === 'signup' && accountType) {
-        const mapAccountTypeToRole = (type: AccountType) => {
-          switch (type) {
-            case 'marchand':
-              return 'vendeur';
-            case 'livreur':
-              return 'livreur';
-            case 'taxi_moto':
-              return 'taxi';
-            case 'transitaire':
-              return 'transitaire';
-            case 'client':
-            default:
-              return 'client';
-          }
-        };
+      const mapAccountTypeToRole = (type: AccountType) => {
+        switch (type) {
+          case 'marchand':
+            return 'vendeur';
+          case 'livreur':
+            return 'livreur';
+          case 'taxi_moto':
+            return 'taxi';
+          case 'transitaire':
+            return 'transitaire';
+          case 'client':
+          default:
+            return 'client';
+        }
+      };
 
-        // Marquer comme nouvelle inscription UNIQUEMENT en mode signup
+      // En mode INSCRIPTION, on doit vérifier si l'email existe déjà
+      if (mode === 'signup' && accountType) {
+        // Note: On ne peut pas vérifier l'email Google AVANT l'OAuth
+        // Donc on configure les flags et on laisse useAuth gérer la détection
         localStorage.setItem('oauth_intent_role', mapAccountTypeToRole(accountType));
         localStorage.setItem('oauth_is_new_signup', 'true');
       } else {
-        // Mode connexion - nettoyer les flags pour ne pas modifier le rôle existant
+        // Mode CONNEXION - nettoyer les flags
         localStorage.removeItem('oauth_intent_role');
         localStorage.removeItem('oauth_is_new_signup');
       }
@@ -149,9 +235,7 @@ export default function EnhancedAuth() {
         options: {
           redirectTo: redirectUrl,
           queryParams: accountType
-            ? {
-                account_type: accountType,
-              }
+            ? { account_type: accountType }
             : undefined,
         },
       });
@@ -599,6 +683,60 @@ export default function EnhancedAuth() {
           </div>
         </div>
       </Card>
+
+      {/* Modal: Email déjà existant */}
+      <Dialog open={existingEmailModal.open} onOpenChange={(open) => setExistingEmailModal(prev => ({ ...prev, open }))}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertCircle className="h-5 w-5" />
+              Email déjà enregistré
+            </DialogTitle>
+            <DialogDescription className="pt-2 space-y-2">
+              <p>
+                L'email <strong className="text-foreground">{existingEmailModal.email}</strong> est déjà 
+                associé à un compte <Badge variant="secondary">{existingEmailModal.role}</Badge>.
+              </p>
+              <p className="text-sm">
+                Souhaitez-vous vous connecter avec ce compte existant ?
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+            <div className="flex items-center gap-2 text-sm">
+              <Mail className="h-4 w-4 text-muted-foreground" />
+              <span>{existingEmailModal.email}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <UserCheck className="h-4 w-4 text-muted-foreground" />
+              <span>Compte: {existingEmailModal.role}</span>
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setExistingEmailModal(prev => ({ ...prev, open: false }))}
+              className="w-full sm:w-auto"
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={() => {
+                setExistingEmailModal(prev => ({ ...prev, open: false }));
+                if (existingEmailModal.provider) {
+                  proceedWithOAuthLogin(existingEmailModal.provider);
+                }
+              }}
+              className="w-full sm:w-auto gap-2"
+            >
+              <LogIn className="h-4 w-4" />
+              Se connecter
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

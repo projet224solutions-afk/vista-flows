@@ -56,6 +56,15 @@ export const useRoleRedirect = () => {
     if (user && profile && profile.role && !profileLoading) {
       const currentPath = location.pathname;
 
+      // Vérifier si le profil doit être complété (nouveau compte)
+      const needsProfileCompletion = localStorage.getItem('needs_profile_completion') === 'true';
+      const isProfileIncomplete = !profile.first_name || !profile.last_name || !profile.phone;
+      
+      if (needsProfileCompletion && isProfileIncomplete) {
+        // Stocker l'info pour afficher un banner de complétion
+        console.log('📝 Profil incomplet - demande de complétion');
+      }
+
       // Ne pas rediriger si l'utilisateur est sur une route publique
       const isOnPublicRoute = PUBLIC_ROUTES.some(route => 
         currentPath === route || currentPath.startsWith(route + '/')

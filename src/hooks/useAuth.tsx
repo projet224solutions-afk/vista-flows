@@ -221,10 +221,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log('✅ Profil existant trouvé:', current.email, '| Rôle:', current.role);
 
         // Si l'utilisateur essayait de créer un compte (isNewOAuthSignup=true)
-        // mais le profil existe déjà → AVERTIR et garder le rôle existant
+        // mais le profil existe déjà → AVERTIR CLAIREMENT et garder le rôle existant
         if (isNewOAuthSignup) {
           console.log('⚠️ Tentative d\'inscription mais compte existe déjà');
-          toast.info(`Bienvenue ! Vous êtes connecté en tant que ${current.role}.`);
+          
+          // Message clair indiquant que l'email existe déjà
+          toast.warning(
+            `Cet email est déjà enregistré ! Vous avez été connecté à votre compte ${current.role} existant.`,
+            {
+              duration: 6000,
+              description: 'Votre compte existant a été utilisé pour la connexion.',
+            }
+          );
+        } else {
+          // Connexion normale
+          const roleLabels: Record<string, string> = {
+            client: 'Client',
+            vendeur: 'Marchand',
+            livreur: 'Livreur',
+            taxi: 'Taxi Moto',
+            transitaire: 'Transitaire',
+            admin: 'Administrateur',
+            ceo: 'PDG',
+            agent: 'Agent',
+            syndicat: 'Syndicat',
+          };
+          toast.success(`Bienvenue ! Vous êtes connecté en tant que ${roleLabels[current.role] || current.role}.`);
         }
 
         // NE JAMAIS modifier le rôle d'un profil existant
@@ -310,7 +332,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (createdProfile) {
         console.log('✅ Nouveau profil créé avec succès:', createdProfile.role);
-        toast.success(`Compte créé ! Vous êtes inscrit en tant que ${createdProfile.role}.`);
+        
+        const roleLabels: Record<string, string> = {
+          client: 'Client',
+          vendeur: 'Marchand',
+          livreur: 'Livreur',
+          taxi: 'Taxi Moto',
+          transitaire: 'Transitaire',
+        };
+        
+        toast.success(
+          `Compte créé avec succès !`,
+          {
+            duration: 5000,
+            description: `Vous êtes inscrit en tant que ${roleLabels[createdProfile.role] || createdProfile.role}. Complétez votre profil pour continuer.`,
+          }
+        );
+        
+        // Marquer que le profil doit être complété
+        localStorage.setItem('needs_profile_completion', 'true');
+        
         setProfile(createdProfile as Profile);
       } else {
         setProfile(profileToCreate as any);
