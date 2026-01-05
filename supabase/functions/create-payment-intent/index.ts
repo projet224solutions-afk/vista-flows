@@ -133,11 +133,20 @@ serve(async (req) => {
     // Calculer commission plateforme
     const commissionRate = config.platform_commission_rate;
     const commissionAmount = Math.round((amount * commissionRate) / 100);
-    const sellerNetAmount = amount - commissionAmount;
+    // ✅ CLIENT PAIE PRODUIT + COMMISSION (pas déduit du vendeur)
+    const totalAmountWithCommission = amount + commissionAmount;
+    const sellerNetAmount = amount; // Vendeur reçoit montant complet produit
 
-    // Créer PaymentIntent Stripe
+    console.log(`💰 Calcul paiement:
+      - Montant produit: ${amount} ${currency}
+      - Commission (${commissionRate}%): ${commissionAmount} ${currency}
+      - TOTAL CLIENT: ${totalAmountWithCommission} ${currency}
+      - Net vendeur: ${sellerNetAmount} ${currency}
+    `);
+
+    // Créer PaymentIntent Stripe avec montant TOTAL (produit + commission)
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount,
+      amount: totalAmountWithCommission, // ✅ Client paie produit + commission
       currency: currency.toLowerCase(),
       automatic_payment_methods: {
         enabled: true,
@@ -148,8 +157,10 @@ serve(async (req) => {
         order_id: order_id || '',
         service_id: service_id || '',
         product_id: product_id || '',
+        product_amount: amount.toString(), // Montant produit seul
         commission_rate: commissionRate.toString(),
         commission_amount: commissionAmount.toString(),
+        total_amount: totalAmountWithCommission.toString(), // Montant total facturé
         seller_net_amount: sellerNetAmount.toString(),
         platform: '224SOLUTIONS',
         ...metadata
@@ -165,7 +176,7 @@ serve(async (req) => {
         stripe_payment_intent_id: paymentIntent.id,
         buyer_id: user.id,
         seller_id: seller_id,
-        amount: amount,
+        amount: totalAmountWithCommission, // Montant total facturé au client
         currency: currency.toUpperCase(),
         commission_rate: commissionRate,
         commission_amount: commissionAmount,
@@ -175,7 +186,11 @@ serve(async (req) => {
         service_id: service_id,
         product_id: product_id,
         payment_method: 'card',
-        metadata: metadata,
+        metadata: {
+          product_amount: amount, // Montant produit original
+          total_amount: totalAmountWithCommission,
+          ...metadata
+        },
       })
       .select()
       .single();
@@ -191,9 +206,10 @@ serve(async (req) => {
         client_secret: paymentIntent.client_secret,
         payment_intent_id: paymentIntent.id,
         transaction_id: transaction?.id,
-        amount: amount,
+        product_amount: amount, // Montant produit
+        commission_amount: commissionAmount, // Commission
+        total_amount: totalAmountWithCommission, // Total à payer
         currency: currency,
-        commission_amount: commissionAmount,
         seller_net_amount: sellerNetAmount,
       }),
       { 
