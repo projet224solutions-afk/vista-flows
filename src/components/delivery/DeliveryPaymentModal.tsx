@@ -1,10 +1,9 @@
 /**
  * MODAL PAIEMENT LIVRAISONS
- * Support: Wallet, Card (Stripe), Mobile Money (Orange, MTN, Moov), PayPal, Cash
- * Pattern sécurisé INP < 200ms
+ * Support: Wallet, Card (Stripe), Mobile Money (Orange, MTN, Moov), Cash
  */
 
-import { useState, useEffect, useCallback, startTransition, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -16,14 +15,16 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CreditCard, Smartphone, Wallet, Banknote, Loader2, Shield, Package, AlertCircle } from "lucide-react";
+import { CreditCard, Smartphone, Wallet, Banknote, Loader2, Shield, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DeliveryPaymentService } from "@/services/delivery/DeliveryPaymentService";
 import { SecureButton } from "@/components/ui/SecureButton";
+import { StripeCardPaymentModal } from "@/components/pos/StripeCardPaymentModal";
+import { Button } from "@/components/ui/button";
 
-export type DeliveryPaymentMethod = 'wallet' | 'cash' | 'mobile_money' | 'card' | 'paypal';
+export type DeliveryPaymentMethod = 'wallet' | 'cash' | 'mobile_money' | 'card';
 
 interface DeliveryPaymentModalProps {
   open: boolean;
@@ -49,8 +50,7 @@ export default function DeliveryPaymentModal({
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [mobileProvider, setMobileProvider] = useState<'orange' | 'mtn' | 'moov'>('orange');
-  const [paypalEmail, setPaypalEmail] = useState('');
-  const [cardToken, setCardToken] = useState('');
+  const [showStripeModal, setShowStripeModal] = useState(false);
 
   useEffect(() => {
     if (open && customerId) {
@@ -85,8 +85,8 @@ export default function DeliveryPaymentModal({
     },
     {
       id: 'card' as DeliveryPaymentMethod,
-      name: 'Carte bancaire',
-      description: 'Visa, Mastercard',
+      name: 'Carte bancaire (Stripe)',
+      description: 'Visa, Mastercard - Paiement sécurisé',
       icon: CreditCard,
       color: 'text-blue-600'
     },
@@ -98,13 +98,6 @@ export default function DeliveryPaymentModal({
       color: 'text-orange-600'
     },
     {
-      id: 'paypal' as DeliveryPaymentMethod,
-      name: 'PayPal',
-      description: 'Paiement via PayPal',
-      icon: CreditCard,
-      color: 'text-blue-500'
-    },
-    {
       id: 'cash' as DeliveryPaymentMethod,
       name: 'Paiement à la livraison',
       description: 'Payez en espèces au livreur',
@@ -113,255 +106,259 @@ export default function DeliveryPaymentModal({
     }
   ];
 
-  // Action de paiement sécurisée - séparée du handler UI
-  const executePayment = useCallback(async () => {
-    console.log('[DeliveryPayment] Starting payment:', {
-      deliveryId,
-      customerId,
-      deliveryManId,
-      amount,
-      paymentMethod
+  const handlePayment = useCallback(async () => {
+    // Si carte bancaire sélectionnée, ouvrir le modal Stripe
+    if (paymentMethod === 'card') {
+      setShowStripeModal(true);
+      return;
+    }
+
+    setProcessing(true);
+
+    try {
+      console.log('[DeliveryPayment] Starting payment:', {
+        deliveryId,
+        customerId,
+        deliveryManId,
+        amount,
+        paymentMethod
+      });
+
+      // Vérifier le solde pour wallet
+      if (paymentMethod === 'wallet') {
+        if (walletBalance !== null && walletBalance < amount) {
+          toast.error('Solde insuffisant', {
+            description: 'Veuillez recharger votre wallet'
+          });
+          setProcessing(false);
+          return;
+        }
+      }
+
+      // Validation des champs requis
+      if (paymentMethod === 'mobile_money' && (!phoneNumber || phoneNumber.length < 8)) {
+        toast.error('Numéro de téléphone requis', {
+          description: 'Veuillez entrer votre numéro Mobile Money'
+        });
+        setProcessing(false);
+        return;
+      }
+
+      let result;
+
+      // Appeler le service de paiement approprié
+      switch (paymentMethod) {
+        case 'wallet':
+          result = await DeliveryPaymentService.payWithWallet(deliveryId, amount, customerId);
+          break;
+        case 'mobile_money':
+          result = await DeliveryPaymentService.payWithMobileMoney(
+            deliveryId,
+            amount,
+            customerId,
+            phoneNumber,
+            mobileProvider
+          );
+          break;
+        case 'cash':
+          result = await DeliveryPaymentService.payWithCash(deliveryId, amount, customerId);
+          break;
+        default:
+          throw new Error('Méthode de paiement non supportée');
+      }
+
+      if (result.success) {
+        toast.success('Paiement effectué avec succès!', {
+          description: `Transaction ID: ${result.transaction_id}`
+        });
+        onPaymentSuccess();
+        onClose();
+      } else {
+        toast.error('Erreur de paiement', {
+          description: result.error || 'Une erreur est survenue'
+        });
+      }
+    } catch (error) {
+      console.error('[DeliveryPayment] Error:', error);
+      toast.error('Erreur de paiement', {
+        description: error instanceof Error ? error.message : 'Veuillez réessayer'
+      });
+    } finally {
+      setProcessing(false);
+    }
+  }, [deliveryId, customerId, deliveryManId, amount, paymentMethod, walletBalance, phoneNumber, mobileProvider, onPaymentSuccess, onClose]);
+
+  const handleStripeSuccess = async (paymentIntentId: string) => {
+    console.log('[DeliveryPayment] Stripe payment success:', paymentIntentId);
+    
+    toast.success('Paiement par carte réussi !', {
+      description: `${amount.toLocaleString()} GNF payés par carte`
     });
 
-    // Vérifier le solde pour wallet
-    if (paymentMethod === 'wallet') {
-      if (walletBalance !== null && walletBalance < amount) {
-        toast.error('Solde insuffisant', {
-          description: 'Veuillez recharger votre wallet'
-        });
-        throw new Error('Solde insuffisant');
-      }
-    }
-
-    // Validation des champs requis
-    if (paymentMethod === 'mobile_money' && (!phoneNumber || phoneNumber.length < 8)) {
-      toast.error('Numéro de téléphone requis', {
-        description: 'Veuillez entrer votre numéro Mobile Money'
-      });
-      throw new Error('Numéro de téléphone requis');
-    }
-
-    if (paymentMethod === 'paypal' && (!paypalEmail || !paypalEmail.includes('@'))) {
-      toast.error('Email PayPal requis', {
-        description: 'Veuillez entrer un email PayPal valide'
-      });
-      throw new Error('Email PayPal requis');
-    }
-
-    if (paymentMethod === 'card' && (!cardToken || cardToken.length < 10)) {
-      toast.error('Informations carte requises', {
-        description: 'Veuillez entrer les informations de votre carte'
-      });
-      throw new Error('Informations carte requises');
-    }
-
-    let result;
-
-    // Appeler le service de paiement approprié
-    switch (paymentMethod) {
-      case 'wallet':
-        result = await DeliveryPaymentService.payWithWallet(deliveryId, amount, customerId);
-        break;
-      case 'mobile_money':
-        result = await DeliveryPaymentService.payWithMobileMoney(
-          deliveryId,
-          amount,
-          customerId,
-          phoneNumber,
-          mobileProvider
-        );
-        break;
-      case 'card':
-        result = await DeliveryPaymentService.payWithCard(deliveryId, amount, customerId, cardToken);
-        break;
-      case 'paypal':
-        result = await DeliveryPaymentService.payWithPayPal(deliveryId, amount, customerId, paypalEmail);
-        break;
-      case 'cash':
-        result = await DeliveryPaymentService.payWithCash(deliveryId, amount, customerId);
-        break;
-      default:
-        throw new Error('Méthode de paiement non supportée');
-    }
-
-    if (result.success) {
-      toast.success('Paiement effectué avec succès!', {
-        description: `Transaction ID: ${result.transaction_id}`
-      });
-      onPaymentSuccess();
-      onClose();
-    } else {
-      toast.error('Erreur de paiement', {
-        description: result.error || 'Une erreur est survenue'
-      });
-      throw new Error(result.error || 'Erreur de paiement');
-    }
-  }, [deliveryId, customerId, deliveryManId, amount, paymentMethod, walletBalance, phoneNumber, mobileProvider, paypalEmail, cardToken, onPaymentSuccess, onClose]);
+    setShowStripeModal(false);
+    onPaymentSuccess();
+    onClose();
+  };
 
   const insufficientBalance = paymentMethod === 'wallet' && walletBalance !== null && walletBalance < amount;
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Paiement de la livraison</DialogTitle>
-          <DialogDescription>
-            Montant à payer: <span className="font-bold text-lg">{amount.toLocaleString()} GNF</span>
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-primary" />
+              Paiement de la livraison
+            </DialogTitle>
+            <DialogDescription>
+              Montant à payer: <span className="font-bold text-lg">{amount.toLocaleString()} GNF</span>
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Alerte Wallet Balance */}
-          {paymentMethod === 'wallet' && walletBalance !== null && (
-            <Alert>
-              <Wallet className="h-4 w-4" />
-              <AlertDescription>
-                Solde actuel: <span className="font-bold">{walletBalance.toLocaleString()} GNF</span>
-                {walletBalance < amount && (
-                  <span className="text-red-600 ml-2">
-                    (Insuffisant - {(amount - walletBalance).toLocaleString()} GNF manquant)
-                  </span>
-                )}
-              </AlertDescription>
-            </Alert>
-          )}
+          <div className="space-y-4">
+            {/* Alerte Wallet Balance */}
+            {paymentMethod === 'wallet' && walletBalance !== null && (
+              <Alert>
+                <Wallet className="h-4 w-4" />
+                <AlertDescription>
+                  Solde actuel: <span className="font-bold">{walletBalance.toLocaleString()} GNF</span>
+                  {walletBalance < amount && (
+                    <span className="text-red-600 ml-2">
+                      (Insuffisant - {(amount - walletBalance).toLocaleString()} GNF manquant)
+                    </span>
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
 
-          {/* Protection Escrow */}
-          {paymentMethod !== 'cash' && (
-            <Alert>
-              <Shield className="h-4 w-4" />
-              <AlertDescription>
-                Paiement sécurisé: Les fonds sont conservés jusqu'à la livraison confirmée
-              </AlertDescription>
-            </Alert>
-          )}
+            {/* Protection Escrow */}
+            {paymentMethod !== 'cash' && (
+              <Alert>
+                <Shield className="h-4 w-4" />
+                <AlertDescription>
+                  Paiement sécurisé: Les fonds sont conservés jusqu'à la livraison confirmée
+                </AlertDescription>
+              </Alert>
+            )}
 
-          {insufficientBalance && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Solde insuffisant. Veuillez recharger votre wallet pour continuer.
-            </AlertDescription>
-          </Alert>
-        )}
+            {insufficientBalance && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Solde insuffisant. Veuillez recharger votre wallet pour continuer.
+                </AlertDescription>
+              </Alert>
+            )}
 
-        <div className="space-y-4 py-4">
-          <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as DeliveryPaymentMethod)}>
-            {paymentMethods.map((method) => {
-              const Icon = method.icon;
-              return (
-                <div key={method.id} className="flex items-center space-x-3 rounded-lg border p-4 cursor-pointer hover:bg-accent"
-                     onClick={() => setPaymentMethod(method.id)}>
-                  <RadioGroupItem value={method.id} id={method.id} />
-                  <Icon className={`w-6 h-6 ${method.color}`} />
-                  <div className="flex-1">
-                    <Label htmlFor={method.id} className="font-medium cursor-pointer">
-                      {method.name}
-                    </Label>
-                    <p className="text-sm text-muted-foreground">{method.description}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </RadioGroup>
-        </div>
-
-          {/* Sélection méthode de paiement */}
-          <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as DeliveryPaymentMethod)}>
-            {paymentMethods.map((method) => {
-              const Icon = method.icon;
-              return (
-                <div key={method.id} className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-accent cursor-pointer">
-                  <RadioGroupItem value={method.id} id={method.id} />
-                  <Label htmlFor={method.id} className="flex items-center space-x-3 flex-1 cursor-pointer">
-                    <Icon className={`h-5 w-5 ${method.color}`} />
-                    <div>
-                      <p className="font-medium">{method.name}</p>
-                      <p className="text-sm text-muted-foreground">{method.description}</p>
-                    </div>
-                  </Label>
-                </div>
-              );
-            })}
-          </RadioGroup>
-
-          {/* Champs conditionnels */}
-          {paymentMethod === 'mobile_money' && (
             <div className="space-y-3">
-              <div>
-                <Label>Opérateur Mobile Money</Label>
-                <Select value={mobileProvider} onValueChange={(v: any) => setMobileProvider(v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="orange">Orange Money</SelectItem>
-                    <SelectItem value="mtn">MTN Money</SelectItem>
-                    <SelectItem value="moov">Moov Money</SelectItem>
-                  </SelectContent>
-                </Select>
+              <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as DeliveryPaymentMethod)}>
+                {paymentMethods.map((method) => {
+                  const Icon = method.icon;
+                  return (
+                    <div key={method.id} className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-accent cursor-pointer"
+                         onClick={() => setPaymentMethod(method.id)}>
+                      <RadioGroupItem value={method.id} id={method.id} />
+                      <Label htmlFor={method.id} className="flex items-center space-x-3 flex-1 cursor-pointer">
+                        <Icon className={`h-5 w-5 ${method.color}`} />
+                        <div>
+                          <p className="font-medium">{method.name}</p>
+                          <p className="text-sm text-muted-foreground">{method.description}</p>
+                        </div>
+                      </Label>
+                    </div>
+                  );
+                })}
+              </RadioGroup>
+            </div>
+
+            {/* Champs conditionnels */}
+            {paymentMethod === 'mobile_money' && (
+              <div className="space-y-3">
+                <div>
+                  <Label>Opérateur Mobile Money</Label>
+                  <Select value={mobileProvider} onValueChange={(v: any) => setMobileProvider(v)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="orange">Orange Money</SelectItem>
+                      <SelectItem value="mtn">MTN Money</SelectItem>
+                      <SelectItem value="moov">Moov Money</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Numéro de téléphone</Label>
+                  <Input
+                    type="tel"
+                    placeholder="622123456"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                  />
+                </div>
               </div>
-              <div>
-                <Label>Numéro de téléphone</Label>
-                <Input
-                  type="tel"
-                  placeholder="622123456"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                />
-              </div>
+            )}
+
+            {paymentMethod === 'card' && (
+              <Alert className="bg-blue-50 border-blue-200">
+                <CreditCard className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-sm text-blue-700">
+                  Vous serez redirigé vers le formulaire de paiement Stripe sécurisé
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {paymentMethod === 'cash' && (
+              <Alert>
+                <Banknote className="h-4 w-4" />
+                <AlertDescription>
+                  Vous paierez en espèces au livreur lors de la remise du colis
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Boutons */}
+            <div className="flex gap-3 pt-2">
+              <Button variant="outline" onClick={onClose} className="flex-1" disabled={processing}>
+                Annuler
+              </Button>
+              <Button
+                onClick={handlePayment}
+                className="flex-1"
+                disabled={processing || insufficientBalance || (paymentMethod === 'mobile_money' && phoneNumber.length < 8)}
+              >
+                {processing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Traitement...
+                  </>
+                ) : (
+                  paymentMethod === 'card' ? 'Payer par carte' :
+                  paymentMethod === 'cash' ? 'Confirmer' : 
+                  `Payer ${amount.toLocaleString()} GNF`
+                )}
+              </Button>
             </div>
-          )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
-          {paymentMethod === 'paypal' && (
-            <div>
-              <Label>Email PayPal</Label>
-              <Input
-                type="email"
-                placeholder="votre@email.com"
-                value={paypalEmail}
-                onChange={(e) => setPaypalEmail(e.target.value)}
-              />
-            </div>
-          )}
-
-          {paymentMethod === 'card' && (
-            <div>
-              <Label>Token de carte (Stripe)</Label>
-              <Input
-                type="text"
-                placeholder="tok_visa_..."
-                value={cardToken}
-                onChange={(e) => setCardToken(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                En production, utilisez Stripe Elements pour la saisie sécurisée
-              </p>
-            </div>
-          )}
-
-          {paymentMethod === 'cash' && (
-            <Alert>
-              <Banknote className="h-4 w-4" />
-              <AlertDescription>
-                Vous paierez en espèces au livreur lors de la remise du colis
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Bouton de paiement sécurisé - INP optimisé */}
-          <SecureButton
-            onSecureClick={executePayment}
-            disabled={insufficientBalance}
-            className="w-full"
-            size="lg"
-            loadingText="Traitement en cours..."
-            debounceMs={1000}
-          >
-            {paymentMethod === 'cash' ? 'Confirmer' : 'Payer'} {amount.toLocaleString()} GNF
-          </SecureButton>
-        </div>
-      </DialogContent>
-    </Dialog>
+      {/* Modal Stripe pour paiement par carte */}
+      <StripeCardPaymentModal
+        isOpen={showStripeModal}
+        onClose={() => setShowStripeModal(false)}
+        amount={amount}
+        currency="GNF"
+        orderId={deliveryId}
+        sellerId={deliveryManId}
+        description={`Livraison #${deliveryId.slice(0, 8)}`}
+        onSuccess={handleStripeSuccess}
+        onError={(error) => {
+          toast.error('Erreur paiement carte', { description: error });
+          setShowStripeModal(false);
+        }}
+      />
+    </>
   );
 }
