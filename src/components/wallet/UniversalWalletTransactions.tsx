@@ -416,8 +416,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
     const permissions: Record<string, string[]> = {
       send: ['admin', 'agent', 'vendeur', 'client', 'livreur'],
-      receive: ['admin', 'agent', 'vendeur', 'livreur'],
-      withdraw: ['admin', 'agent', 'vendeur'],
+      receive: ['admin', 'agent', 'vendeur', 'client', 'livreur'],
+      withdraw: ['admin', 'agent', 'vendeur', 'client', 'livreur'],
       deposit: ['admin', 'agent', 'vendeur', 'client', 'livreur']
     };
 
