@@ -158,13 +158,22 @@ export default function MerchantOnboarding() {
         email: data.email || defaultEmail,
       });
 
-      // Critères "profil complet" : service_type + business_name + city + phone
-      const isComplete = Boolean(
-        (data as any).service_type && 
-        data.business_name && 
-        (data.city || profile.city) && 
-        (data.phone || profile.phone)
-      );
+      // Critères "profil complet" : service_type + business_name sont obligatoires
+      // city et phone sont optionnels (peuvent être dans profile)
+      const hasServiceType = Boolean((data as any).service_type);
+      const hasBusinessName = Boolean(data.business_name && data.business_name.trim().length >= 3);
+      
+      // Si les infos essentielles sont là, le profil est complet
+      const isComplete = hasServiceType && hasBusinessName;
+      
+      console.log('📋 Vérification profil marchand:', {
+        hasServiceType,
+        hasBusinessName,
+        isComplete,
+        service_type: (data as any).service_type,
+        business_name: data.business_name
+      });
+      
       setOpen(!isComplete);
     };
 
