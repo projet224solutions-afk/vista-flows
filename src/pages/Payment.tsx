@@ -142,18 +142,23 @@ export default function Payment() {
         });
 
         // Récupérer le public_id / custom_id du vendeur depuis profiles
-        const { data: vendorProfile } = await supabase
+        const { data: vendorProfile, error: profileError } = await supabase
           .from('profiles')
           .select('public_id, custom_id')
           .eq('id', vendorInfo.user_id)
           .single();
 
+        if (profileError) {
+          console.error('Erreur chargement profil vendeur:', profileError);
+        }
+
         // Pré-remplir les champs
         setPaymentAmount(totalAmount.toString());
-        const vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id;
-        if (vendorCode) {
-          setRecipientId(vendorCode);
-        }
+        
+        // Utiliser custom_id en priorité, puis public_id, puis l'user_id du vendeur comme fallback
+        const vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id || vendorInfo.user_id;
+        setRecipientId(vendorCode);
+        console.log('✅ RecipientId panier défini:', vendorCode);
         
         const itemNames = cartItems.map((item: any) => `${item.name} (x${item.quantity})`).join(', ');
         setPaymentDescription(`Achat panier: ${itemNames}`);
@@ -210,18 +215,24 @@ export default function Payment() {
             });
             
             // Récupérer le public_id / custom_id du vendeur depuis profiles
-            const { data: vendorProfile } = await supabase
+            const { data: vendorProfile, error: profileError } = await supabase
               .from('profiles')
               .select('public_id, custom_id')
               .eq('id', proService.user_id)
               .single();
 
+            if (profileError) {
+              console.error('Erreur chargement profil vendeur digital:', profileError);
+            }
+
             // Pré-remplir les champs
             setPaymentAmount(totalAmount.toString());
-            const vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id;
-            if (vendorCode) {
-              setRecipientId(vendorCode);
-            }
+            
+            // Utiliser custom_id en priorité, puis public_id, puis l'user_id comme fallback
+            const vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id || proService.user_id;
+            setRecipientId(vendorCode);
+            console.log('✅ RecipientId digital défini:', vendorCode);
+            
             setPaymentDescription(`Achat numérique: ${digitalProduct.name} (x${qty})`);
             
             // Ouvrir automatiquement le dialog de paiement
@@ -257,18 +268,24 @@ export default function Payment() {
             });
             
             // Récupérer le public_id / custom_id du vendeur depuis profiles
-            const { data: vendorProfile } = await supabase
+            const { data: vendorProfile, error: profileError } = await supabase
               .from('profiles')
               .select('public_id, custom_id')
               .eq('id', product.vendors.user_id)
               .single();
 
+            if (profileError) {
+              console.error('Erreur chargement profil vendeur:', profileError);
+            }
+
             // Pré-remplir les champs
             setPaymentAmount(totalAmount.toString());
-            const vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id;
-            if (vendorCode) {
-              setRecipientId(vendorCode);
-            }
+            
+            // Utiliser custom_id en priorité, puis public_id, puis l'user_id du vendeur comme fallback
+            const vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id || product.vendors.user_id;
+            setRecipientId(vendorCode);
+            console.log('✅ RecipientId défini:', vendorCode);
+            
             setPaymentDescription(`Achat: ${product.name} (x${qty})`);
             
             // Ouvrir automatiquement le dialog de paiement
