@@ -183,61 +183,65 @@ export default function DirectConversation() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <div className="flex items-center gap-3 p-3 border-b border-border bg-card sticky top-0 z-50">
+    <div className="fixed inset-0 bg-background flex flex-col z-[100]">
+      {/* Header Professionnel */}
+      <div className="flex items-center gap-3 p-4 border-b border-border bg-card/95 backdrop-blur-sm shadow-sm">
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={() => navigate(-1)}
-          className="h-9 w-9"
+          className="h-10 w-10 rounded-full hover:bg-muted"
         >
           <ArrowLeft className="w-5 h-5" />
         </Button>
         
-        <Avatar className="w-10 h-10">
+        <Avatar className="w-11 h-11 ring-2 ring-primary/20">
           <AvatarImage src={recipient.avatar_url} />
-          <AvatarFallback className="bg-primary/10 text-primary">
-            {recipient.first_name?.[0]}{recipient.last_name?.[0]}
+          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
+            {recipient.first_name?.[0]?.toUpperCase()}{recipient.last_name?.[0]?.toUpperCase()}
           </AvatarFallback>
         </Avatar>
         
         <div className="flex-1 min-w-0">
-          <h1 className="font-semibold truncate">
+          <h1 className="font-semibold text-lg truncate">
             {recipient.first_name} {recipient.last_name}
           </h1>
-          {recipient.email && (
-            <p className="text-xs text-muted-foreground truncate">{recipient.email}</p>
-          )}
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            <span className="text-xs text-muted-foreground">En ligne</span>
+          </div>
         </div>
         
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-9 w-9">
-            <Phone className="w-4 h-4" />
+          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-primary/10 hover:text-primary">
+            <Phone className="w-5 h-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9">
-            <Video className="w-4 h-4" />
+          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-primary/10 hover:text-primary">
+            <Video className="w-5 h-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9">
-            <MoreVertical className="w-4 h-4" />
+          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-muted">
+            <MoreVertical className="w-5 h-5" />
           </Button>
         </div>
       </div>
       
-      {/* Messages */}
-      <ScrollArea className="flex-1 p-4">
+      {/* Zone des Messages */}
+      <ScrollArea className="flex-1 px-4 py-3">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-20">
-            <Avatar className="w-20 h-20 mb-4">
+            <Avatar className="w-24 h-24 mb-6 ring-4 ring-primary/10">
               <AvatarImage src={recipient.avatar_url} />
-              <AvatarFallback className="bg-primary/10 text-primary text-2xl">
-                {recipient.first_name?.[0]}{recipient.last_name?.[0]}
+              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/5 text-primary text-3xl font-bold">
+                {recipient.first_name?.[0]?.toUpperCase()}{recipient.last_name?.[0]?.toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <p className="font-medium text-foreground">
+            <p className="font-semibold text-lg text-foreground mb-1">
               {recipient.first_name} {recipient.last_name}
             </p>
-            <p className="text-sm">Commencez la conversation</p>
+            <p className="text-sm text-muted-foreground">Commencez la conversation</p>
+            <p className="text-xs text-muted-foreground/70 mt-2">
+              Les messages sont chiffrés de bout en bout
+            </p>
           </div>
         ) : (
           <>
@@ -249,10 +253,10 @@ export default function DirectConversation() {
                   className={cn("flex mb-3", isOwn ? "justify-end" : "justify-start")}
                 >
                   <div className={cn(
-                    "max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm",
+                    "max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm transition-all",
                     isOwn 
-                      ? "bg-primary text-primary-foreground rounded-br-md" 
-                      : "bg-muted rounded-bl-md"
+                      ? "bg-primary text-primary-foreground rounded-br-sm" 
+                      : "bg-muted rounded-bl-sm"
                   )}>
                     {msg.file_url && msg.type === 'image' && (
                       <img src={msg.file_url} alt="Image" className="rounded-lg max-w-full mb-2" />
@@ -278,8 +282,8 @@ export default function DirectConversation() {
         )}
       </ScrollArea>
       
-      {/* Input */}
-      <div className="p-3 border-t border-border bg-card sticky bottom-0 z-50">
+      {/* Barre de Saisie Ultra Professionnelle */}
+      <div className="p-3 border-t border-border bg-card/95 backdrop-blur-sm shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
         <form 
           onSubmit={(e) => { e.preventDefault(); handleSend(); }}
           className="flex items-center gap-2"
@@ -288,29 +292,44 @@ export default function DirectConversation() {
             type="button" 
             variant="ghost" 
             size="icon" 
-            className="h-10 w-10 flex-shrink-0"
+            className="h-11 w-11 flex-shrink-0 rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
           >
             <Paperclip className="w-5 h-5" />
           </Button>
           
-          <Input
-            ref={inputRef}
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Écrivez votre message..."
-            className="flex-1 bg-muted/50 border-0"
-            disabled={sending}
-          />
+          <div className="flex-1 relative">
+            <Input
+              ref={inputRef}
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Écrivez votre message..."
+              className="w-full h-11 bg-muted/60 border border-border/50 rounded-full px-5 pr-4 
+                         focus:bg-background focus:border-primary/30 focus:ring-2 focus:ring-primary/10
+                         placeholder:text-muted-foreground/60 transition-all"
+              disabled={sending}
+            />
+          </div>
           
           <Button 
             type="submit" 
             size="icon"
             disabled={!newMessage.trim() || sending}
-            className="h-10 w-10 flex-shrink-0 rounded-full"
+            className={cn(
+              "h-11 w-11 flex-shrink-0 rounded-full transition-all duration-200",
+              newMessage.trim() 
+                ? "bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25" 
+                : "bg-muted text-muted-foreground"
+            )}
           >
-            <Send className="w-5 h-5" />
+            <Send className={cn(
+              "w-5 h-5 transition-transform",
+              sending && "animate-pulse"
+            )} />
           </Button>
         </form>
+        
+        {/* Safe area pour iOS */}
+        <div className="h-safe-area-inset-bottom" />
       </div>
     </div>
   );
