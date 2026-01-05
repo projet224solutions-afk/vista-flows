@@ -54,6 +54,7 @@ interface Order {
     profiles?: {
       first_name?: string;
       last_name?: string;
+      full_name?: string;
       phone?: string;
       email?: string;
       city?: string;
@@ -210,8 +211,7 @@ export default function OrderManagement() {
           *,
           customers(
             id, 
-            user_id,
-            profiles(first_name, last_name, phone, email, city, country)
+            user_id
           ),
           order_items(
             id,
@@ -240,10 +240,44 @@ export default function OrderManagement() {
         throw error;
       }
 
-      console.log('✅ Orders fetched:', ordersData?.length || 0);
+      // Récupérer les user_ids des customers pour charger les profils
+      const userIds = (ordersData || [])
+        .filter(o => o.customers?.user_id)
+        .map(o => o.customers.user_id);
+
+      // Charger les profils correspondants
+      let profilesMap: Record<string, any> = {};
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, phone, email, full_name, city, country')
+          .in('id', userIds);
+
+        if (profilesData) {
+          profilesData.forEach(p => {
+            profilesMap[p.id] = p;
+          });
+        }
+      }
+
+      // Enrichir les commandes avec les données de profil
+      const enrichedOrders = (ordersData || []).map(order => {
+        if (order.customers?.user_id && profilesMap[order.customers.user_id]) {
+          return {
+            ...order,
+            customers: {
+              ...order.customers,
+              profiles: profilesMap[order.customers.user_id]
+            }
+          };
+        }
+        return order;
+      });
+
+      console.log('✅ Orders fetched:', enrichedOrders?.length || 0);
 
       // Charger les infos escrow pour chaque commande
-      const ordersWithEscrow = await Promise.all((ordersData || []).map(async (order) => {
+      const ordersWithEscrow = await Promise.all(enrichedOrders.map(async (order) => {
         const { data: escrow } = await supabase
           .from('escrow_transactions')
           .select('id, status, amount, created_at')
@@ -788,9 +822,10 @@ export default function OrderManagement() {
                           <div>
                             <span className="text-muted-foreground">Nom:</span>
                             <span className="ml-2 font-semibold">
-                              {order.customers?.profiles?.first_name || order.customers?.profiles?.last_name
-                                ? `${order.customers.profiles.first_name || ''} ${order.customers.profiles.last_name || ''}`.trim()
-                                : 'Client POS'}
+                              {order.customers?.profiles?.full_name 
+                                || (order.customers?.profiles?.first_name || order.customers?.profiles?.last_name
+                                  ? `${order.customers.profiles.first_name || ''} ${order.customers.profiles.last_name || ''}`.trim()
+                                  : 'Client POS')}
                             </span>
                           </div>
                           <div>
@@ -1011,9 +1046,10 @@ export default function OrderManagement() {
                             <div>
                               <span className="text-muted-foreground">Nom:</span>
                               <span className="ml-2 font-semibold">
-                                {order.customers?.profiles?.first_name || order.customers?.profiles?.last_name
-                                  ? `${order.customers.profiles.first_name || ''} ${order.customers.profiles.last_name || ''}`.trim()
-                                  : 'Client'}
+                                {order.customers?.profiles?.full_name 
+                                  || (order.customers?.profiles?.first_name || order.customers?.profiles?.last_name
+                                    ? `${order.customers.profiles.first_name || ''} ${order.customers.profiles.last_name || ''}`.trim()
+                                    : 'Client')}
                               </span>
                             </div>
                             <div>
