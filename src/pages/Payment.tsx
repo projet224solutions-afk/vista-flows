@@ -146,7 +146,7 @@ export default function Payment() {
           .from('profiles')
           .select('public_id, custom_id')
           .eq('id', vendorInfo.user_id)
-          .single();
+          .maybeSingle();
 
         if (profileError) {
           console.error('Erreur chargement profil vendeur:', profileError);
@@ -155,10 +155,14 @@ export default function Payment() {
         // Pré-remplir les champs
         setPaymentAmount(totalAmount.toString());
         
-        // Utiliser custom_id en priorité, puis public_id, puis l'user_id du vendeur comme fallback
-        const vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id || vendorInfo.user_id;
+        // Utiliser custom_id en priorité (format VND0001), puis public_id, puis générer un fallback lisible
+        let vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id;
+        if (!vendorCode || vendorCode.length > 15) {
+          // Si c'est un UUID ou trop long, essayer de créer un code plus lisible
+          vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id || `VEN-${vendorInfo.user_id.substring(0, 8).toUpperCase()}`;
+        }
         setRecipientId(vendorCode);
-        console.log('✅ RecipientId panier défini:', vendorCode);
+        console.log('✅ RecipientId panier défini:', vendorCode, 'from profile:', vendorProfile);
         
         const itemNames = cartItems.map((item: any) => `${item.name} (x${item.quantity})`).join(', ');
         setPaymentDescription(`Achat panier: ${itemNames}`);
@@ -219,7 +223,7 @@ export default function Payment() {
               .from('profiles')
               .select('public_id, custom_id')
               .eq('id', proService.user_id)
-              .single();
+              .maybeSingle();
 
             if (profileError) {
               console.error('Erreur chargement profil vendeur digital:', profileError);
@@ -228,10 +232,13 @@ export default function Payment() {
             // Pré-remplir les champs
             setPaymentAmount(totalAmount.toString());
             
-            // Utiliser custom_id en priorité, puis public_id, puis l'user_id comme fallback
-            const vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id || proService.user_id;
+            // Utiliser custom_id en priorité (format VND0001), puis public_id
+            let vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id;
+            if (!vendorCode || vendorCode.length > 15) {
+              vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id || `VEN-${proService.user_id.substring(0, 8).toUpperCase()}`;
+            }
             setRecipientId(vendorCode);
-            console.log('✅ RecipientId digital défini:', vendorCode);
+            console.log('✅ RecipientId digital défini:', vendorCode, 'from profile:', vendorProfile);
             
             setPaymentDescription(`Achat numérique: ${digitalProduct.name} (x${qty})`);
             
@@ -272,7 +279,7 @@ export default function Payment() {
               .from('profiles')
               .select('public_id, custom_id')
               .eq('id', product.vendors.user_id)
-              .single();
+              .maybeSingle();
 
             if (profileError) {
               console.error('Erreur chargement profil vendeur:', profileError);
@@ -281,10 +288,13 @@ export default function Payment() {
             // Pré-remplir les champs
             setPaymentAmount(totalAmount.toString());
             
-            // Utiliser custom_id en priorité, puis public_id, puis l'user_id du vendeur comme fallback
-            const vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id || product.vendors.user_id;
+            // Utiliser custom_id en priorité (format VND0001), puis public_id
+            let vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id;
+            if (!vendorCode || vendorCode.length > 15) {
+              vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id || `VEN-${product.vendors.user_id.substring(0, 8).toUpperCase()}`;
+            }
             setRecipientId(vendorCode);
-            console.log('✅ RecipientId défini:', vendorCode);
+            console.log('✅ RecipientId défini:', vendorCode, 'from profile:', vendorProfile);
             
             setPaymentDescription(`Achat: ${product.name} (x${qty})`);
             
@@ -927,15 +937,15 @@ export default function Payment() {
                             <Label htmlFor="recipient-id">ID du destinataire *</Label>
                             <Input
                               id="recipient-id"
-                              placeholder="USR0001, VEN0001..."
+                              placeholder="VND0001, USR0001..."
                               value={recipientId}
                               onChange={(e) => setRecipientId(e.target.value.toUpperCase())}
-                              maxLength={7}
-                              readOnly={searchParams.get('productId') !== null || location.state?.productId}
-                              className={searchParams.get('productId') || location.state?.productId ? 'bg-muted cursor-not-allowed' : ''}
+                              maxLength={20}
+                              readOnly={searchParams.get('productId') !== null || location.state?.productId || location.state?.fromCart}
+                              className={searchParams.get('productId') || location.state?.productId || location.state?.fromCart ? 'bg-muted cursor-not-allowed' : ''}
                             />
                             <p className="text-xs text-muted-foreground">
-                              Format: 3 lettres + 4 chiffres (ex: USR0001)
+                              Format: 3 lettres + 4 chiffres (ex: VND0001)
                             </p>
                           </div>
                           <div className="space-y-2">
