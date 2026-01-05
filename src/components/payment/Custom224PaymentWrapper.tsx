@@ -9,7 +9,7 @@ import { loadStripe, StripeElementsOptions } from '@stripe/stripe-js';
 import { Custom224PaymentForm } from './Custom224PaymentForm';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 // Clé publique Stripe LIVE
 const stripePromise = loadStripe('pk_live_51RdKJzRxqizQJVjLFseVlmZ7qOJmOIx9PlsGPY600C0CifOqNyNlbfTb2NZAbW1cyVgk8hUt6vGAD3KQqMCIc7NB00F0KjYCqc');

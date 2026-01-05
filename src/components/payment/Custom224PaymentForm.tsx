@@ -106,8 +106,9 @@ export function Custom224PaymentForm({
       }
 
       // Confirmer le paiement avec le Payment Method
+      const clientSecret = (window as any).clientSecret;
       const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
-        window.clientSecret, // Défini par StripePaymentWrapper
+        clientSecret, // Défini par StripePaymentWrapper
         {
           payment_method: paymentMethod.id,
         }
@@ -228,7 +229,7 @@ export function Custom224PaymentForm({
                 </label>
                 <div className="border-2 border-gray-300 rounded-lg p-4 hover:border-primary focus-within:border-primary transition-colors bg-white">
                   <CardExpiryElement
-                    options={STRIPE_ELEMENT_STYLE}
+                    options={{ style: STRIPE_ELEMENT_STYLE }}
                     onChange={(e) => setCardComplete({ ...cardComplete, expiry: e.complete })}
                   />
                 </div>
@@ -240,7 +241,7 @@ export function Custom224PaymentForm({
                 </label>
                 <div className="border-2 border-gray-300 rounded-lg p-4 hover:border-primary focus-within:border-primary transition-colors bg-white">
                   <CardCvcElement
-                    options={STRIPE_ELEMENT_STYLE}
+                    options={{ style: STRIPE_ELEMENT_STYLE }}
                     onChange={(e) => setCardComplete({ ...cardComplete, cvc: e.complete })}
                   />
                 </div>

@@ -215,3 +215,5 @@ export function Custom224PaymentDemo() {
     </div>
   );
 }
+
+export default Custom224PaymentDemo;
