@@ -455,6 +455,107 @@ BEGIN
     WHERE w.id = v_platform_wallet_id;
   END IF;
   
+  -- ✅ NOUVEAU: Calculer et créditer commission agent
+  DECLARE
+    v_buyer_creator_agent_id UUID;
+    v_buyer_creator_type VARCHAR(20);
+    v_agent_commission_amount DECIMAL(15,2);
+    v_agent_commission_rate DECIMAL(5,4);
+    v_agent_wallet_id UUID;
+  BEGIN
+    -- 1. Identifier agent créateur du client acheteur
+    SELECT creator_id, creator_type 
+    INTO v_buyer_creator_agent_id, v_buyer_creator_type
+    FROM agent_created_users
+    WHERE user_id = v_transaction.buyer_id;
+    
+    IF v_buyer_creator_agent_id IS NOT NULL THEN
+      -- 2. Récupérer taux commission agent depuis config
+      SELECT setting_value INTO v_agent_commission_rate
+      FROM commission_settings
+      WHERE setting_key = 'base_user_commission';
+      
+      -- Par défaut 20% si non trouvé
+      IF v_agent_commission_rate IS NULL THEN
+        v_agent_commission_rate := 0.20;
+      END IF;
+      
+      -- 3. Calculer commission agent (% du montant net vendeur)
+      v_agent_commission_amount := v_transaction.seller_net_amount * v_agent_commission_rate;
+      
+      -- 4. Créer/récupérer wallet agent
+      v_agent_wallet_id := get_or_create_wallet(v_buyer_creator_agent_id);
+      
+      -- 5. Créditer wallet agent
+      UPDATE wallets
+      SET 
+        available_balance = available_balance + v_agent_commission_amount,
+        total_earned = total_earned + v_agent_commission_amount,
+        updated_at = NOW()
+      WHERE id = v_agent_wallet_id;
+      
+      -- 6. Enregistrer commission dans agent_commissions
+      INSERT INTO agent_commissions (
+        commission_code,
+        recipient_id,
+        recipient_type,
+        source_user_id,
+        source_transaction_id,
+        amount,
+        commission_rate,
+        source_type,
+        calculation_details,
+        status
+      ) VALUES (
+        'COM-' || EXTRACT(YEAR FROM NOW()) || '-' || LPAD((EXTRACT(EPOCH FROM NOW())::BIGINT % 10000000)::TEXT, 7, '0'),
+        v_buyer_creator_agent_id,
+        v_buyer_creator_type,
+        v_transaction.buyer_id,
+        v_transaction.id,
+        v_agent_commission_amount,
+        v_agent_commission_rate,
+        'purchase',
+        jsonb_build_object(
+          'stripe_transaction_id', v_transaction.id,
+          'product_amount', v_transaction.amount,
+          'seller_net', v_transaction.seller_net_amount,
+          'agent_commission_rate', v_agent_commission_rate,
+          'calculation_type', 'stripe_purchase'
+        ),
+        'paid'
+      );
+      
+      -- 7. Transaction wallet agent
+      INSERT INTO wallet_transactions (
+        wallet_id,
+        type,
+        amount,
+        currency,
+        description,
+        stripe_transaction_id,
+        balance_before,
+        balance_after
+      )
+      SELECT
+        v_agent_wallet_id,
+        'AGENT_COMMISSION',
+        v_agent_commission_amount,
+        v_transaction.currency,
+        'Commission agent - Achat client (ordre: ' || COALESCE(v_transaction.order_id::TEXT, 'N/A') || ')',
+        v_transaction.id,
+        w.available_balance - v_agent_commission_amount,
+        w.available_balance
+      FROM wallets w
+      WHERE w.id = v_agent_wallet_id;
+      
+      RAISE NOTICE '✅ Commission agent créditée: % GNF pour agent %', v_agent_commission_amount, v_buyer_creator_agent_id;
+    END IF;
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- Logger l'erreur mais ne pas bloquer le paiement principal
+      RAISE WARNING '⚠️ Erreur calcul commission agent: %', SQLERRM;
+  END;
+  
   RETURN true;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

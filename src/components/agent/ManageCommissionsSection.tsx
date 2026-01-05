@@ -34,8 +34,27 @@ export function ManageCommissionsSection({
   const loadCommissions = async () => {
     try {
       setLoading(true);
-      // Simulation de données de commissions (à remplacer par des vraies données)
-      setCommissions([]);
+      
+      // Charger vraies commissions depuis agent_commissions
+      const { data, error } = await supabase
+        .from('agent_commissions')
+        .select('*')
+        .eq('recipient_id', agentId)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      if (error) throw error;
+      
+      // Mapper vers format Commission
+      const mappedCommissions: Commission[] = (data || []).map(c => ({
+        id: c.id,
+        amount: c.amount,
+        date: c.created_at,
+        status: c.status,
+        description: `Commission ${c.source_type} - ${c.commission_code}`
+      }));
+      
+      setCommissions(mappedCommissions);
     } catch (error) {
       console.error('Erreur chargement commissions:', error);
       toast.error('Erreur lors du chargement des commissions');

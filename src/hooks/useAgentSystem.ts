@@ -281,12 +281,32 @@ export function useCommissionManagement(recipientId?: string, recipientType?: 'a
 
   const updateSetting = useCallback(async (settingKey: string, value?: unknown) => {
     try {
-      // Mock update - do nothing for now
-      console.log('Mise à jour simulée:', settingKey, value);
+      if (typeof value !== 'number') {
+        throw new Error('La valeur doit être un nombre');
+      }
+      
+      const { data, error } = await supabase
+        .from('commission_settings')
+        .update({ 
+          setting_value: value,
+          updated_at: new Date().toISOString()
+        })
+        .eq('setting_key', settingKey)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Rafraîchir settings
+      await fetchSettings();
+      
+      console.log('✅ Paramètre mis à jour:', settingKey, value);
+      return data;
     } catch (err) {
-      // Ignorer les erreurs de mise à jour
+      console.error('❌ Erreur mise à jour paramètre:', err);
+      throw err;
     }
-  }, []);
+  }, [fetchSettings]);
 
   const processTransaction = useCallback(async (data: {
     userId: string;
