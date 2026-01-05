@@ -188,11 +188,12 @@ function App() {
               {/* Page d'accueil publique - toujours accessible */}
               <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/home" element={<Index />} />
               <Route path="/diagnostic" element={<SimpleDiagnostic />} />
+              <Route path="/auth" element={<Auth />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/login" element={<Navigate to="/auth" replace />} />
               <Route path="/auth/google" element={<LoginGoogle />} />
-              <Route path="/auth/google/success" element={<AuthGoogleSuccess />} />
               <Route path="/auth/google/success" element={<AuthGoogleSuccess />} />
               <Route path="/universal-login" element={<UniversalLoginPage />} />
               <Route path="/agent/create" element={<AgentCreation />} />
