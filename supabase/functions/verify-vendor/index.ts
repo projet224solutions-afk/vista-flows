@@ -65,7 +65,8 @@ serve(async (req) => {
       );
     }
 
-    if (!['CEO', 'SUPER_ADMIN'].includes(adminProfile.role)) {
+    // Accept 'admin' role (PDG in the system) as well as CEO/SUPER_ADMIN
+    if (!['CEO', 'SUPER_ADMIN', 'admin', 'ceo'].includes(adminProfile.role)) {
       console.warn(`⚠️ Unauthorized certification attempt by ${user.email} (role: ${adminProfile.role})`);
       return new Response(
         JSON.stringify({ 
@@ -100,7 +101,8 @@ serve(async (req) => {
       );
     }
 
-    if (vendorProfile.role !== 'VENDOR') {
+    // Accept 'vendeur' role (vendor in the system) as well as VENDOR
+    if (!['VENDOR', 'vendeur'].includes(vendorProfile.role)) {
       return new Response(
         JSON.stringify({ error: 'Target user is not a vendor' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

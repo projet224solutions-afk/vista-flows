@@ -49,6 +49,7 @@ const PDGStolenVehiclesSupervision = lazy(() => import('@/components/pdg/PDGStol
 const DriverSubscriptionManagement = lazy(() => import('@/components/pdg/DriverSubscriptionManagement'));
 const PDGServiceSubscriptions = lazy(() => import('@/components/pdg/PDGServiceSubscriptions'));
 const PDGBureauMonitoring = lazy(() => import('@/components/pdg/PDGBureauMonitoring'));
+const VendorCertificationManager = lazy(() => import('@/components/ceo/VendorCertificationManager').then(m => ({ default: m.VendorCertificationManager })));
 
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
@@ -629,6 +630,12 @@ export default function PDG224Solutions() {
               {activeTab === 'bureau-monitoring' && (
                 <ErrorBoundary>
                   <PDGBureauMonitoring />
+                </ErrorBoundary>
+              )}
+
+              {activeTab === 'vendor-certification' && (
+                <ErrorBoundary>
+                  <VendorCertificationManager />
                 </ErrorBoundary>
               )}
             </Suspense>
