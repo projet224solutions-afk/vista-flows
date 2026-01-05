@@ -121,8 +121,15 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
     const activeCategory = categories.find(cat => 
       cat.items.some(item => item.value === activeTab)
     );
+
     if (activeCategory) {
       setExpandedCategory(activeCategory.title);
+      return;
+    }
+
+    // Quand on est sur un onglet non listé (ex: dashboard), ouvrir une catégorie utile par défaut
+    if (activeTab === 'dashboard') {
+      setExpandedCategory('Opérations');
     }
   }, [activeTab]);
 
