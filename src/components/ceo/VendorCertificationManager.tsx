@@ -91,7 +91,20 @@ export function VendorCertificationManager() {
 
       // Mapper les résultats avec les certifications déjà attachées
       const vendorsWithCerts: VendorWithCertification[] = (vendorsData || []).map(vendor => {
-        const cert = vendor.vendor_certifications?.[0];
+        // Cast the vendor_certifications to the expected type
+        const certifications = vendor.vendor_certifications as unknown as Array<{
+          id: string;
+          status: string;
+          verified_at: string | null;
+          kyc_verified_at: string | null;
+          kyc_status: string | null;
+          last_status_change: string | null;
+          internal_notes: string | null;
+          rejection_reason: string | null;
+          created_at: string;
+          updated_at: string;
+        }> | null;
+        const cert = certifications?.[0];
         return {
           id: vendor.id,
           full_name: vendor.full_name,
