@@ -2,14 +2,26 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 
+interface OrderStats {
+  total: number;
+  pending: number;
+  confirmed: number;
+  delivered: number;
+  cancelled: number;
+}
+
+interface SalesStats {
+  totalRevenue: number;
+  todayRevenue: number;
+  weekRevenue: number;
+  monthRevenue: number;
+  averageOrderValue: number;
+}
+
 export interface EcommerceStats {
-  orders: {
-    total: number;
-    pending: number;
-    confirmed: number;
-    delivered: number;
-    cancelled: number;
-  };
+  orders: OrderStats;
+  ordersPos: OrderStats;
+  ordersOnline: OrderStats;
   products: {
     total: number;
     active: number;
@@ -20,13 +32,9 @@ export interface EcommerceStats {
     total: number;
     newThisMonth: number;
   };
-  sales: {
-    totalRevenue: number;
-    todayRevenue: number;
-    weekRevenue: number;
-    monthRevenue: number;
-    averageOrderValue: number;
-  };
+  sales: SalesStats;
+  salesPos: SalesStats;
+  salesOnline: SalesStats;
 }
 
 export interface RecentOrder {
@@ -36,6 +44,7 @@ export interface RecentOrder {
   total_amount: number;
   created_at: string;
   customer_name?: string;
+  source?: string;
 }
 
 export interface TopProduct {
@@ -44,6 +53,32 @@ export interface TopProduct {
   total_sold: number;
   revenue: number;
   image?: string;
+}
+
+function calculateOrderStats(orders: any[]): OrderStats {
+  return {
+    total: orders.length,
+    pending: orders.filter(o => o.status === 'pending').length,
+    confirmed: orders.filter(o => ['confirmed', 'processing', 'preparing', 'ready', 'in_transit'].includes(o.status)).length,
+    delivered: orders.filter(o => ['delivered', 'completed'].includes(o.status)).length,
+    cancelled: orders.filter(o => o.status === 'cancelled').length,
+  };
+}
+
+function calculateSalesStats(orders: any[], startOfDay: Date, startOfWeek: Date, startOfMonth: Date): SalesStats {
+  const paidOrders = orders.filter(o => o.payment_status === 'paid');
+  const totalRevenue = paidOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+  const todayOrders = paidOrders.filter(o => new Date(o.created_at) >= startOfDay);
+  const weekOrders = paidOrders.filter(o => new Date(o.created_at) >= startOfWeek);
+  const monthOrders = paidOrders.filter(o => new Date(o.created_at) >= startOfMonth);
+
+  return {
+    totalRevenue,
+    todayRevenue: todayOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0),
+    weekRevenue: weekOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0),
+    monthRevenue: monthOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0),
+    averageOrderValue: paidOrders.length > 0 ? totalRevenue / paidOrders.length : 0,
+  };
 }
 
 export function useEcommerceStats() {
@@ -61,43 +96,32 @@ export function useEcommerceStats() {
       setLoading(true);
       setError(null);
 
-      // Load orders stats
+      // Load orders stats with source
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
-        .select('id, status, total_amount, created_at, payment_status')
+        .select('id, status, total_amount, created_at, payment_status, source')
         .eq('vendor_id', vendorId);
 
       if (ordersError) throw ordersError;
 
       const orders = ordersData || [];
+      const posOrders = orders.filter(o => o.source === 'pos');
+      const onlineOrders = orders.filter(o => o.source === 'online');
+
       const now = new Date();
       const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const startOfWeek = new Date(now);
       startOfWeek.setDate(now.getDate() - now.getDay());
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      const orderStats = {
-        total: orders.length,
-        pending: orders.filter(o => o.status === 'pending').length,
-        confirmed: orders.filter(o => ['confirmed', 'processing', 'preparing', 'ready', 'shipped', 'in_transit'].includes(o.status)).length,
-        delivered: orders.filter(o => ['delivered', 'completed'].includes(o.status)).length,
-        cancelled: orders.filter(o => o.status === 'cancelled').length,
-      };
+      // Calculate stats for all, POS, and Online
+      const orderStats = calculateOrderStats(orders);
+      const orderStatsPos = calculateOrderStats(posOrders);
+      const orderStatsOnline = calculateOrderStats(onlineOrders);
 
-      // Chiffre d'affaires basé sur payment_status = 'paid' (synchronisé avec OrderManagement)
-      const paidOrders = orders.filter(o => o.payment_status === 'paid');
-      const totalRevenue = paidOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
-      const todayOrders = paidOrders.filter(o => new Date(o.created_at) >= startOfDay);
-      const weekOrders = paidOrders.filter(o => new Date(o.created_at) >= startOfWeek);
-      const monthOrders = paidOrders.filter(o => new Date(o.created_at) >= startOfMonth);
-
-      const salesStats = {
-        totalRevenue,
-        todayRevenue: todayOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0),
-        weekRevenue: weekOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0),
-        monthRevenue: monthOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0),
-        averageOrderValue: paidOrders.length > 0 ? totalRevenue / paidOrders.length : 0,
-      };
+      const salesStats = calculateSalesStats(orders, startOfDay, startOfWeek, startOfMonth);
+      const salesStatsPos = calculateSalesStats(posOrders, startOfDay, startOfWeek, startOfMonth);
+      const salesStatsOnline = calculateSalesStats(onlineOrders, startOfDay, startOfWeek, startOfMonth);
 
       // Load products stats
       const { data: productsData, error: productsError } = await supabase
@@ -136,16 +160,20 @@ export function useEcommerceStats() {
 
       setStats({
         orders: orderStats,
+        ordersPos: orderStatsPos,
+        ordersOnline: orderStatsOnline,
         products: productStats,
         clients: clientStats,
         sales: salesStats,
+        salesPos: salesStatsPos,
+        salesOnline: salesStatsOnline,
       });
 
-      // Load recent orders with customer info
+      // Load recent orders with customer info and source
       const { data: recentOrdersData } = await supabase
         .from('orders')
         .select(`
-          id, order_number, status, total_amount, created_at,
+          id, order_number, status, total_amount, created_at, source,
           customers(profiles(first_name, last_name))
         `)
         .eq('vendor_id', vendorId)
@@ -158,6 +186,7 @@ export function useEcommerceStats() {
         status: o.status,
         total_amount: o.total_amount,
         created_at: o.created_at,
+        source: o.source,
         customer_name: o.customers?.profiles 
           ? `${o.customers.profiles.first_name || ''} ${o.customers.profiles.last_name || ''}`.trim() || 'Client anonyme'
           : 'Client anonyme',
