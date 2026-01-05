@@ -206,7 +206,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
 
         <TabsContent value="overview" className="mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Sales Summary */}
+            {/* Sales Summary - Séparé POS / Online */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -215,6 +215,32 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Total */}
+                <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
+                  <span className="text-sm font-medium">Total général</span>
+                  <span className="font-bold text-primary">{formatCurrency(stats?.sales.totalRevenue || 0)}</span>
+                </div>
+                
+                {/* Séparation POS / Online */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                    <div className="flex items-center gap-1 mb-1">
+                      <span className="text-xs font-medium text-orange-700">🏪 POS</span>
+                    </div>
+                    <div className="text-lg font-bold text-orange-600">
+                      {formatCurrency(stats?.salesPos.totalRevenue || 0)}
+                    </div>
+                  </div>
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-1 mb-1">
+                      <span className="text-xs font-medium text-blue-700">🌐 En ligne</span>
+                    </div>
+                    <div className="text-lg font-bold text-blue-600">
+                      {formatCurrency(stats?.salesOnline.totalRevenue || 0)}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
                   <span className="text-sm">Aujourd'hui</span>
                   <span className="font-semibold">{formatCurrency(stats?.sales.todayRevenue || 0)}</span>
@@ -227,14 +253,10 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
                   <span className="text-sm">Ce mois</span>
                   <span className="font-semibold">{formatCurrency(stats?.sales.monthRevenue || 0)}</span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
-                  <span className="text-sm font-medium">Panier moyen</span>
-                  <span className="font-bold text-primary">{formatCurrency(stats?.sales.averageOrderValue || 0)}</span>
-                </div>
               </CardContent>
             </Card>
 
-            {/* Order Status Distribution */}
+            {/* Order Status Distribution - Séparé POS / Online */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -242,34 +264,77 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
                   État des commandes
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-yellow-500" />
-                    <span className="text-sm">En attente</span>
+              <CardContent className="space-y-4">
+                {/* Séparation POS / Online pour les commandes */}
+                <div className="grid grid-cols-2 gap-3 pb-3 border-b">
+                  <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg text-center">
+                    <span className="text-xs font-medium text-orange-700">🏪 POS</span>
+                    <div className="text-xl font-bold text-orange-600">{stats?.ordersPos.total || 0}</div>
                   </div>
-                  <Badge variant="secondary">{stats?.orders.pending || 0}</Badge>
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
+                    <span className="text-xs font-medium text-blue-700">🌐 En ligne</span>
+                    <div className="text-xl font-bold text-blue-600">{stats?.ordersOnline.total || 0}</div>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <Package className="w-4 h-4 text-blue-500" />
-                    <span className="text-sm">En cours</span>
+
+                {/* Détails par statut */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-yellow-500" />
+                      <span className="text-sm">En attente</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Badge variant="outline" className="text-orange-600 border-orange-300 text-xs">
+                        POS: {stats?.ordersPos.pending || 0}
+                      </Badge>
+                      <Badge variant="outline" className="text-blue-600 border-blue-300 text-xs">
+                        Web: {stats?.ordersOnline.pending || 0}
+                      </Badge>
+                    </div>
                   </div>
-                  <Badge variant="secondary">{stats?.orders.confirmed || 0}</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span className="text-sm">Livrées</span>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <Package className="w-4 h-4 text-blue-500" />
+                      <span className="text-sm">En cours</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Badge variant="outline" className="text-orange-600 border-orange-300 text-xs">
+                        POS: {stats?.ordersPos.confirmed || 0}
+                      </Badge>
+                      <Badge variant="outline" className="text-blue-600 border-blue-300 text-xs">
+                        Web: {stats?.ordersOnline.confirmed || 0}
+                      </Badge>
+                    </div>
                   </div>
-                  <Badge variant="secondary">{stats?.orders.delivered || 0}</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <XCircle className="w-4 h-4 text-red-500" />
-                    <span className="text-sm">Annulées</span>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <span className="text-sm">Livrées</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Badge variant="outline" className="text-orange-600 border-orange-300 text-xs">
+                        POS: {stats?.ordersPos.delivered || 0}
+                      </Badge>
+                      <Badge variant="outline" className="text-blue-600 border-blue-300 text-xs">
+                        Web: {stats?.ordersOnline.delivered || 0}
+                      </Badge>
+                    </div>
                   </div>
-                  <Badge variant="secondary">{stats?.orders.cancelled || 0}</Badge>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <XCircle className="w-4 h-4 text-red-500" />
+                      <span className="text-sm">Annulées</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Badge variant="outline" className="text-orange-600 border-orange-300 text-xs">
+                        POS: {stats?.ordersPos.cancelled || 0}
+                      </Badge>
+                      <Badge variant="outline" className="text-blue-600 border-blue-300 text-xs">
+                        Web: {stats?.ordersOnline.cancelled || 0}
+                      </Badge>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -299,11 +364,20 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
                       className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-medium">#{order.order_number}</span>
                           <Badge className={statusColors[order.status] || 'bg-gray-100'}>
                             {statusLabels[order.status] || order.status}
                           </Badge>
+                          {order.source === 'pos' ? (
+                            <Badge variant="outline" className="text-orange-600 border-orange-300 text-xs">
+                              🏪 POS
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-blue-600 border-blue-300 text-xs">
+                              🌐 En ligne
+                            </Badge>
+                          )}
                         </div>
                         <div className="text-sm text-muted-foreground">
                           {order.customer_name} • {formatDistanceToNow(new Date(order.created_at), { addSuffix: true, locale: fr })}
