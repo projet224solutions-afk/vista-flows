@@ -113,36 +113,68 @@ export default function EnhancedAuth() {
     provider: 'google' | 'facebook' | null;
   }>({ open: false, email: '', role: '', provider: null });
 
-  // Handle OAuth callback - avec redirection intelligente selon le profil
+  // Handle OAuth callback - avec redirection intelligente vers le bon dashboard
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
+        console.log('🔐 [EnhancedAuth] OAuth SIGNED_IN détecté');
         const isNewSignup = localStorage.getItem('oauth_is_new_signup') === 'true';
         
-        // Attendre un peu pour que le profil soit créé
+        // Attendre que le profil soit créé/chargé
         setTimeout(async () => {
-          // Vérifier si le profil est complet
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('first_name, last_name, phone, role')
-            .eq('id', session.user.id)
-            .maybeSingle();
+          try {
+            // Récupérer le profil pour déterminer la redirection
+            const { data: profile, error } = await supabase
+              .from('profiles')
+              .select('first_name, last_name, phone, role')
+              .eq('id', session.user.id)
+              .maybeSingle();
 
-          if (profile) {
-            const isProfileIncomplete = !profile.first_name || !profile.last_name || !profile.phone;
-            
-            if (isNewSignup && isProfileIncomplete) {
-              // Nouveau compte avec profil incomplet → rediriger vers complétion
-              toast.info('Bienvenue ! Veuillez compléter votre profil.');
-              localStorage.setItem('needs_profile_completion', 'true');
-            } else {
-              toast.success('Connexion réussie !');
+            if (error) {
+              console.error('❌ Erreur récupération profil:', error);
+              navigate('/');
+              return;
             }
+
+            if (profile && profile.role) {
+              const isProfileIncomplete = !profile.first_name || !profile.last_name || !profile.phone;
+              
+              if (isNewSignup && isProfileIncomplete) {
+                toast.info('Bienvenue ! Veuillez compléter votre profil.');
+                localStorage.setItem('needs_profile_completion', 'true');
+              } else {
+                toast.success('Connexion réussie !');
+              }
+              
+              // Définir la route cible selon le rôle
+              const roleRoutes: Record<string, string> = {
+                admin: '/pdg',
+                ceo: '/pdg',
+                vendeur: '/vendeur',
+                livreur: '/livreur',
+                taxi: '/taxi-moto/driver',
+                syndicat: '/syndicat',
+                transitaire: '/transitaire',
+                client: '/client',
+                agent: '/agent',
+              };
+              
+              const targetRoute = roleRoutes[profile.role] || '/';
+              console.log(`🚀 [EnhancedAuth] Redirection vers ${targetRoute} (rôle: ${profile.role})`);
+              
+              localStorage.removeItem('oauth_is_new_signup');
+              navigate(targetRoute, { replace: true });
+            } else {
+              console.log('⚠️ [EnhancedAuth] Pas de profil/rôle, redirection vers /');
+              localStorage.removeItem('oauth_is_new_signup');
+              navigate('/');
+            }
+          } catch (err) {
+            console.error('❌ Erreur OAuth callback:', err);
+            localStorage.removeItem('oauth_is_new_signup');
+            navigate('/');
           }
-          
-          localStorage.removeItem('oauth_is_new_signup');
-          navigate('/');
-        }, 500);
+        }, 800); // Délai légèrement plus long pour laisser le temps au profil d'être créé
       }
     });
 
