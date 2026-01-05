@@ -62,7 +62,7 @@ serve(async (req) => {
       currency = 'gnf', 
       orderId, 
       description,
-      sellerId,
+      sellerId: rawSellerId,
       commissionRate = DEFAULT_COMMISSION_RATE
     } = await req.json();
 
@@ -70,8 +70,37 @@ serve(async (req) => {
       throw new Error("Montant invalide");
     }
 
-    if (!sellerId) {
+    if (!rawSellerId) {
       throw new Error("Seller ID requis");
+    }
+
+    // Résoudre le sellerId - il peut être un user_id UUID ou un public_id/custom_id
+    let sellerId = rawSellerId;
+    
+    // Si ce n'est pas un UUID valide, chercher par public_id ou custom_id
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(rawSellerId)) {
+      logStep("Resolving seller by public_id/custom_id", { rawSellerId });
+      
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+      
+      const normalizedId = rawSellerId.trim().toUpperCase();
+      const { data: profileData, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .or(`public_id.eq.${normalizedId},custom_id.eq.${normalizedId}`)
+        .maybeSingle();
+      
+      if (profileError || !profileData) {
+        logStep("Error resolving seller", { error: profileError?.message });
+        throw new Error("Vendeur introuvable avec cet ID");
+      }
+      
+      sellerId = profileData.id;
+      logStep("Seller resolved", { originalId: rawSellerId, resolvedId: sellerId });
     }
 
     // ✅ Commission payée par le CLIENT
