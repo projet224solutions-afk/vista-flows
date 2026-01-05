@@ -7,6 +7,8 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, ShoppingBag, MapPin, User, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
+import { getDashboardRoute } from '@/hooks/useRoleRedirect';
 
 interface NavItem {
   id: string;
@@ -15,13 +17,6 @@ interface NavItem {
   path: string;
 }
 
-const navItems: NavItem[] = [
-  { id: 'home', icon: Home, label: 'Accueil', path: '/home' },
-  { id: 'marketplace', icon: ShoppingBag, label: 'Marketplace', path: '/marketplace' },
-  { id: 'tracking', icon: MapPin, label: 'Tracking', path: '/tracking' },
-  { id: 'profil', icon: User, label: 'Profil', path: '/profil' },
-];
-
 interface BottomNavigationProps {
   className?: string;
 }
@@ -29,10 +24,25 @@ interface BottomNavigationProps {
 export function BottomNavigation({ className }: BottomNavigationProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { profile } = useAuth();
+  
+  // Déterminer le chemin d'accueil selon le rôle
+  const homePath = getDashboardRoute(profile?.role);
+  
+  const navItems: NavItem[] = [
+    { id: 'home', icon: Home, label: 'Accueil', path: homePath },
+    { id: 'marketplace', icon: ShoppingBag, label: 'Marketplace', path: '/marketplace' },
+    { id: 'tracking', icon: MapPin, label: 'Tracking', path: '/tracking' },
+    { id: 'profil', icon: User, label: 'Profil', path: '/profil' },
+  ];
   
   const isActive = (path: string) => {
-    if (path === '/home') {
-      return location.pathname === '/home' || location.pathname === '/';
+    // Pour l'accueil, vérifier si on est sur le dashboard du rôle
+    if (path === homePath) {
+      return location.pathname === homePath || 
+             location.pathname === '/home' || 
+             location.pathname === '/' ||
+             location.pathname.startsWith(homePath + '/');
     }
     return location.pathname.startsWith(path);
   };
