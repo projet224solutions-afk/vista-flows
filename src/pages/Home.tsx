@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/contexts/CartContext';
 import { useUniversalProducts } from '@/hooks/useUniversalProducts';
+import { useRoleRedirect } from '@/hooks/useRoleRedirect';
 import { useNearbyServiceStats } from '@/hooks/useNearbyServiceStats';
 import { toast } from 'sonner';
 
@@ -31,6 +32,9 @@ export default function Home() {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading, profileLoading } = useAuth();
   const { addToCart, getCartCount } = useCart();
+
+  // Rediriger les utilisateurs connectés vers leur dashboard
+  useRoleRedirect();
 
   // Stats des services à proximité (filtrés par distance 20km)
   const { stats: serviceStats } = useNearbyServiceStats();
