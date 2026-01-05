@@ -32,21 +32,26 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Loader2, Store, Utensils, ShoppingBag, Scissors, Car, Home, Wrench, Camera, GraduationCap, Stethoscope, Plane, Package } from "lucide-react";
+import { Loader2, Store, Utensils, ShoppingBag, Scissors, Car, Home, Wrench, Camera, GraduationCap, Stethoscope, Plane, Package, Truck, Sparkles, HardHat, Tractor, Laptop } from "lucide-react";
 
-// Types de services disponibles pour les marchands
+// Types de services avec correspondance service_types.code dans la BDD
 const SERVICE_TYPES = [
-  { value: "boutique", label: "Boutique / Commerce général", icon: ShoppingBag },
-  { value: "restaurant", label: "Restaurant / Alimentation", icon: Utensils },
-  { value: "salon_coiffure", label: "Salon de coiffure / Beauté", icon: Scissors },
-  { value: "garage_auto", label: "Garage auto / Mécanique", icon: Car },
-  { value: "immobilier", label: "Immobilier / Location", icon: Home },
-  { value: "services_pro", label: "Services professionnels", icon: Wrench },
-  { value: "photographe", label: "Photographe / Vidéaste", icon: Camera },
-  { value: "education", label: "Éducation / Formation", icon: GraduationCap },
-  { value: "sante", label: "Santé / Pharmacie", icon: Stethoscope },
-  { value: "voyage", label: "Voyage / Tourisme", icon: Plane },
-  { value: "autre", label: "Autre service", icon: Package },
+  { value: "ecommerce", code: "ecommerce", label: "Boutique / E-commerce", icon: ShoppingBag },
+  { value: "restaurant", code: "restaurant", label: "Restaurant / Alimentation", icon: Utensils },
+  { value: "beaute", code: "beaute", label: "Beauté & Bien-être", icon: Scissors },
+  { value: "reparation", code: "reparation", label: "Réparation / Mécanique", icon: Car },
+  { value: "location", code: "location", label: "Location Immobilière", icon: Home },
+  { value: "menage", code: "menage", label: "Ménage & Entretien", icon: Sparkles },
+  { value: "livraison", code: "livraison", label: "Livraison / Coursier", icon: Truck },
+  { value: "media", code: "media", label: "Photographe / Vidéaste", icon: Camera },
+  { value: "education", code: "education", label: "Éducation / Formation", icon: GraduationCap },
+  { value: "sante", code: "sante", label: "Santé & Bien-être", icon: Stethoscope },
+  { value: "voyage", code: "voyage", label: "Voyage / Tourisme", icon: Plane },
+  { value: "freelance", code: "freelance", label: "Services Professionnels", icon: Wrench },
+  { value: "construction", code: "construction", label: "Construction / BTP", icon: HardHat },
+  { value: "agriculture", code: "agriculture", label: "Agriculture", icon: Tractor },
+  { value: "informatique", code: "informatique", label: "Informatique / Tech", icon: Laptop },
+  { value: "autre", code: "ecommerce", label: "Autre service", icon: Package },
 ] as const;
 
 const merchantSetupSchema = z.object({
@@ -171,6 +176,8 @@ export default function MerchantOnboarding() {
 
     setSubmitting(true);
     try {
+      let currentVendorId = vendorId;
+      
       if (vendorId) {
         const { error } = await supabase
           .from("vendors")
@@ -204,11 +211,53 @@ export default function MerchantOnboarding() {
           .single();
 
         if (error) throw error;
+        currentVendorId = data.id;
         setVendorId(data.id);
+      }
+
+      // Trouver le service_type_id correspondant au code sélectionné
+      const selectedServiceType = SERVICE_TYPES.find(s => s.value === values.service_type);
+      const serviceCode = selectedServiceType?.code || values.service_type;
+      
+      const { data: serviceTypeData } = await supabase
+        .from("service_types")
+        .select("id, name, code")
+        .eq("code", serviceCode)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (serviceTypeData && currentVendorId) {
+        // Vérifier si un professional_service existe déjà
+        const { data: existingService } = await supabase
+          .from("professional_services")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("service_type_id", serviceTypeData.id)
+          .maybeSingle();
+
+        if (!existingService) {
+          // Créer le professional_service pour activer le module métier
+          await supabase.from("professional_services").insert({
+            user_id: user.id,
+            service_type_id: serviceTypeData.id,
+            business_name: values.business_name,
+            description: values.description || null,
+            address: values.address || null,
+            phone: values.phone || null,
+            email: values.email || null,
+            city: values.city || null,
+            status: "active",
+          });
+          
+          console.log(`✅ Module métier "${serviceTypeData.name}" créé pour le marchand`);
+        }
       }
 
       toast.success("Profil marchand enregistré avec succès !");
       setOpen(false);
+      
+      // Rediriger vers le dashboard vendeur pour voir le module
+      window.location.reload();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erreur lors de l'enregistrement";
       toast.error(msg);
