@@ -308,18 +308,9 @@ export default function NearbyLivraison() {
             </CardContent>
           </Card>
         ) : (
-          <div 
-            className="space-y-3"
-            }
-            }
-          >
+          <div className="space-y-3">
             {drivers.map((driver, index) => (
-              <div
-                key={`${driver.source}-${driver.id}`}
-                }
-                }
-                }
-              >
+              <div key={`${driver.source}-${driver.id}`}>
                 <Card className="border-border/50 hover:border-orange-500/50 transition-colors">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-4">

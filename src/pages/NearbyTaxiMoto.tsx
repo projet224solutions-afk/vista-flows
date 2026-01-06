@@ -255,18 +255,9 @@ export default function NearbyTaxiMoto() {
             </CardContent>
           </Card>
         ) : (
-          <div 
-            className="space-y-3"
-            }
-            }
-          >
+          <div className="space-y-3">
             {drivers.map((driver, index) => (
-              <div
-                key={driver.id}
-                }
-                }
-                }
-              >
+              <div key={driver.id}>
                 <Card className="border-border/50 hover:border-emerald-500/50 transition-colors">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-4">
