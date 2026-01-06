@@ -163,6 +163,24 @@ export default function Auth() {
   const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
   const [showServiceSelection, setShowServiceSelection] = useState(false);
   const [showRoleSelectionModal, setShowRoleSelectionModal] = useState(false);
+  const [currentClientEmail, setCurrentClientEmail] = useState<string | null>(null);
+
+  // Détecter si l'utilisateur vient de "Devenir Marchand" pour créer un compte séparé
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get('mode');
+    const role = params.get('role');
+    const clientEmail = params.get('currentEmail');
+    
+    if (mode === 'signup' && role === 'merchant' && clientEmail) {
+      console.log('🏪 Création compte marchand séparé détectée pour:', clientEmail);
+      setShowSignup(true);
+      setIsLogin(false);
+      setSelectedRole('vendeur');
+      setCurrentClientEmail(clientEmail);
+      setError(`⚠️ Veuillez utiliser une adresse email différente de ${clientEmail} pour créer votre compte marchand.`);
+    }
+  }, []);
 
   // Mapping pays → indicatif téléphonique (pour auto-détection)
   const COUNTRY_PHONE_CODES: Record<string, string> = {
@@ -540,6 +558,11 @@ export default function Auth() {
         // Inscription
         if (!selectedRole) {
           throw new Error("⚠️ Veuillez d'abord sélectionner un type de compte ci-dessus (Client, Marchand, Livreur, etc.)");
+        }
+        
+        // Vérifier que l'email est différent de celui du compte client actuel (si création de compte marchand séparé)
+        if (currentClientEmail && formData.email.toLowerCase() === currentClientEmail.toLowerCase()) {
+          throw new Error(`❌ Vous devez utiliser une adresse email différente de ${currentClientEmail} pour créer votre compte marchand. Les comptes client et marchand doivent être séparés.`);
         }
         
         if (formData.password !== formData.confirmPassword) {

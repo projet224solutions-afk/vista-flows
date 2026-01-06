@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Store, CheckCircle, Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
@@ -27,7 +26,7 @@ export function MerchantActivationDialog({
   onOpenChange,
   onSuccess
 }: MerchantActivationDialogProps) {
-  const { user, refreshProfile } = useAuth();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const handleActivate = async () => {
@@ -35,42 +34,22 @@ export function MerchantActivationDialog({
 
     setLoading(true);
     try {
-      // Mettre à jour le rôle en vendeur
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ role: 'vendeur' })
-        .eq('id', user.id);
-
-      if (profileError) throw profileError;
-
-      // Créer une entrée vendor si elle n'existe pas
-      const { data: existingVendor } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!existingVendor) {
-        const { error: vendorError } = await supabase
-          .from('vendors')
-          .insert({
-            user_id: user.id,
-            business_name: `Boutique de ${user.email?.split('@')[0] || 'Vendeur'}`,
-            status: 'active',
-            is_verified: false
-          });
-
-        if (vendorError) throw vendorError;
-      }
-
-      // Rafraîchir le profil
-      await refreshProfile();
+      // Rediriger vers la page d'inscription pour créer un compte marchand séparé
+      // On passe l'email actuel pour éviter qu'il soit réutilisé
+      const currentEmail = user.email || '';
       
-      toast.success('Statut Marchand activé avec succès!');
+      toast.info('Vous allez être redirigé vers la page d\'inscription pour créer un compte marchand séparé');
+      
+      // Attendre un peu pour que l'utilisateur lise le message
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Rediriger vers la page d'auth avec les paramètres nécessaires
+      window.location.href = `/auth?mode=signup&role=merchant&currentEmail=${encodeURIComponent(currentEmail)}`;
+      
       onSuccess();
     } catch (error) {
-      console.error('Erreur activation marchand:', error);
-      toast.error('Erreur lors de l\'activation du statut Marchand');
+      console.error('Erreur redirection marchand:', error);
+      toast.error('Erreur lors de la redirection');
     } finally {
       setLoading(false);
     }
@@ -85,15 +64,25 @@ export function MerchantActivationDialog({
             Devenir Marchand
           </DialogTitle>
           <DialogDescription>
-            Pour vendre et créer vos propres produits numériques sur le marketplace, 
-            vous devez activer votre statut de Marchand. La consultation des produits reste gratuite.
+            Pour vendre vos produits numériques sur le marketplace, vous devez créer un <strong>compte marchand séparé</strong> avec une adresse email différente de votre compte client actuel. Cela permet de bien séparer vos activités d'achat et de vente.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+            <h4 className="font-semibold text-sm text-amber-900 dark:text-amber-100 mb-2 flex items-center gap-2">
+              <Store className="w-4 h-4" />
+              Compte Marchand Séparé Requis
+            </h4>
+            <p className="text-xs text-amber-800 dark:text-amber-200">
+              ⚠️ Vous devez créer un nouveau compte avec une <strong>adresse email différente</strong> de celle de votre compte client actuel ({user?.email}). 
+              Les deux comptes resteront indépendants.
+            </p>
+          </div>
+
           <div className="bg-muted/50 rounded-lg p-4 space-y-3">
             <h4 className="font-medium text-sm text-foreground">
-              Avantages du statut Marchand :
+              Avantages du compte Marchand :
             </h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
@@ -118,15 +107,14 @@ export function MerchantActivationDialog({
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
-                Activation 100% gratuite et instantanée
+                Compte 100% gratuit et activation instantanée
               </li>
             </ul>
           </div>
 
           <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
             <p className="text-xs text-blue-900 dark:text-blue-100">
-              ℹ️ <strong>Note :</strong> Vous pouvez toujours acheter et consulter les produits sans être marchand. 
-              Le statut marchand est uniquement pour <strong>vendre</strong> vos propres créations.
+              ℹ️ <strong>Note :</strong> Votre compte client actuel restera actif. Vous pourrez continuer à acheter avec ce compte et vendre avec votre nouveau compte marchand.
             </p>
           </div>
 
@@ -138,12 +126,12 @@ export function MerchantActivationDialog({
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Activation en cours...
+                Redirection en cours...
               </>
             ) : (
               <>
                 <Store className="w-4 h-4 mr-2" />
-                Devenir marchand maintenant
+                Créer mon compte marchand
               </>
             )}
           </Button>
