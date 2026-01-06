@@ -78,13 +78,16 @@ export function PaymentSystemConfig() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Sauvegarder chaque changement
+      // Sauvegarder chaque changement dans la table payment_system_config
       for (const [key, value] of Object.entries(changes)) {
-        const { error } = await supabase.rpc('update_config', {
-          p_key: key,
-          p_value: String(value),
-          p_admin_id: user.id,
-        });
+        const { error } = await supabase
+          .from('payment_system_config')
+          .upsert({
+            config_key: key,
+            config_value: String(value),
+            updated_at: new Date().toISOString(),
+            updated_by: user.id
+          }, { onConflict: 'config_key' });
 
         if (error) throw error;
       }

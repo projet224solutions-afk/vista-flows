@@ -42,23 +42,18 @@ interface FundsRelease {
   released_at: string | null;
   status: 'PENDING' | 'SCHEDULED' | 'RELEASED' | 'REJECTED' | 'DISPUTED';
   release_type: string;
-  stripe_transaction: {
+  stripe_transaction?: {
     stripe_payment_intent_id: string;
     amount: number;
     buyer_id: string;
-  };
-  payment_risk_assessment: {
-    trust_score: number;
-    risk_level: string;
-    decision: string;
-    random_review: boolean;
-  };
+  } | null;
 }
 
 interface WalletBalance {
-  available_balance: number;
-  pending_balance: number;
-  total_earned: number;
+  id: string;
+  balance: number;
+  total_received: number;
+  total_sent: number;
 }
 
 export function FundsReleaseStatus() {
@@ -85,28 +80,33 @@ export function FundsReleaseStatus() {
       // Récupérer le wallet
       const { data: wallet, error: walletError } = await supabase
         .from('wallets')
-        .select('available_balance, pending_balance, total_earned')
+        .select('id, balance, total_received, total_sent')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (walletError) throw walletError;
+      if (!wallet) {
+        setLoading(false);
+        return;
+      }
       setWalletBalance(wallet);
 
       // Récupérer les libérations en cours
       const { data: releasesData, error: releasesError } = await supabase
         .from('funds_release_schedule')
         .select(`
-          *,
+          id,
+          transaction_id,
+          amount_to_release,
+          held_at,
+          scheduled_release_at,
+          released_at,
+          status,
+          release_type,
           stripe_transaction:stripe_transactions!transaction_id (
             stripe_payment_intent_id,
             amount,
             buyer_id
-          ),
-          payment_risk_assessment:payment_risk_assessments!transaction_id (
-            trust_score,
-            risk_level,
-            decision,
-            random_review
           )
         `)
         .eq('wallet_id', wallet.id)
@@ -115,7 +115,7 @@ export function FundsReleaseStatus() {
 
       if (releasesError) throw releasesError;
       
-      setReleases(releasesData || []);
+      setReleases((releasesData || []) as FundsRelease[]);
     } catch (error) {
       console.error('Error fetching funds release status:', error);
     } finally {
@@ -193,7 +193,7 @@ export function FundsReleaseStatus() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {((walletBalance?.available_balance || 0) / 100).toFixed(2)} XOF
+              {((walletBalance?.balance || 0) / 100).toFixed(2)} XOF
             </div>
             <p className="text-xs text-muted-foreground">
               Utilisable immédiatement
@@ -204,13 +204,13 @@ export function FundsReleaseStatus() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Fonds en attente
+              Total reçu
             </CardTitle>
             <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {((walletBalance?.pending_balance || 0) / 100).toFixed(2)} XOF
+              {((walletBalance?.total_received || 0) / 100).toFixed(2)} XOF
             </div>
             <p className="text-xs text-muted-foreground">
               {releases.length} paiement{releases.length > 1 ? 's' : ''} en cours
@@ -221,13 +221,13 @@ export function FundsReleaseStatus() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total gagné
+              Total envoyé
             </CardTitle>
             <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {((walletBalance?.total_earned || 0) / 100).toFixed(2)} XOF
+              {((walletBalance?.total_sent || 0) / 100).toFixed(2)} XOF
             </div>
             <p className="text-xs text-muted-foreground">
               Toutes périodes confondues
@@ -250,10 +250,6 @@ export function FundsReleaseStatus() {
           </CardHeader>
           <CardContent className="space-y-4">
             {releases.map((release) => {
-              const assessment = Array.isArray(release.payment_risk_assessment)
-                ? release.payment_risk_assessment[0]
-                : release.payment_risk_assessment;
-
               const isScheduled = release.status === 'SCHEDULED';
               const isPending = release.status === 'PENDING';
               const progress = isScheduled 
@@ -281,17 +277,7 @@ export function FundsReleaseStatus() {
                           </p>
                         </div>
 
-                        {assessment && (
-                          <div className="text-right">
-                            <div className="flex items-center gap-1 mb-1">
-                              <Shield className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm font-medium">Trust Score</span>
-                            </div>
-                            <div className="text-2xl font-bold">
-                              {assessment.trust_score}/100
-                            </div>
-                          </div>
-                        )}
+                        {getStatusBadge(release.status)}
                       </div>
 
                       {/* Progress Bar (for SCHEDULED) */}
@@ -317,9 +303,7 @@ export function FundsReleaseStatus() {
                                 Révision en cours
                               </p>
                               <p className="text-sm text-yellow-700 mt-1">
-                                {assessment?.random_review
-                                  ? 'Ce paiement fait l\'objet d\'un contrôle de routine aléatoire. Les fonds seront libérés après validation.'
-                                  : 'Votre paiement nécessite une validation manuelle par notre équipe. Cela peut prendre jusqu\'à 24 heures.'}
+                                Votre paiement nécessite une validation manuelle par notre équipe. Cela peut prendre jusqu'à 24 heures.
                               </p>
                             </div>
                           </div>
