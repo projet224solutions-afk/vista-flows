@@ -3,6 +3,8 @@
  * 224SOLUTIONS - Affichage transparent du statut des fonds en attente
  */
 
+// build: force-recompile
+
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { 
