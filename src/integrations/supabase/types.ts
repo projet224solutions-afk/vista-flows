@@ -19440,7 +19440,7 @@ export type Database = {
       }
       process_successful_payment: {
         Args: { p_transaction_id: string }
-        Returns: Json
+        Returns: boolean
       }
       process_taxi_card_payment: {
         Args: { p_stripe_payment_intent_id: string }
