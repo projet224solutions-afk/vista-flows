@@ -371,18 +371,12 @@ export default function Proximite() {
             </div>
           </div>
 
-          <div 
-            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {serviceCategories.map((service) => {
               const Icon = service.icon;
               return (
                 <button
                   key={service.id}
-                  variants={itemVariants}
                   onClick={() => handleServiceClick(service.path)}
                   className="group relative bg-card rounded-2xl p-4 border border-border/50 hover:border-primary/30 hover:shadow-lg transition-all duration-300 text-left overflow-hidden"
                 >
@@ -443,16 +437,10 @@ export default function Proximite() {
               <p className="text-xs mt-1">Les catégories apparaîtront ici dès que des produits seront ajoutés</p>
             </div>
           ) : (
-            <div 
-              className="grid grid-cols-2 sm:grid-cols-4 gap-3"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {productCategories.slice(0, 8).map((category) => (
                 <button
                   key={category.id}
-                  variants={itemVariants}
                   onClick={() => navigate(`/marketplace?category=${category.id}&includePhysical=1`)}
                   className="group bg-card rounded-2xl p-4 border border-border/50 hover:border-primary/30 hover:shadow-lg transition-all duration-300 text-left"
                 >
@@ -494,18 +482,12 @@ export default function Proximite() {
             </button>
           </div>
 
-          <div 
-            className="grid grid-cols-2 sm:grid-cols-4 gap-3"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {professionalServices.map((service) => {
               const Icon = service.icon;
               return (
                 <button
                   key={service.id}
-                  variants={itemVariants}
                   onClick={() => navigate(`/services-proximite?type=${service.id}`)}
                   className="group relative bg-gradient-to-br from-card to-muted/30 rounded-2xl p-4 border border-border/50 hover:border-primary/30 hover:shadow-lg transition-all duration-300 text-left overflow-hidden"
                 >
@@ -530,12 +512,7 @@ export default function Proximite() {
         </section>
 
         {/* Banner promotionnel */}
-        <div 
-          }
-          }
-          }
-          className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-primary/90 to-primary/80 p-6 text-primary-foreground"
-        >
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-primary/90 to-primary/80 p-6 text-primary-foreground">
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
           
