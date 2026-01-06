@@ -194,29 +194,40 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
         return;
       }
 
-      // Vérifier que l'utilisateur a un profil
+      // Vérifier que l'utilisateur a un profil, sinon le créer
       const { data: senderProfile, error: profileError } = await supabase
         .from('profiles')
         .select('id')
         .eq('id', user.id)
         .maybeSingle();
 
-      if (profileError || !senderProfile) {
-        console.error('Profil sender non trouvé:', profileError);
-        toast.error('Votre profil n\'est pas configuré. Veuillez compléter votre inscription.');
-        return;
+      if (!senderProfile) {
+        // Créer le profil automatiquement
+        const { error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Utilisateur'
+          });
+        
+        if (createError) {
+          console.error('Erreur création profil:', createError);
+          toast.error('Impossible de configurer votre profil. Veuillez réessayer.');
+          return;
+        }
       }
 
       // Vérifier que le vendeur a un profil
       const { data: recipientProfile, error: recipientError } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, full_name')
         .eq('id', product.vendors.user_id)
         .maybeSingle();
 
-      if (recipientError || !recipientProfile) {
-        console.error('Profil vendeur non trouvé:', recipientError);
-        toast.error('Le profil du vendeur est introuvable');
+      if (!recipientProfile) {
+        console.error('Profil vendeur non trouvé pour user_id:', product.vendors.user_id);
+        toast.error('Ce vendeur n\'a pas encore configuré son profil de messagerie');
         return;
       }
 
