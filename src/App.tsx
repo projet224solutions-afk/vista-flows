@@ -202,7 +202,6 @@ function App() {
               <Route path="/install-app" element={<InstallMobileApp />} />
 
               {/* Main App Routes */}
-              <Route path="/home" element={<Home />} />
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/marketplace/visual-search" element={<VisualSearch />} />
               <Route path="/marketplace/product/:id" element={<ProductDetail />} />
