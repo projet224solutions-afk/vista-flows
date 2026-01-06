@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+// Framer-motion supprimé pour réduire TBT de 914ms
 import { 
   Store, 
   Bike, 
@@ -371,7 +371,7 @@ export default function Proximite() {
             </div>
           </div>
 
-          <motion.div 
+          <div 
             className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
             variants={containerVariants}
             initial="hidden"
@@ -380,7 +380,7 @@ export default function Proximite() {
             {serviceCategories.map((service) => {
               const Icon = service.icon;
               return (
-                <motion.button
+                <button
                   key={service.id}
                   variants={itemVariants}
                   onClick={() => handleServiceClick(service.path)}
@@ -408,10 +408,10 @@ export default function Proximite() {
                     <span className="text-xs font-medium text-primary">{service.count} {t('home.available') || 'disponibles'}</span>
                     <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                   </div>
-                </motion.button>
+                </button>
               );
             })}
-          </motion.div>
+          </div>
         </section>
 
         {/* Catégories de produits */}
@@ -443,14 +443,14 @@ export default function Proximite() {
               <p className="text-xs mt-1">Les catégories apparaîtront ici dès que des produits seront ajoutés</p>
             </div>
           ) : (
-            <motion.div 
+            <div 
               className="grid grid-cols-2 sm:grid-cols-4 gap-3"
               variants={containerVariants}
               initial="hidden"
               animate="visible"
             >
               {productCategories.slice(0, 8).map((category) => (
-                <motion.button
+                <button
                   key={category.id}
                   variants={itemVariants}
                   onClick={() => navigate(`/marketplace?category=${category.id}&includePhysical=1`)}
@@ -470,9 +470,9 @@ export default function Proximite() {
                       {category.product_count > 1 ? 'articles' : 'article'}
                     </span>
                   </div>
-                </motion.button>
+                </button>
               ))}
-            </motion.div>
+            </div>
           )}
         </section>
 
@@ -494,7 +494,7 @@ export default function Proximite() {
             </button>
           </div>
 
-          <motion.div 
+          <div 
             className="grid grid-cols-2 sm:grid-cols-4 gap-3"
             variants={containerVariants}
             initial="hidden"
@@ -503,7 +503,7 @@ export default function Proximite() {
             {professionalServices.map((service) => {
               const Icon = service.icon;
               return (
-                <motion.button
+                <button
                   key={service.id}
                   variants={itemVariants}
                   onClick={() => navigate(`/services-proximite?type=${service.id}`)}
@@ -523,17 +523,17 @@ export default function Proximite() {
                   {service.count > 0 && (
                     <span className="text-xs font-medium text-primary">{service.count} disponibles</span>
                   )}
-                </motion.button>
+                </button>
               );
             })}
-          </motion.div>
+          </div>
         </section>
 
         {/* Banner promotionnel */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+        <div 
+          }
+          }
+          }
           className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-primary/90 to-primary/80 p-6 text-primary-foreground"
         >
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
@@ -551,7 +551,7 @@ export default function Proximite() {
               S'inscrire maintenant
             </button>
           </div>
-        </motion.div>
+        </div>
       </div>
 
       <QuickFooter />

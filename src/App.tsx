@@ -12,8 +12,8 @@ import { LanguageProvider } from "@/i18n/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
 
-// Import EAGER - Page d'accueil critique pour performance initiale
-import Index from "./pages/Index";
+// Lazy load TOUT - même la page d'accueil pour réduire TBT
+const Index = lazyWithRetry(() => import("./pages/Index"));
 
 // Lazy load avec retry automatique pour éviter les erreurs de cache après déploiement
 const QuickFooter = lazyWithRetry(() => import("@/components/QuickFooter"));

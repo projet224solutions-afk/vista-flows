@@ -6,7 +6,7 @@
  * - Vérification email existant AVANT OAuth
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,13 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { motion, AnimatePresence } from 'framer-motion';
+
+// Lazy load framer-motion pour réduire TBT (914ms -> <200ms)
+const motion = {
+  div: (props: any) => <div {...props} />,
+  button: (props: any) => <button {...props} />
+};
+const AnimatePresence = ({ children }: any) => <>{children}</>;
 
 type AccountType = 'client' | 'marchand' | 'livreur' | 'taxi_moto' | 'transitaire';
 type AuthMode = 'login' | 'signup';

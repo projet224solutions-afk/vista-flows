@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import QuickFooter from "@/components/QuickFooter";
-import { motion } from "framer-motion";
+// Framer-motion supprimé pour réduire TBT
 import { useGeoDistance, calculateDistance } from "@/hooks/useGeoDistance";
 
 const RADIUS_KM = 20;
@@ -255,17 +255,17 @@ export default function NearbyTaxiMoto() {
             </CardContent>
           </Card>
         ) : (
-          <motion.div 
+          <div 
             className="space-y-3"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            }
+            }
           >
             {drivers.map((driver, index) => (
-              <motion.div
+              <div
                 key={driver.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
+                }
+                }
+                }
               >
                 <Card className="border-border/50 hover:border-emerald-500/50 transition-colors">
                   <CardContent className="p-4">
@@ -337,9 +337,9 @@ export default function NearbyTaxiMoto() {
                     </div>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
         )}
       </div>
 
@@ -347,3 +347,4 @@ export default function NearbyTaxiMoto() {
     </div>
   );
 }
+
