@@ -4,7 +4,7 @@
  * Toutes les fonctionnalités du Taxi-Moto intégrées + Responsive
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -12,38 +12,39 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { NearbyDeliveriesPanel } from '@/components/delivery/NearbyDeliveriesPanel';
 import { toast } from "sonner";
 import { MapPin, Package, Clock, Wallet, CheckCircle, AlertTriangle, Truck, Navigation, Bell, TrendingUp, Car, MessageSquare } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { DriverSubscriptionBanner } from '@/components/driver/DriverSubscriptionBanner';
-import { DriverSubscriptionButton } from '@/components/driver/DriverSubscriptionButton';
 import { useCurrentLocation } from "@/hooks/useGeolocation";
 import { supabase } from "@/integrations/supabase/client";
 import { useDelivery } from "@/hooks/useDelivery";
 import { useTaxiRides } from "@/hooks/useTaxiRides";
 import { useDriver } from "@/hooks/useDriver";
-import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
-import { UserIdDisplay } from "@/components/UserIdDisplay";
-import { NearbyDeliveriesListener } from "@/components/delivery/NearbyDeliveriesListener";
-import { DriverStatusToggle } from "@/components/driver/DriverStatusToggle";
-import { EarningsDisplay } from "@/components/driver/EarningsDisplay";
-import { DeliveryProofUpload } from "@/components/driver/DeliveryProofUpload";
 import { useResponsive } from "@/hooks/useResponsive";
-import { ResponsiveContainer, ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
-import { MobileBottomNav } from "@/components/responsive/MobileBottomNav";
-import CommunicationWidget from "@/components/communication/CommunicationWidget";
-import { DriverLayout } from "@/components/driver/DriverLayout";
-import DeliveryChat from "@/components/delivery/DeliveryChat";
-// NOUVEAUX IMPORTS POUR LES AMÉLIORATIONS
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { DeliveryGPSNavigation } from "@/components/delivery/DeliveryGPSNavigation";
-
 import { useLivreurErrorBoundary } from "@/hooks/useLivreurErrorBoundary";
 import { useDeliveryActions } from "@/hooks/useDeliveryActions";
 import { useRealtimeDelivery } from "@/hooks/useRealtimeDelivery";
 import { useDriverSubscription } from "@/hooks/useDriverSubscription";
-import DeliveryPaymentModal from "@/components/delivery/DeliveryPaymentModal";
+
+// Lazy loading des composants lourds
+const NearbyDeliveriesPanel = lazy(() => import('@/components/delivery/NearbyDeliveriesPanel').then(m => ({ default: m.NearbyDeliveriesPanel })));
+const DriverSubscriptionBanner = lazy(() => import('@/components/driver/DriverSubscriptionBanner').then(m => ({ default: m.DriverSubscriptionBanner })));
+const DriverSubscriptionButton = lazy(() => import('@/components/driver/DriverSubscriptionButton').then(m => ({ default: m.DriverSubscriptionButton })));
+const WalletBalanceWidget = lazy(() => import("@/components/wallet/WalletBalanceWidget").then(m => ({ default: m.WalletBalanceWidget })));
+const UserIdDisplay = lazy(() => import("@/components/UserIdDisplay").then(m => ({ default: m.UserIdDisplay })));
+const NearbyDeliveriesListener = lazy(() => import('@/components/delivery/NearbyDeliveriesListener').then(m => ({ default: m.NearbyDeliveriesListener })));
+const DriverStatusToggle = lazy(() => import('@/components/driver/DriverStatusToggle').then(m => ({ default: m.DriverStatusToggle })));
+const EarningsDisplay = lazy(() => import('@/components/driver/EarningsDisplay').then(m => ({ default: m.EarningsDisplay })));
+const DeliveryProofUpload = lazy(() => import('@/components/driver/DeliveryProofUpload').then(m => ({ default: m.DeliveryProofUpload })));
+const ResponsiveContainer = lazy(() => import("@/components/responsive/ResponsiveContainer").then(m => ({ default: m.ResponsiveContainer })));
+const ResponsiveGrid = lazy(() => import("@/components/responsive/ResponsiveContainer").then(m => ({ default: m.ResponsiveGrid })));
+const MobileBottomNav = lazy(() => import("@/components/responsive/MobileBottomNav").then(m => ({ default: m.MobileBottomNav })));
+const CommunicationWidget = lazy(() => import("@/components/communication/CommunicationWidget"));
+const DriverLayout = lazy(() => import('@/components/driver/DriverLayout').then(m => ({ default: m.DriverLayout })));
+const DeliveryChat = lazy(() => import('@/components/delivery/DeliveryChat'));
+const DeliveryGPSNavigation = lazy(() => import('@/components/delivery/DeliveryGPSNavigation').then(m => ({ default: m.DeliveryGPSNavigation })));
+const DeliveryPaymentModal = lazy(() => import('@/components/delivery/DeliveryPaymentModal'));
 
 export default function LivreurDashboard() {
   const { user, profile } = useAuth();
@@ -312,6 +313,14 @@ export default function LivreurDashboard() {
   }
 
   return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-3">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-sm text-muted-foreground">Chargement du dashboard livreur...</p>
+        </div>
+      </div>
+    }>
     <>
       {/* Bannière d'abonnement */}
       <DriverSubscriptionBanner />
@@ -893,5 +902,6 @@ export default function LivreurDashboard() {
     </div>
     </DriverLayout>
     </>
+    </Suspense>
   );
 }

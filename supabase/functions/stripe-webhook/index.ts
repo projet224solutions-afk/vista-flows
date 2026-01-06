@@ -183,7 +183,7 @@ serve(async (req) => {
           const { error: updateError } = await supabase
             .from('stripe_transactions')
             .update({
-              status: 'SUCCEEDED',
+              payment_status: 'SUCCEEDED',
               stripe_charge_id: chargeId,
               last4: last4,
               card_brand: cardBrand,
@@ -197,15 +197,73 @@ serve(async (req) => {
             logStep('Error updating transaction', { error: updateError.message });
           }
 
-          // Traiter le paiement (créditer wallet vendeur)
-          const { data: processResult, error: processError } = await supabase.rpc('process_successful_payment', {
-            p_transaction_id: transaction.id
-          });
+          // =========================================================
+          // 🔐 SYSTÈME DE DÉBLOCAGE INTELLIGENT DES FONDS
+          // =========================================================
+          logStep('🔐 Starting payment risk assessment...');
+          
+          try {
+            // Appeler l'Edge Function d'évaluation des risques
+            const assessResponse = await fetch(
+              `${supabaseUrl}/functions/v1/assess-payment-risk`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${supabaseServiceKey}`,
+                },
+                body: JSON.stringify({
+                  transactionId: transaction.id,
+                  paymentIntentId: paymentIntent.id,
+                }),
+              }
+            );
 
-          if (processError) {
-            logStep('Error processing payment', { error: processError.message });
-          } else {
-            logStep('Payment processed successfully', { result: processResult });
+            if (!assessResponse.ok) {
+              const errorData = await assessResponse.json();
+              logStep('⚠️ Risk assessment failed', { error: errorData });
+              
+              // En cas d'erreur, ne pas bloquer le paiement mais logger
+              // Fallback: traiter normalement
+              const { error: processError } = await supabase.rpc('process_successful_payment', {
+                p_transaction_id: transaction.id
+              });
+              
+              if (processError) {
+                logStep('Error processing payment (fallback)', { error: processError.message });
+              } else {
+                logStep('Payment processed successfully (fallback)');
+              }
+            } else {
+              const assessData = await assessResponse.json();
+              logStep('✅ Risk assessment completed', { 
+                decision: assessData.decision,
+                trustScore: assessData.trust_score 
+              });
+
+              // La fonction assess-payment-risk gère automatiquement:
+              // - AUTO_APPROVED: Crédite pending_balance + planifie libération
+              // - ADMIN_REVIEW: Crédite pending_balance + met en attente
+              // - BLOCKED: Aucun crédit + alerte admin
+              
+              logStep('Smart funds release system activated', {
+                decision: assessData.decision,
+                releaseScheduledIn: assessData.delay_minutes ? `${assessData.delay_minutes} minutes` : 'pending admin'
+              });
+            }
+          } catch (assessError) {
+            logStep('⚠️ Exception in risk assessment', { error: String(assessError) });
+            
+            // Fallback: traiter normalement en cas d'erreur
+            const { error: processError } = await supabase.rpc('process_successful_payment', {
+              p_transaction_id: transaction.id
+            });
+            
+            if (processError) {
+              logStep('Error processing payment (exception fallback)', { error: processError.message });
+            } else {
+              logStep('Payment processed successfully (exception fallback)');
+            }
           }
 
           // Mettre à jour la commande si order_id existe

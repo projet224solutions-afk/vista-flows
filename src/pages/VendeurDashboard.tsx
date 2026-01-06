@@ -4,7 +4,7 @@
  * @updated 2025-12-20 - Ajout du panneau Avis Clients
  */
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,48 +23,48 @@ import { VendorSidebar } from "@/components/vendor/VendorSidebar";
 import { useVendorStats } from "@/hooks/useVendorData";
 import { supabase } from "@/integrations/supabase/client";
 
-// Import des modules vendeur
-import ProductManagement from "@/components/vendor/ProductManagement";
-import OrderManagement from "@/components/vendor/OrderManagement";
-import ClientManagement from "@/components/vendor/ClientManagement";
-import AgentManagement from "@/components/vendor/AgentManagement";
-import ExpenseManagementDashboard from "@/components/vendor/ExpenseManagementDashboard";
-import PaymentLinksManager from "@/components/vendor/PaymentLinksManager";
-import { VendorAnalyticsDashboard } from "@/components/vendor/VendorAnalyticsDashboard";
-import InventoryManagement from "@/components/vendor/InventoryManagement";
-import MarketingManagement from "@/components/vendor/MarketingManagement";
-import ProspectManagement from "@/components/vendor/ProspectManagement";
-import SupportTickets from "@/components/vendor/SupportTickets";
-import WarehouseManagement from "@/components/vendor/WarehouseManagement";
-import POSSystemWrapper from "@/components/vendor/POSSystemWrapper";
-import PaymentManagement from "@/components/vendor/PaymentManagement";
-import { VendorDebtManagement } from "@/components/vendor/debts/VendorDebtManagement";
-import UniversalCommunicationHub from "@/components/communication/UniversalCommunicationHub";
-import AffiliateManagement from "@/components/vendor/AffiliateManagement";
-import SupplierManagement from "@/components/vendor/SupplierManagement";
-import UniversalWalletTransactions from "@/components/wallet/UniversalWalletTransactions";
-import { ProfessionalVirtualCard } from "@/components/virtual-card";
-import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
-import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
-import OfflineSyncPanel from "@/components/vendor/OfflineSyncPanel";
-import NetworkStatusIndicator from "@/components/vendor/NetworkStatusIndicator";
+// Import des modules vendeur (Lazy Loading pour optimisation)
+const ProductManagement = lazy(() => import("@/components/vendor/ProductManagement"));
+const OrderManagement = lazy(() => import("@/components/vendor/OrderManagement"));
+const ClientManagement = lazy(() => import("@/components/vendor/ClientManagement"));
+const AgentManagement = lazy(() => import("@/components/vendor/AgentManagement"));
+const ExpenseManagementDashboard = lazy(() => import("@/components/vendor/ExpenseManagementDashboard"));
+const PaymentLinksManager = lazy(() => import("@/components/vendor/PaymentLinksManager"));
+const VendorAnalyticsDashboard = lazy(() => import("@/components/vendor/VendorAnalyticsDashboard").then(m => ({ default: m.VendorAnalyticsDashboard })));
+const InventoryManagement = lazy(() => import("@/components/vendor/InventoryManagement"));
+const MarketingManagement = lazy(() => import("@/components/vendor/MarketingManagement"));
+const ProspectManagement = lazy(() => import("@/components/vendor/ProspectManagement"));
+const SupportTickets = lazy(() => import("@/components/vendor/SupportTickets"));
+const WarehouseManagement = lazy(() => import("@/components/vendor/WarehouseManagement"));
+const POSSystemWrapper = lazy(() => import("@/components/vendor/POSSystemWrapper"));
+const PaymentManagement = lazy(() => import("@/components/vendor/PaymentManagement"));
+const VendorDebtManagement = lazy(() => import("@/components/vendor/debts/VendorDebtManagement").then(m => ({ default: m.VendorDebtManagement })));
+const UniversalCommunicationHub = lazy(() => import("@/components/communication/UniversalCommunicationHub"));
+const AffiliateManagement = lazy(() => import("@/components/vendor/AffiliateManagement"));
+const SupplierManagement = lazy(() => import("@/components/vendor/SupplierManagement"));
+const UniversalWalletTransactions = lazy(() => import("@/components/wallet/UniversalWalletTransactions"));
+const ProfessionalVirtualCard = lazy(() => import("@/components/virtual-card").then(m => ({ default: m.ProfessionalVirtualCard })));
+const WalletBalanceWidget = lazy(() => import("@/components/wallet/WalletBalanceWidget").then(m => ({ default: m.WalletBalanceWidget })));
+const QuickTransferButton = lazy(() => import("@/components/wallet/QuickTransferButton").then(m => ({ default: m.QuickTransferButton })));
+const OfflineSyncPanel = lazy(() => import("@/components/vendor/OfflineSyncPanel"));
+const NetworkStatusIndicator = lazy(() => import("@/components/vendor/NetworkStatusIndicator"));
 // import PWAInstallButton from "@/components/pwa/PWAInstallButton"; // PWA désactivée
-import { VendorIdDisplay } from "@/components/vendor/VendorIdDisplay";
-import { VendorNotificationsPanel } from "@/components/vendor/VendorNotificationsPanel";
-import CommunicationWidget from "@/components/communication/CommunicationWidget";
-import { VendorDeliveriesPanel } from "@/components/vendor/VendorDeliveriesPanel";
-import VendorRatingsPanel from "@/components/vendor/VendorRatingsPanel";
-import { PushNotificationButton } from "@/components/vendor/PushNotificationButton";
-import { ProtectedRoute } from "@/components/subscription/ProtectedRoute";
-import { VendorSubscriptionButton } from "@/components/vendor/VendorSubscriptionButton";
-import { VendorSubscriptionBanner } from "@/components/vendor/VendorSubscriptionBanner";
-import { SubscriptionExpiryBanner } from "@/components/vendor/SubscriptionExpiryBanner";
-import VendorQuotesInvoices from "@/pages/VendorQuotesInvoices";
-import VendorContracts from "@/pages/VendorContracts";
-import VendorSettings from "@/pages/vendor/Settings";
-import CopiloteChat from "@/components/copilot/CopiloteChat";
-import ReviewsManagement from "@/components/vendor/ReviewsManagement";
-import VendorServiceModule from "@/components/vendor/VendorServiceModule";
+const VendorIdDisplay = lazy(() => import("@/components/vendor/VendorIdDisplay").then(m => ({ default: m.VendorIdDisplay })));
+const VendorNotificationsPanel = lazy(() => import("@/components/vendor/VendorNotificationsPanel").then(m => ({ default: m.VendorNotificationsPanel })));
+const CommunicationWidget = lazy(() => import("@/components/communication/CommunicationWidget"));
+const VendorDeliveriesPanel = lazy(() => import("@/components/vendor/VendorDeliveriesPanel").then(m => ({ default: m.VendorDeliveriesPanel })));
+const VendorRatingsPanel = lazy(() => import("@/components/vendor/VendorRatingsPanel"));
+const PushNotificationButton = lazy(() => import("@/components/vendor/PushNotificationButton").then(m => ({ default: m.PushNotificationButton })));
+const ProtectedRoute = lazy(() => import("@/components/subscription/ProtectedRoute").then(m => ({ default: m.ProtectedRoute })));
+const VendorSubscriptionButton = lazy(() => import("@/components/vendor/VendorSubscriptionButton").then(m => ({ default: m.VendorSubscriptionButton })));
+const VendorSubscriptionBanner = lazy(() => import("@/components/vendor/VendorSubscriptionBanner").then(m => ({ default: m.VendorSubscriptionBanner })));
+const SubscriptionExpiryBanner = lazy(() => import("@/components/vendor/SubscriptionExpiryBanner").then(m => ({ default: m.SubscriptionExpiryBanner })));
+const VendorQuotesInvoices = lazy(() => import("@/pages/VendorQuotesInvoices"));
+const VendorContracts = lazy(() => import("@/pages/VendorContracts"));
+const VendorSettings = lazy(() => import("@/pages/vendor/Settings"));
+const CopiloteChat = lazy(() => import("@/components/copilot/CopiloteChat"));
+const ReviewsManagement = lazy(() => import("@/components/vendor/ReviewsManagement"));
+const VendorServiceModule = lazy(() => import("@/components/vendor/VendorServiceModule"));
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useVendorErrorBoundary } from "@/hooks/useVendorErrorBoundary";
 
@@ -269,14 +269,24 @@ export default function VendeurDashboard() {
 
   // (stats déplacées plus haut via useMemo)
 
-  // Composant Dashboard principal
+  // Composant Dashboard principal avec Suspense
   const DashboardHome = () => (
-    <div className="space-y-6">
-      {/* Banner d'abonnement */}
-      <VendorSubscriptionBanner />
-      
-      {/* Analytics Dashboard intégré */}
-      <VendorAnalyticsDashboard />
+    <Suspense fallback={
+      <div className="flex items-center justify-center p-12">
+        <div className="flex items-center gap-3">
+          <div className="w-3 h-3 rounded-full bg-blue-600 animate-pulse"></div>
+          <div className="w-3 h-3 rounded-full bg-indigo-600 animate-pulse [animation-delay:150ms]"></div>
+          <div className="w-3 h-3 rounded-full bg-purple-600 animate-pulse [animation-delay:300ms]"></div>
+          <span className="text-sm font-medium">{t('common.loading')}</span>
+        </div>
+      </div>
+    }>
+      <div className="space-y-6">
+        {/* Banner d'abonnement */}
+        <VendorSubscriptionBanner />
+        
+        {/* Analytics Dashboard intégré */}
+        <VendorAnalyticsDashboard />
 
       {/* Activité récente */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -376,6 +386,7 @@ export default function VendeurDashboard() {
         </CardContent>
       </Card>
     </div>
+    </Suspense>
   );
 
   // Composant Settings
@@ -484,6 +495,14 @@ export default function VendeurDashboard() {
 
           {/* Contenu principal - padding optimisé pour éviter coupures */}
           <main className="flex-1 p-2 sm:p-3 md:p-6 overflow-x-hidden overflow-y-auto pt-4 pb-24 md:pb-8 w-full max-w-full">
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-64">
+                <div className="text-center space-y-3">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                  <p className="text-sm text-muted-foreground">Chargement...</p>
+                </div>
+              </div>
+            }>
             <Routes>
               {/* Route par défaut - toujours accessible */}
               <Route index element={<DashboardHome />} />
@@ -694,6 +713,7 @@ export default function VendeurDashboard() {
                 </ProtectedRoute>
               } />
             </Routes>
+            </Suspense>
           </main>
         </div>
       </div>

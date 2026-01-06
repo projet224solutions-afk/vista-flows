@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,26 +16,28 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useClientData } from "@/hooks/useClientData";
 import { useUniversalProducts } from "@/hooks/useUniversalProducts";
-import ProductCard from "@/components/ProductCard";
-import UserProfileCard from "@/components/UserProfileCard";
-import UniversalCommunicationHub from "@/components/communication/UniversalCommunicationHub";
-import CopiloteChat from "@/components/copilot/CopiloteChat";
-import UniversalWalletTransactions from "@/components/wallet/UniversalWalletTransactions";
-import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
-import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
-import { UserIdDisplay } from "@/components/UserIdDisplay";
-import { IdSystemIndicator } from "@/components/IdSystemIndicator";
-import ProductPaymentModal from "@/components/ecommerce/ProductPaymentModal";
-import ClientOrdersList from "@/components/client/ClientOrdersList";
 import { supabase } from "@/lib/supabaseClient";
 import { useResponsive } from "@/hooks/useResponsive";
-import { ResponsiveGrid, ResponsiveStack } from "@/components/responsive/ResponsiveContainer";
-import ProductDetailModal from "@/components/marketplace/ProductDetailModal";
 import { useCart } from "@/contexts/CartContext";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useClientErrorBoundary } from "@/hooks/useClientErrorBoundary";
-
 import { useClientStats } from "@/hooks/useClientStats";
+
+// Lazy loading des composants lourds
+const ProductCard = lazy(() => import("@/components/ProductCard"));
+const UserProfileCard = lazy(() => import("@/components/UserProfileCard"));
+const UniversalCommunicationHub = lazy(() => import("@/components/communication/UniversalCommunicationHub"));
+const CopiloteChat = lazy(() => import("@/components/copilot/CopiloteChat"));
+const UniversalWalletTransactions = lazy(() => import("@/components/wallet/UniversalWalletTransactions"));
+const WalletBalanceWidget = lazy(() => import("@/components/wallet/WalletBalanceWidget").then(m => ({ default: m.WalletBalanceWidget })));
+const QuickTransferButton = lazy(() => import("@/components/wallet/QuickTransferButton").then(m => ({ default: m.QuickTransferButton })));
+const UserIdDisplay = lazy(() => import("@/components/UserIdDisplay").then(m => ({ default: m.UserIdDisplay })));
+const IdSystemIndicator = lazy(() => import("@/components/IdSystemIndicator").then(m => ({ default: m.IdSystemIndicator })));
+const ProductPaymentModal = lazy(() => import("@/components/ecommerce/ProductPaymentModal"));
+const ClientOrdersList = lazy(() => import("@/components/client/ClientOrdersList"));
+const ResponsiveGrid = lazy(() => import("@/components/responsive/ResponsiveContainer").then(m => ({ default: m.ResponsiveGrid })));
+const ResponsiveStack = lazy(() => import("@/components/responsive/ResponsiveContainer").then(m => ({ default: m.ResponsiveStack })));
+const ProductDetailModal = lazy(() => import("@/components/marketplace/ProductDetailModal"));
 
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -204,6 +206,14 @@ export default function ClientDashboard() {
   const activeOrders = orders.filter(o => o.status === 'pending' || o.status === 'processing');
 
   return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-3">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-sm text-muted-foreground">Chargement du dashboard...</p>
+        </div>
+      </div>
+    }>
     <div className="min-h-screen bg-background pb-24">
       {/* Header Premium - Responsive */}
       <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
@@ -701,5 +711,6 @@ export default function ClientDashboard() {
 
       {/* Note: CommunicationWidget et QuickFooter sont rendus globalement dans App.tsx */}
     </div>
+    </Suspense>
   );
 }

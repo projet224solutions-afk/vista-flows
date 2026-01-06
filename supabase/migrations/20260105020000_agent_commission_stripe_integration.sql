@@ -1,10 +1,10 @@
 -- =====================================================
--- MIGRATION: Intégration Commission Agents dans Paiements Stripe
+-- MIGRATION: Integration Commission Agents dans Paiements Stripe
 -- Date: 2026-01-05
 -- Description: Calcul automatique commission agents sur achats e-commerce
 -- =====================================================
 
--- Fonction améliorée: Traiter paiement réussi avec commission agent
+-- Fonction amelioree: Traiter paiement reussi avec commission agent
 CREATE OR REPLACE FUNCTION process_successful_payment(
   p_transaction_id UUID
 )
@@ -26,7 +26,7 @@ DECLARE
   v_agent_balance_before NUMERIC;
   v_agent_balance_after NUMERIC;
 BEGIN
-  -- Récupérer transaction
+  -- Recuperer transaction
   SELECT * INTO v_transaction
   FROM stripe_transactions
   WHERE id = p_transaction_id;
@@ -35,10 +35,10 @@ BEGIN
     RAISE EXCEPTION 'Transaction not found';
   END IF;
   
-  -- Récupérer/Créer wallet vendeur
+  -- Recuperer/Creer wallet vendeur
   v_seller_wallet_id := get_or_create_wallet(v_transaction.seller_id);
   
-  -- Récupérer CEO/Platform wallet
+  -- Recuperer CEO/Platform wallet
   SELECT id INTO v_platform_user_id
   FROM profiles
   WHERE role = 'CEO'
@@ -48,11 +48,11 @@ BEGIN
     v_platform_wallet_id := get_or_create_wallet(v_platform_user_id);
   END IF;
   
-  -- Récupérer balances vendeur avant/après
+  -- Recuperer balances vendeur avant/apres
   SELECT available_balance - v_transaction.seller_net_amount, available_balance
     INTO v_seller_balance_before, v_seller_balance_after
     FROM wallets WHERE id = v_seller_wallet_id;
-  -- Mettre à jour solde vendeur (montant net)
+  -- Mettre a jour solde vendeur (montant net)
   UPDATE wallets
   SET 
     available_balance = available_balance + v_transaction.seller_net_amount,
@@ -83,7 +83,7 @@ BEGIN
     v_seller_balance_after
   );
   
-  -- Mettre à jour wallet plateforme (commission)
+  -- Mettre a jour wallet plateforme (commission)
   IF v_platform_wallet_id IS NOT NULL THEN
     SELECT available_balance - v_transaction.commission_amount, available_balance
       INTO v_platform_balance_before, v_platform_balance_after
@@ -116,20 +116,20 @@ BEGIN
     );
   END IF;
   
-  -- ✅ NOUVEAU: Calculer et créditer commission agent
-    -- 1. Identifier agent créateur du client acheteur
+  -- NOUVEAU: Calculer et crediter commission agent
+    -- 1. Identifier agent createur du client acheteur
     SELECT creator_id, creator_type 
     INTO v_buyer_creator_agent_id, v_buyer_creator_type
     FROM agent_created_users
     WHERE user_id = v_transaction.buyer_id;
     
     IF v_buyer_creator_agent_id IS NOT NULL THEN
-      -- 2. Récupérer taux commission agent depuis config
+      -- 2. Recuperer taux commission agent depuis config
       SELECT setting_value INTO v_agent_commission_rate
       FROM commission_settings
       WHERE setting_key = 'base_user_commission';
       
-      -- Par défaut 20% si non trouvé
+      -- Par defaut 20% si non trouve
       IF v_agent_commission_rate IS NULL THEN
         v_agent_commission_rate := 0.20;
       END IF;
@@ -137,13 +137,13 @@ BEGIN
       -- 3. Calculer commission agent (% du montant net vendeur)
       v_agent_commission_amount := v_transaction.seller_net_amount * v_agent_commission_rate;
       
-      -- 4. Créer/récupérer wallet agent
+      -- 4. Creer/recuperer wallet agent
       v_agent_wallet_id := get_or_create_wallet(v_buyer_creator_agent_id);
-      -- Récupérer balances agent avant/après
+      -- Recuperer balances agent avant/apres
       SELECT available_balance - v_agent_commission_amount, available_balance
         INTO v_agent_balance_before, v_agent_balance_after
         FROM wallets WHERE id = v_agent_wallet_id;
-      -- 5. Créditer wallet agent
+      -- 5. Crediter wallet agent
       UPDATE wallets
       SET 
         available_balance = available_balance + v_agent_commission_amount,
@@ -200,7 +200,7 @@ BEGIN
         v_agent_balance_before,
         v_agent_balance_after
       );
-      RAISE NOTICE '✅ Commission agent créditée: % GNF pour agent %', v_agent_commission_amount, v_buyer_creator_agent_id;
+      RAISE NOTICE 'Commission agent creditee: % GNF pour agent %', v_agent_commission_amount, v_buyer_creator_agent_id;
     END IF;
   
   RETURN true;
@@ -213,4 +213,4 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Commentaire
-COMMENT ON FUNCTION process_successful_payment IS 'Traite un paiement réussi: crédite vendeur, plateforme ET agent créateur du client';
+COMMENT ON FUNCTION process_successful_payment IS 'Traite un paiement reussi: credite vendeur, plateforme ET agent createur du client';
