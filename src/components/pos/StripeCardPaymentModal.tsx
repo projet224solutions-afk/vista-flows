@@ -167,26 +167,22 @@ function PaymentForm({
       <Card className="bg-primary/5 border-primary/20">
         <CardContent className="pt-4">
           <div className="space-y-2">
-            <div className="flex justify-between text-lg">
-              <span>Total à payer</span>
-              <span className="font-bold text-primary">{formatAmount(totalAmount)}</span>
-            </div>
-
-            <div className="border-t pt-2 space-y-1 text-sm text-muted-foreground">
+            <div className="border-b pb-2 space-y-1 text-sm">
               <div className="flex justify-between">
+                <span>Montant produit</span>
+                <span className="font-medium">{formatAmount(productAmount)}</span>
+              </div>
+              <div className="flex justify-between text-muted-foreground">
                 <span>Commission plateforme ({commissionRate}%)</span>
                 <span>+{formatAmount(commissionAmount)}</span>
               </div>
-
-              <div className="flex justify-between font-medium">
-                <span>Montant produit</span>
-                <span>{formatAmount(productAmount)}</span>
-              </div>
-
-              <div className="flex justify-between font-medium">
-                <span>Net vendeur</span>
-                <span className="text-green-600">{formatAmount(sellerNetAmount)}</span>
-              </div>
+            </div>
+            <div className="flex justify-between text-lg font-bold">
+              <span>Total à payer</span>
+              <span className="text-primary">{formatAmount(totalAmount)}</span>
+            </div>
+            <div className="text-xs text-muted-foreground pt-1">
+              ✅ Le vendeur recevra {formatAmount(sellerNetAmount)} net
             </div>
           </div>
         </CardContent>
@@ -320,11 +316,11 @@ export function StripeCardPaymentModal({
 
         setClientSecret(data.clientSecret);
         setPaymentDetails({
-          commissionRate: data.commissionRate,
-          commissionAmount: data.commissionAmount,
-          sellerNetAmount: data.sellerNetAmount,
-          productAmount: data.productAmount ?? amount,
-          totalAmount: data.totalAmount ?? amount,
+          commissionRate: data.commissionRate || 2.5,
+          commissionAmount: data.commissionAmount || 0,
+          sellerNetAmount: data.sellerNetAmount || amount,
+          productAmount: data.productAmount || amount,
+          totalAmount: data.totalAmount || amount,
         });
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Erreur inconnue';

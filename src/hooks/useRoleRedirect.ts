@@ -7,6 +7,7 @@ import { useAuth } from './useAuth';
  * sans redirection vers leur dashboard
  */
 const PUBLIC_ROUTES = [
+  '/home',
   '/marketplace',
   '/tracking',
   '/client-tracking',
@@ -102,7 +103,7 @@ export const useRoleRedirect = () => {
         console.log('📝 [useRoleRedirect] Profil incomplet - demande de complétion');
       }
 
-      // Ne pas rediriger si l'utilisateur est sur une route publique (sauf /home)
+      // Ne pas rediriger si l'utilisateur est sur une route publique
       const isOnPublicRoute = PUBLIC_ROUTES.some(route => 
         currentPath === route || currentPath.startsWith(route + '/')
       );
@@ -114,8 +115,8 @@ export const useRoleRedirect = () => {
 
       const targetRoute = getDashboardRoute(profile.role);
       
-      // ⚡ Rediriger depuis /home ou / vers le dashboard approprié
-      if (currentPath === '/' || currentPath === '/home') {
+      // ⚡ Rediriger depuis / vers le dashboard approprié
+      if (currentPath === '/') {
         console.log(`🚀 [useRoleRedirect] Redirection depuis ${currentPath} vers ${targetRoute} (rôle: ${profile.role})`);
         navigate(targetRoute, { replace: true });
         return;

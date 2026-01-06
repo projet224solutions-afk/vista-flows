@@ -14,6 +14,17 @@ DECLARE
   v_seller_wallet_id UUID;
   v_platform_wallet_id UUID;
   v_platform_user_id UUID;
+  v_platform_balance_before NUMERIC;
+  v_platform_balance_after NUMERIC;
+  v_seller_balance_before NUMERIC;
+  v_seller_balance_after NUMERIC;
+  v_buyer_creator_agent_id UUID;
+  v_buyer_creator_type VARCHAR(20);
+  v_agent_commission_amount DECIMAL(15,2);
+  v_agent_commission_rate DECIMAL(5,4);
+  v_agent_wallet_id UUID;
+  v_agent_balance_before NUMERIC;
+  v_agent_balance_after NUMERIC;
 BEGIN
   -- Récupérer transaction
   SELECT * INTO v_transaction
@@ -37,6 +48,10 @@ BEGIN
     v_platform_wallet_id := get_or_create_wallet(v_platform_user_id);
   END IF;
   
+  -- Récupérer balances vendeur avant/après
+  SELECT available_balance - v_transaction.seller_net_amount, available_balance
+    INTO v_seller_balance_before, v_seller_balance_after
+    FROM wallets WHERE id = v_seller_wallet_id;
   -- Mettre à jour solde vendeur (montant net)
   UPDATE wallets
   SET 
@@ -45,7 +60,6 @@ BEGIN
     total_transactions = total_transactions + 1,
     updated_at = NOW()
   WHERE id = v_seller_wallet_id;
-  
   -- Enregistrer transaction wallet vendeur
   INSERT INTO wallet_transactions (
     wallet_id,
@@ -57,8 +71,7 @@ BEGIN
     order_id,
     balance_before,
     balance_after
-  )
-  SELECT
+  ) VALUES (
     v_seller_wallet_id,
     'PAYMENT',
     v_transaction.seller_net_amount,
@@ -66,20 +79,21 @@ BEGIN
     'Payment received from order ' || COALESCE(v_transaction.order_id::TEXT, 'N/A'),
     v_transaction.id,
     v_transaction.order_id,
-    w.available_balance - v_transaction.seller_net_amount,
-    w.available_balance
-  FROM wallets w
-  WHERE w.id = v_seller_wallet_id;
+    v_seller_balance_before,
+    v_seller_balance_after
+  );
   
   -- Mettre à jour wallet plateforme (commission)
   IF v_platform_wallet_id IS NOT NULL THEN
+    SELECT available_balance - v_transaction.commission_amount, available_balance
+      INTO v_platform_balance_before, v_platform_balance_after
+      FROM wallets WHERE id = v_platform_wallet_id;
     UPDATE wallets
     SET 
       available_balance = available_balance + v_transaction.commission_amount,
       total_earned = total_earned + v_transaction.commission_amount,
       updated_at = NOW()
     WHERE id = v_platform_wallet_id;
-    
     -- Enregistrer transaction wallet plateforme
     INSERT INTO wallet_transactions (
       wallet_id,
@@ -90,28 +104,19 @@ BEGIN
       stripe_transaction_id,
       balance_before,
       balance_after
-    )
-    SELECT
+    ) VALUES (
       v_platform_wallet_id,
       'COMMISSION',
       v_transaction.commission_amount,
       v_transaction.currency,
       'Platform commission from order ' || COALESCE(v_transaction.order_id::TEXT, 'N/A'),
       v_transaction.id,
-      w.available_balance - v_transaction.commission_amount,
-      w.available_balance
-    FROM wallets w
-    WHERE w.id = v_platform_wallet_id;
+      v_platform_balance_before,
+      v_platform_balance_after
+    );
   END IF;
   
   -- ✅ NOUVEAU: Calculer et créditer commission agent
-  DECLARE
-    v_buyer_creator_agent_id UUID;
-    v_buyer_creator_type VARCHAR(20);
-    v_agent_commission_amount DECIMAL(15,2);
-    v_agent_commission_rate DECIMAL(5,4);
-    v_agent_wallet_id UUID;
-  BEGIN
     -- 1. Identifier agent créateur du client acheteur
     SELECT creator_id, creator_type 
     INTO v_buyer_creator_agent_id, v_buyer_creator_type
@@ -134,7 +139,10 @@ BEGIN
       
       -- 4. Créer/récupérer wallet agent
       v_agent_wallet_id := get_or_create_wallet(v_buyer_creator_agent_id);
-      
+      -- Récupérer balances agent avant/après
+      SELECT available_balance - v_agent_commission_amount, available_balance
+        INTO v_agent_balance_before, v_agent_balance_after
+        FROM wallets WHERE id = v_agent_wallet_id;
       -- 5. Créditer wallet agent
       UPDATE wallets
       SET 
@@ -142,7 +150,6 @@ BEGIN
         total_earned = total_earned + v_agent_commission_amount,
         updated_at = NOW()
       WHERE id = v_agent_wallet_id;
-      
       -- 6. Enregistrer commission dans agent_commissions
       INSERT INTO agent_commissions (
         commission_code,
@@ -173,7 +180,6 @@ BEGIN
         ),
         'paid'
       );
-      
       -- 7. Transaction wallet agent
       INSERT INTO wallet_transactions (
         wallet_id,
@@ -184,28 +190,25 @@ BEGIN
         stripe_transaction_id,
         balance_before,
         balance_after
-      )
-      SELECT
+      ) VALUES (
         v_agent_wallet_id,
         'AGENT_COMMISSION',
         v_agent_commission_amount,
         v_transaction.currency,
         'Commission agent - Achat client (ordre: ' || COALESCE(v_transaction.order_id::TEXT, 'N/A') || ')',
         v_transaction.id,
-        w.available_balance - v_agent_commission_amount,
-        w.available_balance
-      FROM wallets w
-      WHERE w.id = v_agent_wallet_id;
-      
+        v_agent_balance_before,
+        v_agent_balance_after
+      );
       RAISE NOTICE '✅ Commission agent créditée: % GNF pour agent %', v_agent_commission_amount, v_buyer_creator_agent_id;
     END IF;
-  EXCEPTION
-    WHEN OTHERS THEN
-      -- Logger l'erreur mais ne pas bloquer le paiement principal
-      RAISE WARNING '⚠️ Erreur calcul commission agent: %', SQLERRM;
-  END;
   
   RETURN true;
+EXCEPTION
+  WHEN OTHERS THEN
+    -- Logger l'erreur mais ne pas bloquer le paiement principal
+    RAISE WARNING '⚠️ Erreur lors du traitement du paiement: %', SQLERRM;
+    RETURN false;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

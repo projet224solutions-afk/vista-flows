@@ -164,7 +164,7 @@ serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     });
 
-    // Créer le Payment Intent
+    // Créer le Payment Intent avec montant TOTAL (produit + commission)
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(totalAmount), // GNF n'a pas de centimes
       currency: currency.toLowerCase(),
