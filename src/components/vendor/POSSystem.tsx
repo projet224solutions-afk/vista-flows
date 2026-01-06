@@ -366,7 +366,12 @@ export function POSSystem() {
   const change = receivedAmount - total;
 
   // Fonction d'ajout au panier avec calcul automatique (unités)
-  const addToCart = (product: Product, quantity: number = 1) => {
+  const addToCart = (productOrCartItem: Product | CartItem, quantity: number = 1) => {
+    // Récupérer le produit original pour avoir le prix unitaire correct
+    const originalProduct = products.find(p => p.id === productOrCartItem.id);
+    const product = originalProduct || productOrCartItem;
+    const unitPrice = originalProduct?.price || productOrCartItem.price;
+    
     if (product.stock <= 0) {
       toast.error('Produit en rupture de stock');
       return;
@@ -391,21 +396,27 @@ export function POSSystem() {
       const existingItem = prev.find(item => item.id === product.id && item.saleType !== 'carton');
       if (existingItem) {
         const newQuantity = existingItem.quantity + quantity;
+        // Utiliser le prix unitaire original pour le calcul
+        const originalUnitPrice = originalProduct?.price || existingItem.price;
         return prev.map(item =>
           item.id === product.id && item.saleType !== 'carton'
-            ? { ...item, quantity: newQuantity, total: newQuantity * item.price }
+            ? { ...item, quantity: newQuantity, total: newQuantity * originalUnitPrice }
             : item
         );
       }
 
-      return [...prev, { ...product, quantity, total: product.price * quantity, saleType: 'unit' as const }];
+      return [...prev, { ...product, quantity, total: unitPrice * quantity, saleType: 'unit' as const, price: unitPrice }];
     });
 
     toast.success(`${product.name} ajouté au panier`);
   };
 
   // Fonction d'ajout au panier par carton
-  const addToCartByCarton = (product: Product, cartonCount: number = 1) => {
+  const addToCartByCarton = (productOrCartItem: Product | CartItem, cartonCount: number = 1) => {
+    // Récupérer le produit original depuis la liste des produits pour avoir les prix corrects
+    const originalProduct = products.find(p => p.id === productOrCartItem.id);
+    const product = originalProduct || productOrCartItem;
+    
     if (!product.sell_by_carton || !product.units_per_carton || product.units_per_carton <= 1) {
       toast.error('Ce produit ne peut pas être vendu par carton');
       return;
@@ -419,9 +430,14 @@ export function POSSystem() {
       return [product.id, ...filtered].slice(0, 3);
     });
 
-    const pricePerCarton = (product.price_carton && product.price_carton > 0)
-      ? product.price_carton
-      : (product.price * product.units_per_carton);
+    // IMPORTANT: Utiliser le prix du produit ORIGINAL, pas celui du CartItem
+    // car le CartItem.price peut être le prix carton déjà calculé
+    const originalUnitPrice = originalProduct?.price || product.price;
+    const originalPriceCarton = originalProduct?.price_carton || product.price_carton;
+    
+    const pricePerCarton = (originalPriceCarton && originalPriceCarton > 0)
+      ? originalPriceCarton
+      : (originalUnitPrice * product.units_per_carton);
 
     setCart(prev => {
       const unitUnits = prev
@@ -496,10 +512,13 @@ export function POSSystem() {
       prev.map(item => {
         if (item.id !== productId) return item;
         
-        // Pour les ventes carton, calculer le total correctement
+        // Pour les ventes carton, calculer le total correctement avec le prix du produit ORIGINAL
         if (item.saleType === 'carton' && product?.units_per_carton) {
           const cartonCount = Math.floor(newQuantity / product.units_per_carton);
-          const pricePerCarton = product.price_carton || (product.price * product.units_per_carton);
+          // Utiliser les prix du produit original, pas du cartItem
+          const pricePerCarton = (product.price_carton && product.price_carton > 0) 
+            ? product.price_carton 
+            : (product.price * product.units_per_carton);
           return { 
             ...item, 
             quantity: newQuantity, 
@@ -508,8 +527,9 @@ export function POSSystem() {
           };
         }
         
-        // Vente unitaire standard
-        return { ...item, quantity: newQuantity, total: newQuantity * item.price };
+        // Vente unitaire standard - utiliser le prix du produit original
+        const unitPrice = product?.price || item.price;
+        return { ...item, quantity: newQuantity, total: newQuantity * unitPrice };
       })
     );
   };
