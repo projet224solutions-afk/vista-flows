@@ -2060,6 +2060,77 @@ export type Database = {
           },
         ]
       }
+      chargeback_history: {
+        Row: {
+          amount: number
+          buyer_id: string | null
+          created_at: string | null
+          currency: string | null
+          disputed_at: string
+          id: string
+          reason: string | null
+          resolved_at: string | null
+          seller_id: string | null
+          status: string
+          stripe_charge_id: string
+        }
+        Insert: {
+          amount: number
+          buyer_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          disputed_at: string
+          id?: string
+          reason?: string | null
+          resolved_at?: string | null
+          seller_id?: string | null
+          status: string
+          stripe_charge_id: string
+        }
+        Update: {
+          amount?: number
+          buyer_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          disputed_at?: string
+          id?: string
+          reason?: string | null
+          resolved_at?: string | null
+          seller_id?: string | null
+          status?: string
+          stripe_charge_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chargeback_history_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chargeback_history_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chargeback_history_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chargeback_history_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
@@ -5765,6 +5836,119 @@ export type Database = {
         }
         Relationships: []
       }
+      funds_release_schedule: {
+        Row: {
+          amount_held: number
+          amount_to_release: number
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          held_at: string
+          id: string
+          notes: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
+          release_type: string | null
+          released_at: string | null
+          scheduled_release_at: string
+          status: Database["public"]["Enums"]["release_status_enum"] | null
+          transaction_id: string
+          updated_at: string | null
+          wallet_id: string
+        }
+        Insert: {
+          amount_held: number
+          amount_to_release: number
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          held_at?: string
+          id?: string
+          notes?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          release_type?: string | null
+          released_at?: string | null
+          scheduled_release_at: string
+          status?: Database["public"]["Enums"]["release_status_enum"] | null
+          transaction_id: string
+          updated_at?: string | null
+          wallet_id: string
+        }
+        Update: {
+          amount_held?: number
+          amount_to_release?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          held_at?: string
+          id?: string
+          notes?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          release_type?: string | null
+          released_at?: string | null
+          scheduled_release_at?: string
+          status?: Database["public"]["Enums"]["release_status_enum"] | null
+          transaction_id?: string
+          updated_at?: string | null
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funds_release_schedule_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funds_release_schedule_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funds_release_schedule_rejected_by_fkey"
+            columns: ["rejected_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funds_release_schedule_rejected_by_fkey"
+            columns: ["rejected_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funds_release_schedule_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "admin_payment_review_queue"
+            referencedColumns: ["transaction_id"]
+          },
+          {
+            foreignKeyName: "funds_release_schedule_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "stripe_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funds_release_schedule_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       generated_reports: {
         Row: {
           expires_at: string | null
@@ -7838,6 +8022,77 @@ export type Database = {
           },
         ]
       }
+      payment_fraud_signals: {
+        Row: {
+          created_at: string | null
+          description: string
+          details: Json | null
+          id: string
+          resolution_notes: string | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: number | null
+          signal_type: Database["public"]["Enums"]["fraud_signal_enum"]
+          transaction_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          details?: Json | null
+          id?: string
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: number | null
+          signal_type: Database["public"]["Enums"]["fraud_signal_enum"]
+          transaction_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          details?: Json | null
+          id?: string
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: number | null
+          signal_type?: Database["public"]["Enums"]["fraud_signal_enum"]
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_fraud_signals_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_fraud_signals_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_fraud_signals_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "admin_payment_review_queue"
+            referencedColumns: ["transaction_id"]
+          },
+          {
+            foreignKeyName: "payment_fraud_signals_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "stripe_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_links: {
         Row: {
           client_id: string | null
@@ -7981,6 +8236,105 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      payment_risk_assessments: {
+        Row: {
+          amount_deviation: number | null
+          amount_risk_score: number | null
+          assessment_version: string | null
+          auto_blocked: boolean | null
+          block_reasons: string[] | null
+          card_history_score: number | null
+          card_usage_count: number | null
+          chargeback_history: number | null
+          chargeback_score: number | null
+          created_at: string | null
+          decision: Database["public"]["Enums"]["decision_enum"]
+          decision_expires_at: string | null
+          decision_made_at: string | null
+          details: Json | null
+          id: string
+          kyc_score: number | null
+          kyc_verified: boolean | null
+          random_review: boolean | null
+          random_seed: number | null
+          risk_level: Database["public"]["Enums"]["risk_level_enum"]
+          transaction_id: string
+          trust_score: number
+          updated_at: string | null
+          user_age_days: number | null
+          user_age_score: number | null
+        }
+        Insert: {
+          amount_deviation?: number | null
+          amount_risk_score?: number | null
+          assessment_version?: string | null
+          auto_blocked?: boolean | null
+          block_reasons?: string[] | null
+          card_history_score?: number | null
+          card_usage_count?: number | null
+          chargeback_history?: number | null
+          chargeback_score?: number | null
+          created_at?: string | null
+          decision: Database["public"]["Enums"]["decision_enum"]
+          decision_expires_at?: string | null
+          decision_made_at?: string | null
+          details?: Json | null
+          id?: string
+          kyc_score?: number | null
+          kyc_verified?: boolean | null
+          random_review?: boolean | null
+          random_seed?: number | null
+          risk_level: Database["public"]["Enums"]["risk_level_enum"]
+          transaction_id: string
+          trust_score: number
+          updated_at?: string | null
+          user_age_days?: number | null
+          user_age_score?: number | null
+        }
+        Update: {
+          amount_deviation?: number | null
+          amount_risk_score?: number | null
+          assessment_version?: string | null
+          auto_blocked?: boolean | null
+          block_reasons?: string[] | null
+          card_history_score?: number | null
+          card_usage_count?: number | null
+          chargeback_history?: number | null
+          chargeback_score?: number | null
+          created_at?: string | null
+          decision?: Database["public"]["Enums"]["decision_enum"]
+          decision_expires_at?: string | null
+          decision_made_at?: string | null
+          details?: Json | null
+          id?: string
+          kyc_score?: number | null
+          kyc_verified?: boolean | null
+          random_review?: boolean | null
+          random_seed?: number | null
+          risk_level?: Database["public"]["Enums"]["risk_level_enum"]
+          transaction_id?: string
+          trust_score?: number
+          updated_at?: string | null
+          user_age_days?: number | null
+          user_age_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_risk_assessments_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "admin_payment_review_queue"
+            referencedColumns: ["transaction_id"]
+          },
+          {
+            foreignKeyName: "payment_risk_assessments_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "stripe_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_schedules: {
         Row: {
@@ -8158,6 +8512,48 @@ export type Database = {
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "payment_core_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_system_config: {
+        Row: {
+          config_key: string
+          config_value: Json
+          description: string | null
+          id: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          config_key: string
+          config_value: Json
+          description?: string | null
+          id?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          config_key?: string
+          config_value?: Json
+          description?: string | null
+          id?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_system_config_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_system_config_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
             referencedColumns: ["id"]
           },
         ]
@@ -17768,6 +18164,33 @@ export type Database = {
           },
         ]
       }
+      admin_payment_review_queue: {
+        Row: {
+          amount: number | null
+          auto_blocked: boolean | null
+          block_reasons: string[] | null
+          buyer_email: string | null
+          buyer_name: string | null
+          decision: Database["public"]["Enums"]["decision_enum"] | null
+          payment_created_at: string | null
+          random_review: boolean | null
+          release_id: string | null
+          release_status:
+            | Database["public"]["Enums"]["release_status_enum"]
+            | null
+          risk_level: Database["public"]["Enums"]["risk_level_enum"] | null
+          scheduled_release_at: string | null
+          seller_email: string | null
+          seller_kyc_status: string | null
+          seller_name: string | null
+          seller_net_amount: number | null
+          stripe_payment_intent_id: string | null
+          transaction_id: string | null
+          trust_score: number | null
+          unresolved_fraud_signals: number | null
+        }
+        Relationships: []
+      }
       agent_type_statistics: {
         Row: {
           active_agents: number | null
@@ -18271,6 +18694,14 @@ export type Database = {
             }
             Returns: string
           }
+      admin_approve_payment: {
+        Args: { p_admin_id: string; p_notes?: string; p_release_id: string }
+        Returns: boolean
+      }
+      admin_reject_payment: {
+        Args: { p_admin_id: string; p_reason: string; p_release_id: string }
+        Returns: boolean
+      }
       agent_can_create_sub_agents: {
         Args: { _user_id: string }
         Returns: boolean
@@ -18364,7 +18795,13 @@ export type Database = {
         Returns: Json
       }
       calculate_payment_trust_score: {
-        Args: { p_transaction_id: string }
+        Args: {
+          p_amount: number
+          p_buyer_id: string
+          p_card_last4: string
+          p_seller_id: string
+          p_transaction_id: string
+        }
         Returns: Json
       }
       calculate_recommendation_score: {
@@ -18991,6 +19428,8 @@ export type Database = {
         }[]
       }
       get_card_stats: { Args: { p_card_id: string }; Returns: Json }
+      get_config: { Args: { p_key: string }; Returns: string }
+      get_config_int: { Args: { p_key: string }; Returns: number }
       get_escrow_stats: {
         Args: { p_end_date?: string; p_start_date?: string }
         Returns: {
@@ -19584,6 +20023,10 @@ export type Database = {
         Args: { p_admin_id?: string; p_escrow_id: string; p_notes?: string }
         Returns: boolean
       }
+      release_scheduled_funds: {
+        Args: { p_release_id: string }
+        Returns: boolean
+      }
       release_taxi_lock:
         | {
             Args: {
@@ -19611,6 +20054,15 @@ export type Database = {
       }
       resolve_cache_errors: { Args: never; Returns: number }
       run_daily_wallet_audit: { Args: never; Returns: Json }
+      schedule_funds_release: {
+        Args: {
+          p_amount: number
+          p_transaction_id: string
+          p_trust_score: number
+          p_wallet_id: string
+        }
+        Returns: string
+      }
       set_agent_permissions: {
         Args: { p_agent_id: string; p_permissions: Json }
         Returns: Json
@@ -20315,6 +20767,7 @@ export type Database = {
         | "manager"
         | "technique"
       call_status_type: "ringing" | "accepted" | "rejected" | "ended" | "missed"
+      decision_enum: "AUTO_APPROVED" | "ADMIN_REVIEW" | "BLOCKED"
       delivery_status:
         | "pending"
         | "assigned"
@@ -20323,6 +20776,14 @@ export type Database = {
         | "delivered"
         | "cancelled"
       escrow_status_type: "holding" | "released" | "disputed" | "cancelled"
+      fraud_signal_enum:
+        | "UNUSUAL_AMOUNT"
+        | "NEW_SELLER"
+        | "HIGH_VELOCITY"
+        | "RISKY_COUNTRY"
+        | "SUSPICIOUS_PATTERN"
+        | "CARD_TESTING"
+        | "DEVICE_MISMATCH"
       message_type: "text" | "image" | "file" | "call" | "location"
       order_source: "online" | "pos"
       order_status:
@@ -20350,12 +20811,19 @@ export type Database = {
         | "mtn"
         | "wave"
       payment_status: "pending" | "paid" | "failed" | "refunded"
+      release_status_enum:
+        | "PENDING"
+        | "SCHEDULED"
+        | "RELEASED"
+        | "REJECTED"
+        | "DISPUTED"
       ride_status:
         | "requested"
         | "accepted"
         | "in_progress"
         | "completed"
         | "cancelled"
+      risk_level_enum: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
       stripe_payment_status:
         | "PENDING"
         | "PROCESSING"
@@ -20543,6 +21011,7 @@ export const Constants = {
         "technique",
       ],
       call_status_type: ["ringing", "accepted", "rejected", "ended", "missed"],
+      decision_enum: ["AUTO_APPROVED", "ADMIN_REVIEW", "BLOCKED"],
       delivery_status: [
         "pending",
         "assigned",
@@ -20552,6 +21021,15 @@ export const Constants = {
         "cancelled",
       ],
       escrow_status_type: ["holding", "released", "disputed", "cancelled"],
+      fraud_signal_enum: [
+        "UNUSUAL_AMOUNT",
+        "NEW_SELLER",
+        "HIGH_VELOCITY",
+        "RISKY_COUNTRY",
+        "SUSPICIOUS_PATTERN",
+        "CARD_TESTING",
+        "DEVICE_MISMATCH",
+      ],
       message_type: ["text", "image", "file", "call", "location"],
       order_source: ["online", "pos"],
       order_status: [
@@ -20582,6 +21060,13 @@ export const Constants = {
         "wave",
       ],
       payment_status: ["pending", "paid", "failed", "refunded"],
+      release_status_enum: [
+        "PENDING",
+        "SCHEDULED",
+        "RELEASED",
+        "REJECTED",
+        "DISPUTED",
+      ],
       ride_status: [
         "requested",
         "accepted",
@@ -20589,6 +21074,7 @@ export const Constants = {
         "completed",
         "cancelled",
       ],
+      risk_level_enum: ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
       stripe_payment_status: [
         "PENDING",
         "PROCESSING",
