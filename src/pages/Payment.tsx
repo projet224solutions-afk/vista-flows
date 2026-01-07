@@ -504,28 +504,11 @@ export default function Payment() {
   };
 
   // Fonction pour paiement à la livraison
-  const handleCashOnDeliveryPayment = async () => {
-    if (!user?.id || !paymentAmount || !recipientId) return;
+  const handleCashOnDeliveryPayment = async (addressData?: any) => {
+    if (!user?.id || !paymentAmount) return;
 
     setProcessing(true);
     try {
-      // Convertir le code (custom_id ou public_id) en user_id
-      const normalizedRecipient = recipientId.trim().toUpperCase();
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('id')
-        .or(`public_id.eq.${normalizedRecipient},custom_id.eq.${normalizedRecipient}`)
-        .maybeSingle();
-
-      if (userError || !userData) {
-        toast({
-          title: "Erreur",
-          description: "Utilisateur introuvable avec cet ID",
-          variant: "destructive"
-        });
-        return;
-      }
-
       // Si c'est un achat produit ou panier, créer la commande en mode "cash on delivery"
       if (productPaymentInfo || cartPaymentInfo) {
         const vendorId = productPaymentInfo?.vendorId || cartPaymentInfo?.vendorId;
@@ -534,18 +517,39 @@ export default function Payment() {
           : cartPaymentInfo?.items.map((item: any) => ({ product_id: item.product_id || item.id, quantity: item.quantity, price: item.price }));
 
         // Utiliser 'cash' comme payment_method (valeur valide de l'enum) avec is_cod dans metadata
+        // Récupérer le téléphone du profil si l'adresse ne le contient pas
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('phone')
+          .eq('id', user.id)
+          .single();
+
+        // Construire l'adresse de livraison avec les données du formulaire ou valeurs par défaut
+        const shippingAddress = addressData ? {
+          address: addressData.street,
+          neighborhood: addressData.neighborhood || '',
+          city: addressData.city,
+          landmark: addressData.landmark || '',
+          phone: profileData?.phone || 'Non fourni',
+          country: 'Guinée',
+          instructions: addressData.instructions || '',
+          is_cod: true
+        } : {
+          address: 'Adresse à confirmer par le client',
+          city: 'Conakry',
+          phone: profileData?.phone || 'Non fourni',
+          country: 'Guinée',
+          is_cod: true,
+          instructions: 'Le client sera contacté pour confirmer l\'adresse exacte'
+        };
+
         const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
           p_user_id: user.id,
           p_vendor_id: vendorId,
           p_items: items,
           p_total_amount: parseFloat(paymentAmount),
           p_payment_method: 'cash', // Utiliser 'cash' car 'cash_on_delivery' n'existe pas dans l'enum
-          p_shipping_address: {
-            address: 'Adresse de livraison',
-            city: 'Conakry',
-            country: 'Guinée',
-            is_cod: true // Marquer comme paiement à la livraison
-          }
+          p_shipping_address: shippingAddress
         });
 
         if (orderError) throw orderError;
@@ -1028,8 +1032,8 @@ export default function Payment() {
                             variant: "destructive",
                           });
                         }}
-                        onCashOnDelivery={() => {
-                          handleCashOnDeliveryPayment();
+                        onCashOnDelivery={(addressData) => {
+                          handleCashOnDeliveryPayment(addressData);
                         }}
                         onCancel={() => setPaymentStep('form')}
                       />

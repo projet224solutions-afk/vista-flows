@@ -82,6 +82,15 @@ export function JomyPaymentSelector({
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [showStripeModal, setShowStripeModal] = useState(false);
 
+  // État pour adresse de livraison (COD)
+  const [deliveryAddress, setDeliveryAddress] = useState({
+    street: '',
+    neighborhood: '',
+    city: 'Conakry',
+    landmark: '',
+    instructions: ''
+  });
+
   // Charger le solde wallet si disponible
   useEffect(() => {
     const loadWalletBalance = async () => {
@@ -145,7 +154,7 @@ export function JomyPaymentSelector({
     ...(productType === 'physical' && transactionType === 'product' && onCashOnDelivery ? [{
       id: 'CASH_ON_DELIVERY' as const,
       name: 'Paiement à la livraison',
-      description: 'Payez en espèces à la réception',
+      description: 'Vous serez contacté pour confirmer l\'adresse de livraison',
       icon: <Truck className="h-5 w-5 text-emerald-600" />,
       iconBg: 'bg-emerald-100',
       requiresPhone: false
@@ -166,8 +175,23 @@ export function JomyPaymentSelector({
 
     // Paiement à la livraison
     if (selectedMethod === 'CASH_ON_DELIVERY') {
+      // Valider adresse complète
+      if (!deliveryAddress.street.trim()) {
+        toast.error('Adresse requise', {
+          description: 'Veuillez entrer votre adresse complète'
+        });
+        return;
+      }
+      
+      if (!deliveryAddress.city) {
+        toast.error('Ville requise', {
+          description: 'Veuillez sélectionner votre ville'
+        });
+        return;
+      }
+
       if (onCashOnDelivery) {
-        onCashOnDelivery();
+        onCashOnDelivery(deliveryAddress as any); // Passer l'adresse au callback
       }
       return;
     }
@@ -423,6 +447,96 @@ export function JomyPaymentSelector({
                 Une demande de confirmation sera envoyée sur ce numéro
               </p>
             </div>
+          )}
+
+          {/* Formulaire adresse de livraison pour COD */}
+          {selectedMethod === 'CASH_ON_DELIVERY' && (
+            <div className="space-y-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg animate-in slide-in-from-top-2">
+              <h4 className="font-semibold text-emerald-800 flex items-center gap-2">
+                <Truck className="h-4 w-4" />
+                Adresse de livraison
+              </h4>
+              
+              <div className="space-y-2">
+                <Label htmlFor="street" className="text-sm">
+                  Rue et numéro <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="street"
+                  placeholder="Ex: Avenue de la République, Immeuble 234"
+                  value={deliveryAddress.street}
+                  onChange={(e) => setDeliveryAddress({...deliveryAddress, street: e.target.value})}
+                  className="bg-white"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="neighborhood" className="text-sm">Quartier</Label>
+                <Input
+                  id="neighborhood"
+                  placeholder="Ex: Kaloum, Matam, Dixinn..."
+                  value={deliveryAddress.neighborhood}
+                  onChange={(e) => setDeliveryAddress({...deliveryAddress, neighborhood: e.target.value})}
+                  className="bg-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="city" className="text-sm">
+                  Ville <span className="text-red-500">*</span>
+                </Label>
+                <select
+                  id="city"
+                  value={deliveryAddress.city}
+                  onChange={(e) => setDeliveryAddress({...deliveryAddress, city: e.target.value})}
+                  className="w-full px-3 py-2 border rounded-md bg-white"
+                  required
+                >
+                  <option value="Conakry">Conakry</option>
+                  <option value="Kindia">Kindia</option>
+                  <option value="Labé">Labé</option>
+                  <option value="Kankan">Kankan</option>
+                  <option value="N'Zérékoré">N'Zérékoré</option>
+                  <option value="Mamou">Mamou</option>
+                  <option value="Boké">Boké</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="landmark" className="text-sm">Point de repère</Label>
+                <Input
+                  id="landmark"
+                  placeholder="Ex: En face de la banque BICIGUI"
+                  value={deliveryAddress.landmark}
+                  onChange={(e) => setDeliveryAddress({...deliveryAddress, landmark: e.target.value})}
+                  className="bg-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="instructions" className="text-sm">Instructions spéciales</Label>
+                <Input
+                  id="instructions"
+                  placeholder="Ex: Appeler 10 minutes avant"
+                  value={deliveryAddress.instructions}
+                  onChange={(e) => setDeliveryAddress({...deliveryAddress, instructions: e.target.value})}
+                  className="bg-white"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Info pour paiement à la livraison */}
+          {selectedMethod === 'CASH_ON_DELIVERY' && (
+            <Alert className="bg-emerald-50 border-emerald-200">
+              <Truck className="h-4 w-4 text-emerald-600" />
+              <AlertDescription className="text-emerald-700">
+                <strong>Paiement à la livraison confirmé</strong><br/>
+                Vous serez contacté par téléphone pour confirmer votre adresse exacte avant la livraison. 
+                Préparez {amount.toLocaleString()} GNF en espèces.
+              </AlertDescription>
+            </Alert>
           )}
 
           {/* Info statut */}

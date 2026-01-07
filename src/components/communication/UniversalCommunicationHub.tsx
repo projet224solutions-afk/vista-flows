@@ -751,7 +751,7 @@ export default function UniversalCommunicationHub({
                             : "bg-muted rounded-bl-md"
                         )}>
                           {msg.file_url && msg.type === 'image' && (
-                            <img src={msg.file_url} alt="Image" className="rounded-lg max-w-full mb-2" />
+                            <img loading="lazy" src={msg.file_url} alt="Image" className="rounded-lg max-w-full mb-2" />
                           )}
                           {msg.file_url && msg.type === 'audio' && (
                             <audio controls src={msg.file_url} className="max-w-full mb-2" />

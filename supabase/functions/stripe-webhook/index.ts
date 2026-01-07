@@ -198,76 +198,73 @@ serve(async (req) => {
           }
 
           // =========================================================
-          // 🔐 SYSTÈME DE DÉBLOCAGE INTELLIGENT DES FONDS
+          // � CRÉER COMMANDE SI MANQUANTE
           // =========================================================
-          logStep('🔐 Starting payment risk assessment...');
+          let orderId = transaction.order_id;
+          
+          if (!orderId && transaction.product_id) {
+            logStep('📦 Creating order from payment...');
+            
+            try {
+              const { data: orderResult, error: orderError } = await supabase
+                .rpc('create_order_from_payment', {
+                  p_transaction_id: transaction.id
+                });
+
+              if (orderError) {
+                logStep('⚠️ Error creating order', { error: orderError.message });
+              } else if (orderResult?.success) {
+                orderId = orderResult.order_id;
+                logStep('✅ Order created', { 
+                  orderId, 
+                  orderNumber: orderResult.order_number 
+                });
+              }
+            } catch (orderErr) {
+              logStep('⚠️ Exception creating order', { error: String(orderErr) });
+            }
+          }
+
+          // =========================================================
+          // 💰 CRÉDITER WALLET VENDEUR DIRECTEMENT
+          // =========================================================
+          logStep('💰 Crediting seller wallet...');
           
           try {
-            // Appeler l'Edge Function d'évaluation des risques
-            const assessResponse = await fetch(
-              `${supabaseUrl}/functions/v1/assess-payment-risk`,
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${supabaseServiceKey}`,
-                },
-                body: JSON.stringify({
-                  transactionId: transaction.id,
-                  paymentIntentId: paymentIntent.id,
-                }),
-              }
-            );
+            const { data: walletResult, error: walletError } = await supabase
+              .rpc('force_credit_seller_wallet', {
+                p_transaction_id: transaction.id
+              });
 
-            if (!assessResponse.ok) {
-              const errorData = await assessResponse.json();
-              logStep('⚠️ Risk assessment failed', { error: errorData });
+            if (walletError) {
+              logStep('❌ Error crediting wallet', { error: walletError.message });
               
-              // En cas d'erreur, ne pas bloquer le paiement mais logger
-              // Fallback: traiter normalement
+              // Fallback: essayer process_successful_payment
               const { error: processError } = await supabase.rpc('process_successful_payment', {
                 p_transaction_id: transaction.id
               });
               
               if (processError) {
-                logStep('Error processing payment (fallback)', { error: processError.message });
+                logStep('❌ Error in fallback wallet credit', { error: processError.message });
               } else {
-                logStep('Payment processed successfully (fallback)');
+                logStep('✅ Wallet credited via fallback');
               }
-            } else {
-              const assessData = await assessResponse.json();
-              logStep('✅ Risk assessment completed', { 
-                decision: assessData.decision,
-                trustScore: assessData.trust_score 
-              });
-
-              // La fonction assess-payment-risk gère automatiquement:
-              // - AUTO_APPROVED: Crédite pending_balance + planifie libération
-              // - ADMIN_REVIEW: Crédite pending_balance + met en attente
-              // - BLOCKED: Aucun crédit + alerte admin
-              
-              logStep('Smart funds release system activated', {
-                decision: assessData.decision,
-                releaseScheduledIn: assessData.delay_minutes ? `${assessData.delay_minutes} minutes` : 'pending admin'
+            } else if (walletResult?.success) {
+              logStep('✅ Wallet credited', {
+                walletId: walletResult.wallet_id,
+                amount: walletResult.amount_credited,
+                balanceBefore: walletResult.balance_before,
+                balanceAfter: walletResult.balance_after
               });
             }
-          } catch (assessError) {
-            logStep('⚠️ Exception in risk assessment', { error: String(assessError) });
-            
-            // Fallback: traiter normalement en cas d'erreur
-            const { error: processError } = await supabase.rpc('process_successful_payment', {
-              p_transaction_id: transaction.id
-            });
-            
-            if (processError) {
-              logStep('Error processing payment (exception fallback)', { error: processError.message });
-            } else {
-              logStep('Payment processed successfully (exception fallback)');
-            }
+          } catch (walletErr) {
+            logStep('❌ Exception crediting wallet', { error: String(walletErr) });
           }
 
-          // Mettre à jour la commande si order_id existe
-          if (transaction.order_id) {
+          // =========================================================
+          // 📋 METTRE À JOUR LA COMMANDE
+          // =========================================================
+          if (orderId) {
             await supabase
               .from('orders')
               .update({
@@ -275,9 +272,9 @@ serve(async (req) => {
                 status: 'confirmed',
                 updated_at: new Date().toISOString(),
               })
-              .eq('id', transaction.order_id);
+              .eq('id', orderId);
             
-            logStep('Order updated', { orderId: transaction.order_id });
+            logStep('✅ Order updated', { orderId });
           }
         }
 

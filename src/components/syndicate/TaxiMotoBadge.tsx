@@ -89,7 +89,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
           <div className="flex items-center gap-5">
             <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/20">
               {bureauLogo ? (
-                <img src={bureauLogo} alt="Logo" className="w-12 h-12 object-contain" />
+                <img loading="lazy" src={bureauLogo} alt="Logo" className="w-12 h-12 object-contain" />
               ) : (
                 <Shield className="w-8 h-8 text-white" />
               )}

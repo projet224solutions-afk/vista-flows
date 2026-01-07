@@ -79,18 +79,19 @@ export function FundsReleaseStatus() {
       
       setUserId(user.id);
 
-      // Récupérer le wallet
+      // Récupérer le wallet avec gestion robuste des colonnes
       const { data: wallet, error: walletError } = await supabase
         .from('wallets')
         .select('id, balance, total_received, total_sent')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (walletError) throw walletError;
-      if (!wallet) {
+      if (walletError || !wallet) {
+        console.error('Wallet not found or error:', walletError);
         setLoading(false);
         return;
       }
+      
       setWalletBalance(wallet);
 
       // Récupérer les libérations en cours
@@ -115,9 +116,17 @@ export function FundsReleaseStatus() {
         .in('status', ['PENDING', 'SCHEDULED'])
         .order('held_at', { ascending: false });
 
-      if (releasesError) throw releasesError;
+      if (releasesError) {
+        console.error('Releases error:', releasesError);
+        return;
+      }
       
-      setReleases((releasesData || []) as FundsRelease[]);
+      // Valider et filtrer les données
+      const validReleases = (releasesData || []).filter(release => {
+        return release.stripe_transaction != null;
+      }) as FundsRelease[];
+      
+      setReleases(validReleases);
     } catch (error) {
       console.error('Error fetching funds release status:', error);
     } finally {

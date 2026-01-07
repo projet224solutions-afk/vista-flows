@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -16,8 +16,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { MoreVertical, Trash2, Copy, Reply, Edit } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+} from '@/components/ui/dialog';
+import { MoreVertical, Trash2, Copy, Reply, Edit, Download, Play, Pause, Volume2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface MessageItemProps {
   message: {
@@ -26,6 +31,10 @@ interface MessageItemProps {
     timestamp: string;
     isOwn: boolean;
     senderName?: string;
+    type?: 'text' | 'image' | 'video' | 'audio' | 'file';
+    file_url?: string;
+    file_name?: string;
+    file_size?: number;
     attachments?: { type: string; url: string; name: string }[];
   };
   onDelete?: (messageId: string) => void;
@@ -43,6 +52,18 @@ export default function MessageItem({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    return () => {
+      // Cleanup audio si composant unmount
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    };
+  }, []);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
@@ -70,6 +91,25 @@ export default function MessageItem({
       });
     }
     setIsEditing(false);
+  };
+
+  const toggleAudio = () => {
+    if (!audioRef.current) return;
+    
+    if (isPlayingAudio) {
+      audioRef.current.pause();
+      setIsPlayingAudio(false);
+    } else {
+      audioRef.current.play();
+      setIsPlayingAudio(true);
+    }
+  };
+
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
   return (
@@ -214,6 +254,19 @@ export default function MessageItem({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog Preview Image */}
+      {message.type === 'image' && message.file_url && (
+        <Dialog open={showImagePreview} onOpenChange={setShowImagePreview}>
+          <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+            <img
+              src={message.file_url}
+              alt={message.file_name || 'Image'}
+              className="w-full h-auto"
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }

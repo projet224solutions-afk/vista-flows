@@ -223,7 +223,7 @@ export default function ProductDetail() {
                       selectedImage === idx ? 'border-primary' : 'border-transparent'
                     }`}
                   >
-                    <img src={img} alt={`${product.name} ${idx + 1}`} className="w-full h-full object-cover" />
+                    <img loading="lazy" src={img} alt={`${product.name} ${idx + 1}`} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>

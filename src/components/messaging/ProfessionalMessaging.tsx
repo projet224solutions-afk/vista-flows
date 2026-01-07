@@ -581,7 +581,7 @@ export default function ProfessionalMessaging() {
                         msg.isOwn ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted rounded-bl-md"
                       )}>
                         {msg.type === 'image' && msg.file_url && (
-                          <img src={msg.file_url} alt="Image" className="rounded-lg max-w-full mb-2" />
+                          <img loading="lazy" src={msg.file_url} alt="Image" className="rounded-lg max-w-full mb-2" />
                         )}
                         {msg.type === 'file' && msg.file_url && (
                           <a href={msg.file_url} target="_blank" rel="noopener noreferrer" 

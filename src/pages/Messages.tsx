@@ -1,14 +1,20 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Send, User, Search, MessageCircle, Phone, Video, MoreVertical } from "lucide-react";
+import { ArrowLeft, Send, User, Search, MessageCircle, Phone, Video, MoreVertical, Shield, Check, CheckCheck, Clock, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import QuickFooter from "@/components/QuickFooter";
+import { universalCommunicationService } from "@/services/UniversalCommunicationService";
+import AgoraVideoCall from "@/components/communication/AgoraVideoCall";
+import AgoraAudioCall from "@/components/communication/AgoraAudioCall";
+import MessageInput from "@/components/communication/MessageInput";
 
 interface Message {
   id: string;
@@ -17,6 +23,15 @@ interface Message {
   recipient_id: string;
   created_at: string;
   read_at: string | null;
+  status?: 'sent' | 'delivered' | 'read' | 'failed';
+  type?: 'text' | 'image' | 'video' | 'audio' | 'file' | 'location' | 'call';
+  file_url?: string;
+  file_name?: string;
+  file_size?: number;
+  file_type?: string;
+  conversation_id?: string;
+  public_id?: string;
+  metadata?: any;
 }
 
 interface Conversation {
@@ -28,6 +43,10 @@ interface Conversation {
   last_message: string;
   last_message_time: string;
   unread_count: number;
+  is_vendor?: boolean;
+  is_certified?: boolean;
+  vendor_phone?: string;
+  vendor_shop_slug?: string;
 }
 
 export default function Messages() {
@@ -43,6 +62,8 @@ export default function Messages() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showChat, setShowChat] = useState(false);
+  const [showVideoCall, setShowVideoCall] = useState(false);
+  const [showAudioCall, setShowAudioCall] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -125,69 +146,61 @@ export default function Messages() {
     try {
       setLoading(true);
       
-      const { data: messagesData, error } = await supabase
-        .from('messages')
-        .select('*')
-        .or(`sender_id.eq.${currentUser.id},recipient_id.eq.${currentUser.id}`)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const conversationsMap = new Map<string, any>();
+      // Utiliser le service professionnel
+      const conversationsData = await universalCommunicationService.getConversations(currentUser.id);
       
-      for (const message of messagesData || []) {
-        const otherUserId = message.sender_id === currentUser.id 
-          ? message.recipient_id 
-          : message.sender_id;
-        
-        if (!conversationsMap.has(otherUserId)) {
+      // Enrichir avec infos vendeur
+      const enrichedConversations = await Promise.all(
+        conversationsData.map(async (conv: any) => {
+          const otherUserId = conv.participants?.find((p: any) => p.user_id !== currentUser.id)?.user_id;
+          if (!otherUserId) return conv;
+
+          // Récupérer profil avec infos vendeur
           const { data: profile } = await supabase
             .from('profiles')
-            .select('first_name, last_name, email, avatar_url')
+            .select(`
+              first_name,
+              last_name,
+              email,
+              avatar_url,
+              vendors!inner(
+                business_name,
+                shop_slug,
+                phone,
+                certification_status:vendor_certifications(status)
+              )
+            `)
             .eq('id', otherUserId)
             .maybeSingle();
 
-          const userName = profile?.first_name && profile?.last_name
-            ? `${profile.first_name} ${profile.last_name}`
-            : profile?.email || 'Utilisateur';
+          const isVendor = profile?.vendors && typeof profile.vendors === 'object';
+          const vendorInfo = isVendor ? profile.vendors[0] : null;
+          const isCertified = vendorInfo?.certification_status?.status === 'CERTIFIE';
 
-          conversationsMap.set(otherUserId, {
-            id: otherUserId,
+          const userName = vendorInfo?.business_name
+            ? vendorInfo.business_name
+            : (profile?.first_name && profile?.last_name
+              ? `${profile.first_name} ${profile.last_name}`
+              : profile?.email || 'Utilisateur');
+
+          return {
+            id: conv.id,
             other_user_id: otherUserId,
             other_user_name: userName,
             other_user_email: profile?.email || '',
             other_user_avatar: profile?.avatar_url,
-            last_message: message.content,
-            last_message_time: message.created_at,
-            unread_count: 0
-          });
-        }
-      }
+            last_message: conv.last_message_preview || 'Nouvelle conversation',
+            last_message_time: conv.last_message_at || conv.created_at,
+            unread_count: conv.unread_count || 0,
+            is_vendor: isVendor,
+            is_certified: isCertified,
+            vendor_phone: vendorInfo?.phone,
+            vendor_shop_slug: vendorInfo?.shop_slug
+          };
+        })
+      );
 
-      if (recipientIdParam && !conversationsMap.has(recipientIdParam)) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('first_name, last_name, email, avatar_url')
-          .eq('id', recipientIdParam)
-          .maybeSingle();
-
-        const userName = profile?.first_name && profile?.last_name
-          ? `${profile.first_name} ${profile.last_name}`
-          : profile?.email || 'Utilisateur';
-
-        conversationsMap.set(recipientIdParam, {
-          id: recipientIdParam,
-          other_user_id: recipientIdParam,
-          other_user_name: userName,
-          other_user_email: profile?.email || '',
-          other_user_avatar: profile?.avatar_url,
-          last_message: 'Nouvelle conversation',
-          last_message_time: new Date().toISOString(),
-          unread_count: 0
-        });
-      }
-
-      setConversations(Array.from(conversationsMap.values()));
+      setConversations(enrichedConversations);
     } catch (error) {
       console.error('Erreur chargement conversations:', error);
       toast.error('Erreur lors du chargement des conversations');
@@ -207,7 +220,15 @@ export default function Messages() {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
+      
+      // Caster les données pour correspondre à l'interface Message
+      const messagesData = (data || []).map(msg => ({
+        ...msg,
+        status: msg.status as 'sent' | 'delivered' | 'read' | 'failed' | undefined,
+        type: msg.type as 'text' | 'image' | 'video' | 'audio' | 'file' | 'location' | 'call' | undefined
+      }));
+      
+      setMessages(messagesData);
 
       await supabase
         .from('messages')
@@ -226,16 +247,13 @@ export default function Messages() {
     if (!newMessage.trim() || !selectedConversation || !currentUser) return;
 
     try {
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          sender_id: currentUser.id,
-          recipient_id: selectedConversation,
-          content: newMessage.trim(),
-          type: 'text'
-        });
-
-      if (error) throw error;
+      // Utiliser le service professionnel
+      const conversationId = `direct_${selectedConversation}`;
+      await universalCommunicationService.sendTextMessage(
+        conversationId,
+        currentUser.id,
+        newMessage.trim()
+      );
 
       setNewMessage("");
       loadMessages(selectedConversation);
@@ -243,6 +261,28 @@ export default function Messages() {
     } catch (error) {
       console.error('Erreur envoi message:', error);
       toast.error("Erreur lors de l'envoi du message");
+    }
+  };
+
+  const handleSendFile = async (file: File) => {
+    if (!selectedConversation || !currentUser) {
+      toast.error('Impossible d\'envoyer le fichier');
+      return;
+    }
+
+    try {
+      const conversationId = `direct_${selectedConversation}`;
+      await universalCommunicationService.sendFileMessage(
+        conversationId,
+        currentUser.id,
+        file
+      );
+
+      loadMessages(selectedConversation);
+      loadConversations();
+    } catch (error: any) {
+      console.error('Erreur envoi fichier:', error);
+      throw error; // Re-throw pour que MessageInput affiche l'erreur
     }
   };
 
@@ -283,6 +323,18 @@ export default function Messages() {
     return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
   };
 
+  const formatDetailedTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleString('fr-FR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Liste des conversations - visible quand showChat est false sur mobile */}
@@ -291,7 +343,7 @@ export default function Messages() {
         showChat ? "hidden md:flex" : "flex"
       )}>
         {/* Header liste */}
-        <header className="bg-card border-b border-border sticky top-0 z-40 px-4 py-4">
+        <header className="bg-gradient-to-r from-card to-card/95 border-b border-border sticky top-0 z-40 px-4 py-4 shadow-sm backdrop-blur-sm">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-bold text-foreground">Messages</h1>
           </div>
@@ -310,27 +362,30 @@ export default function Messages() {
         <ScrollArea className="flex-1">
           {loading ? (
             <div className="p-8 text-center text-muted-foreground">
-              <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2" />
-              Chargement...
+              <div className="animate-spin w-8 h-8 border-3 border-primary border-t-transparent rounded-full mx-auto mb-3" />
+              <p className="text-sm">Chargement des conversations...</p>
             </div>
           ) : filteredConversations.length === 0 ? (
-            <div className="p-8 text-center">
-              <MessageCircle className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
-              <p className="text-muted-foreground">Aucune conversation</p>
-              <p className="text-sm text-muted-foreground/70 mt-1">
-                Commencez une nouvelle conversation depuis le marketplace
+            <div className="p-8 text-center animate-in fade-in duration-500">
+              <div className="bg-primary/5 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                <MessageCircle className="w-10 h-10 text-primary" />
+              </div>
+              <p className="text-lg font-medium text-foreground mb-2">Aucune conversation</p>
+              <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                Commencez une nouvelle conversation depuis le marketplace ou contactez un vendeur
               </p>
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {filteredConversations.map((conv) => (
+              {filteredConversations.map((conv, index) => (
                 <button
                   key={conv.id}
                   onClick={() => handleSelectConversation(conv.id)}
                   className={cn(
-                    "w-full p-4 flex items-center gap-3 hover:bg-accent/50 transition-colors text-left",
-                    selectedConversation === conv.id && "bg-accent"
+                    "w-full p-4 flex items-center gap-3 hover:bg-accent/50 transition-all duration-200 text-left animate-in fade-in slide-in-from-left-3",
+                    selectedConversation === conv.id && "bg-accent shadow-sm"
                   )}
+                  style={{ animationDelay: `${index * 30}ms` }}
                 >
                   <Avatar className="w-12 h-12 flex-shrink-0">
                     <AvatarImage src={conv.other_user_avatar} />
@@ -343,7 +398,10 @@ export default function Messages() {
                       <p className="font-medium text-foreground truncate">
                         {conv.other_user_name}
                       </p>
-                      <span className="text-xs text-muted-foreground flex-shrink-0">
+                      <span 
+                        className="text-xs text-muted-foreground flex-shrink-0 cursor-help"
+                        title={formatDetailedTime(conv.last_message_time)}
+                      >
                         {formatTime(conv.last_message_time)}
                       </span>
                     </div>
@@ -371,7 +429,7 @@ export default function Messages() {
         {selectedConversation ? (
           <>
             {/* Header conversation */}
-            <header className="bg-card border-b border-border px-3 py-3 flex items-center gap-3 sticky top-0 z-40">
+            <header className="bg-gradient-to-r from-card to-card/95 border-b border-border px-3 py-3 flex items-center gap-3 sticky top-0 z-40 shadow-sm backdrop-blur-sm">
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -387,16 +445,42 @@ export default function Messages() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-foreground truncate">
-                  {selectedConvData?.other_user_name}
-                </p>
-                <p className="text-xs text-muted-foreground">En ligne</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-foreground truncate">
+                    {selectedConvData?.other_user_name}
+                  </p>
+                  {selectedConvData?.is_certified && (
+                    <Badge variant="default" className="gap-1 flex-shrink-0">
+                      <Shield className="w-3 h-3" />
+                      Certifié
+                    </Badge>
+                  )}
+                </div>
+                {selectedConvData?.is_vendor ? (
+                  <p className="text-xs text-muted-foreground">
+                    Vendeur {selectedConvData?.vendor_phone ? `• ${selectedConvData.vendor_phone}` : '• En ligne'}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">En ligne</p>
+                )}
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="text-muted-foreground">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-muted-foreground"
+                  onClick={() => setShowAudioCall(true)}
+                  title="Appel audio"
+                >
                   <Phone className="w-5 h-5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="text-muted-foreground">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-muted-foreground"
+                  onClick={() => setShowVideoCall(true)}
+                  title="Appel vidéo"
+                >
                   <Video className="w-5 h-5" />
                 </Button>
               </div>
@@ -406,38 +490,62 @@ export default function Messages() {
             <ScrollArea className="flex-1 px-4 py-4">
               <div className="space-y-3 pb-4">
                 {messages.length === 0 ? (
-                  <div className="text-center py-12">
-                    <MessageCircle className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
-                    <p className="text-muted-foreground text-sm">
-                      Commencez la conversation !
+                  <div className="text-center py-16 animate-in fade-in duration-500">
+                    <div className="bg-primary/5 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
+                      <MessageCircle className="w-12 h-12 text-primary" />
+                    </div>
+                    <p className="text-lg font-medium text-foreground mb-2">
+                      Démarrez la conversation
+                    </p>
+                    <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                      Envoyez votre premier message à {selectedConvData?.other_user_name}
                     </p>
                   </div>
                 ) : (
-                  messages.map((message) => {
+                  messages.map((message, index) => {
                     const isOwnMessage = message.sender_id === currentUser?.id;
+                    const messageStatus = message.status || (message.read_at ? 'read' : 'delivered');
+                    
                     return (
                       <div
                         key={message.id}
-                        className={cn("flex", isOwnMessage ? "justify-end" : "justify-start")}
+                        className={cn(
+                          "flex animate-in fade-in slide-in-from-bottom-2 duration-300",
+                          isOwnMessage ? "justify-end" : "justify-start"
+                        )}
+                        style={{ animationDelay: `${index * 50}ms` }}
                       >
                         <div
                           className={cn(
-                            "max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm",
+                            "max-w-[80%] rounded-2xl px-4 py-2.5 shadow-md transition-all hover:shadow-lg",
                             isOwnMessage
-                              ? "bg-primary text-primary-foreground rounded-br-md"
+                              ? "bg-gradient-to-br from-primary to-primary/90 text-primary-foreground rounded-br-md"
                               : "bg-card border border-border text-foreground rounded-bl-md"
                           )}
                         >
                           <p className="text-sm leading-relaxed break-words">{message.content}</p>
-                          <p className={cn(
-                            "text-[10px] mt-1 text-right",
-                            isOwnMessage ? "text-primary-foreground/70" : "text-muted-foreground"
-                          )}>
-                            {new Date(message.created_at).toLocaleTimeString('fr-FR', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </p>
+                          <div className="flex items-center justify-end gap-1 mt-1">
+                            <p 
+                              className={cn(
+                                "text-[10px] cursor-help",
+                                isOwnMessage ? "text-primary-foreground/70" : "text-muted-foreground"
+                              )}
+                              title={formatDetailedTime(message.created_at)}
+                            >
+                              {new Date(message.created_at).toLocaleTimeString('fr-FR', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                            {isOwnMessage && (
+                              <span className="flex-shrink-0" title={messageStatus === 'read' ? 'Lu' : messageStatus === 'delivered' ? 'Délivré' : messageStatus === 'sent' ? 'Envoyé' : 'Échec'}>
+                                {messageStatus === 'read' && <CheckCheck className="w-3 h-3 text-blue-400" />}
+                                {messageStatus === 'delivered' && <CheckCheck className="w-3 h-3 text-primary-foreground/50" />}
+                                {messageStatus === 'sent' && <Check className="w-3 h-3 text-primary-foreground/50" />}
+                                {messageStatus === 'failed' && <XCircle className="w-3 h-3 text-red-400" />}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
@@ -447,32 +555,24 @@ export default function Messages() {
               </div>
             </ScrollArea>
 
-            {/* Zone de saisie - TOUJOURS VISIBLE */}
-            <div className="border-t border-border bg-card p-3 sticky bottom-0 z-50">
-              <div className="flex items-center gap-2">
-                <Input
-                  ref={inputRef}
-                  placeholder="Écrivez votre message..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      sendMessage();
-                    }
-                  }}
-                  className="flex-1 bg-muted/50 border-0 focus-visible:ring-1"
-                />
-                <Button 
-                  onClick={sendMessage} 
-                  disabled={!newMessage.trim()}
-                  size="icon"
-                  className="flex-shrink-0 rounded-full w-10 h-10"
-                >
-                  <Send className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
+            {/* Zone de saisie avec MessageInput */}
+            <MessageInput
+              onSendText={async (text) => {
+                if (!currentUser || !selectedConversation) return;
+                const conversationId = `direct_${selectedConversation}`;
+                await universalCommunicationService.sendTextMessage(
+                  conversationId,
+                  currentUser.id,
+                  text
+                );
+                loadMessages(selectedConversation);
+                loadConversations();
+              }}
+              onSendFile={handleSendFile}
+              disabled={!selectedConversation}
+              placeholder="Écrivez votre message..."
+              className="sticky bottom-0 z-50"
+            />
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
@@ -491,6 +591,45 @@ export default function Messages() {
       <div className={cn(showChat ? "hidden" : "block")}>
         <QuickFooter />
       </div>
+
+      {/* Dialogs Appels Agora */}
+      {showAudioCall && selectedConversation && (
+        <Dialog open={showAudioCall} onOpenChange={setShowAudioCall}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Appel Audio</DialogTitle>
+            </DialogHeader>
+            <AgoraAudioCall 
+              channel={`audio_${selectedConversation}_${currentUser?.id}`}
+              callerInfo={{
+                name: selectedConvData?.other_user_name || 'Utilisateur',
+                avatar: selectedConvData?.other_user_avatar,
+                userId: selectedConversation
+              }}
+              onCallEnd={() => setShowAudioCall(false)} 
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {showVideoCall && selectedConversation && (
+        <Dialog open={showVideoCall} onOpenChange={setShowVideoCall}>
+          <DialogContent className="max-w-4xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle>Appel Vidéo</DialogTitle>
+            </DialogHeader>
+            <AgoraVideoCall 
+              channel={`video_${selectedConversation}_${currentUser?.id}`}
+              callerInfo={{
+                name: selectedConvData?.other_user_name || 'Utilisateur',
+                avatar: selectedConvData?.other_user_avatar,
+                userId: selectedConversation
+              }}
+              onCallEnd={() => setShowVideoCall(false)} 
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

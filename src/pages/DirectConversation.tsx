@@ -259,7 +259,7 @@ export default function DirectConversation() {
                       : "bg-muted rounded-bl-sm"
                   )}>
                     {msg.file_url && msg.type === 'image' && (
-                      <img src={msg.file_url} alt="Image" className="rounded-lg max-w-full mb-2" />
+                      <img loading="lazy" src={msg.file_url} alt="Image" className="rounded-lg max-w-full mb-2" />
                     )}
                     {msg.content && (
                       <p className="text-sm leading-relaxed break-words">{msg.content}</p>

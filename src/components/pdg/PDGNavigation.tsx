@@ -67,6 +67,7 @@ const categories: NavCategory[] = [
       { value: 'stolen-vehicles', label: 'Motos Volées', icon: Shield, badge: true },
       { value: 'orders', label: 'Commandes', icon: Package },
       { value: 'vendors', label: 'Vendeurs', icon: Store },
+      { value: 'vendor-kyc-review', label: 'Vérification KYC', icon: Shield, badge: true },
       { value: 'vendor-certification', label: 'Certification Vendeurs', icon: Shield, badge: true },
       { value: 'drivers', label: 'Livreurs', icon: Bike },
       { value: 'quotes-invoices', label: 'Devis & Factures', icon: FileText },

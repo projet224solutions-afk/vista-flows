@@ -289,7 +289,7 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
                     {/* Photo */}
                     <div className="w-[280px] h-[320px] bg-gradient-to-b from-sky-200 to-sky-100 rounded-2xl border-8 border-white shadow-xl flex items-center justify-center overflow-hidden">
                       {badgeData.photo ? (
-                        <img src={badgeData.photo} alt="Photo" className="w-full h-full object-cover" />
+                        <img loading="lazy" src={badgeData.photo} alt="Photo" className="w-full h-full object-cover" />
                       ) : (
                         <Camera className="w-24 h-24 text-sky-400" />
                       )}

@@ -160,7 +160,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
             <div className="text-center border-b border-dashed border-muted-foreground/30 pb-3 mb-3">
               <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-xl mx-auto mb-2 flex items-center justify-center overflow-hidden">
                 {orderData.logoUrl ? (
-                  <img src={orderData.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                  <img loading="lazy" src={orderData.logoUrl} alt="Logo" className="w-full h-full object-contain" />
                 ) : (
                   <Store className="h-6 w-6 text-primary-foreground" />
                 )}

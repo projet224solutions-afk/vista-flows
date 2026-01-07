@@ -1,6 +1,9 @@
 /**
  * 📧 SERVICE D'EMAIL RÉEL - 224SOLUTIONS
- * Service pour envoyer de vrais emails via EmailJS (gratuit)
+ * Service pour envoyer de vrais emails via Resend (recommandé) ou EmailJS
+ * 
+ * ⚠️ IMPORTANT: Ce service est DÉPRÉCIÉ
+ * Utilisez plutôt resendEmailService.ts qui est plus fiable
  */
 
 import emailjs from '@emailjs/browser';
@@ -20,10 +23,11 @@ class RealEmailService {
   private static instance: RealEmailService;
   private isInitialized = false;
 
-  // Configuration EmailJS (service gratuit)
-  private readonly SERVICE_ID = '224solutions_service';
-  private readonly TEMPLATE_ID = 'syndicate_bureau_template';
-  private readonly PUBLIC_KEY = 'your_emailjs_public_key';
+  // Configuration EmailJS (service gratuit) - OPTIONNEL
+  // Si non configuré, utilisera le backend ou Resend
+  private readonly SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || '';
+  private readonly TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '';
+  private readonly PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '';
 
   static getInstance(): RealEmailService {
     if (!RealEmailService.instance) {
@@ -33,10 +37,22 @@ class RealEmailService {
   }
 
   /**
+   * Vérifie si EmailJS est configuré
+   */
+  private isEmailJSConfigured(): boolean {
+    return !!(this.SERVICE_ID && this.TEMPLATE_ID && this.PUBLIC_KEY);
+  }
+
+  /**
    * Initialise EmailJS
    */
   private async initializeEmailJS() {
     try {
+      if (!this.isEmailJSConfigured()) {
+        console.warn('⚠️ EmailJS non configuré - utilisation du backend');
+        return;
+      }
+      
       // Initialiser EmailJS avec votre clé publique
       emailjs.init(this.PUBLIC_KEY);
       this.isInitialized = true;
@@ -51,35 +67,46 @@ class RealEmailService {
    */
   async sendSyndicatePresidentEmail(data: SyndicateEmailData): Promise<boolean> {
     try {
-      // Méthode 1: Essayer d'envoyer via EmailJS
-      const emailJSResult = await this.sendViaEmailJS(data);
-      if (emailJSResult) {
-        return true;
+      console.log('📧 Tentative envoi email président:', data.president_email);
+      
+      // Méthode 1: Essayer EmailJS si configuré
+      if (this.isEmailJSConfigured()) {
+        const emailJSResult = await this.sendViaEmailJS(data);
+        if (emailJSResult) {
+          return true;
+        }
+      } else {
+        console.log('⚠️ EmailJS non configuré, passage au backend...');
       }
 
-      // Méthode 2: Essayer d'envoyer via le backend
+      // Méthode 2: Essayer d'envoyer via le backend (Resend)
       const backendResult = await this.sendViaBackend(data);
       if (backendResult) {
         return true;
       }
 
-      // Méthode 3: Utiliser l'API Web Share ou mailto
+      // Méthode 3: Utiliser l'API Web Share ou mailto en dernier recours
       const webResult = await this.sendViaWebAPI(data);
       return webResult;
 
     } catch (error) {
       console.error('❌ Erreur envoi email président:', error);
+      toast.error('Erreur lors de l\'envoi de l\'email. Veuillez réessayer.');
       return false;
     }
   }
 
   /**
-   * Méthode 1: Envoi via EmailJS (service gratuit)
+   * Méthode 1: Envoi via EmailJS (optionnel)
    */
   private async sendViaEmailJS(data: SyndicateEmailData): Promise<boolean> {
     try {
       if (!this.isInitialized) {
         await this.initializeEmailJS();
+      }
+
+      if (!this.isEmailJSConfigured()) {
+        return false;
       }
 
       const templateParams = {
@@ -109,6 +136,7 @@ class RealEmailService {
       return false;
     } catch (error) {
       console.error('❌ Erreur EmailJS:', error);
+      // Ne pas afficher d'erreur, passer à la méthode suivante
       return false;
     }
   }

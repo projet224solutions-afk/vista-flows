@@ -50,6 +50,7 @@ const DriverSubscriptionManagement = lazy(() => import('@/components/pdg/DriverS
 const PDGServiceSubscriptions = lazy(() => import('@/components/pdg/PDGServiceSubscriptions'));
 const PDGBureauMonitoring = lazy(() => import('@/components/pdg/PDGBureauMonitoring'));
 const VendorCertificationManager = lazy(() => import('@/components/ceo/VendorCertificationManager').then(m => ({ default: m.VendorCertificationManager })));
+const VendorKYCReview = lazy(() => import('@/components/ceo/VendorKYCReview').then(m => ({ default: m.VendorKYCReview })));
 
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
@@ -636,6 +637,12 @@ export default function PDG224Solutions() {
               {activeTab === 'vendor-certification' && (
                 <ErrorBoundary>
                   <VendorCertificationManager />
+                </ErrorBoundary>
+              )}
+
+              {activeTab === 'vendor-kyc-review' && (
+                <ErrorBoundary>
+                  <VendorKYCReview />
                 </ErrorBoundary>
               )}
             </Suspense>

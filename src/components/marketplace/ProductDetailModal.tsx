@@ -316,7 +316,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                       selectedImage === index ? 'border-primary' : 'border-transparent'
                     }`}
                   >
-                    <img src={img} alt={`${product.name} ${index + 1}`} className="w-full h-full object-contain" />
+                    <img loading="lazy" src={img} alt={`${product.name} ${index + 1}`} className="w-full h-full object-contain" />
                   </button>
                 ))}
               </div>
