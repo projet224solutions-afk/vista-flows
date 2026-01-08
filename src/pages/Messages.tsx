@@ -48,6 +48,7 @@ interface Conversation {
   is_certified?: boolean;
   vendor_phone?: string;
   vendor_shop_slug?: string;
+  vendor_id?: string;
 }
 
 export default function Messages() {
@@ -203,7 +204,7 @@ export default function Messages() {
           // Vérifier si c'est un vendeur
           const { data: vendor } = await supabase
             .from('vendors')
-            .select('business_name, shop_slug, phone')
+            .select('id, business_name, shop_slug, phone')
             .eq('user_id', conv.other_user_id)
             .maybeSingle();
 
@@ -234,7 +235,8 @@ export default function Messages() {
             is_vendor: isVendor,
             is_certified: isCertified,
             vendor_phone: vendor?.phone,
-            vendor_shop_slug: vendor?.shop_slug
+            vendor_shop_slug: vendor?.shop_slug,
+            vendor_id: vendor?.id
           };
         })
       );
@@ -723,42 +725,53 @@ export default function Messages() {
               >
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <Avatar className="w-10 h-10 flex-shrink-0">
-                <AvatarImage src={selectedConvData?.other_user_avatar} />
-                <AvatarFallback className="bg-primary/10 text-primary">
-                  {selectedConvData?.other_user_name?.substring(0, 2).toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-semibold text-foreground truncate">
-                    {selectedConvData?.other_user_public_id && (
-                      <span className="text-primary font-mono text-sm mr-1.5">
-                        {selectedConvData.other_user_public_id}
-                      </span>
+              <div 
+                className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => {
+                  if (selectedConvData?.is_vendor && selectedConvData?.vendor_id) {
+                    navigate(`/boutique/${selectedConvData.vendor_id}`);
+                  } else if (selectedConversation) {
+                    navigate(`/profile/${selectedConversation}`);
+                  }
+                }}
+              >
+                <Avatar className="w-10 h-10 flex-shrink-0">
+                  <AvatarImage src={selectedConvData?.other_user_avatar} />
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    {selectedConvData?.other_user_name?.substring(0, 2).toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-foreground truncate">
+                      {selectedConvData?.other_user_public_id && (
+                        <span className="text-primary font-mono text-sm mr-1.5">
+                          {selectedConvData.other_user_public_id}
+                        </span>
+                      )}
+                      {selectedConvData?.other_user_name}
+                    </p>
+                    {selectedConvData?.is_certified && (
+                      <Badge variant="default" className="gap-1 flex-shrink-0">
+                        <Shield className="w-3 h-3" />
+                        Certifié
+                      </Badge>
                     )}
-                    {selectedConvData?.other_user_name}
-                  </p>
-                  {selectedConvData?.is_certified && (
-                    <Badge variant="default" className="gap-1 flex-shrink-0">
-                      <Shield className="w-3 h-3" />
-                      Certifié
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {selectedConvData?.is_vendor ? (
-                    <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-                      Vendeur
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-xs">
-                      Client
-                    </Badge>
-                  )}
-                  <span className="text-xs text-muted-foreground">
-                    {selectedConvData?.vendor_phone ? selectedConvData.vendor_phone : 'En ligne'}
-                  </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {selectedConvData?.is_vendor ? (
+                      <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                        Vendeur
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs">
+                        Client
+                      </Badge>
+                    )}
+                    <span className="text-xs text-muted-foreground">
+                      {selectedConvData?.vendor_phone ? selectedConvData.vendor_phone : 'En ligne'}
+                    </span>
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-1">
