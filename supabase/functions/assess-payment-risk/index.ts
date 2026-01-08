@@ -87,7 +87,7 @@ serve(async (req) => {
 
     // Vérifier que le paiement a bien été effectué
     const charges = paymentIntent.charges?.data || [];
-    const paidCharge = charges.find(c => c.paid === true);
+    const paidCharge = charges.find((c: any) => c.paid === true);
     
     if (!paidCharge) {
       console.error('⚠️ NO PAID CHARGE FOUND');
@@ -218,14 +218,11 @@ serve(async (req) => {
         .select()
         .single();
 
-      // Créditer le pending_balance (fonds non disponibles)
-      await supabase
-        .from('wallets')
-        .update({
-          pending_balance: supabase.raw(`pending_balance + ${transaction.seller_net_amount}`),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', wallet.id);
+      // Créditer le pending_balance via RPC
+      await supabase.rpc('increment_pending_balance', {
+        p_wallet_id: wallet.id,
+        p_amount: transaction.seller_net_amount,
+      });
 
       console.log(`⏳ Funds held in pending_balance: ${transaction.seller_net_amount} XOF`);
 
@@ -286,14 +283,11 @@ serve(async (req) => {
         .eq('id', releaseId)
         .single();
 
-      // Créditer le pending_balance
-      await supabase
-        .from('wallets')
-        .update({
-          pending_balance: supabase.raw(`pending_balance + ${transaction.seller_net_amount}`),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', wallet.id);
+      // Créditer le pending_balance via RPC
+      await supabase.rpc('increment_pending_balance', {
+        p_wallet_id: wallet.id,
+        p_amount: transaction.seller_net_amount,
+      });
 
       const delayMinutes = Math.round(
         (new Date(schedule.scheduled_release_at).getTime() - new Date().getTime()) / 60000
@@ -322,7 +316,7 @@ serve(async (req) => {
     console.error('❌ Error in assess-payment-risk:', error);
     return new Response(
       JSON.stringify({
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         success: false,
       }),
       {
