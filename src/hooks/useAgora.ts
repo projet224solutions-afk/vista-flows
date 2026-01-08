@@ -48,10 +48,26 @@ export function useAgora() {
 
   const configRef = useRef<AgoraConfig | null>(null);
 
+  // Convertir UUID en UID numérique pour Agora (UUID -> nombre 32-bit)
+  const uuidToNumericUid = useCallback((uuid: string): number => {
+    // Prendre les 8 premiers caractères hex du UUID et convertir en nombre
+    const hex = uuid.replace(/-/g, '').substring(0, 8);
+    return parseInt(hex, 16) % 2147483647; // Garder dans la plage int32 positive
+  }, []);
+
+  // Valider et nettoyer le nom de canal pour Agora (max 64 bytes, caractères limités)
+  const sanitizeChannelName = useCallback((channel: string): string => {
+    // Supprimer les caractères non autorisés et limiter à 64 caractères
+    const sanitized = channel
+      .replace(/[^a-zA-Z0-9_\-]/g, '_')
+      .substring(0, 64);
+    return sanitized;
+  }, []);
+
   // Fonction pour récupérer les credentials Agora
-  const fetchAgoraCredentials = useCallback(async (channel: string, uid: string) => {
+  const fetchAgoraCredentials = useCallback(async (channel: string, uid: number) => {
     const { data, error } = await supabase.functions.invoke('agora-token', {
-      body: { channel, uid, role: 'publisher' }
+      body: { channel, uid: String(uid), role: 'publisher' }
     });
 
     if (error) throw error;
@@ -111,11 +127,15 @@ export function useAgora() {
       setIsLoading(true);
       setError(null);
 
-      console.log('📞 Tentative de rejoindre l\'appel:', channel, 'User:', user.id);
+      // Convertir l'UUID en UID numérique et nettoyer le nom du canal
+      const numericUid = uuidToNumericUid(user.id);
+      const sanitizedChannel = sanitizeChannelName(channel);
+
+      console.log('📞 Tentative de rejoindre l\'appel:', sanitizedChannel, 'User:', user.id, 'NumericUID:', numericUid);
 
       // Récupérer le token (et l'appId) pour ce canal
-      console.log('🔑 Récupération du token pour:', channel);
-      const credentials = await fetchAgoraCredentials(channel, user.id);
+      console.log('🔑 Récupération du token pour:', sanitizedChannel);
+      const credentials = await fetchAgoraCredentials(sanitizedChannel, numericUid);
 
       if (!credentials?.appId) {
         throw new Error('App ID Agora non reçu');
@@ -137,8 +157,8 @@ export function useAgora() {
       }
 
       const callConfig: CallConfig = {
-        channel,
-        uid: user.id,
+        channel: sanitizedChannel,
+        uid: String(numericUid),
         token: credentials.token,
         role: 'publisher'
       };
@@ -261,7 +281,9 @@ export function useAgora() {
    * Démarrer un appel
    */
   const startCall = useCallback(async (userId: string, isVideo: boolean = true) => {
-    const channel = `call_${user?.id}_${userId}_${Date.now()}`;
+    // Créer un nom de canal court et valide pour Agora (max 64 chars)
+    const timestamp = Date.now().toString(36); // Base36 pour raccourcir
+    const channel = `call_${timestamp}`;
     await joinCall(channel, isVideo);
   }, [user?.id, joinCall]);
 

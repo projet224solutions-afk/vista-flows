@@ -637,8 +637,9 @@ class UniversalCommunicationService {
     }
 
     try {
-      // Générer un channel unique pour Agora
-      const agoraChannel = `call_${callerId.substring(0, 8)}_${receiverId.substring(0, 8)}_${Date.now()}`;
+      // Générer un channel court et valide pour Agora (max 64 chars, alphanumérique)
+      const timestamp = Date.now().toString(36);
+      const agoraChannel = `call_${timestamp}`;
       
       console.log('[Communication] Création appel avec channel Agora:', agoraChannel);
 
