@@ -219,20 +219,33 @@ serve(async (req) => {
       // Vérification alternative: le token est valide si Supabase l'accepte
     }
 
-    console.log('Utilisateur authentifié:', userId);
-
     const { channel, uid: requestedUid, role = 'publisher' } = await req.json();
 
-    if (!channel) {
+    if (!channel || typeof channel !== 'string') {
       throw new Error('Channel requis');
     }
 
-    // On impose l'UID Agora = userId authentifié
-    const uid = userId;
-    if (requestedUid && requestedUid !== uid) {
-      console.warn('UID demandé différent du userId authentifié; override.', { requestedUid, uid });
+    const sanitizeChannelName = (value: string) =>
+      value.replace(/[^a-zA-Z0-9_\-]/g, '_').substring(0, 64);
+
+    const uuidToNumericUid = (uuid: string): number => {
+      const hex = uuid.replace(/-/g, '').substring(0, 8);
+      return parseInt(hex, 16) % 2147483647;
+    };
+
+    const safeChannel = sanitizeChannelName(channel);
+
+    // Utiliser l'UID fourni par le client si présent (doit matcher l'UID utilisé côté RTC join)
+    const fallbackUid = String(uuidToNumericUid(userId));
+    const uid = (typeof requestedUid === 'string' && requestedUid.trim().length > 0)
+      ? requestedUid.trim().substring(0, 64)
+      : fallbackUid;
+
+    if (!/^[a-zA-Z0-9_\-]{1,64}$/.test(uid)) {
+      throw new Error('UID invalide');
     }
 
+    console.log('Utilisateur authentifié:', userId, 'Agora uid:', uid, 'Channel:', safeChannel);
     const AGORA_APP_ID = Deno.env.get('AGORA_APP_ID');
     const AGORA_APP_CERTIFICATE = Deno.env.get('AGORA_APP_CERTIFICATE');
 
@@ -246,6 +259,15 @@ serve(async (req) => {
       throw new Error('Configuration Agora manquante: AGORA_APP_CERTIFICATE');
     }
 
+    // Validation basique (Agora App ID et Certificate sont généralement des hex de 32 chars)
+    if (!/^[a-f0-9]{32}$/i.test(AGORA_APP_ID)) {
+      throw new Error('AGORA_APP_ID invalide (attendu: 32 caractères hex)');
+    }
+
+    if (!/^[a-f0-9]{32}$/i.test(AGORA_APP_CERTIFICATE)) {
+      throw new Error('AGORA_APP_CERTIFICATE invalide (attendu: 32 caractères hex)');
+    }
+
     console.log('Agora config OK - AppID:', AGORA_APP_ID.substring(0, 8) + '...');
 
     // Token expire dans 24 heures
@@ -256,19 +278,19 @@ serve(async (req) => {
     const rtcToken = await generateRtcToken(
       AGORA_APP_ID,
       AGORA_APP_CERTIFICATE,
-      channel,
+      safeChannel,
       uid,
       roleValue,
       privilegeExpiredTs
     );
 
-    console.log('✅ Token Agora généré pour channel:', channel, 'uid:', uid.substring(0, 8) + '...');
+    console.log('✅ Token Agora généré pour channel:', safeChannel, 'uid:', uid);
 
     return new Response(
       JSON.stringify({
         appId: AGORA_APP_ID,
         token: rtcToken,
-        channel,
+        channel: safeChannel,
         uid,
         role,
         expiresAt: privilegeExpiredTs
