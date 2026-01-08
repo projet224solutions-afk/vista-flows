@@ -4,6 +4,9 @@
  */
 
 export function registerServiceWorker() {
+  // IMPORTANT: ne jamais enregistrer le SW en dev (évite cache + invalid hook call)
+  if (import.meta.env.DEV) return;
+
   // Enregistrer le SW de manière différée pour ne pas bloquer le chargement initial
   if ("serviceWorker" in navigator) {
     // Attendre que l'app soit chargée avant d'enregistrer le SW

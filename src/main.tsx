@@ -2,7 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import { registerServiceWorker } from "./lib/serviceWorkerRegistration";
+import { registerServiceWorker, unregisterServiceWorker } from "./lib/serviceWorkerRegistration";
 
 // Hide the initial loader
 const hideLoader = () => {
@@ -78,10 +78,22 @@ const initApp = () => {
 // Start app
 initApp();
 
-// Register service worker after delay
-setTimeout(() => {
-  registerServiceWorker();
-}, 3000);
+// Service Worker: désactivé en preview/dev pour éviter des bundles React mélangés (Invalid hook call)
+const isPreviewHost = window.location.hostname.includes('lovableproject.com') ||
+  window.location.hostname.includes('localhost') ||
+  window.location.hostname.includes('127.0.0.1');
+
+if (import.meta.env.DEV || isPreviewHost) {
+  unregisterServiceWorker();
+  // Nettoyer les caches éventuels (corrige les écrans blancs après déploiement)
+  if ('caches' in window) {
+    caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))));
+  }
+} else {
+  setTimeout(() => {
+    registerServiceWorker();
+  }, 3000);
+}
 
 // Capturer les erreurs globales
 window.addEventListener('error', (event) => {
