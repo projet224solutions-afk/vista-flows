@@ -278,69 +278,10 @@ export default function Messages() {
     try {
       setLoadingContacts(true);
 
-      // Récupérer les vendeurs actifs (sauf l'utilisateur actuel)
-      type VendorData = { id: string; user_id: string; business_name: string | null; shop_slug: string | null; phone: string | null };
-      
-      const result = await supabase
-        .from('vendors')
-        .select('id, user_id, business_name, shop_slug, phone');
-      
-      const allVendors = (result.data || []) as VendorData[];
-      const vendors = allVendors
-        .filter(v => v.user_id !== currentUser.id)
-        .slice(0, 20);
-
-      if (result.error) {
-        console.error('Erreur chargement vendeurs:', result.error);
-        return;
-      }
-
-      if (vendors.length === 0) {
-        setAvailableContacts([]);
-        return;
-      }
-
-      // Enrichir avec les profils
-      const contacts = await Promise.all(
-        vendors.map(async (vendor) => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('first_name, last_name, email, avatar_url, public_id')
-            .eq('id', vendor.user_id)
-            .single();
-
-          // Vérifier certification
-          const { data: cert } = await supabase
-            .from('vendor_certifications')
-            .select('status')
-            .eq('vendor_id', vendor.user_id)
-            .maybeSingle();
-
-          const isCertified = cert?.status === 'CERTIFIE';
-          const userName = vendor.business_name || 
-            (profile?.first_name && profile?.last_name
-              ? `${profile.first_name} ${profile.last_name}`
-              : profile?.email || 'Vendeur');
-
-          return {
-            id: vendor.user_id,
-            other_user_id: vendor.user_id,
-            other_user_name: userName,
-            other_user_email: profile?.email || '',
-            other_user_avatar: profile?.avatar_url,
-            other_user_public_id: (profile as any)?.public_id || null,
-            last_message: 'Cliquez pour discuter',
-            last_message_time: new Date().toISOString(),
-            unread_count: 0,
-            is_vendor: true,
-            is_certified: isCertified,
-            vendor_phone: vendor.phone,
-            vendor_shop_slug: vendor.shop_slug
-          };
-        })
-      );
-
-      setAvailableContacts(contacts);
+      // Les contacts disponibles sont maintenant gérés via les conversations existantes
+      // Cette fonction n'affiche plus tous les utilisateurs, seulement ceux avec qui on a déjà conversé
+      // Les nouveaux contacts sont ajoutés via la recherche d'utilisateurs
+      setAvailableContacts([]);
     } catch (error) {
       console.error('Erreur chargement contacts:', error);
     } finally {
