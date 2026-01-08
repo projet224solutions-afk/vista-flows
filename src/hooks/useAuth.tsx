@@ -234,19 +234,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
           );
         } else {
-          // Connexion normale
-          const roleLabels: Record<string, string> = {
-            client: 'Client',
-            vendeur: 'Marchand',
-            livreur: 'Livreur',
-            taxi: 'Taxi Moto',
-            transitaire: 'Transitaire',
-            admin: 'Administrateur',
-            ceo: 'PDG',
-            agent: 'Agent',
-            syndicat: 'Syndicat',
-          };
-          toast.success(`Bienvenue ! Vous êtes connecté en tant que ${roleLabels[current.role] || current.role}.`);
+          // Connexion normale - afficher le toast une seule fois par session
+          const welcomeShownKey = `welcome_shown_${user.id}`;
+          if (!sessionStorage.getItem(welcomeShownKey)) {
+            const roleLabels: Record<string, string> = {
+              client: 'Client',
+              vendeur: 'Marchand',
+              livreur: 'Livreur',
+              taxi: 'Taxi Moto',
+              transitaire: 'Transitaire',
+              admin: 'Administrateur',
+              ceo: 'PDG',
+              agent: 'Agent',
+              syndicat: 'Syndicat',
+            };
+            toast.success(`Bienvenue ! Vous êtes connecté en tant que ${roleLabels[current.role] || current.role}.`);
+            sessionStorage.setItem(welcomeShownKey, 'true');
+          }
         }
 
         // NE JAMAIS modifier le rôle d'un profil existant
