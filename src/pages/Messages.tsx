@@ -150,76 +150,49 @@ export default function Messages() {
 
     try {
       setLoading(true);
-      
-      // Récupérer les conversations où l'utilisateur est participant
-      const { data: participations, error: partError } = await supabase
-        .from('conversation_participants')
-        .select(`
-          conversation_id,
-          conversations (
-            id,
-            name,
-            type,
-            last_message_preview,
-            last_message_at,
-            created_at
-          )
-        `)
-        .eq('user_id', currentUser.id);
 
-      if (partError) {
-        console.error('Erreur chargement participations:', partError);
+      // ✅ Source de vérité: table messages
+      // On liste uniquement les contacts qui ont déjà échangé au moins 1 message avec l'utilisateur.
+      const { data: recentMessages, error: msgError } = await supabase
+        .from('messages')
+        .select('sender_id, recipient_id, content, created_at')
+        .or(`sender_id.eq.${currentUser.id},recipient_id.eq.${currentUser.id}`)
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      if (msgError) {
+        console.error('Erreur chargement messages (conversations):', msgError);
         setConversations([]);
-        setLoading(false);
         return;
       }
 
-      if (!participations || participations.length === 0) {
+      if (!recentMessages || recentMessages.length === 0) {
         setConversations([]);
-        setLoading(false);
         return;
       }
 
-      // Pour chaque conversation, trouver l'autre participant
-      const conversationMap = new Map<string, any>();
-      
-      for (const part of participations) {
-        if (!part.conversations) continue;
-        const conv = part.conversations as any;
-        
-        // Trouver l'autre participant
-        const { data: otherParticipants } = await supabase
-          .from('conversation_participants')
-          .select('user_id')
-          .eq('conversation_id', conv.id)
-          .neq('user_id', currentUser.id)
-          .limit(1);
+      // Construire une liste unique de contacts (dernier message conservé)
+      const conversationMap = new Map<string, { other_user_id: string; last_message: string; last_message_time: string }>();
 
-        const otherUserId = otherParticipants?.[0]?.user_id;
+      for (const msg of recentMessages as any[]) {
+        const otherUserId = msg.sender_id === currentUser.id ? msg.recipient_id : msg.sender_id;
         if (!otherUserId) continue;
+        if (otherUserId === currentUser.id) continue;
 
         if (!conversationMap.has(otherUserId)) {
           conversationMap.set(otherUserId, {
-            conversation_id: conv.id,
             other_user_id: otherUserId,
-            last_message: conv.last_message_preview || '',
-            last_message_time: conv.last_message_at || conv.created_at
+            last_message: msg.content || 'Nouvelle conversation',
+            last_message_time: msg.created_at
           });
         }
       }
 
-      // Enrichir avec infos profil
       const enrichedConversations = await Promise.all(
         Array.from(conversationMap.values()).map(async (conv) => {
           const { data: profile } = await supabase
             .from('profiles')
-            .select(`
-              first_name,
-              last_name,
-              email,
-              avatar_url,
-              public_id
-            `)
+            .select('first_name, last_name, email, avatar_url, public_id')
             .eq('id', conv.other_user_id)
             .single();
 
@@ -239,7 +212,7 @@ export default function Messages() {
 
           const isVendor = !!vendor;
           const isCertified = cert?.status === 'CERTIFIE';
-          const userName = vendor?.business_name || 
+          const userName = vendor?.business_name ||
             (profile?.first_name && profile?.last_name
               ? `${profile.first_name} ${profile.last_name}`
               : profile?.email || 'Utilisateur');
