@@ -262,4 +262,10 @@ serve(async (req) => {
       }
     );
   }
+
+  // Fallback response (should never reach here)
+  return new Response(
+    JSON.stringify({ error: 'Invalid action', success: false }),
+    { headers: { 'Content-Type': 'application/json' }, status: 400 }
+  );
 });
