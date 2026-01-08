@@ -19641,10 +19641,19 @@ export type Database = {
         Args: { p_product_id: string; p_quantity: number }
         Returns: undefined
       }
-      increment_shared_link_views: {
-        Args: { p_short_code: string }
-        Returns: undefined
-      }
+      increment_shared_link_views:
+        | {
+            Args: { p_short_code: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.increment_shared_link_views(p_short_code => text), public.increment_shared_link_views(p_short_code => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+          }
+        | {
+            Args: { p_short_code: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.increment_shared_link_views(p_short_code => text), public.increment_shared_link_views(p_short_code => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+          }
       initialize_user_wallet: { Args: { p_user_id: string }; Returns: Json }
       initiate_escrow:
         | {
