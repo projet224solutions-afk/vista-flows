@@ -185,7 +185,7 @@ export function useAgora() {
 
       const callConfig: CallConfig = {
         channel: sanitizedChannel,
-        uid: String(numericUid),
+        uid: String(credentials?.uid ?? numericUid),
         token: credentials.token,
         role: 'publisher'
       };
