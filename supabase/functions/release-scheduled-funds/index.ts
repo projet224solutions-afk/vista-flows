@@ -113,7 +113,7 @@ serve(async (req) => {
         results.details.push({
           release_id: release.id,
           success: false,
-          error: error.message,
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     }
@@ -133,7 +133,7 @@ serve(async (req) => {
     console.error('❌ Fatal error in release-scheduled-funds:', error);
     return new Response(
       JSON.stringify({
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         success: false,
       }),
       {

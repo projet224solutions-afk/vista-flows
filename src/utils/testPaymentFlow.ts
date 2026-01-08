@@ -46,7 +46,7 @@ async function testStripeConfig(): Promise<TestResult> {
       message: `Configuration OK - Commission: ${data.platform_commission_rate}%`,
       details: {
         commission: data.platform_commission_rate,
-        currency: data.default_currency,
+        currency: data.currency,
         has_keys: !!data.stripe_publishable_key
       }
     };
@@ -132,21 +132,19 @@ async function testOrdersConsistency(): Promise<TestResult> {
       ?.filter(t => t.stripe_payment_intent_id)
       .map(t => t.stripe_payment_intent_id) || [];
 
-    const { data: orders, error: ordersError } = await supabase
+    const { data: orders, error: ordersError } = await (supabase
       .from('orders')
-      .select('id, order_number, stripe_payment_intent_id')
-      .in('stripe_payment_intent_id', paymentIntentIds);
+      .select('id, order_number')
+      .limit(50) as any);
 
     if (ordersError) throw ordersError;
 
     const transactionsWithOrders = transactions?.filter(t => 
-      t.order_id || orders?.some(o => o.stripe_payment_intent_id === t.stripe_payment_intent_id)
+      t.order_id
     ) || [];
 
     const transactionsWithoutOrders = transactions?.filter(t => 
-      !t.order_id && 
-      !orders?.some(o => o.stripe_payment_intent_id === t.stripe_payment_intent_id) &&
-      t.product_id
+      !t.order_id && t.product_id
     ) || [];
 
     const consistencyRate = transactions && transactions.length > 0
@@ -190,19 +188,25 @@ async function testWalletCredits(): Promise<TestResult> {
     if (stError) throw stError;
 
     // Récupérer transactions wallet correspondantes
-    const { data: walletTransactions, error: wtError } = await supabase
-      .from('wallet_transactions')
-      .select('stripe_transaction_id, amount')
-      .in('stripe_transaction_id', stripeTransactions?.map(t => t.id) || []);
-
-    if (wtError) throw wtError;
+    const stripeIds = stripeTransactions?.map(t => t.id) || [];
+    const walletTransactions: any[] = [];
+    
+    if (stripeIds.length > 0) {
+      const { data: wtData, error: wtError } = await supabase
+        .from('wallet_transactions')
+        .select('id, amount, reference_id')
+        .limit(100);
+      
+      if (wtError) throw wtError;
+      if (wtData) walletTransactions.push(...wtData);
+    }
 
     const credited = stripeTransactions?.filter(st =>
-      walletTransactions?.some(wt => wt.stripe_transaction_id === st.id)
+      walletTransactions?.some((wt: any) => wt.reference_id === st.id)
     ) || [];
 
     const notCredited = stripeTransactions?.filter(st =>
-      !walletTransactions?.some(wt => wt.stripe_transaction_id === st.id)
+      !walletTransactions?.some((wt: any) => wt.reference_id === st.id)
     ) || [];
 
     const creditRate = stripeTransactions && stripeTransactions.length > 0

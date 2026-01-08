@@ -18976,6 +18976,10 @@ export type Database = {
           order_number: string
         }[]
       }
+      create_order_from_payment: {
+        Args: { p_transaction_id: string }
+        Returns: Json
+      }
       create_secure_transaction: {
         Args: {
           p_device_fingerprint?: string
@@ -19062,6 +19066,10 @@ export type Database = {
             Args: { credit_amount: number; receiver_user_id: string }
             Returns: undefined
           }
+      customer_belongs_to_auth_user: {
+        Args: { p_customer_id: string }
+        Returns: boolean
+      }
       deactivate_panic_mode: { Args: { p_pdg_id: string }; Returns: Json }
       declare_vehicle_recovered:
         | {
@@ -19223,6 +19231,11 @@ export type Database = {
           wallet_id: string
         }[]
       }
+      fix_orphan_payment: { Args: { p_transaction_id: string }; Returns: Json }
+      force_credit_seller_wallet: {
+        Args: { p_transaction_id: string }
+        Returns: Json
+      }
       gen_random_bytes: { Args: { p_size: number }; Returns: string }
       generate_agent_access_token: { Args: never; Returns: string }
       generate_agent_id: { Args: { p_type_agent: string }; Returns: string }
@@ -19282,7 +19295,10 @@ export type Database = {
       generate_unique_custom_id: { Args: never; Returns: string }
       generate_unique_id: { Args: { prefix: string }; Returns: string }
       generate_unique_invitation_token: { Args: never; Returns: string }
-      generate_unique_public_id: { Args: { p_scope: string }; Returns: string }
+      generate_unique_public_id: {
+        Args: { user_role_param?: string }
+        Returns: string
+      }
       generate_user_custom_id: { Args: never; Returns: string }
       generate_vendor_agent_access_token: { Args: never; Returns: string }
       generate_vendor_agent_code: { Args: never; Returns: string }
@@ -19866,17 +19882,29 @@ export type Database = {
         }
         Returns: Json
       }
-      process_secure_wallet_transfer: {
-        Args: {
-          p_amount: number
-          p_description?: string
-          p_receiver_id: string
-          p_receiver_type?: string
-          p_sender_id: string
-          p_sender_type?: string
-        }
-        Returns: Json
-      }
+      process_secure_wallet_transfer:
+        | {
+            Args: {
+              p_amount: number
+              p_description?: string
+              p_receiver_id: string
+              p_receiver_type?: string
+              p_sender_id: string
+              p_sender_type?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_description?: string
+              p_recipient_id: string
+              p_recipient_type: string
+              p_sender_id: string
+              p_sender_type: string
+            }
+            Returns: Json
+          }
       process_successful_payment: {
         Args: { p_transaction_id: string }
         Returns: boolean
@@ -20757,6 +20785,14 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      wallet_recipient_lookup: {
+        Args: { p_q: string }
+        Returns: {
+          code: string
+          display_name: string
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       agent_type_enum:
@@ -20867,6 +20903,7 @@ export type Database = {
         | "ceo"
         | "agent"
       vehicle_type: "moto" | "car" | "bicycle" | "truck"
+      vendor_certification_status: "NON_CERTIFIE" | "CERTIFIE" | "SUSPENDU"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -21124,6 +21161,7 @@ export const Constants = {
         "agent",
       ],
       vehicle_type: ["moto", "car", "bicycle", "truck"],
+      vendor_certification_status: ["NON_CERTIFIE", "CERTIFIE", "SUSPENDU"],
     },
   },
 } as const

@@ -17,20 +17,15 @@ interface CommunicationWidgetProps {
   showNotifications?: boolean;
 }
 
-/**
- * Widget de Communication - VERSION SIMPLIFIÉE
- * Bouton flottant de notification qui redirige vers /messages
- */
- * Widget de Communication - VERSION SIMPLIFIÉE
- * Bouton flottant de notification qui redirige vers /messages
- */
-export default function CommunicationWidget({ 
+export default function CommunicationWidget({
   position = 'bottom-right',
   showNotifications = true 
 }: CommunicationWidgetProps) {
   const { user } = useAuth();
-  const { unreadCount, notificationCount } = useUniversalCommunication();
+  const { stats } = useUniversalCommunication();
   const navigate = useNavigate();
+  const unreadCount = stats?.unreadCount || 0;
+  const notificationCount = stats?.notificationCount || 0;
 
   if (!user) return null;
 

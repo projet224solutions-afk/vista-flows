@@ -37,7 +37,7 @@ interface JomyPaymentSelectorProps {
   onPaymentSuccess: (transactionId: string, status: string) => void;
   onPaymentPending?: (transactionId: string) => void;
   onPaymentFailed?: (error: string) => void;
-  onCashOnDelivery?: () => void;
+  onCashOnDelivery?: (addressData?: any) => void;
   onCancel: () => void;
   enableEscrow?: boolean;
   recipientId?: string;
