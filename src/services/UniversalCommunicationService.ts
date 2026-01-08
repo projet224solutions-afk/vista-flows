@@ -385,11 +385,9 @@ class UniversalCommunicationService {
             sender_id: senderId,
             recipient_id: recipientId,
             content: sanitizedContent,
-            topic: 'chat',
-            extension: 'txt',
             type: 'text',
             status: 'sent',
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
           })
           .select()
           .single();
@@ -499,13 +497,11 @@ class UniversalCommunicationService {
           sender_id: senderId,
           recipient_id: recipientId,
           content: file.name,
-          topic: 'chat',
-          extension: fileExt,
           type: fileType,
           status: 'sent',
           file_url: publicUrl,
           file_name: file.name,
-          file_size: file.size
+          file_size: file.size,
         } as any)
         .select()
         .single();
