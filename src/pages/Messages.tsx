@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Send, User, Search, MessageCircle, Phone, Video, MoreVertical, Shield, Check, CheckCheck, Clock, XCircle } from "lucide-react";
+import { ArrowLeft, Send, User, Search, MessageCircle, Phone, Video, MoreVertical, Shield, Check, CheckCheck, Clock, XCircle, UserPlus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -67,6 +67,10 @@ export default function Messages() {
   const [showChat, setShowChat] = useState(false);
   const [showVideoCall, setShowVideoCall] = useState(false);
   const [showAudioCall, setShowAudioCall] = useState(false);
+  const [showSearchDialog, setShowSearchDialog] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -262,6 +266,79 @@ export default function Messages() {
     }
   };
 
+  // Rechercher des utilisateurs par nom, email ou public_id
+  const searchUsers = async (query: string) => {
+    if (!query.trim() || query.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    try {
+      setSearchingUsers(true);
+      const searchTerm = query.trim().toLowerCase();
+
+      // Recherche dans profiles
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email, avatar_url, public_id')
+        .neq('id', currentUser?.id)
+        .or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,public_id.ilike.%${searchTerm}%`)
+        .limit(10);
+
+      if (error) {
+        console.error('Erreur recherche utilisateurs:', error);
+        setSearchResults([]);
+        return;
+      }
+
+      // Enrichir avec infos vendeur
+      const enrichedResults = await Promise.all(
+        (profiles || []).map(async (profile) => {
+          const { data: vendor } = await supabase
+            .from('vendors')
+            .select('business_name, phone')
+            .eq('user_id', profile.id)
+            .maybeSingle();
+
+          const { data: cert } = await supabase
+            .from('vendor_certifications')
+            .select('status')
+            .eq('vendor_id', profile.id)
+            .maybeSingle();
+
+          return {
+            id: profile.id,
+            name: vendor?.business_name || 
+              (profile.first_name && profile.last_name 
+                ? `${profile.first_name} ${profile.last_name}` 
+                : profile.email || 'Utilisateur'),
+            email: profile.email,
+            avatar_url: profile.avatar_url,
+            public_id: profile.public_id,
+            is_vendor: !!vendor,
+            is_certified: cert?.status === 'CERTIFIE',
+            vendor_phone: vendor?.phone
+          };
+        })
+      );
+
+      setSearchResults(enrichedResults);
+    } catch (error) {
+      console.error('Erreur recherche:', error);
+      setSearchResults([]);
+    } finally {
+      setSearchingUsers(false);
+    }
+  };
+
+  // Sélectionner un utilisateur depuis la recherche et ouvrir la conversation
+  const handleSelectSearchResult = (user: any) => {
+    setShowSearchDialog(false);
+    setUserSearchQuery("");
+    setSearchResults([]);
+    handleSelectConversation(user.id);
+  };
+
   const loadMessages = async (otherUserId: string) => {
     if (!currentUser) return;
 
@@ -436,6 +513,15 @@ export default function Messages() {
         <header className="bg-gradient-to-r from-card to-card/95 border-b border-border sticky top-0 z-40 px-4 py-4 shadow-sm backdrop-blur-sm">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-bold text-foreground">Messages</h1>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSearchDialog(true)}
+              className="gap-2"
+            >
+              <UserPlus className="w-4 h-4" />
+              Nouveau
+            </Button>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -841,6 +927,109 @@ export default function Messages() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Dialog de recherche d'utilisateurs */}
+      <Dialog open={showSearchDialog} onOpenChange={setShowSearchDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-primary" />
+              Nouvelle conversation
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher par nom, email ou ID..."
+                value={userSearchQuery}
+                onChange={(e) => {
+                  setUserSearchQuery(e.target.value);
+                  searchUsers(e.target.value);
+                }}
+                className="pl-9"
+                autoFocus
+              />
+            </div>
+
+            <ScrollArea className="h-64">
+              {searchingUsers ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : searchResults.length > 0 ? (
+                <div className="divide-y divide-border">
+                  {searchResults.map((user) => (
+                    <button
+                      key={user.id}
+                      onClick={() => handleSelectSearchResult(user)}
+                      className={cn(
+                        "w-full p-3 flex items-center gap-3 hover:bg-accent/50 transition-all text-left border-l-4",
+                        user.is_vendor ? "border-l-emerald-500" : "border-l-blue-500"
+                      )}
+                    >
+                      <div className="relative">
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src={user.avatar_url} />
+                          <AvatarFallback className={cn(
+                            "text-white text-sm",
+                            user.is_vendor ? "bg-emerald-500" : "bg-blue-500"
+                          )}>
+                            {user.name.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        {user.is_certified && (
+                          <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-0.5">
+                            <Shield className="w-2.5 h-2.5 text-primary-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          {user.public_id && (
+                            <span className="text-xs font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                              {user.public_id}
+                            </span>
+                          )}
+                          <p className="font-medium text-foreground truncate text-sm">
+                            {user.name}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <Badge 
+                            variant="secondary" 
+                            className={cn(
+                              "text-xs",
+                              user.is_vendor 
+                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" 
+                                : "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                            )}
+                          >
+                            {user.is_vendor ? 'Vendeur' : 'Client'}
+                          </Badge>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {user.email}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : userSearchQuery.trim().length >= 2 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <User className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Aucun utilisateur trouvé</p>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Search className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Tapez au moins 2 caractères</p>
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
