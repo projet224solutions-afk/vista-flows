@@ -41,15 +41,25 @@ export default function ShortLinkRedirect() {
 
       console.log('🔗 [ShortLink] Resolving short code:', shortCode);
 
-      // Récupérer les infos du lien (avec cast pour éviter les erreurs de type)
-      const { data, error: fetchError } = await (supabase
-        .from('shared_links' as any)
+      // Utiliser une requête directe avec cast pour éviter les problèmes de types
+      const { data, error: fetchError } = await supabase
+        .from('shared_links' as 'shared_links')
         .select('original_url, title, link_type, resource_id')
-        .eq('short_code', shortCode)
-        .single() as any) as { data: SharedLinkData | null; error: any };
+        .eq('short_code', shortCode as string)
+        .eq('is_active', true)
+        .maybeSingle();
 
-      if (fetchError || !data) {
-        console.error('🔗 [ShortLink] Link not found:', fetchError);
+      console.log('🔗 [ShortLink] Query result:', { data, fetchError });
+
+      if (fetchError) {
+        console.error('🔗 [ShortLink] Database error:', fetchError);
+        setError('Erreur lors de la résolution du lien');
+        setLoading(false);
+        return;
+      }
+      
+      if (!data) {
+        console.error('🔗 [ShortLink] Link not found for code:', shortCode);
         setError('Lien introuvable ou expiré');
         setLoading(false);
         return;
