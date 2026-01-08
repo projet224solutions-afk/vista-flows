@@ -85,25 +85,33 @@ export function VendorKYCReview() {
     try {
       setLoading(true);
 
-      // Fetch KYC records with vendor info
+      // Fetch KYC records
       const { data, error } = await supabase
         .from('vendor_kyc')
-        .select(`
-          *,
-          profiles!vendor_kyc_vendor_id_fkey (
-            full_name,
-            email
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const enrichedData: VendorKYC[] = (data || []).map((record: any) => ({
-        ...record,
-        vendor_name: record.profiles?.full_name || 'Nom inconnu',
-        vendor_email: record.profiles?.email || 'Email inconnu'
-      }));
+      // Fetch profile info for each vendor
+      const vendorIds = (data || []).map(k => k.vendor_id);
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', vendorIds);
+
+      if (error) throw error;
+
+      const profilesMap = new Map((profilesData || []).map(p => [p.id, p]));
+      
+      const enrichedData: VendorKYC[] = (data || []).map((record: any) => {
+        const profile = profilesMap.get(record.vendor_id);
+        return {
+          ...record,
+          vendor_name: profile?.full_name || 'Nom inconnu',
+          vendor_email: profile?.email || 'Email inconnu'
+        };
+      });
 
       setKycRecords(enrichedData);
 
