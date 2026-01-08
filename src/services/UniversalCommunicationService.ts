@@ -540,7 +540,9 @@ class UniversalCommunicationService {
         });
       }
 
-      await this.logAudit(userId, 'message_read', conversationId);
+      // Ne pas bloquer sur l'audit, utiliser un UUID valide si disponible
+      const auditTargetId = isDirectConversation(conversationId) ? extractRecipientFromDirectId(conversationId) : conversationId;
+      this.logAudit(userId, 'message_read', validateUUID(auditTargetId) ? auditTargetId : undefined).catch(() => {});
     } catch (error) {
       console.error('[Communication] Erreur markMessagesAsRead:', error);
       throw error;
