@@ -48,6 +48,7 @@ class AgoraService {
   private localVideoTrack: ICameraVideoTrack | null = null;
   private remoteUsers: Map<string, RemoteUser> = new Map();
   private isConnected = false;
+  private isJoining = false;
   private currentChannel = '';
   private currentUid = '';
   private appId = '';
@@ -243,76 +244,111 @@ class AgoraService {
       throw new Error('Client Agora non initialisé. Appelez initialize() d\'abord.');
     }
 
+    // Empêcher les doubles joins (ex: React StrictMode / double click)
+    if (this.isJoining) {
+      console.warn('[Agora] ⚠️ joinChannel ignoré: join déjà en cours');
+      return;
+    }
+
+    const connectionState = (this.client as any)?.connectionState as string | undefined;
+
+    // Si on est déjà connecté/connecting, éviter INVALID_OPERATION
+    if (connectionState && connectionState !== 'DISCONNECTED') {
+      if (this.currentChannel && this.currentChannel === config.channel) {
+        console.log('[Agora] ✅ Déjà dans le canal:', config.channel, 'state:', connectionState);
+        return;
+      }
+
+      console.warn('[Agora] ⚠️ Client déjà', connectionState, '- leave avant nouveau join');
+      try {
+        await this.client.leave();
+      } catch (e) {
+        console.warn('[Agora] ⚠️ leave() a échoué (non bloquant):', (e as any)?.message || e);
+      }
+
+      // Reset état local
+      this.isConnected = false;
+      this.currentChannel = '';
+      this.currentUid = '';
+    }
+
     const maxRetries = 3;
     let retryCount = 0;
 
-    while (retryCount < maxRetries) {
-      try {
-        console.log(`[Agora] 🔗 Tentative ${retryCount + 1}/${maxRetries} - Rejoindre canal:`, config.channel);
-
-        // Timeout pour éviter blocage infini
-        const joinPromise = this.client.join(
-          this.appId,
-          config.channel,
-          config.token || null,
-          config.uid
-        );
-
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout joinChannel (30s)')), 30000)
-        );
-
-        await Promise.race([joinPromise, timeoutPromise]);
-
-        this.currentChannel = config.channel;
-        this.currentUid = config.uid;
-        this.isConnected = true;
-
-        console.log('[Agora] ✅ Canal rejoint avec succès:', config.channel);
-
-        // Publier audio et vidéo si rôle publisher
-        if (config.role === 'publisher') {
-          await this.publishLocalTracks();
-        }
-
-        return; // Succès, sortir de la boucle
-
-      } catch (error: any) {
-        retryCount++;
-        const errorMessage = error?.message || 'Erreur inconnue';
-        
-        console.error(`[Agora] ❌ Tentative ${retryCount}/${maxRetries} échouée:`, {
-          error: errorMessage,
-          channel: config.channel,
-          uid: config.uid
-        });
-
-        // Erreurs non-retriables
-        if (errorMessage.includes('INVALID_') || errorMessage.includes('banned')) {
-          throw new Error(`Erreur Agora non-retriable: ${errorMessage}`);
-        }
-
-        if (retryCount >= maxRetries) {
-          throw new Error(`Échec rejoindre canal après ${maxRetries} tentatives: ${errorMessage}`);
-        }
-
-        // Exponential backoff avant retry
-        const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
-        console.log(`[Agora] ⏳ Retry dans ${delay}ms...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-
-        // Cleanup avant retry
+    this.isJoining = true;
+    try {
+      while (retryCount < maxRetries) {
         try {
-          if (this.client && this.isConnected) {
-            await this.client.leave();
+          console.log(`[Agora] 🔗 Tentative ${retryCount + 1}/${maxRetries} - Rejoindre canal:`, config.channel);
+
+          // Timeout pour éviter blocage infini
+          const joinPromise = this.client.join(
+            this.appId,
+            config.channel,
+            config.token || null,
+            config.uid
+          );
+
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Timeout joinChannel (30s)')), 30000)
+          );
+
+          await Promise.race([joinPromise, timeoutPromise]);
+
+          this.currentChannel = config.channel;
+          this.currentUid = config.uid;
+          this.isConnected = true;
+
+          console.log('[Agora] ✅ Canal rejoint avec succès:', config.channel);
+
+          // Publier audio et vidéo si rôle publisher
+          if (config.role === 'publisher') {
+            await this.publishLocalTracks();
           }
-        } catch (cleanupErr) {
-          console.warn('[Agora] ⚠️ Erreur cleanup avant retry:', cleanupErr);
+
+          return; // Succès, sortir de la boucle
+
+        } catch (error: any) {
+          retryCount++;
+          const errorMessage = error?.message || 'Erreur inconnue';
+
+          console.error(`[Agora] ❌ Tentative ${retryCount}/${maxRetries} échouée:`, {
+            error: errorMessage,
+            channel: config.channel,
+            uid: config.uid
+          });
+
+          // Erreurs non-retriables
+          if (errorMessage.includes('INVALID_') || errorMessage.includes('banned')) {
+            throw new Error(`Erreur Agora non-retriable: ${errorMessage}`);
+          }
+
+          if (retryCount >= maxRetries) {
+            throw new Error(`Échec rejoindre canal après ${maxRetries} tentatives: ${errorMessage}`);
+          }
+
+          // Exponential backoff avant retry
+          const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
+          console.log(`[Agora] ⏳ Retry dans ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+
+          // Cleanup avant retry
+          try {
+            await this.client.leave();
+          } catch (cleanupErr) {
+            console.warn('[Agora] ⚠️ Erreur cleanup avant retry:', (cleanupErr as any)?.message || cleanupErr);
+          }
+
+          this.isConnected = false;
+          this.currentChannel = '';
+          this.currentUid = '';
         }
       }
-    }
 
-    throw new Error('Nombre maximum de tentatives atteint');
+      throw new Error('Nombre maximum de tentatives atteint');
+    } finally {
+      this.isJoining = false;
+    }
   }
 
   /**
@@ -494,6 +530,13 @@ class AgoraService {
    */
   isChannelConnected(): boolean {
     return this.isConnected;
+  }
+
+  /**
+   * État de connexion RTC (DISCONNECTED / CONNECTING / CONNECTED / ...)
+   */
+  getConnectionState(): string {
+    return ((this.client as any)?.connectionState as string) || 'DISCONNECTED';
   }
 
   /**
