@@ -110,6 +110,40 @@
     <div class="text">Chargement...</div>
   </div>
 
+  <!-- Preview hotfix: désenregistrer SW + vider caches pour éviter "Invalid hook call" -->
+  <script>
+    (function () {
+      var isLovablePreview = location.hostname.indexOf('lovableproject.com') !== -1;
+      if (!isLovablePreview) return;
+
+      var FLAG = '__lovable_sw_reset_done__';
+      if (sessionStorage.getItem(FLAG) === '1') return;
+      sessionStorage.setItem(FLAG, '1');
+
+      function safe(p) { return p && typeof p.then === 'function' ? p : Promise.resolve(); }
+
+      safe(
+        (async function () {
+          try {
+            if ('serviceWorker' in navigator) {
+              var regs = await navigator.serviceWorker.getRegistrations();
+              await Promise.all((regs || []).map(function (r) { return r.unregister(); }));
+            }
+            if ('caches' in window) {
+              var keys = await caches.keys();
+              await Promise.all((keys || []).map(function (k) { return caches.delete(k); }));
+            }
+          } catch (e) {
+            // ignore
+          }
+        })()
+      ).finally(function () {
+        // Recharge une fois pour repartir sur des bundles propres
+        location.reload();
+      });
+    })();
+  </script>
+
   <script type="module" src="/src/main.tsx"></script>
   
   <script>
