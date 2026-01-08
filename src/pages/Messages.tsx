@@ -40,6 +40,7 @@ interface Conversation {
   other_user_name: string;
   other_user_email?: string;
   other_user_avatar?: string;
+  other_user_public_id?: string;
   last_message: string;
   last_message_time: string;
   unread_count: number;
@@ -216,7 +217,8 @@ export default function Messages() {
               first_name,
               last_name,
               email,
-              avatar_url
+              avatar_url,
+              public_id
             `)
             .eq('id', conv.other_user_id)
             .single();
@@ -248,6 +250,7 @@ export default function Messages() {
             other_user_name: userName,
             other_user_email: profile?.email || '',
             other_user_avatar: profile?.avatar_url,
+            other_user_public_id: (profile as any)?.public_id || null,
             last_message: conv.last_message || 'Nouvelle conversation',
             last_message_time: conv.last_message_time,
             unread_count: 0,
@@ -302,7 +305,7 @@ export default function Messages() {
         vendors.map(async (vendor) => {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('first_name, last_name, email, avatar_url')
+            .select('first_name, last_name, email, avatar_url, public_id')
             .eq('id', vendor.user_id)
             .single();
 
@@ -325,6 +328,7 @@ export default function Messages() {
             other_user_name: userName,
             other_user_email: profile?.email || '',
             other_user_avatar: profile?.avatar_url,
+            other_user_public_id: (profile as any)?.public_id || null,
             last_message: 'Cliquez pour discuter',
             last_message_time: new Date().toISOString(),
             unread_count: 0,
@@ -551,31 +555,58 @@ export default function Messages() {
                         key={contact.id}
                         onClick={() => handleSelectConversation(contact.id)}
                         className={cn(
-                          "w-full p-4 flex items-center gap-3 hover:bg-accent/50 transition-all duration-200 text-left animate-in fade-in slide-in-from-left-3",
-                          selectedConversation === contact.id && "bg-accent shadow-sm"
+                          "w-full p-4 flex items-center gap-3 hover:bg-accent/50 transition-all duration-200 text-left animate-in fade-in slide-in-from-left-3 border-l-4",
+                          selectedConversation === contact.id && "bg-accent shadow-sm",
+                          contact.is_vendor ? "border-l-emerald-500" : "border-l-blue-500"
                         )}
                         style={{ animationDelay: `${index * 30}ms` }}
                       >
-                        <Avatar className="w-12 h-12 flex-shrink-0">
-                          <AvatarImage src={contact.other_user_avatar} />
-                          <AvatarFallback className="bg-primary/10 text-primary">
-                            {contact.other_user_name.substring(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
+                        <div className="relative">
+                          <Avatar className="w-12 h-12 flex-shrink-0">
+                            <AvatarImage src={contact.other_user_avatar} />
+                            <AvatarFallback className={cn(
+                              "text-white",
+                              contact.is_vendor ? "bg-emerald-500" : "bg-blue-500"
+                            )}>
+                              {contact.other_user_name.substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          {contact.is_certified && (
+                            <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-0.5">
+                              <Shield className="w-3 h-3 text-primary-foreground" />
+                            </div>
+                          )}
+                        </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
+                            {contact.other_user_public_id && (
+                              <span className="text-xs font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                                {contact.other_user_public_id}
+                              </span>
+                            )}
                             <p className="font-medium text-foreground truncate">
                               {contact.other_user_name}
                             </p>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge 
+                              variant="secondary" 
+                              className={cn(
+                                "text-xs",
+                                contact.is_vendor 
+                                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" 
+                                  : "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                              )}
+                            >
+                              {contact.is_vendor ? 'Vendeur' : 'Client'}
+                            </Badge>
                             {contact.is_certified && (
-                              <Badge variant="secondary" className="gap-1 flex-shrink-0 text-xs">
+                              <Badge variant="outline" className="text-xs gap-1">
                                 <Shield className="w-3 h-3" />
+                                Certifié
                               </Badge>
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground truncate mt-0.5">
-                            {contact.is_vendor ? 'Vendeur' : 'Utilisateur'}
-                          </p>
                         </div>
                       </button>
                     ))}
@@ -605,22 +636,40 @@ export default function Messages() {
                   key={conv.id}
                   onClick={() => handleSelectConversation(conv.id)}
                   className={cn(
-                    "w-full p-4 flex items-center gap-3 hover:bg-accent/50 transition-all duration-200 text-left animate-in fade-in slide-in-from-left-3",
-                    selectedConversation === conv.id && "bg-accent shadow-sm"
+                    "w-full p-4 flex items-center gap-3 hover:bg-accent/50 transition-all duration-200 text-left animate-in fade-in slide-in-from-left-3 border-l-4",
+                    selectedConversation === conv.id && "bg-accent shadow-sm",
+                    conv.is_vendor ? "border-l-emerald-500" : "border-l-blue-500"
                   )}
                   style={{ animationDelay: `${index * 30}ms` }}
                 >
-                  <Avatar className="w-12 h-12 flex-shrink-0">
-                    <AvatarImage src={conv.other_user_avatar} />
-                    <AvatarFallback className="bg-primary/10 text-primary">
-                      {conv.other_user_name.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="relative">
+                    <Avatar className="w-12 h-12 flex-shrink-0">
+                      <AvatarImage src={conv.other_user_avatar} />
+                      <AvatarFallback className={cn(
+                        "text-white",
+                        conv.is_vendor ? "bg-emerald-500" : "bg-blue-500"
+                      )}>
+                        {conv.other_user_name.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    {conv.is_certified && (
+                      <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-0.5">
+                        <Shield className="w-3 h-3 text-primary-foreground" />
+                      </div>
+                    )}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="font-medium text-foreground truncate">
-                        {conv.other_user_name}
-                      </p>
+                      <div className="flex items-center gap-2 min-w-0">
+                        {conv.other_user_public_id && (
+                          <span className="text-xs font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded flex-shrink-0">
+                            {conv.other_user_public_id}
+                          </span>
+                        )}
+                        <p className="font-medium text-foreground truncate">
+                          {conv.other_user_name}
+                        </p>
+                      </div>
                       <span 
                         className="text-xs text-muted-foreground flex-shrink-0 cursor-help"
                         title={formatDetailedTime(conv.last_message_time)}
@@ -628,9 +677,22 @@ export default function Messages() {
                         {formatTime(conv.last_message_time)}
                       </span>
                     </div>
-                    <p className="text-sm text-muted-foreground truncate mt-0.5">
-                      {conv.last_message}
-                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge 
+                        variant="secondary" 
+                        className={cn(
+                          "text-xs",
+                          conv.is_vendor 
+                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" 
+                            : "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                        )}
+                      >
+                        {conv.is_vendor ? 'Vendeur' : 'Client'}
+                      </Badge>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {conv.last_message}
+                      </p>
+                    </div>
                   </div>
                   {conv.unread_count > 0 && (
                     <div className="bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs font-medium flex-shrink-0">
@@ -670,6 +732,11 @@ export default function Messages() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="font-semibold text-foreground truncate">
+                    {selectedConvData?.other_user_public_id && (
+                      <span className="text-primary font-mono text-sm mr-1.5">
+                        {selectedConvData.other_user_public_id}
+                      </span>
+                    )}
                     {selectedConvData?.other_user_name}
                   </p>
                   {selectedConvData?.is_certified && (
@@ -679,13 +746,20 @@ export default function Messages() {
                     </Badge>
                   )}
                 </div>
-                {selectedConvData?.is_vendor ? (
-                  <p className="text-xs text-muted-foreground">
-                    Vendeur {selectedConvData?.vendor_phone ? `• ${selectedConvData.vendor_phone}` : '• En ligne'}
-                  </p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">En ligne</p>
-                )}
+                <div className="flex items-center gap-2">
+                  {selectedConvData?.is_vendor ? (
+                    <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                      Vendeur
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs">
+                      Client
+                    </Badge>
+                  )}
+                  <span className="text-xs text-muted-foreground">
+                    {selectedConvData?.vendor_phone ? selectedConvData.vendor_phone : 'En ligne'}
+                  </span>
+                </div>
               </div>
               <div className="flex items-center gap-1">
                 <Button 
