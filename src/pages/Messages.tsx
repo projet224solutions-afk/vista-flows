@@ -146,56 +146,79 @@ export default function Messages() {
     try {
       setLoading(true);
       
-      // Utiliser le service professionnel
-      const conversationsData = await universalCommunicationService.getConversations(currentUser.id);
-      
-      // Enrichir avec infos vendeur
-      const enrichedConversations = await Promise.all(
-        conversationsData.map(async (conv: any) => {
-          const otherUserId = conv.participants?.find((p: any) => p.user_id !== currentUser.id)?.user_id;
-          if (!otherUserId) return conv;
+      // Récupérer les messages pour trouver les conversations
+      const { data: messagesData, error: messagesError } = await supabase
+        .from('messages')
+        .select('sender_id, recipient_id, content, created_at')
+        .or(`sender_id.eq.${currentUser.id},recipient_id.eq.${currentUser.id}`)
+        .order('created_at', { ascending: false })
+        .limit(100);
 
-          // Récupérer profil avec infos vendeur
+      if (messagesError) throw messagesError;
+
+      // Grouper par utilisateur
+      const conversationMap = new Map<string, any>();
+      
+      for (const msg of messagesData || []) {
+        const otherUserId = msg.sender_id === currentUser.id ? msg.recipient_id : msg.sender_id;
+        
+        if (!conversationMap.has(otherUserId)) {
+          conversationMap.set(otherUserId, {
+            other_user_id: otherUserId,
+            last_message: msg.content,
+            last_message_time: msg.created_at
+          });
+        }
+      }
+
+      // Enrichir avec infos profil
+      const enrichedConversations = await Promise.all(
+        Array.from(conversationMap.values()).map(async (conv) => {
           const { data: profile } = await supabase
             .from('profiles')
             .select(`
               first_name,
               last_name,
               email,
-              avatar_url,
-              vendors!inner(
-                business_name,
-                shop_slug,
-                phone,
-                certification_status:vendor_certifications(status)
-              )
+              avatar_url
             `)
-            .eq('id', otherUserId)
+            .eq('id', conv.other_user_id)
+            .single();
+
+          // Vérifier si c'est un vendeur
+          const { data: vendor } = await supabase
+            .from('vendors')
+            .select('business_name, shop_slug, phone')
+            .eq('user_id', conv.other_user_id)
             .maybeSingle();
 
-          const isVendor = profile?.vendors && typeof profile.vendors === 'object';
-          const vendorInfo = isVendor ? profile.vendors[0] : null;
-          const isCertified = vendorInfo?.certification_status?.status === 'CERTIFIE';
+          // Vérifier certification
+          const { data: cert } = await supabase
+            .from('vendor_certifications')
+            .select('status')
+            .eq('vendor_id', conv.other_user_id)
+            .maybeSingle();
 
-          const userName = vendorInfo?.business_name
-            ? vendorInfo.business_name
-            : (profile?.first_name && profile?.last_name
+          const isVendor = !!vendor;
+          const isCertified = cert?.status === 'CERTIFIE';
+          const userName = vendor?.business_name || 
+            (profile?.first_name && profile?.last_name
               ? `${profile.first_name} ${profile.last_name}`
               : profile?.email || 'Utilisateur');
 
           return {
-            id: conv.id,
-            other_user_id: otherUserId,
+            id: conv.other_user_id,
+            other_user_id: conv.other_user_id,
             other_user_name: userName,
             other_user_email: profile?.email || '',
             other_user_avatar: profile?.avatar_url,
-            last_message: conv.last_message_preview || 'Nouvelle conversation',
-            last_message_time: conv.last_message_at || conv.created_at,
-            unread_count: conv.unread_count || 0,
+            last_message: conv.last_message || 'Nouvelle conversation',
+            last_message_time: conv.last_message_time,
+            unread_count: 0,
             is_vendor: isVendor,
             is_certified: isCertified,
-            vendor_phone: vendorInfo?.phone,
-            vendor_shop_slug: vendorInfo?.shop_slug
+            vendor_phone: vendor?.phone,
+            vendor_shop_slug: vendor?.shop_slug
           };
         })
       );
@@ -247,17 +270,21 @@ export default function Messages() {
     if (!newMessage.trim() || !selectedConversation || !currentUser) return;
 
     try {
-      // Utiliser le service professionnel
-      const conversationId = `direct_${selectedConversation}`;
-      await universalCommunicationService.sendTextMessage(
-        conversationId,
-        currentUser.id,
-        newMessage.trim()
-      );
+      const { error } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: currentUser.id,
+          recipient_id: selectedConversation,
+          content: newMessage.trim(),
+          type: 'text',
+          status: 'sent'
+        });
+
+      if (error) throw error;
 
       setNewMessage("");
       loadMessages(selectedConversation);
-      loadConversations();
+      scrollToBottom();
     } catch (error) {
       console.error('Erreur envoi message:', error);
       toast.error("Erreur lors de l'envoi du message");
@@ -271,18 +298,54 @@ export default function Messages() {
     }
 
     try {
-      const conversationId = `direct_${selectedConversation}`;
-      await universalCommunicationService.sendFileMessage(
-        conversationId,
-        currentUser.id,
-        file
-      );
+      // Upload fichier vers Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('communication-files')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Récupérer URL publique
+      const { data: { publicUrl } } = supabase.storage
+        .from('communication-files')
+        .getPublicUrl(fileName);
+
+      // Déterminer le type de fichier
+      let fileType: 'image' | 'video' | 'audio' | 'file' = 'file';
+      if (file.type.startsWith('image/')) fileType = 'image';
+      else if (file.type.startsWith('video/')) fileType = 'video';
+      else if (file.type.startsWith('audio/') || file.name.includes('vocal')) fileType = 'audio';
+
+      // Insérer message avec fichier
+      const { error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: currentUser.id,
+          recipient_id: selectedConversation,
+          content: file.name,
+          type: fileType,
+          file_url: publicUrl,
+          file_name: file.name,
+          file_size: file.size,
+          file_type: file.type,
+          status: 'sent'
+        });
+
+      if (messageError) throw messageError;
 
       loadMessages(selectedConversation);
-      loadConversations();
+      scrollToBottom();
+      toast.success('Fichier envoyé !');
     } catch (error: any) {
       console.error('Erreur envoi fichier:', error);
-      throw error; // Re-throw pour que MessageInput affiche l'erreur
+      toast.error(error.message || 'Erreur lors de l\'envoi');
+      throw error;
     }
   };
 
