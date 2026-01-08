@@ -56,10 +56,12 @@ export default function Messages() {
   
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [availableContacts, setAvailableContacts] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadingContacts, setLoadingContacts] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showChat, setShowChat] = useState(false);
   const [showVideoCall, setShowVideoCall] = useState(false);
@@ -74,6 +76,7 @@ export default function Messages() {
   useEffect(() => {
     if (currentUser) {
       loadConversations();
+      loadAvailableContacts();
     }
   }, [currentUser]);
 
@@ -262,6 +265,82 @@ export default function Messages() {
       toast.error('Erreur lors du chargement des conversations');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Charger les contacts disponibles (vendeurs) pour démarrer une nouvelle conversation
+  const loadAvailableContacts = async () => {
+    if (!currentUser) return;
+
+    try {
+      setLoadingContacts(true);
+
+      // Récupérer les vendeurs actifs (sauf l'utilisateur actuel)
+      type VendorData = { id: string; user_id: string; business_name: string | null; shop_slug: string | null; phone: string | null };
+      
+      const result = await supabase
+        .from('vendors')
+        .select('id, user_id, business_name, shop_slug, phone');
+      
+      const allVendors = (result.data || []) as VendorData[];
+      const vendors = allVendors
+        .filter(v => v.user_id !== currentUser.id)
+        .slice(0, 20);
+
+      if (result.error) {
+        console.error('Erreur chargement vendeurs:', result.error);
+        return;
+      }
+
+      if (vendors.length === 0) {
+        setAvailableContacts([]);
+        return;
+      }
+
+      // Enrichir avec les profils
+      const contacts = await Promise.all(
+        vendors.map(async (vendor) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('first_name, last_name, email, avatar_url')
+            .eq('id', vendor.user_id)
+            .single();
+
+          // Vérifier certification
+          const { data: cert } = await supabase
+            .from('vendor_certifications')
+            .select('status')
+            .eq('vendor_id', vendor.user_id)
+            .maybeSingle();
+
+          const isCertified = cert?.status === 'CERTIFIE';
+          const userName = vendor.business_name || 
+            (profile?.first_name && profile?.last_name
+              ? `${profile.first_name} ${profile.last_name}`
+              : profile?.email || 'Vendeur');
+
+          return {
+            id: vendor.user_id,
+            other_user_id: vendor.user_id,
+            other_user_name: userName,
+            other_user_email: profile?.email || '',
+            other_user_avatar: profile?.avatar_url,
+            last_message: 'Cliquez pour discuter',
+            last_message_time: new Date().toISOString(),
+            unread_count: 0,
+            is_vendor: true,
+            is_certified: isCertified,
+            vendor_phone: vendor.phone,
+            vendor_shop_slug: vendor.shop_slug
+          };
+        })
+      );
+
+      setAvailableContacts(contacts);
+    } catch (error) {
+      console.error('Erreur chargement contacts:', error);
+    } finally {
+      setLoadingContacts(false);
     }
   };
 
@@ -459,14 +538,65 @@ export default function Messages() {
               <p className="text-sm">Chargement des conversations...</p>
             </div>
           ) : filteredConversations.length === 0 ? (
-            <div className="p-8 text-center animate-in fade-in duration-500">
-              <div className="bg-primary/5 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
-                <MessageCircle className="w-10 h-10 text-primary" />
-              </div>
-              <p className="text-lg font-medium text-foreground mb-2">Aucune conversation</p>
-              <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                Commencez une nouvelle conversation depuis le marketplace ou contactez un vendeur
-              </p>
+            <div className="animate-in fade-in duration-500">
+              {/* Section contacts disponibles */}
+              {availableContacts.length > 0 ? (
+                <>
+                  <div className="p-4 border-b border-border">
+                    <p className="text-sm font-medium text-muted-foreground">Contacts disponibles</p>
+                  </div>
+                  <div className="divide-y divide-border">
+                    {availableContacts.map((contact, index) => (
+                      <button
+                        key={contact.id}
+                        onClick={() => handleSelectConversation(contact.id)}
+                        className={cn(
+                          "w-full p-4 flex items-center gap-3 hover:bg-accent/50 transition-all duration-200 text-left animate-in fade-in slide-in-from-left-3",
+                          selectedConversation === contact.id && "bg-accent shadow-sm"
+                        )}
+                        style={{ animationDelay: `${index * 30}ms` }}
+                      >
+                        <Avatar className="w-12 h-12 flex-shrink-0">
+                          <AvatarImage src={contact.other_user_avatar} />
+                          <AvatarFallback className="bg-primary/10 text-primary">
+                            {contact.other_user_name.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-foreground truncate">
+                              {contact.other_user_name}
+                            </p>
+                            {contact.is_certified && (
+                              <Badge variant="secondary" className="gap-1 flex-shrink-0 text-xs">
+                                <Shield className="w-3 h-3" />
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground truncate mt-0.5">
+                            {contact.is_vendor ? 'Vendeur' : 'Utilisateur'}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : loadingContacts ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  <div className="animate-spin w-8 h-8 border-3 border-primary border-t-transparent rounded-full mx-auto mb-3" />
+                  <p className="text-sm">Chargement des contacts...</p>
+                </div>
+              ) : (
+                <div className="p-8 text-center">
+                  <div className="bg-primary/5 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                    <MessageCircle className="w-10 h-10 text-primary" />
+                  </div>
+                  <p className="text-lg font-medium text-foreground mb-2">Aucun contact</p>
+                  <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                    Visitez le marketplace pour découvrir des vendeurs
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="divide-y divide-border">
