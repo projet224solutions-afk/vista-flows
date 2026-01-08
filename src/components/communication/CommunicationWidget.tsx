@@ -36,42 +36,6 @@ export default function CommunicationWidget({
     'top-left': 'top-4 left-4'
   };
 
-  return (
-    <div className={`fixed ${positionClasses[position]} z-50 flex flex-col gap-2`}>
-      {/* Bouton principal Messages */}
-      <Button
-        size="lg"
-        onClick={() => navigate('/messages')}
-        className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all bg-primary hover:bg-primary/90"
-      >
-        <MessageSquare className="h-6 w-6" />
-        {unreadCount > 0 && (
-          <Badge 
-            variant="destructive" 
-            className="absolute -top-2 -right-2 h-6 w-6 flex items-center justify-center text-xs animate-pulse"
-          >
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </Badge>
-        )}
-      </Button>
-
-      {/* Bouton notifications (optionnel) */}
-      {showNotifications && notificationCount > 0 && (
-        <Button
-          variant="secondary"
-          size="lg"
-          onClick={() => navigate('/messages')}
-          className="h-12 w-12 rounded-full shadow-lg relative"
-        >
-          <Bell className="h-5 w-5" />
-          <Badge 
-            variant="destructive" 
-            className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs"
-          >
-            {notificationCount}
-          </Badge>
-        </Button>
-      )}
-    </div>
-  );
+  // Widget désactivé
+  return null;
 }
