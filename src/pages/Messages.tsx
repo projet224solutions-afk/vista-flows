@@ -105,13 +105,14 @@ export default function Messages() {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'messages',
-          filter: `recipient_id=eq.${currentUser.id}`
+          table: 'messages'
         },
         (payload) => {
-          const newMsg = payload.new as Message;
-          if (newMsg.sender_id === selectedConversation) {
-            setMessages(prev => [...prev, newMsg]);
+          const newMsg = payload.new as any;
+          // Vérifier si le message concerne cette conversation
+          if (newMsg.sender_id === selectedConversation || newMsg.sender_id === currentUser.id) {
+            // Recharger les messages pour cette conversation
+            loadMessages(selectedConversation);
           }
         }
       )
@@ -146,40 +147,59 @@ export default function Messages() {
     try {
       setLoading(true);
       
-      // Récupérer les messages pour trouver les conversations
-      const { data: messagesData, error: messagesError } = await supabase
-        .from('messages')
-        .select('sender_id, recipient_id, content, created_at')
-        .or(`sender_id.eq.${currentUser.id},recipient_id.eq.${currentUser.id}`)
-        .order('created_at', { ascending: false })
-        .limit(100);
+      // Récupérer les conversations où l'utilisateur est participant
+      const { data: participations, error: partError } = await supabase
+        .from('conversation_participants')
+        .select(`
+          conversation_id,
+          conversations (
+            id,
+            name,
+            type,
+            last_message_preview,
+            last_message_at,
+            created_at
+          )
+        `)
+        .eq('user_id', currentUser.id);
 
-      if (messagesError) {
-        console.error('Erreur chargement messages:', messagesError);
-        // Si la table n'existe pas ou est vide, afficher une liste vide
+      if (partError) {
+        console.error('Erreur chargement participations:', partError);
         setConversations([]);
         setLoading(false);
         return;
       }
 
-      // Si aucun message, afficher liste vide (pas d'erreur)
-      if (!messagesData || messagesData.length === 0) {
+      if (!participations || participations.length === 0) {
         setConversations([]);
         setLoading(false);
         return;
       }
 
-      // Grouper par utilisateur
+      // Pour chaque conversation, trouver l'autre participant
       const conversationMap = new Map<string, any>();
       
-      for (const msg of messagesData || []) {
-        const otherUserId = msg.sender_id === currentUser.id ? msg.recipient_id : msg.sender_id;
+      for (const part of participations) {
+        if (!part.conversations) continue;
+        const conv = part.conversations as any;
         
+        // Trouver l'autre participant
+        const { data: otherParticipants } = await supabase
+          .from('conversation_participants')
+          .select('user_id')
+          .eq('conversation_id', conv.id)
+          .neq('user_id', currentUser.id)
+          .limit(1);
+
+        const otherUserId = otherParticipants?.[0]?.user_id;
+        if (!otherUserId) continue;
+
         if (!conversationMap.has(otherUserId)) {
           conversationMap.set(otherUserId, {
+            conversation_id: conv.id,
             other_user_id: otherUserId,
-            last_message: msg.content,
-            last_message_time: msg.created_at
+            last_message: conv.last_message_preview || '',
+            last_message_time: conv.last_message_at || conv.created_at
           });
         }
       }
@@ -249,13 +269,18 @@ export default function Messages() {
     if (!currentUser) return;
 
     try {
+      // Charger les messages directement via sender_id et recipient_id
       const { data, error } = await supabase
         .from('messages')
         .select('*')
         .or(`and(sender_id.eq.${currentUser.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${currentUser.id})`)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur requête messages:', error);
+        setMessages([]);
+        return;
+      }
       
       // Caster les données pour correspondre à l'interface Message
       const messagesData = (data || []).map(msg => ({
@@ -265,13 +290,6 @@ export default function Messages() {
       }));
       
       setMessages(messagesData);
-
-      await supabase
-        .from('messages')
-        .update({ read_at: new Date().toISOString() })
-        .eq('recipient_id', currentUser.id)
-        .eq('sender_id', otherUserId)
-        .is('read_at', null);
 
     } catch (error) {
       console.error('Erreur chargement messages:', error);
@@ -283,49 +301,10 @@ export default function Messages() {
     if (!newMessage.trim() || !selectedConversation || !currentUser) return;
 
     try {
-      // Créer ou récupérer la conversation
-      const conversationId = `direct_${[currentUser.id, selectedConversation].sort().join('_')}`;
-      
-      // Vérifier si la conversation existe
-      const { data: existingConv } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('id', conversationId)
-        .maybeSingle();
-
-      // Créer la conversation si elle n'existe pas
-      if (!existingConv) {
-        const { error: convError } = await supabase
-          .from('conversations')
-          .insert({
-            id: conversationId,
-            type: 'direct',
-            created_by: currentUser.id
-          });
-
-        if (convError) {
-          console.error('Erreur création conversation:', convError);
-          throw convError;
-        }
-
-        // Ajouter les participants
-        const { error: partError } = await supabase
-          .from('conversation_participants')
-          .insert([
-            { conversation_id: conversationId, user_id: currentUser.id },
-            { conversation_id: conversationId, user_id: selectedConversation }
-          ]);
-
-        if (partError) {
-          console.error('Erreur ajout participants:', partError);
-        }
-      }
-
-      // Insérer le message
+      // Insérer le message directement avec sender_id et recipient_id
       const { error } = await supabase
         .from('messages')
         .insert({
-          conversation_id: conversationId,
           sender_id: currentUser.id,
           recipient_id: selectedConversation,
           content: newMessage.trim(),
@@ -337,6 +316,7 @@ export default function Messages() {
 
       setNewMessage("");
       loadMessages(selectedConversation);
+      loadConversations();
       scrollToBottom();
     } catch (error) {
       console.error('Erreur envoi message:', error);
@@ -369,53 +349,27 @@ export default function Messages() {
         .from('communication-files')
         .getPublicUrl(fileName);
 
-      // Déterminer le type de fichier
-      let fileType: 'image' | 'video' | 'audio' | 'file' = 'file';
+      // Déterminer le type de fichier - utiliser les types acceptés par la DB
+      let fileType: 'image' | 'file' = 'file';
       if (file.type.startsWith('image/')) fileType = 'image';
-      else if (file.type.startsWith('video/')) fileType = 'video';
-      else if (file.type.startsWith('audio/') || file.name.includes('vocal')) fileType = 'audio';
 
-      // Créer ou récupérer la conversation
-      const conversationId = `direct_${[currentUser.id, selectedConversation].sort().join('_')}`;
-      
-      const { data: existingConv } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('id', conversationId)
-        .maybeSingle();
-
-      if (!existingConv) {
-        await supabase.from('conversations').insert({
-          id: conversationId,
-          type: 'direct',
-          created_by: currentUser.id
-        });
-
-        await supabase.from('conversation_participants').insert([
-          { conversation_id: conversationId, user_id: currentUser.id },
-          { conversation_id: conversationId, user_id: selectedConversation }
-        ]);
-      }
-
-      // Insérer message avec fichier
+      // Insérer message avec fichier directement
       const { error: messageError } = await supabase
         .from('messages')
         .insert({
-          conversation_id: conversationId,
           sender_id: currentUser.id,
           recipient_id: selectedConversation,
           content: file.name,
           type: fileType,
           file_url: publicUrl,
           file_name: file.name,
-          file_size: file.size,
-          file_type: file.type,
-          status: 'sent'
+          file_size: file.size
         });
 
       if (messageError) throw messageError;
 
       loadMessages(selectedConversation);
+      loadConversations();
       scrollToBottom();
       toast.success('Fichier envoyé !');
     } catch (error: any) {
