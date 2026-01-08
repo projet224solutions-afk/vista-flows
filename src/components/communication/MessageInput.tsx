@@ -158,7 +158,7 @@ export default function MessageInput({
   };
 
   return (
-    <div className={cn("border-t border-border bg-card p-3 space-y-3", className)}>
+    <div className={cn("border-t border-border bg-card p-2 space-y-2", className)}>
       {/* Aperçu pièces jointes */}
       {attachments.length > 0 && (
         <div className="flex flex-wrap gap-2 p-2 bg-muted/50 rounded-lg border border-border/50">
