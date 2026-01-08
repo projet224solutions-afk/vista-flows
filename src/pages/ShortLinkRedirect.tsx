@@ -39,6 +39,8 @@ export default function ShortLinkRedirect() {
       setLoading(true);
       setError(null);
 
+      console.log('🔗 [ShortLink] Resolving short code:', shortCode);
+
       // Récupérer les infos du lien (avec cast pour éviter les erreurs de type)
       const { data, error: fetchError } = await (supabase
         .from('shared_links' as any)
@@ -47,42 +49,58 @@ export default function ShortLinkRedirect() {
         .single() as any) as { data: SharedLinkData | null; error: any };
 
       if (fetchError || !data) {
+        console.error('🔗 [ShortLink] Link not found:', fetchError);
         setError('Lien introuvable ou expiré');
         setLoading(false);
         return;
       }
 
-      // Incrémenter le compteur de vues (cast to any pour éviter les erreurs de type)
-      await (supabase.rpc as any)('increment_shared_link_views', { 
-        p_short_code: shortCode 
+      console.log('🔗 [ShortLink] Found link data:', {
+        originalUrl: data.original_url,
+        title: data.title,
+        linkType: data.link_type
       });
 
-      // Stocker les infos pour affichage en cas de besoin
+      // Incrémenter le compteur de vues (cast to any pour éviter les erreurs de type)
+      (supabase.rpc as any)('increment_shared_link_views', { 
+        p_short_code: shortCode 
+      }).catch((e: any) => console.warn('Failed to increment views:', e));
+
+      // Stocker les infos pour affichage en cas de fallback
       setLinkInfo({
         title: data.title,
         type: data.link_type,
         originalUrl: data.original_url
       });
 
-      // Extraire le chemin relatif de l'URL originale
+      // Extraire le chemin relatif de l'URL originale et rediriger
+      let relativePath: string;
+      
       try {
         const url = new URL(data.original_url);
         // Retirer les paramètres internes Lovable (ex: __lovable_token)
         for (const key of Array.from(url.searchParams.keys())) {
           if (key.startsWith('__lovable')) url.searchParams.delete(key);
         }
-        const relativePath = url.pathname + url.search;
-        // Rediriger vers la page
-        navigate(relativePath, { replace: true });
+        relativePath = url.pathname + url.search;
       } catch {
-        // Si l'URL est déjà relative
-        navigate(data.original_url, { replace: true });
+        // Si l'URL est déjà relative ou malformée
+        relativePath = data.original_url.startsWith('/') 
+          ? data.original_url 
+          : `/${data.original_url}`;
       }
 
+      console.log('🔗 [ShortLink] Redirecting to:', relativePath);
+      
+      // IMPORTANT: Rediriger AVANT de changer l'état loading
+      // pour éviter les re-renders qui interrompent la navigation
+      setLoading(false);
+      navigate(relativePath, { replace: true });
+      return; // Éviter toute autre exécution
+
     } catch (err) {
-      console.error('Error resolving short link:', err);
+      console.error('🔗 [ShortLink] Error resolving short link:', err);
       setError('Erreur lors de la résolution du lien');
-    } finally {
       setLoading(false);
     }
   };
