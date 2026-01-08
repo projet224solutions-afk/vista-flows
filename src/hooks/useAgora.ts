@@ -47,6 +47,7 @@ export function useAgora() {
   const [error, setError] = useState<string | null>(null);
 
   const configRef = useRef<AgoraConfig | null>(null);
+  const joinInProgressRef = useRef(false);
 
   // Convertir UUID en UID numérique pour Agora (UUID -> nombre 32-bit)
   const uuidToNumericUid = useCallback((uuid: string): number => {
@@ -123,13 +124,39 @@ export function useAgora() {
       return;
     }
 
+    const sanitizedChannel = sanitizeChannelName(channel);
+    const connectionState = agoraService.getConnectionState();
+    const currentChannel = agoraService.getCurrentChannel();
+
+    // Éviter INVALID_OPERATION (client déjà connecting/connected)
+    if (connectionState === 'CONNECTING') {
+      console.warn('[AgoraHook] ⚠️ joinCall ignoré: client en CONNECTING');
+      return;
+    }
+
+    if (connectionState === 'CONNECTED') {
+      if (currentChannel === sanitizedChannel) {
+        console.log('[AgoraHook] ✅ Déjà connecté au canal:', sanitizedChannel);
+        return;
+      }
+
+      // Si déjà dans un autre appel, on coupe proprement avant de rejoindre
+      await agoraService.leaveChannel().catch(() => undefined);
+    }
+
+    if (joinInProgressRef.current) {
+      console.warn('[AgoraHook] ⚠️ joinCall ignoré: join déjà en cours');
+      return;
+    }
+
+    joinInProgressRef.current = true;
+
     try {
       setIsLoading(true);
       setError(null);
 
-      // Convertir l'UUID en UID numérique et nettoyer le nom du canal
+      // Convertir l'UUID en UID numérique
       const numericUid = uuidToNumericUid(user.id);
-      const sanitizedChannel = sanitizeChannelName(channel);
 
       console.log('📞 Tentative de rejoindre l\'appel:', sanitizedChannel, 'User:', user.id, 'NumericUID:', numericUid);
 
@@ -170,7 +197,7 @@ export function useAgora() {
         ...prev,
         isConnected: true,
         isInCall: true,
-        currentChannel: channel,
+        currentChannel: sanitizedChannel,
         isVideoEnabled: isVideo
       }));
 
@@ -190,9 +217,17 @@ export function useAgora() {
         variant: "destructive"
       });
     } finally {
+      joinInProgressRef.current = false;
       setIsLoading(false);
     }
-  }, [user?.id, toast, fetchAgoraCredentials, isInitialized]);
+  }, [
+    user?.id,
+    toast,
+    sanitizeChannelName,
+    uuidToNumericUid,
+    fetchAgoraCredentials,
+    isInitialized,
+  ]);
 
   /**
    * Quitter un appel
