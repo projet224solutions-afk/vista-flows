@@ -1,14 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, Shield, Lock, AlertCircle } from "lucide-react";
+import { Shield, Lock, AlertCircle } from "lucide-react";
 import { useBureauAuth } from "@/hooks/useBureauAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { OptimizedPasswordInput, type PasswordStrength } from "@/components/ui/OptimizedPasswordInput";
 
 const BureauChangePassword = () => {
   const navigate = useNavigate();
@@ -22,11 +22,7 @@ const BureauChangePassword = () => {
     confirmPassword: ""
   });
 
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  const [passwordStrength, setPasswordStrength] = useState({
+  const [passwordStrength, setPasswordStrength] = useState<PasswordStrength>({
     score: 0,
     message: "",
     color: ""
@@ -73,44 +69,14 @@ const BureauChangePassword = () => {
     loadBureauData();
   }, [bureauAuth, navigate]);
 
-  // Calculer la force du nouveau mot de passe
-  useEffect(() => {
-    const password = formData.newPassword;
-    let score = 0;
+  // Handlers optimisés - state local uniquement, pas de validation lourde
+  const handlePasswordChange = useCallback((field: keyof typeof formData) => (value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  }, []);
 
-    if (password.length >= 8) score++;
-    if (password.length >= 12) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[a-z]/.test(password)) score++;
-    if (/[0-9]/.test(password)) score++;
-    if (/[^A-Za-z0-9]/.test(password)) score++;
-
-    let message = "";
-    let color = "";
-
-    if (password.length === 0) {
-      message = "";
-      color = "";
-    } else if (score <= 2) {
-      message = "Faible";
-      color = "text-red-500";
-    } else if (score <= 4) {
-      message = "Bon";
-      color = "text-yellow-500";
-    } else {
-      message = "Excellent";
-      color = "text-green-500";
-    }
-
-    setPasswordStrength({ score, message, color });
-  }, [formData.newPassword]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
+  const handleStrengthChange = useCallback((strength: PasswordStrength) => {
+    setPasswordStrength(strength);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -246,24 +212,14 @@ const BureauChangePassword = () => {
                   <Lock className="h-4 w-4 text-green-600" />
                   Mot de passe actuel
                 </Label>
-                <div className="relative">
-                  <Input
-                    id="currentPassword"
-                    name="currentPassword"
-                    type={showCurrentPassword ? "text" : "password"}
-                    value={formData.currentPassword}
-                    onChange={handleChange}
-                    className="pr-10 border-green-200 focus:border-green-500"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-green-600"
-                  >
-                    {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
+                <OptimizedPasswordInput
+                  id="currentPassword"
+                  name="currentPassword"
+                  value={formData.currentPassword}
+                  onChange={handlePasswordChange('currentPassword')}
+                  className="border-green-200 focus:border-green-500"
+                  required
+                />
               </div>
 
               {/* Nouveau mot de passe */}
@@ -272,48 +228,16 @@ const BureauChangePassword = () => {
                   <Lock className="h-4 w-4 text-green-600" />
                   Nouveau mot de passe
                 </Label>
-                <div className="relative">
-                  <Input
-                    id="newPassword"
-                    name="newPassword"
-                    type={showNewPassword ? "text" : "password"}
-                    value={formData.newPassword}
-                    onChange={handleChange}
-                    className="pr-10 border-green-200 focus:border-green-500"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-green-600"
-                  >
-                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                
-                {/* Indicateur de force du mot de passe */}
-                {formData.newPassword && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Force du mot de passe :</span>
-                      <span className={`font-semibold ${passwordStrength.color}`}>
-                        {passwordStrength.message}
-                      </span>
-                    </div>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-300 ${
-                          passwordStrength.score <= 2
-                            ? "bg-red-500"
-                            : passwordStrength.score <= 4
-                            ? "bg-yellow-500"
-                            : "bg-green-500"
-                        }`}
-                        style={{ width: `${(passwordStrength.score / 6) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
+                <OptimizedPasswordInput
+                  id="newPassword"
+                  name="newPassword"
+                  value={formData.newPassword}
+                  onChange={handlePasswordChange('newPassword')}
+                  className="border-green-200 focus:border-green-500"
+                  required
+                  showStrengthIndicator
+                  onStrengthChange={handleStrengthChange}
+                />
               </div>
 
               {/* Confirmer le nouveau mot de passe */}
@@ -322,24 +246,14 @@ const BureauChangePassword = () => {
                   <Lock className="h-4 w-4 text-green-600" />
                   Confirmer le nouveau mot de passe
                 </Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className="pr-10 border-green-200 focus:border-green-500"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-green-600"
-                  >
-                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
+                <OptimizedPasswordInput
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handlePasswordChange('confirmPassword')}
+                  className="border-green-200 focus:border-green-500"
+                  required
+                />
                 
                 {/* Indicateur de correspondance */}
                 {formData.confirmPassword && (
