@@ -506,6 +506,18 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       // Créer une transaction de dépôt
       const referenceNumber = `DEP${Date.now()}${Math.floor(Math.random() * 1000)}`;
       
+      // ⚡ Update atomique
+      const { error: balanceError } = await supabase
+        .rpc('update_wallet_balance_atomic', {
+          p_wallet_id: walletData.id,
+          p_amount: amount,
+          p_transaction_id: referenceNumber,
+          p_description: 'Dépôt manuel sur le wallet'
+        });
+
+      if (balanceError) throw balanceError;
+
+      // Enregistrer transaction
       const { error: transactionError } = await supabase
         .from('wallet_transactions')
         .insert({
@@ -517,19 +529,11 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           currency: 'GNF',
           status: 'completed',
           description: 'Dépôt manuel sur le wallet',
-          receiver_wallet_id: walletData.id
+          receiver_wallet_id: walletData.id,
+          receiver_user_id: effectiveUserId
         });
 
-      if (transactionError) throw transactionError;
-
-      // Mettre à jour le solde du wallet
-      const newBalance = walletData.balance + amount;
-      const { error: updateError } = await supabase
-        .from('wallets')
-        .update({ balance: newBalance })
-        .eq('user_id', effectiveUserId);
-
-      if (updateError) throw updateError;
+      if (transactionError) console.warn('Transaction log failed:', transactionError);
 
       console.log('✅ Dépôt effectué avec succès');
 
@@ -1784,15 +1788,16 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
           if (transactionError) throw transactionError;
 
-          // Mettre à jour le solde du wallet
-          const newBalance = (wallet?.balance || 0) + numAmount;
-          
-          const { error: updateError } = await supabase
-            .from('wallets')
-            .update({ balance: newBalance })
-            .eq('id', wallet?.id);
+          // ⚡ Update atomique du balance
+          const { error: balanceError } = await supabase
+            .rpc('update_wallet_balance_atomic', {
+              p_wallet_id: wallet?.id,
+              p_amount: numAmount,
+              p_transaction_id: referenceNumber,
+              p_description: 'Recharge wallet par carte bancaire (Stripe)'
+            });
 
-          if (updateError) throw updateError;
+          if (balanceError) throw balanceError;
 
           toast.success('Recharge réussie !', {
             description: `${numAmount.toLocaleString()} GNF ajoutés à votre wallet`

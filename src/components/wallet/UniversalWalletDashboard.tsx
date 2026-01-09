@@ -192,6 +192,18 @@ export default function UniversalWalletDashboard({
 
       const referenceNumber = `DEP${Date.now()}${Math.floor(Math.random() * 1000)}`;
       
+      // ⚡ Update atomique du balance (évite race conditions)
+      const { data: balanceData, error: balanceError } = await supabase
+        .rpc('update_wallet_balance_atomic', {
+          p_wallet_id: wallet.id,
+          p_amount: amount,
+          p_transaction_id: referenceNumber,
+          p_description: 'Dépôt sur le wallet'
+        });
+
+      if (balanceError) throw balanceError;
+
+      // Enregistrer la transaction
       const { error: transactionError } = await supabase
         .from('wallet_transactions')
         .insert({
@@ -203,18 +215,11 @@ export default function UniversalWalletDashboard({
           currency: 'GNF',
           status: 'completed',
           description: 'Dépôt sur le wallet',
-          receiver_wallet_id: wallet.id
+          receiver_wallet_id: wallet.id,
+          receiver_user_id: userId
         });
 
-      if (transactionError) throw transactionError;
-
-      const newBalance = wallet.balance + amount;
-      const { error: updateError } = await supabase
-        .from('wallets')
-        .update({ balance: newBalance })
-        .eq('user_id', userId);
-
-      if (updateError) throw updateError;
+      if (transactionError) console.warn('Transaction log failed:', transactionError);
 
       setDepositAmount("");
       toast.success(`Dépôt de ${amount.toLocaleString()} GNF effectué avec succès`);
@@ -251,29 +256,34 @@ export default function UniversalWalletDashboard({
 
       const referenceNumber = `WDR${Date.now()}${Math.floor(Math.random() * 1000)}`;
       
+      // ⚡ Update atomique du balance (avec montant négatif pour retrait)
+      const { data: balanceData, error: balanceError } = await supabase
+        .rpc('update_wallet_balance_atomic', {
+          p_wallet_id: wallet.id,
+          p_amount: -amount, // Négatif pour retrait
+          p_transaction_id: referenceNumber,
+          p_description: 'Retrait du wallet'
+        });
+
+      if (balanceError) throw balanceError;
+
+      // Enregistrer la transaction
       const { error: transactionError } = await supabase
         .from('wallet_transactions')
         .insert({
           transaction_id: referenceNumber,
           transaction_type: 'withdraw',
-          amount: -amount,
-          net_amount: -amount,
+          amount: amount,
+          net_amount: amount,
           fee: 0,
           currency: 'GNF',
           status: 'completed',
           description: 'Retrait du wallet',
-          sender_wallet_id: wallet.id
+          sender_wallet_id: wallet.id,
+          sender_user_id: userId
         });
 
-      if (transactionError) throw transactionError;
-
-      const newBalance = wallet.balance - amount;
-      const { error: updateError } = await supabase
-        .from('wallets')
-        .update({ balance: newBalance })
-        .eq('user_id', userId);
-
-      if (updateError) throw updateError;
+      if (transactionError) console.warn('Transaction log failed:', transactionError);
 
       setWithdrawAmount("");
       toast.success(`Retrait de ${amount.toLocaleString()} GNF effectué avec succès`);
