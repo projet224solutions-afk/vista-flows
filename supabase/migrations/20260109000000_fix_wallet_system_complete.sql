@@ -4,14 +4,34 @@
 -- Objectif: Réparer le système wallet cassé
 -- =================================================================
 
--- 1. SUPPRIMER LES DOUBLONS ET INCONSISTANCES
+-- 1. SAUVEGARDER DONNÉES EXISTANTES AVANT SUPPRESSION
+DO $$
+BEGIN
+    -- Créer table temporaire pour sauvegarder transactions si elle existe
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'wallet_transactions') THEN
+        CREATE TEMP TABLE temp_wallet_transactions AS 
+        SELECT * FROM wallet_transactions;
+        RAISE NOTICE '✅ Sauvegarde de % transactions existantes', (SELECT COUNT(*) FROM temp_wallet_transactions);
+    END IF;
+    
+    -- Créer table temporaire pour sauvegarder wallets si elle existe
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'wallets') THEN
+        CREATE TEMP TABLE temp_wallets AS 
+        SELECT * FROM wallets;
+        RAISE NOTICE '✅ Sauvegarde de % wallets existants', (SELECT COUNT(*) FROM temp_wallets);
+    END IF;
+END $$;
+
+-- 2. SUPPRIMER LES DOUBLONS ET INCONSISTANCES
 DROP TABLE IF EXISTS enhanced_transactions CASCADE;
+DROP TABLE IF EXISTS wallet_transactions CASCADE;
+DROP TABLE IF EXISTS wallets CASCADE;
 DROP TYPE IF EXISTS wallet_status CASCADE;
 DROP TYPE IF EXISTS transaction_type CASCADE;
 DROP TYPE IF EXISTS transaction_status CASCADE;
 DROP TYPE IF EXISTS commission_type CASCADE;
 
--- 2. CRÉER LES TYPES ENUM
+-- 4. CRÉER LES TYPES ENUM
 CREATE TYPE wallet_status AS ENUM ('active', 'suspended', 'blocked', 'pending_verification');
 CREATE TYPE transaction_type AS ENUM (
     'transfer', 'deposit', 'withdrawal', 'payment', 'refund', 
@@ -24,9 +44,7 @@ CREATE TYPE transaction_status AS ENUM (
 );
 CREATE TYPE commission_type AS ENUM ('percentage', 'fixed', 'tiered');
 
--- 3. RECRÉER TABLE WALLETS (Schema Unifié)
-DROP TABLE IF EXISTS wallets CASCADE;
-
+-- 5. CRÉER TABLE WALLETS (Schema Unifié)
 CREATE TABLE wallets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID UNIQUE NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -48,8 +66,8 @@ CREATE TABLE wallets (
 CREATE INDEX idx_wallets_user_id ON wallets(user_id);
 CREATE INDEX idx_wallets_status ON wallets(wallet_status) WHERE wallet_status = 'active';
 
--- 4. TABLE TRANSACTIONS (Unifiée)
-CREATE TABLE IF NOT EXISTS wallet_transactions (
+-- 6. TABLE TRANSACTIONS (Unifiée)
+CREATE TABLE wallet_transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     transaction_id VARCHAR(50) UNIQUE NOT NULL,
     
@@ -100,7 +118,81 @@ CREATE INDEX idx_wallet_tx_receiver_wallet ON wallet_transactions(receiver_walle
 CREATE INDEX idx_wallet_tx_status ON wallet_transactions(status, created_at DESC);
 CREATE INDEX idx_wallet_tx_idempotency ON wallet_transactions(idempotency_key) WHERE idempotency_key IS NOT NULL;
 
--- 5. FONCTION ATOMIQUE: Update Balance
+-- 7. RESTAURER WALLETS EXISTANTS
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'pg_temp' AND tablename LIKE 'temp_wallets%') THEN
+        INSERT INTO wallets (id, user_id, balance, currency, wallet_status, is_blocked, blocked_reason, blocked_at, created_at, updated_at)
+        SELECT 
+            id, 
+            user_id, 
+            COALESCE(balance, 0),
+            COALESCE(currency, 'GNF'),
+            CASE 
+                WHEN is_blocked THEN 'blocked'::wallet_status
+                ELSE 'active'::wallet_status
+            END,
+            COALESCE(is_blocked, false),
+            blocked_reason,
+            blocked_at,
+            COALESCE(created_at, NOW()),
+            COALESCE(updated_at, NOW())
+        FROM temp_wallets
+        ON CONFLICT (user_id) DO UPDATE SET
+            balance = EXCLUDED.balance,
+            currency = EXCLUDED.currency,
+            updated_at = NOW();
+            
+        RAISE NOTICE '✅ Restauré % wallets', (SELECT COUNT(*) FROM temp_wallets);
+    END IF;
+END $$;
+
+-- 8. RESTAURER TRANSACTIONS EXISTANTES
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'pg_temp' AND tablename LIKE 'temp_wallet_transactions%') THEN
+        -- Restaurer transactions avec mise à jour des user_ids
+        INSERT INTO wallet_transactions (
+            id, transaction_id, sender_wallet_id, receiver_wallet_id, 
+            sender_user_id, receiver_user_id,
+            amount, fee, net_amount, currency,
+            transaction_type, status, description, reference_id, metadata,
+            signature, signature_verified, ip_address, device_info, idempotency_key,
+            created_at, updated_at, completed_at
+        )
+        SELECT 
+            t.id,
+            COALESCE(t.transaction_id, 'TX-' || t.id),
+            t.sender_wallet_id,
+            t.receiver_wallet_id,
+            -- Récupérer user_id depuis wallets
+            COALESCE(t.sender_user_id, (SELECT user_id FROM wallets WHERE id = t.sender_wallet_id)),
+            COALESCE(t.receiver_user_id, (SELECT user_id FROM wallets WHERE id = t.receiver_wallet_id)),
+            t.amount,
+            COALESCE(t.fee, 0),
+            COALESCE(t.net_amount, t.amount - COALESCE(t.fee, 0)),
+            COALESCE(t.currency, 'GNF'),
+            COALESCE(t.transaction_type::text, 'transfer')::transaction_type,
+            COALESCE(t.status::text, 'completed')::transaction_status,
+            t.description,
+            t.reference_id,
+            COALESCE(t.metadata, '{}'::jsonb),
+            t.signature,
+            COALESCE(t.signature_verified, false),
+            t.ip_address,
+            t.device_info,
+            t.idempotency_key,
+            COALESCE(t.created_at, NOW()),
+            COALESCE(t.updated_at, NOW()),
+            t.completed_at
+        FROM temp_wallet_transactions t
+        ON CONFLICT (transaction_id) DO NOTHING;
+        
+        RAISE NOTICE '✅ Restauré % transactions', (SELECT COUNT(*) FROM temp_wallet_transactions);
+    END IF;
+END $$;
+
+-- 9. FONCTION ATOMIQUE: Update Balance
 CREATE OR REPLACE FUNCTION update_wallet_balance_atomic(
     p_wallet_id UUID,
     p_amount DECIMAL,
@@ -157,7 +249,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 6. FONCTION: Create Wallet Auto
+-- 10. FONCTION: Create Wallet Auto
 CREATE OR REPLACE FUNCTION create_wallet_for_user(p_user_id UUID)
 RETURNS UUID AS $$
 DECLARE
@@ -181,7 +273,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 7. TRIGGER: Auto-Create Wallet on Profile Insert
+-- 11. TRIGGER: Auto-Create Wallet on Profile Insert
 CREATE OR REPLACE FUNCTION trigger_create_wallet()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -200,7 +292,7 @@ CREATE TRIGGER trigger_create_wallet_on_profile
     FOR EACH ROW
     EXECUTE FUNCTION trigger_create_wallet();
 
--- 8. RLS POLICIES
+-- 12. RLS POLICIES
 ALTER TABLE wallets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wallet_transactions ENABLE ROW LEVEL SECURITY;
 
@@ -231,7 +323,7 @@ CREATE POLICY "Service role manage transactions"
 ON wallet_transactions FOR ALL
 USING (auth.role() = 'service_role');
 
--- 9. TABLE: Idempotency Keys (Prevent Duplicates)
+-- 13. TABLE: Idempotency Keys (Prevent Duplicates)
 CREATE TABLE IF NOT EXISTS idempotency_keys (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     key VARCHAR(100) UNIQUE NOT NULL,
@@ -244,7 +336,7 @@ CREATE TABLE IF NOT EXISTS idempotency_keys (
 CREATE INDEX idx_idempotency_key ON idempotency_keys(key);
 CREATE INDEX idx_idempotency_expires ON idempotency_keys(expires_at);
 
--- 10. FONCTION: Check Idempotency
+-- 14. FONCTION: Check Idempotency
 CREATE OR REPLACE FUNCTION check_idempotency_key(
     p_key VARCHAR,
     p_user_id UUID,
@@ -276,24 +368,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 11. MIGRER DONNÉES EXISTANTES (Si wallet existe déjà)
-DO $$
-BEGIN
-    -- Ajouter user_id dans transactions si manquant
-    UPDATE wallet_transactions wt
-    SET sender_user_id = w.user_id
-    FROM wallets w
-    WHERE wt.sender_wallet_id = w.id AND wt.sender_user_id IS NULL;
-    
-    UPDATE wallet_transactions wt
-    SET receiver_user_id = w.user_id
-    FROM wallets w
-    WHERE wt.receiver_wallet_id = w.id AND wt.receiver_user_id IS NULL;
-    
-    RAISE NOTICE '✅ Données wallet_transactions migrées';
-END $$;
-
--- 12. CRÉER WALLETS MANQUANTS POUR USERS EXISTANTS
+-- 15. CRÉER WALLETS MANQUANTS POUR USERS EXISTANTS
 INSERT INTO wallets (user_id, balance, currency, wallet_status)
 SELECT id, 0, 'GNF', 'active'
 FROM profiles
@@ -302,7 +377,7 @@ WHERE NOT EXISTS (
 )
 ON CONFLICT (user_id) DO NOTHING;
 
--- 13. VIEWS UTILES
+-- 16. VIEWS UTILES
 CREATE OR REPLACE VIEW wallet_summary AS
 SELECT 
     w.id as wallet_id,
@@ -322,7 +397,7 @@ LEFT JOIN profiles p ON w.user_id = p.id
 LEFT JOIN wallet_transactions wt ON (wt.sender_user_id = w.user_id OR wt.receiver_user_id = w.user_id)
 GROUP BY w.id, w.user_id, p.custom_id, p.role, w.balance, w.currency, w.wallet_status, w.is_blocked;
 
--- 14. GRANTS
+-- 17. GRANTS
 GRANT SELECT ON wallet_summary TO authenticated;
 GRANT SELECT ON wallet_summary TO anon;
 
