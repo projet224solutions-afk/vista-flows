@@ -78,7 +78,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   
   // États pour les formulaires
   const [depositAmount, setDepositAmount] = useState('');
-  const [depositMethod, setDepositMethod] = useState<'card' | 'manual' | 'mobile_money'>('card');
+  const [depositMethod, setDepositMethod] = useState<'card' | 'mobile_money'>('card');
   const [mobileMoneyPhone, setMobileMoneyPhone] = useState('');
   const [showStripeModal, setShowStripeModal] = useState(false);
   const [mobileMoneyProvider, setMobileMoneyProvider] = useState<'orange' | 'mtn'>('orange');
@@ -1191,8 +1191,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   Ajoutez des fonds à votre wallet
                 </DialogDescription>
               </DialogHeader>
-              <Tabs value={depositMethod} onValueChange={(v) => setDepositMethod(v as 'card' | 'manual' | 'mobile_money')}>
-                <TabsList className="grid w-full grid-cols-3">
+              <Tabs value={depositMethod} onValueChange={(v) => setDepositMethod(v as 'card' | 'mobile_money')}>
+                <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="card" className="gap-1 text-xs">
                     <CreditCard className="w-3 h-3" />
                     Carte
@@ -1200,9 +1200,6 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   <TabsTrigger value="mobile_money" className="gap-1 text-xs">
                     <Smartphone className="w-3 h-3" />
                     Mobile
-                  </TabsTrigger>
-                  <TabsTrigger value="manual" className="gap-1 text-xs">
-                    Manuel
                   </TabsTrigger>
                 </TabsList>
                 
@@ -1338,27 +1335,6 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                     className="w-full bg-green-600 hover:bg-green-700"
                   >
                     {processing ? 'Traitement...' : `Recharger ${depositAmount ? parseFloat(depositAmount).toLocaleString() : '0'} GNF`}
-                  </Button>
-                </TabsContent>
-                
-                <TabsContent value="manual" className="space-y-4 mt-4">
-                  <div>
-                    <Label htmlFor="deposit-amount">Montant (GNF)</Label>
-                    <Input
-                      id="deposit-amount"
-                      type="number"
-                      placeholder="10000"
-                      value={depositAmount}
-                      onChange={(e) => setDepositAmount(e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">Mode développement uniquement</p>
-                  </div>
-                  <Button 
-                    onClick={handleDeposit} 
-                    disabled={processing || !depositAmount}
-                    className="w-full bg-green-600 hover:bg-green-700"
-                  >
-                    {processing ? 'Traitement...' : 'Confirmer le dépôt'}
                   </Button>
                 </TabsContent>
               </Tabs>
