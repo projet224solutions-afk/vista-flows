@@ -443,6 +443,7 @@ export default function AgentManagement() {
               <DialogTrigger asChild>
                 <Button onClick={() => {
                   setEditingAgent(null);
+                  agentPasswordRef.current = "";
                   setFormData({
                     name: '',
                     email: '',
