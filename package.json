@@ -101,6 +101,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@swc/core": "^1.15.8",
     "@tailwindcss/typography": "^0.5.16",
     "@types/crypto-js": "^4.2.2",
     "@types/dompurify": "^3.0.5",
