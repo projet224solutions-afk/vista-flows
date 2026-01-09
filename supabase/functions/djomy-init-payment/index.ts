@@ -136,13 +136,31 @@ serve(async (req) => {
       throw new Error("Méthode de paiement invalide (OM, MOMO, KULU)");
     }
 
-    // Get Djomy credentials
+    // Get Djomy credentials with validation
     const clientId = Deno.env.get("DJOMY_CLIENT_ID")?.trim();
     const clientSecret = Deno.env.get("DJOMY_CLIENT_SECRET")?.trim();
 
     if (!clientId || !clientSecret) {
-      throw new Error("Djomy credentials not configured");
+      logStep("❌ Credentials missing", { 
+        hasClientId: !!clientId, 
+        hasSecret: !!clientSecret 
+      });
+      throw new Error("🔴 Credentials Djomy manquants. Vérifiez DJOMY_CLIENT_ID et DJOMY_CLIENT_SECRET dans les secrets Supabase.");
     }
+
+    // Validate Client ID format (must be djomy-merchant-XXXXX)
+    if (!clientId.startsWith("djomy-merchant-")) {
+      logStep("⚠️ Invalid Client ID format", { 
+        clientIdPrefix: clientId.substring(0, 15),
+        expected: "djomy-merchant-XXXXX" 
+      });
+      throw new Error(`🔴 Format Client ID invalide: "${clientId.substring(0, 20)}..." doit commencer par "djomy-merchant-". Contactez support@djomy.africa pour obtenir vos vrais identifiants marchands.`);
+    }
+
+    logStep("✅ Credentials validated", { 
+      clientIdPrefix: clientId.substring(0, 20),
+      environment: useSandbox ? "sandbox" : "production"
+    });
 
     // Initialize Supabase clients
     const supabaseAnon = createClient(
@@ -336,10 +354,50 @@ serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const duration = Date.now() - startTime;
     
-    logStep("ERROR", { message: errorMessage, duration });
+    // Categorize errors for better user experience
+    let errorCode = "UNKNOWN";
+    let userFriendlyMessage = errorMessage;
+
+    if (errorMessage.includes("Djomy API error: 403")) {
+      errorCode = "DJOMY_AUTH_403";
+      userFriendlyMessage = "🔴 Accès refusé par Djomy (403). Vos credentials ne sont pas valides ou votre serveur n'est pas autorisé. Contactez support@djomy.africa.";
+    } else if (errorMessage.includes("Djomy API error: 401")) {
+      errorCode = "DJOMY_AUTH_401";
+      userFriendlyMessage = "🔴 Authentification Djomy échouée (401). Vérifiez vos DJOMY_CLIENT_ID et DJOMY_CLIENT_SECRET.";
+    } else if (errorMessage.includes("Djomy authentication failed")) {
+      errorCode = "DJOMY_AUTH_FAILED";
+      userFriendlyMessage = "🔴 Impossible de s'authentifier auprès de Djomy. Vérifiez vos credentials et votre connexion internet.";
+    } else if (errorMessage.includes("Format Client ID invalide")) {
+      errorCode = "INVALID_CLIENT_ID";
+      userFriendlyMessage = errorMessage; // Déjà user-friendly
+    } else if (errorMessage.includes("Credentials Djomy manquants")) {
+      errorCode = "MISSING_CREDENTIALS";
+      userFriendlyMessage = errorMessage; // Déjà user-friendly
+    } else if (errorMessage.includes("Montant invalide")) {
+      errorCode = "INVALID_AMOUNT";
+      userFriendlyMessage = "⚠️ Montant invalide. Le montant doit être supérieur à 0.";
+    } else if (errorMessage.includes("Numéro de téléphone invalide")) {
+      errorCode = "INVALID_PHONE";
+      userFriendlyMessage = "⚠️ Numéro de téléphone invalide. Minimum 8 chiffres requis.";
+    } else if (errorMessage.includes("Méthode de paiement invalide")) {
+      errorCode = "INVALID_METHOD";
+      userFriendlyMessage = "⚠️ Méthode de paiement invalide. Utilisez: OM (Orange Money), MOMO (MTN), ou KULU.";
+    }
+    
+    logStep("ERROR", { 
+      code: errorCode,
+      message: errorMessage, 
+      duration,
+      userMessage: userFriendlyMessage
+    });
 
     return new Response(
-      JSON.stringify({ success: false, error: errorMessage }),
+      JSON.stringify({ 
+        success: false, 
+        error: userFriendlyMessage,
+        errorCode: errorCode,
+        details: errorMessage !== userFriendlyMessage ? errorMessage : undefined
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   }

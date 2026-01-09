@@ -98,26 +98,30 @@ serve(async (req) => {
       useSandbox = false,
     } = body;
 
-    // Utiliser les secrets DJOMY_ configurés dans Supabase
+    // Get and validate Djomy credentials
     const clientId = Deno.env.get("DJOMY_CLIENT_ID");
     const clientSecret = Deno.env.get("DJOMY_CLIENT_SECRET");
 
     if (!clientId || !clientSecret) {
-      throw new Error("Djomy credentials not configured");
+      logStep("❌ Credentials missing", { 
+        hasClientId: !!clientId, 
+        hasSecret: !!clientSecret 
+      });
+      throw new Error("🔴 Credentials Djomy manquants. Configurez DJOMY_CLIENT_ID et DJOMY_CLIENT_SECRET dans les secrets Supabase.");
     }
 
-    // Nettoyer les espaces éventuels dans les identifiants
+    // Clean credentials
     const cleanClientId = clientId.trim();
     const cleanClientSecret = clientSecret.trim();
 
-    // Heuristique: un Client ID "djomy-client-<timestamp>" ressemble à un identifiant de test/généré,
-    // pas à un identifiant marchand (ex: djomy-merchant-001 dans la doc).
-    // On ne bloque pas, on log juste pour aider au diagnostic.
-    if (/^djomy-client-\d{10,}/.test(cleanClientId)) {
-      logStep("Warning: suspicious Djomy clientId format", {
-        hint: "Vérifiez que le Client ID provient bien de l'espace marchand Djomy",
-        clientIdPrefix: cleanClientId.substring(0, 12) + "...",
+    // Validate Client ID format (must be djomy-merchant-XXXXX for production)
+    if (!cleanClientId.startsWith("djomy-merchant-") && !useSandbox) {
+      logStep("⚠️ Suspicious Client ID format", {
+        clientIdPrefix: cleanClientId.substring(0, 15),
+        expected: "djomy-merchant-XXXXX",
+        hint: "Utilisez les credentials de l'espace marchand Djomy"
       });
+      throw new Error(`🔴 Format Client ID invalide: "${cleanClientId.substring(0, 20)}..." doit commencer par "djomy-merchant-" en production. Vos credentials actuels ressemblent à des identifiants de test. Contactez support@djomy.africa.`);
     }
 
     logStep("Credentials verified", {
@@ -302,19 +306,48 @@ serve(async (req) => {
   } catch (error) {
     const errorMessageRaw = error instanceof Error ? error.message : String(error);
 
-    // Rendre le message lisible côté UI (Supabase invoke masque souvent les erreurs non-2xx)
+    // Transform technical errors into user-friendly messages
     let errorMessage = errorMessageRaw;
+    let errorCode = "UNKNOWN";
+    
     if (errorMessageRaw.includes('Authentication failed: 403')) {
-      errorMessage = "Djomy refuse l'accès (403). Ce n'est pas un problème de sandbox: l'appel part vers l'API Djomy mais est bloqué. Vérifiez que vous utilisez le vrai Client ID/Client Secret de l'espace marchand (le Client ID ressemble souvent à 'djomy-merchant-...'), ou demandez à Djomy l'autorisation/whitelist pour les requêtes serveur.";
+      errorCode = "AUTH_403";
+      errorMessage = "🔴 ERREUR 403: L'API Djomy refuse l'accès. Causes possibles:\n" +
+                     "1. Client ID/Secret invalides (format attendu: djomy-merchant-XXXXX)\n" +
+                     "2. Serveurs Supabase pas whitelistés par Djomy\n" +
+                     "3. Credentials de test utilisés en production\n" +
+                     "➡️ Action: Contactez support@djomy.africa pour vérifier vos credentials et demander la whitelist.";
     } else if (errorMessageRaw.includes('Authentication failed: 401')) {
-      errorMessage = "Identifiants Djomy invalides (401). Vérifiez Client ID / Client Secret.";
+      errorCode = "AUTH_401";
+      errorMessage = "🔴 ERREUR 401: Signature HMAC invalide. Vérifiez que DJOMY_CLIENT_ID et DJOMY_CLIENT_SECRET correspondent exactement à vos identifiants Djomy (pas d'espaces, copié-collé exact).";
+    } else if (errorMessageRaw.includes('Payment initiation failed: 400')) {
+      errorCode = "PAYMENT_400";
+      errorMessage = "⚠️ ERREUR 400: Données de paiement invalides. Vérifiez le numéro de téléphone, le montant et la méthode de paiement.";
+    } else if (errorMessageRaw.includes('Payment initiation failed: 500')) {
+      errorCode = "PAYMENT_500";
+      errorMessage = "🔴 ERREUR 500: Problème serveur Djomy. Réessayez dans quelques minutes ou contactez support@djomy.africa.";
+    } else if (errorMessageRaw.includes('Format Client ID invalide')) {
+      errorCode = "INVALID_CREDENTIALS";
+      errorMessage = errorMessageRaw; // Déjà user-friendly
+    } else if (errorMessageRaw.includes('Credentials Djomy manquants')) {
+      errorCode = "MISSING_CREDENTIALS";
+      errorMessage = errorMessageRaw; // Déjà user-friendly
     }
 
-    logStep("ERROR", { message: errorMessageRaw });
+    logStep("ERROR", { 
+      code: errorCode,
+      message: errorMessageRaw,
+      userMessage: errorMessage 
+    });
 
     // IMPORTANT: on renvoie 200 pour que le frontend reçoive le JSON d'erreur (au lieu d'un 'non-2xx status code')
     return new Response(
-      JSON.stringify({ success: false, error: errorMessage }),
+      JSON.stringify({ 
+        success: false, 
+        error: errorMessage,
+        errorCode: errorCode,
+        details: errorMessageRaw !== errorMessage ? errorMessageRaw : undefined
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
