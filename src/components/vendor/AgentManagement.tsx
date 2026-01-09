@@ -447,7 +447,6 @@ export default function AgentManagement() {
                     name: '',
                     email: '',
                     phone: '',
-                    password: '',
                     agent_type: 'commercial',
                     permissions: {
                       view_dashboard: true,
