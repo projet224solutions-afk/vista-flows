@@ -44,6 +44,9 @@ export default function VendorAgentInterface() {
   const [agent, setAgent] = useState<VendorAgent | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [vendorBusinessType, setVendorBusinessType] = useState<string | null>(null);
+
+  const canAccessPOS = vendorBusinessType !== 'digital' && vendorBusinessType !== 'online';
 
   useEffect(() => {
     console.log('🚀 VendorAgentInterface - Initialisation avec token:', token);
@@ -118,8 +121,17 @@ export default function VendorAgentInterface() {
         ...agentData,
         permissions: agentData.permissions as VendorAgentPermissions
       };
-      
+
       setAgent(formattedAgent);
+
+      // Récupérer le business_type du vendeur (pour verrouiller POS si "digital")
+      const { data: vendorInfo } = await supabase
+        .from('vendors')
+        .select('business_type')
+        .eq('id', agentData.vendor_id)
+        .maybeSingle();
+      setVendorBusinessType(vendorInfo?.business_type ?? null);
+
       toast.success(`Bienvenue ${agentData.name} !`);
       
     } catch (error: any) {
@@ -230,9 +242,19 @@ export default function VendorAgentInterface() {
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
             )}
             {hasPermission('access_pos') && (
-              <TabsTrigger value="pos">POS</TabsTrigger>
+              <TabsTrigger
+                value="pos"
+                disabled={!canAccessPOS}
+                onClick={() => {
+                  if (!canAccessPOS) {
+                    toast.error("POS verrouillé : disponible uniquement pour boutiques physiques / hybrides");
+                    setActiveTab('overview');
+                  }
+                }}
+              >
+                POS{!canAccessPOS ? ' 🔒' : ''}
+              </TabsTrigger>
             )}
-            {hasPermission('manage_products') && (
               <TabsTrigger value="products">Produits</TabsTrigger>
             )}
             {hasPermission('manage_orders') && (
@@ -422,11 +444,17 @@ export default function VendorAgentInterface() {
                   {hasPermission('access_pos') && (
                     <Button
                       variant="outline"
-                      className="h-24 flex flex-col gap-2"
-                      onClick={() => setActiveTab('pos')}
+                      className={`h-24 flex flex-col gap-2 ${!canAccessPOS ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      onClick={() => {
+                        if (!canAccessPOS) {
+                          toast.error("POS verrouillé : vendeur en ligne uniquement");
+                          return;
+                        }
+                        setActiveTab('pos');
+                      }}
                     >
                       <CreditCard className="h-6 w-6" />
-                      <span className="text-sm">POS</span>
+                      <span className="text-sm">POS{!canAccessPOS ? ' (verrouillé)' : ''}</span>
                     </Button>
                   )}
                   {hasPermission('manage_products') && (
@@ -582,7 +610,21 @@ export default function VendorAgentInterface() {
           {hasPermission('access_pos') && (
             <TabsContent value="pos">
               <AgentModuleWrapper>
-                <POSSystemWrapper />
+                {canAccessPOS ? (
+                  <POSSystemWrapper />
+                ) : (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>POS verrouillé</CardTitle>
+                      <CardDescription>
+                        Le vendeur est configuré en "En ligne uniquement". Le POS est désactivé.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button variant="outline" onClick={() => setActiveTab('overview')}>Retour</Button>
+                    </CardContent>
+                  </Card>
+                )}
               </AgentModuleWrapper>
             </TabsContent>
           )}
