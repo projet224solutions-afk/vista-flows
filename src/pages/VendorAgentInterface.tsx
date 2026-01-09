@@ -255,7 +255,7 @@ export default function VendorAgentInterface() {
                 POS{!canAccessPOS ? ' 🔒' : ''}
               </TabsTrigger>
             )}
-              <TabsTrigger value="products">Produits</TabsTrigger>
+            <TabsTrigger value="products">Produits</TabsTrigger>
             {hasPermission('manage_orders') && (
               <TabsTrigger value="orders">Commandes</TabsTrigger>
             )}
