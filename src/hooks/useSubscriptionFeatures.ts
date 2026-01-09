@@ -120,7 +120,8 @@ const PLAN_FEATURES: Record<string, SubscriptionFeature[]> = {
   ],
 
   // ========== BASIC ==========
-  // POS, Inventaire, Produits (restriction), Livraison, Avis, Support, Messages, Copilot IA, Clients, Wallet (restriction)
+  // POS, Inventaire, Produits (restriction), Livraison, Avis, Support, Messages, Copilot IA, Wallet (restriction)
+  // ⚠️ CRM + Agents déplacés au plan Premium
   'basic': [
     'pos_system',
     'inventory_management',
@@ -131,7 +132,6 @@ const PLAN_FEATURES: Record<string, SubscriptionFeature[]> = {
     'support_tickets',
     'communication_hub',
     'copilot_ai',
-    'crm_basic',
     'wallet_basic',
     'orders_simple',
     'orders_detailed',
@@ -142,7 +142,8 @@ const PLAN_FEATURES: Record<string, SubscriptionFeature[]> = {
   ],
 
   // ========== PRO ==========
-  // BASIC + Clients avancé + Marketing (restriction produits)
+  // BASIC + Marketing + Analytics avancés
+  // ⚠️ CRM + Agents déplacés au plan Premium
   'pro': [
     // Tout de BASIC
     'pos_system',
@@ -154,7 +155,6 @@ const PLAN_FEATURES: Record<string, SubscriptionFeature[]> = {
     'support_tickets',
     'communication_hub',
     'copilot_ai',
-    'crm_basic',
     'wallet_basic',
     'orders_simple',
     'orders_detailed',
@@ -163,11 +163,9 @@ const PLAN_FEATURES: Record<string, SubscriptionFeature[]> = {
     'auto_billing',
     'analytics_basic',
     // Nouveautés PRO
-    'crm_advanced',
     'marketing_promotions',
     'analytics_advanced',
     'affiliate_program',
-    'sales_agents',
     'stock_alerts',
     'complete_history',
     'priority_support',
@@ -176,6 +174,7 @@ const PLAN_FEATURES: Record<string, SubscriptionFeature[]> = {
 
   // ========== BUSINESS ==========
   // PRO + Devis, Paiements, Lien de paiement, Dépenses, Dettes, Contrats + Produits illimités
+  // ⚠️ CRM + Agents déplacés au plan Premium
   'business': [
     // Tout de PRO
     'pos_system',
@@ -188,8 +187,6 @@ const PLAN_FEATURES: Record<string, SubscriptionFeature[]> = {
     'support_tickets',
     'communication_hub',
     'copilot_ai',
-    'crm_basic',
-    'crm_advanced',
     'wallet_basic',
     'wallet_unlimited', // ✅ Wallet sans restriction
     'orders_simple',
@@ -201,7 +198,6 @@ const PLAN_FEATURES: Record<string, SubscriptionFeature[]> = {
     'analytics_advanced',
     'marketing_promotions',
     'affiliate_program',
-    'sales_agents',
     'stock_alerts',
     'complete_history',
     'priority_support',
@@ -316,7 +312,7 @@ export const FEATURE_MIN_PLAN: Record<SubscriptionFeature, string> = {
   'support_tickets': 'basic',
   'communication_hub': 'basic',
   'copilot_ai': 'basic',
-  'crm_basic': 'basic',
+  'crm_basic': 'premium',
   'orders_detailed': 'basic',
   'notifications_push': 'basic',
   'email_support': 'basic',
@@ -324,11 +320,11 @@ export const FEATURE_MIN_PLAN: Record<SubscriptionFeature, string> = {
   'analytics_basic': 'basic',
   
   // Pro
-  'crm_advanced': 'pro',
+  'crm_advanced': 'premium',
   'marketing_promotions': 'pro',
   'analytics_advanced': 'pro',
   'affiliate_program': 'pro',
-  'sales_agents': 'pro',
+  'sales_agents': 'premium',
   'stock_alerts': 'pro',
   'complete_history': 'pro',
   'priority_support': 'pro',

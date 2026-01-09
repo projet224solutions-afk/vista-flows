@@ -37,52 +37,67 @@ export const AgentChangePassword: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  // Vérifier force du mot de passe
+  // Vérifier force du mot de passe (DEBOUNCE + requestIdleCallback)
   useEffect(() => {
-    if (!formData.newPassword) {
+    const password = formData.newPassword;
+
+    // Reset immédiat
+    if (!password) {
       setPasswordStrength({ score: 0, message: '', color: '' });
       return;
     }
 
-    let score = 0;
-    let messages: string[] = [];
+    const timeoutId = setTimeout(() => {
+      const run = () => {
+        let score = 0;
+        const messages: string[] = [];
 
-    // Longueur
-    if (formData.newPassword.length >= 8) score++;
-    if (formData.newPassword.length >= 12) score++;
-    else messages.push('Au moins 8 caractères');
+        // Longueur
+        if (password.length >= 8) score++;
+        if (password.length >= 12) score++;
+        else messages.push('Au moins 8 caractères');
 
-    // Majuscules
-    if (/[A-Z]/.test(formData.newPassword)) score++;
-    else messages.push('Une majuscule');
+        // Majuscules
+        if (/[A-Z]/.test(password)) score++;
+        else messages.push('Une majuscule');
 
-    // Minuscules
-    if (/[a-z]/.test(formData.newPassword)) score++;
-    else messages.push('Une minuscule');
+        // Minuscules
+        if (/[a-z]/.test(password)) score++;
+        else messages.push('Une minuscule');
 
-    // Chiffres
-    if (/[0-9]/.test(formData.newPassword)) score++;
-    else messages.push('Un chiffre');
+        // Chiffres
+        if (/[0-9]/.test(password)) score++;
+        else messages.push('Un chiffre');
 
-    // Caractères spéciaux
-    if (/[^A-Za-z0-9]/.test(formData.newPassword)) score++;
-    else messages.push('Un caractère spécial');
+        // Caractères spéciaux
+        if (/[^A-Za-z0-9]/.test(password)) score++;
+        else messages.push('Un caractère spécial');
 
-    const strength = {
-      0: { message: 'Très faible', color: 'text-red-600' },
-      1: { message: 'Faible', color: 'text-orange-600' },
-      2: { message: 'Moyen', color: 'text-yellow-600' },
-      3: { message: 'Bon', color: 'text-blue-600' },
-      4: { message: 'Fort', color: 'text-green-600' },
-      5: { message: 'Très fort', color: 'text-green-700' },
-      6: { message: 'Excellent', color: 'text-green-800' }
-    }[Math.min(score, 6)] || { message: '', color: '' };
+        const strength = {
+          0: { message: 'Très faible', color: 'text-destructive' },
+          1: { message: 'Faible', color: 'text-destructive' },
+          2: { message: 'Moyen', color: 'text-muted-foreground' },
+          3: { message: 'Bon', color: 'text-primary' },
+          4: { message: 'Fort', color: 'text-primary' },
+          5: { message: 'Très fort', color: 'text-primary' },
+          6: { message: 'Excellent', color: 'text-primary' }
+        }[Math.min(score, 6)] || { message: '', color: '' };
 
-    setPasswordStrength({
-      score,
-      message: messages.length > 0 ? `Manquant: ${messages.join(', ')}` : strength.message,
-      color: strength.color
-    });
+        setPasswordStrength({
+          score,
+          message: messages.length > 0 ? `Manquant: ${messages.join(', ')}` : strength.message,
+          color: strength.color
+        });
+      };
+
+      if ('requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(run);
+      } else {
+        requestAnimationFrame(run);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
   }, [formData.newPassword]);
 
   const handleSubmit = async (e: React.FormEvent) => {
