@@ -225,42 +225,59 @@ export default function AgentManagement() {
     agentPasswordRef.current = value;
   }, []);
 
-  const [formData, setFormData] = useState({
+  type AgentType = 'commercial' | 'logistique' | 'support' | 'administratif' | 'manager' | 'technique';
+
+  // Note: password is intentionally NOT stored in React state (we keep it in a ref for perf/security).
+  // This optional field exists only to avoid TS errors if any legacy setFormData payload still includes `password`.
+  const DEFAULT_AGENT_PERMISSIONS = {
+    // Vue d'ensemble
+    view_dashboard: true,
+    view_analytics: true,
+    // Ventes & Commerce
+    access_pos: true,
+    manage_products: true,
+    manage_orders: true,
+    manage_inventory: true,
+    manage_warehouse: true,
+    manage_suppliers: true,
+    // Clients & Marketing
+    manage_agents: false,
+    manage_clients: true,
+    manage_prospects: true,
+    manage_marketing: true,
+    // Finances
+    access_wallet: true,
+    manage_payments: true,
+    manage_payment_links: true,
+    manage_expenses: true,
+    manage_debts: true,
+    access_affiliate: false,
+    // Support & Outils
+    manage_delivery: true,
+    access_support: true,
+    access_communication: true,
+    view_reports: true,
+    // Configuration
+    access_settings: false,
+  } as const;
+
+  type AgentPermissions = { [K in keyof typeof DEFAULT_AGENT_PERMISSIONS]: boolean };
+
+  type AgentFormData = {
+    name: string;
+    email: string;
+    phone: string;
+    agent_type: AgentType;
+    permissions: AgentPermissions;
+    password?: string;
+  };
+
+  const [formData, setFormData] = useState<AgentFormData>({
     name: '',
     email: '',
     phone: '',
-    agent_type: 'commercial' as 'commercial' | 'logistique' | 'support' | 'administratif' | 'manager' | 'technique',
-    permissions: {
-      // Vue d'ensemble
-      view_dashboard: true,
-      view_analytics: true,
-      // Ventes & Commerce
-      access_pos: true,
-      manage_products: true,
-      manage_orders: true,
-      manage_inventory: true,
-      manage_warehouse: true,
-      manage_suppliers: true,
-      // Clients & Marketing
-      manage_agents: false,
-      manage_clients: true,
-      manage_prospects: true,
-      manage_marketing: true,
-      // Finances
-      access_wallet: true,
-      manage_payments: true,
-      manage_payment_links: true,
-      manage_expenses: true,
-      manage_debts: true,
-      access_affiliate: false,
-      // Support & Outils
-      manage_delivery: true,
-      access_support: true,
-      access_communication: true,
-      view_reports: true,
-      // Configuration
-      access_settings: false
-    }
+    agent_type: 'commercial',
+    permissions: { ...DEFAULT_AGENT_PERMISSIONS },
   });
 
   const handleCreateAgent = async (e: React.FormEvent) => {
