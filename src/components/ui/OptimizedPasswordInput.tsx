@@ -6,6 +6,9 @@ import { cn } from "@/lib/utils";
 interface PasswordStrength {
   score: number;
   message: string;
+  /**
+   * Classe Tailwind basée sur des tokens (ex: text-destructive, text-primary)
+   */
   color: string;
 }
 
@@ -13,11 +16,20 @@ interface OptimizedPasswordInputProps {
   id: string;
   name: string;
   value: string;
+  /**
+   * Callback appelé de façon différée (debounce) + au blur (commit) pour éviter les re-renders globaux.
+   */
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
   required?: boolean;
   disabled?: boolean;
+
+  /** Délai de propagation au parent (en ms). */
+  commitDelayMs?: number;
+  /** Commit immédiat au blur (utile pour garantir que le submit a la dernière valeur). */
+  commitOnBlur?: boolean;
+
   showStrengthIndicator?: boolean;
   onStrengthChange?: (strength: PasswordStrength) => void;
 }
@@ -25,7 +37,7 @@ interface OptimizedPasswordInputProps {
 // Calcul de force différé - jamais sur le thread principal
 const calculateStrength = (password: string): PasswordStrength => {
   if (!password) return { score: 0, message: "", color: "" };
-  
+
   let score = 0;
   if (password.length >= 8) score++;
   if (password.length >= 12) score++;
@@ -34,21 +46,14 @@ const calculateStrength = (password: string): PasswordStrength => {
   if (/[0-9]/.test(password)) score++;
   if (/[^A-Za-z0-9]/.test(password)) score++;
 
-  let message = "";
-  let color = "";
-
+  // Couleurs via tokens (pas de couleurs directes)
   if (score <= 2) {
-    message = "Faible";
-    color = "text-red-500";
-  } else if (score <= 4) {
-    message = "Bon";
-    color = "text-yellow-500";
-  } else {
-    message = "Excellent";
-    color = "text-green-500";
+    return { score, message: "Faible", color: "text-destructive" };
   }
-
-  return { score, message, color };
+  if (score <= 4) {
+    return { score, message: "Bon", color: "text-foreground" };
+  }
+  return { score, message: "Excellent", color: "text-primary" };
 };
 
 /**
@@ -67,6 +72,8 @@ const OptimizedPasswordInput = memo(({
   className,
   required = false,
   disabled = false,
+  commitDelayMs = 50,
+  commitOnBlur = true,
   showStrengthIndicator = false,
   onStrengthChange
 }: OptimizedPasswordInputProps) => {
@@ -88,33 +95,32 @@ const OptimizedPasswordInput = memo(({
   // Handler ULTRA LÉGER - mise à jour state local uniquement
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
-    
+
     // Mise à jour IMMÉDIATE du state local (pas de lag)
     setLocalValue(newValue);
-    
-    // Debounce pour propager au parent (300ms)
+
+    // Debounce pour propager au parent (évite les re-renders globaux)
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
     debounceRef.current = setTimeout(() => {
       onChange(newValue);
-    }, 50); // Propagation rapide mais différée
+    }, commitDelayMs);
 
-    // Debounce SÉPARÉ pour le calcul de force (300ms)
+    // Debounce SÉPARÉ pour le calcul de force (>= 300ms)
     if (showStrengthIndicator && onStrengthChange) {
       if (strengthDebounceRef.current) {
         clearTimeout(strengthDebounceRef.current);
       }
       strengthDebounceRef.current = setTimeout(() => {
         // Exécuter dans requestIdleCallback si disponible
-        if ('requestIdleCallback' in window) {
+        if ("requestIdleCallback" in window) {
           (window as any).requestIdleCallback(() => {
             const newStrength = calculateStrength(newValue);
             setStrength(newStrength);
             onStrengthChange(newStrength);
           });
         } else {
-          // Fallback avec requestAnimationFrame
           requestAnimationFrame(() => {
             const newStrength = calculateStrength(newValue);
             setStrength(newStrength);
@@ -123,7 +129,18 @@ const OptimizedPasswordInput = memo(({
         }
       }, 300);
     }
-  }, [onChange, showStrengthIndicator, onStrengthChange]);
+  }, [onChange, commitDelayMs, showStrengthIndicator, onStrengthChange]);
+
+  const handleBlur = useCallback(() => {
+    if (!commitOnBlur) return;
+
+    // Garantit que la dernière valeur est propagée avant submit
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    onChange(localValue);
+  }, [commitOnBlur, onChange, localValue]);
 
   // Toggle visibilité - ultra léger
   const toggleVisibility = useCallback(() => {
@@ -147,6 +164,7 @@ const OptimizedPasswordInput = memo(({
           type={showPassword ? "text" : "password"}
           value={localValue}
           onChange={handleChange}
+          onBlur={handleBlur}
           placeholder={placeholder}
           className={cn("pr-10", className)}
           required={required}

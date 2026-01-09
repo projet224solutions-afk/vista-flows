@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ import { useVendorAgentsData, type VendorAgent } from '@/hooks/useVendorAgentsDa
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ProfessionalMessaging from '@/components/messaging/ProfessionalMessaging';
+import { OptimizedPasswordInput } from '@/components/ui/OptimizedPasswordInput';
 
 export default function AgentManagement() {
   const { 
@@ -216,11 +217,18 @@ export default function AgentManagement() {
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<VendorAgent | null>(null);
+
+  // ⚡️ Perf: mot de passe isolé (pas de setState pendant la frappe)
+  const agentPasswordRef = useRef("");
+  const [passwordInputKey, setPasswordInputKey] = useState(0);
+  const commitAgentPassword = useCallback((value: string) => {
+    agentPasswordRef.current = value;
+  }, []);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    password: '',
     agent_type: 'commercial' as 'commercial' | 'logistique' | 'support' | 'administratif' | 'manager' | 'technique',
     permissions: {
       // Vue d'ensemble
@@ -267,8 +275,9 @@ export default function AgentManagement() {
       return;
     }
 
-    // Validation du mot de passe pour les nouveaux agents
-    if (!editingAgent && formData.password && formData.password.length > 0 && formData.password.length < 8) {
+    // Validation du mot de passe pour les nouveaux agents (sans bloquer la frappe)
+    const newAgentPassword = !editingAgent ? agentPasswordRef.current.trim() : '';
+    if (!editingAgent && newAgentPassword.length > 0 && newAgentPassword.length < 8) {
       toast({
         title: "❌ Mot de passe trop court",
         description: "Le mot de passe doit contenir au moins 8 caractères",
@@ -294,7 +303,7 @@ export default function AgentManagement() {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        password: formData.password || undefined,
+        password: newAgentPassword.length > 0 ? newAgentPassword : undefined,
         agent_type: formData.agent_type,
         permissions: permissionsForDB,
         can_create_sub_agent: formData.permissions.manage_agents,
@@ -305,7 +314,6 @@ export default function AgentManagement() {
       name: '',
       email: '',
       phone: '',
-      password: '',
       agent_type: 'commercial',
       permissions: {
         view_dashboard: true,
@@ -333,18 +341,25 @@ export default function AgentManagement() {
         access_settings: false
       }
     });
-    
+
+    // Reset password input sans re-render à chaque frappe
+    agentPasswordRef.current = "";
+    setPasswordInputKey((k) => k + 1);
+
     setEditingAgent(null);
     setIsCreateDialogOpen(false);
   };
 
   const handleEditAgent = (agent: VendorAgent) => {
     setEditingAgent(agent);
+    // Reset password (pas utilisé en édition)
+    agentPasswordRef.current = "";
+    setPasswordInputKey((k) => k + 1);
+
     setFormData({
       name: agent.name,
       email: agent.email,
       phone: agent.phone,
-      password: '',
       agent_type: agent.agent_type || 'commercial',
       permissions: {
         view_dashboard: agent.permissions.view_dashboard || false,
@@ -514,12 +529,16 @@ export default function AgentManagement() {
                   {!editingAgent && (
                     <div className="space-y-2">
                       <Label htmlFor="password">Mot de passe (optionnel)</Label>
-                      <Input
+                      <OptimizedPasswordInput
+                        key={passwordInputKey}
                         id="password"
-                        type="password"
-                        value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        name="password"
+                        value=""
+                        onChange={commitAgentPassword}
                         placeholder="Min. 8 caractères pour auth par email"
+                        // ⚡️ Pas de propagation fréquente (et aucune setState côté parent)
+                        commitDelayMs={300}
+                        className={undefined}
                       />
                       <p className="text-xs text-muted-foreground">
                         💡 Si fourni, l'agent pourra se connecter avec email/mot de passe. Sinon, il utilisera le lien d'accès.
