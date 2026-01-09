@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Activity, LogOut, Bell, Settings, User, ChevronRight,
-  DollarSign, ShoppingCart, Users, Target, TrendingUp, Package
+  DollarSign, ShoppingCart, Users, Target, TrendingUp, Package, Lock
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
@@ -22,6 +22,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { VendorSidebar } from "@/components/vendor/VendorSidebar";
 import { useVendorStats } from "@/hooks/useVendorData";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 
 // Import des modules vendeur (Lazy Loading pour optimisation)
 const ProductManagement = lazy(() => import("@/components/vendor/ProductManagement"));
@@ -76,6 +77,10 @@ export default function VendeurDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   useRoleRedirect();
+
+  // Business type (physical | digital | hybrid) pour appliquer les règles marketplace/POS
+  const { canAccessPOS, businessType } = useCurrentVendor();
+
   const { userInfo } = useUserInfo();
   const { stats, loading: statsLoading, error: statsError } = useVendorStats();
   
@@ -352,11 +357,21 @@ export default function VendeurDashboard() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Button
               variant="outline"
-              className="h-auto py-6 flex-col gap-2"
-              onClick={() => navigate('/vendeur/pos')}
+              className={`h-auto py-6 flex-col gap-2 ${!canAccessPOS ? 'opacity-60 cursor-not-allowed' : ''}`}
+              onClick={() => {
+                if (!canAccessPOS) {
+                  toast({
+                    title: "POS verrouillé",
+                    description: "Le POS est désactivé pour les vendeurs 'En ligne uniquement'.",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+                navigate('/vendeur/pos');
+              }}
             >
-              <Activity className="w-6 h-6" />
-              <span className="text-sm font-medium">{t('vendor.pos')}</span>
+              {!canAccessPOS ? <Lock className="w-6 h-6" /> : <Activity className="w-6 h-6" />}
+              <span className="text-sm font-medium">{t('vendor.pos')}{!canAccessPOS ? ' (verrouillé)' : ''}</span>
             </Button>
             <Button
               variant="outline"
@@ -516,13 +531,27 @@ export default function VendeurDashboard() {
               } />
               
               {/* Ventes & Commerce */}
-              {/* POS - Basic+ */}
+              {/* POS - Basic+ (verrouillé si business_type = digital) */}
               <Route path="pos" element={
-                <ProtectedRoute feature="pos_system">
-                  <POSSystemWrapper />
-                </ProtectedRoute>
+                canAccessPOS ? (
+                  <ProtectedRoute feature="pos_system">
+                    <POSSystemWrapper />
+                  </ProtectedRoute>
+                ) : (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>POS verrouillé</CardTitle>
+                      <CardDescription>
+                        Votre boutique est configurée en "En ligne uniquement". Le POS est désactivé.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex gap-2">
+                      <Button variant="outline" onClick={() => navigate('/vendeur/settings')}>Paramètres</Button>
+                      <Button onClick={() => navigate('/vendeur/dashboard')}>Retour</Button>
+                    </CardContent>
+                  </Card>
+                )
               } />
-              {/* Module Métier - Charge le module spécialisé selon le service_type */}
               <Route path="service-module" element={
                 <ProtectedRoute feature="pos_system">
                   <VendorServiceModule />

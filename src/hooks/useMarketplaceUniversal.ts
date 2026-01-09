@@ -92,7 +92,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           reviews_count,
           free_shipping,
           created_at,
-          vendors(business_name, user_id),
+          vendors(business_name, user_id, business_type),
           categories(name)
         `)
         .eq('is_active', true);
@@ -115,7 +115,13 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       const { data, error } = await query;
       if (error) throw error;
 
-      return (data || []).map(product => ({
+      // Règle marketplace: exclure les vendeurs "physical" (boutique physique uniquement)
+      const filtered = (data || []).filter(product => {
+        const vendor = (product.vendors as any);
+        return !vendor || (vendor.business_type !== 'physical');
+      });
+
+      return filtered.map(product => ({
         id: product.id,
         name: product.name,
         price: product.price,

@@ -35,7 +35,8 @@ interface VendorData {
   agentPermissions?: VendorAgentPermissions;
   user: any;
   profile: any;
-  businessType?: 'physical' | 'online' | 'hybrid';
+  // business_type vient de vendors.business_type (physical | digital | hybrid)
+  businessType?: 'physical' | 'digital' | 'hybrid' | 'online';
 }
 
 /**
@@ -79,7 +80,7 @@ export const useCurrentVendor = () => {
           agentPermissions: (agentContext.agent?.permissions as VendorAgentPermissions) || {},
           user: { id: agentVendorId },
           profile: null,
-          businessType: vendorInfo?.business_type as 'physical' | 'online' | 'hybrid' | undefined
+          businessType: vendorInfo?.business_type as 'physical' | 'digital' | 'hybrid' | 'online' | undefined
         });
         
         console.log('✅ Données vendeur chargées (mode agent):', {
@@ -103,7 +104,7 @@ export const useCurrentVendor = () => {
           .maybeSingle();
 
         const vendorId = vendorProfile?.id || authUserId;
-        const businessType = vendorProfile?.business_type as 'physical' | 'online' | 'hybrid' | undefined;
+        const businessType = vendorProfile?.business_type as 'physical' | 'digital' | 'hybrid' | 'online' | undefined;
 
         setVendorData({
           vendorId: vendorId,
@@ -147,7 +148,7 @@ export const useCurrentVendor = () => {
       }
       return true; // Vendeur direct a toutes les permissions
     },
-    // POS accessible uniquement pour physical et hybrid (pas pour online)
-    canAccessPOS: vendorData?.businessType !== 'online'
+    // POS accessible uniquement pour physical et hybrid (pas pour digital/online)
+    canAccessPOS: vendorData?.businessType !== 'digital' && vendorData?.businessType !== 'online'
   };
 };
