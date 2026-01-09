@@ -160,7 +160,15 @@ class WalletService {
   }
 
   // Effectuer un transfert entre wallets
+  // ⚠️ DÉPRÉCIÉ: Utiliser l'Edge Function wallet-transfer à la place
+  // Cette méthode n'est PAS sécurisée (pas de HMAC, pas d'audit, race conditions)
   async transferFunds(fromWalletId: string, toWalletId: string, amount: number, description: string): Promise<boolean> {
+    console.error('⚠️ ATTENTION: walletService.transferFunds() est déprécié!');
+    console.error('➡️ Utilisez plutôt: supabase.functions.invoke("wallet-transfer")');
+    
+    throw new Error('Cette méthode est désactivée. Utilisez l\'Edge Function wallet-transfer à la place.');
+    
+    /* CODE DÉSACTIVÉ - CONSERVER POUR RÉFÉRENCE
     try {
       // Vérifier le solde du wallet source
       const { data: fromWallet, error: fromError } = await supabase
@@ -224,6 +232,7 @@ class WalletService {
       console.error('❌ Erreur transfert:', error);
       return false;
     }
+    */
   }
 
   // Obtenir les statistiques d'un wallet

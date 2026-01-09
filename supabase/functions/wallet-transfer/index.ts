@@ -8,13 +8,30 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { crypto } from "https://deno.land/std@0.190.0/crypto/mod.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// 🔐 CORS Restrictif - Seulement domaines autorisés
+const ALLOWED_ORIGINS = [
+  "https://224solution.net",
+  "https://www.224solution.net",
+  "http://localhost:5173", // Dev uniquement
+  "http://localhost:3000",
+];
+
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
 
 // Marge de sécurité invisible - JAMAIS exposée au client
 const SECURITY_MARGIN = 0.005; // 0.5%
+
+// 💰 Limites de transfert
+const MIN_TRANSFER_AMOUNT = 100; // 100 GNF minimum
+const MAX_TRANSFER_AMOUNT = 50000000; // 50M GNF maximum
+
 const TRANSACTION_SECRET = (() => {
   const secret = Deno.env.get("TRANSACTION_SECRET_KEY");
   if (!secret) {
@@ -75,6 +92,9 @@ interface TransferResult {
 }
 
 serve(async (req) => {
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -88,12 +108,18 @@ serve(async (req) => {
     const action = url.searchParams.get("action") || "transfer";
     const body = await req.json();
 
-    console.log(`💸 Wallet transfer action: ${action}`, body);
+    console.log(`💸 Wallet transfer action: ${action}`);
+
+    // 🔐 Authentification requise pour preview aussi
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader) {
+      throw new Error("Authentification requise");
+    }
 
     if (action === "preview") {
-      return await handlePreview(supabase, body);
+      return await handlePreview(supabase, body, corsHeaders);
     } else if (action === "transfer") {
-      return await handleTransfer(supabase, body, req);
+      return await handleTransfer(supabase, body, req, corsHeaders);
     } else {
       throw new Error("Invalid action");
     }
@@ -107,8 +133,16 @@ serve(async (req) => {
   }
 });
 
-async function handlePreview(supabase: any, body: TransferPreviewRequest) {
+async function handlePreview(supabase: any, body: TransferPreviewRequest, corsHeaders: Record<string, string>) {
   const { sender_id, receiver_id, amount } = body;
+
+  // Validation des montants
+  if (amount < MIN_TRANSFER_AMOUNT) {
+    throw new Error(`Montant minimum: ${MIN_TRANSFER_AMOUNT} GNF`);
+  }
+  if (amount > MAX_TRANSFER_AMOUNT) {
+    throw new Error(`Montant maximum: ${MAX_TRANSFER_AMOUNT} GNF`);
+  }
 
   // Obtenir les infos des wallets
   const [senderResult, receiverResult] = await Promise.all([
@@ -188,7 +222,7 @@ async function handlePreview(supabase: any, body: TransferPreviewRequest) {
     currency_received: currencyTo,
   };
 
-  console.log("📊 Transfer preview:", preview);
+  console.log("📊 Transfer preview completed");
 
   return new Response(JSON.stringify(preview), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -196,7 +230,7 @@ async function handlePreview(supabase: any, body: TransferPreviewRequest) {
   });
 }
 
-async function handleTransfer(supabase: any, body: TransferRequest, req: Request) {
+async function handleTransfer(supabase: any, body: TransferRequest, req: Request, corsHeaders: Record<string, string>) {
   const { sender_id, receiver_id, amount, description } = body;
 
   // Validation
@@ -210,6 +244,14 @@ async function handleTransfer(supabase: any, body: TransferRequest, req: Request
 
   if (amount <= 0) {
     throw new Error("Le montant doit être positif");
+  }
+
+  if (amount < MIN_TRANSFER_AMOUNT) {
+    throw new Error(`Montant minimum: ${MIN_TRANSFER_AMOUNT} GNF`);
+  }
+
+  if (amount > MAX_TRANSFER_AMOUNT) {
+    throw new Error(`Montant maximum: ${MAX_TRANSFER_AMOUNT} GNF`);
   }
 
   // Générer le code de transfert unique
@@ -305,10 +347,7 @@ async function handleTransfer(supabase: any, body: TransferRequest, req: Request
   // L'utilisateur voit le calcul avec le taux PUBLIC
   const amountReceivedDisplayed = feeData.amount_after_fee * ratePublic;
 
-  console.log(`🔒 Rate public: ${ratePublic}, Rate internal (with margin): ${rateInternal}`);
-  console.log(`💰 Amount after fee: ${feeData.amount_after_fee}`);
-  console.log(`📤 Amount received (displayed): ${amountReceivedDisplayed}`);
-  console.log(`📥 Amount received (real): ${amountReceivedReal}`);
+  console.log(`� Transfer calculation completed for ${currencyFrom} → ${currencyTo}`);
 
   // Obtenir l'IP pour l'audit
   const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() 
@@ -356,7 +395,6 @@ async function handleTransfer(supabase: any, body: TransferRequest, req: Request
       amount_after_fee: feeData.amount_after_fee,
       rate_displayed: ratePublic, // Ce que l'utilisateur voit
       rate_used: rateInternal, // Ce qui est réellement utilisé (INVISIBLE)
-      security_margin_applied: SECURITY_MARGIN,
       amount_received: Math.round(amountReceivedReal * 100) / 100, // Montant réel reçu
       currency_received: currencyTo,
       transfer_type: "WALLET_TO_WALLET",
@@ -483,7 +521,7 @@ async function handleTransfer(supabase: any, body: TransferRequest, req: Request
       fee_amount: feeData.fee_amount,
       amount_after_fee: feeData.amount_after_fee,
       rate_displayed: ratePublic, // TAUX PUBLIC pour l'utilisateur
-      amount_received: Math.round(amountReceivedDisplayed * 100) / 100, // MONTANT AFFICHÉ (pas le réel)
+      amount_received: Math.round(amountReceivedReal * 100) / 100, // VRAI MONTANT reçu (transparence)
       currency_received: currencyTo,
     };
 
