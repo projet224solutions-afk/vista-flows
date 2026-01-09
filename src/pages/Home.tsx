@@ -50,6 +50,7 @@ export default function Home() {
     limit: 6,
     sortBy: 'newest' as const,
     autoLoad: true,
+    includePhysicalVendors: true,
   }), []);
   
   const { products: universalProducts, loading: productsLoading } = useUniversalProducts(productOptions);
