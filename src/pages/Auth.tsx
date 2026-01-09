@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship, Crown, Utensils, ShoppingBag, Scissors, Car, GraduationCap, Stethoscope, Wrench, Home, Plane, Camera, ArrowLeft, Eye, EyeOff, Chrome, Search, ChevronDown, Check } from "lucide-react";
+import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship, Crown, Utensils, ShoppingBag, Scissors, Car, GraduationCap, Stethoscope, Wrench, Home, Plane, Camera, ArrowLeft, Eye, EyeOff, Chrome, Search, ChevronDown, Check, RefreshCw, Sparkles } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Separator } from "@/components/ui/separator";
@@ -33,9 +34,12 @@ type UserRole = 'client' | 'vendeur' | 'livreur' | 'taxi' | 'syndicat' | 'transi
 
 export default function Auth() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<'google' | 'facebook' | null>(null);
+  const [oauthRetrying, setOauthRetrying] = useState(false);
+  const [oauthAttempts, setOauthAttempts] = useState<{ google: number; facebook: number }>({ google: 0, facebook: 0 });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -47,11 +51,59 @@ export default function Auth() {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const navigate = useNavigate();
 
-  // === OAUTH HANDLERS (Google & Facebook) ===
-  const handleGoogleLogin = async () => {
+  // === OAUTH HANDLERS AMÉLIORÉS (Google & Facebook) ===
+  
+  // 📊 Analytics tracking
+  const trackOAuthEvent = useCallback((provider: 'google' | 'facebook', event: 'click' | 'success' | 'error', metadata?: any) => {
+    const timestamp = Date.now();
+    const analyticsData = {
+      provider,
+      event,
+      timestamp,
+      userAgent: navigator.userAgent,
+      screenSize: `${window.innerWidth}x${window.innerHeight}`,
+      role: selectedRole || 'none',
+      mode: showSignup ? 'signup' : 'login',
+      ...metadata
+    };
+    
+    // Log to console (en dev) ou envoyer à analytics service (en prod)
+    console.log('📊 OAuth Analytics:', analyticsData);
+    
+    // TODO: Envoyer à Google Analytics, Mixpanel, ou autre
+    // analytics.track('oauth_event', analyticsData);
+    
+    // Sauvegarder localement pour debug
+    try {
+      const existingLogs = JSON.parse(localStorage.getItem('oauth_analytics') || '[]');
+      existingLogs.push(analyticsData);
+      // Garder seulement les 50 derniers événements
+      if (existingLogs.length > 50) existingLogs.shift();
+      localStorage.setItem('oauth_analytics', JSON.stringify(existingLogs));
+    } catch (e) {
+      // Ignore storage errors
+    }
+  }, [selectedRole, showSignup]);
+
+  const handleGoogleLogin = async (isRetry = false) => {
+    // 🛡️ Rate limiting: Max 3 tentatives par minute
+    const now = Date.now();
+    const lastAttemptKey = 'oauth_google_last_attempt';
+    const lastAttempt = parseInt(localStorage.getItem(lastAttemptKey) || '0');
+    
+    if (!isRetry && now - lastAttempt < 20000 && oauthAttempts.google >= 3) {
+      toast({
+        title: "⏱️ Trop de tentatives",
+        description: "Veuillez patienter 20 secondes avant de réessayer.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Si l'utilisateur est en mode inscription mais n'a pas choisi de rôle, on force un choix
     if (showSignup && !selectedRole) {
       setShowRoleSelectionModal(true);
+      trackOAuthEvent('google', 'click', { blocked: 'no_role' });
       return;
     }
 
@@ -60,14 +112,26 @@ export default function Auth() {
       localStorage.setItem('oauth_intent_role', selectedRole);
     }
 
+    // 📊 Track click
+    trackOAuthEvent('google', 'click', { attempt: oauthAttempts.google + 1, isRetry });
+    
     setOauthLoading('google');
+    if (isRetry) setOauthRetrying(true);
     setError(null);
+    setOauthAttempts(prev => ({ ...prev, google: prev.google + 1 }));
+    localStorage.setItem(lastAttemptKey, now.toString());
 
     try {
       // Forcer HTTPS sur le domaine production (sinon session perdue entre http/https)
       const origin = window.location.origin;
       const safeOrigin = origin.includes('224solution.net') ? origin.replace('http://', 'https://') : origin;
       const redirectUrl = `${safeOrigin}/`;
+
+      // ✨ Toast de démarrage
+      toast({
+        title: "🔄 Connexion Google",
+        description: "Redirection vers Google en cours...",
+      });
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -81,18 +145,52 @@ export default function Auth() {
       });
 
       if (error) throw error;
+      
+      // 📊 Track success
+      trackOAuthEvent('google', 'success');
+      
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur de connexion Google';
       setError(message);
       console.error('❌ Erreur Google OAuth:', err);
+      
+      // 📊 Track error
+      trackOAuthEvent('google', 'error', { error: message });
+      
+      // 🔄 Toast d'erreur avec option retry
+      toast({
+        title: "❌ Erreur de connexion",
+        description: message + " • Voulez-vous réessayer?",
+        variant: "destructive",
+        action: {
+          label: "Réessayer",
+          onClick: () => handleGoogleLogin(true)
+        }
+      });
     } finally {
       setOauthLoading(null);
+      setOauthRetrying(false);
     }
   };
 
-  const handleFacebookLogin = async () => {
+  const handleFacebookLogin = async (isRetry = false) => {
+    // 🛡️ Rate limiting
+    const now = Date.now();
+    const lastAttemptKey = 'oauth_facebook_last_attempt';
+    const lastAttempt = parseInt(localStorage.getItem(lastAttemptKey) || '0');
+    
+    if (!isRetry && now - lastAttempt < 20000 && oauthAttempts.facebook >= 3) {
+      toast({
+        title: "⏱️ Trop de tentatives",
+        description: "Veuillez patienter 20 secondes avant de réessayer.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (showSignup && !selectedRole) {
       setShowRoleSelectionModal(true);
+      trackOAuthEvent('facebook', 'click', { blocked: 'no_role' });
       return;
     }
 
@@ -100,13 +198,25 @@ export default function Auth() {
       localStorage.setItem('oauth_intent_role', selectedRole);
     }
 
+    // 📊 Track click
+    trackOAuthEvent('facebook', 'click', { attempt: oauthAttempts.facebook + 1, isRetry });
+
     setOauthLoading('facebook');
+    if (isRetry) setOauthRetrying(true);
     setError(null);
+    setOauthAttempts(prev => ({ ...prev, facebook: prev.facebook + 1 }));
+    localStorage.setItem(lastAttemptKey, now.toString());
 
     try {
       const origin = window.location.origin;
       const safeOrigin = origin.includes('224solution.net') ? origin.replace('http://', 'https://') : origin;
       const redirectUrl = `${safeOrigin}/`;
+
+      // ✨ Toast de démarrage
+      toast({
+        title: "🔄 Connexion Facebook",
+        description: "Redirection vers Facebook en cours...",
+      });
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'facebook',
@@ -116,12 +226,31 @@ export default function Auth() {
       });
 
       if (error) throw error;
+      
+      // 📊 Track success
+      trackOAuthEvent('facebook', 'success');
+      
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur de connexion Facebook';
       setError(message);
       console.error('❌ Erreur Facebook OAuth:', err);
+      
+      // 📊 Track error
+      trackOAuthEvent('facebook', 'error', { error: message });
+      
+      // 🔄 Toast d'erreur avec option retry
+      toast({
+        title: "❌ Erreur de connexion",
+        description: message + " • Voulez-vous réessayer?",
+        variant: "destructive",
+        action: {
+          label: "Réessayer",
+          onClick: () => handleFacebookLogin(true)
+        }
+      });
     } finally {
       setOauthLoading(null);
+      setOauthRetrying(false);
     }
   };
 
@@ -1777,16 +1906,22 @@ export default function Auth() {
                     type="button"
                     variant="outline"
                     className="w-full h-12 gap-2 font-medium hover:bg-red-50 hover:border-red-300 hover:shadow-md transition-all duration-200 relative overflow-hidden group"
-                    onClick={handleGoogleLogin}
+                    onClick={() => handleGoogleLogin(false)}
                     disabled={loading || oauthLoading !== null}
+                    aria-label={showSignup ? "S'inscrire avec Google" : "Se connecter avec Google"}
+                    aria-busy={oauthLoading === 'google'}
                   >
                     {/* Effet de brillance au survol */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
                     
                     {oauthLoading === 'google' ? (
                       <>
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        <span className="hidden sm:inline">Connexion...</span>
+                        {oauthRetrying ? (
+                          <RefreshCw className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        )}
+                        <span className="hidden sm:inline">{oauthRetrying ? 'Nouvelle tentative...' : 'Connexion...'}</span>
                       </>
                     ) : (
                       <>
@@ -1807,16 +1942,22 @@ export default function Auth() {
                   type="button"
                   variant="outline"
                   className="h-12 gap-2 font-medium hover:bg-blue-50 hover:border-blue-300 hover:shadow-md transition-all duration-200 relative overflow-hidden group"
-                  onClick={handleFacebookLogin}
+                  onClick={() => handleFacebookLogin(false)}
                   disabled={loading || oauthLoading !== null}
+                  aria-label={showSignup ? "S'inscrire avec Facebook" : "Se connecter avec Facebook"}
+                  aria-busy={oauthLoading === 'facebook'}
                 >
                   {/* Effet de brillance au survol */}
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
                   
                   {oauthLoading === 'facebook' ? (
                     <>
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      <span className="hidden sm:inline">Connexion...</span>
+                      {oauthRetrying ? (
+                        <RefreshCw className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      )}
+                      <span className="hidden sm:inline">{oauthRetrying ? 'Nouvelle tentative...' : 'Connexion...'}</span>
                     </>
                   ) : (
                     <>
