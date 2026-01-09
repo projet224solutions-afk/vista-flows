@@ -369,10 +369,11 @@ export function useClientData() {
     }
   }, [loadProducts, loadCategories, loadOrders]);
 
-  // Charger les données au montage
+  // Charger les données au montage initial uniquement
   useEffect(() => {
     loadAllData();
-  }, [loadAllData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Tableau vide = exécution uniquement au montage
 
   // Contacter un vendeur via edge function
   const contactVendor = useCallback(async (vendorUserId: string, vendorName: string) => {
