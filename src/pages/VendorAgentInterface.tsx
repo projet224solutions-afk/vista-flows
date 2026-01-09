@@ -256,7 +256,6 @@ export default function VendorAgentInterface() {
               </TabsTrigger>
             )}
               <TabsTrigger value="products">Produits</TabsTrigger>
-            )}
             {hasPermission('manage_orders') && (
               <TabsTrigger value="orders">Commandes</TabsTrigger>
             )}
