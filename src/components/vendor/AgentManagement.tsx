@@ -269,13 +269,16 @@ export default function AgentManagement() {
     phone: string;
     agent_type: AgentType;
     permissions: AgentPermissions;
-    password?: string;
+    // Keep `password` in the type so any legacy setFormData({ password: ... }) won't error.
+    // Actual password handling still uses `agentPasswordRef`.
+    password: string;
   };
 
   const [formData, setFormData] = useState<AgentFormData>({
     name: '',
     email: '',
     phone: '',
+    password: '',
     agent_type: 'commercial',
     permissions: { ...DEFAULT_AGENT_PERMISSIONS },
   });
@@ -331,32 +334,9 @@ export default function AgentManagement() {
       name: '',
       email: '',
       phone: '',
+      password: '',
       agent_type: 'commercial',
-      permissions: {
-        view_dashboard: true,
-        view_analytics: true,
-        access_pos: true,
-        manage_products: true,
-        manage_orders: true,
-        manage_inventory: true,
-        manage_warehouse: true,
-        manage_suppliers: true,
-        manage_agents: false,
-        manage_clients: true,
-        manage_prospects: true,
-        manage_marketing: true,
-        access_wallet: true,
-        manage_payments: true,
-        manage_payment_links: true,
-        manage_expenses: true,
-        manage_debts: true,
-        access_affiliate: false,
-        manage_delivery: true,
-        access_support: true,
-        access_communication: true,
-        view_reports: true,
-        access_settings: false
-      }
+      permissions: { ...DEFAULT_AGENT_PERMISSIONS },
     });
 
     // Reset password input sans re-render à chaque frappe
@@ -377,6 +357,7 @@ export default function AgentManagement() {
       name: agent.name,
       email: agent.email,
       phone: agent.phone,
+      password: '',
       agent_type: agent.agent_type || 'commercial',
       permissions: {
         view_dashboard: agent.permissions.view_dashboard || false,
@@ -465,32 +446,9 @@ export default function AgentManagement() {
                     name: '',
                     email: '',
                     phone: '',
+                    password: '',
                     agent_type: 'commercial',
-                    permissions: {
-                      view_dashboard: true,
-                      view_analytics: true,
-                      access_pos: true,
-                      manage_products: true,
-                      manage_orders: true,
-                      manage_inventory: true,
-                      manage_warehouse: true,
-                      manage_suppliers: true,
-                      manage_agents: false,
-                      manage_clients: true,
-                      manage_prospects: true,
-                      manage_marketing: true,
-                      access_wallet: true,
-                      manage_payments: true,
-                      manage_payment_links: true,
-                      manage_expenses: true,
-                      manage_debts: true,
-                      access_affiliate: false,
-                      manage_delivery: true,
-                      access_support: true,
-                      access_communication: true,
-                      view_reports: true,
-                      access_settings: false
-                    }
+                    permissions: { ...DEFAULT_AGENT_PERMISSIONS },
                   });
                 }}>
                   <UserPlus className="h-4 w-4 mr-2" />

@@ -2112,6 +2112,13 @@ export type Database = {
             foreignKeyName: "chargeback_history_buyer_id_fkey"
             columns: ["buyer_id"]
             isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "chargeback_history_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
             referencedRelation: "user_search_view"
             referencedColumns: ["id"]
           },
@@ -2121,6 +2128,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chargeback_history_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "chargeback_history_seller_id_fkey"
@@ -2874,6 +2888,13 @@ export type Database = {
             foreignKeyName: "customers_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "customers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "user_search_view"
             referencedColumns: ["id"]
           },
@@ -3148,6 +3169,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deliveries_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "deliveries_driver_id_fkey"
@@ -4378,6 +4406,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drivers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "drivers_user_id_fkey"
@@ -5909,6 +5944,13 @@ export type Database = {
             foreignKeyName: "funds_release_schedule_approved_by_fkey"
             columns: ["approved_by"]
             isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "funds_release_schedule_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
             referencedRelation: "user_search_view"
             referencedColumns: ["id"]
           },
@@ -5918,6 +5960,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funds_release_schedule_rejected_by_fkey"
+            columns: ["rejected_by"]
+            isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "funds_release_schedule_rejected_by_fkey"
@@ -6704,6 +6753,13 @@ export type Database = {
             foreignKeyName: "international_shipments_transitaire_id_fkey"
             columns: ["transitaire_id"]
             isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "international_shipments_transitaire_id_fkey"
+            columns: ["transitaire_id"]
+            isOneToOne: false
             referencedRelation: "user_search_view"
             referencedColumns: ["id"]
           },
@@ -7301,6 +7357,13 @@ export type Database = {
             foreignKeyName: "messages_recipient_id_fkey"
             columns: ["recipient_id"]
             isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "messages_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
             referencedRelation: "user_search_view"
             referencedColumns: ["id"]
           },
@@ -7310,6 +7373,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "messages_sender_id_fkey"
@@ -8074,6 +8144,13 @@ export type Database = {
             foreignKeyName: "payment_fraud_signals_resolved_by_fkey"
             columns: ["resolved_by"]
             isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "payment_fraud_signals_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
             referencedRelation: "user_search_view"
             referencedColumns: ["id"]
           },
@@ -8167,6 +8244,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_links_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "payment_links_client_id_fkey"
@@ -8548,6 +8632,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_system_config_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "payment_system_config_updated_by_fkey"
@@ -12641,6 +12732,13 @@ export type Database = {
             foreignKeyName: "stripe_wallets_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "stripe_wallets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "user_search_view"
             referencedColumns: ["id"]
           },
@@ -12703,6 +12801,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stripe_withdrawals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "stripe_withdrawals_user_id_fkey"
@@ -12994,6 +13099,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suspicious_activities_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "suspicious_activities_vendor_id_fkey"
@@ -13609,6 +13721,7 @@ export type Database = {
           bureau_id: string | null
           can_work: boolean | null
           created_at: string | null
+          driver_code: string | null
           id: string
           is_online: boolean | null
           kyc_verified: boolean | null
@@ -13632,6 +13745,7 @@ export type Database = {
           bureau_id?: string | null
           can_work?: boolean | null
           created_at?: string | null
+          driver_code?: string | null
           id?: string
           is_online?: boolean | null
           kyc_verified?: boolean | null
@@ -13655,6 +13769,7 @@ export type Database = {
           bureau_id?: string | null
           can_work?: boolean | null
           created_at?: string | null
+          driver_code?: string | null
           id?: string
           is_online?: boolean | null
           kyc_verified?: boolean | null
@@ -15166,6 +15281,13 @@ export type Database = {
             foreignKeyName: "user_roles_assigned_by_fkey"
             columns: ["assigned_by"]
             isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_roles_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
             referencedRelation: "user_search_view"
             referencedColumns: ["id"]
           },
@@ -15175,6 +15297,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "user_roles_user_id_fkey"
@@ -16130,6 +16259,13 @@ export type Database = {
             foreignKeyName: "vendor_analytics_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "vendor_analytics_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
             referencedRelation: "user_search_view"
             referencedColumns: ["id"]
           },
@@ -16406,6 +16542,13 @@ export type Database = {
             foreignKeyName: "vendor_kyc_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: true
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "vendor_kyc_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: true
             referencedRelation: "user_search_view"
             referencedColumns: ["id"]
           },
@@ -16449,6 +16592,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_notifications_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "vendor_notifications_vendor_id_fkey"
@@ -16893,6 +17043,13 @@ export type Database = {
             foreignKeyName: "vendor_trust_score_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: true
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "vendor_trust_score_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: true
             referencedRelation: "user_search_view"
             referencedColumns: ["id"]
           },
@@ -17008,6 +17165,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendors_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "vendors_user_id_fkey"
@@ -18461,6 +18625,20 @@ export type Database = {
         }
         Relationships: []
       }
+      user_codes_unified: {
+        Row: {
+          agent_code: string | null
+          bureau_code: string | null
+          email: string | null
+          profile_custom_id: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          taxi_driver_code: string | null
+          unified_code: string | null
+          user_id: string | null
+          vendor_code: string | null
+        }
+        Relationships: []
+      }
       user_search_view: {
         Row: {
           business_name: string | null
@@ -18492,6 +18670,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendors_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "vendors_user_id_fkey"
@@ -19575,6 +19760,7 @@ export type Database = {
           wishlist_count: number
         }[]
       }
+      get_user_code: { Args: { p_user_id: string }; Returns: string }
       get_user_conversations: {
         Args: { p_user_id: string }
         Returns: {
