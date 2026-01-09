@@ -35,6 +35,7 @@ interface VendorData {
   agentPermissions?: VendorAgentPermissions;
   user: any;
   profile: any;
+  businessType?: 'physical' | 'online' | 'hybrid';
 }
 
 /**
@@ -65,18 +66,25 @@ export const useCurrentVendor = () => {
       if (hasAgent && agentVendorId) {
         console.log('🔄 Mode Agent - Chargement données vendeur:', agentVendorId);
         
-        // L'agent a son propre vendorId - on l'utilise directement
-        // Les RLS sur products permettent l'accès via vendor_agents
+        // Récupérer le business_type du vendeur
+        const { data: vendorInfo } = await supabase
+          .from('vendors')
+          .select('business_type')
+          .eq('id', agentVendorId)
+          .maybeSingle();
+        
         setVendorData({
           vendorId: agentVendorId,
           isAgent: true,
           agentPermissions: (agentContext.agent?.permissions as VendorAgentPermissions) || {},
-          user: { id: agentVendorId }, // Utiliser vendorId comme référence
-          profile: null
+          user: { id: agentVendorId },
+          profile: null,
+          businessType: vendorInfo?.business_type as 'physical' | 'online' | 'hybrid' | undefined
         });
         
         console.log('✅ Données vendeur chargées (mode agent):', {
           vendorId: agentVendorId,
+          businessType: vendorInfo?.business_type,
           agentPermissions: agentContext.agent?.permissions
         });
         setLoading(false);
@@ -87,23 +95,25 @@ export const useCurrentVendor = () => {
       if (authUserId && auth.profile) {
         console.log('🔄 Mode Vendeur Direct - Utilisation user actuel:', authUserId);
         
-        // Trouver le vendor_id du profil vendeur
+        // Trouver le vendor_id et business_type du profil vendeur
         const { data: vendorProfile, error: vendorError } = await supabase
           .from('vendors')
-          .select('id')
+          .select('id, business_type')
           .eq('user_id', authUserId)
           .maybeSingle();
 
         const vendorId = vendorProfile?.id || authUserId;
+        const businessType = vendorProfile?.business_type as 'physical' | 'online' | 'hybrid' | undefined;
 
         setVendorData({
           vendorId: vendorId,
           isAgent: false,
           user: auth.user,
-          profile: auth.profile
+          profile: auth.profile,
+          businessType: businessType
         });
         
-        console.log('✅ Données vendeur chargées (mode direct):', { vendorId });
+        console.log('✅ Données vendeur chargées (mode direct):', { vendorId, businessType });
       } else if (!hasAgent) {
         // CAS 3: Aucun contexte valide (ni agent ni vendeur)
         console.warn('⚠️ Aucun contexte vendeur valide');
@@ -127,6 +137,7 @@ export const useCurrentVendor = () => {
     agentPermissions: vendorData?.agentPermissions,
     user: vendorData?.user,
     profile: vendorData?.profile,
+    businessType: vendorData?.businessType,
     loading,
     error,
     reload: loadVendorData,
@@ -135,6 +146,8 @@ export const useCurrentVendor = () => {
         return vendorData.agentPermissions[permission as keyof VendorAgentPermissions] || false;
       }
       return true; // Vendeur direct a toutes les permissions
-    }
+    },
+    // POS accessible uniquement pour physical et hybrid (pas pour online)
+    canAccessPOS: vendorData?.businessType !== 'online'
   };
 };

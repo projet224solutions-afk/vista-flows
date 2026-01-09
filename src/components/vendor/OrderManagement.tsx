@@ -11,7 +11,7 @@ import { GeocodedAddress } from "@/components/vendor/GeocodedAddress";
 import { 
   ShoppingCart, Search, Filter, Eye, Package, Clock, 
   CheckCircle, XCircle, Truck, CreditCard, FileText,
-  Calendar, User, MapPin, Download, MoreHorizontal, Shield, RefreshCw, Banknote
+  Calendar, User, MapPin, Download, MoreHorizontal, Shield, RefreshCw, Banknote, Lock
 } from "lucide-react";
 
 interface Address {
@@ -146,7 +146,7 @@ const getPaymentMethodLabel = (order: Order): string => {
 };
 
 export default function OrderManagement() {
-  const { vendorId, user, loading: vendorLoading } = useCurrentVendor();
+  const { vendorId, user, loading: vendorLoading, canAccessPOS, businessType } = useCurrentVendor();
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -619,10 +619,22 @@ export default function OrderManagement() {
 
       {/* Boutons Ventes POS et En Ligne - Mobile optimisé */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
-        {/* Bouton Ventes POS */}
+        {/* Bouton Ventes POS - Verrouillé si vendeur "online" uniquement */}
         <Card 
-          className="border-2 border-purple-300 bg-purple-50/50 cursor-pointer hover:shadow-lg transition-all active:scale-[0.98]"
+          className={`border-2 transition-all ${
+            canAccessPOS 
+              ? 'border-purple-300 bg-purple-50/50 cursor-pointer hover:shadow-lg active:scale-[0.98]' 
+              : 'border-gray-300 bg-gray-100/50 cursor-not-allowed opacity-60'
+          }`}
           onClick={() => {
+            if (!canAccessPOS) {
+              toast({
+                title: "Accès restreint",
+                description: "Le module POS n'est pas disponible pour les boutiques en ligne uniquement.",
+                variant: "destructive"
+              });
+              return;
+            }
             setActiveView('pos');
             setTimeout(() => {
               document.querySelector('.pos-orders-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -630,24 +642,29 @@ export default function OrderManagement() {
           }}
         >
           <CardHeader className="p-3 md:p-6 pb-2 md:pb-4">
-            <CardTitle className="flex items-center gap-2 text-purple-700 text-base md:text-lg">
-              🛒 Ventes POS
+            <CardTitle className={`flex items-center gap-2 text-base md:text-lg ${canAccessPOS ? 'text-purple-700' : 'text-gray-500'}`}>
+              {canAccessPOS ? '🛒' : <Lock className="w-4 h-4" />} Ventes POS
+              {!canAccessPOS && (
+                <Badge variant="secondary" className="ml-2 text-xs">
+                  Non disponible
+                </Badge>
+              )}
             </CardTitle>
             <p className="text-xs md:text-sm text-muted-foreground line-clamp-1">
-              Ventes par points de vente
+              {canAccessPOS ? 'Ventes par points de vente' : 'Réservé aux boutiques physiques'}
             </p>
           </CardHeader>
           <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
             <div className="grid grid-cols-2 gap-2 md:gap-4">
               <div className="bg-white/80 rounded-lg p-2 md:p-4">
                 <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Total ventes</p>
-                <p className="text-xl md:text-3xl font-bold text-purple-700">
+                <p className={`text-xl md:text-3xl font-bold ${canAccessPOS ? 'text-purple-700' : 'text-gray-400'}`}>
                   {orders.filter(o => o.source === 'pos').length}
                 </p>
               </div>
               <div className="bg-white/80 rounded-lg p-2 md:p-4">
                 <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Chiffre d'affaires</p>
-                <p className="text-sm md:text-xl font-bold text-purple-700 truncate">
+                <p className={`text-sm md:text-xl font-bold truncate ${canAccessPOS ? 'text-purple-700' : 'text-gray-400'}`}>
                   {orders
                     .filter(o => o.source === 'pos' && o.payment_status === 'paid')
                     .reduce((sum, o) => sum + o.total_amount, 0)
@@ -655,8 +672,15 @@ export default function OrderManagement() {
                 </p>
               </div>
             </div>
-            <Button className="w-full mt-3 md:mt-4 bg-purple-600 hover:bg-purple-700 h-9 text-xs md:text-sm">
-              Voir les ventes POS
+            <Button 
+              className={`w-full mt-3 md:mt-4 h-9 text-xs md:text-sm ${
+                canAccessPOS 
+                  ? 'bg-purple-600 hover:bg-purple-700' 
+                  : 'bg-gray-400 cursor-not-allowed'
+              }`}
+              disabled={!canAccessPOS}
+            >
+              {canAccessPOS ? 'Voir les ventes POS' : 'POS verrouillé'}
             </Button>
           </CardContent>
         </Card>
