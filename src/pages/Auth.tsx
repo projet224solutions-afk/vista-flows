@@ -2122,7 +2122,7 @@ export default function Auth() {
                 <button
                   onClick={() => {
                     setShowRoleSelectionModal(false);
-                    handleGoogleLogin();
+                    handleGoogleLogin(false);
                   }}
                   className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 hover:shadow-md transition-all duration-200 relative overflow-hidden group"
                   disabled={oauthLoading !== null}
@@ -2149,7 +2149,7 @@ export default function Auth() {
               <button
                 onClick={() => {
                   setShowRoleSelectionModal(false);
-                  handleFacebookLogin();
+                  handleFacebookLogin(false);
                 }}
                 className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 hover:shadow-md transition-all duration-200 relative overflow-hidden group"
                 disabled={oauthLoading !== null}
