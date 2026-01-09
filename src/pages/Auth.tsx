@@ -1756,54 +1756,93 @@ export default function Auth() {
               <div className="relative my-6">
                 <Separator />
                 <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-sm text-muted-foreground">
-                  ou continuer avec
+                  {showSignup ? 'ou s\'inscrire avec' : 'ou continuer avec'}
                 </span>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                {/* Bouton Google */}
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-12 gap-2 font-medium hover:bg-red-50 hover:border-red-300 transition-all"
-                  onClick={handleGoogleLogin}
-                  disabled={loading || oauthLoading !== null}
-                >
-                  {oauthLoading === 'google' ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <svg className="h-5 w-5" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                    </svg>
+                {/* Bouton Google avec badge recommandé */}
+                <div className="relative">
+                  {showSignup && (
+                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-10">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-semibold shadow-lg">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        Rapide
+                      </span>
+                    </div>
                   )}
-                  <span className="hidden sm:inline">Google</span>
-                </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full h-12 gap-2 font-medium hover:bg-red-50 hover:border-red-300 hover:shadow-md transition-all duration-200 relative overflow-hidden group"
+                    onClick={handleGoogleLogin}
+                    disabled={loading || oauthLoading !== null}
+                  >
+                    {/* Effet de brillance au survol */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
+                    
+                    {oauthLoading === 'google' ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span className="hidden sm:inline">Connexion...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" viewBox="0 0 24 24">
+                          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        <span className="hidden sm:inline">Google</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
 
                 {/* Bouton Facebook */}
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-12 gap-2 font-medium hover:bg-blue-50 hover:border-blue-300 transition-all"
+                  className="h-12 gap-2 font-medium hover:bg-blue-50 hover:border-blue-300 hover:shadow-md transition-all duration-200 relative overflow-hidden group"
                   onClick={handleFacebookLogin}
                   disabled={loading || oauthLoading !== null}
                 >
+                  {/* Effet de brillance au survol */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
+                  
                   {oauthLoading === 'facebook' ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <span className="hidden sm:inline">Connexion...</span>
+                    </>
                   ) : (
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="#1877F2">
-                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                    </svg>
+                    <>
+                      <svg className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" viewBox="0 0 24 24" fill="#1877F2">
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                      </svg>
+                      <span className="hidden sm:inline">Facebook</span>
+                    </>
                   )}
-                  <span className="hidden sm:inline">Facebook</span>
                 </Button>
               </div>
 
-              <p className="text-xs text-center text-muted-foreground mt-3">
-                En continuant, vous acceptez nos conditions d'utilisation
-              </p>
+              {/* Message de sécurité et confidentialité */}
+              <div className="mt-4 space-y-2">
+                <p className="text-xs text-center text-muted-foreground">
+                  En continuant, vous acceptez nos conditions d'utilisation
+                </p>
+                {(oauthLoading === 'google' || oauthLoading === 'facebook') && (
+                  <div className="flex items-center justify-center gap-2 text-xs text-blue-600 animate-pulse">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                    </svg>
+                    <span>Redirection sécurisée vers {oauthLoading === 'google' ? 'Google' : 'Facebook'}...</span>
+                  </div>
+                )}
+              </div>
               {/* ===== FIN OAUTH BUTTONS ===== */}
 
               <div className="text-center pt-4">
@@ -1927,35 +1966,66 @@ export default function Auth() {
               </div>
             </div>
             
-            {/* Boutons OAuth */}
+            {/* Boutons OAuth avec badge recommandé */}
             <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => {
-                  setShowRoleSelectionModal(false);
-                  handleGoogleLogin();
-                }}
-                className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 transition-all"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                <span className="font-medium text-gray-700">Google</span>
-              </button>
+              <div className="relative">
+                {/* Badge "Rapide" sur Google */}
+                <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-10">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-semibold shadow-lg">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Rapide
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowRoleSelectionModal(false);
+                    handleGoogleLogin();
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 hover:shadow-md transition-all duration-200 relative overflow-hidden group"
+                  disabled={oauthLoading !== null}
+                >
+                  {/* Effet de brillance */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
+                  
+                  {oauthLoading === 'google' ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <svg className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                  )}
+                  <span className="font-medium text-gray-700">
+                    {oauthLoading === 'google' ? 'Connexion...' : 'Google'}
+                  </span>
+                </button>
+              </div>
               
               <button
                 onClick={() => {
                   setShowRoleSelectionModal(false);
                   handleFacebookLogin();
                 }}
-                className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all"
+                className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 hover:shadow-md transition-all duration-200 relative overflow-hidden group"
+                disabled={oauthLoading !== null}
               >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="#1877F2">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-                <span className="font-medium text-gray-700">Facebook</span>
+                {/* Effet de brillance */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
+                
+                {oauthLoading === 'facebook' ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <svg className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" viewBox="0 0 24 24" fill="#1877F2">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  </svg>
+                )}
+                <span className="font-medium text-gray-700">
+                  {oauthLoading === 'facebook' ? 'Connexion...' : 'Facebook'}
+                </span>
               </button>
             </div>
             
