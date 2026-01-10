@@ -3,17 +3,17 @@
  * COMPOSANT: InstallAppButton
  * =====================================================
  * 
- * Bouton d'installation PWA proéminent et attractif
+ * Bouton d'installation PWA native depuis le navigateur
  * - Détecte automatiquement si l'installation PWA est possible
  * - Affiche des instructions spécifiques selon le navigateur/OS
- * - Animation attractive pour attirer l'attention
+ * - Installation directe sans téléchargement de fichiers
  * 
  * @author 224Solutions
- * @version 1.0
+ * @version 2.0
  */
 
 import { useState, useEffect } from 'react';
-import { Download, Smartphone, CheckCircle2, Share, Plus, MoreVertical, ExternalLink } from 'lucide-react';
+import { Download, Smartphone, CheckCircle2, Share, Plus, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -23,13 +23,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
-
-// URLs de téléchargement direct - Supabase Storage
-const SUPABASE_URL = 'https://uakkxaibujzxdiqzpnpr.supabase.co';
-const DOWNLOAD_LINKS = {
-  android: `${SUPABASE_URL}/storage/v1/object/public/app-downloads/224Solutions.apk`,
-  windows: `${SUPABASE_URL}/storage/v1/object/public/app-downloads/224Solutions.exe`,
-};
 
 interface InstallAppButtonProps {
   variant?: 'default' | 'compact' | 'floating';
@@ -64,19 +57,13 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
     if (isInstallable) {
       const success = await promptInstall();
       console.log('📱 [Install] Prompt result:', success);
-      // Si l'installation native échoue, montrer les alternatives
       if (!success) {
         setShowInstructions(true);
       }
     } else {
-      // Pas de prompt natif disponible, montrer les alternatives (APK/instructions)
+      // Pas de prompt natif disponible, montrer les instructions manuelles
       setShowInstructions(true);
     }
-  };
-
-  // Télécharger l'APK directement (pour Android)
-  const handleDownloadAPK = () => {
-    window.open(DOWNLOAD_LINKS.android, '_blank');
   };
 
   // Ne pas afficher si déjà installé
@@ -195,19 +182,6 @@ interface InstallInstructionsDialogProps {
 }
 
 function InstallInstructionsDialog({ open, onOpenChange, deviceInfo }: InstallInstructionsDialogProps) {
-  // Téléchargement direct
-  const handleDownloadAPK = () => {
-    window.open(DOWNLOAD_LINKS.android, '_blank');
-  };
-
-  const handleDownloadEXE = () => {
-    window.open(DOWNLOAD_LINKS.windows, '_blank');
-  };
-
-  // Détecter si on est sur desktop Windows
-  const isWindows = typeof navigator !== 'undefined' && navigator.userAgent.includes('Windows');
-  const isMobile = deviceInfo.isAndroid || deviceInfo.isIOS;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
@@ -217,59 +191,20 @@ function InstallInstructionsDialog({ open, onOpenChange, deviceInfo }: InstallIn
             Installer 224Solutions
           </DialogTitle>
           <DialogDescription>
-            Téléchargez l'application pour votre appareil
+            Suivez les étapes pour installer l'application
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 mt-4">
-          {/* Option de téléchargement direct - TOUJOURS VISIBLE */}
-          <div className="p-4 bg-primary/10 rounded-lg border-2 border-primary">
-            <h4 className="font-bold text-primary mb-2 flex items-center gap-2">
-              <Download className="w-5 h-5" />
-              Téléchargement direct (recommandé)
-            </h4>
-            
-            <div className="space-y-3">
-              {/* Bouton APK Android - prioritaire sur mobile */}
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">
-                  📱 Pour Android (APK)
-                </p>
-                <Button onClick={handleDownloadAPK} className="w-full gap-2" size="lg">
-                  <ExternalLink className="w-4 h-4" />
-                  Télécharger APK Android
-                </Button>
-              </div>
-              
-              {/* Bouton EXE Windows - visible sur desktop */}
-              {!isMobile && (
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    💻 Pour Windows (EXE)
-                  </p>
-                  <Button onClick={handleDownloadEXE} variant="outline" className="w-full gap-2">
-                    <ExternalLink className="w-4 h-4" />
-                    Télécharger pour Windows
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Ou installer via le navigateur
-              </span>
-            </div>
-          </div>
-
           {deviceInfo.isIOS ? (
             // Instructions iOS/Safari
             <div className="space-y-4">
+              <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm text-blue-800 font-medium">
+                  📱 Sur iPhone/iPad, utilisez Safari pour installer l'app
+                </p>
+              </div>
+              
               <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
                 <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
                   1
@@ -308,7 +243,7 @@ function InstallInstructionsDialog({ open, onOpenChange, deviceInfo }: InstallIn
                 </div>
               </div>
             </div>
-          ) : deviceInfo.isChrome ? (
+          ) : deviceInfo.isAndroid || deviceInfo.isChrome ? (
             // Instructions Chrome (Android/Desktop)
             <div className="space-y-4">
               <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">

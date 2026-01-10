@@ -598,49 +598,6 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
                 </div>
               );
             })}
-
-              return (
-                <div key={message.id}>
-                  {showDate && (
-                    <div className="flex items-center justify-center my-4">
-                      <Badge variant="outline" className="text-xs">
-                        {formatDate(message.timestamp)}
-                      </Badge>
-                    </div>
-                  )}
-
-                  <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
-                    <div className={`flex max-w-[80%] ${isUser ? 'flex-row-reverse' : 'flex-row'} items-start space-x-2`}>
-                      <Avatar className={`h-8 w-8 ${isUser ? 'ml-2' : 'mr-2'}`}>
-                        {isUser ? (
-                          <AvatarFallback className="bg-blue-500 text-white">
-                            <User className="h-4 w-4" />
-                          </AvatarFallback>
-                        ) : (
-                          <AvatarFallback className={`bg-gradient-to-br ${roleColor} text-white`}>
-                            <Bot className="h-4 w-4" />
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
-
-                      <div className={`rounded-2xl px-4 py-3 ${isUser
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-muted text-foreground'
-                        }`}>
-                        <div className="whitespace-pre-wrap text-sm">
-                          {message.content || (isLoading && !isUser ? '...' : '')}
-                        </div>
-                        <div className={`text-xs mt-1 ${isUser ? 'text-blue-100' : 'text-muted-foreground'}`}>
-                          <Clock className="h-3 w-3 inline mr-1" />
-                          {formatTime(message.timestamp)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-
             {isTyping && (
               <div className="flex justify-start mb-4">
                 <div className="flex items-start space-x-2">
