@@ -194,10 +194,18 @@ interface InstallInstructionsDialogProps {
 }
 
 function InstallInstructionsDialog({ open, onOpenChange, deviceInfo }: InstallInstructionsDialogProps) {
-  // Télécharger l'APK directement
+  // Téléchargement direct
   const handleDownloadAPK = () => {
     window.open(DOWNLOAD_LINKS.android, '_blank');
   };
+
+  const handleDownloadEXE = () => {
+    window.open(DOWNLOAD_LINKS.windows, '_blank');
+  };
+
+  // Détecter si on est sur desktop Windows
+  const isWindows = typeof navigator !== 'undefined' && navigator.userAgent.includes('Windows');
+  const isMobile = deviceInfo.isAndroid || deviceInfo.isIOS;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -208,27 +216,44 @@ function InstallInstructionsDialog({ open, onOpenChange, deviceInfo }: InstallIn
             Installer 224Solutions
           </DialogTitle>
           <DialogDescription>
-            Choisissez votre méthode d'installation
+            Téléchargez l'application pour votre appareil
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 mt-4">
-          {/* Option de téléchargement direct pour Android */}
-          {deviceInfo.isAndroid && (
-            <div className="p-4 bg-primary/10 rounded-lg border-2 border-primary">
-              <h4 className="font-bold text-primary mb-2 flex items-center gap-2">
-                <Download className="w-5 h-5" />
-                Installation rapide (recommandée)
-              </h4>
-              <p className="text-sm text-muted-foreground mb-3">
-                Téléchargez directement l'application APK
-              </p>
-              <Button onClick={handleDownloadAPK} className="w-full gap-2">
-                <ExternalLink className="w-4 h-4" />
-                Télécharger l'APK
-              </Button>
+          {/* Option de téléchargement direct - TOUJOURS VISIBLE */}
+          <div className="p-4 bg-primary/10 rounded-lg border-2 border-primary">
+            <h4 className="font-bold text-primary mb-2 flex items-center gap-2">
+              <Download className="w-5 h-5" />
+              Téléchargement direct (recommandé)
+            </h4>
+            
+            <div className="space-y-3">
+              {/* Bouton APK Android - prioritaire sur mobile */}
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">
+                  📱 Pour Android (APK)
+                </p>
+                <Button onClick={handleDownloadAPK} className="w-full gap-2" size="lg">
+                  <ExternalLink className="w-4 h-4" />
+                  Télécharger APK Android
+                </Button>
+              </div>
+              
+              {/* Bouton EXE Windows - visible sur desktop */}
+              {!isMobile && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    💻 Pour Windows (EXE)
+                  </p>
+                  <Button onClick={handleDownloadEXE} variant="outline" className="w-full gap-2">
+                    <ExternalLink className="w-4 h-4" />
+                    Télécharger pour Windows
+                  </Button>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -236,7 +261,7 @@ function InstallInstructionsDialog({ open, onOpenChange, deviceInfo }: InstallIn
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
-                {deviceInfo.isAndroid ? 'Ou via le navigateur' : 'Instructions'}
+                Ou installer via le navigateur
               </span>
             </div>
           </div>
