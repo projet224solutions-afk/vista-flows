@@ -15,6 +15,14 @@ const planIcons = {
   premium: Rocket,
 };
 
+const planDescriptions: Record<string, string> = {
+  free: 'Idéal pour découvrir les fonctionnalités essentielles de la plateforme.',
+  basic: 'Conçu pour gérer vos produits, ventes et livraisons avec des outils professionnels.',
+  pro: 'Pensé pour développer votre activité avec marketing, analytics et automatisations.',
+  business: 'Adapté aux entreprises nécessitant gestion financière complète et outils avancés.',
+  premium: 'Solution intégrale avec intelligence artificielle, automatisation et support dédié.',
+};
+
 interface SubscriptionPlansProps {
   onSelectPlan: (plan: Plan) => void;
 }
@@ -108,6 +116,9 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
                   <Icon className="w-6 h-6 text-primary" />
                 </div>
                 <CardTitle className="text-2xl">{plan.display_name}</CardTitle>
+                <CardDescription className="mt-2 min-h-[2.5rem]">
+                  {planDescriptions[plan.name] || ''}
+                </CardDescription>
                 <CardDescription>
                   <div className="mt-4">
                     <span className="text-3xl font-bold text-foreground">

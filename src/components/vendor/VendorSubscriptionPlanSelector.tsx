@@ -97,6 +97,17 @@ export function VendorSubscriptionPlanSelector({
     return null;
   };
 
+  const getPlanDescription = (planName: string): string => {
+    const descriptions: Record<string, string> = {
+      'free': 'Idéal pour découvrir les fonctionnalités essentielles de la plateforme.',
+      'basic': 'Conçu pour gérer vos produits, ventes et livraisons avec des outils professionnels.',
+      'pro': 'Pensé pour développer votre activité avec marketing, analytics et automatisations.',
+      'business': 'Adapté aux entreprises nécessitant gestion financière complète et outils avancés.',
+      'premium': 'Solution intégrale avec intelligence artificielle, automatisation et support dédié.'
+    };
+    return descriptions[planName] || '';
+  };
+
   const handleSubscribe = async () => {
     if (!selectedPlan || !user?.id) return;
 
@@ -242,6 +253,10 @@ export function VendorSubscriptionPlanSelector({
                             </Badge>
                           )}
                         </div>
+                        {/* Description courte du plan */}
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {getPlanDescription(plan.name)}
+                        </p>
                         <div className="flex items-baseline gap-2">
                           <span className="text-2xl font-bold text-primary">
                             {price.toLocaleString()} GNF
