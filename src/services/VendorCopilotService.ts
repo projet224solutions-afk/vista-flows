@@ -322,13 +322,19 @@ export class VendorCopilotService {
   /**
    * � ANALYSE DÉTAILLÉE D'UN CLIENT
    * Analyse complète d'un client spécifique avec localisation et historique
+   * Accepte customer_id (customers table) OU user_id (profiles table)
    */
   static async analyzeCustomer(customerId: string, vendorId: string): Promise<CustomerDetailedAnalysis | null> {
     try {
       console.log(`🔍 Analyse client ${customerId} pour vendeur ${vendorId}...`);
 
-      // 1. Informations du client
-      const { data: customer } = await (supabase as any)
+      // 1. TENTATIVE 1: Rechercher dans la table customers
+      let customer: any = null;
+      let profile: any = null;
+      let userId: string | null = null;
+      let customerTableId: string | null = null;
+
+      const { data: customerData } = await (supabase as any)
         .from('customers')
         .select(`
           id,
@@ -344,14 +350,43 @@ export class VendorCopilotService {
           )
         `)
         .eq('id', customerId)
-        .single();
+        .maybeSingle();
 
-      if (!customer) {
-        console.error('Client non trouvé');
-        return null;
+      if (customerData) {
+        console.log('✅ Client trouvé dans table customers');
+        customer = customerData;
+        profile = customerData.profiles;
+        userId = customerData.user_id;
+        customerTableId = customerData.id;
+      } else {
+        // 2. TENTATIVE 2: Rechercher directement dans profiles (user_id)
+        console.log('⚠️ Pas trouvé dans customers, recherche dans profiles...');
+        const { data: profileData } = await (supabase as any)
+          .from('profiles')
+          .select('id, email, phone, first_name, last_name, created_at, raw_user_meta_data')
+          .eq('id', customerId)
+          .maybeSingle();
+
+        if (profileData) {
+          console.log('✅ Client trouvé dans table profiles (user_id)');
+          profile = profileData;
+          userId = profileData.id;
+          customerTableId = null; // Pas dans customers table
+          
+          // Créer un objet customer factice
+          customer = {
+            id: null,
+            user_id: userId,
+            addresses: profileData.raw_user_meta_data?.addresses || [],
+            payment_methods: profileData.raw_user_meta_data?.payment_methods || [],
+            created_at: profileData.created_at,
+          };
+        } else {
+          console.error('❌ Client non trouvé ni dans customers ni dans profiles');
+          return null;
+        }
       }
 
-      const profile = customer.profiles;
       const full_name = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Client anonyme';
 
       // 2. Extraction des adresses
@@ -363,10 +398,11 @@ export class VendorCopilotService {
       const address = defaultAddress?.street || 'Non spécifié';
 
       // 3. Historique des commandes (TOUTES confondues)
+      // IMPORTANT: chercher par customer_id OU par user_id selon ce qui est disponible
       const { data: allOrders } = await (supabase as any)
         .from('orders')
-        .select('id, total_amount, status, created_at, vendor_id')
-        .eq('customer_id', customerId)
+        .select('id, total_amount, status, created_at, vendor_id, customer_id')
+        .or(customerTableId ? `customer_id.eq.${customerTableId}` : `customer_id.eq.${userId}`)
         .order('created_at', { ascending: true });
 
       const total_orders = allOrders?.length || 0;
@@ -459,8 +495,8 @@ export class VendorCopilotService {
       loyalty_score += orders_with_this_vendor > 0 ? 10 : 0; // 10 points si a commandé chez ce vendeur
 
       return {
-        customer_id: customerId,
-        user_id: customer.user_id,
+        customer_id: customerTableId || userId, // Utiliser customerTableId si disponible, sinon userId
+        user_id: userId,
         email: profile.email,
         phone: profile.phone || 'Non spécifié',
         first_name: profile.first_name || '',

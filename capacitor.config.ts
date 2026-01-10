@@ -1,12 +1,12 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.a00e0cf7bf68445f848bf2c774cf80ce',
-  appName: 'vista-flows',
+  appId: 'com.solutions224.app',
+  appName: '224Solutions',
   webDir: 'dist',
   server: {
-    // URL du sandbox pour hot-reload en développement
-    url: 'https://a00e0cf7-bf68-445f-848b-f2c774cf80ce.lovableproject.com?forceHideBadge=true',
+    // URL du sandbox pour hot-reload en développement (commenter en production)
+    // url: 'https://a00e0cf7-bf68-445f-848b-f2c774cf80ce.lovableproject.com?forceHideBadge=true',
     cleartext: true
   },
   plugins: {
