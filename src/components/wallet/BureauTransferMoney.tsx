@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface BureauTransferMoneyProps {
-  bureauWalletId: string;
+  bureauWalletId: string | number;
   currentBalance: number;
   currency: string;
   onTransferComplete?: () => void;
@@ -29,7 +29,7 @@ interface UserSearchResult {
   name: string;
   email: string;
   type: 'bureau' | 'agent' | 'vendor' | 'user' | 'driver';
-  wallet_id?: string;
+  wallet_id?: string | number;
 }
 
 export default function BureauTransferMoney({ bureauWalletId, currentBalance, currency, onTransferComplete }: BureauTransferMoneyProps) {
@@ -206,10 +206,9 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
       const referenceNumber = `BUR-TRF-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
       // Créer la transaction de transfert (débit pour le bureau expéditeur)
-      const { error: debitError } = await supabase
+      const { error: debitError } = await (supabase
         .from('wallet_transactions')
         .insert({
-          transaction_id: `${referenceNumber}-OUT`,
           transaction_type: 'transfer',
           amount: -transferAmount,
           net_amount: -transferAmount,
@@ -217,23 +216,23 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
           currency: currency,
           status: 'completed',
           description: description || `Transfert vers ${selectedUser.name}`,
-          sender_wallet_id: bureauWalletId,
-          receiver_wallet_id: selectedUser.wallet_id,
+          sender_wallet_id: Number(bureauWalletId),
+          receiver_wallet_id: Number(selectedUser.wallet_id),
           metadata: {
+            reference: `${referenceNumber}-OUT`,
             recipient_name: selectedUser.name,
             recipient_email: selectedUser.email,
             recipient_type: selectedUser.type,
             sender_type: 'bureau'
           }
-        });
+        }) as any);
 
       if (debitError) throw debitError;
 
       // Créer la transaction de réception (crédit pour le destinataire)
-      const { error: creditError } = await supabase
+      const { error: creditError } = await (supabase
         .from('wallet_transactions')
         .insert({
-          transaction_id: `${referenceNumber}-IN`,
           transaction_type: 'transfer',
           amount: transferAmount,
           net_amount: transferAmount,
@@ -241,12 +240,13 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
           currency: currency,
           status: 'completed',
           description: description || `Transfert reçu d'un bureau`,
-          sender_wallet_id: bureauWalletId,
-          receiver_wallet_id: selectedUser.wallet_id,
+          sender_wallet_id: Number(bureauWalletId),
+          receiver_wallet_id: Number(selectedUser.wallet_id),
           metadata: {
+            reference: `${referenceNumber}-IN`,
             sender_type: 'bureau'
           }
-        });
+        }) as any);
 
       if (creditError) throw creditError;
 
@@ -257,7 +257,7 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
           balance: currentBalance - transferAmount,
           updated_at: new Date().toISOString()
         })
-        .eq('id', bureauWalletId);
+        .eq('id', String(bureauWalletId));
 
       if (updateSenderError) throw updateSenderError;
 
@@ -266,7 +266,7 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
         const { data: recipientWallet } = await supabase
           .from('bureau_wallets')
           .select('balance')
-          .eq('id', selectedUser.wallet_id)
+          .eq('id', String(selectedUser.wallet_id))
           .single();
 
         if (recipientWallet) {
@@ -276,13 +276,13 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
               balance: recipientWallet.balance + transferAmount,
               updated_at: new Date().toISOString()
             })
-            .eq('id', selectedUser.wallet_id);
+            .eq('id', String(selectedUser.wallet_id));
         }
       } else if (selectedUser.type === 'agent') {
         const { data: recipientWallet } = await supabase
           .from('agent_wallets')
           .select('balance')
-          .eq('id', selectedUser.wallet_id)
+          .eq('id', String(selectedUser.wallet_id))
           .single();
 
         if (recipientWallet) {
@@ -292,14 +292,14 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
               balance: recipientWallet.balance + transferAmount,
               updated_at: new Date().toISOString()
             })
-            .eq('id', selectedUser.wallet_id);
+            .eq('id', String(selectedUser.wallet_id));
         }
       } else {
         // Vendeur, chauffeur ou utilisateur standard
         const { data: recipientWallet } = await supabase
           .from('wallets')
           .select('balance')
-          .eq('id', selectedUser.wallet_id)
+          .eq('id', Number(selectedUser.wallet_id))
           .single();
 
         if (recipientWallet) {
@@ -309,7 +309,7 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
               balance: recipientWallet.balance + transferAmount,
               updated_at: new Date().toISOString()
             })
-            .eq('id', selectedUser.wallet_id);
+            .eq('id', Number(selectedUser.wallet_id));
         }
       }
 

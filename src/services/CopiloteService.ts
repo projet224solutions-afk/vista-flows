@@ -299,14 +299,14 @@ class CopiloteService {
 
   async getTransactionHistory(limit: number = 10): Promise<Record<string, unknown>[]> {
     try {
-      const { data: transactions, error } = await supabase
-        .from('enhanced_transactions')
+      const { data: transactions, error } = await (supabase
+        .from('enhanced_transactions' as any)
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(limit);
+        .limit(limit) as any);
 
       if (error) throw error;
-      return transactions || [];
+      return (transactions || []) as Record<string, unknown>[];
     } catch (error) {
       console.error('Erreur lors de la récupération des transactions:', error);
       throw error;
@@ -365,12 +365,12 @@ class CopiloteService {
 
     try {
       const [transactionsData, profilesData, walletsData] = await Promise.all([
-        supabase.from('enhanced_transactions').select('*').limit(50),
+        supabase.from('enhanced_transactions' as any).select('*').limit(50) as any,
         supabase.from('profiles').select('*').limit(100),
         supabase.from('wallets').select('*').limit(50)
       ]);
 
-      const transactions = transactionsData.data || [];
+      const transactions = (transactionsData.data || []) as Record<string, unknown>[];
       const profiles = profilesData.data || [];
       const wallets = walletsData.data || [];
 

@@ -118,7 +118,7 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
               name: `${bureau.bureau_code} - ${bureau.prefecture || bureau.commune || 'Bureau'}`,
               email: bureau.commune || '',
               type: 'bureau',
-              wallet_id: bureauWallet.id
+              wallet_id: Number(bureauWallet.id)
             });
           }
         }

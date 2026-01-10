@@ -132,10 +132,10 @@ export function usePDGStats() {
           .lte('created_at', lastDayOfLastMonth.toISOString()),
         
         // Transactions pour revenue (exclure archivées)
-        supabase.from('enhanced_transactions')
+        supabase.from('enhanced_transactions' as any)
           .select('amount, created_at, status')
           .eq('status', 'completed')
-          .neq('is_archived', true),
+          .neq('is_archived', true) as any,
         
         // Produits
         supabase.from('products').select('id, is_active', { count: 'exact' }),
@@ -192,7 +192,7 @@ export function usePDGStats() {
       });
 
       // Revenue
-      const completedTransactions = transactionsRes.data || [];
+      const completedTransactions = (transactionsRes.data || []) as Array<{ amount: number; created_at: string; status: string }>;
       const totalRevenueAmount = completedTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
       const revenueThisMonth = completedTransactions
         .filter(t => new Date(t.created_at) >= firstDayOfMonth)

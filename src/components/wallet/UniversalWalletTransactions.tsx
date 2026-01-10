@@ -40,7 +40,7 @@ interface UniversalWalletTransactionsProps {
 }
 
 interface WalletInfo {
-  id: string;
+  id: string | number;
   balance: number;
   currency: string;
 }
@@ -212,13 +212,13 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
     try {
       // Charger depuis enhanced_transactions (exclure les archivées)
-      const { data: enhancedData, error: enhancedError } = await supabase
-        .from('enhanced_transactions')
+      const { data: enhancedData, error: enhancedError } = await (supabase
+        .from('enhanced_transactions' as any)
         .select('*')
         .or(`sender_id.eq.${effectiveUserId},receiver_id.eq.${effectiveUserId}`)
         .neq('is_archived', true)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(10) as any);
 
       if (enhancedError) console.error('Erreur enhanced_transactions:', enhancedError);
 
@@ -234,13 +234,13 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       // Charger les wallet_transactions seulement si on a un wallet_id
       let walletTxData: any[] = [];
       if (userWalletId) {
-        const { data: wtData, error: walletError } = await supabase
+        const { data: wtData, error: walletError } = await (supabase
           .from('wallet_transactions')
           .select('*')
           .or(`sender_wallet_id.eq.${userWalletId},receiver_wallet_id.eq.${userWalletId}`)
           .neq('is_archived', true)
           .order('created_at', { ascending: false })
-          .limit(10);
+          .limit(10) as any);
 
         if (walletError) console.error('Erreur wallet_transactions:', walletError);
         if (wtData) walletTxData = wtData;
@@ -507,21 +507,20 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       const referenceNumber = `DEP${Date.now()}${Math.floor(Math.random() * 1000)}`;
       
       // ⚡ Update atomique
-      const { error: balanceError } = await supabase
-        .rpc('update_wallet_balance_atomic', {
-          p_wallet_id: walletData.id,
+      const { error: balanceError } = await (supabase
+        .rpc('update_wallet_balance_atomic' as any, {
+          p_wallet_id: Number(walletData.id),
           p_amount: amount,
           p_tx_id: referenceNumber,
           p_description: 'Dépôt manuel sur le wallet'
-        });
+        }) as any);
 
       if (balanceError) throw balanceError;
 
       // Enregistrer transaction
-      const { error: transactionError } = await supabase
+      const { error: transactionError } = await (supabase
         .from('wallet_transactions')
         .insert({
-          transaction_id: referenceNumber,
           transaction_type: 'deposit',
           amount: amount,
           net_amount: amount,
@@ -529,9 +528,10 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           currency: 'GNF',
           status: 'completed',
           description: 'Dépôt manuel sur le wallet',
-          receiver_wallet_id: walletData.id,
-          receiver_user_id: effectiveUserId
-        });
+          receiver_wallet_id: Number(walletData.id),
+          receiver_user_id: effectiveUserId,
+          metadata: { reference: referenceNumber }
+        }) as any);
 
       if (transactionError) console.warn('Transaction log failed:', transactionError);
 
@@ -1771,10 +1771,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           const referenceNumber = `TOP${Date.now()}${Math.floor(Math.random() * 1000)}`;
           
           // Créer la transaction de dépôt
-          const { error: transactionError } = await supabase
+          const { error: transactionError } = await (supabase
             .from('wallet_transactions')
             .insert({
-              transaction_id: referenceNumber,
               transaction_type: 'deposit',
               amount: numAmount,
               net_amount: numAmount,
@@ -1782,20 +1781,20 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
               currency: 'GNF',
               status: 'completed',
               description: 'Recharge wallet par carte bancaire (Stripe)',
-              receiver_wallet_id: wallet?.id,
-              metadata: { stripe_payment_intent_id: paymentIntentId }
-            });
+              receiver_wallet_id: Number(wallet?.id),
+              metadata: { stripe_payment_intent_id: paymentIntentId, reference: referenceNumber }
+            }) as any);
 
           if (transactionError) throw transactionError;
 
           // ⚡ Update atomique du balance
-          const { error: balanceError } = await supabase
-            .rpc('update_wallet_balance_atomic', {
-              p_wallet_id: wallet?.id,
+          const { error: balanceError } = await (supabase
+            .rpc('update_wallet_balance_atomic' as any, {
+              p_wallet_id: Number(wallet?.id),
               p_amount: numAmount,
               p_tx_id: referenceNumber,
               p_description: 'Recharge wallet par carte bancaire (Stripe)'
-            });
+            }) as any);
 
           if (balanceError) throw balanceError;
 

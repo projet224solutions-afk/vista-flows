@@ -52,7 +52,7 @@ interface FundsRelease {
 }
 
 interface WalletBalance {
-  id: string;
+  id: string | number;
   balance: number;
   total_received: number;
   total_sent: number;
@@ -112,7 +112,7 @@ export function FundsReleaseStatus() {
             buyer_id
           )
         `)
-        .eq('wallet_id', wallet.id)
+        .eq('wallet_id', String(wallet.id))
         .in('status', ['PENDING', 'SCHEDULED'])
         .order('held_at', { ascending: false });
 

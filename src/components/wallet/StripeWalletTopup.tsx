@@ -16,7 +16,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface StripeWalletTopupProps {
   userId: string;
-  walletId: string;
+  walletId: string | number;
   onSuccess?: () => void;
 }
 
@@ -47,10 +47,9 @@ export default function StripeWalletTopup({ userId, walletId, onSuccess }: Strip
       // Créer la transaction de dépôt
       const referenceNumber = `TOP${Date.now()}${Math.floor(Math.random() * 1000)}`;
       
-      const { error: transactionError } = await supabase
+      const { error: transactionError } = await (supabase
         .from('wallet_transactions')
         .insert({
-          transaction_id: referenceNumber,
           transaction_type: 'deposit',
           amount: numAmount,
           net_amount: numAmount,
@@ -58,9 +57,9 @@ export default function StripeWalletTopup({ userId, walletId, onSuccess }: Strip
           currency: 'GNF',
           status: 'completed',
           description: 'Recharge wallet par carte bancaire (Stripe)',
-          receiver_wallet_id: walletId,
-          metadata: { stripe_payment_intent_id: paymentIntentId }
-        });
+          receiver_wallet_id: Number(walletId),
+          metadata: { stripe_payment_intent_id: paymentIntentId, reference: referenceNumber }
+        }) as any);
 
       if (transactionError) throw transactionError;
 
@@ -68,7 +67,7 @@ export default function StripeWalletTopup({ userId, walletId, onSuccess }: Strip
       const { data: wallet, error: walletError } = await supabase
         .from('wallets')
         .select('balance')
-        .eq('id', walletId)
+        .eq('id', Number(walletId))
         .single();
 
       if (walletError) throw walletError;
@@ -78,7 +77,7 @@ export default function StripeWalletTopup({ userId, walletId, onSuccess }: Strip
       const { error: updateError } = await supabase
         .from('wallets')
         .update({ balance: newBalance })
-        .eq('id', walletId);
+        .eq('id', Number(walletId));
 
       if (updateError) throw updateError;
 

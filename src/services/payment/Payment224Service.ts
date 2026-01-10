@@ -134,7 +134,7 @@ export class Payment224Service {
       if (error) throw error;
 
       toast.success('Paiement effectué via portefeuille');
-      return { success: true, transactionId: transaction.id };
+      return { success: true, transactionId: String(transaction.id) };
     } catch (error) {
       console.error('[Payment224Service] Error processing wallet payment:', error);
       toast.error('Erreur lors du paiement');
