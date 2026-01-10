@@ -43,7 +43,7 @@ interface EarningsStats {
 }
 
 interface WalletTransaction {
-  id: string;
+  id: string | number;
   transaction_type: string;
   amount: number;
   description: string;
@@ -162,7 +162,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
             .order('created_at', { ascending: false })
             .limit(20);
 
-          setTransactions(transactionsData || []);
+          setTransactions((transactionsData || []) as unknown as WalletTransaction[]);
         }
       }
     } catch (error) {

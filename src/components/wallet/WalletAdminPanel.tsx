@@ -149,7 +149,7 @@ export function WalletAdminPanel() {
           blocked_at: new Date().toISOString(),
           wallet_status: 'blocked'
         })
-        .eq('id', selectedWallet.id);
+        .eq('id', Number(selectedWallet.id));
 
       if (error) throw error;
 
@@ -174,7 +174,7 @@ export function WalletAdminPanel() {
           blocked_at: null,
           wallet_status: 'active'
         })
-        .eq('id', walletId);
+        .eq('id', Number(walletId));
 
       if (error) throw error;
 

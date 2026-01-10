@@ -29,16 +29,16 @@ export const useEnhancedTransactions = () => {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('enhanced_transactions')
+      const { data, error } = await (supabase
+        .from('enhanced_transactions' as any)
         .select('*')
         .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
         .neq('is_archived', true)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(50) as any);
 
       if (error) throw error;
-      setTransactions(data || []);
+      setTransactions((data || []) as EnhancedTransaction[]);
     } catch (err) {
       console.error('Erreur lors du chargement des transactions:', err);
       setError(err.message);
@@ -123,8 +123,8 @@ export const useEnhancedTransactions = () => {
       }
 
       // Créer transaction Escrow
-      const { data, error } = await supabase
-        .from('enhanced_transactions')
+      const { data, error } = await (supabase
+        .from('enhanced_transactions' as any)
         .insert({
           sender_id: user.id,
           receiver_id: receiverProfile.id,
@@ -135,7 +135,7 @@ export const useEnhancedTransactions = () => {
           metadata: { description: description || '', escrow_status: 'holding' }
         })
         .select()
-        .single();
+        .single() as any);
 
       if (error) throw error;
 
@@ -174,7 +174,7 @@ export const useEnhancedTransactions = () => {
     try {
       setLoading(true);
       let query = supabase
-        .from('enhanced_transactions')
+        .from('enhanced_transactions' as any)
         .select('*')
         .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
         .neq('is_archived', true);
@@ -204,12 +204,12 @@ export const useEnhancedTransactions = () => {
         query = query.lte('amount', filters.maxAmount);
       }
 
-      const { data, error } = await query
+      const { data, error } = await (query
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(100) as any);
 
       if (error) throw error;
-      setTransactions(data || []);
+      setTransactions((data || []) as EnhancedTransaction[]);
     } catch (err) {
       console.error('Erreur lors de la recherche:', err);
       setError(err.message);

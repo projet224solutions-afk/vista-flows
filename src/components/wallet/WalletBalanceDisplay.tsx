@@ -69,7 +69,7 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
             return;
           }
           
-          setWalletId(reloadedWallet.id);
+          setWalletId(String(reloadedWallet.id));
           setBalance(reloadedWallet.balance || 0);
           setCurrency(reloadedWallet.currency || 'GNF');
           console.log('✅ Wallet rechargé avec succès:', reloadedWallet);
@@ -80,7 +80,7 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
         return;
       }
 
-      setWalletId(data.id);
+      setWalletId(String(data.id));
       setBalance(data.balance || 0);
       setCurrency(data.currency || 'GNF');
       setLoading(false);

@@ -111,7 +111,7 @@ export const useWallet = () => {
       }
 
       if (walletData) {
-        setWallet(walletData as WalletData);
+        setWallet({ ...walletData, id: String(walletData.id) } as WalletData);
 
         // Calculer les stats à partir des transactions
         const { data: txData } = await supabase
@@ -151,16 +151,16 @@ export const useWallet = () => {
     if (!user?.id) return;
 
     try {
-      const { data, error } = await supabase
-        .from('enhanced_transactions')
+      const { data, error } = await (supabase
+        .from('enhanced_transactions' as any)
         .select('*')
         .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
         .neq('is_archived', true)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(50) as any);
 
       if (error) throw error;
-      setTransactions(data || []);
+      setTransactions((data || []) as TransactionData[]);
 
     } catch (error) {
       console.error('❌ Erreur loadTransactions:', error);

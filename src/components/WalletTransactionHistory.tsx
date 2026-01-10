@@ -75,21 +75,22 @@ export const WalletTransactionHistory = ({
         setWalletCurrency(walletData.currency);
 
         // Récupérer les transactions depuis enhanced_transactions (exclure archivées)
-        const { data: transactionsData, error: transactionsError } = await supabase
+        const { data: transactionsData, error: transactionsError } = await (supabase
           .from('enhanced_transactions' as any)
           .select('id, amount, sender_id, receiver_id, method, created_at, status')
           .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
           .neq('is_archived', true)
           .order('created_at', { ascending: false })
-          .limit(limit);
+          .limit(limit) as any);
 
         if (transactionsError) {
           console.error('Erreur récupération transactions:', transactionsError);
           setError(`Impossible de charger l'historique: ${transactionsError.message}`);
         } else if (transactionsData) {
+          const txArray = (transactionsData || []) as Array<{ id: string | number; amount: number; sender_id: string; receiver_id: string; method: string; created_at: string; status: string }>;
           // Enrichir les transactions avec les public_id ET les noms depuis profiles
           const enrichedTransactions = await Promise.all(
-            transactionsData.map(async (tx) => {
+            txArray.map(async (tx) => {
               // Récupérer le public_id et nom de l'expéditeur et destinataire depuis profiles
               const [senderProfileResult, receiverProfileResult] = await Promise.all([
                 supabase.from('profiles').select('public_id, full_name').eq('id', tx.sender_id).maybeSingle(),
@@ -97,7 +98,13 @@ export const WalletTransactionHistory = ({
               ]);
 
               return {
-                ...tx,
+                id: tx.id,
+                amount: tx.amount,
+                sender_id: tx.sender_id,
+                receiver_id: tx.receiver_id,
+                method: tx.method,
+                created_at: tx.created_at,
+                status: tx.status,
                 sender_custom_id: senderProfileResult.data?.public_id || tx.sender_id?.slice(0, 8),
                 receiver_custom_id: receiverProfileResult.data?.public_id || tx.receiver_id?.slice(0, 8),
                 sender_name: senderProfileResult.data?.full_name || 'Utilisateur',

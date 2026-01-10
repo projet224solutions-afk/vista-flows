@@ -39,21 +39,22 @@ export default function WalletMonthlyStats() {
       const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
       // Récupérer toutes les transactions du mois
-      const { data: transactions, error } = await supabase
+      const { data: transactions, error } = await (supabase
         .from('enhanced_transactions' as any)
         .select('amount, sender_id, receiver_id, status')
         .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
         .eq('status', 'completed')
         .gte('created_at', firstDay.toISOString())
-        .lte('created_at', lastDay.toISOString());
+        .lte('created_at', lastDay.toISOString()) as any);
 
       if (error) throw error;
 
       let totalReceived = 0;
       let totalSent = 0;
-      let transactionCount = transactions?.length || 0;
+      const txArray = (transactions || []) as Array<{ receiver_id: string; sender_id: string; amount: number }>;
+      let transactionCount = txArray.length;
 
-      transactions?.forEach((tx) => {
+      txArray.forEach((tx) => {
         if (tx.receiver_id === user.id) {
           totalReceived += tx.amount;
         } else if (tx.sender_id === user.id) {

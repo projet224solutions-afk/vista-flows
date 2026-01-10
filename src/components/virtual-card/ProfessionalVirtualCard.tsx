@@ -46,7 +46,7 @@ interface VirtualCardData {
 }
 
 interface WalletData {
-  id: string;
+  id: string | number;
   balance: number;
   currency: string;
 }

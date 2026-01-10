@@ -319,15 +319,15 @@ export default function Payment() {
 
   const loadRecentTransactions = async () => {
     try {
-      const { data, error } = await supabase
-        .from('enhanced_transactions')
+      const { data, error } = await (supabase
+        .from('enhanced_transactions' as any)
         .select('*')
         .or(`sender_id.eq.${user?.id},receiver_id.eq.${user?.id}`)
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(5) as any);
 
       if (error) throw error;
-      setRecentTransactions(data || []);
+      setRecentTransactions((data || []) as any[]);
     } catch (error) {
       console.error('Erreur chargement transactions:', error);
     }

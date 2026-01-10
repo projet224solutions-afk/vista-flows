@@ -361,8 +361,8 @@ export function useClientActions() {
       .update({ balance: wallet.balance - amount })
       .eq('user_id', userId);
 
-    await supabase
-      .from('enhanced_transactions')
+    await (supabase
+      .from('enhanced_transactions' as any)
       .insert({
         sender_id: userId,
         receiver_id: orderId,
@@ -372,7 +372,7 @@ export function useClientActions() {
         status: 'completed',
         description: `Paiement commande ${orderId}`,
         reference: transactionId || `PAY-${Date.now()}`
-      });
+      }) as any);
   };
 
   /**
