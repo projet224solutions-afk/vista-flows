@@ -2,6 +2,7 @@
  * 🤖 COPILOTE 224 - INTERFACE CHATGPT STYLE
  * Interface de chat avec le Copilote IA intégral
  * Connecté à la vraie IA avec contexte spécifique client/vendeur
+ * NOUVEAU: Support Copilote Vendeur Enterprise avec analyse complète
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -26,6 +27,8 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useVendorCopilot } from '@/hooks/useVendorCopilot';
+import ReactMarkdown from 'react-markdown';
 
 interface Message {
   id: string;
@@ -59,6 +62,11 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
     loading: userRole === 'vendeur',
     hasVendor: userRole === 'vendeur' ? null : true,
   });
+  
+  // NOUVEAU: Hook Copilote Vendeur Enterprise
+  const vendorCopilot = useVendorCopilot();
+  const [vendorId, setVendorId] = useState<string | null>(null);
+  const [useEnterpriseMode, setUseEnterpriseMode] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -105,7 +113,14 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
           : await baseQuery.single();
 
         if (!cancelled) {
-          setVendorAccess({ loading: false, hasVendor: !!res?.data });
+          const hasVendor = !!res?.data;
+          setVendorAccess({ loading: false, hasVendor });
+          
+          // NOUVEAU: Si vendeur trouvé, activer mode Enterprise et stocker l'ID
+          if (hasVendor && res.data?.id) {
+            setVendorId(res.data.id);
+            setUseEnterpriseMode(true);
+          }
         }
       } catch {
         if (!cancelled) setVendorAccess({ loading: false, hasVendor: false });
@@ -137,7 +152,25 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
     console.log('📤 Copilote: Envoi message, isLoading =', isLoading);
     if (!input.trim() || isLoading) return;
 
-    // 🔒 Le Copilote nécessite une session (edge functions verify_jwt = true)
+    // NOUVEAU: Mode Enterprise pour vendeur avec analyse complète
+    if (userRole === 'vendeur' && useEnterpriseMode && vendorId) {
+      setIsLoading(true);
+      await vendorCopilot.processQuery(input.trim(), vendorId);
+      
+      // Synchroniser les messages
+      setMessages(vendorCopilot.messages.map(msg => ({
+        id: msg.id,
+        role: msg.role === 'system' ? 'assistant' : msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp.toISOString(),
+      })));
+      
+      setInput('');
+      setIsLoading(false);
+      return;
+    }
+
+    // Mode standard (edge function)
     const { data: sessionData } = await supabase.auth.getSession();
     const accessToken = sessionData.session?.access_token;
     if (!accessToken) {
@@ -321,10 +354,17 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
 
   const clearHistory = async () => {
     try {
-      setMessages([]);
-      setUserContext(null);
-      const storageKey = `copilote-history-${userRole}`;
-      localStorage.removeItem(storageKey);
+      if (userRole === 'vendeur' && useEnterpriseMode) {
+        // Mode Enterprise: utiliser le hook vendeur
+        vendorCopilot.clearMessages();
+        setMessages([]);
+      } else {
+        // Mode standard
+        setMessages([]);
+        setUserContext(null);
+        const storageKey = `copilote-history-${userRole}`;
+        localStorage.removeItem(storageKey);
+      }
       toast.success('Historique effacé');
     } catch (error) {
       console.error('Erreur lors de l\'effacement:', error);
@@ -433,29 +473,52 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
                 <h3 className="text-lg font-semibold mb-2">Bienvenue chez Copilote 224</h3>
                 <p className="text-muted-foreground mb-4">
                   {userRole === 'vendeur' 
-                    ? 'Je suis votre assistant pour gérer votre boutique, produits et ventes.'
+                    ? useEnterpriseMode 
+                      ? '🚀 Je suis votre IA ENTERPRISE de 224Solutions. Je peux analyser en profondeur TOUTE votre interface vendeur.'
+                      : 'Je suis votre assistant pour gérer votre boutique, produits et ventes.'
                     : 'Je suis votre assistant pour vos achats, commandes et wallet.'}
                 </p>
                 <div className="grid grid-cols-1 gap-2 text-sm text-muted-foreground">
                   {userRole === 'vendeur' ? (
-                    <>
-                      <div className="flex items-center space-x-2">
-                        <span>📦</span>
-                        <span>Gestion des produits</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span>📊</span>
-                        <span>Analyse des ventes</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span>👥</span>
-                        <span>Gestion des clients</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span>💰</span>
-                        <span>Finances et paiements</span>
-                      </div>
-                    </>
+                    useEnterpriseMode ? (
+                      <>
+                        <div className="flex items-center space-x-2">
+                          <span>📊</span>
+                          <span>Analyse complète de l'interface (produits, ventes, clients, finances...)</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span>💡</span>
+                          <span>Recommandations intelligentes basées sur vos données</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span>📈</span>
+                          <span>Tableaux de bord et insights professionnels</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span>🎯</span>
+                          <span>Scores de santé et alertes prioritaires</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-center space-x-2">
+                          <span>📦</span>
+                          <span>Gestion des produits</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span>📊</span>
+                          <span>Analyse des ventes</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span>👥</span>
+                          <span>Gestion des clients</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span>💰</span>
+                          <span>Finances et paiements</span>
+                        </div>
+                      </>
+                    )
                   ) : (
                     <>
                       <div className="flex items-center space-x-2">
@@ -484,6 +547,57 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
               const isUser = message.role === 'user';
               const showDate = index === 0 ||
                 formatDate(messages[index - 1].timestamp) !== formatDate(message.timestamp);
+
+              return (
+                <div key={message.id}>
+                  {showDate && (
+                    <div className="flex items-center justify-center my-4">
+                      <Badge variant="outline" className="text-xs">
+                        <Clock className="h-3 w-3 mr-1" />
+                        {formatDate(message.timestamp)}
+                      </Badge>
+                    </div>
+                  )}
+
+                  <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
+                    <div className={`flex items-start space-x-2 max-w-[85%] ${isUser ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                      <Avatar className={`h-8 w-8 ${isUser ? 'bg-primary' : 'bg-gradient-to-br from-blue-500 to-purple-600'}`}>
+                        {isUser ? (
+                          <AvatarFallback>
+                            <User className="h-4 w-4 text-white" />
+                          </AvatarFallback>
+                        ) : (
+                          <AvatarFallback>
+                            <Bot className="h-4 w-4 text-white" />
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+
+                      <div className={`rounded-lg p-3 ${
+                        isUser
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted'
+                      }`}>
+                        {/* NOUVEAU: Support Markdown pour mode Enterprise */}
+                        {!isUser && useEnterpriseMode ? (
+                          <div className="prose prose-sm dark:prose-invert max-w-none">
+                            <ReactMarkdown>{message.content}</ReactMarkdown>
+                          </div>
+                        ) : (
+                          <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                        )}
+                        <p className="text-xs mt-1 opacity-70">
+                          {new Date(message.timestamp).toLocaleTimeString('fr-FR', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
 
               return (
                 <div key={message.id}>
