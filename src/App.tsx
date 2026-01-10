@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 
-import MerchantOnboarding from "@/components/onboarding/MerchantOnboarding";
+const MerchantOnboarding = lazyWithRetry(() => import("@/components/onboarding/MerchantOnboarding"));
 import { CartProvider } from "@/contexts/CartContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -181,7 +181,9 @@ function App() {
                 <InstallPromptBanner />
                 <PWAInstallPrompt />
                 <DeepLinkInitializer />
-                <MerchantOnboarding />
+                <Suspense fallback={null}>
+                  <MerchantOnboarding />
+                </Suspense>
 
                 <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>
