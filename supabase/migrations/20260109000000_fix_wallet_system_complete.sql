@@ -46,8 +46,8 @@ CREATE TYPE commission_type AS ENUM ('percentage', 'fixed', 'tiered');
 
 -- 5. CRÉER TABLE WALLETS (Schema Unifié)
 CREATE TABLE wallets (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID UNIQUE NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT UNIQUE NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     balance DECIMAL(15,2) DEFAULT 0 CHECK (balance >= 0),
     currency VARCHAR(3) DEFAULT 'GNF', -- ✅ Guinée Franc
     wallet_status wallet_status DEFAULT 'active',
@@ -68,14 +68,14 @@ CREATE INDEX idx_wallets_status ON wallets(wallet_status) WHERE wallet_status = 
 
 -- 6. TABLE TRANSACTIONS (Unifiée)
 CREATE TABLE wallet_transactions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id BIGSERIAL PRIMARY KEY,
     transaction_id VARCHAR(50) UNIQUE NOT NULL,
     
     -- Références wallets ET users (pour compatibilité)
-    sender_wallet_id UUID REFERENCES wallets(id),
-    receiver_wallet_id UUID REFERENCES wallets(id),
-    sender_user_id UUID REFERENCES profiles(id),
-    receiver_user_id UUID REFERENCES profiles(id),
+    sender_wallet_id BIGINT REFERENCES wallets(id),
+    receiver_wallet_id BIGINT REFERENCES wallets(id),
+    sender_user_id BIGINT REFERENCES profiles(id),
+    receiver_user_id BIGINT REFERENCES profiles(id),
     
     -- Montants
     amount DECIMAL(15,2) NOT NULL CHECK (amount > 0),
@@ -194,7 +194,7 @@ END $$;
 
 -- 9. FONCTION ATOMIQUE: Update Balance
 CREATE OR REPLACE FUNCTION update_wallet_balance_atomic(
-    p_wallet_id UUID,
+    p_wallet_id BIGINT,
     p_amount DECIMAL,
     p_transaction_id VARCHAR,
     p_description TEXT DEFAULT NULL
@@ -203,7 +203,7 @@ RETURNS TABLE(new_balance DECIMAL, success BOOLEAN) AS $$
 DECLARE
     v_current_balance DECIMAL;
     v_new_balance DECIMAL;
-    v_user_id UUID;
+    v_user_id BIGINT;
 BEGIN
     -- 🔒 LOCK la ligne pour éviter race conditions
     SELECT balance, user_id INTO v_current_balance, v_user_id
@@ -250,10 +250,10 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 10. FONCTION: Create Wallet Auto
-CREATE OR REPLACE FUNCTION create_wallet_for_user(p_user_id UUID)
-RETURNS UUID AS $$
+CREATE OR REPLACE FUNCTION create_wallet_for_user(p_user_id BIGINT)
+RETURNS BIGINT AS $$
 DECLARE
-    v_wallet_id UUID;
+    v_wallet_id BIGINT;
 BEGIN
     -- Vérifier si wallet existe déjà
     SELECT id INTO v_wallet_id
@@ -325,9 +325,9 @@ USING (auth.role() = 'service_role');
 
 -- 13. TABLE: Idempotency Keys (Prevent Duplicates)
 CREATE TABLE IF NOT EXISTS idempotency_keys (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id BIGSERIAL PRIMARY KEY,
     key VARCHAR(100) UNIQUE NOT NULL,
-    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    user_id BIGINT REFERENCES profiles(id) ON DELETE CASCADE,
     operation VARCHAR(50) NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '24 hours'
@@ -339,7 +339,7 @@ CREATE INDEX idx_idempotency_expires ON idempotency_keys(expires_at);
 -- 14. FONCTION: Check Idempotency
 CREATE OR REPLACE FUNCTION check_idempotency_key(
     p_key VARCHAR,
-    p_user_id UUID,
+    p_user_id BIGINT,
     p_operation VARCHAR
 )
 RETURNS BOOLEAN AS $$
