@@ -123,7 +123,7 @@ export class Payment224Service {
           sender_wallet_id: wallet.id,
           amount: amount,
           net_amount: amount,
-          transaction_type: 'delivery_payment',
+          transaction_type: 'payment',
           status: 'completed',
           description,
           metadata: { delivery_id: deliveryId },

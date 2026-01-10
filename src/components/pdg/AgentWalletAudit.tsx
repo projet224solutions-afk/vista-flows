@@ -103,7 +103,7 @@ export function AgentWalletAudit() {
             receiver_wallet_id: row.agent_id,
             amount: 0,
             net_amount: 0,
-            transaction_type: 'adjustment',
+            transaction_type: 'commission',
             metadata: { previous_agent_balance: row.agent_balance, new_balance: row.main_balance, operation: 'agent_wallet_resync' }
           });
       }

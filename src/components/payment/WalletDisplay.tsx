@@ -169,7 +169,7 @@ export function WalletDisplay({
               <span className="text-xs">Reçu</span>
             </div>
             <p className="text-lg font-semibold">
-              {showBalance ? formatAmount(wallet.total_received || 0, currency) : '•••'}
+              {showBalance ? formatAmount((wallet as any).total_received || 0, currency) : '•••'}
             </p>
           </div>
 
@@ -180,7 +180,7 @@ export function WalletDisplay({
               <span className="text-xs">Envoyé</span>
             </div>
             <p className="text-lg font-semibold">
-              {showBalance ? formatAmount(wallet.total_sent || 0, currency) : '•••'}
+              {showBalance ? formatAmount((wallet as any).total_sent || 0, currency) : '•••'}
             </p>
           </div>
 

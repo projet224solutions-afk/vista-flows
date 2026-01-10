@@ -144,9 +144,9 @@ export function WalletTransactionsList() {
                     <p className="font-medium text-sm">
                       {getTransactionType(tx)}
                     </p>
-                    {tx.public_id && (
+                    {tx.id && (
                       <PublicIdBadge
-                        publicId={tx.public_id}
+                        publicId={tx.id.slice(0, 8).toUpperCase()}
                         variant="outline"
                         size="sm"
                       />

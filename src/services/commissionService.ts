@@ -121,10 +121,10 @@ export class CommissionService {
 
       // Filtrer selon le type de service
       if (serviceName === 'wallet_transfer') {
-        // Inclure tous les types de transferts : transfer, deposit, withdraw
-        query = query.in('transaction_type', ['transfer', 'deposit', 'withdraw', 'credit']);
+        // Inclure tous les types de transferts : transfer, deposit, withdrawal
+        query = query.in('transaction_type', ['transfer', 'deposit', 'withdrawal', 'mobile_money_in', 'mobile_money_out']);
       } else if (serviceName === 'subscription') {
-        query = query.eq('transaction_type', 'subscription');
+        query = query.eq('transaction_type', 'payment');
       } else {
         // Pour les autres services (marketplace, taxi, delivery, livreur)
         query = query.or(`transaction_type.eq.${serviceName},transaction_type.like.${serviceName}_%`);

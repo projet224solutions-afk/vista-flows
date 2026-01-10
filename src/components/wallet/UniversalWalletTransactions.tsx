@@ -511,7 +511,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         .rpc('update_wallet_balance_atomic', {
           p_wallet_id: walletData.id,
           p_amount: amount,
-          p_transaction_id: referenceNumber,
+          p_tx_id: referenceNumber,
           p_description: 'Dépôt manuel sur le wallet'
         });
 
@@ -1793,7 +1793,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
             .rpc('update_wallet_balance_atomic', {
               p_wallet_id: wallet?.id,
               p_amount: numAmount,
-              p_transaction_id: referenceNumber,
+              p_tx_id: referenceNumber,
               p_description: 'Recharge wallet par carte bancaire (Stripe)'
             });
 
