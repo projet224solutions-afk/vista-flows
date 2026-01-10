@@ -509,7 +509,7 @@ export default function VendeurDashboard() {
           )}
 
           {/* Contenu principal - padding optimisé pour éviter coupures */}
-          <main className="flex-1 p-2 sm:p-3 md:p-6 overflow-x-hidden overflow-y-auto pt-4 pb-24 md:pb-8 w-full max-w-full">
+          <main className="flex-1 p-2 sm:p-3 md:p-6 overflow-x-auto overflow-y-auto pt-4 pb-24 md:pb-8 w-full max-w-full">
             <Suspense fallback={
               <div className="flex items-center justify-center h-64">
                 <div className="text-center space-y-3">
