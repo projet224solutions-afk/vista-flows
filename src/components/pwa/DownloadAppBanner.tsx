@@ -21,10 +21,10 @@ import { X, Download, Smartphone, Monitor } from 'lucide-react';
 // Modifiez ces URLs selon votre serveur d'hébergement
 const DOWNLOAD_CONFIG = {
   // Lien vers le fichier APK pour appareils Android
-  apkUrl: 'https://mon-serveur.com/224Solutions.apk',
+  apkUrl: 'https://224solution.net/download/224Solutions.apk',
   
   // Lien vers l'installateur EXE pour Windows
-  exeUrl: 'https://mon-serveur.com/224Solutions-Setup.exe',
+  exeUrl: 'https://224solution.net/download/224Solutions.exe',
   
   // Clé localStorage pour mémoriser la fermeture du bandeau
   storageKey: '224solutions-download-banner-dismissed',
