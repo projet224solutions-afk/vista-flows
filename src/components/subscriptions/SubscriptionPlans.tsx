@@ -16,11 +16,11 @@ const planIcons = {
 };
 
 const planDescriptions: Record<string, string> = {
-  free: 'Accès aux fonctions de base : gestion produits, commandes simples, dashboard et profil public.',
-  basic: 'Gestion produits avancée, suivi commandes et livraisons, CRM basique, analytics de base et facturation automatique.',
-  pro: 'Stocks et inventaire, marketing, affiliation, agents de vente, liens de paiement et support prioritaire.',
-  business: 'Point de vente (POS), gestion fournisseurs et dettes, entrepôts multiples, exports et accès API.',
-  premium: 'Assistant IA Gemini, hub communication, analytics temps réel, account manager dédié et formation.',
+  free: "Plan basique pour démarrer : gestion des produits, commandes simples, tableau de bord et profil public.",
+  basic: "Plan intermédiaire pour une gestion structurée : produits avancés, suivi des commandes/livraisons, CRM et analytics de base, facturation automatique.",
+  pro: "Plan avancé pour développer l’activité : inventaire, marketing/affiliation, agents de vente, liens de paiement et support prioritaire.",
+  business: "Plan complet pour une gestion étendue : POS, fournisseurs et dettes, multi‑entrepôts, exports et accès API.",
+  premium: "Plan premium avec outils et accompagnement avancés : assistant IA Gemini, hub de communication, analytics temps réel, account manager dédié et formation.",
 };
 
 interface SubscriptionPlansProps {
