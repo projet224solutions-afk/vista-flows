@@ -236,12 +236,12 @@ export default function ProductPaymentModal({
           .eq('currency', 'GNF')
           .single();
 
-        if (walletError || !walletData) {
-          console.error('[ProductPayment] Error loading wallet code:', walletError);
-          setVendorCode(vendorData.user_id.slice(0, 8).toUpperCase());
-        } else {
-          setVendorCode(walletData.id.slice(0, 8).toUpperCase());
-        }
+          if (walletError || !walletData) {
+            console.error('[ProductPayment] Error loading wallet code:', walletError);
+            setVendorCode(vendorData.user_id.slice(0, 8).toUpperCase());
+          } else {
+            setVendorCode(String(walletData.id).slice(0, 8).toUpperCase());
+          }
       }
     } catch (error) {
       console.error('[ProductPayment] Error loading vendor code:', error);

@@ -20,7 +20,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 interface DetailedTransaction {
-  id: string;
+  id: number;
   transaction_id: string;
   amount: number;
   fee: number;
@@ -32,8 +32,8 @@ interface DetailedTransaction {
   created_at: string;
   metadata: any;
   payment_method?: string;
-  sender_wallet_id: string | null;
-  receiver_wallet_id: string | null;
+  sender_wallet_id: number | null;
+  receiver_wallet_id: number | null;
   sender_info?: {
     user_id: string;
     name: string;
@@ -70,7 +70,7 @@ export default function DetailedTransactionsList() {
       console.log('📦 [DetailedTransactions] Transactions brutes:', transactionsData);
 
       // Récupérer les wallet IDs uniques
-      const walletIds = new Set<string>();
+      const walletIds = new Set<number>();
       transactionsData?.forEach((t: any) => {
         if (t.sender_wallet_id) walletIds.add(t.sender_wallet_id);
         if (t.receiver_wallet_id) walletIds.add(t.receiver_wallet_id);

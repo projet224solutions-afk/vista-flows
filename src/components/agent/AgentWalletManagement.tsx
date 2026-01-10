@@ -28,7 +28,7 @@ interface AgentWalletManagementProps {
 }
 
 interface WalletData {
-  id: string;
+  id: number;
   user_id: string;
   balance: number;
   currency: string;
@@ -201,9 +201,9 @@ export default function AgentWalletManagement({
       // Créer une transaction de dépôt dans wallet_transactions
       const referenceNumber = `AGT-DEP-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       
-      const { error: txError } = await supabase
-        .from('wallet_transactions')
-        .insert({
+        const { error: txError } = await supabase
+          .from('wallet_transactions' as any)
+          .insert({
           transaction_id: referenceNumber,
           transaction_type: 'deposit',
           amount: amount,
@@ -292,9 +292,9 @@ export default function AgentWalletManagement({
       // ÉTAPE 2: Créer la transaction de retrait
       const referenceNumber = `AGT-WDR-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       
-      const { error: txError } = await supabase
-        .from('wallet_transactions')
-        .insert({
+        const { error: txError } = await supabase
+          .from('wallet_transactions' as any)
+          .insert({
           transaction_id: referenceNumber,
           transaction_type: 'withdrawal',
           amount: -amount,
@@ -433,7 +433,7 @@ export default function AgentWalletManagement({
               {hidden ? '******' : wallet.balance.toLocaleString()} {wallet.currency}
             </p>
             <Badge variant="outline" className="mt-2">
-              ID Wallet: {wallet.id.slice(0, 8)}...
+              ID Wallet: {String(wallet.id).slice(0, 8)}...
             </Badge>
           </div>
         </CardContent>

@@ -25,7 +25,7 @@ interface VirtualCardInfo {
 }
 
 interface WalletInfo {
-  id: string;
+  id: string | number;
   balance: number;
   currency: string;
   status?: string;

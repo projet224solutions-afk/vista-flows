@@ -4555,72 +4555,6 @@ export type Database = {
           },
         ]
       }
-      enhanced_transactions: {
-        Row: {
-          amount: number
-          created_at: string
-          currency: string
-          custom_id: string
-          escrow_id: string | null
-          id: string
-          is_archived: boolean | null
-          metadata: Json | null
-          method: string
-          public_id: string | null
-          receiver_id: string
-          sender_id: string
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          currency?: string
-          custom_id?: string
-          escrow_id?: string | null
-          id?: string
-          is_archived?: boolean | null
-          metadata?: Json | null
-          method?: string
-          public_id?: string | null
-          receiver_id: string
-          sender_id: string
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          currency?: string
-          custom_id?: string
-          escrow_id?: string | null
-          id?: string
-          is_archived?: boolean | null
-          metadata?: Json | null
-          method?: string
-          public_id?: string | null
-          receiver_id?: string
-          sender_id?: string
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "enhanced_transactions_escrow_id_fkey"
-            columns: ["escrow_id"]
-            isOneToOne: false
-            referencedRelation: "escrow_dashboard"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "enhanced_transactions_escrow_id_fkey"
-            columns: ["escrow_id"]
-            isOneToOne: false
-            referencedRelation: "escrow_transactions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       error_logs: {
         Row: {
           category: string
@@ -4854,20 +4788,6 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "escrow_transactions_transaction_id_fkey"
-            columns: ["transaction_id"]
-            isOneToOne: false
-            referencedRelation: "active_transactions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "escrow_transactions_transaction_id_fkey"
-            columns: ["transaction_id"]
-            isOneToOne: false
-            referencedRelation: "enhanced_transactions"
             referencedColumns: ["id"]
           },
         ]
@@ -17634,15 +17554,20 @@ export type Database = {
           created_at: string | null
           currency: string | null
           description: string | null
+          device_info: Json | null
           fee: number | null
-          id: string
+          id: number
+          idempotency_key: string | null
+          ip_address: unknown
           metadata: Json | null
-          net_amount: number | null
+          net_amount: number
           receiver_user_id: string | null
-          receiver_wallet_id: string | null
+          receiver_wallet_id: number | null
           reference_id: string | null
           sender_user_id: string | null
-          sender_wallet_id: string | null
+          sender_wallet_id: number | null
+          signature: string | null
+          signature_verified: boolean | null
           status: Database["public"]["Enums"]["transaction_status"] | null
           transaction_id: string
           transaction_type: Database["public"]["Enums"]["transaction_type"]
@@ -17654,15 +17579,20 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           description?: string | null
+          device_info?: Json | null
           fee?: number | null
-          id?: string
+          id?: number
+          idempotency_key?: string | null
+          ip_address?: unknown
           metadata?: Json | null
-          net_amount?: number | null
+          net_amount: number
           receiver_user_id?: string | null
-          receiver_wallet_id?: string | null
+          receiver_wallet_id?: number | null
           reference_id?: string | null
           sender_user_id?: string | null
-          sender_wallet_id?: string | null
+          sender_wallet_id?: number | null
+          signature?: string | null
+          signature_verified?: boolean | null
           status?: Database["public"]["Enums"]["transaction_status"] | null
           transaction_id: string
           transaction_type: Database["public"]["Enums"]["transaction_type"]
@@ -17674,15 +17604,20 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           description?: string | null
+          device_info?: Json | null
           fee?: number | null
-          id?: string
+          id?: number
+          idempotency_key?: string | null
+          ip_address?: unknown
           metadata?: Json | null
-          net_amount?: number | null
+          net_amount?: number
           receiver_user_id?: string | null
-          receiver_wallet_id?: string | null
+          receiver_wallet_id?: number | null
           reference_id?: string | null
           sender_user_id?: string | null
-          sender_wallet_id?: string | null
+          sender_wallet_id?: number | null
+          signature?: string | null
+          signature_verified?: boolean | null
           status?: Database["public"]["Enums"]["transaction_status"] | null
           transaction_id?: string
           transaction_type?: Database["public"]["Enums"]["transaction_type"]
@@ -17869,7 +17804,7 @@ export type Database = {
           created_at: string | null
           currency: string | null
           daily_limit: number | null
-          id: string
+          id: number
           is_blocked: boolean | null
           monthly_limit: number | null
           pin_hash: string | null
@@ -17885,7 +17820,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           daily_limit?: number | null
-          id?: string
+          id?: number
           is_blocked?: boolean | null
           monthly_limit?: number | null
           pin_hash?: string | null
@@ -17901,7 +17836,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           daily_limit?: number | null
-          id?: string
+          id?: number
           is_blocked?: boolean | null
           monthly_limit?: number | null
           pin_hash?: string | null
@@ -18369,72 +18304,6 @@ export type Database = {
           },
         ]
       }
-      active_transactions: {
-        Row: {
-          amount: number | null
-          created_at: string | null
-          currency: string | null
-          custom_id: string | null
-          escrow_id: string | null
-          id: string | null
-          is_archived: boolean | null
-          metadata: Json | null
-          method: string | null
-          public_id: string | null
-          receiver_id: string | null
-          sender_id: string | null
-          status: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          amount?: number | null
-          created_at?: string | null
-          currency?: string | null
-          custom_id?: string | null
-          escrow_id?: string | null
-          id?: string | null
-          is_archived?: boolean | null
-          metadata?: Json | null
-          method?: string | null
-          public_id?: string | null
-          receiver_id?: string | null
-          sender_id?: string | null
-          status?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          amount?: number | null
-          created_at?: string | null
-          currency?: string | null
-          custom_id?: string | null
-          escrow_id?: string | null
-          id?: string | null
-          is_archived?: boolean | null
-          metadata?: Json | null
-          method?: string | null
-          public_id?: string | null
-          receiver_id?: string | null
-          sender_id?: string | null
-          status?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "enhanced_transactions_escrow_id_fkey"
-            columns: ["escrow_id"]
-            isOneToOne: false
-            referencedRelation: "escrow_dashboard"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "enhanced_transactions_escrow_id_fkey"
-            columns: ["escrow_id"]
-            isOneToOne: false
-            referencedRelation: "escrow_transactions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       admin_payment_review_queue: {
         Row: {
           amount: number | null
@@ -18783,7 +18652,7 @@ export type Database = {
           total_sent: number | null
           user_code: string | null
           user_id: string | null
-          wallet_id: string | null
+          wallet_id: number | null
           wallet_status: Database["public"]["Enums"]["wallet_status"] | null
         }
         Relationships: [
@@ -19159,6 +19028,10 @@ export type Database = {
         Args: { p_agent_id: string; p_permission_key: string }
         Returns: boolean
       }
+      check_idempotency_key: {
+        Args: { p_key: string; p_operation: string; p_user_id: string }
+        Returns: boolean
+      }
       check_overdue_debts: { Args: never; Returns: undefined }
       check_product_limit: { Args: { p_user_id: string }; Returns: Json }
       check_rate_limit: {
@@ -19341,6 +19214,7 @@ export type Database = {
         }
         Returns: string
       }
+      create_wallet_for_user: { Args: { p_user_id: string }; Returns: number }
       credit_wallet:
         | {
             Args: {
@@ -21070,18 +20944,31 @@ export type Database = {
         }
         Returns: undefined
       }
-      update_wallet_balance_atomic: {
-        Args: {
-          p_amount: number
-          p_description?: string
-          p_tx_id: string
-          p_wallet_id: string
-        }
-        Returns: {
-          new_balance: number
-          success: boolean
-        }[]
-      }
+      update_wallet_balance_atomic:
+        | {
+            Args: {
+              p_amount: number
+              p_description?: string
+              p_transaction_id: string
+              p_wallet_id: number
+            }
+            Returns: {
+              new_balance: number
+              success: boolean
+            }[]
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_description?: string
+              p_tx_id: string
+              p_wallet_id: string
+            }
+            Returns: {
+              new_balance: number
+              success: boolean
+            }[]
+          }
       updategeometrysrid: {
         Args: {
           catalogn_name: string
