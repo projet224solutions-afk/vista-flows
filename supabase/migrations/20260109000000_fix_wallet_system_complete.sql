@@ -47,7 +47,7 @@ CREATE TYPE commission_type AS ENUM ('percentage', 'fixed', 'tiered');
 -- 5. CRÉER TABLE WALLETS (Schema Unifié)
 CREATE TABLE wallets (
     id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT UNIQUE NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    user_id UUID UNIQUE NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     balance DECIMAL(15,2) DEFAULT 0 CHECK (balance >= 0),
     currency VARCHAR(3) DEFAULT 'GNF', -- ✅ Guinée Franc
     wallet_status wallet_status DEFAULT 'active',
@@ -74,8 +74,8 @@ CREATE TABLE wallet_transactions (
     -- Références wallets ET users (pour compatibilité)
     sender_wallet_id BIGINT REFERENCES wallets(id),
     receiver_wallet_id BIGINT REFERENCES wallets(id),
-    sender_user_id BIGINT REFERENCES profiles(id),
-    receiver_user_id BIGINT REFERENCES profiles(id),
+    sender_user_id UUID REFERENCES profiles(id),
+    receiver_user_id UUID REFERENCES profiles(id),
     
     -- Montants
     amount DECIMAL(15,2) NOT NULL CHECK (amount > 0),
@@ -203,7 +203,7 @@ RETURNS TABLE(new_balance DECIMAL, success BOOLEAN) AS $$
 DECLARE
     v_current_balance DECIMAL;
     v_new_balance DECIMAL;
-    v_user_id BIGINT;
+    v_user_id UUID;
 BEGIN
     -- 🔒 LOCK la ligne pour éviter race conditions
     SELECT balance, user_id INTO v_current_balance, v_user_id
@@ -250,7 +250,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 10. FONCTION: Create Wallet Auto
-CREATE OR REPLACE FUNCTION create_wallet_for_user(p_user_id BIGINT)
+CREATE OR REPLACE FUNCTION create_wallet_for_user(p_user_id UUID)
 RETURNS BIGINT AS $$
 DECLARE
     v_wallet_id BIGINT;
@@ -327,7 +327,7 @@ USING (auth.role() = 'service_role');
 CREATE TABLE IF NOT EXISTS idempotency_keys (
     id BIGSERIAL PRIMARY KEY,
     key VARCHAR(100) UNIQUE NOT NULL,
-    user_id BIGINT REFERENCES profiles(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
     operation VARCHAR(50) NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '24 hours'
@@ -339,7 +339,7 @@ CREATE INDEX idx_idempotency_expires ON idempotency_keys(expires_at);
 -- 14. FONCTION: Check Idempotency
 CREATE OR REPLACE FUNCTION check_idempotency_key(
     p_key VARCHAR,
-    p_user_id BIGINT,
+    p_user_id UUID,
     p_operation VARCHAR
 )
 RETURNS BOOLEAN AS $$

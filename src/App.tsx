@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { useDeepLinking } from "@/hooks/useDeepLinking";
 import MerchantOnboarding from "@/components/onboarding/MerchantOnboarding";
 import { CartProvider } from "@/contexts/CartContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
@@ -106,6 +107,7 @@ const StripePaymentTest = lazyWithRetry(() => import("./pages/StripePaymentTest"
 const StripeDiagnostic = lazyWithRetry(() => import("./pages/StripeDiagnostic"));
 const DigitalProducts = lazyWithRetry(() => import("./pages/DigitalProducts"));
 const ShortLinkRedirect = lazyWithRetry(() => import("./pages/ShortLinkRedirect"));
+const ShortUrlRedirect = lazyWithRetry(() => import("./pages/ShortUrlRedirect"));
 const UserPublicProfile = lazyWithRetry(() => import("./pages/UserPublicProfile"));
 const Custom224PaymentDemo = lazyWithRetry(() => import("./pages/demos/Custom224PaymentDemo"));
 // Ultra-simple loading component - Pure CSS inline (no Tailwind dependency)
@@ -155,6 +157,9 @@ const queryClient = new QueryClient({
 function App() {
   // Debug log immédiat
   console.log('🎯 App component rendering...');
+
+  // Initialiser le deep linking pour les short URLs et deep links mobiles
+  useDeepLinking();
 
   useEffect(() => {
     console.log('✅ App component mounted successfully');
@@ -208,6 +213,8 @@ function App() {
               <Route path="/marketplace/product/:id" element={<ProductDetail />} />
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/produit/:id" element={<ProductDetail />} />
+              {/* Short URL redirect - must be before shop/boutique routes */}
+              <Route path="/s/:shortCode" element={<ShortUrlRedirect />} />
               <Route path="/shop/:vendorId" element={<VendorShop />} />
               <Route path="/boutique/:slug" element={<VendorShop />} />
               <Route path="/cart" element={<Cart />} />
