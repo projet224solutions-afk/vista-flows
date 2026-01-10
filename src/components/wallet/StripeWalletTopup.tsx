@@ -47,8 +47,8 @@ export default function StripeWalletTopup({ userId, walletId, onSuccess }: Strip
       // Créer la transaction de dépôt
       const referenceNumber = `TOP${Date.now()}${Math.floor(Math.random() * 1000)}`;
       
-      const { error: transactionError } = await supabase
-        .from('wallet_transactions' as any)
+      const { error: transactionError } = await (supabase
+        .from('wallet_transactions')
         .insert({
           amount: numAmount,
           net_amount: numAmount,
@@ -58,7 +58,7 @@ export default function StripeWalletTopup({ userId, walletId, onSuccess }: Strip
           description: 'Recharge wallet par carte bancaire (Stripe)',
           receiver_wallet_id: Number(walletId),
           metadata: { transaction_type: 'deposit', stripe_payment_intent_id: paymentIntentId, reference: referenceNumber }
-        });
+        } as any));
 
       if (transactionError) throw transactionError;
 

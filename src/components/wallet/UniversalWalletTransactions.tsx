@@ -234,13 +234,15 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       // Charger les wallet_transactions seulement si on a un wallet_id
       let walletTxData: any[] = [];
       if (userWalletId) {
-        const { data: wtData, error: walletError } = await supabase
-          .from('wallet_transactions' as any)
+        const wtResult: any = await (supabase as any)
+          .from('wallet_transactions')
           .select('*')
           .or(`sender_wallet_id.eq.${userWalletId},receiver_wallet_id.eq.${userWalletId}`)
           .neq('is_archived', true)
           .order('created_at', { ascending: false })
           .limit(10);
+        const wtData = wtResult.data || [];
+        const walletError = wtResult.error;
 
         if (walletError) console.error('Erreur wallet_transactions:', walletError);
         if (wtData) walletTxData = wtData;
@@ -518,8 +520,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       if (balanceError) throw balanceError;
 
       // Enregistrer transaction
-      const { error: transactionError } = await supabase
-        .from('wallet_transactions' as any)
+      const { error: transactionError } = await (supabase
+        .from('wallet_transactions')
         .insert({
           amount: amount,
           net_amount: amount,
@@ -530,7 +532,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           receiver_wallet_id: Number(walletData.id),
           receiver_user_id: effectiveUserId,
           metadata: { transaction_type: 'deposit', reference: referenceNumber }
-        });
+        } as any));
 
       if (transactionError) console.warn('Transaction log failed:', transactionError);
 
@@ -1770,8 +1772,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           const referenceNumber = `TOP${Date.now()}${Math.floor(Math.random() * 1000)}`;
           
           // Créer la transaction de dépôt
-          const { error: transactionError } = await supabase
-            .from('wallet_transactions' as any)
+          const { error: transactionError } = await (supabase
+            .from('wallet_transactions')
             .insert({
               amount: numAmount,
               net_amount: numAmount,
@@ -1781,7 +1783,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
               description: 'Recharge wallet par carte bancaire (Stripe)',
               receiver_wallet_id: Number(wallet?.id),
               metadata: { transaction_type: 'deposit', stripe_payment_intent_id: paymentIntentId, reference: referenceNumber }
-            });
+            } as any));
 
           if (transactionError) throw transactionError;
 
