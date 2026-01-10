@@ -13,7 +13,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Download, Smartphone, CheckCircle2, Share, Plus, MoreVertical } from 'lucide-react';
+import { Download, Smartphone, CheckCircle2, Share, Plus, MoreVertical, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -23,6 +23,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
+
+// URLs de téléchargement direct
+const DOWNLOAD_LINKS = {
+  android: 'https://224solution.net/download/224Solutions.apk',
+  windows: 'https://224solution.net/download/224Solutions.exe',
+};
 
 interface InstallAppButtonProps {
   variant?: 'default' | 'compact' | 'floating';
@@ -52,11 +58,24 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
   }, []);
 
   const handleInstallClick = async () => {
+    console.log('📱 [Install] Click - isInstallable:', isInstallable);
+    
     if (isInstallable) {
-      await promptInstall();
+      const success = await promptInstall();
+      console.log('📱 [Install] Prompt result:', success);
+      // Si l'installation native échoue, montrer les alternatives
+      if (!success) {
+        setShowInstructions(true);
+      }
     } else {
+      // Pas de prompt natif disponible, montrer les alternatives (APK/instructions)
       setShowInstructions(true);
     }
+  };
+
+  // Télécharger l'APK directement (pour Android)
+  const handleDownloadAPK = () => {
+    window.open(DOWNLOAD_LINKS.android, '_blank');
   };
 
   // Ne pas afficher si déjà installé
@@ -175,20 +194,53 @@ interface InstallInstructionsDialogProps {
 }
 
 function InstallInstructionsDialog({ open, onOpenChange, deviceInfo }: InstallInstructionsDialogProps) {
+  // Télécharger l'APK directement
+  const handleDownloadAPK = () => {
+    window.open(DOWNLOAD_LINKS.android, '_blank');
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Smartphone className="w-6 h-6 text-primary" />
             Installer 224Solutions
           </DialogTitle>
           <DialogDescription>
-            Suivez ces étapes pour installer l'application
+            Choisissez votre méthode d'installation
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 mt-4">
+          {/* Option de téléchargement direct pour Android */}
+          {deviceInfo.isAndroid && (
+            <div className="p-4 bg-primary/10 rounded-lg border-2 border-primary">
+              <h4 className="font-bold text-primary mb-2 flex items-center gap-2">
+                <Download className="w-5 h-5" />
+                Installation rapide (recommandée)
+              </h4>
+              <p className="text-sm text-muted-foreground mb-3">
+                Téléchargez directement l'application APK
+              </p>
+              <Button onClick={handleDownloadAPK} className="w-full gap-2">
+                <ExternalLink className="w-4 h-4" />
+                Télécharger l'APK
+              </Button>
+            </div>
+          )}
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                {deviceInfo.isAndroid ? 'Ou via le navigateur' : 'Instructions'}
+              </span>
+            </div>
+          </div>
+
           {deviceInfo.isIOS ? (
             // Instructions iOS/Safari
             <div className="space-y-4">
