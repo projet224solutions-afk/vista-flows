@@ -107,7 +107,6 @@ const StripePaymentTest = lazyWithRetry(() => import("./pages/StripePaymentTest"
 const StripeDiagnostic = lazyWithRetry(() => import("./pages/StripeDiagnostic"));
 const DigitalProducts = lazyWithRetry(() => import("./pages/DigitalProducts"));
 const ShortLinkRedirect = lazyWithRetry(() => import("./pages/ShortLinkRedirect"));
-const ShortUrlRedirect = lazyWithRetry(() => import("./pages/ShortUrlRedirect"));
 const UserPublicProfile = lazyWithRetry(() => import("./pages/UserPublicProfile"));
 const Custom224PaymentDemo = lazyWithRetry(() => import("./pages/demos/Custom224PaymentDemo"));
 // Ultra-simple loading component - Pure CSS inline (no Tailwind dependency)
@@ -214,7 +213,7 @@ function App() {
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/produit/:id" element={<ProductDetail />} />
               {/* Short URL redirect - must be before shop/boutique routes */}
-              <Route path="/s/:shortCode" element={<ShortUrlRedirect />} />
+              <Route path="/s/:shortCode" element={<ShortLinkRedirect />} />
               <Route path="/shop/:vendorId" element={<VendorShop />} />
               <Route path="/boutique/:slug" element={<VendorShop />} />
               <Route path="/cart" element={<Cart />} />
@@ -255,9 +254,6 @@ function App() {
               
               {/* Affiliate Routes */}
               <Route path="/ref/:vendorId" element={<AffiliateRedirect />} />
-              
-              {/* Short Link / Deep Link Redirect */}
-              <Route path="/s/:shortCode" element={<ShortLinkRedirect />} />
 
               {/* Dashboard Routes */}
               <Route
