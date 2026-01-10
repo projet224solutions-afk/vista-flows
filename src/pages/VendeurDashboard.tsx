@@ -495,7 +495,9 @@ export default function VendeurDashboard() {
           </header>
 
           {/* Banner d'expiration d'abonnement */}
-          <SubscriptionExpiryBanner />
+          <Suspense fallback={null}>
+            <SubscriptionExpiryBanner />
+          </Suspense>
 
           {/* Error Banner - Affichage des erreurs persistantes */}
           {error && (
