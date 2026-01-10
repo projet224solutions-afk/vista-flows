@@ -3,7 +3,7 @@
  * Résout les liens courts et redirige vers la page originale
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Link2Off, ExternalLink } from 'lucide-react';
@@ -27,11 +27,18 @@ export default function ShortLinkRedirect() {
     type: string;
     originalUrl: string;
   } | null>(null);
+  
+  // Protection contre double exécution
+  const hasResolved = useRef(false);
 
   useEffect(() => {
-    if (shortCode) {
-      resolveAndRedirect();
+    // Si déjà résolu ou pas de shortCode, ne rien faire
+    if (!shortCode || hasResolved.current) {
+      return;
     }
+    
+    hasResolved.current = true;
+    resolveAndRedirect();
   }, [shortCode]);
 
   const resolveAndRedirect = async () => {
@@ -102,16 +109,20 @@ export default function ShortLinkRedirect() {
 
       console.log('🔗 [ShortLink] Redirecting to:', relativePath);
       
-      // IMPORTANT: Rediriger AVANT de changer l'état loading
-      // pour éviter les re-renders qui interrompent la navigation
-      setLoading(false);
-      navigate(relativePath, { replace: true });
-      return; // Éviter toute autre exécution
+      // Rediriger immédiatement avec replace pour éviter l'historique
+      // On utilise window.location pour forcer la navigation
+      if (relativePath.startsWith('http')) {
+        window.location.href = relativePath;
+      } else {
+        // Pour les chemins relatifs, utiliser navigate
+        navigate(relativePath, { replace: true });
+      }
 
     } catch (err) {
       console.error('🔗 [ShortLink] Error resolving short link:', err);
       setError('Erreur lors de la résolution du lien');
       setLoading(false);
+      hasResolved.current = false; // Permettre un retry
     }
   };
 
