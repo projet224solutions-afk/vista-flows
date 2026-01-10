@@ -206,8 +206,8 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
       const referenceNumber = `BUR-TRF-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
       // Créer la transaction de transfert (débit pour le bureau expéditeur)
-      const { error: debitError } = await supabase
-        .from('wallet_transactions' as any)
+      const { error: debitError } = await (supabase
+        .from('wallet_transactions')
         .insert({
           amount: -transferAmount,
           net_amount: -transferAmount,
@@ -225,13 +225,13 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
             recipient_type: selectedUser.type,
             sender_type: 'bureau'
           }
-        });
+        } as any));
 
       if (debitError) throw debitError;
 
       // Créer la transaction de réception (crédit pour le destinataire)
-      const { error: creditError } = await supabase
-        .from('wallet_transactions' as any)
+      const { error: creditError } = await (supabase
+        .from('wallet_transactions')
         .insert({
           amount: transferAmount,
           net_amount: transferAmount,
@@ -246,7 +246,7 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
             reference: `${referenceNumber}-IN`,
             sender_type: 'bureau'
           }
-        });
+        } as any));
 
       if (creditError) throw creditError;
 
