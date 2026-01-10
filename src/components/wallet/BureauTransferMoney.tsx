@@ -208,45 +208,49 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
       // Créer la transaction de transfert (débit pour le bureau expéditeur)
       const { error: debitError } = await (supabase
         .from('wallet_transactions')
-        .insert({
-          amount: -transferAmount,
-          net_amount: -transferAmount,
-          fee: 0,
-          currency: currency,
-          status: 'completed',
-          description: description || `Transfert vers ${selectedUser.name}`,
-          sender_wallet_id: Number(bureauWalletId),
-          receiver_wallet_id: Number(selectedUser.wallet_id),
-          metadata: {
-            transaction_type: 'transfer',
-            reference: `${referenceNumber}-OUT`,
-            recipient_name: selectedUser.name,
-            recipient_email: selectedUser.email,
-            recipient_type: selectedUser.type,
-            sender_type: 'bureau'
-          }
-        } as any));
+        .insert([
+          {
+            amount: -transferAmount,
+            net_amount: -transferAmount,
+            fee: 0,
+            currency: currency,
+            status: 'completed',
+            description: description || `Transfert vers ${selectedUser.name}`,
+            sender_wallet_id: Number(bureauWalletId),
+            receiver_wallet_id: Number(selectedUser.wallet_id),
+            metadata: {
+              transaction_type: 'transfer',
+              reference: `${referenceNumber}-OUT`,
+              recipient_name: selectedUser.name,
+              recipient_email: selectedUser.email,
+              recipient_type: selectedUser.type,
+              sender_type: 'bureau'
+            }
+          } as any
+        ] as any));
 
       if (debitError) throw debitError;
 
       // Créer la transaction de réception (crédit pour le destinataire)
       const { error: creditError } = await (supabase
         .from('wallet_transactions')
-        .insert({
-          amount: transferAmount,
-          net_amount: transferAmount,
-          fee: 0,
-          currency: currency,
-          status: 'completed',
-          description: description || `Transfert reçu d'un bureau`,
-          sender_wallet_id: Number(bureauWalletId),
-          receiver_wallet_id: Number(selectedUser.wallet_id),
-          metadata: {
-            transaction_type: 'transfer',
-            reference: `${referenceNumber}-IN`,
-            sender_type: 'bureau'
-          }
-        } as any));
+        .insert([
+          {
+            amount: transferAmount,
+            net_amount: transferAmount,
+            fee: 0,
+            currency: currency,
+            status: 'completed',
+            description: description || `Transfert reçu d'un bureau`,
+            sender_wallet_id: Number(bureauWalletId),
+            receiver_wallet_id: Number(selectedUser.wallet_id),
+            metadata: {
+              transaction_type: 'transfer',
+              reference: `${referenceNumber}-IN`,
+              sender_type: 'bureau'
+            }
+          } as any
+        ] as any));
 
       if (creditError) throw creditError;
 
