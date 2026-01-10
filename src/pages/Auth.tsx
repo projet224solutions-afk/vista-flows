@@ -51,6 +51,14 @@ export default function Auth() {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const navigate = useNavigate();
 
+  // Form data - MUST be declared before trackOAuthEvent uses them
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [showSignup, setShowSignup] = useState(false);
+  const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
+  const [showServiceSelection, setShowServiceSelection] = useState(false);
+  const [showRoleSelectionModal, setShowRoleSelectionModal] = useState(false);
+  const [currentClientEmail, setCurrentClientEmail] = useState<string | null>(null);
+
   // === OAUTH HANDLERS AMÉLIORÉS (Google & Facebook) ===
   
   // 📊 Analytics tracking
@@ -160,12 +168,8 @@ export default function Auth() {
       // 🔄 Toast d'erreur avec option retry
       toast({
         title: "❌ Erreur de connexion",
-        description: message + " • Voulez-vous réessayer?",
+        description: message + " • Cliquez sur le bouton Google pour réessayer.",
         variant: "destructive",
-        action: {
-          label: "Réessayer",
-          onClick: () => handleGoogleLogin(true)
-        }
       });
     } finally {
       setOauthLoading(null);
@@ -241,12 +245,8 @@ export default function Auth() {
       // 🔄 Toast d'erreur avec option retry
       toast({
         title: "❌ Erreur de connexion",
-        description: message + " • Voulez-vous réessayer?",
+        description: message + " • Cliquez sur le bouton Facebook pour réessayer.",
         variant: "destructive",
-        action: {
-          label: "Réessayer",
-          onClick: () => handleFacebookLogin(true)
-        }
       });
     } finally {
       setOauthLoading(null);
@@ -286,13 +286,7 @@ export default function Auth() {
     checkResetSession();
   }, []);
 
-  // Form data
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
-  const [showSignup, setShowSignup] = useState(false);
-  const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
-  const [showServiceSelection, setShowServiceSelection] = useState(false);
-  const [showRoleSelectionModal, setShowRoleSelectionModal] = useState(false);
-  const [currentClientEmail, setCurrentClientEmail] = useState<string | null>(null);
+  // Form data is already declared above (before trackOAuthEvent)
 
   // Détecter si l'utilisateur vient de "Devenir Marchand" pour créer un compte séparé
   useEffect(() => {

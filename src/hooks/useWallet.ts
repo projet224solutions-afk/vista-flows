@@ -6,29 +6,23 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { usePublicId } from '@/hooks/usePublicId';
 import { toast } from 'sonner';
 
 export interface WalletData {
   id: string;
-  public_id: string | null;
   user_id: string;
   balance: number;
   currency: string;
   wallet_status: string;
   is_blocked: boolean;
   blocked_reason: string | null;
-  total_received: number;
-  total_sent: number;
   daily_limit: number;
   monthly_limit: number;
-  last_transaction_at: string | null;
   created_at: string;
 }
 
 export interface TransactionData {
   id: string;
-  public_id: string | null;
   sender_id: string;
   receiver_id: string;
   amount: number;
@@ -49,7 +43,6 @@ export interface WalletStats {
 
 export const useWallet = () => {
   const { user } = useAuth();
-  const { generatePublicId } = usePublicId();
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [transactions, setTransactions] = useState<TransactionData[]>([]);
   const [stats, setStats] = useState<WalletStats | null>(null);
@@ -117,31 +110,32 @@ export const useWallet = () => {
         }
       }
 
-      // Générer public_id si manquant
-      if (walletData && !walletData.public_id) {
-        const public_id = await generatePublicId('wallets', false);
-        
-        const { error: updateError } = await supabase
-          .from('wallets')
-          .update({ public_id })
-          .eq('id', walletData.id);
-
-        if (!updateError) {
-          walletData.public_id = public_id;
-        }
-      }
-
-      setWallet(walletData);
-
-      // Calculer les stats
       if (walletData) {
+        setWallet(walletData as WalletData);
+
+        // Calculer les stats à partir des transactions
+        const { data: txData } = await supabase
+          .from('wallet_transactions')
+          .select('amount, transaction_type, created_at')
+          .or(`sender_wallet_id.eq.${walletData.id},receiver_wallet_id.eq.${walletData.id}`)
+          .eq('status', 'completed')
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        const totalReceived = txData?.filter(t => t.transaction_type === 'deposit' || t.transaction_type === 'mobile_money_in')
+          .reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+        const totalSent = txData?.filter(t => t.transaction_type === 'withdrawal' || t.transaction_type === 'mobile_money_out')
+          .reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+
         setStats({
           balance: walletData.balance,
-          total_received: walletData.total_received || 0,
-          total_sent: walletData.total_sent || 0,
-          transactions_count: 0,
-          last_transaction: walletData.last_transaction_at
+          total_received: totalReceived,
+          total_sent: totalSent,
+          transactions_count: txData?.length || 0,
+          last_transaction: txData?.[0]?.created_at || null
         });
+      } else {
+        setWallet(null);
       }
 
     } catch (error: any) {
@@ -150,7 +144,7 @@ export const useWallet = () => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, generatePublicId]);
+  }, [user?.id]);
 
   // Charger les transactions
   const loadTransactions = useCallback(async () => {
@@ -341,7 +335,7 @@ export const useWallet = () => {
     // Helpers
     balance: wallet?.balance || 0,
     currency: wallet?.currency || 'GNF',
-    publicId: wallet?.public_id,
+    publicId: wallet?.id,
     isBlocked: wallet?.is_blocked || false
   };
 };

@@ -103,16 +103,34 @@ export function WalletAdminPanel() {
 
   const loadStats = async () => {
     try {
-      const { data, error } = await supabase
-        .from('wallet_admin_stats')
-        .select('*')
-        .single();
+      // Calculer les stats directement depuis la table wallets
+      const { data: walletsData, error } = await supabase
+        .from('wallets')
+        .select('balance, wallet_status');
 
       if (error) throw error;
-      setStats(data);
+
+      const totalWallets = walletsData?.length || 0;
+      const totalBalance = walletsData?.reduce((sum, w) => sum + (w.balance || 0), 0) || 0;
+
+      setStats({
+        total_wallets: totalWallets,
+        total_balance: totalBalance,
+        transactions_24h: 0,
+        agent_wallets: 0,
+        bureau_wallets: 0
+      });
 
     } catch (error) {
       console.error('❌ Erreur loadStats:', error);
+      // Set default stats on error
+      setStats({
+        total_wallets: wallets.length,
+        total_balance: wallets.reduce((sum, w) => sum + (w.balance || 0), 0),
+        transactions_24h: 0,
+        agent_wallets: 0,
+        bureau_wallets: 0
+      });
     }
   };
 

@@ -231,16 +231,16 @@ export default function ProductPaymentModal({
         // Sinon récupérer le public_id du wallet
         const { data: walletData, error: walletError } = await supabase
           .from('wallets')
-          .select('public_id')
+          .select('id')
           .eq('user_id', vendorData.user_id)
           .eq('currency', 'GNF')
           .single();
 
-        if (walletError || !walletData?.public_id) {
+        if (walletError || !walletData) {
           console.error('[ProductPayment] Error loading wallet code:', walletError);
           setVendorCode(vendorData.user_id.slice(0, 8).toUpperCase());
         } else {
-          setVendorCode(walletData.public_id);
+          setVendorCode(walletData.id.slice(0, 8).toUpperCase());
         }
       }
     } catch (error) {

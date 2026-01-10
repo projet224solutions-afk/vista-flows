@@ -100,9 +100,9 @@ export function EnhancedWalletCard({
             </div>
             <div>
               <CardTitle className="text-white text-lg">Mon Wallet</CardTitle>
-              {wallet.public_id && (
+              {wallet.id && (
                 <PublicIdBadge 
-                  publicId={wallet.public_id}
+                  publicId={wallet.id.slice(0, 8).toUpperCase()}
                   variant="outline"
                   size="sm"
                   className="mt-1 bg-white/10 border-white/30 text-white"

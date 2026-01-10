@@ -82,7 +82,7 @@ export function FundsReleaseStatus() {
       // Récupérer le wallet avec gestion robuste des colonnes
       const { data: wallet, error: walletError } = await supabase
         .from('wallets')
-        .select('id, balance, total_received, total_sent')
+        .select('id, balance')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -92,7 +92,7 @@ export function FundsReleaseStatus() {
         return;
       }
       
-      setWalletBalance(wallet);
+      setWalletBalance({ ...wallet, total_received: 0, total_sent: 0 } as any);
 
       // Récupérer les libérations en cours
       const { data: releasesData, error: releasesError } = await supabase

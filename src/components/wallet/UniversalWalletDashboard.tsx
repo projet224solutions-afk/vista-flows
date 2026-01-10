@@ -197,7 +197,7 @@ export default function UniversalWalletDashboard({
         .rpc('update_wallet_balance_atomic', {
           p_wallet_id: wallet.id,
           p_amount: amount,
-          p_transaction_id: referenceNumber,
+          p_tx_id: referenceNumber,
           p_description: 'Dépôt sur le wallet'
         });
 
@@ -261,7 +261,7 @@ export default function UniversalWalletDashboard({
         .rpc('update_wallet_balance_atomic', {
           p_wallet_id: wallet.id,
           p_amount: -amount, // Négatif pour retrait
-          p_transaction_id: referenceNumber,
+          p_tx_id: referenceNumber,
           p_description: 'Retrait du wallet'
         });
 
@@ -272,7 +272,7 @@ export default function UniversalWalletDashboard({
         .from('wallet_transactions')
         .insert({
           transaction_id: referenceNumber,
-          transaction_type: 'withdraw',
+          transaction_type: 'withdrawal',
           amount: amount,
           net_amount: amount,
           fee: 0,

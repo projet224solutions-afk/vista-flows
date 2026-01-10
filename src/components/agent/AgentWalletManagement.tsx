@@ -296,7 +296,7 @@ export default function AgentWalletManagement({
         .from('wallet_transactions')
         .insert({
           transaction_id: referenceNumber,
-          transaction_type: 'withdraw',
+          transaction_type: 'withdrawal',
           amount: -amount,
           net_amount: -amount,
           fee: 0,

@@ -210,7 +210,7 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
         .from('wallet_transactions')
         .insert({
           transaction_id: `${referenceNumber}-OUT`,
-          transaction_type: 'transfer_out',
+          transaction_type: 'transfer',
           amount: -transferAmount,
           net_amount: -transferAmount,
           fee: 0,
@@ -234,7 +234,7 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
         .from('wallet_transactions')
         .insert({
           transaction_id: `${referenceNumber}-IN`,
-          transaction_type: 'transfer_in',
+          transaction_type: 'transfer',
           amount: transferAmount,
           net_amount: transferAmount,
           fee: 0,
