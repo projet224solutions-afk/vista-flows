@@ -522,17 +522,19 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       // Enregistrer transaction
       const { error: transactionError } = await (supabase
         .from('wallet_transactions')
-        .insert({
-          amount: amount,
-          net_amount: amount,
-          fee: 0,
-          currency: 'GNF',
-          status: 'completed',
-          description: 'Dépôt manuel sur le wallet',
-          receiver_wallet_id: Number(walletData.id),
-          receiver_user_id: effectiveUserId,
-          metadata: { transaction_type: 'deposit', reference: referenceNumber }
-        } as any));
+        .insert([
+          {
+            amount: amount,
+            net_amount: amount,
+            fee: 0,
+            currency: 'GNF',
+            status: 'completed',
+            description: 'Dépôt manuel sur le wallet',
+            receiver_wallet_id: Number(walletData.id),
+            receiver_user_id: effectiveUserId,
+            metadata: { transaction_type: 'deposit', reference: referenceNumber }
+          } as any
+        ] as any));
 
       if (transactionError) console.warn('Transaction log failed:', transactionError);
 
@@ -1005,25 +1007,29 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
         // 4. Enregistrer la transaction dans wallet_transactions
         const transactionId = `TRX-BUREAU-${Date.now()}`;
-        const { error: txError } = await supabase.from('wallet_transactions').insert({
-          transaction_id: transactionId,
-          transaction_type: 'transfer',
-          amount: transferPreview.total_debit,
-          net_amount: transferPreview.amount,
-          fee: transferPreview.fee_amount,
-          currency: 'GNF',
-          status: 'completed',
-          description: `${transferDescription} (vers Bureau ${recipientId})`,
-          sender_wallet_id: senderWallet.id,
-          receiver_wallet_id: bureauWalletId,
-          completed_at: new Date().toISOString(),
-          metadata: {
-            recipient_type: 'bureau',
-            bureau_id: bureauId,
-            bureau_wallet_id: bureauWalletId,
-            bureau_code: recipientId
-          }
-        });
+        const { error: txError } = await (supabase
+          .from('wallet_transactions')
+          .insert([
+            {
+              amount: transferPreview.total_debit,
+              net_amount: transferPreview.amount,
+              fee: transferPreview.fee_amount,
+              currency: 'GNF',
+              status: 'completed',
+              description: `${transferDescription} (vers Bureau ${recipientId})`,
+              sender_wallet_id: senderWallet.id,
+              receiver_wallet_id: bureauWalletId,
+              completed_at: new Date().toISOString(),
+              metadata: {
+                transaction_type: 'transfer',
+                reference: transactionId,
+                recipient_type: 'bureau',
+                bureau_id: bureauId,
+                bureau_wallet_id: bureauWalletId,
+                bureau_code: recipientId
+              }
+            } as any
+          ] as any));
 
         if (txError) {
           console.error('❌ Erreur insert wallet_transactions:', txError);
@@ -1774,16 +1780,18 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           // Créer la transaction de dépôt
           const { error: transactionError } = await (supabase
             .from('wallet_transactions')
-            .insert({
-              amount: numAmount,
-              net_amount: numAmount,
-              fee: 0,
-              currency: 'GNF',
-              status: 'completed',
-              description: 'Recharge wallet par carte bancaire (Stripe)',
-              receiver_wallet_id: Number(wallet?.id),
-              metadata: { transaction_type: 'deposit', stripe_payment_intent_id: paymentIntentId, reference: referenceNumber }
-            } as any));
+            .insert([
+              {
+                amount: numAmount,
+                net_amount: numAmount,
+                fee: 0,
+                currency: 'GNF',
+                status: 'completed',
+                description: 'Recharge wallet par carte bancaire (Stripe)',
+                receiver_wallet_id: Number(wallet?.id),
+                metadata: { transaction_type: 'deposit', stripe_payment_intent_id: paymentIntentId, reference: referenceNumber }
+              } as any
+            ] as any));
 
           if (transactionError) throw transactionError;
 
