@@ -36,11 +36,11 @@ const PLAN_COLORS: Record<string, string> = {
 };
 
 const PLAN_DESCRIPTIONS: Record<string, string> = {
-  'free': 'Idéal pour découvrir les fonctionnalités essentielles de la plateforme.',
-  'basic': 'Conçu pour gérer vos produits, ventes et livraisons avec des outils professionnels.',
-  'pro': 'Pensé pour développer votre activité avec marketing, analytics et automatisations.',
-  'business': 'Adapté aux entreprises nécessitant gestion financière complète et outils avancés.',
-  'premium': 'Solution intégrale avec intelligence artificielle, automatisation et support dédié.',
+  'free': 'Accès aux fonctions de base : gestion produits, commandes simples, dashboard et profil public.',
+  'basic': 'Gestion produits avancée, suivi commandes et livraisons, CRM basique, analytics de base et facturation automatique.',
+  'pro': 'Stocks et inventaire, marketing, affiliation, agents de vente, liens de paiement et support prioritaire.',
+  'business': 'Point de vente (POS), gestion fournisseurs et dettes, entrepôts multiples, exports et accès API.',
+  'premium': 'Assistant IA Gemini, hub communication, analytics temps réel, account manager dédié et formation.',
 };
 
 const PLAN_FEATURES_PREVIEW: Record<string, string[]> = {
