@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>224Solutions - Mode Hors Ligne</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .offline-container {
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      max-width: 500px;
+      width: 100%;
+      animation: slideUp 0.5s ease-out;
+    }
+    
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .icon {
+      font-size: 80px;
+      margin-bottom: 20px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.1);
+      }
+    }
+    
+    h1 {
+      color: #2c3e50;
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    
+    p {
+      color: #7f8c8d;
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 14px 32px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 16px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .status {
+      margin-top: 30px;
+      padding: 15px;
+      background: #ecf0f1;
+      border-radius: 10px;
+      font-size: 14px;
+      color: #7f8c8d;
+    }
+    
+    .status.online {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+      background: #e74c3c;
+      animation: blink 1.5s ease-in-out infinite;
+    }
+    
+    .status.online .dot {
+      background: #27ae60;
+      animation: none;
+    }
+    
+    @keyframes blink {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.3;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="offline-container">
+    <div class="icon">📡</div>
+    <h1>Mode Hors Ligne</h1>
+    <p>
+      Vous n'êtes pas connecté à Internet. Certaines fonctionnalités peuvent être limitées.
+      Reconnectez-vous pour profiter de toutes les fonctionnalités de 224Solutions.
+    </p>
+    
+    <button class="btn" onclick="checkConnection()">
+      🔄 Réessayer
+    </button>
+    
+    <div class="status" id="status">
+      <span class="dot"></span>
+      <span>Connexion indisponible</span>
+    </div>
+  </div>
+
+  <script>
+    // Vérifier la connexion
+    function checkConnection() {
+      const statusEl = document.getElementById('status');
+      
+      if (navigator.onLine) {
+        statusEl.className = 'status online';
+        statusEl.innerHTML = '<span class="dot"></span><span>Connexion rétablie ! Redirection...</span>';
+        
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1000);
+      } else {
+        statusEl.className = 'status';
+        statusEl.innerHTML = '<span class="dot"></span><span>Toujours hors ligne. Vérifiez votre connexion.</span>';
+        
+        // Secouer le bouton
+        const btn = document.querySelector('.btn');
+        btn.style.animation = 'shake 0.5s';
+        setTimeout(() => {
+          btn.style.animation = '';
+        }, 500);
+      }
+    }
+    
+    // Écouter les changements de connexion
+    window.addEventListener('online', () => {
+      document.getElementById('status').className = 'status online';
+      document.getElementById('status').innerHTML = '<span class="dot"></span><span>Connexion rétablie ! Cliquez pour continuer</span>';
+    });
+    
+    window.addEventListener('offline', () => {
+      document.getElementById('status').className = 'status';
+      document.getElementById('status').innerHTML = '<span class="dot"></span><span>Connexion perdue</span>';
+    });
+    
+    // Animation shake
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+</body>
+</html>

@@ -83,19 +83,31 @@ function getNotificationActions(type) {
   }
 }
 
-// Liste minimale à précacher
-const PRECACHE_ASSETS = ["/manifest.webmanifest", "/favicon.png"];
+// Liste minimale à précacher pour fonctionnement offline
+const PRECACHE_ASSETS = [
+  "/",
+  "/manifest.webmanifest",
+  "/offline.html",
+  "/favicon.png",
+  "/icon-192.png",
+  "/icon-512.png"
+];
 
 // INSTALL - Ne jamais bloquer
 self.addEventListener("install", (event) => {
-  console.log("[SW] Installation v6");
+  console.log("[SW] Installation v6 - Mode offline activé");
   self.skipWaiting();
 
   event.waitUntil(
     caches
       .open(STATIC_CACHE)
-      .then((cache) => cache.addAll(PRECACHE_ASSETS))
-      .catch(() => console.log("[SW] Précache partiel"))
+      .then((cache) => {
+        console.log("[SW] Précache des assets essentiels");
+        return cache.addAll(PRECACHE_ASSETS);
+      })
+      .catch((err) => {
+        console.warn("[SW] Précache partiel:", err);
+      })
   );
 });
 
@@ -137,18 +149,38 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Navigation (HTML) - TOUJOURS Network First
+  // Navigation (HTML) - Network First avec fallback offline
   if (event.request.mode === "navigate") {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-cache' })
         .then((response) => {
-          const responseClone = response.clone();
-          caches.open(DYNAMIC_CACHE).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
+          // Mettre en cache uniquement si réponse valide
+          if (response && response.ok) {
+            const responseClone = response.clone();
+            caches.open(DYNAMIC_CACHE).then((cache) => {
+              cache.put(event.request, responseClone);
+            });
+          }
           return response;
         })
-        .catch(() => caches.match("/index.html") || caches.match(event.request))
+        .catch(() => {
+          // Mode offline: servir depuis le cache
+          console.log("[SW] Mode offline - Serving from cache");
+          return caches.match(event.request)
+            .then(cached => {
+              if (cached) return cached;
+              // Fallback sur index.html si route spécifique pas en cache
+              return caches.match("/") || caches.match("/index.html");
+            })
+            .then(response => {
+              if (response) return response;
+              // Dernière option: page offline d'urgence
+              return new Response(
+                '<!DOCTYPE html><html><head><meta charset="utf-8"><title>224Solutions - Offline</title></head><body style="font-family: system-ui; text-align: center; padding: 50px; background: #f5f5f5;"><h1>📡 Mode hors ligne</h1><p>Reconnectez-vous pour accéder à toutes les fonctionnalités</p><button onclick="location.reload()" style="padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">Réessayer</button></body></html>',
+                { headers: { 'Content-Type': 'text/html' } }
+              );
+            });
+        })
     );
     return;
   }
@@ -170,18 +202,40 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Autres ressources statiques - Network First avec cache fallback
+  // Autres ressources statiques - Cache First pour meilleur offline
   if (url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2)$/)) {
     event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(STATIC_CACHE).then((cache) => cache.put(event.request, clone));
+      caches.match(event.request)
+        .then((cached) => {
+          if (cached) {
+            console.log("[SW] Serving from cache:", url.pathname);
+            return cached;
           }
-          return response;
+          
+          // Pas en cache, fetch depuis réseau
+          return fetch(event.request)
+            .then((response) => {
+              if (response && response.ok) {
+                const clone = response.clone();
+                caches.open(STATIC_CACHE).then((cache) => {
+                  cache.put(event.request, clone);
+                  console.log("[SW] Cached:", url.pathname);
+                });
+              }
+              return response;
+            })
+            .catch((err) => {
+              console.warn("[SW] Network failed, no cache available:", url.pathname);
+              // Retourner une image placeholder pour les images
+              if (url.pathname.match(/\.(png|jpg|jpeg|gif|svg)$/)) {
+                return new Response(
+                  '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect fill="#ddd" width="200" height="200"/><text fill="#999" x="50%" y="50%" text-anchor="middle" dy=".3em">Offline</text></svg>',
+                  { headers: { 'Content-Type': 'image/svg+xml' } }
+                );
+              }
+              throw err;
+            });
         })
-        .catch(() => caches.match(event.request))
     );
     return;
   }

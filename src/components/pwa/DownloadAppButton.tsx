@@ -80,7 +80,21 @@ export function DownloadAppButton({ variant = 'default', className = '' }: Downl
 
   const handleDownload = (type: 'apk' | 'exe') => {
     const config = DOWNLOAD_CONFIG[type];
-    window.open(config.url, '_blank');
+    
+    // Créer un lien de téléchargement (meilleur support mobile)
+    const link = document.createElement('a');
+    link.href = config.url;
+    link.download = config.name;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    
+    // Déclencher le téléchargement
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Afficher un toast de confirmation
+    console.log(`📥 Téléchargement lancé: ${config.name}`);
   };
 
   // Variant Banner (bandeau en bas de page)

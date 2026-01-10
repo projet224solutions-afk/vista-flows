@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Téléchargement Mobile</title>
+  <style>
+    body {
+      font-family: system-ui;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+    }
+    button {
+      padding: 15px 30px;
+      margin: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #3498db;
+      color: white;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    .log {
+      background: #f5f5f5;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .success { color: green; }
+    .error { color: red; }
+    .info { color: blue; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Test Téléchargement Mobile</h1>
+  
+  <div class="test-section">
+    <h3>📱 Informations Appareil</h3>
+    <div id="device-info"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>📥 Test Téléchargement APK</h3>
+    <button onclick="testDownloadAPK('window.open')">
+      Test 1: window.open()
+    </button>
+    <button onclick="testDownloadAPK('createElement')">
+      Test 2: createElement('a')
+    </button>
+    <button onclick="testDownloadAPK('fetch')">
+      Test 3: Fetch + Blob
+    </button>
+    <div class="log" id="log"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>🌐 Test Mode Offline</h3>
+    <button onclick="testOffline()">
+      Tester Service Worker
+    </button>
+    <button onclick="testCacheStatus()">
+      Vérifier Cache
+    </button>
+    <div class="log" id="offline-log"></div>
+  </div>
+
+  <script>
+    const APK_URL = 'https://uakkxaibujzxdiqzpnpr.supabase.co/storage/v1/object/public/app-downloads/224Solutions.apk';
+    
+    // Afficher les infos appareil
+    document.getElementById('device-info').innerHTML = `
+      <p><strong>User Agent:</strong> ${navigator.userAgent}</p>
+      <p><strong>Plateforme:</strong> ${navigator.platform}</p>
+      <p><strong>Mobile:</strong> ${/Mobi|Android/i.test(navigator.userAgent) ? 'OUI ✅' : 'NON ❌'}</p>
+      <p><strong>Online:</strong> ${navigator.onLine ? 'OUI ✅' : 'NON ❌'}</p>
+      <p><strong>Service Worker:</strong> ${'serviceWorker' in navigator ? 'Supporté ✅' : 'Non supporté ❌'}</p>
+    `;
+
+    function log(message, type = 'info') {
+      const logEl = document.getElementById('log');
+      const time = new Date().toLocaleTimeString();
+      logEl.innerHTML += `<div class="${type}">[${time}] ${message}</div>`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function logOffline(message, type = 'info') {
+      const logEl = document.getElementById('offline-log');
+      const time = new Date().toLocaleTimeString();
+      logEl.innerHTML += `<div class="${type}">[${time}] ${message}</div>`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // Test 1: window.open (méthode ancienne)
+    async function testDownloadWindowOpen() {
+      log('🔍 Test window.open()...', 'info');
+      try {
+        const result = window.open(APK_URL, '_blank');
+        if (result) {
+          log('✅ window.open() exécuté (popup peut être bloqué)', 'success');
+        } else {
+          log('⚠️ window.open() bloqué par le navigateur', 'error');
+        }
+      } catch (err) {
+        log(`❌ Erreur: ${err.message}`, 'error');
+      }
+    }
+
+    // Test 2: createElement (méthode recommandée)
+    async function testDownloadCreateElement() {
+      log('🔍 Test createElement(a)...', 'info');
+      try {
+        const link = document.createElement('a');
+        link.href = APK_URL;
+        link.download = '224Solutions.apk';
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        log('✅ Lien créé et cliqué', 'success');
+        log('📥 Téléchargement devrait démarrer...', 'info');
+      } catch (err) {
+        log(`❌ Erreur: ${err.message}`, 'error');
+      }
+    }
+
+    // Test 3: Fetch + Blob (méthode avancée)
+    async function testDownloadFetch() {
+      log('🔍 Test fetch() + Blob...', 'info');
+      try {
+        log('📡 Téléchargement du fichier...', 'info');
+        const response = await fetch(APK_URL);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        log(`✅ Fichier reçu: ${(blob.size / 1024 / 1024).toFixed(2)} MB`, 'success');
+        
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = '224Solutions.apk';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        window.URL.revokeObjectURL(url);
+        log('✅ Téléchargement lancé via Blob', 'success');
+      } catch (err) {
+        log(`❌ Erreur: ${err.message}`, 'error');
+      }
+    }
+
+    // Router vers le bon test
+    function testDownloadAPK(method) {
+      document.getElementById('log').innerHTML = '';
+      
+      switch(method) {
+        case 'window.open':
+          testDownloadWindowOpen();
+          break;
+        case 'createElement':
+          testDownloadCreateElement();
+          break;
+        case 'fetch':
+          testDownloadFetch();
+          break;
+      }
+    }
+
+    // Test Service Worker
+    async function testOffline() {
+      document.getElementById('offline-log').innerHTML = '';
+      
+      if (!('serviceWorker' in navigator)) {
+        logOffline('❌ Service Worker non supporté', 'error');
+        return;
+      }
+
+      try {
+        logOffline('🔍 Vérification du Service Worker...', 'info');
+        const registration = await navigator.serviceWorker.getRegistration();
+        
+        if (registration) {
+          logOffline('✅ Service Worker enregistré', 'success');
+          logOffline(`📍 Scope: ${registration.scope}`, 'info');
+          logOffline(`📊 État: ${registration.active ? 'Actif ✅' : 'Inactif ❌'}`, registration.active ? 'success' : 'error');
+          
+          if (registration.waiting) {
+            logOffline('⚠️ Mise à jour en attente', 'info');
+          }
+        } else {
+          logOffline('❌ Aucun Service Worker enregistré', 'error');
+        }
+      } catch (err) {
+        logOffline(`❌ Erreur: ${err.message}`, 'error');
+      }
+    }
+
+    // Test Cache
+    async function testCacheStatus() {
+      document.getElementById('offline-log').innerHTML = '';
+      
+      if (!('caches' in window)) {
+        logOffline('❌ Cache API non supporté', 'error');
+        return;
+      }
+
+      try {
+        logOffline('🔍 Vérification du cache...', 'info');
+        const cacheNames = await caches.keys();
+        
+        logOffline(`✅ ${cacheNames.length} cache(s) trouvé(s)`, 'success');
+        
+        for (const name of cacheNames) {
+          const cache = await caches.open(name);
+          const keys = await cache.keys();
+          logOffline(`📦 ${name}: ${keys.length} fichier(s)`, 'info');
+          
+          // Afficher quelques exemples
+          keys.slice(0, 3).forEach(req => {
+            const url = new URL(req.url);
+            logOffline(`  - ${url.pathname}`, 'info');
+          });
+        }
+      } catch (err) {
+        logOffline(`❌ Erreur: ${err.message}`, 'error');
+      }
+    }
+  </script>
+</body>
+</html>
