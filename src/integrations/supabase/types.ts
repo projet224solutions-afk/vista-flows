@@ -1958,13 +1958,6 @@ export type Database = {
             referencedRelation: "virtual_cards"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "card_transactions_wallet_id_fkey"
-            columns: ["wallet_id"]
-            isOneToOne: false
-            referencedRelation: "wallets"
-            referencedColumns: ["id"]
-          },
         ]
       }
       carts: {
@@ -2239,6 +2232,30 @@ export type Database = {
           service_name?: string
           transaction_type?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      commission_rules: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          role: string
+          value: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          role: string
+          value: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          role?: string
+          value?: number
         }
         Relationships: []
       }
@@ -5989,13 +6006,6 @@ export type Database = {
             referencedRelation: "stripe_transactions"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "funds_release_schedule_wallet_id_fkey"
-            columns: ["wallet_id"]
-            isOneToOne: false
-            referencedRelation: "wallets"
-            referencedColumns: ["id"]
-          },
         ]
       }
       generated_reports: {
@@ -6578,6 +6588,55 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      idempotency_keys: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          key: string
+          operation: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          key: string
+          operation: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          key?: string
+          operation?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idempotency_keys_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idempotency_keys_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "idempotency_keys_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ids_reserved: {
         Row: {
@@ -17485,15 +17544,7 @@ export type Database = {
           user_id?: string | null
           wallet_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "wallet_logs_wallet_id_fkey"
-            columns: ["wallet_id"]
-            isOneToOne: false
-            referencedRelation: "wallets"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       wallet_payment_methods: {
         Row: {
@@ -17532,15 +17583,7 @@ export type Database = {
           updated_at?: string | null
           wallet_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "wallet_payment_methods_wallet_id_fkey"
-            columns: ["wallet_id"]
-            isOneToOne: false
-            referencedRelation: "wallets"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       wallet_suspicious_activities: {
         Row: {
@@ -17582,72 +17625,141 @@ export type Database = {
           user_id?: string | null
           wallet_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "wallet_suspicious_activities_wallet_id_fkey"
-            columns: ["wallet_id"]
-            isOneToOne: false
-            referencedRelation: "wallets"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       wallet_transactions: {
         Row: {
           amount: number
           completed_at: string | null
-          created_at: string
-          currency: string
+          created_at: string | null
+          currency: string | null
           description: string | null
-          device_info: Json | null
-          fee: number
+          fee: number | null
           id: string
-          is_archived: boolean | null
           metadata: Json | null
-          net_amount: number
+          net_amount: number | null
+          receiver_user_id: string | null
           receiver_wallet_id: string | null
+          reference_id: string | null
+          sender_user_id: string | null
           sender_wallet_id: string | null
-          status: string
+          status: Database["public"]["Enums"]["transaction_status"] | null
           transaction_id: string
-          transaction_type: string
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          updated_at: string | null
         }
         Insert: {
           amount: number
           completed_at?: string | null
-          created_at?: string
-          currency?: string
+          created_at?: string | null
+          currency?: string | null
           description?: string | null
-          device_info?: Json | null
-          fee?: number
+          fee?: number | null
           id?: string
-          is_archived?: boolean | null
           metadata?: Json | null
-          net_amount: number
+          net_amount?: number | null
+          receiver_user_id?: string | null
           receiver_wallet_id?: string | null
+          reference_id?: string | null
+          sender_user_id?: string | null
           sender_wallet_id?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["transaction_status"] | null
           transaction_id: string
-          transaction_type: string
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string | null
         }
         Update: {
           amount?: number
           completed_at?: string | null
-          created_at?: string
-          currency?: string
+          created_at?: string | null
+          currency?: string | null
           description?: string | null
-          device_info?: Json | null
-          fee?: number
+          fee?: number | null
           id?: string
-          is_archived?: boolean | null
           metadata?: Json | null
-          net_amount?: number
+          net_amount?: number | null
+          receiver_user_id?: string | null
           receiver_wallet_id?: string | null
+          reference_id?: string | null
+          sender_user_id?: string | null
           sender_wallet_id?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["transaction_status"] | null
           transaction_id?: string
-          transaction_type?: string
+          transaction_type?: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_receiver_user_id_fkey"
+            columns: ["receiver_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_receiver_user_id_fkey"
+            columns: ["receiver_user_id"]
+            isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_receiver_user_id_fkey"
+            columns: ["receiver_user_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_receiver_wallet_id_fkey"
+            columns: ["receiver_wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallet_summary"
+            referencedColumns: ["wallet_id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_receiver_wallet_id_fkey"
+            columns: ["receiver_wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_sender_user_id_fkey"
+            columns: ["sender_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_sender_user_id_fkey"
+            columns: ["sender_user_id"]
+            isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_sender_user_id_fkey"
+            columns: ["sender_user_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_sender_wallet_id_fkey"
+            columns: ["sender_wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallet_summary"
+            referencedColumns: ["wallet_id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_sender_wallet_id_fkey"
+            columns: ["sender_wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wallet_transfers: {
         Row: {
@@ -17746,85 +17858,80 @@ export type Database = {
           updated_at?: string | null
           user_agent?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "wallet_transfers_receiver_wallet_id_fkey"
-            columns: ["receiver_wallet_id"]
-            isOneToOne: false
-            referencedRelation: "wallets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "wallet_transfers_sender_wallet_id_fkey"
-            columns: ["sender_wallet_id"]
-            isOneToOne: false
-            referencedRelation: "wallets"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       wallets: {
         Row: {
-          balance: number
+          balance: number | null
+          biometric_enabled: boolean | null
           blocked_at: string | null
           blocked_reason: string | null
-          created_at: string
-          currency: string
+          created_at: string | null
+          currency: string | null
           daily_limit: number | null
           id: string
           is_blocked: boolean | null
-          last_transaction_at: string | null
           monthly_limit: number | null
           pin_hash: string | null
-          public_id: string | null
-          total_received: number | null
-          total_sent: number | null
-          two_factor_enabled: boolean | null
-          updated_at: string
+          updated_at: string | null
           user_id: string
-          wallet_status: string | null
+          wallet_status: Database["public"]["Enums"]["wallet_status"] | null
         }
         Insert: {
-          balance?: number
+          balance?: number | null
+          biometric_enabled?: boolean | null
           blocked_at?: string | null
           blocked_reason?: string | null
-          created_at?: string
-          currency?: string
+          created_at?: string | null
+          currency?: string | null
           daily_limit?: number | null
           id?: string
           is_blocked?: boolean | null
-          last_transaction_at?: string | null
           monthly_limit?: number | null
           pin_hash?: string | null
-          public_id?: string | null
-          total_received?: number | null
-          total_sent?: number | null
-          two_factor_enabled?: boolean | null
-          updated_at?: string
+          updated_at?: string | null
           user_id: string
-          wallet_status?: string | null
+          wallet_status?: Database["public"]["Enums"]["wallet_status"] | null
         }
         Update: {
-          balance?: number
+          balance?: number | null
+          biometric_enabled?: boolean | null
           blocked_at?: string | null
           blocked_reason?: string | null
-          created_at?: string
-          currency?: string
+          created_at?: string | null
+          currency?: string | null
           daily_limit?: number | null
           id?: string
           is_blocked?: boolean | null
-          last_transaction_at?: string | null
           monthly_limit?: number | null
           pin_hash?: string | null
-          public_id?: string | null
-          total_received?: number | null
-          total_sent?: number | null
-          two_factor_enabled?: boolean | null
-          updated_at?: string
+          updated_at?: string | null
           user_id?: string
-          wallet_status?: string | null
+          wallet_status?: Database["public"]["Enums"]["wallet_status"] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "wallets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "wallets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_search_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       warehouse_permissions: {
         Row: {
@@ -18561,20 +18668,6 @@ export type Database = {
         }
         Relationships: []
       }
-      pdg_dashboard_overview: {
-        Row: {
-          deliveries_24h: number | null
-          orders_24h: number | null
-          total_agents: number | null
-          total_bureaus: number | null
-          total_clients: number | null
-          total_drivers: number | null
-          total_users: number | null
-          total_vendors: number | null
-          total_wallet_balance: number | null
-        }
-        Relationships: []
-      }
       pdg_interface_stats: {
         Row: {
           interface: string | null
@@ -18613,15 +18706,6 @@ export type Database = {
         Row: {
           count: number | null
           severity: string | null
-        }
-        Relationships: []
-      }
-      system_dashboard: {
-        Row: {
-          active_security_alerts: number | null
-          pending_errors: number | null
-          system_health: number | null
-          unread_financial_alerts: number | null
         }
         Relationships: []
       }
@@ -18687,24 +18771,44 @@ export type Database = {
           },
         ]
       }
-      wallet_admin_stats: {
-        Row: {
-          agent_wallets: number | null
-          bureau_wallets: number | null
-          total_balance: number | null
-          total_wallets: number | null
-          transactions_24h: number | null
-        }
-        Relationships: []
-      }
       wallet_summary: {
         Row: {
-          avg_balance: number | null
-          total_balance: number | null
-          total_wallets: number | null
-          wallet_type: string | null
+          balance: number | null
+          currency: string | null
+          is_blocked: boolean | null
+          received_count: number | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          sent_count: number | null
+          total_received: number | null
+          total_sent: number | null
+          user_code: string | null
+          user_id: string | null
+          wallet_id: string | null
+          wallet_status: Database["public"]["Enums"]["wallet_status"] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "wallets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "wallets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_search_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
@@ -19973,6 +20077,16 @@ export type Database = {
           vendor_id: string
         }[]
       }
+      pay_with_commission: {
+        Args: {
+          p_amount: number
+          p_buyer_wallet: string
+          p_description?: string
+          p_seller_wallet: string
+          p_tx_id: string
+        }
+        Returns: undefined
+      }
       pdg_offer_subscription: {
         Args: { p_days: number; p_type: string; p_user_id: string }
         Returns: Json
@@ -20911,6 +21025,20 @@ export type Database = {
         Args: { p_bureau_id: string; p_is_active: boolean; p_worker_id: string }
         Returns: undefined
       }
+      transfer_between_wallets: {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_receiver_wallet_id: string
+          p_sender_wallet_id: string
+          p_transaction_id: string
+        }
+        Returns: {
+          receiver_new_balance: number
+          sender_new_balance: number
+          success: boolean
+        }[]
+      }
       unlockrows: { Args: { "": string }; Returns: number }
       update_agent: {
         Args: {
@@ -20941,6 +21069,18 @@ export type Database = {
           p_worker_id: string
         }
         Returns: undefined
+      }
+      update_wallet_balance_atomic: {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_tx_id: string
+          p_wallet_id: string
+        }
+        Returns: {
+          new_balance: number
+          success: boolean
+        }[]
       }
       updategeometrysrid: {
         Args: {
@@ -20998,6 +21138,7 @@ export type Database = {
         | "manager"
         | "technique"
       call_status_type: "ringing" | "accepted" | "rejected" | "ended" | "missed"
+      commission_type: "percentage" | "fixed" | "tiered"
       decision_enum: "AUTO_APPROVED" | "ADMIN_REVIEW" | "BLOCKED"
       delivery_status:
         | "pending"
@@ -21081,12 +21222,31 @@ export type Database = {
         | "in_progress"
         | "delivered"
         | "cancelled"
+      transaction_status:
+        | "pending"
+        | "processing"
+        | "completed"
+        | "failed"
+        | "cancelled"
+        | "refunded"
+        | "disputed"
       transaction_status_type:
         | "pending"
         | "completed"
         | "failed"
         | "refunded"
         | "cancelled"
+      transaction_type:
+        | "transfer"
+        | "deposit"
+        | "withdrawal"
+        | "payment"
+        | "refund"
+        | "commission"
+        | "mobile_money_in"
+        | "mobile_money_out"
+        | "card_payment"
+        | "bank_transfer"
       user_role:
         | "admin"
         | "vendeur"
@@ -21099,6 +21259,7 @@ export type Database = {
         | "agent"
       vehicle_type: "moto" | "car" | "bicycle" | "truck"
       vendor_certification_status: "NON_CERTIFIE" | "CERTIFIE" | "SUSPENDU"
+      wallet_status: "active" | "suspended" | "blocked" | "pending_verification"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -21243,6 +21404,7 @@ export const Constants = {
         "technique",
       ],
       call_status_type: ["ringing", "accepted", "rejected", "ended", "missed"],
+      commission_type: ["percentage", "fixed", "tiered"],
       decision_enum: ["AUTO_APPROVED", "ADMIN_REVIEW", "BLOCKED"],
       delivery_status: [
         "pending",
@@ -21337,12 +21499,33 @@ export const Constants = {
         "delivered",
         "cancelled",
       ],
+      transaction_status: [
+        "pending",
+        "processing",
+        "completed",
+        "failed",
+        "cancelled",
+        "refunded",
+        "disputed",
+      ],
       transaction_status_type: [
         "pending",
         "completed",
         "failed",
         "refunded",
         "cancelled",
+      ],
+      transaction_type: [
+        "transfer",
+        "deposit",
+        "withdrawal",
+        "payment",
+        "refund",
+        "commission",
+        "mobile_money_in",
+        "mobile_money_out",
+        "card_payment",
+        "bank_transfer",
       ],
       user_role: [
         "admin",
@@ -21357,6 +21540,7 @@ export const Constants = {
       ],
       vehicle_type: ["moto", "car", "bicycle", "truck"],
       vendor_certification_status: ["NON_CERTIFIE", "CERTIFIE", "SUSPENDU"],
+      wallet_status: ["active", "suspended", "blocked", "pending_verification"],
     },
   },
 } as const
