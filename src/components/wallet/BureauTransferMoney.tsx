@@ -206,10 +206,9 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
       const referenceNumber = `BUR-TRF-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
       // Créer la transaction de transfert (débit pour le bureau expéditeur)
-      const { error: debitError } = await (supabase
-        .from('wallet_transactions')
+      const { error: debitError } = await supabase
+        .from('wallet_transactions' as any)
         .insert({
-          transaction_type: 'transfer',
           amount: -transferAmount,
           net_amount: -transferAmount,
           fee: 0,
@@ -219,21 +218,21 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
           sender_wallet_id: Number(bureauWalletId),
           receiver_wallet_id: Number(selectedUser.wallet_id),
           metadata: {
+            transaction_type: 'transfer',
             reference: `${referenceNumber}-OUT`,
             recipient_name: selectedUser.name,
             recipient_email: selectedUser.email,
             recipient_type: selectedUser.type,
             sender_type: 'bureau'
           }
-        }) as any);
+        });
 
       if (debitError) throw debitError;
 
       // Créer la transaction de réception (crédit pour le destinataire)
-      const { error: creditError } = await (supabase
-        .from('wallet_transactions')
+      const { error: creditError } = await supabase
+        .from('wallet_transactions' as any)
         .insert({
-          transaction_type: 'transfer',
           amount: transferAmount,
           net_amount: transferAmount,
           fee: 0,
@@ -243,10 +242,11 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
           sender_wallet_id: Number(bureauWalletId),
           receiver_wallet_id: Number(selectedUser.wallet_id),
           metadata: {
+            transaction_type: 'transfer',
             reference: `${referenceNumber}-IN`,
             sender_type: 'bureau'
           }
-        }) as any);
+        });
 
       if (creditError) throw creditError;
 

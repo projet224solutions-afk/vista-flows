@@ -234,13 +234,13 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       // Charger les wallet_transactions seulement si on a un wallet_id
       let walletTxData: any[] = [];
       if (userWalletId) {
-        const { data: wtData, error: walletError } = await (supabase
-          .from('wallet_transactions')
+        const { data: wtData, error: walletError } = await supabase
+          .from('wallet_transactions' as any)
           .select('*')
           .or(`sender_wallet_id.eq.${userWalletId},receiver_wallet_id.eq.${userWalletId}`)
           .neq('is_archived', true)
           .order('created_at', { ascending: false })
-          .limit(10) as any);
+          .limit(10);
 
         if (walletError) console.error('Erreur wallet_transactions:', walletError);
         if (wtData) walletTxData = wtData;
@@ -518,10 +518,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       if (balanceError) throw balanceError;
 
       // Enregistrer transaction
-      const { error: transactionError } = await (supabase
-        .from('wallet_transactions')
+      const { error: transactionError } = await supabase
+        .from('wallet_transactions' as any)
         .insert({
-          transaction_type: 'deposit',
           amount: amount,
           net_amount: amount,
           fee: 0,
@@ -530,8 +529,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           description: 'Dépôt manuel sur le wallet',
           receiver_wallet_id: Number(walletData.id),
           receiver_user_id: effectiveUserId,
-          metadata: { reference: referenceNumber }
-        }) as any);
+          metadata: { transaction_type: 'deposit', reference: referenceNumber }
+        });
 
       if (transactionError) console.warn('Transaction log failed:', transactionError);
 
@@ -1771,10 +1770,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           const referenceNumber = `TOP${Date.now()}${Math.floor(Math.random() * 1000)}`;
           
           // Créer la transaction de dépôt
-          const { error: transactionError } = await (supabase
-            .from('wallet_transactions')
+          const { error: transactionError } = await supabase
+            .from('wallet_transactions' as any)
             .insert({
-              transaction_type: 'deposit',
               amount: numAmount,
               net_amount: numAmount,
               fee: 0,
@@ -1782,8 +1780,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
               status: 'completed',
               description: 'Recharge wallet par carte bancaire (Stripe)',
               receiver_wallet_id: Number(wallet?.id),
-              metadata: { stripe_payment_intent_id: paymentIntentId, reference: referenceNumber }
-            }) as any);
+              metadata: { transaction_type: 'deposit', stripe_payment_intent_id: paymentIntentId, reference: referenceNumber }
+            });
 
           if (transactionError) throw transactionError;
 
