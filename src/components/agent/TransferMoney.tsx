@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface TransferMoneyProps {
-  walletId: string;
+  walletId: number;
   currentBalance: number;
   currency: string;
   onTransferComplete?: () => void;
@@ -30,7 +30,7 @@ interface UserSearchResult {
   name: string;
   email: string;
   type: 'bureau' | 'agent' | 'vendor' | 'user' | 'driver';
-  wallet_id?: string;
+  wallet_id?: number;
   user_id?: string; // Pour les agents, on stocke aussi le user_id
 }
 

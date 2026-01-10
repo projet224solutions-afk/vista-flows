@@ -96,7 +96,7 @@ export function AgentWalletAudit() {
           .eq('agent_id', row.agent_id);
         // Log simple dans wallet_transactions avec champs requis
         await supabase
-          .from('wallet_transactions')
+          .from('wallet_transactions' as any)
           .insert({
             transaction_id: `audit_${row.agent_id}_${Date.now()}`,
             sender_wallet_id: row.agent_id,

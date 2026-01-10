@@ -40,7 +40,7 @@ export default function WalletMonthlyStats() {
 
       // Récupérer toutes les transactions du mois
       const { data: transactions, error } = await supabase
-        .from('enhanced_transactions')
+        .from('enhanced_transactions' as any)
         .select('amount, sender_id, receiver_id, status')
         .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
         .eq('status', 'completed')

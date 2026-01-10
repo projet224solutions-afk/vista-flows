@@ -46,7 +46,7 @@ export default function TransferFeeSettings() {
     try {
       // Calculer le total des frais collectés depuis les métadonnées
       const { data, error } = await supabase
-        .from('enhanced_transactions')
+        .from('enhanced_transactions' as any)
         .select('metadata')
         .eq('method', 'wallet')
         .eq('status', 'completed');
