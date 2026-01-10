@@ -84,7 +84,7 @@ function getNotificationActions(type) {
 }
 
 // Liste minimale à précacher
-const PRECACHE_ASSETS = ["/manifest.json", "/favicon.png"];
+const PRECACHE_ASSETS = ["/manifest.webmanifest", "/favicon.png"];
 
 // INSTALL - Ne jamais bloquer
 self.addEventListener("install", (event) => {
