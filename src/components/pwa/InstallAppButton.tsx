@@ -24,10 +24,11 @@ import {
 } from '@/components/ui/dialog';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 
-// URLs de téléchargement direct
+// URLs de téléchargement direct - Supabase Storage
+const SUPABASE_URL = 'https://uakkxaibujzxdiqzpnpr.supabase.co';
 const DOWNLOAD_LINKS = {
-  android: 'https://224solution.net/download/224Solutions.apk',
-  windows: 'https://224solution.net/download/224Solutions.exe',
+  android: `${SUPABASE_URL}/storage/v1/object/public/app-downloads/224Solutions.apk`,
+  windows: `${SUPABASE_URL}/storage/v1/object/public/app-downloads/224Solutions.exe`,
 };
 
 interface InstallAppButtonProps {
