@@ -1,3 +1,4 @@
+// usePWAInstall v2 - Hook pour l'installation PWA avec support iOS
 import { useState, useEffect, useCallback } from 'react';
 import {
   getPWAInstallPromptState,
