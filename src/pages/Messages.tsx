@@ -277,15 +277,19 @@ export default function Messages() {
 
     try {
       setSearchingUsers(true);
-      const searchTerm = query.trim().toLowerCase();
+      const searchTerm = query.trim();
+      const searchTermLower = searchTerm.toLowerCase();
+      const searchTermUpper = searchTerm.toUpperCase();
 
-      // Recherche dans profiles
+      // Recherche dans profiles avec plusieurs stratégies
+      // 1. Recherche par public_id exact (format VND0001, USR0001, etc.)
+      // 2. Recherche par nom/prénom/email (insensible à la casse)
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, email, avatar_url, public_id')
+        .select('id, first_name, last_name, email, avatar_url, public_id, phone')
         .neq('id', currentUser?.id)
-        .or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,public_id.ilike.%${searchTerm}%`)
-        .limit(10);
+        .or(`public_id.ilike.%${searchTermUpper}%,first_name.ilike.%${searchTermLower}%,last_name.ilike.%${searchTermLower}%,email.ilike.%${searchTermLower}%,phone.ilike.%${searchTerm}%`)
+        .limit(20);
 
       if (error) {
         console.error('Erreur recherche utilisateurs:', error);
@@ -317,6 +321,7 @@ export default function Messages() {
             email: profile.email,
             avatar_url: profile.avatar_url,
             public_id: profile.public_id,
+            phone: profile.phone || vendor?.phone,
             is_vendor: !!vendor,
             is_certified: cert?.status === 'CERTIFIE',
             vendor_phone: vendor?.phone
@@ -954,7 +959,7 @@ export default function Messages() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par nom, email ou ID..."
+                placeholder="Nom, email, ID (VND0001) ou téléphone..."
                 value={userSearchQuery}
                 onChange={(e) => {
                   setUserSearchQuery(e.target.value);
@@ -1020,10 +1025,15 @@ export default function Messages() {
                           >
                             {user.is_vendor ? 'Vendeur' : 'Client'}
                           </Badge>
-                          <p className="text-xs text-muted-foreground truncate">
+                          <p className="text-xs text-muted-foreground truncate max-w-[150px]">
                             {user.email}
                           </p>
                         </div>
+                        {user.phone && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            📞 {user.phone}
+                          </p>
+                        )}
                       </div>
                     </button>
                   ))}
