@@ -1,5 +1,7 @@
-// usePWAInstall v2 - Hook pour l'installation PWA avec support iOS
-import { useState, useEffect, useCallback } from 'react';
+// usePWAInstall v3 - Hook pour l'installation PWA avec support iOS
+// Corrigé pour éviter les erreurs React HMR "Should have a queue"
+
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   getPWAInstallPromptState,
   initPWAInstallPromptListener,
@@ -7,29 +9,52 @@ import {
   subscribePWAInstallPrompt,
 } from '@/lib/pwaInstallPrompt';
 
+// Détection iOS côté client uniquement
+function detectIOS(): boolean {
+  if (typeof window === 'undefined') return false;
+  const ua = navigator.userAgent;
+  return /iPhone|iPad|iPod/i.test(ua);
+}
+
+function detectSafari(): boolean {
+  if (typeof window === 'undefined') return false;
+  const ua = navigator.userAgent;
+  return /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome/i.test(ua);
+}
+
+function detectStandalone(): boolean {
+  if (typeof window === 'undefined') return false;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  const isIOSStandalone = (window.navigator as any).standalone === true;
+  return isStandalone || isIOSStandalone;
+}
+
 export function usePWAInstall() {
-  const [isInstallable, setIsInstallable] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-  const [isSafari, setIsSafari] = useState(false);
+  // Valeurs initiales calculées de manière synchrone (safe pour SSR/HMR)
+  const [isInstallable, setIsInstallable] = useState(() => {
+    // Sur iOS, toujours installable via instructions manuelles
+    return detectIOS() ? true : false;
+  });
+  
+  const [isInstalled, setIsInstalled] = useState(() => detectStandalone());
+  
+  // Ces valeurs sont constantes après le premier render
+  const isIOSRef = useRef(detectIOS());
+  const isSafariRef = useRef(detectSafari());
+  
+  const [isIOS] = useState(() => isIOSRef.current);
+  const [isSafari] = useState(() => isSafariRef.current);
 
   useEffect(() => {
+    // Guard SSR
+    if (typeof window === 'undefined') return;
+
     // 1) Listener global (au cas où l'événement arrive très tôt)
     initPWAInstallPromptListener();
 
-    // Détection iOS
-    const ua = navigator.userAgent;
-    const ios = /iPhone|iPad|iPod/i.test(ua);
-    const safari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome/i.test(ua);
-    setIsIOS(ios);
-    setIsSafari(safari);
-
     // 2) Détection installation (standalone)
     const checkIfInstalled = () => {
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-      // iOS Safari standalone mode
-      const isIOSStandalone = (window.navigator as any).standalone === true;
-      setIsInstalled(isStandalone || isIOSStandalone);
+      setIsInstalled(detectStandalone());
     };
 
     checkIfInstalled();
@@ -38,8 +63,7 @@ export function usePWAInstall() {
     const syncInstallable = () => {
       const state = getPWAInstallPromptState();
       // Sur iOS, on considère toujours "installable" via instructions manuelles
-      // même si beforeinstallprompt n'est pas supporté
-      if (ios) {
+      if (isIOSRef.current) {
         setIsInstallable(true);
       } else {
         setIsInstallable(state.isInstallable);
