@@ -22,21 +22,21 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 
-// Configuration des liens de téléchargement
-const SUPABASE_URL = 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+// Configuration des liens de téléchargement (hébergés sur GitHub Releases)
+// NB: plus fiable sur mobile que le téléchargement cross-domain depuis Storage.
 const DOWNLOAD_CONFIG = {
   apk: {
-    url: `${SUPABASE_URL}/storage/v1/object/public/app-downloads/224Solutions.apk`,
-    name: '224Solutions.apk',
-    size: '~15 MB',
-    platform: 'Android'
+    url: 'https://github.com/projet224solutions-afk/vista-flows/releases/latest/download/224solutions-android.apk',
+    name: '224solutions-android.apk',
+    size: '~25 MB',
+    platform: 'Android',
   },
   exe: {
-    url: `${SUPABASE_URL}/storage/v1/object/public/app-downloads/224Solutions.exe`,
-    name: '224Solutions.exe',
-    size: '~80 MB',
-    platform: 'Windows'
-  }
+    url: 'https://github.com/projet224solutions-afk/vista-flows/releases/latest/download/224solutions-windows.exe',
+    name: '224solutions-windows.exe',
+    size: '~85 MB',
+    platform: 'Windows',
+  },
 };
 
 interface DownloadAppButtonProps {
@@ -51,8 +51,10 @@ export function DownloadAppButton({ variant = 'default', className = '' }: Downl
     apk: 'checking' | 'available' | 'unavailable';
     exe: 'checking' | 'available' | 'unavailable';
   }>({
-    apk: 'checking',
-    exe: 'checking'
+    // On évite les checks HEAD/CORS souvent bloqués sur mobile.
+    // On laisse le download se déclencher directement.
+    apk: 'available',
+    exe: 'available',
   });
 
   // Hook PWA pour fallback
@@ -62,45 +64,8 @@ export function DownloadAppButton({ variant = 'default', className = '' }: Downl
     // Détection mobile
     const mobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     setIsMobile(mobile);
-
-    // Vérifier la disponibilité des fichiers
-    checkFileAvailability();
   }, []);
 
-  const checkFileAvailability = async () => {
-    try {
-      // Vérifier APK avec timeout court
-      const apkPromise = fetch(DOWNLOAD_CONFIG.apk.url, { 
-        method: 'HEAD',
-        signal: AbortSignal.timeout(5000) // 5 secondes max
-      });
-      
-      // Vérifier EXE avec timeout court
-      const exePromise = fetch(DOWNLOAD_CONFIG.exe.url, { 
-        method: 'HEAD',
-        signal: AbortSignal.timeout(5000)
-      });
-
-      const [apkResponse, exeResponse] = await Promise.allSettled([apkPromise, exePromise]);
-
-      setDownloadStatus({
-        apk: apkResponse.status === 'fulfilled' && apkResponse.value.ok ? 'available' : 'unavailable',
-        exe: exeResponse.status === 'fulfilled' && exeResponse.value.ok ? 'available' : 'unavailable'
-      });
-
-      console.log('📥 [Download] Statut fichiers:', {
-        apk: apkResponse.status === 'fulfilled' ? apkResponse.value.status : 'timeout',
-        exe: exeResponse.status === 'fulfilled' ? exeResponse.value.status : 'timeout'
-      });
-    } catch (error) {
-      console.error('❌ [Download] Erreur vérification fichiers:', error);
-      // Marquer comme unavailable mais ne pas bloquer l'affichage
-      setDownloadStatus({
-        apk: 'unavailable',
-        exe: 'unavailable'
-      });
-    }
-  };
 
   const handleDownload = (type: 'apk' | 'exe') => {
     const config = DOWNLOAD_CONFIG[type];
