@@ -3,6 +3,10 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { registerServiceWorker, unregisterServiceWorker } from "./lib/serviceWorkerRegistration";
+import { initPWAInstallPromptListener } from "./lib/pwaInstallPrompt";
+
+// Initialiser le listener PWA le plus tôt possible (évite de rater beforeinstallprompt)
+initPWAInstallPromptListener();
 
 // Hide the initial loader
 const hideLoader = () => {
