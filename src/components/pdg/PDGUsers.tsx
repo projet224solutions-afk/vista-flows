@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, UserCheck, UserX, Lock, Unlock, Shield, Trash2 } from 'lucide-react';
+import { Search, UserCheck, UserX, Lock, Unlock, Shield, Trash2, Store, Package, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Select,
   SelectContent,
@@ -32,6 +33,8 @@ export default function PDGUsers() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [userServices, setUserServices] = useState<Record<string, any[]>>({});
+  const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadUsers();
@@ -52,6 +55,36 @@ export default function PDGUsers() {
 
       if (error) throw error;
       setUsers(profiles || []);
+
+      // Charger les services professionnels pour chaque vendeur
+      const vendorIds = profiles?.filter(p => p.role === 'vendeur').map(p => p.id) || [];
+      if (vendorIds.length > 0) {
+        const { data: services } = await supabase
+          .from('professional_services')
+          .select(`
+            id,
+            user_id,
+            business_name,
+            status,
+            created_at,
+            rating,
+            total_reviews,
+            address,
+            phone,
+            service_types(name, code)
+          `)
+          .in('user_id', vendorIds);
+
+        // Grouper les services par user_id
+        const servicesMap: Record<string, any[]> = {};
+        services?.forEach(service => {
+          if (!servicesMap[service.user_id]) {
+            servicesMap[service.user_id] = [];
+          }
+          servicesMap[service.user_id].push(service);
+        });
+        setUserServices(servicesMap);
+      }
     } catch (error) {
       console.error('Erreur chargement utilisateurs:', error);
       toast.error('Erreur lors du chargement des utilisateurs');
@@ -135,6 +168,16 @@ export default function PDGUsers() {
       console.error('Erreur suppression utilisateur:', error);
       toast.error(error.message || 'Erreur lors de la suppression de l\'utilisateur');
     }
+  };
+
+  const toggleUserExpanded = (userId: string) => {
+    const newExpanded = new Set(expandedUsers);
+    if (newExpanded.has(userId)) {
+      newExpanded.delete(userId);
+    } else {
+      newExpanded.add(userId);
+    }
+    setExpandedUsers(newExpanded);
   };
 
   const getRoleBadge = (role: string) => {
@@ -253,7 +296,7 @@ export default function PDGUsers() {
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-1">
                   <div className="relative">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg">
                       <Shield className="w-7 h-7 text-primary-foreground" />
@@ -262,10 +305,18 @@ export default function PDGUsers() {
                       <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-card" />
                     )}
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">
-                      {user.first_name} {user.last_name}
-                    </h3>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-semibold">
+                        {user.first_name} {user.last_name}
+                      </h3>
+                      {user.role === 'vendeur' && userServices[user.id] && (
+                        <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/30">
+                          <Store className="w-3 h-3 mr-1" />
+                          {userServices[user.id].length} service(s)
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground">{user.email}</p>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {user.public_id && (
@@ -283,6 +334,26 @@ export default function PDGUsers() {
                   </div>
                 </div>
                 <div className="flex gap-2">
+                  {user.role === 'vendeur' && userServices[user.id] && userServices[user.id].length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleUserExpanded(user.id)}
+                      className="border-blue-500/50 hover:bg-blue-500/10 hover:text-blue-500"
+                    >
+                      {expandedUsers.has(user.id) ? (
+                        <>
+                          <ChevronUp className="w-4 h-4 mr-2" />
+                          Masquer
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-4 h-4 mr-2" />
+                          Services
+                        </>
+                      )}
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
@@ -334,6 +405,87 @@ export default function PDGUsers() {
                   </AlertDialog>
                 </div>
               </div>
+
+              {/* Section des services (affichée si étendue) */}
+              {user.role === 'vendeur' && expandedUsers.has(user.id) && userServices[user.id] && (
+                <div className="mt-4 pt-4 border-t border-border/40">
+                  <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <Store className="w-4 h-4" />
+                    Services professionnels ({userServices[user.id].length})
+                  </h4>
+                  <div className="grid gap-3">
+                    {userServices[user.id].map((service) => (
+                      <div 
+                        key={service.id}
+                        className="p-4 rounded-lg border border-border/40 bg-muted/30 hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h5 className="font-semibold text-sm">{service.business_name}</h5>
+                              <Badge 
+                                variant="outline" 
+                                className={
+                                  service.status === 'active' 
+                                    ? 'border-green-500/50 bg-green-500/10 text-green-500 text-xs' 
+                                    : service.status === 'pending'
+                                    ? 'border-yellow-500/50 bg-yellow-500/10 text-yellow-500 text-xs'
+                                    : 'border-red-500/50 bg-red-500/10 text-red-500 text-xs'
+                                }
+                              >
+                                {service.status}
+                              </Badge>
+                              {service.service_types && (
+                                <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-500 border-blue-500/30">
+                                  {service.service_types.name}
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Package className="w-3 h-3" />
+                                <span>ID: {service.id.substring(0, 8)}...</span>
+                              </div>
+                              {service.phone && (
+                                <div className="flex items-center gap-1">
+                                  <span>📞 {service.phone}</span>
+                                </div>
+                              )}
+                              {service.address && (
+                                <div className="col-span-2 flex items-center gap-1">
+                                  <span>📍 {service.address}</span>
+                                </div>
+                              )}
+                              {service.rating > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <span>⭐ {service.rating.toFixed(1)} ({service.total_reviews || 0} avis)</span>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-1">
+                                <span>📅 Créé le {new Date(service.created_at).toLocaleDateString('fr-FR')}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              // Copier l'ID du service
+                              navigator.clipboard.writeText(service.id);
+                              toast.success('ID du service copié');
+                            }}
+                            className="ml-2"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}
