@@ -1,13 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './useAuth';
 
 /**
- * Routes publiques accessibles à tous les utilisateurs connectés
- * sans redirection vers leur dashboard
+ * Routes publiques où l'utilisateur peut rester sans redirection automatique
+ * SAUF s'il vient juste de se connecter (première visite après login)
  */
 const PUBLIC_ROUTES = [
-  '/home',
   '/marketplace',
   '/tracking',
   '/client-tracking',
@@ -37,6 +36,16 @@ const PUBLIC_ROUTES = [
 ];
 
 /**
+ * Routes qui déclenchent toujours une redirection vers le dashboard approprié
+ * Ce sont les pages d'entrée principales où un utilisateur connecté doit être redirigé
+ */
+const REDIRECT_TRIGGER_ROUTES = [
+  '/',
+  '/home',
+  '/auth',
+];
+
+/**
  * Retourne la route du dashboard selon le rôle
  */
 export const getDashboardRoute = (role: string | null | undefined): string => {
@@ -60,25 +69,39 @@ export const getDashboardRoute = (role: string | null | undefined): string => {
 /**
  * Hook pour rediriger automatiquement l'utilisateur vers son dashboard
  * en fonction de son rôle après connexion
- * NE redirige PAS si l'utilisateur est sur une route publique ou déjà sur son dashboard
  * 
- * ⚡ OPTIMISÉ: Redirection immédiate dès que le profil est chargé (pas d'attente du rendu)
+ * ⚡ OPTIMISÉ: 
+ * - Redirection immédiate depuis /, /home, /auth vers le dashboard
+ * - Pas de redirection si déjà sur le bon dashboard ou une route publique autorisée
+ * - Utilise un ref pour éviter les redirections multiples
  */
 export const useRoleRedirect = () => {
   const { profile, user, loading, profileLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const hasRedirectedRef = useRef(false);
+  const lastPathRef = useRef<string>('');
 
   useEffect(() => {
     const currentPath = location.pathname;
     
+    // Reset le flag si on change de page manuellement
+    if (lastPathRef.current !== currentPath) {
+      lastPathRef.current = currentPath;
+      // Ne pas reset si on vient d'être redirigé
+      if (!hasRedirectedRef.current) {
+        hasRedirectedRef.current = false;
+      }
+    }
+
     console.log('🔍 [useRoleRedirect] État:', {
       loading,
       profileLoading,
       hasUser: !!user,
       hasProfile: !!profile,
       role: profile?.role,
-      currentPath
+      currentPath,
+      hasRedirected: hasRedirectedRef.current
     });
 
     // ⚡ Attendre que l'auth soit chargée
@@ -95,29 +118,17 @@ export const useRoleRedirect = () => {
 
     // Si utilisateur connecté avec profil et rôle
     if (user && profile && profile.role) {
-      // Vérifier si le profil doit être complété (nouveau compte)
-      const needsProfileCompletion = localStorage.getItem('needs_profile_completion') === 'true';
-      const isProfileIncomplete = !profile.first_name || !profile.last_name || !profile.phone;
-      
-      if (needsProfileCompletion && isProfileIncomplete) {
-        console.log('📝 [useRoleRedirect] Profil incomplet - demande de complétion');
-      }
-
-      // Ne pas rediriger si l'utilisateur est sur une route publique
-      const isOnPublicRoute = PUBLIC_ROUTES.some(route => 
-        currentPath === route || currentPath.startsWith(route + '/')
-      );
-      
-      if (isOnPublicRoute) {
-        console.log('📍 [useRoleRedirect] Route publique, pas de redirection:', currentPath);
-        return;
-      }
-
       const targetRoute = getDashboardRoute(profile.role);
       
-      // ⚡ Rediriger depuis / vers le dashboard approprié
-      if (currentPath === '/') {
+      // Vérifier si on est sur une route qui déclenche une redirection
+      const isOnRedirectTriggerRoute = REDIRECT_TRIGGER_ROUTES.some(route => 
+        currentPath === route || currentPath === route + '/'
+      );
+      
+      // ⚡ PRIORITÉ 1: Rediriger depuis les pages d'entrée (/, /home, /auth)
+      if (isOnRedirectTriggerRoute && !hasRedirectedRef.current) {
         console.log(`🚀 [useRoleRedirect] Redirection depuis ${currentPath} vers ${targetRoute} (rôle: ${profile.role})`);
+        hasRedirectedRef.current = true;
         navigate(targetRoute, { replace: true });
         return;
       }
@@ -128,10 +139,27 @@ export const useRoleRedirect = () => {
         return;
       }
       
-      console.log('📍 [useRoleRedirect] Sur une autre route autorisée:', currentPath);
+      // Ne pas rediriger si l'utilisateur est sur une route publique autorisée
+      const isOnPublicRoute = PUBLIC_ROUTES.some(route => 
+        currentPath === route || currentPath.startsWith(route + '/')
+      );
+      
+      if (isOnPublicRoute) {
+        console.log('📍 [useRoleRedirect] Route publique autorisée:', currentPath);
+        return;
+      }
+      
+      console.log('📍 [useRoleRedirect] Sur une autre route:', currentPath);
     } else if (user && !profile && !profileLoading) {
       // L'utilisateur est connecté mais n'a pas de profil (rare)
       console.log('⚠️ [useRoleRedirect] Utilisateur sans profil détecté');
     }
   }, [user, profile, loading, profileLoading, navigate, location.pathname]);
+
+  // Reset le flag quand l'utilisateur se déconnecte
+  useEffect(() => {
+    if (!user) {
+      hasRedirectedRef.current = false;
+    }
+  }, [user]);
 };
