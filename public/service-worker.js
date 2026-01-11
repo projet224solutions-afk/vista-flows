@@ -1,5 +1,5 @@
-// Service Worker v7 - PWA + Firebase Cloud Messaging + Mode Offline Vendeur
-const CACHE_VERSION = "v7";
+// Service Worker v8 - PWA + Firebase Cloud Messaging + Mode Offline Desktop & Mobile
+const CACHE_VERSION = "v8";
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
 const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
@@ -97,7 +97,7 @@ const PRECACHE_ASSETS = [
   "/apple-touch-icon.png"
 ];
 
-// Routes principales de l'app vendeur à mettre en cache dynamiquement
+// Routes principales de l'app vendeur à mettre en cache dynamiquement (desktop & mobile)
 const VENDOR_ROUTES = [
   "/vendeur",
   "/vendeur/dashboard",
@@ -107,7 +107,21 @@ const VENDOR_ROUTES = [
   "/vendeur/clients",
   "/vendeur/inventory",
   "/vendeur/wallet",
-  "/vendeur/settings"
+  "/vendeur/settings",
+  "/vendeur/analytics",
+  "/vendeur/marketing",
+  "/vendeur/support",
+  "/vendeur/agents",
+  "/vendeur/expenses",
+  "/vendeur/payments"
+];
+
+// Routes additionnelles pour marketplace/auth (desktop)
+const CORE_ROUTES = [
+  "/",
+  "/marketplace",
+  "/login",
+  "/signup"
 ];
 
 // Pré-cache robuste: index.html + assets build (/assets/...) pour éviter l'écran blanc au redémarrage offline (iOS)
@@ -156,9 +170,9 @@ async function precacheIndexAndBuildAssets() {
   }
 }
 
-// INSTALL - Précacher les assets essentiels
+// INSTALL - Précacher les assets essentiels (mobile + desktop)
 self.addEventListener("install", (event) => {
-  console.log("[SW] Installation v7 - Mode offline vendeur activé");
+  console.log("[SW] Installation v8 - Mode offline desktop & mobile activé");
 
   event.waitUntil(
     precacheIndexAndBuildAssets().then(() => {
@@ -168,9 +182,9 @@ self.addEventListener("install", (event) => {
   );
 });
 
-// ACTIVATE - Nettoyer anciens caches et mettre en cache les routes vendeur
+// ACTIVATE - Nettoyer anciens caches et mettre en cache les routes vendeur + core
 self.addEventListener("activate", (event) => {
-  console.log("[SW] Activation v7");
+  console.log("[SW] Activation v8");
 
   event.waitUntil(
     Promise.all([
@@ -187,11 +201,12 @@ self.addEventListener("activate", (event) => {
       ),
       // Prendre le contrôle immédiatement
       self.clients.claim(),
-      // Précacher les routes vendeur en arrière-plan
+      // Précacher les routes vendeur + core en arrière-plan
       caches.open(DYNAMIC_CACHE).then((cache) => {
-        console.log("[SW] Mise en cache des routes vendeur...");
+        console.log("[SW] Mise en cache des routes vendeur + core...");
+        const allRoutes = [...VENDOR_ROUTES, ...CORE_ROUTES];
         return Promise.allSettled(
-          VENDOR_ROUTES.map(route => 
+          allRoutes.map(route => 
             fetch(route, { cache: 'reload' })
               .then(response => {
                 if (response.ok) {
@@ -476,4 +491,4 @@ self.addEventListener("notificationclose", (event) => {
   console.log("[FCM SW] Notification fermée:", event.notification.tag);
 });
 
-console.log("[SW] Service Worker chargé (v6 - Firebase 10.13.0)");
+console.log("[SW] Service Worker chargé (v8 - Desktop & Mobile Offline)");
