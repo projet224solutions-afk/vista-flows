@@ -632,7 +632,20 @@ export function POSSystem() {
       return;
     }
 
-    // Validation Mobile Money
+    // ✨ NOUVEAU: Vérification mode offline
+    const isOffline = !navigator.onLine;
+    
+    // En mode offline, seuls les paiements en espèces sont autorisés
+    if (isOffline && paymentMethod !== 'cash') {
+      toast.error('Mode hors ligne: Seuls les paiements en espèces sont disponibles', {
+        description: 'Mobile Money et carte bancaire nécessitent une connexion internet.',
+        duration: 5000
+      });
+      setIsProcessingPayment(false);
+      return;
+    }
+
+    // Validation Mobile Money (seulement si online)
     if (paymentMethod === 'mobile_money') {
       if (!mobileMoneyPhone || mobileMoneyPhone.length !== 9) {
         toast.error('Veuillez entrer un numéro de téléphone valide (9 chiffres)');
@@ -858,7 +871,84 @@ export function POSSystem() {
         }
       }
 
-      // Pour les paiements en espèces, procéder normalement
+      // Pour les paiements en espèces, procéder normalement OU en mode offline
+      const isOfflinePayment = !navigator.onLine;
+      
+      // ✨ MODE OFFLINE: Stocker localement pour synchronisation ultérieure
+      if (isOfflinePayment) {
+        try {
+          // Générer un ID local unique pour la commande
+          const offlineOrderId = `offline_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+          const offlineOrderNumber = `POS-OFF-${Date.now().toString(36).toUpperCase()}`;
+          
+          // Préparer les données de la vente
+          const saleData = {
+            type: 'sale',
+            vendor_id: vendorId,
+            data: {
+              offline_order_id: offlineOrderId,
+              order_number: offlineOrderNumber,
+              total_amount: total,
+              subtotal: subtotal,
+              tax_amount: tax,
+              discount_amount: discountValue,
+              payment_method: 'cash',
+              payment_status: 'paid',
+              status: 'confirmed',
+              source: 'pos_offline',
+              items: cart.map(item => ({
+                product_id: item.id,
+                product_name: item.name,
+                quantity: item.quantity,
+                unit_price: item.quantity > 0 ? item.total / item.quantity : item.price,
+                total_price: item.total
+              })),
+              sale_date: new Date().toISOString(),
+              customer_name: selectedCustomer?.name || 'Client comptoir',
+              customer_phone: selectedCustomer?.phone || ''
+            }
+          };
+          
+          // Stocker dans IndexedDB via offlineDB
+          const { default: offlineDB } = await import('@/lib/offlineDB');
+          await offlineDB.initDB();
+          await offlineDB.storeEvent(saleData, true);
+          
+          // Mettre à jour le stock localement (décrémenter)
+          setProducts(prevProducts => 
+            prevProducts.map(product => {
+              const cartItem = cart.find(item => item.id === product.id);
+              if (cartItem) {
+                return { ...product, stock: Math.max(0, product.stock - cartItem.quantity) };
+              }
+              return product;
+            })
+          );
+          
+          setLastOrderNumber(offlineOrderNumber);
+          setShowOrderSummary(false);
+          setShowReceipt(true);
+          
+          toast.success('✅ Vente enregistrée (mode hors-ligne)', {
+            description: 'La vente sera synchronisée automatiquement à la reconnexion.',
+            duration: 5000
+          });
+          
+          clearCart();
+          setIsProcessingPayment(false);
+          return;
+          
+        } catch (offlineError: any) {
+          console.error('Erreur stockage offline:', offlineError);
+          toast.error('Erreur lors de l\'enregistrement hors-ligne', {
+            description: 'Veuillez réessayer.'
+          });
+          setIsProcessingPayment(false);
+          return;
+        }
+      }
+      
+      // Mode ONLINE: procéder normalement avec Supabase
       const customerId = await getOrCreateCustomerId();
       if (!customerId) return;
 
@@ -919,9 +1009,18 @@ export function POSSystem() {
       await loadVendorProducts();
     } catch (error: any) {
       console.error('Erreur paiement:', error);
-      toast.error('Erreur lors du paiement', {
-        description: error.message || 'Une erreur est survenue'
-      });
+      
+      // ✨ NOUVEAU: Si erreur réseau, proposer le mode offline
+      if (error.message?.includes('fetch') || error.message?.includes('network') || error.message?.includes('Failed')) {
+        toast.error('Connexion perdue', {
+          description: 'Passez en mode hors-ligne pour continuer les ventes en espèces.',
+          duration: 5000
+        });
+      } else {
+        toast.error('Erreur lors du paiement', {
+          description: error.message || 'Une erreur est survenue'
+        });
+      }
     } finally {
       setIsProcessingPayment(false);
     }
