@@ -37,20 +37,53 @@ export function DownloadAppButton({ variant = 'default', className = '' }: Downl
   const [isMobile, setIsMobile] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
+  const [isInIframe, setIsInIframe] = useState(false);
+  const [isInAppBrowser, setIsInAppBrowser] = useState(false);
 
   const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
 
   useEffect(() => {
-    const mobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const ua = navigator.userAgent;
+    const mobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    const ios = /iPhone|iPad|iPod/i.test(ua);
+    const inIframe = (() => {
+      try {
+        return window.self !== window.top;
+      } catch {
+        return true;
+      }
+    })();
+    const inApp = /(FBAN|FBAV|Instagram|Line|Twitter|WhatsApp|wv)/i.test(ua);
+
     setIsMobile(mobile);
     setIsIOS(ios);
+    setIsInIframe(inIframe);
+    setIsInAppBrowser(inApp);
   }, []);
+
+  const openForInstall = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('pwa', '1');
+    window.open(url.toString(), '_blank', 'noopener,noreferrer');
+  };
 
   const handleInstall = async () => {
     setIsInstalling(true);
     try {
-      // 0) En preview Lovable: activer le SW pour rendre l'app installable
+      // 0) PWA install bloqué en iframe / webview
+      if (isInIframe || isInAppBrowser) {
+        toast.info('Ouvrir dans le navigateur pour installer', {
+          description: isInAppBrowser
+            ? 'Ouvrez ce lien dans Chrome/Safari (les navigateurs intégrés bloquent l’installation).'
+            : "Ouvrez l'application dans un nouvel onglet pour installer.",
+          duration: 7000,
+        });
+        openForInstall();
+        setShowDialog(false);
+        return;
+      }
+
+      // 1) En preview Lovable: activer le SW pour rendre l'app installable
       const isLovablePreview = window.location.hostname.includes('lovableproject.com');
       const pwaPreviewEnabled = window.localStorage.getItem('enable_pwa_preview') === '1';
       if (!isInstallable && isLovablePreview && !pwaPreviewEnabled) {
@@ -65,7 +98,7 @@ export function DownloadAppButton({ variant = 'default', className = '' }: Downl
         return;
       }
 
-      // 1) Installation PWA native
+      // 2) Installation PWA native
       if (isInstallable) {
         const success = await promptInstall();
         if (success) {
@@ -77,9 +110,9 @@ export function DownloadAppButton({ variant = 'default', className = '' }: Downl
         }
       }
 
-      // 2) Instructions manuelles
+      // 3) Instructions manuelles
       setShowDialog(false);
-      
+
       if (isIOS) {
         toast.info('Installation sur iPhone/iPad', {
           description: "Appuyez sur Partager (↑) puis 'Sur l'écran d'accueil'.",
@@ -212,7 +245,28 @@ function InstallDialog({
   isMobile,
   isIOS,
 }: InstallDialogProps) {
+  const inIframe = (() => {
+    try {
+      return window.self !== window.top;
+    } catch {
+      return true;
+    }
+  })();
+  const inApp = /(FBAN|FBAV|Instagram|Line|Twitter|WhatsApp|wv)/i.test(navigator.userAgent);
+
   const getInstructions = () => {
+    if (inIframe || inApp) {
+      return (
+        <div className="space-y-2">
+          <p className="font-medium">Important :</p>
+          <p className="text-sm">
+            L’installation PWA est bloquée dans un aperçu / navigateur intégré.
+            Ouvrez ce lien dans <span className="font-semibold">Chrome</span> (Android) ou <span className="font-semibold">Safari</span> (iOS).
+          </p>
+        </div>
+      );
+    }
+
     if (isInstallable) {
       return (
         <div className="flex items-center gap-2 text-green-600">
@@ -309,6 +363,8 @@ function InstallDialog({
           <Button onClick={onInstall} className="w-full" size="lg" disabled={isInstalling}>
             {isInstalling ? (
               'Installation en cours...'
+            ) : inIframe || inApp ? (
+              'Ouvrir pour installer'
             ) : isInstallable ? (
               <>
                 <Download className="w-4 h-4 mr-2" />

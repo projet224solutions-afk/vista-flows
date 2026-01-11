@@ -35,23 +35,57 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
   const [isInstalling, setIsInstalling] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isInIframe, setIsInIframe] = useState(false);
+  const [isInAppBrowser, setIsInAppBrowser] = useState(false);
 
   useEffect(() => {
-    const mobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const ua = navigator.userAgent;
+    const mobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    const ios = /iPhone|iPad|iPod/i.test(ua);
+    const inIframe = (() => {
+      try {
+        return window.self !== window.top;
+      } catch {
+        return true;
+      }
+    })();
+    // WebView / in-app browsers n'autorisent souvent pas l'installation PWA
+    const inApp = /(FBAN|FBAV|Instagram|Line|Twitter|WhatsApp|wv)/i.test(ua);
+
     setIsMobile(mobile);
     setIsIOS(ios);
+    setIsInIframe(inIframe);
+    setIsInAppBrowser(inApp);
   }, []);
 
   const handleInstallClick = () => {
     setConfirmOpen(true);
   };
 
+  const openForInstall = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('pwa', '1');
+    // Ouvrir en contexte top-level (requis pour l'installation PWA)
+    window.open(url.toString(), '_blank', 'noopener,noreferrer');
+  };
+
   const runInstall = async () => {
     setIsInstalling(true);
     try {
-      // 0) En preview Lovable: activer le SW (nécessaire pour que Chrome propose l'installation)
-      //    Sans ça, `beforeinstallprompt` ne se déclenche jamais et on reste bloqué sur les instructions.
+      // 0) L'installation PWA ne fonctionne pas dans un iframe / certains webviews
+      if (isInIframe || isInAppBrowser) {
+        toast.info('Ouvrir dans le navigateur pour installer', {
+          description: isInAppBrowser
+            ? 'Ouvrez ce lien dans Chrome/Safari (les navigateurs intégrés bloquent l’installation).'
+            : "Ouvrez l'application dans un nouvel onglet pour installer.",
+          duration: 7000,
+        });
+        openForInstall();
+        setConfirmOpen(false);
+        return;
+      }
+
+      // 1) En preview Lovable: activer le SW (nécessaire pour que Chrome propose l'installation)
       const isLovablePreview = window.location.hostname.includes('lovableproject.com');
       const pwaPreviewEnabled = window.localStorage.getItem('enable_pwa_preview') === '1';
       if (!isInstallable && isLovablePreview && !pwaPreviewEnabled) {
@@ -66,7 +100,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
         return;
       }
 
-      // 1) Essayer l'installation PWA native
+      // 2) Essayer l'installation PWA native
       if (isInstallable) {
         const success = await promptInstall();
         if (success) {
@@ -78,9 +112,9 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
         }
       }
 
-      // 2) Pas de prompt disponible - afficher les instructions manuelles
+      // 3) Pas de prompt disponible - afficher les instructions manuelles
       setConfirmOpen(false);
-      
+
       if (isIOS) {
         toast.info('Installation sur iPhone/iPad', {
           description: "Appuyez sur le bouton Partager (↑) puis 'Sur l'écran d'accueil'.",
@@ -113,9 +147,24 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
   }
 
   const getInstallInstructions = () => {
-    if (isInstallable) {
-      return "L'installation démarrera automatiquement.";
+    if (isInIframe || isInAppBrowser) {
+      return (
+        <span className="flex flex-col gap-2 text-left">
+          <span className="font-medium">Important :</span>
+          <span>
+            L’installation ne fonctionne pas dans un aperçu/ navigateur intégré.
+          </span>
+          <span>
+            Appuyez sur <span className="font-semibold">Installer</span> puis ouvrez le lien dans Chrome/Safari.
+          </span>
+        </span>
+      );
     }
+
+    if (isInstallable) {
+      return "L'installation démarrera automatiquement après confirmation.";
+    }
+
     if (isIOS) {
       return (
         <span className="flex flex-col gap-2 text-left">
@@ -126,6 +175,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
         </span>
       );
     }
+
     if (isMobile) {
       return (
         <span className="flex flex-col gap-2 text-left">
@@ -135,6 +185,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
         </span>
       );
     }
+
     return "Cliquez sur l'icône d'installation dans la barre d'adresse.";
   };
 
@@ -158,7 +209,13 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isInstalling}>Annuler</AlertDialogCancel>
           <AlertDialogAction onClick={runInstall} disabled={isInstalling}>
-            {isInstalling ? 'Installation…' : isInstallable ? 'Installer maintenant' : 'Compris'}
+            {isInstalling
+              ? 'Installation…'
+              : isInIframe || isInAppBrowser
+                ? 'Ouvrir pour installer'
+                : isInstallable
+                  ? 'Installer maintenant'
+                  : 'Compris'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
