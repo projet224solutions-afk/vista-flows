@@ -4,13 +4,15 @@ import { useAuth } from './useAuth';
 
 /**
  * Routes publiques où l'utilisateur peut rester sans redirection automatique
- * SAUF s'il vient juste de se connecter (première visite après login)
+ * Ces routes sont accessibles à tous les utilisateurs, connectés ou non
+ * ⚠️ IMPORTANT: Les liens partagés (/s/, /boutique/, /shop/, /product/) doivent être ici!
  */
 const PUBLIC_ROUTES = [
   '/marketplace',
   '/tracking',
   '/client-tracking',
   '/profil',
+  '/profile',
   '/messages',
   '/services-proximite',
   '/taxi-moto',
@@ -25,7 +27,7 @@ const PUBLIC_ROUTES = [
   '/produit',
   '/shop',
   '/boutique',
-  '/s',
+  '/s',  // Short links - très important!
   '/contact-user',
   '/communication',
   '/bug-bounty',
@@ -33,6 +35,7 @@ const PUBLIC_ROUTES = [
   '/categories',
   '/digital-products',
   '/boutiques',
+  '/ref',  // Affiliate links
 ];
 
 /**

@@ -90,8 +90,8 @@ export default function ShortLinkRedirect() {
         originalUrl: data.original_url
       });
 
-      // Extraire le chemin relatif de l'URL originale et rediriger
-      let relativePath: string;
+      // Extraire le chemin relatif de l'URL originale
+      let targetPath: string;
       
       try {
         const url = new URL(data.original_url);
@@ -99,24 +99,31 @@ export default function ShortLinkRedirect() {
         for (const key of Array.from(url.searchParams.keys())) {
           if (key.startsWith('__lovable')) url.searchParams.delete(key);
         }
-        relativePath = url.pathname + url.search;
+        targetPath = url.pathname + url.search;
       } catch {
         // Si l'URL est déjà relative ou malformée
-        relativePath = data.original_url.startsWith('/') 
+        targetPath = data.original_url.startsWith('/') 
           ? data.original_url 
           : `/${data.original_url}`;
       }
 
-      console.log('🔗 [ShortLink] Redirecting to:', relativePath);
+      console.log('🔗 [ShortLink] Target path extracted:', targetPath);
       
-      // Rediriger immédiatement avec replace pour éviter l'historique
-      // On utilise window.location pour forcer la navigation
-      if (relativePath.startsWith('http')) {
-        window.location.href = relativePath;
-      } else {
-        // Pour les chemins relatifs, utiliser navigate
-        navigate(relativePath, { replace: true });
-      }
+      // ⚡ SOLUTION: Toujours utiliser window.location.replace pour éviter
+      // les conflits avec React Router et useRoleRedirect
+      // Cela garantit une navigation propre vers la destination
+      
+      // Construire l'URL complète pour la redirection
+      const baseUrl = window.location.origin;
+      const fullUrl = targetPath.startsWith('http') 
+        ? targetPath 
+        : `${baseUrl}${targetPath}`;
+      
+      console.log('🔗 [ShortLink] Redirecting via window.location to:', fullUrl);
+      
+      // Utiliser window.location.replace pour une redirection fiable
+      // Cela contourne tous les hooks React et garantit la navigation
+      window.location.replace(fullUrl);
 
     } catch (err) {
       console.error('🔗 [ShortLink] Error resolving short link:', err);
