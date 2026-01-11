@@ -1,5 +1,6 @@
 /**
  * Formulaire unifié de création de produit numérique
+ * Avec support vidéo de présentation (5 secondes max)
  */
 
 import { useState } from 'react';
@@ -14,7 +15,8 @@ import {
   Image as ImageIcon,
   Loader2,
   CheckCircle,
-  Globe
+  Globe,
+  Video
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { VideoUploadPreview } from '@/components/ui/video-upload-preview';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -119,9 +122,17 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
     publishImmediately: true
   });
   const [images, setImages] = useState<string[]>([]);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
 
   const handleChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleVideoSelect = (file: File | null, url: string | null) => {
+    setVideoFile(file);
+    setVideoPreviewUrl(url);
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -175,6 +186,28 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
         .eq('user_id', user.id)
         .single();
 
+      // Upload de la vidéo si présente
+      let videoUrl: string | null = null;
+      if (videoFile) {
+        setUploadingVideo(true);
+        const videoFileName = `${user.id}/videos/${Date.now()}_${videoFile.name}`;
+        
+        const { error: videoError } = await supabase.storage
+          .from('product-images')
+          .upload(videoFileName, videoFile);
+
+        if (!videoError) {
+          const { data: videoUrlData } = supabase.storage
+            .from('product-images')
+            .getPublicUrl(videoFileName);
+          videoUrl = videoUrlData.publicUrl;
+        } else {
+          console.error('Erreur upload vidéo:', videoError);
+          toast.warning('Vidéo non uploadée, mais le produit sera créé');
+        }
+        setUploadingVideo(false);
+      }
+
       const productData = {
         merchant_id: user.id,
         vendor_id: vendor?.id || null,
@@ -182,6 +215,7 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
         description: formData.description.trim(),
         short_description: formData.shortDescription.trim(),
         images: images,
+        video_url: videoUrl,
         category: category,
         product_mode: formData.productMode,
         price: parseFloat(formData.price),
@@ -498,6 +532,27 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
           </CardContent>
         </Card>
 
+        {/* Vidéo de présentation */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Video className="w-4 h-4 text-primary" />
+              Vidéo de présentation
+              <span className="text-xs font-normal text-muted-foreground">(optionnel)</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <VideoUploadPreview
+              maxDuration={5}
+              maxSizeMB={20}
+              onVideoSelect={handleVideoSelect}
+              currentVideoUrl={videoPreviewUrl}
+              label=""
+              helpText="Une courte vidéo de présentation de votre produit (5 secondes maximum)"
+            />
+          </CardContent>
+        </Card>
+
         {/* Publication */}
         <Card>
           <CardContent className="p-4">
@@ -519,13 +574,13 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
         {/* Submit Button */}
         <Button
           onClick={handleSubmit}
-          disabled={loading}
+          disabled={loading || uploadingVideo}
           className="w-full h-12"
         >
-          {loading ? (
+          {loading || uploadingVideo ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Création en cours...
+              {uploadingVideo ? 'Upload vidéo...' : 'Création en cours...'}
             </>
           ) : (
             <>
