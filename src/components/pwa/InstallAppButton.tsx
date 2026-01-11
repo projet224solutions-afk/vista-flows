@@ -3,14 +3,12 @@
  * COMPOSANT: InstallAppButton
  * =====================================================
  *
- * Bouton d'installation PWA native depuis le navigateur.
- *
- * Notes importantes:
- * - Les navigateurs n'autorisent pas une installation 100% automatique.
- * - On peut seulement déclencher le prompt système (si disponible) suite à un geste utilisateur.
+ * Bouton d'installation PWA / APK.
+ * - Tente d'abord l'installation PWA native
+ * - Sinon, lance le téléchargement APK automatiquement sur mobile
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Download, Smartphone, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +24,9 @@ import {
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { toast } from 'sonner';
 
+// URL de téléchargement APK (GitHub Releases)
+const APK_URL = 'https://github.com/projet224solutions-afk/vista-flows/releases/latest/download/224solutions-android.apk';
+
 interface InstallAppButtonProps {
   variant?: 'default' | 'compact' | 'floating';
   className?: string;
@@ -35,6 +36,12 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
   const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    setIsMobile(mobile);
+  }, []);
 
   const handleInstallClick = () => {
     setConfirmOpen(true);
@@ -43,21 +50,29 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
   const runInstall = async () => {
     setIsInstalling(true);
     try {
-      if (!isInstallable) {
-        toast.info('Installation non disponible automatiquement', {
-          description: "Ouvrez le menu de votre navigateur (⋮) puis 'Installer l’application' / 'Ajouter à l’écran d’accueil'.",
-        });
-        return;
+      // 1) Essayer d'abord l'installation PWA native
+      if (isInstallable) {
+        const success = await promptInstall();
+        if (success) {
+          toast.success('Application installée', {
+            description: "224Solutions est maintenant disponible sur votre écran d'accueil.",
+          });
+          setConfirmOpen(false);
+          return;
+        }
       }
 
-      const success = await promptInstall();
-      if (success) {
-        toast.success('Application installée', {
-          description: "224Solutions est maintenant disponible sur votre écran d'accueil.",
+      // 2) Fallback: télécharger l'APK sur mobile Android
+      if (isMobile) {
+        toast.info('Téléchargement de l\'APK en cours…', {
+          description: 'Ouvrez le fichier téléchargé pour installer l\'application.',
         });
+        // Déclencher le téléchargement
+        window.location.assign(APK_URL);
       } else {
-        toast.info('Installation annulée', {
-          description: "Vous pouvez relancer l'installation quand vous voulez.",
+        // Desktop sans PWA disponible
+        toast.info('Installation via le navigateur', {
+          description: "Ouvrez le menu (⋮) puis 'Installer l'application' ou utilisez le téléchargement EXE.",
         });
       }
     } finally {
@@ -80,9 +95,11 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
     <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirmer l’installation</AlertDialogTitle>
+          <AlertDialogTitle>Confirmer l'installation</AlertDialogTitle>
           <AlertDialogDescription>
-            Voulez-vous installer 224Solutions sur cet appareil maintenant ?
+            {isMobile
+              ? 'Voulez-vous installer 224Solutions sur votre téléphone ?'
+              : 'Voulez-vous installer 224Solutions sur cet appareil ?'}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
