@@ -3,9 +3,10 @@
  * COMPOSANT: InstallAppButton
  * =====================================================
  *
- * Bouton d'installation PWA uniquement (pas de téléchargement APK externe).
- * - Installation directe via le navigateur
- * - Guide l'utilisateur si le prompt n'est pas disponible
+ * Bouton d'installation PWA avec support iOS amélioré.
+ * - Installation directe via beforeinstallprompt (Android/Desktop)
+ * - Guide visuel étape par étape pour iOS (Safari uniquement)
+ * - Détection des navigateurs intégrés (WebView)
  */
 
 import { useState, useEffect } from 'react';
@@ -23,6 +24,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { toast } from 'sonner';
+import IOSInstallGuide from './IOSInstallGuide';
 
 interface InstallAppButtonProps {
   variant?: 'default' | 'compact' | 'floating';
@@ -32,16 +34,20 @@ interface InstallAppButtonProps {
 export function InstallAppButton({ variant = 'default', className = '' }: InstallAppButtonProps) {
   const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [iosGuideOpen, setIosGuideOpen] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isSafari, setIsSafari] = useState(false);
   const [isInIframe, setIsInIframe] = useState(false);
   const [isInAppBrowser, setIsInAppBrowser] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
     const ua = navigator.userAgent;
     const mobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
     const ios = /iPhone|iPad|iPod/i.test(ua);
+    const safari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome/i.test(ua);
     const inIframe = (() => {
       try {
         return window.self !== window.top;
@@ -51,14 +57,25 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
     })();
     // WebView / in-app browsers n'autorisent souvent pas l'installation PWA
     const inApp = /(FBAN|FBAV|Instagram|Line|Twitter|WhatsApp|wv)/i.test(ua);
+    
+    // Vérifier si déjà en mode standalone (PWA installée)
+    const standalone = window.matchMedia('(display-mode: standalone)').matches 
+      || (window.navigator as any).standalone === true;
 
     setIsMobile(mobile);
     setIsIOS(ios);
+    setIsSafari(safari);
     setIsInIframe(inIframe);
     setIsInAppBrowser(inApp);
+    setIsStandalone(standalone);
   }, []);
 
   const handleInstallClick = () => {
+    // Sur iOS, ouvrir directement le guide
+    if (isIOS) {
+      setIosGuideOpen(true);
+      return;
+    }
     setConfirmOpen(true);
   };
 
@@ -72,11 +89,36 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
   const runInstall = async () => {
     setIsInstalling(true);
     try {
-      // 0) L'installation PWA ne fonctionne pas dans un iframe / certains webviews
+      // 0) Déjà installé
+      if (isStandalone) {
+        toast.success('Application déjà installée !', {
+          description: "224Solutions est déjà sur votre écran d'accueil.",
+        });
+        setConfirmOpen(false);
+        return;
+      }
+
+      // 1) iOS - Ouvrir le guide visuel
+      if (isIOS) {
+        setConfirmOpen(false);
+        
+        if (!isSafari && !isInAppBrowser) {
+          toast.info('Ouvrir dans Safari', {
+            description: "L'installation PWA sur iOS fonctionne uniquement avec Safari.",
+            duration: 6000,
+          });
+        }
+        
+        // Afficher le guide iOS
+        setIosGuideOpen(true);
+        return;
+      }
+
+      // 2) L'installation PWA ne fonctionne pas dans un iframe / certains webviews
       if (isInIframe || isInAppBrowser) {
         toast.info('Ouvrir dans le navigateur pour installer', {
           description: isInAppBrowser
-            ? 'Ouvrez ce lien dans Chrome/Safari (les navigateurs intégrés bloquent l’installation).'
+            ? "Ouvrez ce lien dans Chrome/Safari (les navigateurs intégrés bloquent l'installation)."
             : "Ouvrez l'application dans un nouvel onglet pour installer.",
           duration: 7000,
         });
@@ -85,14 +127,14 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
         return;
       }
 
-      // 1) En preview Lovable: activer le SW (nécessaire pour que Chrome propose l'installation)
+      // 3) En preview Lovable: activer le SW (nécessaire pour que Chrome propose l'installation)
       const isLovablePreview = window.location.hostname.includes('lovableproject.com');
       const pwaPreviewEnabled = window.localStorage.getItem('enable_pwa_preview') === '1';
       if (!isInstallable && isLovablePreview && !pwaPreviewEnabled) {
         window.localStorage.setItem('enable_pwa_preview', '1');
         const url = new URL(window.location.href);
         url.searchParams.set('pwa', '1');
-        toast.info('Activation de l’installation…', {
+        toast.info("Activation de l'installation…", {
           description: "On recharge la page pour activer le mode PWA (une seule fois).",
           duration: 4000,
         });
@@ -100,7 +142,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
         return;
       }
 
-      // 2) Essayer l'installation PWA native
+      // 4) Essayer l'installation PWA native
       if (isInstallable) {
         const success = await promptInstall();
         if (success) {
@@ -112,15 +154,10 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
         }
       }
 
-      // 3) Pas de prompt disponible - afficher les instructions manuelles
+      // 5) Pas de prompt disponible - afficher les instructions manuelles
       setConfirmOpen(false);
 
-      if (isIOS) {
-        toast.info('Installation sur iPhone/iPad', {
-          description: "Appuyez sur le bouton Partager (↑) puis 'Sur l'écran d'accueil'.",
-          duration: 8000,
-        });
-      } else if (isMobile) {
+      if (isMobile) {
         toast.info('Installation sur Android', {
           description: "Ouvrez le menu (⋮) puis 'Installer l'application' ou 'Ajouter à l'écran d'accueil'.",
           duration: 8000,
@@ -136,8 +173,8 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
     }
   };
 
-  // Ne pas afficher si déjà installé
-  if (isInstalled) {
+  // Ne pas afficher si déjà installé (standalone mode)
+  if (isInstalled || isStandalone) {
     return (
       <div className={`flex items-center gap-2 text-green-600 ${className}`}>
         <CheckCircle2 className="w-5 h-5" />
@@ -152,7 +189,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
         <span className="flex flex-col gap-2 text-left">
           <span className="font-medium">Important :</span>
           <span>
-            L’installation ne fonctionne pas dans un aperçu/ navigateur intégré.
+            L'installation ne fonctionne pas dans un aperçu/ navigateur intégré.
           </span>
           <span>
             Appuyez sur <span className="font-semibold">Installer</span> puis ouvrez le lien dans Chrome/Safari.
@@ -235,6 +272,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
           <span className="font-semibold text-sm">Installer</span>
         </button>
         {ConfirmDialog}
+        <IOSInstallGuide open={iosGuideOpen} onOpenChange={setIosGuideOpen} />
       </>
     );
   }
@@ -248,6 +286,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
           Installer
         </Button>
         {ConfirmDialog}
+        <IOSInstallGuide open={iosGuideOpen} onOpenChange={setIosGuideOpen} />
       </>
     );
   }
@@ -288,6 +327,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
       </div>
 
       {ConfirmDialog}
+      <IOSInstallGuide open={iosGuideOpen} onOpenChange={setIosGuideOpen} />
     </>
   );
 }

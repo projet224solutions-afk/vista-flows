@@ -2,8 +2,10 @@
   "name": "224Solutions - Taxi-Moto, Livraison & E-Commerce",
   "short_name": "224Solutions",
   "description": "Réservez un taxi, commandez vos repas, faites vos achats en ligne. La super-app tout-en-un de la Guinée.",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
+  "id": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
   "orientation": "portrait-primary",
@@ -58,6 +60,28 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Écran d'accueil 224Solutions"
+    },
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Vue bureau 224Solutions"
     }
   ],
   "shortcuts": [
@@ -65,17 +89,21 @@
       "name": "Réserver un Taxi",
       "short_name": "Taxi",
       "description": "Réservez un taxi-moto rapidement",
-      "url": "/taxi",
+      "url": "/taxi?source=pwa_shortcut",
       "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
     },
     {
       "name": "Marketplace",
       "short_name": "Acheter",
       "description": "Découvrez nos produits",
-      "url": "/marketplace",
+      "url": "/marketplace?source=pwa_shortcut",
       "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
     }
   ],
   "related_applications": [],
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "handle_links": "preferred",
+  "launch_handler": {
+    "client_mode": ["navigate-existing", "auto"]
+  }
 }
