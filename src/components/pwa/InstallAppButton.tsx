@@ -50,7 +50,23 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
   const runInstall = async () => {
     setIsInstalling(true);
     try {
-      // Essayer l'installation PWA native
+      // 0) En preview Lovable: activer le SW (nécessaire pour que Chrome propose l'installation)
+      //    Sans ça, `beforeinstallprompt` ne se déclenche jamais et on reste bloqué sur les instructions.
+      const isLovablePreview = window.location.hostname.includes('lovableproject.com');
+      const pwaPreviewEnabled = window.localStorage.getItem('enable_pwa_preview') === '1';
+      if (!isInstallable && isLovablePreview && !pwaPreviewEnabled) {
+        window.localStorage.setItem('enable_pwa_preview', '1');
+        const url = new URL(window.location.href);
+        url.searchParams.set('pwa', '1');
+        toast.info('Activation de l’installation…', {
+          description: "On recharge la page pour activer le mode PWA (une seule fois).",
+          duration: 4000,
+        });
+        window.location.replace(url.toString());
+        return;
+      }
+
+      // 1) Essayer l'installation PWA native
       if (isInstallable) {
         const success = await promptInstall();
         if (success) {
@@ -62,7 +78,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
         }
       }
 
-      // Pas de prompt disponible - afficher les instructions manuelles
+      // 2) Pas de prompt disponible - afficher les instructions manuelles
       setConfirmOpen(false);
       
       if (isIOS) {

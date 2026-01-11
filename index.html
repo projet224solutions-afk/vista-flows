@@ -110,15 +110,19 @@
     <div class="text">Chargement...</div>
   </div>
 
-  <!-- Preview hotfix: désenregistrer SW + vider caches pour éviter "Invalid hook call" -->
+  <!-- Preview hotfix (optionnel): désenregistrer SW + vider caches -->
+  <!--
+    IMPORTANT:
+    - Ce reset empêche l'installation PWA si on le fait à chaque visite.
+    - On l'active seulement si on ajoute ?resetSw=1 à l'URL.
+  -->
   <script>
     (function () {
       var isLovablePreview = location.hostname.indexOf('lovableproject.com') !== -1;
       if (!isLovablePreview) return;
 
-      var FLAG = '__lovable_sw_reset_done__';
-      if (sessionStorage.getItem(FLAG) === '1') return;
-      sessionStorage.setItem(FLAG, '1');
+      var params = new URLSearchParams(location.search);
+      if (!params.has('resetSw')) return;
 
       function safe(p) { return p && typeof p.then === 'function' ? p : Promise.resolve(); }
 
@@ -139,7 +143,7 @@
         })()
       ).finally(function () {
         // Recharge une fois pour repartir sur des bundles propres
-        location.reload();
+        location.replace(location.pathname + location.hash);
       });
     })();
   </script>

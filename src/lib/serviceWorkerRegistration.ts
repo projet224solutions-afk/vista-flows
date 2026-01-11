@@ -3,11 +3,11 @@
  * Gère l'enregistrement du SW de manière non-bloquante
  */
 
-export function registerServiceWorker() {
-  // IMPORTANT: ne jamais enregistrer le SW en dev (évite cache + invalid hook call)
-  if (import.meta.env.DEV) return;
+export function registerServiceWorker(options?: { force?: boolean }) {
+  // IMPORTANT: par défaut on n'enregistre pas le SW en dev (évite cache + invalid hook call)
+  // `force` permet de tester l'installation PWA en preview/mobile si nécessaire.
+  if (import.meta.env.DEV && !options?.force) return;
 
-  // Enregistrer le SW de manière différée pour ne pas bloquer le chargement initial
   if ("serviceWorker" in navigator) {
     // Attendre que l'app soit chargée avant d'enregistrer le SW
     if (document.readyState === 'complete') {
@@ -22,7 +22,7 @@ function registerSW() {
   // Petit délai pour s'assurer que l'app React est montée
   setTimeout(() => {
     navigator.serviceWorker
-      .register("/service-worker.js")
+      .register("/service-worker.js", { updateViaCache: 'none' as any })
       .then((registration) => {
         console.log("[PWA] Service Worker enregistré");
 
