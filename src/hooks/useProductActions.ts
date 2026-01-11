@@ -94,6 +94,43 @@ export function useProductActions({
   }, [vendorId]);
 
   /**
+   * Upload vidéo publicitaire vers Supabase Storage (Premium uniquement)
+   */
+  const uploadPromotionalVideo = useCallback(async (file: File): Promise<string | null> => {
+    if (!vendorId || !file) return null;
+
+    try {
+      toast.info('Upload vidéo publicitaire...');
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${vendorId}/videos/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('product-videos')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error('[VideoUpload] Error:', uploadError);
+        toast.error(`Échec upload vidéo: ${uploadError.message}`);
+        return null;
+      }
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('product-videos').getPublicUrl(fileName);
+
+      toast.success('Vidéo publicitaire uploadée');
+      return publicUrl;
+    } catch (error) {
+      console.error('[VideoUpload] Exception:', error);
+      return null;
+    }
+  }, [vendorId]);
+
+  /**
    * Synchroniser le stock dans la table inventory (stock réel utilisé en POS)
    */
   const syncInventoryQuantity = useCallback(async (productId: string, quantity: number) => {
@@ -189,7 +226,8 @@ export function useProductActions({
    */
   const createProduct = useCallback(async (
     formData: ProductFormData,
-    images: File[]
+    images: File[],
+    promotionalVideo?: File | null
   ): Promise<{ success: boolean; product?: any }> => {
     if (!vendorId) {
       toast.error('Vendeur introuvable');
@@ -241,6 +279,12 @@ export function useProductActions({
       // Upload images
       const imageUrls = await uploadImages(images);
 
+      // Upload vidéo publicitaire si fournie
+      let videoUrl: string | null = null;
+      if (promotionalVideo) {
+        videoUrl = await uploadPromotionalVideo(promotionalVideo);
+      }
+
       // Gérer catégorie - log pour debug
       console.log('[ProductCreate] Category data received:', {
         category_id: formData.category_id,
@@ -277,6 +321,7 @@ export function useProductActions({
         is_active: formData.is_active,
         vendor_id: vendorId,
         images: imageUrls.length > 0 ? imageUrls : null,
+        promotional_video: videoUrl,
         // Champs carton
         sell_by_carton: formData.sell_by_carton || false,
         units_per_carton: formData.units_per_carton ? parseInt(formData.units_per_carton) : 1,
@@ -324,7 +369,9 @@ export function useProductActions({
     productId: string,
     formData: ProductFormData,
     newImages: File[],
-    existingImages: string[] = []
+    existingImages: string[] = [],
+    promotionalVideo?: File | null,
+    existingVideoUrl?: string | null
   ): Promise<{ success: boolean; product?: any }> => {
     if (!vendorId) {
       toast.error('Vendeur introuvable');
@@ -337,6 +384,12 @@ export function useProductActions({
 
       // Combiner anciennes et nouvelles images
       const allImages = newImageUrls.length > 0 ? [...existingImages, ...newImageUrls] : existingImages;
+
+      // Upload nouvelle vidéo si fournie, sinon garder l'existante
+      let videoUrl: string | null | undefined = existingVideoUrl;
+      if (promotionalVideo) {
+        videoUrl = await uploadPromotionalVideo(promotionalVideo);
+      }
 
       // Gérer catégorie
       const categoryId = await handleCategory(formData.category_name, formData.category_id);
@@ -357,6 +410,7 @@ export function useProductActions({
         tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()) : null,
         is_active: formData.is_active,
         images: allImages.length > 0 ? allImages : null,
+        promotional_video: videoUrl,
         // Champs carton
         sell_by_carton: formData.sell_by_carton || false,
         units_per_carton: formData.units_per_carton ? parseInt(formData.units_per_carton) : 1,
@@ -511,5 +565,6 @@ export function useProductActions({
     duplicateProduct,
     bulkUpdateStock,
     uploadImages,
+    uploadPromotionalVideo,
   };
 }
