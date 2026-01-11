@@ -103,81 +103,74 @@ export function DownloadAppBanner() {
   return (
     <div 
       id="download-banner"
-      className="fixed bottom-0 left-0 right-0 z-[9999] animate-in slide-in-from-bottom duration-300"
+      className="fixed left-0 right-0 z-40 animate-in slide-in-from-bottom duration-300"
+      style={{ bottom: '80px' }} // Positionné au-dessus de la barre de navigation mobile
       role="banner"
       aria-label="Bandeau de téléchargement de l'application"
     >
-      {/* Container principal avec fond sombre et shadow */}
+      {/* Container principal avec fond gradient et shadow */}
       <div 
-        className="w-full px-4 py-4 shadow-[0_-4px_20px_rgba(0,0,0,0.3)]"
-        style={{ backgroundColor: '#1a1a1a' }}
+        className="w-full px-3 py-3 shadow-lg rounded-t-xl mx-auto max-w-[98%] sm:max-w-full sm:rounded-none"
+        style={{ 
+          background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+          boxShadow: '0 -4px 20px rgba(37, 99, 235, 0.4)'
+        }}
       >
-        <div className="max-w-screen-xl mx-auto flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap">
+        <div className="max-w-screen-xl mx-auto flex items-center justify-between gap-3">
           
           {/* Section gauche: Icône + Message */}
-          <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
             {/* Icône dynamique selon le type d'appareil */}
             <div 
-              className="p-2.5 rounded-xl flex-shrink-0"
-              style={{ backgroundColor: 'rgba(255, 75, 0, 0.2)' }}
+              className="p-2 rounded-lg flex-shrink-0 bg-white/20"
             >
               {isMobileDevice ? (
-                <Smartphone className="w-6 h-6" style={{ color: '#ff4b00' }} />
+                <Smartphone className="w-5 h-5 text-white" />
               ) : (
-                <Monitor className="w-6 h-6" style={{ color: '#ff4b00' }} />
+                <Monitor className="w-5 h-5 text-white" />
               )}
             </div>
             
             {/* Message d'invitation au téléchargement */}
-            <p 
-              id="download-text"
-              className="text-sm sm:text-base font-medium"
-              style={{ color: '#ffffff' }}
-            >
-              <span className="hidden sm:inline">
-                Téléchargez l'application{' '}
-              </span>
-              <span className="font-bold" style={{ color: '#ff4b00' }}>
-                224Solutions
-              </span>
-              <span className="hidden md:inline">
-                {' '}pour une meilleure expérience !
-              </span>
-              <span className="sm:hidden">
-                {' '}- Télécharger
-              </span>
-            </p>
+            <div className="flex flex-col">
+              <p className="text-sm font-bold text-white leading-tight">
+                Téléchargez 224Solutions
+              </p>
+              <p className="text-xs text-white/80 hidden sm:block">
+                Pour une meilleure expérience !
+              </p>
+            </div>
           </div>
 
           {/* Section droite: Boutons d'action */}
-          <div className="flex items-center gap-3 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
             
             {/* Bouton de téléchargement principal */}
             <a
               id="download-btn"
               href={getDownloadUrl()}
               download
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-sm sm:text-base transition-all duration-200 hover:opacity-90 hover:scale-105 active:scale-95"
-              style={{ 
-                backgroundColor: '#ff4b00', 
-                color: '#ffffff',
-                textDecoration: 'none'
+              onClick={(e) => {
+                e.stopPropagation();
               }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg font-bold text-sm transition-all duration-200 bg-white text-blue-600 hover:bg-blue-50 active:scale-95 shadow-md"
               aria-label={`Télécharger l'application ${isMobileDevice ? 'APK pour Android' : 'EXE pour Windows'}`}
             >
-              <Download className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Télécharger</span>
+              <Download className="w-4 h-4" />
+              <span>Installer</span>
             </a>
             
             {/* Bouton de fermeture */}
             <button
               id="close-banner"
-              onClick={handleClose}
-              className="p-2 rounded-full transition-all duration-200 hover:bg-white/10"
-              style={{ color: '#ffffff' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClose();
+              }}
+              className="p-1.5 rounded-full transition-all duration-200 bg-white/20 hover:bg-white/30 text-white"
               aria-label="Fermer le bandeau de téléchargement"
             >
-              <X className="w-5 h-5 sm:w-6 sm:h-6" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
