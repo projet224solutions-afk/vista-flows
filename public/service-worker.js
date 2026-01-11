@@ -110,32 +110,58 @@ const VENDOR_ROUTES = [
   "/vendeur/settings"
 ];
 
+// Pré-cache robuste: index.html + assets build (/assets/...) pour éviter l'écran blanc au redémarrage offline (iOS)
+async function precacheIndexAndBuildAssets() {
+  const staticCache = await caches.open(STATIC_CACHE);
+
+  // 1) Assets essentiels (best-effort)
+  await Promise.allSettled(
+    PRECACHE_ASSETS.map((url) =>
+      staticCache.add(url).catch((err) => console.warn(`[SW] Échec cache ${url}:`, err))
+    )
+  );
+
+  // 2) Index + extraction des assets Vite (/assets/*.js|css)
+  try {
+    const res = await fetch('/index.html', {
+      cache: 'reload',
+      credentials: 'same-origin',
+    });
+
+    if (!res || !res.ok) return;
+
+    // Garder une copie "app shell" pour les routes SPA
+    const shellCache = await caches.open(APP_SHELL_CACHE);
+    await shellCache.put('/', res.clone());
+
+    // Mettre aussi /index.html en cache
+    await staticCache.put('/index.html', res.clone());
+
+    const html = await res.text();
+    const assetUrls = Array.from(
+      html.matchAll(/(?:href|src)=["'](\/assets\/[^"']+)["']/g)
+    ).map((m) => m[1]);
+
+    const uniqueAssetUrls = Array.from(new Set(assetUrls));
+
+    await Promise.allSettled(
+      uniqueAssetUrls.map((u) =>
+        staticCache.add(new Request(u, { cache: 'reload' })).catch(() => {})
+      )
+    );
+
+    console.log('[SW] Précache build assets:', uniqueAssetUrls.length);
+  } catch (e) {
+    console.warn('[SW] Impossible de précacher index/assets:', e);
+  }
+}
+
 // INSTALL - Précacher les assets essentiels
 self.addEventListener("install", (event) => {
   console.log("[SW] Installation v7 - Mode offline vendeur activé");
-  
+
   event.waitUntil(
-    Promise.all([
-      // Précacher les assets statiques
-      caches.open(STATIC_CACHE).then((cache) => {
-        console.log("[SW] Précache des assets essentiels");
-        // Ajouter un par un pour éviter qu'un échec bloque tout
-        return Promise.allSettled(
-          PRECACHE_ASSETS.map(url => 
-            cache.add(url).catch(err => console.warn(`[SW] Échec cache ${url}:`, err))
-          )
-        );
-      }),
-      // Précacher l'app shell (index.html) séparément
-      caches.open(APP_SHELL_CACHE).then((cache) => {
-        return fetch('/').then(response => {
-          if (response.ok) {
-            cache.put('/', response.clone());
-            cache.put('/index.html', response);
-          }
-        }).catch(() => {});
-      })
-    ]).then(() => {
+    precacheIndexAndBuildAssets().then(() => {
       console.log("[SW] Précache terminé");
       self.skipWaiting();
     })

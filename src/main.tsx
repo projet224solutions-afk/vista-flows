@@ -97,9 +97,8 @@ if (import.meta.env.DEV && !enablePwaPreview) {
     caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))));
   }
 } else {
-  setTimeout(() => {
-    registerServiceWorker({ force: enablePwaPreview });
-  }, 1500);
+  // En prod / preview mobile, on enregistre le SW le plus tôt possible
+  registerServiceWorker({ force: enablePwaPreview });
 }
 
 // Capturer les erreurs globales
