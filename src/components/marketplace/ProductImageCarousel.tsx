@@ -28,6 +28,7 @@ export function ProductImageCarousel({
   const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set([0]));
   const [direction, setDirection] = useState<'next' | 'prev'>('next');
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const restartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Si pas d'images ou qu'une seule, pas de carousel
   if (!images || images.length === 0) {
@@ -54,12 +55,13 @@ export function ProductImageCarousel({
   }
 
   // Auto-défilement
-  const startAutoPlay = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
+  useEffect(() => {
+    // Ne démarrer que si on a plusieurs images et pas en hover
+    if (images.length <= 1 || isHovered) {
+      return;
     }
-    
-    intervalRef.current = setInterval(() => {
+
+    const interval = setInterval(() => {
       setDirection('next');
       setCurrentIndex((prev) => {
         const next = (prev + 1) % images.length;
@@ -68,19 +70,23 @@ export function ProductImageCarousel({
         return next;
       });
     }, autoPlayInterval);
-  }, [images.length, autoPlayInterval]);
 
-  const stopAutoPlay = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
+    return () => {
+      clearInterval(interval);
+    };
+  }, [images.length, autoPlayInterval, isHovered]);
+
+  // Cleanup des timeouts
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
+    };
   }, []);
 
   // Gérer le hover
   const handleMouseEnter = () => {
     setIsHovered(true);
-    stopAutoPlay();
   };
 
   const handleMouseLeave = () => {
@@ -90,7 +96,6 @@ export function ProductImageCarousel({
       setDirection('prev');
       setCurrentIndex(0);
     }
-    startAutoPlay();
   };
 
   // Gérer le touch (swipe)
@@ -99,7 +104,7 @@ export function ProductImageCarousel({
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
-    stopAutoPlay();
+    setIsHovered(true); // Pause l'auto-play
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -108,7 +113,11 @@ export function ProductImageCarousel({
 
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd) {
-      startAutoPlay();
+      // Redémarrer l'auto-play après 2 secondes
+      if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
+      restartTimeoutRef.current = setTimeout(() => {
+        setIsHovered(false);
+      }, 2000);
       return;
     }
 
@@ -135,29 +144,25 @@ export function ProductImageCarousel({
     }
 
     // Redémarrer l'auto-play après 2 secondes
-    setTimeout(() => {
-      startAutoPlay();
+    if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
+    restartTimeoutRef.current = setTimeout(() => {
+      setIsHovered(false);
     }, 2000);
   };
 
   // Navigation par dots
   const goToSlide = (index: number) => {
-    stopAutoPlay();
+    setIsHovered(true);
     setDirection(index > currentIndex ? 'next' : 'prev');
     setCurrentIndex(index);
     setLoadedImages((loaded) => new Set(loaded).add(index));
     
     // Redémarrer après 3 secondes
-    setTimeout(() => {
-      startAutoPlay();
+    if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
+    restartTimeoutRef.current = setTimeout(() => {
+      setIsHovered(false);
     }, 3000);
   };
-
-  // Lifecycle
-  useEffect(() => {
-    startAutoPlay();
-    return () => stopAutoPlay();
-  }, [startAutoPlay, stopAutoPlay]);
 
   // Preload des images au hover
   useEffect(() => {
