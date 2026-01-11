@@ -1,11 +1,16 @@
 /**
  * COMPOSANT: DownloadAppButton
  * Bouton de téléchargement APK/EXE avec génération automatique
- * Version: 3.0 - Avec support génération locale
+ * Version: 4.0 - Avec fallback PWA automatique
+ * 
+ * CHANGEMENTS v4.0:
+ * - Fallback automatique vers PWA si APK/EXE indisponibles
+ * - Affichage intelligent selon disponibilité des fichiers
+ * - Mode "toujours afficher" même si fichiers manquants
  */
 
 import { useState, useEffect } from 'react';
-import { Download, Smartphone, Monitor, AlertCircle, CheckCircle } from 'lucide-react';
+import { Download, Smartphone, Monitor, AlertCircle, CheckCircle, Info, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -15,6 +20,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
 
 // Configuration des liens de téléchargement
 const SUPABASE_URL = 'https://uakkxaibujzxdiqzpnpr.supabase.co';
@@ -49,6 +55,9 @@ export function DownloadAppButton({ variant = 'default', className = '' }: Downl
     exe: 'checking'
   });
 
+  // Hook PWA pour fallback
+  const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
+
   useEffect(() => {
     // Détection mobile
     const mobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -60,17 +69,32 @@ export function DownloadAppButton({ variant = 'default', className = '' }: Downl
 
   const checkFileAvailability = async () => {
     try {
-      // Vérifier APK
-      const apkResponse = await fetch(DOWNLOAD_CONFIG.apk.url, { method: 'HEAD' });
-      // Vérifier EXE
-      const exeResponse = await fetch(DOWNLOAD_CONFIG.exe.url, { method: 'HEAD' });
+      // Vérifier APK avec timeout court
+      const apkPromise = fetch(DOWNLOAD_CONFIG.apk.url, { 
+        method: 'HEAD',
+        signal: AbortSignal.timeout(5000) // 5 secondes max
+      });
+      
+      // Vérifier EXE avec timeout court
+      const exePromise = fetch(DOWNLOAD_CONFIG.exe.url, { 
+        method: 'HEAD',
+        signal: AbortSignal.timeout(5000)
+      });
+
+      const [apkResponse, exeResponse] = await Promise.allSettled([apkPromise, exePromise]);
 
       setDownloadStatus({
-        apk: apkResponse.ok ? 'available' : 'unavailable',
-        exe: exeResponse.ok ? 'available' : 'unavailable'
+        apk: apkResponse.status === 'fulfilled' && apkResponse.value.ok ? 'available' : 'unavailable',
+        exe: exeResponse.status === 'fulfilled' && exeResponse.value.ok ? 'available' : 'unavailable'
+      });
+
+      console.log('📥 [Download] Statut fichiers:', {
+        apk: apkResponse.status === 'fulfilled' ? apkResponse.value.status : 'timeout',
+        exe: exeResponse.status === 'fulfilled' ? exeResponse.value.status : 'timeout'
       });
     } catch (error) {
-      console.error('Erreur vérification fichiers:', error);
+      console.error('❌ [Download] Erreur vérification fichiers:', error);
+      // Marquer comme unavailable mais ne pas bloquer l'affichage
       setDownloadStatus({
         apk: 'unavailable',
         exe: 'unavailable'
@@ -80,6 +104,8 @@ export function DownloadAppButton({ variant = 'default', className = '' }: Downl
 
   const handleDownload = (type: 'apk' | 'exe') => {
     const config = DOWNLOAD_CONFIG[type];
+    
+    console.log(`📥 [Download] Lancement téléchargement: ${config.name}`);
     
     // Créer un lien de téléchargement (meilleur support mobile)
     const link = document.createElement('a');
@@ -93,8 +119,18 @@ export function DownloadAppButton({ variant = 'default', className = '' }: Downl
     link.click();
     document.body.removeChild(link);
     
-    // Afficher un toast de confirmation
-    console.log(`📥 Téléchargement lancé: ${config.name}`);
+    console.log(`✅ [Download] Téléchargement lancé: ${config.name}`);
+  };
+
+  const handleInstallPWA = async () => {
+    console.log('📱 [PWA] Tentative installation PWA');
+    const success = await promptInstall();
+    if (success) {
+      console.log('✅ [PWA] Installation réussie');
+      setShowDialog(false);
+    } else {
+      console.log('⚠️ [PWA] Installation annulée ou échouée');
+    }
   };
 
   // Variant Banner (bandeau en bas de page)
@@ -144,6 +180,8 @@ export function DownloadAppButton({ variant = 'default', className = '' }: Downl
           onOpenChange={setShowDialog}
           downloadStatus={downloadStatus}
           onDownload={handleDownload}
+          onInstallPWA={handleInstallPWA}
+          canInstallPWA={isInstallable && !isInstalled}
           isMobile={isMobile}
         />
       </>
@@ -180,6 +218,8 @@ export function DownloadAppButton({ variant = 'default', className = '' }: Downl
         onOpenChange={setShowDialog}
         downloadStatus={downloadStatus}
         onDownload={handleDownload}
+        onInstallPWA={handleInstallPWA}
+        canInstallPWA={isInstallable && !isInstalled}
         isMobile={isMobile}
       />
     </>
@@ -195,68 +235,133 @@ interface DownloadDialogProps {
     exe: 'checking' | 'available' | 'unavailable';
   };
   onDownload: (type: 'apk' | 'exe') => void;
+  onInstallPWA: () => void;
+  canInstallPWA: boolean;
   isMobile: boolean;
 }
 
-function DownloadDialog({ open, onOpenChange, downloadStatus, onDownload, isMobile }: DownloadDialogProps) {
+function DownloadDialog({ open, onOpenChange, downloadStatus, onDownload, onInstallPWA, canInstallPWA, isMobile }: DownloadDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Download className="w-6 h-6 text-primary" />
-            Télécharger 224Solutions
+            Installer 224Solutions
           </DialogTitle>
           <DialogDescription>
-            Choisissez la version adaptée à votre appareil
+            Choisissez la méthode d'installation adaptée à votre appareil
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 mt-4">
-          {/* APK Android */}
-          <div className="p-4 border rounded-lg">
-            <div className="flex items-start gap-3">
-              <Smartphone className="w-10 h-10 text-green-600" />
-              <div className="flex-1">
-                <h4 className="font-semibold text-lg">Version Android</h4>
-                <p className="text-sm text-muted-foreground">
-                  Fichier APK • {DOWNLOAD_CONFIG.apk.size}
-                </p>
-                
-                {downloadStatus.apk === 'checking' && (
-                  <p className="text-sm text-muted-foreground mt-2">Vérification...</p>
-                )}
-                
-                {downloadStatus.apk === 'available' ? (
-                  <>
-                    <Alert className="mt-3 bg-green-50 border-green-200">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <AlertDescription className="text-green-800">
-                        Fichier disponible et prêt à télécharger
-                      </AlertDescription>
-                    </Alert>
-                    <Button
-                      onClick={() => onDownload('apk')}
-                      className="w-full mt-3 bg-green-600 hover:bg-green-700"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Télécharger APK
-                    </Button>
-                  </>
-                ) : downloadStatus.apk === 'unavailable' ? (
-                  <Alert className="mt-3" variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      Fichier en cours de génération. Réessayez dans quelques minutes.
+          
+          {/* OPTION 1: APK Android (si disponible) */}
+          {isMobile && downloadStatus.apk === 'available' && (
+            <div className="p-4 border rounded-lg bg-green-50 border-green-200">
+              <div className="flex items-start gap-3">
+                <Smartphone className="w-10 h-10 text-green-600" />
+                <div className="flex-1">
+                  <h4 className="font-semibold text-lg flex items-center gap-2">
+                    Version Android (APK)
+                    <span className="text-xs bg-green-600 text-white px-2 py-1 rounded">Recommandé</span>
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Fichier APK • {DOWNLOAD_CONFIG.apk.size}
+                  </p>
+                  
+                  <Alert className="mt-3 bg-green-50 border-green-200">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800">
+                      ✅ Application native Android • Installation hors ligne
                     </AlertDescription>
                   </Alert>
-                ) : null}
+                  
+                  <Button
+                    onClick={() => onDownload('apk')}
+                    className="w-full mt-3 bg-green-600 hover:bg-green-700"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Télécharger l'APK
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* EXE Windows */}
-          {!isMobile && (
+          {/* OPTION 2: PWA (si APK indisponible et PWA possible) */}
+          {isMobile && downloadStatus.apk !== 'available' && canInstallPWA && (
+            <div className="p-4 border rounded-lg bg-blue-50 border-blue-200">
+              <div className="flex items-start gap-3">
+                <Sparkles className="w-10 h-10 text-blue-600" />
+                <div className="flex-1">
+                  <h4 className="font-semibold text-lg flex items-center gap-2">
+                    Application Web Progressive (PWA)
+                    <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">Disponible</span>
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Installation directe • Sans téléchargement
+                  </p>
+                  
+                  <Alert className="mt-3 bg-blue-50 border-blue-200">
+                    <Info className="h-4 w-4 text-blue-600" />
+                    <AlertDescription className="text-blue-800">
+                      ✅ Icône sur l'écran d'accueil • Fonctionne hors ligne
+                    </AlertDescription>
+                  </Alert>
+                  
+                  <Button
+                    onClick={onInstallPWA}
+                    className="w-full mt-3 bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Smartphone className="w-4 h-4 mr-2" />
+                    Installer la PWA
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* OPTION 3: Instructions si APK indisponible et PWA impossible */}
+          {isMobile && downloadStatus.apk !== 'available' && !canInstallPWA && (
+            <div className="p-4 border rounded-lg bg-yellow-50 border-yellow-200">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-10 h-10 text-yellow-600" />
+                <div className="flex-1">
+                  <h4 className="font-semibold text-lg">Téléchargement en cours de préparation</h4>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    L'application mobile est en cours de génération. En attendant, vous pouvez :
+                  </p>
+                  
+                  <ul className="mt-3 space-y-2 text-sm text-gray-700">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
+                      <span>Utiliser l'application web depuis votre navigateur</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
+                      <span>Ajouter un raccourci sur votre écran d'accueil</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
+                      <span>Revenir dans quelques heures pour télécharger l'APK</span>
+                    </li>
+                  </ul>
+                  
+                  <Button
+                    onClick={() => window.location.reload()}
+                    variant="outline"
+                    className="w-full mt-3"
+                  >
+                    🔄 Vérifier à nouveau
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* OPTION 4: EXE Windows (desktop uniquement) */}
+          {!isMobile && downloadStatus.exe === 'available' && (
             <div className="p-4 border rounded-lg">
               <div className="flex items-start gap-3">
                 <Monitor className="w-10 h-10 text-blue-600" />
@@ -266,53 +371,46 @@ function DownloadDialog({ open, onOpenChange, downloadStatus, onDownload, isMobi
                     Installateur EXE • {DOWNLOAD_CONFIG.exe.size}
                   </p>
                   
-                  {downloadStatus.exe === 'checking' && (
-                    <p className="text-sm text-muted-foreground mt-2">Vérification...</p>
-                  )}
+                  <Alert className="mt-3 bg-blue-50 border-blue-200">
+                    <CheckCircle className="h-4 w-4 text-blue-600" />
+                    <AlertDescription className="text-blue-800">
+                      Fichier disponible et prêt à télécharger
+                    </AlertDescription>
+                  </Alert>
                   
-                  {downloadStatus.exe === 'available' ? (
-                    <>
-                      <Alert className="mt-3 bg-blue-50 border-blue-200">
-                        <CheckCircle className="h-4 w-4 text-blue-600" />
-                        <AlertDescription className="text-blue-800">
-                          Fichier disponible et prêt à télécharger
-                        </AlertDescription>
-                      </Alert>
-                      <Button
-                        onClick={() => onDownload('exe')}
-                        variant="outline"
-                        className="w-full mt-3"
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Télécharger EXE
-                      </Button>
-                    </>
-                  ) : downloadStatus.exe === 'unavailable' ? (
-                    <Alert className="mt-3" variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        Fichier en cours de génération. Réessayez dans quelques minutes.
-                      </AlertDescription>
-                    </Alert>
-                  ) : null}
+                  <Button
+                    onClick={() => onDownload('exe')}
+                    variant="outline"
+                    className="w-full mt-3"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Télécharger EXE
+                  </Button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Instructions */}
+          {/* Instructions générales */}
           <div className="pt-4 border-t">
-            <h4 className="font-semibold mb-2">Instructions d'installation</h4>
-            <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
-              <li>Téléchargez le fichier correspondant à votre appareil</li>
-              {isMobile ? (
-                <>
-                  <li>Autorisez l'installation depuis des sources inconnues</li>
-                  <li>Ouvrez le fichier APK et suivez les instructions</li>
-                </>
-              ) : (
-                <>
-                  <li>Exécutez l'installateur téléchargé</li>
+            <h4 className="font-semibold mb-2 text-sm">📝 Après l'installation</h4>
+            {downloadStatus.apk === 'available' ? (
+              <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+                <li>Autorisez l'installation depuis des sources inconnues</li>
+                <li>Ouvrez le fichier téléchargé et suivez les instructions</li>
+                <li>L'icône apparaîtra sur votre écran d'accueil</li>
+              </ol>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                L'application sera accessible comme une app native avec son icône sur l'écran d'accueil.
+              </p>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
                   <li>Suivez les étapes d'installation</li>
                 </>
               )}
