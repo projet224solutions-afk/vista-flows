@@ -207,13 +207,13 @@ function App() {
               {/* Main App Routes */}
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/marketplace/visual-search" element={<VisualSearch />} />
-              <Route path="/marketplace/product/:id" element={<ProductDetail />} />
-              <Route path="/product/:id" element={<ProductDetail />} />
-              <Route path="/produit/:id" element={<ProductDetail />} />
+              <Route path="/marketplace/product/:id/*" element={<ProductDetail />} />
+              <Route path="/product/:id/*" element={<ProductDetail />} />
+              <Route path="/produit/:id/*" element={<ProductDetail />} />
               {/* Short URL redirect - must be before shop/boutique routes */}
-              <Route path="/s/:shortCode" element={<ShortLinkRedirect />} />
-              <Route path="/shop/:vendorId" element={<VendorShop />} />
-              <Route path="/boutique/:slug" element={<VendorShop />} />
+              <Route path="/s/:shortCode/*" element={<ShortLinkRedirect />} />
+              <Route path="/shop/:vendorId/*" element={<VendorShop />} />
+              <Route path="/boutique/:slug/*" element={<VendorShop />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/messages" element={<Messages />} />
               <Route path="/contact-user" element={<ContactUserById />} />
