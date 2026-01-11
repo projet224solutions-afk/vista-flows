@@ -20,6 +20,7 @@ export function registerServiceWorker(options?: { force?: boolean }) {
 
 function registerSW() {
   // Petit délai pour s'assurer que l'app React est montée
+  // (réduit pour fiabiliser l'offline mobile: SW installé avant que l'utilisateur ferme l'app)
   setTimeout(() => {
     navigator.serviceWorker
       .register("/service-worker.js", { updateViaCache: 'none' as any })
@@ -46,7 +47,7 @@ function registerSW() {
       .catch((error) => {
         console.warn("[PWA] Erreur SW:", error);
       });
-  }, 2000); // 2 secondes de délai
+  }, 200); // 200ms de délai
 }
 
 function showUpdateMessage() {
