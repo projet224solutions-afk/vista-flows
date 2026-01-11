@@ -1,82 +1,79 @@
-import { useState, useEffect } from 'react';
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
+import { useState, useEffect, useCallback } from 'react';
+import {
+  getPWAInstallPromptState,
+  initPWAInstallPromptListener,
+  promptPWAInstall,
+  subscribePWAInstallPrompt,
+} from '@/lib/pwaInstallPrompt';
 
 export function usePWAInstall() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
-    // Vérifier si déjà installé
+    // 1) Listener global (au cas où l'événement arrive très tôt)
+    initPWAInstallPromptListener();
+
+    // 2) Détection installation (standalone)
     const checkIfInstalled = () => {
-      // Mode standalone = installé
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-      // iOS Safari
       const isIOSStandalone = (window.navigator as any).standalone === true;
-      
       setIsInstalled(isStandalone || isIOSStandalone);
     };
 
     checkIfInstalled();
 
-    // Écouter l'événement beforeinstallprompt
-    const handleBeforeInstallPrompt = (e: Event) => {
-      console.log('✅ [PWA] Événement beforeinstallprompt détecté');
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setIsInstallable(true);
+    // 3) Sync installable depuis le singleton
+    const syncInstallable = () => {
+      const state = getPWAInstallPromptState();
+      setIsInstallable(state.isInstallable);
     };
 
-    // Écouter l'installation
-    const handleAppInstalled = () => {
-      console.log('✅ [PWA] Application installée!');
-      setIsInstalled(true);
-      setIsInstallable(false);
-      setDeferredPrompt(null);
-    };
+    syncInstallable();
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('appinstalled', handleAppInstalled);
+    const unsubscribe = subscribePWAInstallPrompt(() => {
+      syncInstallable();
+    });
+
+    // Re-check si le display-mode change
+    const media = window.matchMedia('(display-mode: standalone)');
+    const onMediaChange = () => checkIfInstalled();
+
+    if (typeof media.addEventListener === 'function') {
+      media.addEventListener('change', onMediaChange);
+    } else {
+      // Safari ancien
+      media.addListener(onMediaChange);
+    }
+
+    window.addEventListener('appinstalled', checkIfInstalled);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleAppInstalled);
+      unsubscribe();
+      window.removeEventListener('appinstalled', checkIfInstalled);
+      if (typeof media.removeEventListener === 'function') {
+        media.removeEventListener('change', onMediaChange);
+      } else {
+        media.removeListener(onMediaChange);
+      }
     };
   }, []);
 
-  const promptInstall = async () => {
-    if (!deferredPrompt) {
-      console.warn('⚠️ [PWA] Pas de prompt disponible');
-      return false;
+  const promptInstall = useCallback(async () => {
+    const outcome = await promptPWAInstall();
+
+    if (outcome === 'accepted') {
+      setIsInstalled(true);
+      setIsInstallable(false);
+      return true;
     }
 
-    try {
-      console.log('📱 [PWA] Affichage prompt installation...');
-      await deferredPrompt.prompt();
-      const choiceResult = await deferredPrompt.userChoice;
-      
-      console.log(`🎯 [PWA] Choix utilisateur: ${choiceResult.outcome}`);
-      
-      if (choiceResult.outcome === 'accepted') {
-        setIsInstalled(true);
-        setIsInstallable(false);
-      }
-      
-      setDeferredPrompt(null);
-      return choiceResult.outcome === 'accepted';
-    } catch (error) {
-      console.error('❌ [PWA] Erreur installation:', error);
-      return false;
-    }
-  };
+    return false;
+  }, []);
 
   return {
     isInstallable,
     isInstalled,
-    promptInstall
+    promptInstall,
   };
 }

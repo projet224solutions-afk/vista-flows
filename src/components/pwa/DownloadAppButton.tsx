@@ -104,22 +104,24 @@ export function DownloadAppButton({ variant = 'default', className = '' }: Downl
 
   const handleDownload = (type: 'apk' | 'exe') => {
     const config = DOWNLOAD_CONFIG[type];
-    
+
     console.log(`📥 [Download] Lancement téléchargement: ${config.name}`);
-    
-    // Créer un lien de téléchargement (meilleur support mobile)
-    const link = document.createElement('a');
-    link.href = config.url;
-    link.download = config.name;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    
-    // Déclencher le téléchargement
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    console.log(`✅ [Download] Téléchargement lancé: ${config.name}`);
+
+    const isMobileUA =
+      /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // Sur mobile, la navigation directe est la plus fiable (le flag `download` est souvent ignoré en cross-domain)
+    if (isMobileUA) {
+      window.location.assign(config.url);
+      return;
+    }
+
+    const newTab = window.open(config.url, '_blank', 'noopener,noreferrer');
+    if (!newTab) {
+      window.location.assign(config.url);
+    }
+
+    console.log(`✅ [Download] Téléchargement déclenché: ${config.name}`);
   };
 
   const handleInstallPWA = async () => {
@@ -256,31 +258,37 @@ function DownloadDialog({ open, onOpenChange, downloadStatus, onDownload, onInst
 
         <div className="space-y-4 mt-4">
           
-          {/* OPTION 1: APK Android (si disponible) */}
-          {isMobile && downloadStatus.apk === 'available' && (
-            <div className="p-4 border rounded-lg bg-green-50 border-green-200">
+          {/* OPTION 1: Android (APK) */}
+          {isMobile && (
+            <div className="p-4 border rounded-lg bg-card">
               <div className="flex items-start gap-3">
-                <Smartphone className="w-10 h-10 text-green-600" />
+                <Smartphone className="w-10 h-10 text-primary" />
                 <div className="flex-1">
                   <h4 className="font-semibold text-lg flex items-center gap-2">
                     Version Android (APK)
-                    <span className="text-xs bg-green-600 text-white px-2 py-1 rounded">Recommandé</span>
+                    <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">APK</span>
                   </h4>
                   <p className="text-sm text-muted-foreground">
                     Fichier APK • {DOWNLOAD_CONFIG.apk.size}
                   </p>
-                  
-                  <Alert className="mt-3 bg-green-50 border-green-200">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <AlertDescription className="text-green-800">
-                      ✅ Application native Android • Installation hors ligne
-                    </AlertDescription>
-                  </Alert>
-                  
-                  <Button
-                    onClick={() => onDownload('apk')}
-                    className="w-full mt-3 bg-green-600 hover:bg-green-700"
-                  >
+
+                  {downloadStatus.apk === 'unavailable' ? (
+                    <Alert className="mt-3">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Si le téléchargement ne démarre pas, installez plutôt la version PWA (ci-dessous).
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <Alert className="mt-3">
+                      <CheckCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Installation native Android (sources inconnues peut être requis).
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  <Button onClick={() => onDownload('apk')} className="w-full mt-3">
                     <Download className="w-4 h-4 mr-2" />
                     Télécharger l'APK
                   </Button>
@@ -289,31 +297,26 @@ function DownloadDialog({ open, onOpenChange, downloadStatus, onDownload, onInst
             </div>
           )}
 
-          {/* OPTION 2: PWA (si APK indisponible et PWA possible) */}
-          {isMobile && downloadStatus.apk !== 'available' && canInstallPWA && (
-            <div className="p-4 border rounded-lg bg-blue-50 border-blue-200">
+          {/* OPTION 2: PWA (installation depuis le navigateur) */}
+          {canInstallPWA && (
+            <div className="p-4 border rounded-lg bg-card">
               <div className="flex items-start gap-3">
-                <Sparkles className="w-10 h-10 text-blue-600" />
+                <Sparkles className="w-10 h-10 text-primary" />
                 <div className="flex-1">
                   <h4 className="font-semibold text-lg flex items-center gap-2">
-                    Application Web Progressive (PWA)
-                    <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">Disponible</span>
+                    Application Web (PWA)
+                    <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">Sans APK</span>
                   </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Installation directe • Sans téléchargement
-                  </p>
-                  
-                  <Alert className="mt-3 bg-blue-50 border-blue-200">
-                    <Info className="h-4 w-4 text-blue-600" />
-                    <AlertDescription className="text-blue-800">
-                      ✅ Icône sur l'écran d'accueil • Fonctionne hors ligne
+                  <p className="text-sm text-muted-foreground">Icône sur l'écran d'accueil • Mises à jour automatiques</p>
+
+                  <Alert className="mt-3">
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>
+                      Installation directe depuis Chrome (recommandé si le téléchargement est bloqué).
                     </AlertDescription>
                   </Alert>
-                  
-                  <Button
-                    onClick={onInstallPWA}
-                    className="w-full mt-3 bg-blue-600 hover:bg-blue-700"
-                  >
+
+                  <Button onClick={onInstallPWA} className="w-full mt-3">
                     <Smartphone className="w-4 h-4 mr-2" />
                     Installer la PWA
                   </Button>
@@ -360,29 +363,33 @@ function DownloadDialog({ open, onOpenChange, downloadStatus, onDownload, onInst
             </div>
           )}
 
-          {/* OPTION 4: EXE Windows (desktop uniquement) */}
-          {!isMobile && downloadStatus.exe === 'available' && (
-            <div className="p-4 border rounded-lg">
+          {/* OPTION 4: Windows (EXE) */}
+          {!isMobile && (
+            <div className="p-4 border rounded-lg bg-card">
               <div className="flex items-start gap-3">
-                <Monitor className="w-10 h-10 text-blue-600" />
+                <Monitor className="w-10 h-10 text-primary" />
                 <div className="flex-1">
-                  <h4 className="font-semibold text-lg">Version Windows</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Installateur EXE • {DOWNLOAD_CONFIG.exe.size}
-                  </p>
-                  
-                  <Alert className="mt-3 bg-blue-50 border-blue-200">
-                    <CheckCircle className="h-4 w-4 text-blue-600" />
-                    <AlertDescription className="text-blue-800">
-                      Fichier disponible et prêt à télécharger
-                    </AlertDescription>
-                  </Alert>
-                  
-                  <Button
-                    onClick={() => onDownload('exe')}
-                    variant="outline"
-                    className="w-full mt-3"
-                  >
+                  <h4 className="font-semibold text-lg flex items-center gap-2">
+                    Version Windows
+                    <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">EXE</span>
+                  </h4>
+                  <p className="text-sm text-muted-foreground">Installateur • {DOWNLOAD_CONFIG.exe.size}</p>
+
+                  {downloadStatus.exe === 'unavailable' ? (
+                    <Alert className="mt-3">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Le lien Windows semble indisponible pour le moment. Vous pouvez installer la PWA via Chrome.
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <Alert className="mt-3">
+                      <CheckCircle className="h-4 w-4" />
+                      <AlertDescription>Fichier prêt à télécharger</AlertDescription>
+                    </Alert>
+                  )}
+
+                  <Button onClick={() => onDownload('exe')} variant="outline" className="w-full mt-3">
                     <Download className="w-4 h-4 mr-2" />
                     Télécharger EXE
                   </Button>
@@ -411,16 +418,6 @@ function DownloadDialog({ open, onOpenChange, downloadStatus, onDownload, onInst
     </Dialog>
   );
 }
-                  <li>Suivez les étapes d'installation</li>
-                </>
-              )}
-              <li>Lancez l'application depuis votre écran d'accueil</li>
-            </ol>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 export default DownloadAppButton;
+
