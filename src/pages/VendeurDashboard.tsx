@@ -49,7 +49,8 @@ const WalletBalanceWidget = lazy(() => import("@/components/wallet/WalletBalance
 const QuickTransferButton = lazy(() => import("@/components/wallet/QuickTransferButton").then(m => ({ default: m.QuickTransferButton })));
 const OfflineSyncPanel = lazy(() => import("@/components/vendor/OfflineSyncPanel"));
 const NetworkStatusIndicator = lazy(() => import("@/components/vendor/NetworkStatusIndicator"));
-// import PWAInstallButton from "@/components/pwa/PWAInstallButton"; // PWA désactivée
+const OfflineBanner = lazy(() => import("@/components/vendor/OfflineBanner"));
+const PWADiagnostic = lazy(() => import("@/components/pwa/PWADiagnostic"));
 const VendorIdDisplay = lazy(() => import("@/components/vendor/VendorIdDisplay").then(m => ({ default: m.VendorIdDisplay })));
 const VendorNotificationsPanel = lazy(() => import("@/components/vendor/VendorNotificationsPanel").then(m => ({ default: m.VendorNotificationsPanel })));
 const CommunicationWidget = lazy(() => import("@/components/communication/CommunicationWidget"));
@@ -743,6 +744,8 @@ export default function VendeurDashboard() {
                   <OfflineSyncPanel />
                 </ProtectedRoute>
               } />
+              {/* Diagnostic PWA - Toujours accessible */}
+              <Route path="pwa-diagnostic" element={<PWADiagnostic />} />
             </Routes>
             </Suspense>
           </main>
@@ -751,6 +754,11 @@ export default function VendeurDashboard() {
       
       {/* Widget de communication flottant */}
       <CommunicationWidget position="bottom-right" showNotifications={true} />
+      
+      {/* Bannière offline - s'affiche automatiquement */}
+      <Suspense fallback={null}>
+        <OfflineBanner showSyncInfo={true} />
+      </Suspense>
     </SidebarProvider>
   );
 }
