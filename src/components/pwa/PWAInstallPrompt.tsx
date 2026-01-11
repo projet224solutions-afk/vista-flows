@@ -1,16 +1,26 @@
-import { useEffect, useState } from 'react';
+// PWAInstallPrompt v2 - Avec protection contre les erreurs React HMR
+
+import { useEffect, useState, memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Download, X, Smartphone, Monitor, Chrome } from 'lucide-react';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { toast } from 'sonner';
 
-export default function PWAInstallPrompt() {
+function PWAInstallPromptInner() {
   const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Guard contre l'hydratation SSR
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
+    if (!mounted) return;
+
     // Vérifier si l'utilisateur a déjà refusé
     const dismissed = localStorage.getItem('pwa-install-dismissed');
     if (dismissed) {
@@ -26,7 +36,7 @@ export default function PWAInstallPrompt() {
     }, 5000);
 
     return () => clearTimeout(timer);
-  }, [isInstallable, isInstalled]);
+  }, [isInstallable, isInstalled, mounted]);
 
   const handleInstall = async () => {
     const installed = await promptInstall();
@@ -53,8 +63,8 @@ export default function PWAInstallPrompt() {
     });
   };
 
-  // Ne pas afficher si installé, pas installable, ou refusé
-  if (!isVisible || isInstalled || isDismissed) {
+  // Ne pas afficher avant le mount client ou si installé/non installable/refusé
+  if (!mounted || !isVisible || isInstalled || isDismissed) {
     return null;
   }
 
@@ -119,3 +129,9 @@ export default function PWAInstallPrompt() {
     </div>
   );
 }
+
+// Memo pour éviter les re-renders inutiles qui peuvent causer des problèmes HMR
+const PWAInstallPrompt = memo(PWAInstallPromptInner);
+PWAInstallPrompt.displayName = 'PWAInstallPrompt';
+
+export default PWAInstallPrompt;

@@ -1,8 +1,10 @@
 /**
- * PWA install prompt (beforeinstallprompt) singleton.
+ * PWA install prompt (beforeinstallprompt) singleton v2.
  *
  * Objectif: ne jamais rater l'événement `beforeinstallprompt` (qui peut arriver
  * tôt), et permettre à plusieurs composants/hooks d'y accéder.
+ * 
+ * Version 2: Protection contre les erreurs HMR et SSR.
  */
 
 interface BeforeInstallPromptEvent extends Event {
@@ -17,18 +19,22 @@ let installable = false;
 const listeners = new Set<() => void>();
 
 function notify() {
-  listeners.forEach((l) => {
-    try {
-      l();
-    } catch {
-      // ignore
-    }
+  // Utiliser queueMicrotask pour éviter les problèmes de synchronisation React
+  queueMicrotask(() => {
+    listeners.forEach((l) => {
+      try {
+        l();
+      } catch {
+        // ignore
+      }
+    });
   });
 }
 
 export function initPWAInstallPromptListener() {
-  if (initialized) return;
+  // Guard SSR
   if (typeof window === 'undefined') return;
+  if (initialized) return;
 
   initialized = true;
 
@@ -79,5 +85,19 @@ export async function promptPWAInstall(): Promise<'accepted' | 'dismissed' | 'un
     installable = false;
     notify();
     return 'dismissed';
+  }
+}
+
+// Initialiser automatiquement si on est côté client
+if (typeof window !== 'undefined') {
+  // Utiliser requestIdleCallback ou setTimeout pour ne pas bloquer le rendu initial
+  if ('requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(() => {
+      initPWAInstallPromptListener();
+    });
+  } else {
+    setTimeout(() => {
+      initPWAInstallPromptListener();
+    }, 0);
   }
 }
