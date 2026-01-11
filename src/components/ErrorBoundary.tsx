@@ -1,6 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { errorMonitor } from '@/services/errorMonitor';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -14,6 +14,31 @@ interface State {
   error: Error | null;
   errorInfo: ErrorInfo | null;
 }
+
+/**
+ * Vérifie si l'erreur est liée au mode offline
+ */
+const isOfflineError = (error: Error | null): boolean => {
+  if (!error) return false;
+  const message = error.message?.toLowerCase() || '';
+  return (
+    !navigator.onLine ||
+    message.includes('failed to fetch') ||
+    message.includes('failed to load') ||
+    message.includes('network') ||
+    message.includes('dynamically imported module') ||
+    message.includes('offline')
+  );
+};
+
+/**
+ * Vérifie si l'erreur est liée à Stripe
+ */
+const isStripeError = (error: Error | null): boolean => {
+  if (!error) return false;
+  const message = error.message?.toLowerCase() || '';
+  return message.includes('stripe');
+};
 
 class ErrorBoundary extends Component<Props, State> {
   public state: State = {
@@ -34,6 +59,12 @@ class ErrorBoundary extends Component<Props, State> {
       error,
       errorInfo,
     });
+
+    // Ne pas logger les erreurs offline (c'est normal)
+    if (isOfflineError(error)) {
+      console.warn('[ErrorBoundary] Erreur offline ignorée pour le monitoring');
+      return;
+    }
 
     // Log l'erreur dans le système de monitoring
     try {
@@ -64,10 +95,54 @@ class ErrorBoundary extends Component<Props, State> {
     });
   };
 
+  private handleGoHome = () => {
+    window.location.href = '/';
+  };
+
   public render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;
+      }
+
+      const offline = isOfflineError(this.state.error);
+      const stripeErr = isStripeError(this.state.error);
+
+      // UI spéciale pour mode hors ligne
+      if (offline) {
+        return (
+          <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+            <Card className="max-w-lg w-full">
+              <CardHeader>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <WifiOff className="h-6 w-6" />
+                  <CardTitle>Mode hors ligne</CardTitle>
+                </div>
+                <CardDescription>
+                  Cette page n'est pas disponible hors connexion
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  {stripeErr 
+                    ? "Les paiements nécessitent une connexion internet active."
+                    : "Cette fonctionnalité nécessite une connexion internet. Veuillez vous reconnecter et réessayer."
+                  }
+                </p>
+
+                <div className="flex gap-2">
+                  <Button onClick={this.handleGoHome} variant="outline">
+                    Accueil
+                  </Button>
+                  <Button onClick={this.handleReload} className="gap-2">
+                    <RefreshCw className="h-4 w-4" />
+                    Réessayer
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
       }
 
       return (

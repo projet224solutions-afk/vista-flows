@@ -2,6 +2,7 @@
  * STRIPE PAYMENT WRAPPER
  * Wrapper avec Stripe Elements Provider
  * 224SOLUTIONS
+ * v2 - Support mode hors ligne amélioré
  */
 
 import React, { useState, useEffect } from 'react';
@@ -9,10 +10,11 @@ import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe, Stripe, StripeElementsOptions } from '@stripe/stripe-js';
 import { StripePaymentForm } from './StripePaymentForm';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { Loader2, AlertTriangle, WifiOff } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 
 interface StripePaymentWrapperProps {
   amount: number;
@@ -30,7 +32,19 @@ interface StripePaymentWrapperProps {
 
 let stripePromise: Promise<Stripe | null> | null = null;
 
+/**
+ * Vérifie si l'app est en mode hors ligne
+ */
+const isOffline = (): boolean => {
+  return !navigator.onLine;
+};
+
 const getStripePublishableKey = async (): Promise<string> => {
+  // Vérifier mode offline d'abord
+  if (isOffline()) {
+    throw new Error('OFFLINE_MODE');
+  }
+  
   // Essayer d'abord les variables d'environnement
   const envKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
   if (envKey) {
@@ -52,6 +66,11 @@ const getStripePublishableKey = async (): Promise<string> => {
 };
 
 const getStripe = async (): Promise<Stripe | null> => {
+  // Vérifier mode offline avant de charger Stripe
+  if (isOffline()) {
+    throw new Error('OFFLINE_MODE');
+  }
+  
   if (!stripePromise) {
     const key = await getStripePublishableKey();
     stripePromise = loadStripe(key);
@@ -143,15 +162,39 @@ export function StripePaymentWrapper({
   }
 
   if (error || !clientSecret || !stripe) {
+    const isOfflineError = error?.includes('OFFLINE') || !navigator.onLine;
+    
     return (
       <Card className="w-full max-w-md mx-auto">
         <CardContent className="pt-6">
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              {error || 'Impossible de charger le système de paiement. Veuillez réessayer.'}
-            </AlertDescription>
-          </Alert>
+          {isOfflineError ? (
+            <div className="flex flex-col items-center justify-center py-8 space-y-4">
+              <WifiOff className="h-12 w-12 text-muted-foreground" />
+              <div className="text-center space-y-2">
+                <h3 className="font-semibold text-lg">Mode hors ligne</h3>
+                <p className="text-sm text-muted-foreground">
+                  Le paiement nécessite une connexion internet.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Veuillez vous reconnecter pour effectuer ce paiement.
+                </p>
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={() => window.location.reload()}
+                className="mt-4"
+              >
+                Réessayer
+              </Button>
+            </div>
+          ) : (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                {error || 'Impossible de charger le système de paiement. Veuillez réessayer.'}
+              </AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
     );
