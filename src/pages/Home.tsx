@@ -28,7 +28,6 @@ import {
   NearbyDeliveryModal,
 } from '@/components/home';
 import { InstallAppButton } from '@/components/pwa/InstallAppButton';
-import { DownloadAppButton } from '@/components/pwa/DownloadAppButton';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -152,9 +151,6 @@ export default function Home() {
 
       {/* Bouton d'installation PWA flottant */}
       <InstallAppButton variant="floating" />
-      
-      {/* Bandeau de téléchargement APK/EXE */}
-      <DownloadAppButton variant="banner" />
 
       {/* Modals */}
       <NearbyVendorsModal 
