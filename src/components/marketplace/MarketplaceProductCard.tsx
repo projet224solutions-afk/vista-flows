@@ -26,6 +26,7 @@ import { useDisplayCurrency } from "./CurrencyIndicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CertifiedIcon } from "@/components/vendor/CertifiedVendorBadge";
 import { useVendorCertification } from "@/hooks/useVendorCertification";
+import { ProductImageCarousel } from "./ProductImageCarousel";
 
 interface MarketplaceProductCardProps {
   id: string;
@@ -139,26 +140,12 @@ export function MarketplaceProductCard({
       className="marketplace-card group overflow-hidden cursor-pointer" 
       onClick={handleCardClick}
     >
-      {/* Image Container - Format Carré Grande */}
-      <div className="marketplace-card-image-container">
-        {/* Placeholder skeleton */}
-        {!imageLoaded && !imageError && (
-          <div className="absolute inset-0 bg-gradient-to-br from-muted to-secondary animate-pulse" />
-        )}
-        
-        <img 
-          src={imageError ? '/placeholder.svg' : primaryImage}
+      {/* Image Container - Format Carré Grande avec Carousel */}
+      <div className="relative">
+        <ProductImageCarousel 
+          images={images}
           alt={title}
-          loading="lazy"
-          className={cn(
-            "marketplace-card-image",
-            imageLoaded ? "opacity-100" : "opacity-0"
-          )}
-          onLoad={() => setImageLoaded(true)}
-          onError={() => {
-            setImageError(true);
-            setImageLoaded(true);
-          }}
+          className="marketplace-card-image-container"
         />
         
         {/* Badge Premium */}
@@ -181,7 +168,6 @@ export function MarketplaceProductCard({
             </Badge>
           </div>
         )}
-
       </div>
       
       {/* Content */}

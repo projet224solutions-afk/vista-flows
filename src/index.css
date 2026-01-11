@@ -764,4 +764,73 @@ All colors MUST be HSL.
   .rotate-y-180 {
     transform: rotateY(180deg);
   }
+
+  /* ============================================
+     PRODUCT IMAGE CAROUSEL ANIMATIONS - PREMIUM
+     ============================================ */
+  
+  /* Slide in from right (next) */
+  @keyframes slide-in-right {
+    from {
+      opacity: 0;
+      transform: translateX(20px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right 0.7s ease-out forwards;
+  }
+
+  /* Slide in from left (prev) */
+  @keyframes slide-in-left {
+    from {
+      opacity: 0;
+      transform: translateX(-20px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+  }
+
+  .animate-slide-in-left {
+    animation: slide-in-left 0.7s ease-out forwards;
+  }
+
+  /* Smooth fade transition */
+  @keyframes smooth-fade {
+    0% {
+      opacity: 0;
+      filter: blur(2px);
+    }
+    100% {
+      opacity: 1;
+      filter: blur(0);
+    }
+  }
+
+  .animate-smooth-fade {
+    animation: smooth-fade 0.6s ease-out forwards;
+  }
+
+  /* Scale on hover premium */
+  @keyframes scale-hover-premium {
+    0% {
+      transform: scale(1);
+    }
+    100% {
+      transform: scale(1.05);
+    }
+  }
+
+  /* Optimisation GPU pour les animations carousel */
+  .gpu-optimized {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
 }
