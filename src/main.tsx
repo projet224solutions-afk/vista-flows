@@ -82,12 +82,15 @@ const initApp = () => {
 // Start app
 initApp();
 
-// Service Worker: désactivé en preview/dev pour éviter des bundles React mélangés (Invalid hook call)
-const isPreviewHost = window.location.hostname.includes('lovableproject.com') ||
-  window.location.hostname.includes('localhost') ||
-  window.location.hostname.includes('127.0.0.1');
+// Service Worker
+// Par défaut on évite le SW en DEV (pour ne pas casser le hot-reload).
+// Mais on l'autorise en preview si on veut tester l'installation PWA sur mobile.
+const params = new URLSearchParams(window.location.search);
+const enablePwaPreview =
+  params.has('pwa') ||
+  window.localStorage.getItem('enable_pwa_preview') === '1';
 
-if (import.meta.env.DEV || isPreviewHost) {
+if (import.meta.env.DEV && !enablePwaPreview) {
   unregisterServiceWorker();
   // Nettoyer les caches éventuels (corrige les écrans blancs après déploiement)
   if ('caches' in window) {
@@ -95,8 +98,8 @@ if (import.meta.env.DEV || isPreviewHost) {
   }
 } else {
   setTimeout(() => {
-    registerServiceWorker();
-  }, 3000);
+    registerServiceWorker({ force: enablePwaPreview });
+  }, 1500);
 }
 
 // Capturer les erreurs globales

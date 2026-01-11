@@ -50,6 +50,22 @@ export function DownloadAppButton({ variant = 'default', className = '' }: Downl
   const handleInstall = async () => {
     setIsInstalling(true);
     try {
+      // 0) En preview Lovable: activer le SW pour rendre l'app installable
+      const isLovablePreview = window.location.hostname.includes('lovableproject.com');
+      const pwaPreviewEnabled = window.localStorage.getItem('enable_pwa_preview') === '1';
+      if (!isInstallable && isLovablePreview && !pwaPreviewEnabled) {
+        window.localStorage.setItem('enable_pwa_preview', '1');
+        const url = new URL(window.location.href);
+        url.searchParams.set('pwa', '1');
+        toast.info('Activation de l’installation…', {
+          description: 'Recharge en cours pour activer le mode PWA (une seule fois).',
+          duration: 4000,
+        });
+        window.location.replace(url.toString());
+        return;
+      }
+
+      // 1) Installation PWA native
       if (isInstallable) {
         const success = await promptInstall();
         if (success) {
@@ -60,8 +76,8 @@ export function DownloadAppButton({ variant = 'default', className = '' }: Downl
           return;
         }
       }
-      
-      // Afficher instructions manuelles
+
+      // 2) Instructions manuelles
       setShowDialog(false);
       
       if (isIOS) {
