@@ -16,6 +16,7 @@ import QuickFooter from "@/components/QuickFooter";
 import { z } from "zod";
 import { useTranslation } from "@/hooks/useTranslation";
 import LanguageSelector from "@/components/LanguageSelector";
+import { getDashboardRoute } from "@/hooks/useRoleRedirect";
 
 // Validation schemas avec tous les rôles
 const loginSchema = z.object({
@@ -253,6 +254,37 @@ export default function Auth() {
       setOauthRetrying(false);
     }
   };
+
+  // ⚡ NOUVEAU: Rediriger si l'utilisateur est déjà connecté
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const isReset = params.get('reset') === 'true';
+      
+      // Ne pas rediriger si c'est une réinitialisation de mot de passe
+      if (isReset) return;
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        console.log('🔍 [Auth] Utilisateur déjà connecté, vérification profil...');
+        
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        
+        if (profileData?.role) {
+          const targetRoute = getDashboardRoute(profileData.role);
+          console.log('🚀 [Auth] Redirection utilisateur existant vers:', targetRoute);
+          navigate(targetRoute, { replace: true });
+        }
+      }
+    };
+    
+    checkExistingSession();
+  }, [navigate]);
 
   // Détecter si on vient d'un lien de réinitialisation et vérifier la session
   useEffect(() => {
@@ -841,6 +873,23 @@ export default function Auth() {
         
         if (data.user) {
           setSuccess("✅ Connexion réussie ! Redirection en cours...");
+          
+          // ⚡ Récupérer le profil et rediriger immédiatement vers le dashboard
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', data.user.id)
+            .maybeSingle();
+          
+          if (profileData?.role) {
+            const targetRoute = getDashboardRoute(profileData.role);
+            console.log('🚀 [Auth] Redirection vers:', targetRoute, '(rôle:', profileData.role, ')');
+            navigate(targetRoute, { replace: true });
+          } else {
+            // Fallback: rediriger vers home, useRoleRedirect prendra le relais
+            console.log('⚠️ [Auth] Pas de profil trouvé, redirection vers /home');
+            navigate('/home', { replace: true });
+          }
         }
       }
     } catch (err) {
