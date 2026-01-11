@@ -75,13 +75,15 @@ SECURITY DEFINER
 AS $$
 BEGIN
   -- Supprimer les entrées storage qui ne correspondent plus à aucun produit
+  -- URL format: https://{project}.supabase.co/storage/v1/object/public/product-videos/{path}
   DELETE FROM storage.objects
   WHERE bucket_id = 'product-videos'
   AND name NOT IN (
-    SELECT REPLACE(promotional_video, 'product-videos/', '')
+    SELECT 
+      SUBSTRING(promotional_video FROM '/product-videos/(.+)$')
     FROM products
     WHERE promotional_video IS NOT NULL
-    AND promotional_video LIKE '%product-videos/%'
+    AND promotional_video LIKE '%/product-videos/%'
   );
 END;
 $$;
@@ -94,13 +96,21 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
+DECLARE
+  video_path text;
 BEGIN
   -- Si le produit avait une vidéo, la supprimer du storage
-  IF OLD.promotional_video IS NOT NULL AND OLD.promotional_video LIKE '%product-videos/%' THEN
+  IF OLD.promotional_video IS NOT NULL AND OLD.promotional_video LIKE '%/product-videos/%' THEN
     BEGIN
-      DELETE FROM storage.objects
-      WHERE bucket_id = 'product-videos'
-      AND name = REPLACE(OLD.promotional_video, 'product-videos/', '');
+      -- Extraire le chemin depuis l'URL complète
+      -- URL format: https://{project}.supabase.co/storage/v1/object/public/product-videos/{path}
+      video_path := SUBSTRING(OLD.promotional_video FROM '/product-videos/(.+)$');
+      
+      IF video_path IS NOT NULL THEN
+        DELETE FROM storage.objects
+        WHERE bucket_id = 'product-videos'
+        AND name = video_path;
+      END IF;
     EXCEPTION
       WHEN OTHERS THEN
         -- Ignorer les erreurs de suppression storage

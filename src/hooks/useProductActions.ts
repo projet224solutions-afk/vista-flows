@@ -94,6 +94,36 @@ export function useProductActions({
   }, [vendorId]);
 
   /**
+   * Supprimer une vidéo du storage
+   */
+  const deleteVideoFromStorage = useCallback(async (videoUrl: string): Promise<boolean> => {
+    if (!videoUrl || !videoUrl.includes('/product-videos/')) return false;
+
+    try {
+      // Extraire le chemin depuis l'URL
+      // Format: https://{project}.supabase.co/storage/v1/object/public/product-videos/{path}
+      const match = videoUrl.match(/\/product-videos\/(.+)$/);
+      if (!match || !match[1]) return false;
+
+      const filePath = match[1];
+      
+      const { error } = await supabase.storage
+        .from('product-videos')
+        .remove([filePath]);
+
+      if (error) {
+        console.error('[VideoDelete] Error:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('[VideoDelete] Exception:', error);
+      return false;
+    }
+  }, []);
+
+  /**
    * Upload vidéo publicitaire vers Supabase Storage (Premium uniquement)
    */
   const uploadPromotionalVideo = useCallback(async (file: File): Promise<string | null> => {
@@ -385,9 +415,14 @@ export function useProductActions({
       // Combiner anciennes et nouvelles images
       const allImages = newImageUrls.length > 0 ? [...existingImages, ...newImageUrls] : existingImages;
 
-      // Upload nouvelle vidéo si fournie, sinon garder l'existante
+      // Upload nouvelle vidéo si fournie
       let videoUrl: string | null | undefined = existingVideoUrl;
       if (promotionalVideo) {
+        // Supprimer l'ancienne vidéo si elle existe
+        if (existingVideoUrl) {
+          await deleteVideoFromStorage(existingVideoUrl);
+        }
+        // Uploader la nouvelle
         videoUrl = await uploadPromotionalVideo(promotionalVideo);
       }
 
@@ -566,5 +601,6 @@ export function useProductActions({
     bulkUpdateStock,
     uploadImages,
     uploadPromotionalVideo,
+    deleteVideoFromStorage,
   };
 }
