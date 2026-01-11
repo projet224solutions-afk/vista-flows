@@ -3,13 +3,13 @@
  * COMPOSANT: InstallAppButton
  * =====================================================
  *
- * Bouton d'installation PWA / APK.
- * - Tente d'abord l'installation PWA native
- * - Sinon, lance le téléchargement APK automatiquement sur mobile
+ * Bouton d'installation PWA uniquement (pas de téléchargement APK externe).
+ * - Installation directe via le navigateur
+ * - Guide l'utilisateur si le prompt n'est pas disponible
  */
 
 import { useState, useEffect } from 'react';
-import { Download, Smartphone, CheckCircle2 } from 'lucide-react';
+import { Download, Smartphone, CheckCircle2, Share, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -24,9 +24,6 @@ import {
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { toast } from 'sonner';
 
-// URL de téléchargement APK (GitHub Releases)
-const APK_URL = 'https://github.com/projet224solutions-afk/vista-flows/releases/latest/download/224solutions-android.apk';
-
 interface InstallAppButtonProps {
   variant?: 'default' | 'compact' | 'floating';
   className?: string;
@@ -37,10 +34,13 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
     const mobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     setIsMobile(mobile);
+    setIsIOS(ios);
   }, []);
 
   const handleInstallClick = () => {
@@ -50,34 +50,39 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
   const runInstall = async () => {
     setIsInstalling(true);
     try {
-      // 1) Essayer d'abord l'installation PWA native
+      // Essayer l'installation PWA native
       if (isInstallable) {
         const success = await promptInstall();
         if (success) {
-          toast.success('Application installée', {
-            description: "224Solutions est maintenant disponible sur votre écran d'accueil.",
+          toast.success('Application installée !', {
+            description: "224Solutions est maintenant sur votre écran d'accueil.",
           });
           setConfirmOpen(false);
           return;
         }
       }
 
-      // 2) Fallback: télécharger l'APK sur mobile Android
-      if (isMobile) {
-        toast.info('Téléchargement de l\'APK en cours…', {
-          description: 'Ouvrez le fichier téléchargé pour installer l\'application.',
+      // Pas de prompt disponible - afficher les instructions manuelles
+      setConfirmOpen(false);
+      
+      if (isIOS) {
+        toast.info('Installation sur iPhone/iPad', {
+          description: "Appuyez sur le bouton Partager (↑) puis 'Sur l'écran d'accueil'.",
+          duration: 8000,
         });
-        // Déclencher le téléchargement
-        window.location.assign(APK_URL);
+      } else if (isMobile) {
+        toast.info('Installation sur Android', {
+          description: "Ouvrez le menu (⋮) puis 'Installer l'application' ou 'Ajouter à l'écran d'accueil'.",
+          duration: 8000,
+        });
       } else {
-        // Desktop sans PWA disponible
-        toast.info('Installation via le navigateur', {
-          description: "Ouvrez le menu (⋮) puis 'Installer l'application' ou utilisez le téléchargement EXE.",
+        toast.info('Installation sur ordinateur', {
+          description: "Cliquez sur l'icône d'installation dans la barre d'adresse ou le menu du navigateur.",
+          duration: 8000,
         });
       }
     } finally {
       setIsInstalling(false);
-      setConfirmOpen(false);
     }
   };
 
@@ -91,21 +96,53 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
     );
   }
 
+  const getInstallInstructions = () => {
+    if (isInstallable) {
+      return "L'installation démarrera automatiquement.";
+    }
+    if (isIOS) {
+      return (
+        <span className="flex flex-col gap-2 text-left">
+          <span className="font-medium">Sur iPhone/iPad :</span>
+          <span>1. Appuyez sur <Share className="inline w-4 h-4" /> (Partager)</span>
+          <span>2. Faites défiler et appuyez sur "Sur l'écran d'accueil"</span>
+          <span>3. Appuyez sur "Ajouter"</span>
+        </span>
+      );
+    }
+    if (isMobile) {
+      return (
+        <span className="flex flex-col gap-2 text-left">
+          <span className="font-medium">Sur Android :</span>
+          <span>1. Appuyez sur <MoreVertical className="inline w-4 h-4" /> (menu)</span>
+          <span>2. Appuyez sur "Installer l'application" ou "Ajouter à l'écran d'accueil"</span>
+        </span>
+      );
+    }
+    return "Cliquez sur l'icône d'installation dans la barre d'adresse.";
+  };
+
   const ConfirmDialog = (
     <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirmer l'installation</AlertDialogTitle>
-          <AlertDialogDescription>
-            {isMobile
-              ? 'Voulez-vous installer 224Solutions sur votre téléphone ?'
-              : 'Voulez-vous installer 224Solutions sur cet appareil ?'}
+          <AlertDialogTitle className="flex items-center gap-2">
+            <Smartphone className="w-5 h-5 text-primary" />
+            Installer 224Solutions
+          </AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="space-y-3">
+              <p>Installez l'application pour un accès rapide depuis votre écran d'accueil.</p>
+              <div className="p-3 bg-muted rounded-lg text-sm">
+                {getInstallInstructions()}
+              </div>
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isInstalling}>Annuler</AlertDialogCancel>
           <AlertDialogAction onClick={runInstall} disabled={isInstalling}>
-            {isInstalling ? 'Installation…' : 'Installer'}
+            {isInstalling ? 'Installation…' : isInstallable ? 'Installer maintenant' : 'Compris'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
