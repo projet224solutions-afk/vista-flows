@@ -191,6 +191,117 @@ export function POSSystem() {
     loadCategories();
   }, []);
   
+  // ✨ Synchronisation automatique des ventes offline lors de la reconnexion
+  useEffect(() => {
+    const syncOfflineSales = async () => {
+      if (!vendorId || !navigator.onLine) return;
+      
+      try {
+        const { default: offlineDB } = await import('@/lib/offlineDB');
+        const pendingEvents = await offlineDB.getPendingEvents();
+        const salesEvents = pendingEvents.filter(e => e.type === 'sale' && e.vendor_id === vendorId);
+        
+        if (salesEvents.length === 0) return;
+        
+        console.log(`🔄 Synchronisation de ${salesEvents.length} vente(s) offline...`);
+        toast.info(`Synchronisation de ${salesEvents.length} vente(s) en cours...`);
+        
+        for (const event of salesEvents) {
+          try {
+            const saleData = event.data;
+            
+            // Obtenir ou créer un customer_id
+            const { data: existingCustomer } = await supabase
+              .from('customers')
+              .select('id')
+              .eq('vendor_id', vendorId)
+              .eq('name', saleData.customer_name || 'Client comptoir')
+              .maybeSingle();
+            
+            let customerId = existingCustomer?.id;
+            
+            if (!customerId) {
+              const { data: newCustomer } = await supabase
+                .from('customers')
+                .insert({
+                  vendor_id: vendorId,
+                  name: saleData.customer_name || 'Client comptoir',
+                  phone: saleData.customer_phone || null
+                })
+                .select('id')
+                .single();
+              customerId = newCustomer?.id;
+            }
+            
+            if (!customerId) continue;
+            
+            // Créer la commande
+            const { data: order, error: orderError } = await supabase
+              .from('orders')
+              .insert({
+                vendor_id: vendorId,
+                customer_id: customerId,
+                total_amount: saleData.total_amount,
+                subtotal: saleData.subtotal,
+                tax_amount: saleData.tax_amount,
+                discount_amount: saleData.discount_amount,
+                payment_status: 'paid',
+                status: 'confirmed',
+                payment_method: 'cash',
+                shipping_address: { address: 'Point de vente' },
+                notes: `Vente offline synchronisée - ${saleData.order_number}`,
+                source: 'pos_offline_synced',
+                created_at: saleData.sale_date
+              })
+              .select('id')
+              .single();
+            
+            if (orderError) throw orderError;
+            
+            // Créer les items
+            const orderItems = saleData.items.map((item: any) => ({
+              order_id: order.id,
+              product_id: item.product_id,
+              quantity: item.quantity,
+              unit_price: item.unit_price,
+              total_price: item.total_price
+            }));
+            
+            await supabase.from('order_items').insert(orderItems);
+            await supabase.from('orders').update({ status: 'processing' }).eq('id', order.id);
+            
+            // Marquer l'événement comme synchronisé
+            await offlineDB.markEventAsSynced(event.client_event_id);
+            console.log(`✅ Vente offline ${saleData.order_number} synchronisée`);
+            
+          } catch (syncError) {
+            console.error('Erreur sync vente offline:', syncError);
+            await offlineDB.markEventAsFailed(event.client_event_id, String(syncError));
+          }
+        }
+        
+        // Rafraîchir les produits pour avoir les stocks à jour
+        await loadVendorProducts();
+        toast.success('Ventes hors-ligne synchronisées !');
+        
+      } catch (error) {
+        console.error('Erreur synchronisation offline:', error);
+      }
+    };
+    
+    // Sync au montage si online
+    syncOfflineSales();
+    
+    // Sync quand on repasse online
+    const handleOnline = () => {
+      console.log('📡 Connexion rétablie - synchronisation...');
+      syncOfflineSales();
+    };
+    
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [vendorId]);
+  
   const loadVendorProducts = async () => {
     if (!vendorId) return;
     
