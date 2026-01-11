@@ -1,18 +1,16 @@
-// Service Worker v6 - PWA + Firebase Cloud Messaging (Unifié)
-const CACHE_VERSION = "v6";
+// Service Worker v7 - PWA + Firebase Cloud Messaging + Mode Offline Vendeur
+const CACHE_VERSION = "v7";
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
+const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
 
 // --- Firebase Cloud Messaging (FCM) ---
-// IMPORTANT: Un seul Service Worker par scope, on intègre FCM ici.
-// Utiliser Firebase 10.x pour compatibilité avec version moderne
 let firebaseAvailable = false;
 try {
   importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js');
   importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js');
   firebaseAvailable = true;
 } catch (e) {
-  // Ne pas casser le SW si Firebase est bloqué (CSP/adblock/réseau)
   console.warn('[FCM SW] Firebase scripts non chargés — notifications désactivées', e);
 }
 
@@ -31,7 +29,6 @@ function initFCM() {
   }
 
   try {
-    // Eviter double init
     if (!firebase.apps || !firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
     }
@@ -63,7 +60,6 @@ function initFCM() {
   }
 }
 
-// Actions selon le type de notification
 function getNotificationActions(type) {
   switch (type) {
     case 'emergency':
@@ -83,40 +79,76 @@ function getNotificationActions(type) {
   }
 }
 
-// Liste minimale à précacher pour fonctionnement offline
+// Assets essentiels à précacher pour le mode offline
 const PRECACHE_ASSETS = [
   "/",
+  "/index.html",
   "/manifest.webmanifest",
   "/offline.html",
   "/favicon.png",
+  "/icon-72.png",
+  "/icon-96.png",
+  "/icon-128.png",
+  "/icon-144.png",
+  "/icon-152.png",
   "/icon-192.png",
-  "/icon-512.png"
+  "/icon-384.png",
+  "/icon-512.png",
+  "/apple-touch-icon.png"
 ];
 
-// INSTALL - Ne jamais bloquer
-self.addEventListener("install", (event) => {
-  console.log("[SW] Installation v6 - Mode offline activé");
-  self.skipWaiting();
+// Routes principales de l'app vendeur à mettre en cache dynamiquement
+const VENDOR_ROUTES = [
+  "/vendeur",
+  "/vendeur/dashboard",
+  "/vendeur/products",
+  "/vendeur/orders",
+  "/vendeur/pos",
+  "/vendeur/clients",
+  "/vendeur/inventory",
+  "/vendeur/wallet",
+  "/vendeur/settings"
+];
 
+// INSTALL - Précacher les assets essentiels
+self.addEventListener("install", (event) => {
+  console.log("[SW] Installation v7 - Mode offline vendeur activé");
+  
   event.waitUntil(
-    caches
-      .open(STATIC_CACHE)
-      .then((cache) => {
+    Promise.all([
+      // Précacher les assets statiques
+      caches.open(STATIC_CACHE).then((cache) => {
         console.log("[SW] Précache des assets essentiels");
-        return cache.addAll(PRECACHE_ASSETS);
+        // Ajouter un par un pour éviter qu'un échec bloque tout
+        return Promise.allSettled(
+          PRECACHE_ASSETS.map(url => 
+            cache.add(url).catch(err => console.warn(`[SW] Échec cache ${url}:`, err))
+          )
+        );
+      }),
+      // Précacher l'app shell (index.html) séparément
+      caches.open(APP_SHELL_CACHE).then((cache) => {
+        return fetch('/').then(response => {
+          if (response.ok) {
+            cache.put('/', response.clone());
+            cache.put('/index.html', response);
+          }
+        }).catch(() => {});
       })
-      .catch((err) => {
-        console.warn("[SW] Précache partiel:", err);
-      })
+    ]).then(() => {
+      console.log("[SW] Précache terminé");
+      self.skipWaiting();
+    })
   );
 });
 
-// ACTIVATE - Nettoyer anciens caches et prendre le contrôle
+// ACTIVATE - Nettoyer anciens caches et mettre en cache les routes vendeur
 self.addEventListener("activate", (event) => {
-  console.log("[SW] Activation v6");
+  console.log("[SW] Activation v7");
 
   event.waitUntil(
     Promise.all([
+      // Nettoyer les anciens caches
       caches.keys().then((keys) =>
         Promise.all(
           keys
@@ -127,60 +159,169 @@ self.addEventListener("activate", (event) => {
             })
         )
       ),
+      // Prendre le contrôle immédiatement
       self.clients.claim(),
+      // Précacher les routes vendeur en arrière-plan
+      caches.open(DYNAMIC_CACHE).then((cache) => {
+        console.log("[SW] Mise en cache des routes vendeur...");
+        return Promise.allSettled(
+          VENDOR_ROUTES.map(route => 
+            fetch(route, { cache: 'reload' })
+              .then(response => {
+                if (response.ok) {
+                  cache.put(route, response);
+                  console.log(`[SW] Route en cache: ${route}`);
+                }
+              })
+              .catch(() => {})
+          )
+        );
+      })
     ])
   );
 });
 
-// FETCH - Stratégie Network-First pour tout sauf assets statiques
+// FETCH - Stratégie optimisée pour mode offline vendeur
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
   const url = new URL(event.request.url);
 
-  // Ignorer les APIs externes et supabase
+  // Ignorer les APIs externes
   if (
     url.hostname.includes("supabase") ||
     url.hostname.includes("googleapis") ||
     url.hostname.includes("mapbox") ||
     url.hostname.includes("agora") ||
-    url.hostname !== self.location.hostname
+    url.hostname.includes("stripe") ||
+    url.hostname.includes("gstatic") ||
+    url.hostname.includes("firebase")
   ) {
     return;
   }
 
-  // Navigation (HTML) - Network First avec fallback offline
+  // Si hostname différent et pas une extension connue, ignorer
+  if (url.hostname !== self.location.hostname) {
+    return;
+  }
+
+  // Navigation (HTML) - Network First avec fallback app shell
   if (event.request.mode === "navigate") {
     event.respondWith(
-      fetch(event.request, { cache: 'no-cache' })
-        .then((response) => {
-          // Mettre en cache uniquement si réponse valide
-          if (response && response.ok) {
-            const responseClone = response.clone();
-            caches.open(DYNAMIC_CACHE).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
+      (async () => {
+        try {
+          // Essayer le réseau d'abord
+          const networkResponse = await fetch(event.request, { 
+            cache: 'no-cache',
+            credentials: 'same-origin'
+          });
+          
+          if (networkResponse && networkResponse.ok) {
+            // Mettre en cache pour usage offline
+            const cache = await caches.open(DYNAMIC_CACHE);
+            cache.put(event.request, networkResponse.clone());
+            
+            // Aussi mettre en cache l'URL canonique pour les routes SPA
+            if (url.pathname.startsWith('/vendeur')) {
+              cache.put(url.pathname, networkResponse.clone());
+            }
           }
-          return response;
-        })
-        .catch(() => {
-          // Mode offline: servir depuis le cache
-          console.log("[SW] Mode offline - Serving from cache");
-          return caches.match(event.request)
-            .then(cached => {
-              if (cached) return cached;
-              // Fallback sur index.html si route spécifique pas en cache
-              return caches.match("/") || caches.match("/index.html");
-            })
-            .then(response => {
-              if (response) return response;
-              // Dernière option: page offline d'urgence
-              return new Response(
-                '<!DOCTYPE html><html><head><meta charset="utf-8"><title>224Solutions - Offline</title></head><body style="font-family: system-ui; text-align: center; padding: 50px; background: #f5f5f5;"><h1>📡 Mode hors ligne</h1><p>Reconnectez-vous pour accéder à toutes les fonctionnalités</p><button onclick="location.reload()" style="padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">Réessayer</button></body></html>',
-                { headers: { 'Content-Type': 'text/html' } }
-              );
-            });
-        })
+          return networkResponse;
+        } catch (error) {
+          console.log("[SW] Mode offline - Récupération depuis cache pour:", url.pathname);
+          
+          // 1. Essayer le cache exact
+          const exactMatch = await caches.match(event.request);
+          if (exactMatch) return exactMatch;
+          
+          // 2. Essayer le chemin seul (sans query string)
+          const pathMatch = await caches.match(url.pathname);
+          if (pathMatch) return pathMatch;
+          
+          // 3. Pour les routes SPA, servir l'app shell (index.html)
+          const appShell = await caches.match('/') || 
+                          await caches.match('/index.html') ||
+                          await caches.open(APP_SHELL_CACHE).then(c => c.match('/'));
+          
+          if (appShell) {
+            console.log("[SW] Serving app shell for offline SPA route:", url.pathname);
+            return appShell;
+          }
+          
+          // 4. Page offline d'urgence avec toutes les infos
+          console.log("[SW] Serving emergency offline page");
+          return new Response(
+            `<!DOCTYPE html>
+            <html lang="fr">
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <title>224Solutions - Mode Hors Ligne</title>
+              <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { 
+                  font-family: system-ui, -apple-system, sans-serif;
+                  background: linear-gradient(135deg, #667eea, #764ba2);
+                  min-height: 100vh;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  padding: 20px;
+                }
+                .container {
+                  background: white;
+                  padding: 40px;
+                  border-radius: 20px;
+                  text-align: center;
+                  max-width: 400px;
+                  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                }
+                h1 { color: #2c3e50; margin-bottom: 15px; }
+                p { color: #7f8c8d; margin-bottom: 25px; line-height: 1.6; }
+                .icon { font-size: 60px; margin-bottom: 20px; }
+                button {
+                  padding: 14px 28px;
+                  background: linear-gradient(135deg, #667eea, #764ba2);
+                  color: white;
+                  border: none;
+                  border-radius: 50px;
+                  font-size: 16px;
+                  cursor: pointer;
+                  font-weight: 600;
+                }
+                button:hover { transform: scale(1.05); }
+                .info { 
+                  margin-top: 20px;
+                  padding: 15px;
+                  background: #f8f9fa;
+                  border-radius: 10px;
+                  font-size: 13px;
+                  color: #666;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="icon">📡</div>
+                <h1>Mode Hors Ligne</h1>
+                <p>Vous n'êtes pas connecté à Internet. L'interface vendeur nécessite une connexion pour charger initialement.</p>
+                <button onclick="location.reload()">🔄 Réessayer</button>
+                <div class="info">
+                  <strong>💡 Conseil:</strong> Visitez l'interface une première fois avec Internet pour activer le mode hors-ligne.
+                </div>
+              </div>
+              <script>
+                window.addEventListener('online', () => location.reload());
+              </script>
+            </body>
+            </html>`,
+            { 
+              status: 503,
+              headers: { 'Content-Type': 'text/html; charset=utf-8' } 
+            }
+          );
+        }
+      })()
     );
     return;
   }
