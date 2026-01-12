@@ -54,44 +54,52 @@ export default function MessageItem({
   const [editContent, setEditContent] = useState(message.content);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [isPlayingVideo, setIsPlayingVideo] = useState(false);
-  const [audioDuration, setAudioDuration] = useState(0);
-  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
+  const [audioDurations, setAudioDurations] = useState<Record<string, number>>({});
+  const [audioCurrentTimes, setAudioCurrentTimes] = useState<Record<string, number>>({});
+  const audioRefs = useRef<Record<string, HTMLAudioElement>>({});
+  const videoRefs = useRef<Record<string, HTMLVideoElement>>({})
 
   useEffect(() => {
     return () => {
       // Cleanup audio/video si composant unmount
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-      if (videoRef.current) {
-        videoRef.current.pause();
-      }
+      Object.values(audioRefs.current).forEach(audio => {
+        if (audio) audio.pause();
+      });
+      Object.values(videoRefs.current).forEach(video => {
+        if (video) video.pause();
+      });
     };
   }, []);
 
-  useEffect(() => {
-    // Mettre à jour la durée audio
-    const audio = audioRef.current;
-    if (audio) {
-      const handleLoadedMetadata = () => setAudioDuration(audio.duration);
-      const handleTimeUpdate = () => setAudioCurrentTime(audio.currentTime);
-      const handleEnded = () => setIsPlayingAudio(false);
+  // Fonction pour enregistrer une ref audio
+  const setAudioRef = (id: string, element: HTMLAudioElement | null) => {
+    if (element) {
+      audioRefs.current[id] = element;
       
-      audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-      audio.addEventListener('timeupdate', handleTimeUpdate);
-      audio.addEventListener('ended', handleEnded);
-      
-      return () => {
-        audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
-        audio.removeEventListener('timeupdate', handleTimeUpdate);
-        audio.removeEventListener('ended', handleEnded);
+      const handleLoadedMetadata = () => {
+        setAudioDurations(prev => ({ ...prev, [id]: element.duration }));
       };
+      const handleTimeUpdate = () => {
+        setAudioCurrentTimes(prev => ({ ...prev, [id]: element.currentTime }));
+      };
+      const handleEnded = () => {
+        setPlayingAudioId(null);
+      };
+      
+      element.addEventListener('loadedmetadata', handleLoadedMetadata);
+      element.addEventListener('timeupdate', handleTimeUpdate);
+      element.addEventListener('ended', handleEnded);
     }
-  }, [message.file_url, message.type]);
+  };
+
+  // Fonction pour enregistrer une ref vidéo
+  const setVideoRef = (id: string, element: HTMLVideoElement | null) => {
+    if (element) {
+      videoRefs.current[id] = element;
+    }
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
@@ -121,27 +129,35 @@ export default function MessageItem({
     setIsEditing(false);
   };
 
-  const toggleAudio = () => {
-    if (!audioRef.current) return;
+  const toggleAudio = (audioId: string) => {
+    const audio = audioRefs.current[audioId];
+    if (!audio) return;
     
-    if (isPlayingAudio) {
-      audioRef.current.pause();
-      setIsPlayingAudio(false);
+    if (playingAudioId === audioId) {
+      audio.pause();
+      setPlayingAudioId(null);
     } else {
-      audioRef.current.play();
-      setIsPlayingAudio(true);
+      // Pause tous les autres audios
+      Object.entries(audioRefs.current).forEach(([id, otherAudio]) => {
+        if (id !== audioId && otherAudio) {
+          otherAudio.pause();
+        }
+      });
+      audio.play();
+      setPlayingAudioId(audioId);
     }
   };
 
-  const toggleVideo = () => {
-    if (!videoRef.current) return;
+  const toggleVideo = (videoId: string) => {
+    const video = videoRefs.current[videoId];
+    if (!video) return;
     
-    if (isPlayingVideo) {
-      videoRef.current.pause();
-      setIsPlayingVideo(false);
+    if (playingVideoId === videoId) {
+      video.pause();
+      setPlayingVideoId(null);
     } else {
-      videoRef.current.play();
-      setIsPlayingVideo(true);
+      video.play();
+      setPlayingVideoId(videoId);
     }
   };
 
@@ -241,9 +257,12 @@ export default function MessageItem({
             </div>
           ) : (
             <>
-              <div className="text-sm whitespace-pre-wrap break-words">
-                {message.content}
-              </div>
+              {/* Afficher le texte seulement s'il existe et n'est pas juste un nom de fichier */}
+              {message.content && !message.file_url && (
+                <div className="text-sm whitespace-pre-wrap break-words">
+                  {message.content}
+                </div>
+              )}
 
               {/* Pièces jointes */}
               {message.attachments && message.attachments.length > 0 && (
@@ -273,10 +292,10 @@ export default function MessageItem({
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={toggleAudio}
+                            onClick={() => toggleAudio(`attachment-${index}`)}
                             className="h-10 w-10 rounded-full flex-shrink-0"
                           >
-                            {isPlayingAudio ? (
+                            {playingAudioId === `attachment-${index}` ? (
                               <Pause className="w-4 h-4" />
                             ) : (
                               <Play className="w-4 h-4" />
@@ -297,20 +316,23 @@ export default function MessageItem({
                                 <div 
                                   className="h-full bg-primary transition-all duration-100"
                                   style={{ 
-                                    width: audioDuration > 0 
-                                      ? `${(audioCurrentTime / audioDuration) * 100}%` 
+                                    width: audioDurations[`attachment-${index}`] > 0 
+                                      ? `${(audioCurrentTimes[`attachment-${index}`] / audioDurations[`attachment-${index}`]) * 100}%` 
                                       : '0%' 
                                   }}
                                 />
                               </div>
                               <span className="text-xs text-muted-foreground tabular-nums min-w-[35px]">
-                                {formatTime(isPlayingAudio ? audioCurrentTime : audioDuration)}
+                                {formatTime(playingAudioId === `attachment-${index}` 
+                                  ? audioCurrentTimes[`attachment-${index}`] || 0
+                                  : audioDurations[`attachment-${index}`] || 0
+                                )}
                               </span>
                             </div>
                           </div>
                           
                           <audio 
-                            ref={audioRef}
+                            ref={(el) => setAudioRef(`attachment-${index}`, el)}
                             src={attachment.url}
                             preload="metadata"
                             className="hidden"
@@ -322,13 +344,13 @@ export default function MessageItem({
                       {attachment.type.startsWith('video/') && (
                         <div className="relative rounded-lg overflow-hidden bg-black">
                           <video 
-                            ref={videoRef}
+                            ref={(el) => setVideoRef(`attachment-${index}`, el)}
                             src={attachment.url}
                             className="w-full max-h-[400px]"
                             controls
                             preload="metadata"
-                            onPlay={() => setIsPlayingVideo(true)}
-                            onPause={() => setIsPlayingVideo(false)}
+                            onPlay={() => setPlayingVideoId(`attachment-${index}`)}
+                            onPause={() => setPlayingVideoId(null)}
                           />
                         </div>
                       )}
@@ -383,10 +405,10 @@ export default function MessageItem({
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={toggleAudio}
+                        onClick={() => toggleAudio('direct-audio')}
                         className="h-10 w-10 rounded-full flex-shrink-0"
                       >
-                        {isPlayingAudio ? (
+                        {playingAudioId === 'direct-audio' ? (
                           <Pause className="w-4 h-4" />
                         ) : (
                           <Play className="w-4 h-4" />
@@ -406,20 +428,23 @@ export default function MessageItem({
                             <div 
                               className="h-full bg-primary transition-all duration-100"
                               style={{ 
-                                width: audioDuration > 0 
-                                  ? `${(audioCurrentTime / audioDuration) * 100}%` 
+                                width: audioDurations['direct-audio'] > 0 
+                                  ? `${(audioCurrentTimes['direct-audio'] / audioDurations['direct-audio']) * 100}%` 
                                   : '0%' 
                               }}
                             />
                           </div>
                           <span className="text-xs text-muted-foreground tabular-nums min-w-[35px]">
-                            {formatTime(isPlayingAudio ? audioCurrentTime : audioDuration)}
+                            {formatTime(playingAudioId === 'direct-audio'
+                              ? audioCurrentTimes['direct-audio'] || 0
+                              : audioDurations['direct-audio'] || 0
+                            )}
                           </span>
                         </div>
                       </div>
                       
                       <audio 
-                        ref={audioRef}
+                        ref={(el) => setAudioRef('direct-audio', el)}
                         src={message.file_url}
                         preload="metadata"
                         className="hidden"
@@ -431,13 +456,13 @@ export default function MessageItem({
                   {message.type === 'video' && (
                     <div className="relative rounded-lg overflow-hidden bg-black">
                       <video 
-                        ref={videoRef}
+                        ref={(el) => setVideoRef('direct-video', el)}
                         src={message.file_url}
                         className="w-full max-h-[400px]"
                         controls
                         preload="metadata"
-                        onPlay={() => setIsPlayingVideo(true)}
-                        onPause={() => setIsPlayingVideo(false)}
+                        onPlay={() => setPlayingVideoId('direct-video')}
+                        onPause={() => setPlayingVideoId(null)}
                       />
                     </div>
                   )}

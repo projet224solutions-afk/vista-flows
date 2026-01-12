@@ -431,8 +431,14 @@ export default function Messages() {
         .getPublicUrl(fileName);
 
       // Déterminer le type de fichier - utiliser les types acceptés par la DB
-      let fileType: 'image' | 'file' = 'file';
-      if (file.type.startsWith('image/')) fileType = 'image';
+      let fileType: 'image' | 'video' | 'audio' | 'file' = 'file';
+      if (file.type.startsWith('image/')) {
+        fileType = 'image';
+      } else if (file.type.startsWith('video/')) {
+        fileType = 'video';
+      } else if (file.type.startsWith('audio/') || file.name.includes('vocal')) {
+        fileType = 'audio';
+      }
 
       // Insérer message avec fichier directement
       const { error: messageError } = await supabase
