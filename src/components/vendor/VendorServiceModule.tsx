@@ -128,6 +128,7 @@ export default function VendorServiceModule() {
         businessName={businessName}
         serviceId={selectedService?.id || vendorId || 'default'}
         serviceTypeName={serviceTypeName}
+        serviceTypeCode={selectedService?.service_type?.code}
         onRefresh={refresh}
         professionalService={selectedService}
       />
