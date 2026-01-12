@@ -8,7 +8,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { DjomyClient, createDjomyClient } from "../_shared/djomy-client.ts";
+import { createDjomyClient } from "../_shared/djomy-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -45,7 +45,10 @@ serve(async (req) => {
       returnUrl,
       cancelUrl,
       metadata = {},
+      useSandbox = false, // 🧪 Mode sandbox pour les tests
     } = body;
+
+    logStep("Request received", { amount, paymentMethod, useSandbox });
 
     // Input validation
     if (!amount || amount <= 0) {
@@ -58,25 +61,24 @@ serve(async (req) => {
       throw new Error("Méthode de paiement invalide. Utilisez: OM, MOMO ou KULU");
     }
 
-    logStep("Input validated", { amount, paymentMethod, phone: payerPhone.substring(0, 6) + "..." });
+    logStep("Input validated", { amount, paymentMethod, phone: payerPhone.substring(0, 6) + "...", useSandbox });
 
-    // Initialize Supabase clients
-    const supabaseAnon = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
-    
+    // Initialize Supabase admin client
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
 
-    // Get authenticated user (optional)
+    // Get authenticated user (optional - not required for sandbox testing)
     const authHeader = req.headers.get("Authorization");
     let userId: string | null = null;
 
-    if (authHeader) {
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const supabaseAnon = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      );
       const token = authHeader.replace("Bearer ", "");
       const { data: userData } = await supabaseAnon.auth.getUser(token);
       if (userData.user) {
@@ -141,8 +143,8 @@ serve(async (req) => {
 
     logStep("Transaction created", { id: newTransaction.id, orderId: finalOrderId });
 
-    // Initialize Djomy client
-    const djomyClient = createDjomyClient();
+    // Initialize Djomy client (sandbox ou production selon le paramètre)
+    const djomyClient = createDjomyClient(useSandbox);
 
     // Log API request
     await supabaseAdmin
