@@ -94,9 +94,11 @@ serve(async (req) => {
       );
     }
 
-    if (seller.role !== 'VENDOR') {
+    // Accepter les rôles vendeur en français et anglais
+    const validVendorRoles = ['VENDOR', 'vendeur', 'Vendeur', 'vendor'];
+    if (!validVendorRoles.includes(seller.role)) {
       return new Response(
-        JSON.stringify({ error: 'User is not a vendor' }),
+        JSON.stringify({ error: 'User is not a vendor', actual_role: seller.role }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -204,6 +206,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         client_secret: paymentIntent.client_secret,
+        clientSecret: paymentIntent.client_secret, // Alias pour compatibilité frontend
         payment_intent_id: paymentIntent.id,
         transaction_id: transaction?.id,
         product_amount: amount, // Montant produit
