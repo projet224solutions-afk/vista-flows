@@ -41,10 +41,10 @@ const PUBLIC_ROUTES = [
 /**
  * Routes qui déclenchent toujours une redirection vers le dashboard approprié
  * Ce sont les pages d'entrée principales où un utilisateur connecté doit être redirigé
+ * Note: /home est retiré pour permettre aux utilisateurs connectés d'accéder à la page d'accueil
  */
 const REDIRECT_TRIGGER_ROUTES = [
   '/',
-  '/home',
   '/auth',
 ];
 

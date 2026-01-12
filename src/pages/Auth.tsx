@@ -256,6 +256,58 @@ export default function Auth() {
     }
   };
 
+  // ⚡ IMPORTANT: Écouter les événements OAuth pour rediriger après connexion Google/Facebook
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔔 [Auth] Auth state change:', event, session?.user?.email || 'no user');
+      
+      // Rediriger après connexion OAuth réussie
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log('🔐 [Auth] SIGNED_IN détecté - vérification du profil...');
+        setIsAuthenticating(true);
+        
+        // Petit délai pour laisser le profil se créer/charger
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        try {
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .maybeSingle();
+          
+          if (error) {
+            console.error('❌ [Auth] Erreur récupération profil:', error);
+          }
+          
+          if (profile?.role) {
+            const targetRoute = getDashboardRoute(profile.role);
+            console.log(`🚀 [Auth] Redirection OAuth vers ${targetRoute} (rôle: ${profile.role})`);
+            
+            toast({
+              title: "✅ Connexion réussie",
+              description: `Bienvenue ! Redirection vers votre espace ${profile.role}...`,
+            });
+            
+            // Nettoyer les flags OAuth
+            localStorage.removeItem('oauth_intent_role');
+            localStorage.removeItem('oauth_is_new_signup');
+            
+            navigate(targetRoute, { replace: true });
+          } else {
+            console.log('⚠️ [Auth] Pas de rôle trouvé, reste sur /auth');
+          }
+        } catch (err) {
+          console.error('❌ [Auth] Erreur callback OAuth:', err);
+        } finally {
+          setIsAuthenticating(false);
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate, toast]);
+
   // Vérifier si l'utilisateur est déjà connecté au chargement de la page
   useEffect(() => {
     let isMounted = true;
@@ -294,7 +346,7 @@ export default function Auth() {
     return () => {
       isMounted = false;
     };
-  }, []); // Seulement au montage, pas de dépendances
+  }, [isAuthenticating]); // Ajouter isAuthenticating comme dépendance
 
   // Détecter si on vient d'un lien de réinitialisation et vérifier la session
   useEffect(() => {
@@ -1022,6 +1074,13 @@ export default function Auth() {
       // Pour les marchands, afficher d'abord la sélection du type de service
       setShowServiceSelection(true);
       setSelectedRole(role);
+      // Scroll vers le milieu pour afficher la fenêtre de sélection
+      setTimeout(() => {
+        const serviceCard = document.getElementById('service-selection-card');
+        if (serviceCard) {
+          serviceCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
     } else {
       setSelectedRole(role);
       setShowSignup(true);
@@ -1210,13 +1269,13 @@ export default function Auth() {
           </h3>
           
           {/* Ligne des 4 boutons professionnels (Marchand, Livreur, Taxi, Transitaire) */}
-          <div className="flex flex-wrap justify-center gap-2 mb-4">
+          <div className="flex flex-wrap justify-center gap-2 mb-3">
             <button
               onClick={() => handleRoleClick('vendeur')}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
                 selectedRole === 'vendeur' 
-                  ? 'bg-green-600 text-white shadow-lg scale-105' 
-                  : 'bg-white text-green-700 border-2 border-green-200 hover:border-green-400 hover:bg-green-50'
+                  ? 'bg-primary text-primary-foreground shadow-lg scale-105' 
+                  : 'bg-white text-primary border-2 border-primary hover:bg-primary/10'
               }`}
             >
               <Store className="h-4 w-4" />
@@ -1260,23 +1319,20 @@ export default function Auth() {
             </button>
           </div>
           
-          {/* Bouton Client - plus large et stylé en bas avec texte réorganisé */}
-          <button
-            onClick={() => handleRoleClick('client')}
-            className={`w-full flex flex-col items-center justify-center gap-1 py-4 rounded-2xl transition-all ${
-              selectedRole === 'client' 
-                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl scale-[1.02]' 
-                : 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border-2 border-blue-200 hover:border-blue-400 hover:from-blue-100 hover:to-purple-100 hover:shadow-lg'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <UserIcon className={`h-6 w-6 ${selectedRole === 'client' ? 'text-white' : 'text-blue-600'}`} />
-              <span className="text-lg font-semibold">{t('auth.client')}</span>
-            </div>
-            <span className={`text-sm font-normal ${selectedRole === 'client' ? 'text-blue-100' : 'text-muted-foreground'}`}>
-              Acheter des produits et services
-            </span>
-          </button>
+          {/* Bouton Client centré en bas */}
+          <div className="flex justify-center">
+            <button
+              onClick={() => handleRoleClick('client')}
+              className={`flex items-center justify-center gap-2 px-8 py-2.5 rounded-full text-sm font-medium transition-all ${
+                selectedRole === 'client' 
+                  ? 'bg-primary text-primary-foreground shadow-lg scale-105' 
+                  : 'bg-white text-primary border-2 border-primary hover:bg-primary/10'
+              }`}
+            >
+              <UserIcon className="h-4 w-4" />
+              <span>{t('auth.client')}</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1289,9 +1345,9 @@ export default function Auth() {
             onClick={handleCloseServiceSelection}
           />
           <div className="max-w-6xl mx-auto px-4 mt-6 relative z-50">
-            <Card className="shadow-2xl border-2 border-primary bg-white overflow-hidden">
+            <Card id="service-selection-card" className="shadow-2xl border-2 border-primary bg-white overflow-hidden">
             <CardContent className="p-6 md:p-8">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-start mb-6">
                 <Button
                   variant="ghost"
                   onClick={() => {
@@ -1303,16 +1359,27 @@ export default function Auth() {
                   <ArrowLeft className="w-4 h-4" />
                   Retour
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleSkipServiceSelection}
-                  className="gap-2 bg-primary/10 hover:bg-primary/20 border-primary"
-                >
-                  <Store className="w-4 h-4" />
-                  Vendeur E-commerce
-                </Button>
               </div>
               
+              {/* 🛒 Bouton E-commerce classique - Centré et stylé */}
+              <div className="flex justify-center mb-6">
+                <button
+                  onClick={handleSkipServiceSelection}
+                  className="group relative flex items-center gap-3 px-8 py-4 bg-primary text-primary-foreground rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] hover:bg-primary/90 transition-all duration-300 border-2 border-primary"
+                >
+                  <div className="relative flex items-center gap-3">
+                    <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl backdrop-blur-sm">
+                      <Store className="w-6 h-6" />
+                    </div>
+                    <div className="text-center">
+                      <span className="block text-lg font-bold">Mode Vendeur E-commerce classique</span>
+                      <span className="block text-sm text-primary-foreground/80">(vente de produits uniquement)</span>
+                    </div>
+                    <Sparkles className="w-5 h-5 animate-pulse" />
+                  </div>
+                </button>
+              </div>
+
               <div className="text-center mb-6">
                 <h3 className="text-xl md:text-2xl font-bold mb-2">
                   Choisissez votre Type de Service
@@ -1324,19 +1391,35 @@ export default function Auth() {
 
               {/* Section: Services de Proximité Populaires */}
               <div className="mb-6">
-                <h4 className="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
+                <h4 className="text-sm font-semibold text-primary mb-3 flex items-center justify-center gap-2">
                   <span className="w-8 h-0.5 bg-primary rounded"></span>
                   Services de Proximité Populaires
                   <span className="w-8 h-0.5 bg-primary rounded"></span>
                 </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {/* Première ligne - 4 boutons */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
                   {[
-                    { id: 'ecommerce', name: 'Boutique', icon: '🏪', desc: 'Commerce de détail' },
                     { id: 'restaurant', name: 'Restaurant', icon: '🍽️', desc: 'Cuisine & plats' },
-                    { id: 'livraison', name: 'Livraison', icon: '📦', desc: 'Colis & courses' },
                     { id: 'beaute', name: 'Beauté & Coiffure', icon: '💇', desc: 'Soins & styling' },
                     { id: 'vtc', name: 'Transport VTC', icon: '🚗', desc: 'Véhicules privés' },
                     { id: 'reparation', name: 'Réparation', icon: '🔧', desc: 'Électro & mécanique' },
+                  ].map((service) => (
+                    <button
+                      key={service.id}
+                      onClick={() => handleServiceTypeSelect(service.id)}
+                      className={`flex flex-col items-center p-3 bg-gradient-to-br from-white to-slate-50 rounded-xl border-2 hover:border-primary hover:shadow-lg hover:scale-[1.02] transition-all ${
+                        selectedServiceType === service.id ? 'border-primary ring-2 ring-primary/30 bg-primary/5' : 'border-slate-200'
+                      }`}
+                    >
+                      <div className="text-3xl mb-1.5">{service.icon}</div>
+                      <span className="text-sm font-semibold text-foreground">{service.name}</span>
+                      <span className="text-[10px] text-muted-foreground">{service.desc}</span>
+                    </button>
+                  ))}
+                </div>
+                {/* Deuxième ligne - 2 boutons centrés */}
+                <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 max-w-md mx-auto">
+                  {[
                     { id: 'menage', name: 'Nettoyage', icon: '✨', desc: 'Ménage & pressing' },
                     { id: 'informatique', name: 'Informatique', icon: '💻', desc: 'Tech & dépannage' },
                   ].map((service) => (
@@ -1355,37 +1438,8 @@ export default function Auth() {
                 </div>
               </div>
 
-              {/* Section: Catégories de Produits */}
-              <div className="mb-6">
-                <h4 className="text-sm font-semibold text-emerald-600 mb-3 flex items-center gap-2">
-                  <span className="w-8 h-0.5 bg-emerald-500 rounded"></span>
-                  Vente de Produits par Catégorie
-                  <span className="w-8 h-0.5 bg-emerald-500 rounded"></span>
-                </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[
-                    { id: 'mode', name: 'Mode & Vêtements', icon: '👗', desc: 'Prêt-à-porter' },
-                    { id: 'sante', name: 'Santé & Bien-être', icon: '💊', desc: 'Pharmacie & soins' },
-                    { id: 'electronique', name: 'Électronique', icon: '📱', desc: 'High-tech' },
-                    { id: 'maison', name: 'Maison & Déco', icon: '🏠', desc: 'Intérieur' },
-                  ].map((service) => (
-                    <button
-                      key={service.id}
-                      onClick={() => handleServiceTypeSelect(service.id)}
-                      className={`flex flex-col items-center p-3 bg-gradient-to-br from-emerald-50 to-white rounded-xl border-2 hover:border-emerald-500 hover:shadow-lg hover:scale-[1.02] transition-all ${
-                        selectedServiceType === service.id ? 'border-emerald-500 ring-2 ring-emerald-500/30' : 'border-emerald-200'
-                      }`}
-                    >
-                      <div className="text-3xl mb-1.5">{service.icon}</div>
-                      <span className="text-sm font-semibold text-foreground">{service.name}</span>
-                      <span className="text-[10px] text-muted-foreground">{service.desc}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Section: Services Professionnels */}
-              <div className="mb-4">
+              <div className="mb-6">
                 <h4 className="text-sm font-semibold text-violet-600 mb-3 flex items-center gap-2">
                   <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
                   Services Professionnels
@@ -1393,10 +1447,14 @@ export default function Auth() {
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
-                    { id: 'location', name: 'Immobilier', icon: '🏢', desc: 'Location & vente' },
-                    { id: 'education', name: 'Formation', icon: '🎓', desc: 'Cours & coaching' },
-                    { id: 'media', name: 'Photo & Vidéo', icon: '📸', desc: 'Événements' },
                     { id: 'sport', name: 'Sport & Fitness', icon: '🏋️', desc: 'Coaching' },
+                    { id: 'location', name: 'Immobilier', icon: '🏢', desc: 'Location & vente' },
+                    { id: 'media', name: 'Photo & Vidéo', icon: '📸', desc: 'Événements' },
+                    { id: 'construction', name: 'Construction & BTP', icon: '🏗️', desc: 'Bâtiment' },
+                    { id: 'agriculture', name: 'Agriculture', icon: '🌾', desc: 'Produits locaux' },
+                    { id: 'freelance', name: 'Administratif', icon: '💼', desc: 'Secrétariat' },
+                    { id: 'sante', name: 'Santé & Bien-être', icon: '💊', desc: 'Pharmacie & soins' },
+                    { id: 'maison', name: 'Maison & Déco', icon: '🏠', desc: 'Intérieur' },
                   ].map((service) => (
                     <button
                       key={service.id}
@@ -1414,54 +1472,24 @@ export default function Auth() {
               </div>
 
               {/* Section: Produits Numériques */}
-              <div className="mb-6">
+              <div className="mb-4">
                 <h4 className="text-sm font-semibold text-cyan-600 mb-3 flex items-center gap-2">
                   <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
                   Produits Numériques
                   <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
                 </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
-                    { id: 'digital_voyage', name: 'Vol/Hôtel', icon: '✈️', desc: 'Billets & réservations' },
                     { id: 'digital_logiciel', name: 'Logiciel', icon: '💻', desc: 'Antivirus & SaaS' },
-                    { id: 'digital_formation', name: 'Formation', icon: '🎓', desc: 'Vidéos & PDF' },
+                    { id: 'dropshipping', name: 'Dropshipping', icon: '📦', desc: 'Amazon, AliExpress' },
+                    { id: 'education', name: 'Formation', icon: '🎓', desc: 'Cours & coaching' },
                     { id: 'digital_livre', name: 'Livres', icon: '📚', desc: 'eBooks & affiliation' },
-                    { id: 'digital_custom', name: 'Produit Numérique', icon: '✨', desc: 'Templates & services' },
                   ].map((service) => (
                     <button
                       key={service.id}
                       onClick={() => handleServiceTypeSelect(service.id)}
                       className={`flex flex-col items-center p-3 bg-gradient-to-br from-cyan-50 to-white rounded-xl border-2 hover:border-cyan-500 hover:shadow-lg hover:scale-[1.02] transition-all ${
                         selectedServiceType === service.id ? 'border-cyan-500 ring-2 ring-cyan-500/30' : 'border-cyan-200'
-                      }`}
-                    >
-                      <div className="text-3xl mb-1.5">{service.icon}</div>
-                      <span className="text-sm font-semibold text-foreground">{service.name}</span>
-                      <span className="text-[10px] text-muted-foreground">{service.desc}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Section: Autres Services */}
-              <div>
-                <h4 className="text-sm font-semibold text-amber-600 mb-3 flex items-center gap-2">
-                  <span className="w-8 h-0.5 bg-amber-500 rounded"></span>
-                  Autres Services
-                  <span className="w-8 h-0.5 bg-amber-500 rounded"></span>
-                </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[
-                    { id: 'freelance', name: 'Administratif', icon: '💼', desc: 'Secrétariat' },
-                    { id: 'agriculture', name: 'Agriculture', icon: '🌾', desc: 'Produits locaux' },
-                    { id: 'construction', name: 'Construction & BTP', icon: '🏗️', desc: 'Bâtiment' },
-                    { id: 'dropshipping', name: 'Dropshipping', icon: '📦', desc: 'Amazon, AliExpress' },
-                  ].map((service) => (
-                    <button
-                      key={service.id}
-                      onClick={() => handleServiceTypeSelect(service.id)}
-                      className={`flex flex-col items-center p-3 bg-gradient-to-br from-amber-50 to-white rounded-xl border-2 hover:border-amber-500 hover:shadow-lg hover:scale-[1.02] transition-all ${
-                        selectedServiceType === service.id ? 'border-amber-500 ring-2 ring-amber-500/30' : 'border-amber-200'
                       }`}
                     >
                       <div className="text-3xl mb-1.5">{service.icon}</div>
@@ -2010,7 +2038,7 @@ export default function Auth() {
 
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 disabled={loading || oauthLoading !== null}
               >
                 {loading ? (
@@ -2031,9 +2059,9 @@ export default function Auth() {
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                {/* Bouton Google avec badge recommandé */}
-                <div className="relative">
+              <div className="flex justify-center">
+                {/* Bouton Google - Agrandi et centré */}
+                <div className="relative w-full max-w-sm">
                   {showSignup && (
                     <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-10">
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-semibold shadow-lg">
@@ -2047,7 +2075,7 @@ export default function Auth() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full h-12 gap-2 font-medium hover:bg-red-50 hover:border-red-300 hover:shadow-md transition-all duration-200 relative overflow-hidden group"
+                    className="w-full h-14 gap-3 font-medium text-base hover:bg-red-50 hover:border-red-300 hover:shadow-lg transition-all duration-200 relative overflow-hidden group"
                     onClick={() => handleGoogleLogin(false)}
                     disabled={loading || oauthLoading !== null}
                     aria-label={showSignup ? "S'inscrire avec Google" : "Se connecter avec Google"}
@@ -2059,57 +2087,25 @@ export default function Auth() {
                     {oauthLoading === 'google' ? (
                       <>
                         {oauthRetrying ? (
-                          <RefreshCw className="h-5 w-5 animate-spin" />
+                          <RefreshCw className="h-6 w-6 animate-spin" />
                         ) : (
-                          <Loader2 className="h-5 w-5 animate-spin" />
+                          <Loader2 className="h-6 w-6 animate-spin" />
                         )}
-                        <span className="hidden sm:inline">{oauthRetrying ? 'Nouvelle tentative...' : 'Connexion...'}</span>
+                        <span>{oauthRetrying ? 'Nouvelle tentative...' : 'Connexion...'}</span>
                       </>
                     ) : (
                       <>
-                        <svg className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" viewBox="0 0 24 24">
+                        <svg className="h-6 w-6 group-hover:scale-110 transition-transform duration-200" viewBox="0 0 24 24">
                           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                         </svg>
-                        <span className="hidden sm:inline">Google</span>
+                        <span>Continuer avec Google</span>
                       </>
                     )}
                   </Button>
                 </div>
-
-                {/* Bouton Facebook */}
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-12 gap-2 font-medium hover:bg-blue-50 hover:border-blue-300 hover:shadow-md transition-all duration-200 relative overflow-hidden group"
-                  onClick={() => handleFacebookLogin(false)}
-                  disabled={loading || oauthLoading !== null}
-                  aria-label={showSignup ? "S'inscrire avec Facebook" : "Se connecter avec Facebook"}
-                  aria-busy={oauthLoading === 'facebook'}
-                >
-                  {/* Effet de brillance au survol */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
-                  
-                  {oauthLoading === 'facebook' ? (
-                    <>
-                      {oauthRetrying ? (
-                        <RefreshCw className="h-5 w-5 animate-spin" />
-                      ) : (
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                      )}
-                      <span className="hidden sm:inline">{oauthRetrying ? 'Nouvelle tentative...' : 'Connexion...'}</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" viewBox="0 0 24 24" fill="#1877F2">
-                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                      </svg>
-                      <span className="hidden sm:inline">Facebook</span>
-                    </>
-                  )}
-                </Button>
               </div>
 
               {/* Message de sécurité et confidentialité */}
@@ -2117,12 +2113,12 @@ export default function Auth() {
                 <p className="text-xs text-center text-muted-foreground">
                   En continuant, vous acceptez nos conditions d'utilisation
                 </p>
-                {(oauthLoading === 'google' || oauthLoading === 'facebook') && (
+                {oauthLoading === 'google' && (
                   <div className="flex items-center justify-center gap-2 text-xs text-blue-600 animate-pulse">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                     </svg>
-                    <span>Redirection sécurisée vers {oauthLoading === 'google' ? 'Google' : 'Facebook'}...</span>
+                    <span>Redirection sécurisée vers Google...</span>
                   </div>
                 )}
               </div>
@@ -2178,10 +2174,10 @@ export default function Auth() {
                   setShowRoleSelectionModal(false);
                   handleRoleClick('vendeur');
                 }}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-green-50 border-2 border-green-200 hover:border-green-400 hover:bg-green-100 transition-all"
+                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-blue-50 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-100 transition-all"
               >
-                <Store className="h-8 w-8 text-green-600" />
-                <span className="font-semibold text-green-700">{t('auth.merchant')}</span>
+                <Store className="h-8 w-8 text-blue-600" />
+                <span className="font-semibold text-blue-700">{t('auth.merchant')}</span>
                 <span className="text-xs text-muted-foreground text-center">Gérer une boutique</span>
               </button>
               
@@ -2249,9 +2245,9 @@ export default function Auth() {
               </div>
             </div>
             
-            {/* Boutons OAuth avec badge recommandé */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="relative">
+            {/* Bouton Google OAuth centré et agrandi */}
+            <div className="flex justify-center">
+              <div className="relative w-full max-w-xs">
                 {/* Badge "Rapide" sur Google */}
                 <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-10">
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-semibold shadow-lg">
@@ -2266,50 +2262,27 @@ export default function Auth() {
                     setShowRoleSelectionModal(false);
                     handleGoogleLogin(false);
                   }}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 hover:shadow-md transition-all duration-200 relative overflow-hidden group"
+                  className="w-full flex items-center justify-center gap-3 py-4 px-6 rounded-xl bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 hover:shadow-md transition-all duration-200 relative overflow-hidden group"
                   disabled={oauthLoading !== null}
                 >
                   {/* Effet de brillance */}
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
                   
                   {oauthLoading === 'google' ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <Loader2 className="h-6 w-6 animate-spin" />
                   ) : (
-                    <svg className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" viewBox="0 0 24 24">
+                    <svg className="h-6 w-6 group-hover:scale-110 transition-transform duration-200" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                       <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                       <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                     </svg>
                   )}
-                  <span className="font-medium text-gray-700">
-                    {oauthLoading === 'google' ? 'Connexion...' : 'Google'}
+                  <span className="font-semibold text-gray-700 text-base">
+                    {oauthLoading === 'google' ? 'Connexion...' : 'Continuer avec Google'}
                   </span>
                 </button>
               </div>
-              
-              <button
-                onClick={() => {
-                  setShowRoleSelectionModal(false);
-                  handleFacebookLogin(false);
-                }}
-                className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 hover:shadow-md transition-all duration-200 relative overflow-hidden group"
-                disabled={oauthLoading !== null}
-              >
-                {/* Effet de brillance */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
-                
-                {oauthLoading === 'facebook' ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <svg className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" viewBox="0 0 24 24" fill="#1877F2">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                  </svg>
-                )}
-                <span className="font-medium text-gray-700">
-                  {oauthLoading === 'facebook' ? 'Connexion...' : 'Facebook'}
-                </span>
-              </button>
             </div>
             
             {/* Bouton fermer */}

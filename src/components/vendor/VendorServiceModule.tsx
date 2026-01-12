@@ -1,36 +1,63 @@
 /**
- * VendorServiceModule - Charge le module métier approprié pour le vendor
- * Basé sur son professional_service.service_type.code
+ * VendorServiceModule - Module métier du vendeur
+ * Affiche le dashboard complet même sans professional_service
+ * Permet de créer un nouveau service professionnel
  */
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, RefreshCw, Briefcase } from 'lucide-react';
+import { AlertCircle, RefreshCw, Plus, Store } from 'lucide-react';
 import { useVendorProfessionalService } from '@/hooks/useVendorProfessionalService';
-import { ServiceModuleManager } from '@/components/professional-services/modules/ServiceModuleManager';
+import { useCurrentVendor } from '@/hooks/useCurrentVendor';
+import { VendorBusinessDashboard } from '@/components/vendor/business-module';
+import { AddServiceModal } from '@/components/vendor/business-module/AddServiceModal';
 
 export default function VendorServiceModule() {
+  const { vendorId, profile, loading: vendorLoading } = useCurrentVendor();
   const { 
     professionalService, 
-    serviceTypeCode, 
     serviceTypeName,
-    loading, 
+    loading: serviceLoading, 
     error 
   } = useVendorProfessionalService();
+  
+  const [showAddService, setShowAddService] = useState(false);
+
+  const loading = vendorLoading || serviceLoading;
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-48" />
-          <Skeleton className="h-4 w-72 mt-2" />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-8 w-64 mb-2" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+          <Skeleton className="h-10 w-28" />
+        </div>
+
+        {/* KPI Cards Skeleton */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-4">
+                <Skeleton className="h-4 w-20 mb-3" />
+                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-3 w-24" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Content Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-64 w-full rounded-lg" />
+          <Skeleton className="h-64 w-full rounded-lg" />
+        </div>
+      </div>
     );
   }
 
@@ -61,82 +88,25 @@ export default function VendorServiceModule() {
     );
   }
 
-  if (!professionalService) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Briefcase className="w-5 h-5" />
-            Module Métier
-          </CardTitle>
-          <CardDescription>
-            Configuration du module métier en cours
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-            <div className="flex gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-semibold text-amber-900 mb-1">Module métier non configuré</h3>
-                <p className="text-sm text-amber-800 mb-3">
-                  Votre compte vendeur n'a pas encore de module métier activé. 
-                  Cela peut arriver si votre compte a été créé avant la mise à jour du système.
-                </p>
-                <p className="text-sm text-amber-800">
-                  <strong>Solutions :</strong>
-                </p>
-                <ul className="text-sm text-amber-800 list-disc list-inside mt-2 space-y-1">
-                  <li>Contactez le support technique</li>
-                  <li>Ou reconnectez-vous pour activer automatiquement le module</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => window.location.reload()}
-              className="gap-2"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Actualiser
-            </Button>
-            <Button 
-              onClick={() => window.location.href = '/auth'}
-              className="gap-2"
-            >
-              Se reconnecter
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Si pas de professional_service, afficher quand même le dashboard avec les données vendor
+  // et permettre de créer un service
+  const businessName = professionalService?.business_name 
+    || profile?.business_name 
+    || profile?.first_name 
+    || 'Ma Boutique';
 
-  // Afficher le module métier approprié via ServiceModuleManager
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Briefcase className="w-5 h-5 text-primary" />
-            {serviceTypeName || 'Module Métier'}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {professionalService.business_name}
-          </p>
-        </div>
-      </div>
-
-      <ServiceModuleManager
-        serviceId={professionalService.id}
-        serviceTypeId={professionalService.service_type_id}
-        serviceTypeName={serviceTypeName || 'Service'}
-        serviceTypeCode={serviceTypeCode || undefined}
-        businessName={professionalService.business_name}
+    <>
+      <VendorBusinessDashboard
+        businessName={businessName}
+        serviceId={professionalService?.id || vendorId || 'default'}
+        serviceTypeName={serviceTypeName || 'Commerce'}
       />
-    </div>
+
+      <AddServiceModal 
+        open={showAddService} 
+        onOpenChange={setShowAddService}
+      />
+    </>
   );
 }

@@ -7,7 +7,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, ShoppingBag, MapPin, User, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/useAuth';
 
 interface NavItem {
   id: string;
@@ -22,42 +21,18 @@ interface BottomNavigationProps {
 
 export function BottomNavigation({ className }: BottomNavigationProps) {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const location = useLocation();
 
-  // Déterminer la page d'accueil selon le rôle
-  const getHomePath = () => {
-    if (!profile?.role) return '/home';
-    const roleRoutes: Record<string, string> = {
-      admin: '/pdg',
-      ceo: '/pdg',
-      vendeur: '/vendeur',
-      livreur: '/livreur',
-      taxi: '/taxi-moto/driver',
-      syndicat: '/syndicat',
-      transitaire: '/transitaire',
-      client: '/client',
-      agent: '/agent',
-    };
-    return roleRoutes[profile.role] || '/home';
-  };
-
+  // Le bouton Accueil va toujours vers /home pour accéder aux services
   const navItems: NavItem[] = [
-    { id: 'home', icon: Home, label: 'Accueil', path: getHomePath },
+    { id: 'home', icon: Home, label: 'Accueil', path: '/home' },
     { id: 'marketplace', icon: ShoppingBag, label: 'Marketplace', path: '/marketplace' },
     { id: 'tracking', icon: MapPin, label: 'Tracking', path: '/tracking' },
     { id: 'profil', icon: User, label: 'Profil', path: '/profil' },
   ];
-  const location = useLocation();
   
   const isActive = (path: string | (() => string)) => {
     const actualPath = typeof path === 'function' ? path() : path;
-    
-    // Pour le bouton Home, considérer actif si on est sur un dashboard ou /home
-    if (typeof path === 'function') {
-      const dashboardPaths = ['/pdg', '/vendeur', '/livreur', '/taxi-moto/driver', '/syndicat', '/transitaire', '/client', '/agent', '/home'];
-      return dashboardPaths.some(dashboard => location.pathname.startsWith(dashboard));
-    }
-    
     return location.pathname.startsWith(actualPath);
   };
 
