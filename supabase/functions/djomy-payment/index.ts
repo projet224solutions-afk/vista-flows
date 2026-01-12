@@ -95,7 +95,7 @@ serve(async (req) => {
       cancelUrl,
       countryCode = "GN",
       useGateway = true, // Use gateway (redirect) or direct payment
-      useSandbox = false,
+      useSandbox = true, // ⚠️ SANDBOX par défaut - Changer à false quand production Djomy activée
     } = body;
 
     // Get and validate Djomy credentials

@@ -473,8 +473,9 @@ export class DjomyClient {
  * @param useSandbox - Force le mode sandbox si true
  */
 export function createDjomyClient(useSandbox?: boolean): DjomyClient {
-  // Détermine le mode: paramètre > env var > défaut (production)
-  const sandboxMode = useSandbox ?? Deno.env.get("DJOMY_SANDBOX") === "true";
+  // Détermine le mode: paramètre > env var > défaut (SANDBOX par défaut car production pas encore activée)
+  // ⚠️ Quand production activée, changer: useSandbox ?? Deno.env.get("DJOMY_SANDBOX") !== "false"
+  const sandboxMode = useSandbox ?? (Deno.env.get("DJOMY_SANDBOX") !== "false");
   
   let clientId: string | undefined;
   let clientSecret: string | undefined;
