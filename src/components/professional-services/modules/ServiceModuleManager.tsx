@@ -98,11 +98,23 @@ export function ServiceModuleManager({
   
   const props = { serviceId, businessName };
   
+  // Debug logging
+  console.log('🔍 ServiceModuleManager - Props reçus:', {
+    serviceId,
+    serviceTypeId,
+    serviceTypeName,
+    serviceTypeCode,
+    businessName
+  });
+  
   // Essayer d'abord avec le code
   if (serviceTypeCode && MODULE_MAP[serviceTypeCode]) {
+    console.log('✅ Module trouvé par code:', serviceTypeCode);
     const ModuleComponent = MODULE_MAP[serviceTypeCode];
     return <ModuleComponent {...props} />;
   }
+  
+  console.log('⚠️ Code non trouvé dans MODULE_MAP, utilisation du fallback par nom:', serviceTypeName);
   
   // Fallback basé sur le nom du service type
   const nameLower = serviceTypeName.toLowerCase();

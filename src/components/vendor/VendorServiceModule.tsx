@@ -105,23 +105,25 @@ export default function VendorServiceModule() {
 
   return (
     <div className="space-y-6">
-      {/* 🆕 Service Selector (si plusieurs services) */}
-      {hasMultipleServices && (
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b">
-          <div>
-            <h2 className="text-lg font-semibold mb-1">Mes services professionnels</h2>
-            <p className="text-sm text-muted-foreground">
-              Sélectionnez le service à gérer
-            </p>
-          </div>
-          <ServiceSelector
-            services={services}
-            selectedServiceId={selectedServiceId}
-            onSelectService={selectService}
-            onCreateNew={() => setShowAddService(true)}
-          />
+      {/* 🆕 Service Selector (toujours visible pour permettre de créer/gérer des services) */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b">
+        <div>
+          <h2 className="text-lg font-semibold mb-1">Mes services professionnels</h2>
+          <p className="text-sm text-muted-foreground">
+            {services.length > 1 
+              ? 'Sélectionnez le service à gérer' 
+              : services.length === 1 
+                ? `Service actif: ${selectedService?.service_type?.name || 'Non défini'}` 
+                : 'Créez votre premier service'}
+          </p>
         </div>
-      )}
+        <ServiceSelector
+          services={services}
+          selectedServiceId={selectedServiceId}
+          onSelectService={selectService}
+          onCreateNew={() => setShowAddService(true)}
+        />
+      </div>
 
       {/* Status Alerts pour le service sélectionné */}
       {selectedService?.status === 'pending' && (
