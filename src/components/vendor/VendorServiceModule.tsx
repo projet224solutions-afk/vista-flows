@@ -70,14 +70,46 @@ export default function VendorServiceModule() {
             Module Métier
           </CardTitle>
           <CardDescription>
-            Aucun service professionnel associé à votre compte
+            Configuration du module métier en cours
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Votre compte vendeur n'a pas encore de service professionnel configuré.
-            Contactez le support pour activer votre module métier spécialisé.
-          </p>
+        <CardContent className="space-y-4">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <div className="flex gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-amber-900 mb-1">Module métier non configuré</h3>
+                <p className="text-sm text-amber-800 mb-3">
+                  Votre compte vendeur n'a pas encore de module métier activé. 
+                  Cela peut arriver si votre compte a été créé avant la mise à jour du système.
+                </p>
+                <p className="text-sm text-amber-800">
+                  <strong>Solutions :</strong>
+                </p>
+                <ul className="text-sm text-amber-800 list-disc list-inside mt-2 space-y-1">
+                  <li>Contactez le support technique</li>
+                  <li>Ou reconnectez-vous pour activer automatiquement le module</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.reload()}
+              className="gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Actualiser
+            </Button>
+            <Button 
+              onClick={() => window.location.href = '/auth'}
+              className="gap-2"
+            >
+              Se reconnecter
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );

@@ -817,6 +817,7 @@ export default function Auth() {
           try {
             const businessName = formData.businessName?.trim() || `${validatedData.firstName} ${validatedData.lastName}`;
             
+            // 1. Créer le profil vendor
             const { error: vendorError } = await supabase
               .from('vendors')
               .insert({
@@ -835,6 +836,43 @@ export default function Auth() {
               console.error('❌ Erreur création profil vendeur:', vendorError);
             } else {
               console.log('✅ Profil vendeur créé avec nom entreprise:', businessName);
+            }
+
+            // 2. 🆕 Créer automatiquement le professional_service pour activer le module métier
+            if (selectedServiceType && selectedServiceType !== 'general') {
+              console.log('🔧 Création du professional_service pour le module métier:', selectedServiceType);
+              
+              // Récupérer le service_type_id à partir du code
+              const { data: serviceType, error: serviceTypeError } = await supabase
+                .from('service_types')
+                .select('id')
+                .eq('code', selectedServiceType)
+                .maybeSingle();
+              
+              if (serviceTypeError) {
+                console.error('❌ Erreur récupération service_type:', serviceTypeError);
+              } else if (serviceType) {
+                const { error: professionalServiceError } = await supabase
+                  .from('professional_services')
+                  .insert({
+                    user_id: authData.user.id,
+                    service_type_id: serviceType.id,
+                    business_name: businessName,
+                    address: validatedData.city,
+                    phone: `${phoneCode} ${formData.phone}`,
+                    email: validatedData.email,
+                    status: 'pending', // En attente de validation
+                    verification_status: 'unverified'
+                  });
+                
+                if (professionalServiceError) {
+                  console.error('❌ Erreur création professional_service:', professionalServiceError);
+                } else {
+                  console.log('✅ Professional service créé - Module métier activé:', selectedServiceType);
+                }
+              } else {
+                console.warn('⚠️ Service type non trouvé pour le code:', selectedServiceType);
+              }
             }
           } catch (vendorSyncError) {
             console.error('❌ Erreur synchronisation vendeur:', vendorSyncError);
