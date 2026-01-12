@@ -2136,10 +2136,10 @@ export default function Auth() {
                   setShowRoleSelectionModal(false);
                   handleRoleClick('vendeur');
                 }}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-green-50 border-2 border-green-200 hover:border-green-400 hover:bg-green-100 transition-all"
+                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-blue-50 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-100 transition-all"
               >
-                <Store className="h-8 w-8 text-green-600" />
-                <span className="font-semibold text-green-700">{t('auth.merchant')}</span>
+                <Store className="h-8 w-8 text-blue-600" />
+                <span className="font-semibold text-blue-700">{t('auth.merchant')}</span>
                 <span className="text-xs text-muted-foreground text-center">Gérer une boutique</span>
               </button>
               
