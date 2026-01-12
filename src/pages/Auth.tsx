@@ -1036,6 +1036,10 @@ export default function Auth() {
       // Pour les marchands, afficher d'abord la sélection du type de service
       setShowServiceSelection(true);
       setSelectedRole(role);
+      // Scroll vers le haut pour afficher la fenêtre de sélection complète
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
     } else {
       setSelectedRole(role);
       setShowSignup(true);
@@ -1350,30 +1354,29 @@ export default function Auth() {
 
               {/* Section: Services de Proximité Populaires */}
               <div className="mb-6">
-                <h4 className="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
+                <h4 className="text-sm font-semibold text-primary mb-3 flex items-center justify-center gap-2">
                   <span className="w-8 h-0.5 bg-primary rounded"></span>
                   Services de Proximité Populaires
                   <span className="w-8 h-0.5 bg-primary rounded"></span>
                 </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                   {[
-                    { id: 'restaurant', name: 'Restaurant', icon: '🍽️', desc: 'Cuisine & plats' },
-                    { id: 'beaute', name: 'Beauté & Coiffure', icon: '💇', desc: 'Soins & styling' },
-                    { id: 'vtc', name: 'Transport VTC', icon: '🚗', desc: 'Véhicules privés' },
-                    { id: 'reparation', name: 'Réparation', icon: '🔧', desc: 'Électro & mécanique' },
-                    { id: 'menage', name: 'Nettoyage', icon: '✨', desc: 'Ménage & pressing' },
-                    { id: 'informatique', name: 'Informatique', icon: '💻', desc: 'Tech & dépannage' },
+                    { id: 'restaurant', name: 'Restaurant', icon: '🍽️', desc: 'Cuisine' },
+                    { id: 'beaute', name: 'Beauté', icon: '💇', desc: 'Coiffure' },
+                    { id: 'vtc', name: 'VTC', icon: '🚗', desc: 'Transport' },
+                    { id: 'reparation', name: 'Réparation', icon: '🔧', desc: 'Dépannage' },
+                    { id: 'menage', name: 'Nettoyage', icon: '✨', desc: 'Ménage' },
+                    { id: 'informatique', name: 'Info', icon: '💻', desc: 'Tech' },
                   ].map((service) => (
                     <button
                       key={service.id}
                       onClick={() => handleServiceTypeSelect(service.id)}
-                      className={`flex flex-col items-center p-3 bg-gradient-to-br from-white to-slate-50 rounded-xl border-2 hover:border-primary hover:shadow-lg hover:scale-[1.02] transition-all ${
+                      className={`flex flex-col items-center p-2 bg-gradient-to-br from-white to-slate-50 rounded-lg border-2 hover:border-primary hover:shadow-md hover:scale-[1.02] transition-all ${
                         selectedServiceType === service.id ? 'border-primary ring-2 ring-primary/30 bg-primary/5' : 'border-slate-200'
                       }`}
                     >
-                      <div className="text-3xl mb-1.5">{service.icon}</div>
-                      <span className="text-sm font-semibold text-foreground">{service.name}</span>
-                      <span className="text-[10px] text-muted-foreground">{service.desc}</span>
+                      <div className="text-2xl mb-1">{service.icon}</div>
+                      <span className="text-xs font-semibold text-foreground">{service.name}</span>
                     </button>
                   ))}
                 </div>
