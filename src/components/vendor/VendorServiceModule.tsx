@@ -33,6 +33,17 @@ export default function VendorServiceModule() {
 
   const loading = vendorLoading || servicesLoading;
 
+  // Debug logs
+  console.log('📊 VendorServiceModule état:', {
+    vendorLoading,
+    servicesLoading,
+    loading,
+    vendorId,
+    servicesCount: services.length,
+    selectedService: selectedService?.business_name,
+    error
+  });
+
   if (loading) {
     return (
       <div className="space-y-6">
