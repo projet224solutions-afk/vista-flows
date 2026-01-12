@@ -27,18 +27,24 @@ const USER_ROLES = [
   { value: 'syndicat', label: 'Syndicat', icon: Building2, description: 'Organisation syndicale', color: 'text-pink-600' },
 ];
 
+// Codes synchronisés avec service_types en BDD
 const VENDOR_SERVICE_TYPES = [
-  { value: 'boutique', label: 'Boutique / Commerce général' },
+  { value: 'ecommerce', label: 'Boutique / E-commerce' },
   { value: 'restaurant', label: 'Restaurant / Alimentation' },
-  { value: 'salon_coiffure', label: 'Salon de coiffure / Beauté' },
-  { value: 'garage_auto', label: 'Garage auto / Mécanique' },
-  { value: 'immobilier', label: 'Immobilier / Location' },
-  { value: 'services_pro', label: 'Services professionnels' },
-  { value: 'photographe', label: 'Photographe / Vidéaste' },
+  { value: 'beaute', label: 'Beauté & Bien-être' },
+  { value: 'reparation', label: 'Réparation / Mécanique' },
+  { value: 'location', label: 'Location Immobilière' },
+  { value: 'freelance', label: 'Services Professionnels' },
+  { value: 'media', label: 'Photographe / Vidéaste' },
   { value: 'education', label: 'Éducation / Formation' },
-  { value: 'sante', label: 'Santé / Pharmacie' },
+  { value: 'sante', label: 'Santé & Bien-être' },
   { value: 'voyage', label: 'Voyage / Tourisme' },
-  { value: 'autre', label: 'Autre service' },
+  { value: 'menage', label: 'Ménage & Entretien' },
+  { value: 'informatique', label: 'Informatique / Tech' },
+  { value: 'construction', label: 'Construction / BTP' },
+  { value: 'agriculture', label: 'Agriculture' },
+  { value: 'livraison', label: 'Livraison / Coursier' },
+  { value: 'vtc', label: 'VTC / Transport' },
 ] as const;
 interface CreateUserFormProps {
   agentId: string;
