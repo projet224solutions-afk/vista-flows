@@ -191,7 +191,8 @@ function App() {
               {/* Page d'accueil publique - toujours accessible */}
               <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/home" element={<Index />} />
+              {/* Accueil application (avec footer + services) */}
+              <Route path="/home" element={<Home />} />
               <Route path="/diagnostic" element={<SimpleDiagnostic />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth" element={<Auth />} />
