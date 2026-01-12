@@ -325,7 +325,7 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
       </div>
 
       {/* Service types list */}
-      <div className="max-h-[350px] overflow-y-auto space-y-3 pr-1">
+      <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-1">
         {filteredServiceTypes.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground text-sm">
             Aucun service trouvé pour "{searchQuery}"
@@ -390,7 +390,7 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-hidden">
+      <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
