@@ -271,45 +271,83 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
     return SERVICE_ICONS[code] || SERVICE_ICONS.default;
   };
 
+  // Organisation des services par catégorie (synchronisé avec Auth.tsx)
+  const PROXIMITY_SERVICES = ['restaurant', 'beaute', 'vtc', 'reparation', 'menage', 'informatique'];
+  const PROFESSIONAL_SERVICES = ['sport', 'location', 'media', 'construction', 'agriculture', 'freelance', 'sante', 'maison'];
+  const OTHER_SERVICES = ['education', 'livraison', 'voyage', 'ecommerce'];
+
+  const getServicesByCategory = (codes: string[]) => {
+    return serviceTypes.filter(type => codes.includes(type.code));
+  };
+
+  const renderServiceCard = (type: ServiceType) => {
+    const Icon = getServiceIcon(type.code);
+    return (
+      <Card
+        key={type.id}
+        className={cn(
+          'cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-primary hover:scale-[1.02]',
+          'group border-2'
+        )}
+        onClick={() => handleSelectType(type)}
+      >
+        <CardContent className="p-3">
+          <div className="flex flex-col items-center text-center gap-2">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center shrink-0 group-hover:from-primary/20 group-hover:to-primary/30 transition-colors">
+              <Icon className="w-6 h-6 text-primary" />
+            </div>
+            <h4 className="font-semibold text-xs text-foreground leading-tight">
+              {type.name}
+            </h4>
+            {type.description && (
+              <p className="text-[10px] text-muted-foreground line-clamp-2">
+                {type.description}
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   const renderServiceTypeGrid = () => (
     <ScrollArea className="h-[500px] pr-4">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {serviceTypes.map((type) => {
-          const Icon = getServiceIcon(type.code);
-          return (
-            <Card
-              key={type.id}
-              className={cn(
-                'cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-primary hover:scale-[1.02]',
-                'group border-2'
-              )}
-              onClick={() => handleSelectType(type)}
-            >
-              <CardContent className="p-4">
-                <div className="flex flex-col items-center text-center gap-3">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center shrink-0 group-hover:from-primary/20 group-hover:to-primary/30 transition-colors">
-                    <Icon className="w-7 h-7 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-sm text-foreground leading-tight">
-                      {type.name}
-                    </h4>
-                    {type.category && (
-                      <Badge variant="secondary" className="text-[10px] mt-2">
-                        {type.category}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                {type.description && (
-                  <p className="text-[11px] text-muted-foreground mt-3 line-clamp-2 text-center">
-                    {type.description}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
+      <div className="space-y-6">
+        {/* Section: Services de Proximité Populaires */}
+        <div>
+          <h4 className="text-sm font-semibold text-primary mb-3 flex items-center justify-center gap-2">
+            <span className="w-8 h-0.5 bg-primary rounded"></span>
+            Services de Proximité Populaires
+            <span className="w-8 h-0.5 bg-primary rounded"></span>
+          </h4>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {getServicesByCategory(PROXIMITY_SERVICES).map(renderServiceCard)}
+          </div>
+        </div>
+
+        {/* Section: Services Professionnels */}
+        <div>
+          <h4 className="text-sm font-semibold text-violet-600 mb-3 flex items-center justify-center gap-2">
+            <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
+            Services Professionnels
+            <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
+          </h4>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {getServicesByCategory(PROFESSIONAL_SERVICES).map(renderServiceCard)}
+          </div>
+        </div>
+
+        {/* Section: Autres Services */}
+        <div>
+          <h4 className="text-sm font-semibold text-cyan-600 mb-3 flex items-center justify-center gap-2">
+            <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
+            Autres Services
+            <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
+          </h4>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {getServicesByCategory(OTHER_SERVICES).map(renderServiceCard)}
+          </div>
+        </div>
       </div>
     </ScrollArea>
   );
