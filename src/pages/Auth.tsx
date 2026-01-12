@@ -893,11 +893,14 @@ export default function Auth() {
         }
       } else {
         // Connexion
+        console.log('🔐 [Auth] Tentative de connexion...');
         const validatedData = loginSchema.parse(formData);
         const { data, error } = await supabase.auth.signInWithPassword({
           email: validatedData.email,
           password: validatedData.password,
         });
+
+        console.log('🔐 [Auth] Résultat connexion:', { hasUser: !!data?.user, hasError: !!error });
 
         if (error) {
           // Gérer les erreurs d'authentification de manière conviviale
@@ -913,20 +916,41 @@ export default function Auth() {
         if (data.user) {
           setSuccess("✅ Connexion réussie ! Redirection en cours...");
           
-          // ⚡ Récupérer le profil et rediriger immédiatement vers le dashboard
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', data.user.id)
-            .maybeSingle();
+          // ⚡ Récupérer le profil avec retry pour s'assurer qu'il est chargé
+          let profileData = null;
+          let attempts = 0;
+          const maxAttempts = 10;
+          const userId = data.user.id;
+          
+          while (!profileData && attempts < maxAttempts) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('role')
+              .eq('id', userId)
+              .maybeSingle();
+            
+            if (profile?.role) {
+              profileData = profile;
+              break;
+            }
+            
+            // Attendre 200ms entre chaque tentative (max 2s total)
+            if (attempts < maxAttempts - 1) {
+              await new Promise(resolve => setTimeout(resolve, 200));
+            }
+            attempts++;
+            console.log(`⏳ [Auth Login] Chargement profil... (tentative ${attempts}/${maxAttempts})`);
+          }
           
           if (profileData?.role) {
             const targetRoute = getDashboardRoute(profileData.role);
-            console.log('🚀 [Auth] Redirection vers:', targetRoute, '(rôle:', profileData.role, ')');
+            console.log('🚀 [Auth Login] Redirection vers:', targetRoute, '(rôle:', profileData.role, ')');
+            // Attendre un peu pour que l'auth state soit bien propagé
+            await new Promise(resolve => setTimeout(resolve, 300));
             navigate(targetRoute, { replace: true });
           } else {
             // Fallback: rediriger vers home, useRoleRedirect prendra le relais
-            console.log('⚠️ [Auth] Pas de profil trouvé, redirection vers /home');
+            console.log('⚠️ [Auth Login] Pas de profil trouvé, redirection vers /home');
             navigate('/home', { replace: true });
           }
         }
