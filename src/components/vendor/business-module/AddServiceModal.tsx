@@ -203,8 +203,8 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
 
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        // Erreur de validation Zod
-        const firstError = error.errors[0];
+        // Erreur de validation Zod - utiliser .issues pour Zod v4+
+        const firstError = error.issues[0];
         toast.error(firstError.message);
       } else if (error.code === '23505') {
         toast.error('Vous avez déjà un service de ce type actif');
