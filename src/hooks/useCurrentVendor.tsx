@@ -49,7 +49,7 @@ export const useCurrentVendor = () => {
   const auth = useAuth();
   const agentContext = useAgent();
   const [vendorData, setVendorData] = useState<VendorData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [internalLoading, setInternalLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Mémoriser les IDs pour éviter les re-renders inutiles
@@ -57,10 +57,19 @@ export const useCurrentVendor = () => {
   const authProfileId = auth.profile?.id;
   const agentVendorId = agentContext.vendorId;
   const hasAgent = !!agentContext.agent;
+  
+  // Le loading global inclut le chargement du profil auth
+  const loading = auth.loading || auth.profileLoading || internalLoading;
 
   const loadVendorData = useCallback(async () => {
+    // ⚡ Ne pas charger si auth n'est pas encore prêt
+    if (auth.loading || auth.profileLoading) {
+      console.log('⏳ useCurrentVendor: En attente du profil auth...');
+      return;
+    }
+    
     try {
-      setLoading(true);
+      setInternalLoading(true);
       setError(null);
 
       // CAS 1: On est dans un contexte AGENT (prioritaire)
@@ -88,12 +97,12 @@ export const useCurrentVendor = () => {
           businessType: vendorInfo?.business_type,
           agentPermissions: agentContext.agent?.permissions
         });
-        setLoading(false);
+        setInternalLoading(false);
         return;
       }
       
       // CAS 2: On est dans un contexte VENDEUR DIRECT
-      if (authUserId && auth.profile) {
+      if (authUserId) {
         console.log('🔄 Mode Vendeur Direct - Utilisation user actuel:', authUserId);
         
         // Trouver le vendor_id et business_type du profil vendeur
@@ -103,6 +112,7 @@ export const useCurrentVendor = () => {
           .eq('user_id', authUserId)
           .maybeSingle();
 
+        // Utiliser l'user_id comme vendorId si pas d'entrée vendors (nouveau vendeur)
         const vendorId = vendorProfile?.id || authUserId;
         const businessType = vendorProfile?.business_type as 'physical' | 'digital' | 'hybrid' | 'online' | undefined;
 
@@ -111,7 +121,7 @@ export const useCurrentVendor = () => {
           isAgent: false,
           user: auth.user,
           profile: auth.profile,
-          businessType: businessType
+          businessType: businessType || 'hybrid' // Default pour nouveaux vendeurs
         });
         
         console.log('✅ Données vendeur chargées (mode direct):', { vendorId, businessType });
@@ -124,13 +134,16 @@ export const useCurrentVendor = () => {
       console.error('❌ Erreur chargement vendeur:', error);
       setError(error.message || 'Erreur lors du chargement des données');
     } finally {
-      setLoading(false);
+      setInternalLoading(false);
     }
-  }, [authUserId, authProfileId, agentVendorId, hasAgent, auth.user, auth.profile, agentContext.agent]);
+  }, [authUserId, authProfileId, agentVendorId, hasAgent, auth.user, auth.profile, agentContext.agent, auth.loading, auth.profileLoading]);
 
   useEffect(() => {
-    loadVendorData();
-  }, [loadVendorData]);
+    // Seulement charger si auth est prêt
+    if (!auth.loading && !auth.profileLoading) {
+      loadVendorData();
+    }
+  }, [loadVendorData, auth.loading, auth.profileLoading]);
 
   return {
     vendorId: vendorData?.vendorId || null,
