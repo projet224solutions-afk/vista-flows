@@ -64,8 +64,8 @@ export function HeroSection({ className }: HeroSectionProps) {
       // User is logged in - show available services modal
       setShowServicesModal(true);
     } else {
-      // User is not logged in - navigate to services page
-      navigate('/services');
+      // User is not logged in - navigate to auth page
+      navigate('/auth');
     }
   };
 
@@ -74,8 +74,8 @@ export function HeroSection({ className }: HeroSectionProps) {
       // User is logged in - show available services modal
       setShowServicesModal(true);
     } else {
-      // User is not logged in - navigate to services page
-      navigate('/services');
+      // User is not logged in - navigate to auth page
+      navigate('/auth');
     }
   };
 
