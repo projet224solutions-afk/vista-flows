@@ -124,14 +124,30 @@ export default function VendorServiceModule() {
       )}
 
       {/* Dashboard du service sélectionné */}
-      <VendorBusinessDashboard
-        businessName={businessName}
-        serviceId={selectedService?.id || vendorId || 'default'}
-        serviceTypeName={serviceTypeName}
-        serviceTypeCode={selectedService?.service_type?.code}
-        onRefresh={refresh}
-        professionalService={selectedService}
-      />
+      {selectedService ? (
+        <VendorBusinessDashboard
+          businessName={businessName}
+          serviceId={selectedService.id}
+          serviceTypeName={serviceTypeName}
+          serviceTypeCode={selectedService.service_type?.code}
+          onRefresh={refresh}
+          professionalService={selectedService}
+        />
+      ) : (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Store className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-semibold mb-2">Aucun service professionnel</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Créez votre premier service professionnel pour commencer
+            </p>
+            <Button onClick={() => setShowAddService(true)} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Créer un service
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <AddServiceModal 
         open={showAddService} 

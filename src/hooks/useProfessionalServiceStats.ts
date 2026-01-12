@@ -61,6 +61,7 @@ export function useProfessionalServiceStats({ serviceId, serviceTypeCode }: UseP
 
   const fetchStats = useCallback(async () => {
     if (!serviceId) {
+      console.log('⚠️ useProfessionalServiceStats - Pas de serviceId fourni');
       setStats(null);
       setLoading(false);
       return;
@@ -69,6 +70,8 @@ export function useProfessionalServiceStats({ serviceId, serviceTypeCode }: UseP
     try {
       setLoading(true);
       setError(null);
+
+      console.log('📊 Chargement stats pour serviceId:', serviceId, 'type:', serviceTypeCode);
 
       const now = new Date();
       const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -80,6 +83,7 @@ export function useProfessionalServiceStats({ serviceId, serviceTypeCode }: UseP
 
       // Récupérer des stats en fonction du type de service
       const code = serviceTypeCode?.toLowerCase() || '';
+      console.log('🔍 Code de service détecté:', code);
 
       if (code.includes('beauty') || code.includes('salon') || code.includes('spa') || code.includes('coiffure')) {
         // Stats pour salon de beauté
@@ -211,12 +215,53 @@ export function useProfessionalServiceStats({ serviceId, serviceTypeCode }: UseP
           if (coursesResult.value.data.length > 0) serviceStats.hasData = true;
         }
 
+      } else if (code.includes('ecommerce') || code.includes('boutique') || code.includes('shop') || code.includes('commerce')) {
+        // Stats pour boutique e-commerce
+        console.log('🛒 Service e-commerce détecté - serviceId:', serviceId);
+        
+        // Vérifier d'abord si ce service a des produits dans service_products
+        const { data: productsData, error: productsError } = await supabase
+          .from('service_products')
+          .select('id, is_available, price')
+          .eq('professional_service_id', serviceId);
+        
+        console.log('📦 Produits (service_products) trouvés:', productsData?.length || 0, 'erreur:', productsError);
+        
+        if (productsData && productsData.length > 0) {
+          serviceStats.productsCount = productsData.filter(p => p.is_available).length;
+          serviceStats.hasData = true;
+        }
+        
+        // Vérifier les commandes/réservations liées au professional_service
+        const { data: bookingsData, error: bookingsError } = await supabase
+          .from('service_bookings')
+          .select('id, status, total_amount, created_at')
+          .eq('professional_service_id', serviceId);
+        
+        console.log('📋 Réservations (service_bookings) trouvées:', bookingsData?.length || 0, 'erreur:', bookingsError);
+        
+        if (bookingsData && bookingsData.length > 0) {
+          const completedBookings = bookingsData.filter(b => b.status === 'completed');
+          serviceStats.ordersCount = bookingsData.length;
+          serviceStats.pendingCount = bookingsData.filter(b => b.status === 'pending' || b.status === 'confirmed').length;
+          serviceStats.revenue = completedBookings.reduce((sum, b) => sum + (b.total_amount || 0), 0);
+          
+          serviceStats.todayRevenue = completedBookings
+            .filter(b => new Date(b.created_at) >= startOfDay)
+            .reduce((sum, b) => sum + (b.total_amount || 0), 0);
+          serviceStats.monthRevenue = completedBookings
+            .filter(b => new Date(b.created_at) >= startOfMonth)
+            .reduce((sum, b) => sum + (b.total_amount || 0), 0);
+          
+          serviceStats.hasData = true;
+        }
       } else {
         // Service générique ou nouveau - retourner des stats vides
-        console.log(`Service type '${serviceTypeCode}' - initializing with empty stats`);
+        console.log(`⚠️ Service type '${serviceTypeCode}' non reconnu - initializing with empty stats`);
         serviceStats.hasData = false;
       }
 
+      console.log('✅ Stats finales:', serviceStats);
       setStats(serviceStats);
 
     } catch (err: unknown) {

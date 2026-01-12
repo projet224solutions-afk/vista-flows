@@ -50,6 +50,10 @@ export function VendorBusinessDashboard({
   const [showAddService, setShowAddService] = useState(false);
   
   // Utiliser les stats spécifiques au service professionnel sélectionné
+  console.log('🔍 VendorBusinessDashboard - serviceId:', serviceId);
+  console.log('🔍 VendorBusinessDashboard - serviceTypeCode:', serviceTypeCode);
+  console.log('🔍 VendorBusinessDashboard - professionalService:', professionalService);
+  
   const { stats, loading, refresh: refreshStats } = useProfessionalServiceStats({
     serviceId,
     serviceTypeCode: serviceTypeCode || professionalService?.service_type?.code
