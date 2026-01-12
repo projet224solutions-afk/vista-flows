@@ -333,6 +333,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
         {/* Action buttons */}
         <div className="flex gap-3 pt-2">
           <Button 
+            type="button"
             variant="outline" 
             onClick={handleBack}
             className="flex-1"
@@ -341,6 +342,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
             Retour
           </Button>
           <Button 
+            type="button"
             onClick={handleCreate}
             className="flex-1 gap-2"
             disabled={creating || !businessName.trim()}
