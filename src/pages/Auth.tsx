@@ -1516,19 +1516,19 @@ export default function Auth() {
                 </div>
               </div>
 
-              {/* Section: Produits Numériques */}
+              {/* Section: Autres Services */}
               <div className="mb-4">
                 <h4 className="text-sm font-semibold text-cyan-600 mb-3 flex items-center gap-2">
                   <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
-                  Produits Numériques
+                  Autres Services
                   <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
-                    { id: 'digital_logiciel', name: 'Logiciel', icon: '💻', desc: 'Antivirus & SaaS' },
-                    { id: 'dropshipping', name: 'Dropshipping', icon: '📦', desc: 'Amazon, AliExpress' },
                     { id: 'education', name: 'Formation', icon: '🎓', desc: 'Cours & coaching' },
-                    { id: 'digital_livre', name: 'Livres', icon: '📚', desc: 'eBooks & affiliation' },
+                    { id: 'livraison', name: 'Livraison', icon: '🚚', desc: 'Coursier & colis' },
+                    { id: 'voyage', name: 'Voyage', icon: '✈️', desc: 'Tourisme & voyages' },
+                    { id: 'ecommerce', name: 'Boutique', icon: '🏪', desc: 'E-commerce' },
                   ].map((service) => (
                     <button
                       key={service.id}
@@ -1597,17 +1597,16 @@ export default function Auth() {
                     <span className="block mt-2 font-semibold text-primary">
                       ✓ Service sélectionné : {(() => {
                         const allServices = [
+                          // Services synchronisés avec service_types en base de données
                           { id: 'ecommerce', name: 'Boutique', icon: '🏪' },
                           { id: 'restaurant', name: 'Restaurant', icon: '🍽️' },
-                          { id: 'livraison', name: 'Livraison', icon: '📦' },
+                          { id: 'livraison', name: 'Livraison', icon: '🚚' },
                           { id: 'beaute', name: 'Beauté & Coiffure', icon: '💇' },
                           { id: 'vtc', name: 'Transport VTC', icon: '🚗' },
                           { id: 'reparation', name: 'Réparation', icon: '🔧' },
                           { id: 'menage', name: 'Nettoyage', icon: '✨' },
                           { id: 'informatique', name: 'Informatique', icon: '💻' },
-                          { id: 'mode', name: 'Mode & Vêtements', icon: '👗' },
                           { id: 'sante', name: 'Santé & Bien-être', icon: '💊' },
-                          { id: 'electronique', name: 'Électronique', icon: '📱' },
                           { id: 'maison', name: 'Maison & Déco', icon: '🏠' },
                           { id: 'location', name: 'Immobilier', icon: '🏢' },
                           { id: 'education', name: 'Formation', icon: '🎓' },
@@ -1616,12 +1615,7 @@ export default function Auth() {
                           { id: 'freelance', name: 'Administratif', icon: '💼' },
                           { id: 'agriculture', name: 'Agriculture', icon: '🌾' },
                           { id: 'construction', name: 'Construction & BTP', icon: '🏗️' },
-                          { id: 'dropshipping', name: 'Dropshipping', icon: '📦' },
-                          { id: 'digital_voyage', name: 'Vol/Hôtel', icon: '✈️' },
-                          { id: 'digital_logiciel', name: 'Logiciel', icon: '💻' },
-                          { id: 'digital_formation', name: 'Formation Numérique', icon: '🎓' },
-                          { id: 'digital_livre', name: 'Livres Numériques', icon: '📚' },
-                          { id: 'digital_custom', name: 'Produit Numérique', icon: '✨' },
+                          { id: 'voyage', name: 'Voyage', icon: '✈️' },
                         ];
                         const service = allServices.find(s => s.id === selectedServiceType);
                         return service ? `${service.icon} ${service.name}` : selectedServiceType;
