@@ -324,65 +324,60 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
         />
       </div>
 
-      {/* Service types list */}
-      <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-1">
+      {/* Service types grid - landscape layout */}
+      <div className="max-h-[60vh] overflow-y-auto pr-1">
         {filteredServiceTypes.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground text-sm">
             Aucun service trouvé pour "{searchQuery}"
           </div>
         ) : (
-          filteredServiceTypes.map((serviceType) => (
-            <Card
-              key={serviceType.id}
-              className={cn(
-                'cursor-pointer transition-all duration-200',
-                'hover:border-primary/50 hover:shadow-md'
-              )}
-              onClick={() => handleServiceTypeClick(serviceType)}
-            >
-              <CardContent className="p-3">
-                <div className="flex items-center gap-3">
-                  {/* Icon with gradient */}
-                  <div className={cn(
-                    'w-12 h-12 rounded-xl flex items-center justify-center shrink-0',
-                    'bg-gradient-to-br text-white',
-                    getCategoryGradient(serviceType.category)
-                  )}>
-                    {getIconComponent(serviceType.icon)}
-                  </div>
-                  
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h4 className="font-semibold text-foreground text-sm">
-                          {serviceType.name}
-                        </h4>
-                        {serviceType.category && (
-                          <Badge variant="secondary" className="text-xs mt-1 capitalize">
-                            {serviceType.category}
-                          </Badge>
-                        )}
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filteredServiceTypes.map((serviceType) => (
+              <Card
+                key={serviceType.id}
+                className={cn(
+                  'cursor-pointer transition-all duration-200',
+                  'hover:border-primary/50 hover:shadow-md hover:scale-[1.02]'
+                )}
+                onClick={() => handleServiceTypeClick(serviceType)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    {/* Icon with gradient */}
+                    <div className={cn(
+                      'w-14 h-14 rounded-xl flex items-center justify-center',
+                      'bg-gradient-to-br text-white shadow-lg',
+                      getCategoryGradient(serviceType.category)
+                    )}>
+                      {getIconComponent(serviceType.icon)}
                     </div>
                     
-                    {serviceType.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
-                        {serviceType.description}
-                      </p>
-                    )}
-                    
-                    {(serviceType.services_count ?? 0) > 0 && (
-                      <p className="text-xs text-primary mt-1">
-                        {serviceType.services_count} service{(serviceType.services_count ?? 0) > 1 ? 's' : ''} actif{(serviceType.services_count ?? 0) > 1 ? 's' : ''}
-                      </p>
-                    )}
+                    {/* Content */}
+                    <div className="space-y-1">
+                      <h4 className="font-semibold text-foreground text-sm">
+                        {serviceType.name}
+                      </h4>
+                      {serviceType.category && (
+                        <Badge variant="secondary" className="text-xs capitalize">
+                          {serviceType.category}
+                        </Badge>
+                      )}
+                      {serviceType.description && (
+                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                          {serviceType.description}
+                        </p>
+                      )}
+                      {(serviceType.services_count ?? 0) > 0 && (
+                        <p className="text-xs text-primary font-medium mt-1">
+                          {serviceType.services_count} service{(serviceType.services_count ?? 0) > 1 ? 's' : ''} actif{(serviceType.services_count ?? 0) > 1 ? 's' : ''}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
       </div>
     </div>
