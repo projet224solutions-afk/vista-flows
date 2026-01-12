@@ -30,6 +30,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { z } from 'zod';
 
 interface ServiceType {
   id: string;
@@ -64,6 +65,31 @@ const SERVICE_ICONS: Record<string, React.ElementType> = {
   menage: Sparkles,
   default: Store
 };
+
+// Schéma de validation Zod
+const serviceFormSchema = z.object({
+  businessName: z
+    .string()
+    .min(3, 'Le nom doit contenir au moins 3 caractères')
+    .max(100, 'Le nom ne peut pas dépasser 100 caractères')
+    .regex(
+      /^[a-zA-Z0-9\sÀ-ÿ\-'&.]+$/,
+      'Le nom contient des caractères non autorisés'
+    )
+    .transform(val => val.trim()),
+  description: z
+    .string()
+    .max(500, 'La description ne peut pas dépasser 500 caractères')
+    .optional()
+    .or(z.literal('')),
+  address: z
+    .string()
+    .max(200, 'L\'adresse ne peut pas dépasser 200 caractères')
+    .optional()
+    .or(z.literal(''))
+});
+
+type ServiceFormData = z.infer<typeof serviceFormSchema>;
 
 export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
   const navigate = useNavigate();
@@ -131,23 +157,29 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
       return;
     }
 
-    if (!businessName.trim()) {
-      toast.error('Le nom de l\'entreprise est requis');
-      return;
-    }
-
-    setCreating(true);
+    // Validation avec Zod
     try {
-      // Créer le nouveau service professionnel
+      const formData: ServiceFormData = {
+        businessName,
+        description,
+        address
+      };
+      
+      const validatedData = serviceFormSchema.parse(formData);
+      
+      setCreating(true);
+
+      // Créer le nouveau service professionnel avec données validées
       const { data, error } = await supabase
         .from('professional_services')
         .insert({
           user_id: user.id,
           service_type_id: selectedType.id,
-          business_name: businessName.trim(),
-          description: description.trim() || null,
-          address: address.trim() || null,
+          business_name: validatedData.businessName,
+          description: validatedData.description || null,
+          address: validatedData.address || null,
           status: 'active',
+          verification_status: 'unverified',
           rating: 0,
           total_reviews: 0
         })
@@ -168,10 +200,14 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
       });
 
     } catch (error: any) {
-      console.error('Error creating service:', error);
-      if (error.code === '23505') {
+      if (error instanceof z.ZodError) {
+        // Erreur de validation Zod
+        const firstError = error.errors[0];
+        toast.error(firstError.message);
+      } else if (error.code === '23505') {
         toast.error('Vous avez déjà un service de ce type actif');
       } else {
+        console.error('Error creating service:', error);
         toast.error('Erreur lors de la création du service');
       }
     } finally {

@@ -894,36 +894,63 @@ export default function Auth() {
             if (selectedServiceType && selectedServiceType !== 'general') {
               console.log('🔧 Création du professional_service pour le module métier:', selectedServiceType);
               
-              // Récupérer le service_type_id à partir du code
-              const { data: serviceType, error: serviceTypeError } = await supabase
-                .from('service_types')
-                .select('id')
-                .eq('code', selectedServiceType)
-                .maybeSingle();
+              // ✅ AMÉLIORATION: Attendre que le vendor soit bien créé
+              let vendorCreated = false;
+              let retries = 0;
+              const maxRetries = 5;
               
-              if (serviceTypeError) {
-                console.error('❌ Erreur récupération service_type:', serviceTypeError);
-              } else if (serviceType) {
-                const { error: professionalServiceError } = await supabase
-                  .from('professional_services')
-                  .insert({
-                    user_id: authData.user.id,
-                    service_type_id: serviceType.id,
-                    business_name: businessName,
-                    address: validatedData.city,
-                    phone: `${phoneCode} ${formData.phone}`,
-                    email: validatedData.email,
-                    status: 'pending', // En attente de validation
-                    verification_status: 'unverified'
-                  });
+              while (!vendorCreated && retries < maxRetries) {
+                const { data: vendorCheck } = await supabase
+                  .from('vendors')
+                  .select('id')
+                  .eq('user_id', authData.user.id)
+                  .maybeSingle();
                 
-                if (professionalServiceError) {
-                  console.error('❌ Erreur création professional_service:', professionalServiceError);
+                if (vendorCheck) {
+                  vendorCreated = true;
+                  console.log('✅ Vendor créé, création du professional_service...');
                 } else {
-                  console.log('✅ Professional service créé - Module métier activé:', selectedServiceType);
+                  retries++;
+                  console.log(`⏳ Attente vendor (${retries}/${maxRetries})...`);
+                  await new Promise(resolve => setTimeout(resolve, 200));
                 }
+              }
+              
+              if (!vendorCreated) {
+                console.error('❌ Vendor non créé après', maxRetries, 'tentatives');
+                // Continue quand même, le vendeur pourra créer manuellement
               } else {
-                console.warn('⚠️ Service type non trouvé pour le code:', selectedServiceType);
+                // Récupérer le service_type_id à partir du code
+                const { data: serviceType, error: serviceTypeError } = await supabase
+                  .from('service_types')
+                  .select('id')
+                  .eq('code', selectedServiceType)
+                  .maybeSingle();
+                
+                if (serviceTypeError) {
+                  console.error('❌ Erreur récupération service_type:', serviceTypeError);
+                } else if (serviceType) {
+                  const { error: professionalServiceError } = await supabase
+                    .from('professional_services')
+                    .insert({
+                      user_id: authData.user.id,
+                      service_type_id: serviceType.id,
+                      business_name: businessName,
+                      address: validatedData.city,
+                      phone: `${phoneCode} ${formData.phone}`,
+                      email: validatedData.email,
+                      status: 'active', // ✅ CHANGÉ: Actif directement
+                      verification_status: 'unverified'
+                    });
+                  
+                  if (professionalServiceError) {
+                    console.error('❌ Erreur création professional_service:', professionalServiceError);
+                  } else {
+                    console.log('✅ Professional service créé - Module métier activé:', selectedServiceType);
+                  }
+                } else {
+                  console.warn('⚠️ Service type non trouvé pour le code:', selectedServiceType);
+                }
               }
             }
           } catch (vendorSyncError) {

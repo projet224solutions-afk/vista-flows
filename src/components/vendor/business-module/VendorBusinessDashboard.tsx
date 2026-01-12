@@ -10,11 +10,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { 
   ShoppingCart, Package, Users, TrendingUp, 
   RefreshCw, Clock, CheckCircle, XCircle, 
   DollarSign, BarChart3, ShoppingBag, Plus,
-  Store, Briefcase, ArrowUpRight
+  Store, Briefcase, ArrowUpRight, Info,
+  Sparkles, Settings, BookOpen
 } from 'lucide-react';
 import { useVendorStats } from '@/hooks/useVendorStats';
 import { useEcommerceStats } from '@/hooks/useEcommerceStats';
@@ -28,6 +30,7 @@ interface VendorBusinessDashboardProps {
   serviceId: string;
   serviceTypeName?: string;
   onRefresh?: () => void;
+  professionalService?: any;
 }
 
 function formatCurrency(amount: number): string {
@@ -41,7 +44,8 @@ export function VendorBusinessDashboard({
   businessName,
   serviceId,
   serviceTypeName,
-  onRefresh
+  onRefresh,
+  professionalService
 }: VendorBusinessDashboardProps) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
@@ -119,6 +123,96 @@ export function VendorBusinessDashboard({
           </Button>
         </div>
       </div>
+
+      {/* 🆕 Status Banners */}
+      {professionalService?.status === 'pending' && (
+        <Alert variant="default" className="bg-amber-50 border-amber-200 dark:bg-amber-900/20">
+          <Clock className="w-4 h-4 text-amber-600" />
+          <AlertTitle className="text-amber-900 dark:text-amber-100">
+            Service en cours de validation
+          </AlertTitle>
+          <AlertDescription className="text-amber-800 dark:text-amber-200">
+            Votre service professionnel est en attente de validation par notre équipe.
+            Vous pourrez commencer à vendre une fois validé.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {professionalService?.verification_status === 'rejected' && (
+        <Alert variant="destructive">
+          <XCircle className="w-4 h-4" />
+          <AlertTitle>Service rejeté</AlertTitle>
+          <AlertDescription>
+            Votre service n'a pas été approuvé. Contactez le support pour plus d'informations.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!professionalService && (
+        <Alert variant="default" className="bg-blue-50 border-blue-200 dark:bg-blue-900/20">
+          <Info className="w-4 h-4 text-blue-600" />
+          <AlertTitle className="text-blue-900 dark:text-blue-100">
+            Créez votre premier service professionnel
+          </AlertTitle>
+          <AlertDescription className="text-blue-800 dark:text-blue-200">
+            Configurez votre activité pour débloquer toutes les fonctionnalités du module métier.
+            <Button 
+              variant="link" 
+              className="p-0 h-auto ml-1 text-blue-600"
+              onClick={() => setShowAddService(true)}
+            >
+              Créer maintenant →
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* 🆕 Message d'onboarding pour nouveaux vendeurs */}
+      {stats?.products.total === 0 && stats?.orders.total === 0 && (
+        <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-6 h-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg mb-2">
+                  Bienvenue dans votre espace professionnel !
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Commencez à vendre en quelques étapes simples
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <Button 
+                    variant="outline" 
+                    className="gap-2 justify-start"
+                    onClick={() => navigate('/vendeur/products/new')}
+                  >
+                    <Plus className="w-4 h-4" />
+                    Ajouter un produit
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="gap-2 justify-start"
+                    onClick={() => navigate('/vendeur/settings')}
+                  >
+                    <Settings className="w-4 h-4" />
+                    Configurer mon profil
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="gap-2 justify-start"
+                    onClick={() => window.open('/help/vendor-guide', '_blank')}
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    Guide du vendeur
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* KPI Cards - Design comme l'image */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">

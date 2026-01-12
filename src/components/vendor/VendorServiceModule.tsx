@@ -1,7 +1,6 @@
 /**
  * VendorServiceModule - Module métier du vendeur
- * Affiche le dashboard complet même sans professional_service
- * Permet de créer un nouveau service professionnel
+ * Support multi-services avec sélecteur et interface dédiée par service
  */
 
 import { useState } from 'react';
@@ -9,23 +8,28 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw, Plus, Store } from 'lucide-react';
-import { useVendorProfessionalService } from '@/hooks/useVendorProfessionalService';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
+import { useVendorServices } from '@/hooks/useVendorServices';
 import { VendorBusinessDashboard } from '@/components/vendor/business-module';
 import { AddServiceModal } from '@/components/vendor/business-module/AddServiceModal';
+import { ServiceSelector } from '@/components/vendor/business-module/ServiceSelector';
 
 export default function VendorServiceModule() {
   const { vendorId, profile, loading: vendorLoading } = useCurrentVendor();
   const { 
-    professionalService, 
-    serviceTypeName,
-    loading: serviceLoading, 
-    error 
-  } = useVendorProfessionalService();
+    services,
+    selectedService,
+    selectedServiceId,
+    selectService,
+    hasMultipleServices,
+    loading: servicesLoading, 
+    error,
+    refresh
+  } = useVendorServices();
   
   const [showAddService, setShowAddService] = useState(false);
 
-  const loading = vendorLoading || serviceLoading;
+  const loading = vendorLoading || servicesLoading;
 
   if (loading) {
     return (
@@ -38,6 +42,9 @@ export default function VendorServiceModule() {
           </div>
           <Skeleton className="h-10 w-28" />
         </div>
+
+        {/* Service Selector Skeleton */}
+        <Skeleton className="h-12 w-full md:w-[350px]" />
 
         {/* KPI Cards Skeleton */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -70,7 +77,7 @@ export default function VendorServiceModule() {
             Erreur de chargement
           </CardTitle>
           <CardDescription>
-            Impossible de charger votre module métier
+            Impossible de charger vos services professionnels
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -88,25 +95,47 @@ export default function VendorServiceModule() {
     );
   }
 
-  // Si pas de professional_service, afficher quand même le dashboard avec les données vendor
-  // et permettre de créer un service
-  const businessName = professionalService?.business_name 
+  // Déterminer le nom de la boutique
+  const businessName = selectedService?.business_name 
     || profile?.business_name 
     || profile?.first_name 
     || 'Ma Boutique';
 
+  const serviceTypeName = selectedService?.service_type?.name || 'Commerce';
+
   return (
-    <>
+    <div className="space-y-6">
+      {/* 🆕 Service Selector (si plusieurs services) */}
+      {hasMultipleServices && (
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b">
+          <div>
+            <h2 className="text-lg font-semibold mb-1">Mes services professionnels</h2>
+            <p className="text-sm text-muted-foreground">
+              Sélectionnez le service à gérer
+            </p>
+          </div>
+          <ServiceSelector
+            services={services}
+            selectedServiceId={selectedServiceId}
+            onSelectService={selectService}
+            onCreateNew={() => setShowAddService(true)}
+          />
+        </div>
+      )}
+
+      {/* Dashboard du service sélectionné */}
       <VendorBusinessDashboard
         businessName={businessName}
-        serviceId={professionalService?.id || vendorId || 'default'}
-        serviceTypeName={serviceTypeName || 'Commerce'}
+        serviceId={selectedService?.id || vendorId || 'default'}
+        serviceTypeName={serviceTypeName}
+        onRefresh={refresh}
+        professionalService={selectedService}
       />
 
       <AddServiceModal 
         open={showAddService} 
         onOpenChange={setShowAddService}
       />
-    </>
+    </div>
   );
 }
