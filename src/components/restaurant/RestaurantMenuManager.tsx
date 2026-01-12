@@ -18,9 +18,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   Plus, Edit2, Trash2, UtensilsCrossed, Tag, 
   Clock, Flame, Leaf, Star, Eye, EyeOff,
-  GripVertical, Search, Filter
+  GripVertical, Search, Filter, Upload, X, Loader2, Image as ImageIcon
 } from 'lucide-react';
 import { useRestaurantMenu, MenuCategory, MenuItem } from '@/hooks/useRestaurantMenu';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface RestaurantMenuManagerProps {
@@ -72,6 +73,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [editingCategory, setEditingCategory] = useState<MenuCategory | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // États du formulaire plat
   const [itemForm, setItemForm] = useState({
@@ -83,6 +85,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
     spicy_level: '0',
     is_featured: false,
     dietary_tags: [] as string[],
+    image_url: '',
   });
 
   // États du formulaire catégorie
@@ -102,6 +105,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
       spicy_level: '0',
       is_featured: false,
       dietary_tags: [],
+      image_url: '',
     });
     setEditingItem(null);
   };
@@ -132,6 +136,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
           spicy_level: parseInt(itemForm.spicy_level),
           is_featured: itemForm.is_featured,
           dietary_tags: itemForm.dietary_tags,
+          image_url: itemForm.image_url || null,
         });
         toast.success('Plat mis à jour');
       } else {
@@ -144,6 +149,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
           spicy_level: parseInt(itemForm.spicy_level),
           is_featured: itemForm.is_featured,
           dietary_tags: itemForm.dietary_tags,
+          image_url: itemForm.image_url || undefined,
         });
         toast.success('Plat ajouté');
       }
@@ -186,8 +192,51 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
       spicy_level: item.spicy_level.toString(),
       is_featured: item.is_featured,
       dietary_tags: item.dietary_tags || [],
+      image_url: item.image_url || '',
     });
     setShowItemDialog(true);
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!file) return;
+    
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("L'image ne doit pas dépasser 5MB");
+      return;
+    }
+    
+    try {
+      setUploadingImage(true);
+      
+      const fileExt = file.name.split('.').pop();
+      const fileName = `dish_${serviceId}_${Date.now()}.${fileExt}`;
+      const filePath = `restaurant-dishes/${fileName}`;
+      
+      const { error: uploadError } = await supabase
+        .from('professional_services')
+        .select('id')
+        .eq('id', serviceId)
+        .single();
+
+      // Upload to storage
+      const { error: storageError } = await supabase.storage
+        .from('public-images')
+        .upload(filePath, file, { upsert: true });
+
+      if (storageError) throw storageError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('public-images')
+        .getPublicUrl(filePath);
+
+      setItemForm(prev => ({ ...prev, image_url: publicUrl }));
+      toast.success('Image uploadée !');
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      toast.error("Erreur lors de l'upload");
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleEditCategory = (cat: MenuCategory) => {
@@ -365,6 +414,52 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                     placeholder="Décrivez le plat..."
                     rows={2}
                   />
+                </div>
+
+                {/* Image du plat */}
+                <div className="space-y-2">
+                  <Label>Image du plat</Label>
+                  <div className="border-2 border-dashed rounded-lg p-4 text-center">
+                    {itemForm.image_url ? (
+                      <div className="relative inline-block">
+                        <img 
+                          src={itemForm.image_url} 
+                          alt="Plat" 
+                          className="w-32 h-24 object-cover rounded-lg"
+                        />
+                        <button
+                          onClick={() => setItemForm(prev => ({ ...prev, image_url: '' }))}
+                          className="absolute -top-2 -right-2 p-1 bg-destructive text-destructive-foreground rounded-full"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="py-2">
+                        <ImageIcon className="w-8 h-8 text-muted-foreground mx-auto mb-1" />
+                        <p className="text-xs text-muted-foreground">Aucune image</p>
+                      </div>
+                    )}
+                    <label className="mt-2 inline-block">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
+                        disabled={uploadingImage}
+                      />
+                      <Button variant="outline" size="sm" asChild disabled={uploadingImage}>
+                        <span className="cursor-pointer">
+                          {uploadingImage ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Upload className="w-4 h-4 mr-2" />
+                          )}
+                          {uploadingImage ? 'Upload...' : 'Ajouter une image'}
+                        </span>
+                      </Button>
+                    </label>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
