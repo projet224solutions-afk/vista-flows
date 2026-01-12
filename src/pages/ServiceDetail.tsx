@@ -286,6 +286,14 @@ export default function ServiceDetail() {
     toast.success('Système de réservation à venir');
   };
 
+  // Naviguer vers le menu restaurant pour passer commande
+  const handleOrderFromRestaurant = () => {
+    navigate(`/restaurant/${id}/menu`);
+  };
+
+  // Vérifier si c'est un restaurant
+  const isRestaurant = service?.category?.toLowerCase().includes('restaurant');
+
   const handleShare = async () => {
     try {
       if (navigator.share) {
@@ -445,10 +453,17 @@ export default function ServiceDetail() {
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Contacter
               </Button>
-              <Button onClick={handleReservation} variant="outline" className="w-full">
-                <Calendar className="w-4 h-4 mr-2" />
-                Réserver
-              </Button>
+              {isRestaurant ? (
+                <Button onClick={handleOrderFromRestaurant} className="w-full bg-orange-500 hover:bg-orange-600">
+                  <span className="mr-2">🍽️</span>
+                  Commander
+                </Button>
+              ) : (
+                <Button onClick={handleReservation} variant="outline" className="w-full">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Réserver
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

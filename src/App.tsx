@@ -109,6 +109,7 @@ const StripeDiagnostic = lazyWithRetry(() => import("./pages/StripeDiagnostic"))
 const DigitalProducts = lazyWithRetry(() => import("./pages/DigitalProducts"));
 const ShortLinkRedirect = lazyWithRetry(() => import("./pages/ShortLinkRedirect"));
 const UserPublicProfile = lazyWithRetry(() => import("./pages/UserPublicProfile"));
+const RestaurantPublicMenu = lazyWithRetry(() => import("./pages/RestaurantPublicMenu"));
 const Custom224PaymentDemo = lazyWithRetry(() => import("./pages/demos/Custom224PaymentDemo"));
 // Ultra-simple loading component - Pure CSS inline (no Tailwind dependency)
 const PageLoader = memo(() => (
@@ -235,6 +236,8 @@ function App() {
               
               <Route path="/services-proximite" element={<ServicesProximite />} />
               <Route path="/services-proximite/:id" element={<ServiceDetail />} />
+              {/* Page publique menu restaurant pour commande client */}
+              <Route path="/restaurant/:serviceId/menu" element={<RestaurantPublicMenu />} />
               {/* Alias legacy: /service/:id -> /services-proximite/:id */}
               <Route path="/service/:id" element={<ServiceRedirect />} />
               {/* Service Selection - Protected for logged-in users to create their professional service */}

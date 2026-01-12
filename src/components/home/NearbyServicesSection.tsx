@@ -4,7 +4,7 @@
  * Apple/Uber-inspired with modern glassmorphism
  */
 
-import { Store, Car, Truck, Zap } from 'lucide-react';
+import { Store, Car, Truck, Zap, Utensils } from 'lucide-react';
 import { HomeServiceCard } from './ServiceCard';
 import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,7 @@ interface ServiceStats {
   boutiques: number;
   taxi: number;
   livraison: number;
+  restaurants: number;
 }
 
 interface NearbyServicesSectionProps {
@@ -33,17 +34,27 @@ export function NearbyServicesSection({
       id: 'boutiques',
       icon: <Store className="w-6 h-6 text-vendeur-primary" />,
       title: t('home.shops'),
-      subtitle: 'Découvrez les commerces locaux',
+      subtitle: 'Commerces locaux',
       count: stats.boutiques,
       gradient: 'from-vendeur-primary/20 to-vendeur-secondary/10',
       iconBg: 'bg-vendeur-primary/15',
       trending: stats.boutiques > 5,
     },
     {
+      id: 'restaurants',
+      icon: <Utensils className="w-6 h-6 text-orange-500" />,
+      title: 'Restaurants',
+      subtitle: 'Commander à manger',
+      count: stats.restaurants,
+      gradient: 'from-orange-500/20 to-red-500/10',
+      iconBg: 'bg-orange-500/15',
+      trending: stats.restaurants > 0,
+    },
+    {
       id: 'taxi',
       icon: <Car className="w-6 h-6 text-taxi-primary" />,
       title: t('home.taxiMotos'),
-      subtitle: 'Transport rapide et sécurisé',
+      subtitle: 'Transport rapide',
       count: stats.taxi,
       gradient: 'from-taxi-primary/20 to-taxi-secondary/10',
       iconBg: 'bg-taxi-primary/15',
@@ -53,7 +64,7 @@ export function NearbyServicesSection({
       id: 'livraison',
       icon: <Truck className="w-6 h-6 text-livreur-primary" />,
       title: t('home.delivery'),
-      subtitle: 'Livraison express à domicile',
+      subtitle: 'Livraison express',
       count: stats.livraison,
       gradient: 'from-livreur-primary/20 to-livreur-secondary/10',
       iconBg: 'bg-livreur-primary/15',
@@ -91,7 +102,7 @@ export function NearbyServicesSection({
       </div>
 
       {/* Services Grid - Landscape Layout */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {services.map((service, index) => (
           <div
             key={service.id}
