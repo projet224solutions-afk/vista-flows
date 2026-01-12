@@ -278,42 +278,55 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
     return SERVICE_ICONS[code] || SERVICE_ICONS.default;
   };
 
-  // Organisation des services par catégorie (synchronisé avec Auth.tsx)
-  const PROXIMITY_SERVICES = ['restaurant', 'beaute', 'vtc', 'reparation', 'menage', 'informatique'];
-  const PROFESSIONAL_SERVICES = ['sport', 'location', 'media', 'construction', 'agriculture', 'freelance', 'sante', 'maison'];
-  const OTHER_SERVICES = ['education', 'livraison', 'voyage', 'ecommerce'];
-
-  const getServicesByCategory = (codes: string[]) => {
-    return serviceTypes.filter(type => codes.includes(type.code));
+  // Services hardcodés identiques à Auth.tsx
+  const DISPLAY_SERVICES = {
+    // Services de Proximité Populaires
+    proximity: [
+      { code: 'restaurant', name: 'Restaurant', icon: '🍽️', desc: 'Cuisine & plats' },
+      { code: 'beaute', name: 'Beauté & Coiffure', icon: '💇', desc: 'Soins & styling' },
+      { code: 'vtc', name: 'Transport VTC', icon: '🚗', desc: 'Véhicules privés' },
+      { code: 'reparation', name: 'Réparation', icon: '🔧', desc: 'Électro & mécanique' },
+      { code: 'menage', name: 'Nettoyage', icon: '✨', desc: 'Ménage & pressing' },
+      { code: 'informatique', name: 'Informatique', icon: '💻', desc: 'Tech & dépannage' },
+    ],
+    // Services Professionnels
+    professional: [
+      { code: 'sport', name: 'Sport & Fitness', icon: '🏋️', desc: 'Coaching' },
+      { code: 'location', name: 'Immobilier', icon: '🏢', desc: 'Location & vente' },
+      { code: 'media', name: 'Photo & Vidéo', icon: '📸', desc: 'Événements' },
+      { code: 'construction', name: 'Construction & BTP', icon: '🏗️', desc: 'Bâtiment' },
+      { code: 'agriculture', name: 'Agriculture', icon: '🌾', desc: 'Produits locaux' },
+      { code: 'freelance', name: 'Administratif', icon: '💼', desc: 'Secrétariat' },
+      { code: 'sante', name: 'Santé & Bien-être', icon: '💊', desc: 'Pharmacie & soins' },
+      { code: 'maison', name: 'Maison & Déco', icon: '🏠', desc: 'Intérieur' },
+    ],
+    // Autres Services
+    other: [
+      { code: 'education', name: 'Formation', icon: '🎓', desc: 'Cours & coaching' },
+      { code: 'livraison', name: 'Livraison', icon: '🚚', desc: 'Coursier & colis' },
+      { code: 'voyage', name: 'Voyage', icon: '✈️', desc: 'Tourisme & voyages' },
+      { code: 'ecommerce', name: 'Boutique', icon: '🏪', desc: 'E-commerce' },
+    ]
   };
 
-  const renderServiceCard = (type: ServiceType) => {
-    const Icon = getServiceIcon(type.code);
+  const getServiceTypeByCode = (code: string) => {
+    return serviceTypes.find(type => type.code === code);
+  };
+
+  const renderDisplayServiceCard = (displayService: { code: string; name: string; icon: string; desc: string }, colorClass: string, borderClass: string) => {
+    const dbService = getServiceTypeByCode(displayService.code);
+    if (!dbService) return null;
+    
     return (
-      <Card
-        key={type.id}
-        className={cn(
-          'cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-primary hover:scale-[1.02]',
-          'group border-2'
-        )}
-        onClick={() => handleSelectType(type)}
+      <button
+        key={displayService.code}
+        onClick={() => handleSelectType(dbService)}
+        className={`flex flex-col items-center p-3 bg-gradient-to-br ${colorClass} rounded-xl border-2 hover:shadow-lg hover:scale-[1.02] transition-all ${borderClass}`}
       >
-        <CardContent className="p-3">
-          <div className="flex flex-col items-center text-center gap-2">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center shrink-0 group-hover:from-primary/20 group-hover:to-primary/30 transition-colors">
-              <Icon className="w-6 h-6 text-primary" />
-            </div>
-            <h4 className="font-semibold text-xs text-foreground leading-tight">
-              {type.name}
-            </h4>
-            {type.description && (
-              <p className="text-[10px] text-muted-foreground line-clamp-2">
-                {type.description}
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+        <div className="text-3xl mb-1.5">{displayService.icon}</div>
+        <span className="text-sm font-semibold text-foreground">{displayService.name}</span>
+        <span className="text-[10px] text-muted-foreground">{displayService.desc}</span>
+      </button>
     );
   };
 
@@ -327,8 +340,17 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
             Services de Proximité Populaires
             <span className="w-8 h-0.5 bg-primary rounded"></span>
           </h4>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {getServicesByCategory(PROXIMITY_SERVICES).map(renderServiceCard)}
+          {/* Première ligne - 4 boutons */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+            {DISPLAY_SERVICES.proximity.slice(0, 4).map(s => 
+              renderDisplayServiceCard(s, 'from-white to-slate-50', 'border-slate-200 hover:border-primary')
+            )}
+          </div>
+          {/* Deuxième ligne - 2 boutons centrés */}
+          <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
+            {DISPLAY_SERVICES.proximity.slice(4).map(s => 
+              renderDisplayServiceCard(s, 'from-white to-slate-50', 'border-slate-200 hover:border-primary')
+            )}
           </div>
         </div>
 
@@ -340,7 +362,9 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
             <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
           </h4>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {getServicesByCategory(PROFESSIONAL_SERVICES).map(renderServiceCard)}
+            {DISPLAY_SERVICES.professional.map(s => 
+              renderDisplayServiceCard(s, 'from-violet-50 to-white', 'border-violet-200 hover:border-violet-500')
+            )}
           </div>
         </div>
 
@@ -352,7 +376,9 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
             <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
           </h4>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {getServicesByCategory(OTHER_SERVICES).map(renderServiceCard)}
+            {DISPLAY_SERVICES.other.map(s => 
+              renderDisplayServiceCard(s, 'from-cyan-50 to-white', 'border-cyan-200 hover:border-cyan-500')
+            )}
           </div>
         </div>
       </div>
