@@ -8,7 +8,6 @@ import { useAuth } from './useAuth';
  * ⚠️ IMPORTANT: Les liens partagés (/s/, /boutique/, /shop/, /product/) doivent être ici!
  */
 const PUBLIC_ROUTES = [
-  '/home',  // Page d'accueil - accessible à tous
   '/marketplace',
   '/tracking',
   '/client-tracking',
@@ -42,10 +41,10 @@ const PUBLIC_ROUTES = [
 /**
  * Routes qui déclenchent toujours une redirection vers le dashboard approprié
  * Ce sont les pages d'entrée principales où un utilisateur connecté doit être redirigé
- * NOTE: /home est maintenant une route publique accessible à tous
  */
 const REDIRECT_TRIGGER_ROUTES = [
   '/',
+  '/home',
   '/auth',
 ];
 

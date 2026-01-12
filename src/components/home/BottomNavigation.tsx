@@ -7,20 +7,14 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, ShoppingBag, MapPin, User, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
 
 interface NavItem {
   id: string;
   icon: LucideIcon;
   label: string;
-  path: string;
+  path: string | (() => string);
 }
-
-const navItems: NavItem[] = [
-  { id: 'home', icon: Home, label: 'Accueil', path: '/home' },
-  { id: 'marketplace', icon: ShoppingBag, label: 'Marketplace', path: '/marketplace' },
-  { id: 'tracking', icon: MapPin, label: 'Tracking', path: '/tracking' },
-  { id: 'profil', icon: User, label: 'Profil', path: '/profil' },
-];
 
 interface BottomNavigationProps {
   className?: string;
@@ -28,13 +22,43 @@ interface BottomNavigationProps {
 
 export function BottomNavigation({ className }: BottomNavigationProps) {
   const navigate = useNavigate();
+  const { profile } = useAuth();
+
+  // Déterminer la page d'accueil selon le rôle
+  const getHomePath = () => {
+    if (!profile?.role) return '/home';
+    const roleRoutes: Record<string, string> = {
+      admin: '/pdg',
+      ceo: '/pdg',
+      vendeur: '/vendeur',
+      livreur: '/livreur',
+      taxi: '/taxi-moto/driver',
+      syndicat: '/syndicat',
+      transitaire: '/transitaire',
+      client: '/client',
+      agent: '/agent',
+    };
+    return roleRoutes[profile.role] || '/home';
+  };
+
+  const navItems: NavItem[] = [
+    { id: 'home', icon: Home, label: 'Accueil', path: getHomePath },
+    { id: 'marketplace', icon: ShoppingBag, label: 'Marketplace', path: '/marketplace' },
+    { id: 'tracking', icon: MapPin, label: 'Tracking', path: '/tracking' },
+    { id: 'profil', icon: User, label: 'Profil', path: '/profil' },
+  ];
   const location = useLocation();
   
-  const isActive = (path: string) => {
-    if (path === '/home') {
-      return location.pathname === '/home' || location.pathname === '/';
+  const isActive = (path: string | (() => string)) => {
+    const actualPath = typeof path === 'function' ? path() : path;
+    
+    // Pour le bouton Home, considérer actif si on est sur un dashboard ou /home
+    if (typeof path === 'function') {
+      const dashboardPaths = ['/pdg', '/vendeur', '/livreur', '/taxi-moto/driver', '/syndicat', '/transitaire', '/client', '/agent', '/home'];
+      return dashboardPaths.some(dashboard => location.pathname.startsWith(dashboard));
     }
-    return location.pathname.startsWith(path);
+    
+    return location.pathname.startsWith(actualPath);
   };
 
   return (
@@ -60,12 +84,13 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
         <div className="grid grid-cols-4 max-w-lg mx-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
+            const itemPath = typeof item.path === 'function' ? item.path() : item.path;
             const active = isActive(item.path);
 
             return (
               <button
                 key={item.id}
-                onClick={() => navigate(item.path)}
+                onClick={() => navigate(itemPath)}
                 className={cn(
                   'relative flex flex-col items-center justify-center gap-0.5 py-2 px-1',
                   'transition-all duration-200',

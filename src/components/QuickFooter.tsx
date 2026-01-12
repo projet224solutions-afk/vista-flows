@@ -10,13 +10,30 @@ export default function QuickFooter() {
   const { profile } = useAuth();
   const { t } = useTranslation();
 
+  // Déterminer la page d'accueil selon le rôle
+  const getHomePath = () => {
+    if (!profile?.role) return '/home';
+    const roleRoutes: Record<string, string> = {
+      admin: '/pdg',
+      ceo: '/pdg',
+      vendeur: '/vendeur',
+      livreur: '/livreur',
+      taxi: '/taxi-moto/driver',
+      syndicat: '/syndicat',
+      transitaire: '/transitaire',
+      client: '/client',
+      agent: '/agent',
+    };
+    return roleRoutes[profile.role] || '/home';
+  };
+
   // Navigation basée sur les fonctionnalités réelles de 224Solutions
   const navigationItems = [
     {
       id: 'home',
       labelKey: 'nav.home',
       icon: Home,
-      path: '/home',
+      path: getHomePath(),
     },
     {
       id: 'marketplace',
@@ -48,8 +65,11 @@ export default function QuickFooter() {
     <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border z-[100] shadow-elegant pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]" role="navigation" aria-label="Navigation principale">
       <div className="flex items-center justify-around px-2 max-w-screen-xl mx-auto">
         {navigationItems.map((item) => {
-          const isActive = location.pathname === item.path ||
-            (item.id === 'profil' && !profile && location.pathname === '/auth');
+          // Détecter si c'est le bouton Home et si on est sur un dashboard
+          const isDashboard = ['/pdg', '/vendeur', '/livreur', '/taxi-moto/driver', '/syndicat', '/transitaire', '/client', '/agent'].some(path => location.pathname.startsWith(path));
+          const isActive = item.id === 'home' 
+            ? isDashboard || location.pathname === item.path
+            : location.pathname === item.path || (item.id === 'profil' && !profile && location.pathname === '/auth');
           const Icon = item.icon;
 
           return (
