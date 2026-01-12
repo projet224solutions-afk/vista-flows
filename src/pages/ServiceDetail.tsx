@@ -28,6 +28,7 @@ interface ServiceDetail {
   name: string;
   description: string;
   category: string;
+  service_type_code?: string; // Code du type de service (restaurant, salon, etc.)
   address?: string;
   phone?: string;
   email?: string;
@@ -126,6 +127,7 @@ export default function ServiceDetail() {
           name: proService.business_name,
           description: proService.description || 'Aucune description disponible',
           category: proService.service_types?.category || 'service',
+          service_type_code: proService.service_types?.code, // Ajouter le code du type
           address: proService.address,
           phone: proService.phone,
           rating: Number(proService.rating) || 0,
@@ -291,8 +293,8 @@ export default function ServiceDetail() {
     navigate(`/restaurant/${id}/menu`);
   };
 
-  // Vérifier si c'est un restaurant
-  const isRestaurant = service?.category?.toLowerCase().includes('restaurant');
+  // Vérifier si c'est un restaurant (via le code du type de service)
+  const isRestaurant = service?.service_type_code === 'restaurant';
 
   const handleShare = async () => {
     try {
