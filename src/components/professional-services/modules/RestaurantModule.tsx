@@ -21,6 +21,7 @@ import { fr } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { RestaurantMenuManager } from '@/components/restaurant/RestaurantMenuManager';
 import { RestaurantTableManager } from '@/components/restaurant/RestaurantTableManager';
+import { RestaurantSettings } from '@/components/restaurant/RestaurantSettings';
 
 interface RestaurantModuleProps {
   serviceId: string;
@@ -236,7 +237,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
           <TabsTrigger value="overview">
             <DollarSign className="w-4 h-4 mr-2 hidden md:block" />
             Vue d'ensemble
@@ -252,6 +253,10 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
           <TabsTrigger value="tables">
             <LayoutGrid className="w-4 h-4 mr-2 hidden md:block" />
             Tables
+          </TabsTrigger>
+          <TabsTrigger value="settings">
+            <Settings className="w-4 h-4 mr-2 hidden md:block" />
+            Paramètres
           </TabsTrigger>
         </TabsList>
 
@@ -424,6 +429,10 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
 
         <TabsContent value="tables" className="mt-4">
           <RestaurantTableManager serviceId={serviceId} />
+        </TabsContent>
+
+        <TabsContent value="settings" className="mt-4">
+          <RestaurantSettings serviceId={serviceId} />
         </TabsContent>
       </Tabs>
     </div>
