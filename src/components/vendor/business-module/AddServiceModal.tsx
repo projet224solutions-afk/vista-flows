@@ -278,9 +278,9 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
     return SERVICE_ICONS[code] || SERVICE_ICONS.default;
   };
 
-  // Services hardcodés identiques à Auth.tsx
+  // Services hardcodés identiques au formulaire d'inscription
   const DISPLAY_SERVICES = {
-    // Services de Proximité Populaires
+    // Services de Proximité Populaires (6)
     proximity: [
       { code: 'restaurant', name: 'Restaurant', icon: '🍽️', desc: 'Cuisine & plats' },
       { code: 'beaute', name: 'Beauté & Coiffure', icon: '💇', desc: 'Soins & styling' },
@@ -289,23 +289,23 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
       { code: 'menage', name: 'Nettoyage', icon: '✨', desc: 'Ménage & pressing' },
       { code: 'informatique', name: 'Informatique', icon: '💻', desc: 'Tech & dépannage' },
     ],
-    // Services Professionnels
+    // Services Professionnels (8)
     professional: [
       { code: 'sport', name: 'Sport & Fitness', icon: '🏋️', desc: 'Coaching' },
       { code: 'location', name: 'Immobilier', icon: '🏢', desc: 'Location & vente' },
       { code: 'media', name: 'Photo & Vidéo', icon: '📸', desc: 'Événements' },
       { code: 'construction', name: 'Construction & BTP', icon: '🏗️', desc: 'Bâtiment' },
-      { code: 'agriculture', name: 'Agriculture', icon: '🌾', desc: 'Produits locaux' },
-      { code: 'freelance', name: 'Administratif', icon: '💼', desc: 'Secrétariat' },
-      { code: 'sante', name: 'Santé & Bien-être', icon: '💊', desc: 'Pharmacie & soins' },
+      { code: 'agriculture', name: 'Agriculture', icon: '🌱', desc: 'Produits locaux' },
+      { code: 'freelance', name: 'Administratif', icon: '📋', desc: 'Secrétariat' },
+      { code: 'sante', name: 'Santé & Bien-être', icon: '❤️', desc: 'Pharmacie & soins' },
       { code: 'maison', name: 'Maison & Déco', icon: '🏠', desc: 'Intérieur' },
     ],
-    // Autres Services
-    other: [
+    // Produits Numériques (4)
+    digital: [
+      { code: 'ecommerce', name: 'Logiciel', icon: '💻', desc: 'Antivirus & SaaS' },
+      { code: 'livraison', name: 'Dropshipping', icon: '📦', desc: 'Amazon, AliExpress' },
       { code: 'education', name: 'Formation', icon: '🎓', desc: 'Cours & coaching' },
-      { code: 'livraison', name: 'Livraison', icon: '🚚', desc: 'Coursier & colis' },
-      { code: 'voyage', name: 'Voyage', icon: '✈️', desc: 'Tourisme & voyages' },
-      { code: 'ecommerce', name: 'Boutique', icon: '🏪', desc: 'E-commerce' },
+      { code: 'voyage', name: 'Livres', icon: '📚', desc: 'eBooks & affiliation' },
     ]
   };
 
@@ -347,7 +347,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
             )}
           </div>
           {/* Deuxième ligne - 2 boutons centrés */}
-          <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
+          <div className="grid grid-cols-2 gap-3 max-w-xs mx-auto">
             {DISPLAY_SERVICES.proximity.slice(4).map(s => 
               renderDisplayServiceCard(s, 'from-white to-slate-50', 'border-slate-200 hover:border-primary')
             )}
@@ -361,23 +361,29 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
             Services Professionnels
             <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
           </h4>
+          {/* Deux lignes de 4 */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+            {DISPLAY_SERVICES.professional.slice(0, 4).map(s => 
+              renderDisplayServiceCard(s, 'from-white to-slate-50', 'border-slate-200 hover:border-violet-500')
+            )}
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {DISPLAY_SERVICES.professional.map(s => 
-              renderDisplayServiceCard(s, 'from-violet-50 to-white', 'border-violet-200 hover:border-violet-500')
+            {DISPLAY_SERVICES.professional.slice(4).map(s => 
+              renderDisplayServiceCard(s, 'from-white to-slate-50', 'border-slate-200 hover:border-violet-500')
             )}
           </div>
         </div>
 
-        {/* Section: Autres Services */}
+        {/* Section: Produits Numériques */}
         <div>
-          <h4 className="text-sm font-semibold text-cyan-600 mb-3 flex items-center justify-center gap-2">
-            <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
-            Autres Services
-            <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
+          <h4 className="text-sm font-semibold text-amber-600 mb-3 flex items-center justify-center gap-2">
+            <span className="w-8 h-0.5 bg-amber-500 rounded"></span>
+            Produits Numériques
+            <span className="w-8 h-0.5 bg-amber-500 rounded"></span>
           </h4>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {DISPLAY_SERVICES.other.map(s => 
-              renderDisplayServiceCard(s, 'from-cyan-50 to-white', 'border-cyan-200 hover:border-cyan-500')
+            {DISPLAY_SERVICES.digital.map(s => 
+              renderDisplayServiceCard(s, 'from-white to-slate-50', 'border-slate-200 hover:border-amber-500')
             )}
           </div>
         </div>
