@@ -256,6 +256,58 @@ export default function Auth() {
     }
   };
 
+  // ⚡ IMPORTANT: Écouter les événements OAuth pour rediriger après connexion Google/Facebook
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔔 [Auth] Auth state change:', event, session?.user?.email || 'no user');
+      
+      // Rediriger après connexion OAuth réussie
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log('🔐 [Auth] SIGNED_IN détecté - vérification du profil...');
+        setIsAuthenticating(true);
+        
+        // Petit délai pour laisser le profil se créer/charger
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        try {
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .maybeSingle();
+          
+          if (error) {
+            console.error('❌ [Auth] Erreur récupération profil:', error);
+          }
+          
+          if (profile?.role) {
+            const targetRoute = getDashboardRoute(profile.role);
+            console.log(`🚀 [Auth] Redirection OAuth vers ${targetRoute} (rôle: ${profile.role})`);
+            
+            toast({
+              title: "✅ Connexion réussie",
+              description: `Bienvenue ! Redirection vers votre espace ${profile.role}...`,
+            });
+            
+            // Nettoyer les flags OAuth
+            localStorage.removeItem('oauth_intent_role');
+            localStorage.removeItem('oauth_is_new_signup');
+            
+            navigate(targetRoute, { replace: true });
+          } else {
+            console.log('⚠️ [Auth] Pas de rôle trouvé, reste sur /auth');
+          }
+        } catch (err) {
+          console.error('❌ [Auth] Erreur callback OAuth:', err);
+        } finally {
+          setIsAuthenticating(false);
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate, toast]);
+
   // Vérifier si l'utilisateur est déjà connecté au chargement de la page
   useEffect(() => {
     let isMounted = true;
@@ -294,7 +346,7 @@ export default function Auth() {
     return () => {
       isMounted = false;
     };
-  }, []); // Seulement au montage, pas de dépendances
+  }, [isAuthenticating]); // Ajouter isAuthenticating comme dépendance
 
   // Détecter si on vient d'un lien de réinitialisation et vérifier la session
   useEffect(() => {

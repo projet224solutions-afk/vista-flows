@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lock, Eye, EyeOff, CheckCircle2, XCircle } from 'lucide-react';
+import { Lock, Eye, EyeOff, CheckCircle2, XCircle, AlertCircle, Chrome } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const passwordSchema = z.string()
   .min(8, "Le mot de passe doit contenir au moins 8 caractères")
@@ -23,6 +24,50 @@ export default function VendorPasswordChange() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isOAuthUser, setIsOAuthUser] = useState(false);
+  const [oauthProvider, setOauthProvider] = useState<string | null>(null);
+  const [checkingAuthMethod, setCheckingAuthMethod] = useState(true);
+
+  // ⚡ Détecter si l'utilisateur s'est connecté via OAuth (Google, Facebook, etc.)
+  useEffect(() => {
+    const checkAuthMethod = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          // Vérifier les identités de l'utilisateur (OAuth providers)
+          const identities = user.identities || [];
+          const oauthIdentity = identities.find(id => 
+            id.provider === 'google' || 
+            id.provider === 'facebook' || 
+            id.provider === 'twitter' ||
+            id.provider === 'github' ||
+            id.provider === 'apple'
+          );
+          
+          if (oauthIdentity) {
+            setIsOAuthUser(true);
+            setOauthProvider(oauthIdentity.provider);
+            console.log('🔐 Utilisateur OAuth détecté:', oauthIdentity.provider);
+          } else {
+            // Vérifier aussi app_metadata.provider
+            const provider = user.app_metadata?.provider;
+            if (provider && provider !== 'email') {
+              setIsOAuthUser(true);
+              setOauthProvider(provider);
+              console.log('🔐 Utilisateur OAuth (via app_metadata):', provider);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Erreur vérification méthode auth:', error);
+      } finally {
+        setCheckingAuthMethod(false);
+      }
+    };
+
+    checkAuthMethod();
+  }, []);
 
   // Validation en temps réel
   const passwordChecks = {
@@ -39,7 +84,8 @@ export default function VendorPasswordChange() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!currentPassword.trim()) {
+    // ⚡ Pour les utilisateurs OAuth, pas besoin de mot de passe actuel
+    if (!isOAuthUser && !currentPassword.trim()) {
       toast.error("Veuillez entrer votre mot de passe actuel");
       return;
     }
@@ -60,23 +106,24 @@ export default function VendorPasswordChange() {
     setLoading(true);
 
     try {
-      // Récupérer l'email de l'utilisateur actuel
       const { data: { user } } = await supabase.auth.getUser();
       if (!user?.email) {
         toast.error("Impossible de récupérer les informations utilisateur");
         return;
       }
 
-      // Vérifier le mot de passe actuel en tentant une connexion
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: currentPassword
-      });
+      // ⚡ Pour les utilisateurs NON-OAuth, vérifier le mot de passe actuel
+      if (!isOAuthUser) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: currentPassword
+        });
 
-      if (signInError) {
-        toast.error("Le mot de passe actuel est incorrect");
-        setLoading(false);
-        return;
+        if (signInError) {
+          toast.error("Le mot de passe actuel est incorrect");
+          setLoading(false);
+          return;
+        }
       }
 
       // Mettre à jour le mot de passe
@@ -89,12 +136,21 @@ export default function VendorPasswordChange() {
         return;
       }
 
-      toast.success("Mot de passe modifié avec succès");
+      toast.success(isOAuthUser 
+        ? "Mot de passe défini avec succès ! Vous pouvez maintenant vous connecter avec email + mot de passe."
+        : "Mot de passe modifié avec succès"
+      );
       
       // Réinitialiser les champs
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      
+      // Si c'était un utilisateur OAuth, il a maintenant un mot de passe
+      if (isOAuthUser) {
+        setIsOAuthUser(false);
+        setOauthProvider(null);
+      }
     } catch (error: any) {
       console.error('Erreur changement mot de passe:', error);
       toast.error("Une erreur est survenue");
@@ -110,51 +166,110 @@ export default function VendorPasswordChange() {
     </div>
   );
 
+  const getProviderIcon = () => {
+    switch (oauthProvider) {
+      case 'google':
+        return <Chrome className="w-4 h-4" />;
+      default:
+        return <AlertCircle className="w-4 h-4" />;
+    }
+  };
+
+  const getProviderName = () => {
+    switch (oauthProvider) {
+      case 'google':
+        return 'Google';
+      case 'facebook':
+        return 'Facebook';
+      case 'twitter':
+        return 'Twitter';
+      case 'github':
+        return 'GitHub';
+      case 'apple':
+        return 'Apple';
+      default:
+        return oauthProvider || 'OAuth';
+    }
+  };
+
+  if (checkingAuthMethod) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+            <span className="text-sm text-muted-foreground">Vérification...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Lock className="w-5 h-5" />
-          Modifier le mot de passe
+          {isOAuthUser ? 'Définir un mot de passe' : 'Modifier le mot de passe'}
         </CardTitle>
         <CardDescription>
-          Changez votre mot de passe de connexion
+          {isOAuthUser 
+            ? 'Vous êtes connecté via ' + getProviderName() + '. Définissez un mot de passe pour pouvoir aussi vous connecter par email.'
+            : 'Changez votre mot de passe de connexion'
+          }
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Mot de passe actuel */}
-          <div className="space-y-2">
-            <Label htmlFor="currentPassword">Mot de passe actuel</Label>
-            <div className="relative">
-              <Input
-                id="currentPassword"
-                type={showCurrentPassword ? "text" : "password"}
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Entrez votre mot de passe actuel"
-                className="pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+        {/* ⚡ Alerte pour les utilisateurs OAuth */}
+        {isOAuthUser && (
+          <Alert className="mb-6 border-blue-200 bg-blue-50">
+            <div className="flex items-center gap-2">
+              {getProviderIcon()}
+              <AlertDescription className="text-blue-800">
+                <strong>Compte {getProviderName()}</strong> - Vous n'avez pas encore de mot de passe.
+                En définissant un mot de passe, vous pourrez aussi vous connecter avec votre email.
+              </AlertDescription>
             </div>
-          </div>
+          </Alert>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Mot de passe actuel - Seulement pour les utilisateurs NON-OAuth */}
+          {!isOAuthUser && (
+            <div className="space-y-2">
+              <Label htmlFor="currentPassword">Mot de passe actuel</Label>
+              <div className="relative">
+                <Input
+                  id="currentPassword"
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Entrez votre mot de passe actuel"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Nouveau mot de passe */}
           <div className="space-y-2">
-            <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+            <Label htmlFor="newPassword">
+              {isOAuthUser ? 'Nouveau mot de passe' : 'Nouveau mot de passe'}
+            </Label>
             <div className="relative">
               <Input
                 id="newPassword"
                 type={showNewPassword ? "text" : "password"}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Entrez votre nouveau mot de passe"
+                placeholder={isOAuthUser ? "Créez votre mot de passe" : "Entrez votre nouveau mot de passe"}
                 className="pr-10"
               />
               <button
@@ -203,16 +318,16 @@ export default function VendorPasswordChange() {
 
           <Button 
             type="submit" 
-            disabled={loading || !allChecksPass || !currentPassword}
+            disabled={loading || !allChecksPass || (!isOAuthUser && !currentPassword)}
             className="w-full"
           >
             {loading ? (
               <span className="flex items-center gap-2">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                Modification en cours...
+                {isOAuthUser ? 'Définition en cours...' : 'Modification en cours...'}
               </span>
             ) : (
-              "Modifier le mot de passe"
+              isOAuthUser ? "Définir le mot de passe" : "Modifier le mot de passe"
             )}
           </Button>
         </form>
