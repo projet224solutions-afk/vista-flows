@@ -13,12 +13,14 @@ import {
   UtensilsCrossed, ClipboardList, Users, Calendar,
   TrendingUp, RefreshCw, Clock, CheckCircle, XCircle,
   DollarSign, ShoppingBag, Package, Truck, MapPin, Eye,
-  Sparkles, Settings, Plus
+  Sparkles, Settings, Plus, LayoutGrid
 } from 'lucide-react';
 import { useServiceRestaurantStats } from '@/hooks/useServiceRestaurantStats';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import { RestaurantMenuManager } from '@/components/restaurant/RestaurantMenuManager';
+import { RestaurantTableManager } from '@/components/restaurant/RestaurantTableManager';
 
 interface RestaurantModuleProps {
   serviceId: string;
@@ -252,7 +254,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
           <TabsTrigger value="overview">
             <DollarSign className="w-4 h-4 mr-2 hidden md:block" />
             Vue d'ensemble
@@ -262,8 +264,12 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
             Commandes
           </TabsTrigger>
           <TabsTrigger value="menu">
-            <Package className="w-4 h-4 mr-2 hidden md:block" />
-            Produits/Services
+            <UtensilsCrossed className="w-4 h-4 mr-2 hidden md:block" />
+            Menu
+          </TabsTrigger>
+          <TabsTrigger value="tables">
+            <LayoutGrid className="w-4 h-4 mr-2 hidden md:block" />
+            Tables
           </TabsTrigger>
         </TabsList>
 
