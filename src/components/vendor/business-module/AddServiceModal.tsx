@@ -24,7 +24,7 @@ import {
   Plus, Store, Utensils, Scissors, Car, Heart, 
   BookOpen, Camera, Truck, Building2, Dumbbell,
   Laptop, Leaf, Hammer, Sparkles, ArrowRight,
-  Loader2, CheckCircle, AlertCircle
+  Loader2, CheckCircle, AlertCircle, MapPin, Navigation
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -107,6 +107,10 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
   const [businessName, setBusinessName] = useState('');
   const [description, setDescription] = useState('');
   const [address, setAddress] = useState('');
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsError, setGpsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -121,6 +125,50 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
     setBusinessName('');
     setDescription('');
     setAddress('');
+    setLatitude(null);
+    setLongitude(null);
+    setGpsError(null);
+  };
+
+  // Fonction pour obtenir la position GPS
+  const getGpsLocation = async () => {
+    if (!navigator.geolocation) {
+      setGpsError('La géolocalisation n\'est pas supportée par votre navigateur');
+      return;
+    }
+
+    setGpsLoading(true);
+    setGpsError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLatitude(position.coords.latitude);
+        setLongitude(position.coords.longitude);
+        setGpsLoading(false);
+        toast.success('Position GPS capturée avec succès');
+      },
+      (error) => {
+        setGpsLoading(false);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setGpsError('Vous avez refusé l\'accès à votre position');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setGpsError('Position non disponible');
+            break;
+          case error.TIMEOUT:
+            setGpsError('Délai d\'attente dépassé');
+            break;
+          default:
+            setGpsError('Erreur lors de la récupération de la position');
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
   };
 
   const fetchServiceTypes = async () => {
@@ -180,6 +228,8 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
           business_name: validatedData.businessName,
           description: validatedData.description || null,
           address: validatedData.address || null,
+          latitude: latitude,
+          longitude: longitude,
           status: 'active',
           verification_status: 'unverified',
           rating: 0,
@@ -314,6 +364,41 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
               value={address}
               onChange={(e) => setAddress(e.target.value)}
             />
+          </div>
+
+          {/* GPS Location */}
+          <div className="space-y-2">
+            <Label>Position GPS (recommandé)</Label>
+            <div className="flex items-center gap-3">
+              <Button 
+                type="button"
+                variant="outline" 
+                onClick={getGpsLocation}
+                disabled={gpsLoading}
+                className="gap-2"
+              >
+                {gpsLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Navigation className="w-4 h-4" />
+                )}
+                {gpsLoading ? 'Localisation...' : 'Localiser mon service'}
+              </Button>
+              {latitude && longitude && (
+                <div className="flex items-center gap-2 text-sm text-green-600">
+                  <MapPin className="w-4 h-4" />
+                  <span>Position enregistrée</span>
+                </div>
+              )}
+            </div>
+            {gpsError && (
+              <p className="text-xs text-destructive">{gpsError}</p>
+            )}
+            {latitude && longitude && (
+              <p className="text-xs text-muted-foreground">
+                Coordonnées: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+              </p>
+            )}
           </div>
         </div>
 

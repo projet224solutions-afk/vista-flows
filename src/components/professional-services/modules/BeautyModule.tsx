@@ -121,15 +121,27 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
                   Configurez vos services, gérez vos rendez-vous et suivez vos performances.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <Button variant="outline" className="gap-2 justify-start">
+                  <Button 
+                    variant="outline" 
+                    className="gap-2 justify-start"
+                    onClick={() => setActiveTab('services')}
+                  >
                     <Plus className="w-4 h-4" />
                     Ajouter un service
                   </Button>
-                  <Button variant="outline" className="gap-2 justify-start">
+                  <Button 
+                    variant="outline" 
+                    className="gap-2 justify-start"
+                    onClick={() => navigate('/vendeur/settings')}
+                  >
                     <Users className="w-4 h-4" />
-                    Ajouter du personnel
+                    Gérer le personnel
                   </Button>
-                  <Button variant="outline" className="gap-2 justify-start">
+                  <Button 
+                    variant="outline" 
+                    className="gap-2 justify-start"
+                    onClick={() => navigate('/vendeur/settings')}
+                  >
                     <Settings className="w-4 h-4" />
                     Configurer
                   </Button>
@@ -360,13 +372,28 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
 
         <TabsContent value="services" className="mt-4">
           <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                Produits & Services
+              </CardTitle>
+              <Button onClick={() => navigate('/vendeur/products')} className="gap-2">
+                <Plus className="w-4 h-4" />
+                Ajouter un service
+              </Button>
+            </CardHeader>
             <CardContent className="p-6">
               <div className="text-center py-8 text-muted-foreground">
                 <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>La gestion des services sera disponible prochainement</p>
-                <Button variant="outline" className="mt-4">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Ajouter un service
+                <p className="mb-2">Gérez vos prestations et produits de beauté</p>
+                <p className="text-sm">Les services ajoutés seront visibles sur le marketplace</p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => navigate('/vendeur/products')}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  Voir tous mes produits
                 </Button>
               </div>
             </CardContent>

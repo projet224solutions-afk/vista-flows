@@ -142,15 +142,27 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
                   Configurez votre menu, gérez vos commandes et suivez vos performances en temps réel.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <Button variant="outline" className="gap-2 justify-start">
+                  <Button 
+                    variant="outline" 
+                    className="gap-2 justify-start"
+                    onClick={() => setActiveTab('menu')}
+                  >
                     <Plus className="w-4 h-4" />
                     Ajouter un plat
                   </Button>
-                  <Button variant="outline" className="gap-2 justify-start">
+                  <Button 
+                    variant="outline" 
+                    className="gap-2 justify-start"
+                    onClick={() => navigate('/vendeur/settings')}
+                  >
                     <Settings className="w-4 h-4" />
                     Configurer
                   </Button>
-                  <Button variant="outline" className="gap-2 justify-start">
+                  <Button 
+                    variant="outline" 
+                    className="gap-2 justify-start"
+                    onClick={() => setActiveTab('menu')}
+                  >
                     <ClipboardList className="w-4 h-4" />
                     Voir le menu
                   </Button>
@@ -250,8 +262,8 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
             Commandes
           </TabsTrigger>
           <TabsTrigger value="menu">
-            <UtensilsCrossed className="w-4 h-4 mr-2 hidden md:block" />
-            Menu
+            <Package className="w-4 h-4 mr-2 hidden md:block" />
+            Produits/Services
           </TabsTrigger>
         </TabsList>
 
@@ -417,13 +429,28 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
 
         <TabsContent value="menu" className="mt-4">
           <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Package className="w-5 h-5" />
+                Produits & Services
+              </CardTitle>
+              <Button onClick={() => navigate('/vendeur/products')} className="gap-2">
+                <Plus className="w-4 h-4" />
+                Ajouter un produit
+              </Button>
+            </CardHeader>
             <CardContent className="p-6">
               <div className="text-center py-8 text-muted-foreground">
                 <UtensilsCrossed className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>La gestion du menu sera disponible prochainement</p>
-                <Button variant="outline" className="mt-4">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Ajouter un plat
+                <p className="mb-2">Gérez vos plats, boissons et services</p>
+                <p className="text-sm">Les produits ajoutés seront visibles sur le marketplace</p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => navigate('/vendeur/products')}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  Voir tous mes produits
                 </Button>
               </div>
             </CardContent>
