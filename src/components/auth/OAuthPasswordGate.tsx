@@ -34,10 +34,9 @@ export default function OAuthPasswordGate() {
 
     if (!isOAuthUser) return;
 
+    // Seul "true" est accepté - "skipped" n'est plus valide (mot de passe obligatoire)
     const hasSetPassword = localStorage.getItem(`oauth_password_set_${user.id}`);
-    const alreadyHandled = hasSetPassword === "true" || hasSetPassword === "skipped";
-
-    if (alreadyHandled) return;
+    if (hasSetPassword === "true") return;
 
     console.log("🔐 [OAuthPasswordGate] OAuth user sans mot de passe -> /auth/set-password", {
       from: location.pathname,
