@@ -294,8 +294,32 @@ export default function EnhancedAuth() {
     setLoading(true);
 
     try {
+      // Mapper le type de compte vers le rôle
+      const mapAccountTypeToRole = (type: AccountType | null) => {
+        switch (type) {
+          case 'marchand':
+            return 'vendeur';
+          case 'livreur':
+            return 'livreur';
+          case 'taxi_moto':
+            return 'taxi';
+          case 'transitaire':
+            return 'transitaire';
+          case 'client':
+          default:
+            return 'client';
+        }
+      };
+
       if (mode === 'signup') {
-        // Inscription
+        // Inscription - passer le rôle mappé ET le account_type
+        const roleToUse = mapAccountTypeToRole(accountType);
+        
+        // Extraire prénom et nom du nom complet
+        const nameParts = fullName.trim().split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+        
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -303,7 +327,10 @@ export default function EnhancedAuth() {
             emailRedirectTo: `${window.location.origin}/`,
             data: {
               full_name: fullName,
-              account_type: accountType
+              first_name: firstName,
+              last_name: lastName,
+              account_type: accountType,
+              role: roleToUse // Ajouter le rôle directement
             }
           }
         });
