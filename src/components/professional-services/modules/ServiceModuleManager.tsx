@@ -2,6 +2,7 @@
  * GESTIONNAIRE DE MODULES MÉTIERS
  * Charge dynamiquement le module approprié selon le type de service
  * Utilise les codes de service_types pour le mapping
+ * Synchronisé avec src/config/serviceTypesConfig.ts
  */
 
 // Import des modules complets
@@ -30,6 +31,7 @@ import { AgricultureModule } from './AgricultureModule';
 import { ConstructionModule } from './ConstructionModule';
 import { DropshippingModule } from './DropshippingModule';
 import { CateringModule } from './stubs';
+import { normalizeServiceCode } from '@/config/serviceTypesConfig';
 
 interface ServiceModuleManagerProps {
   serviceId: string;
@@ -39,9 +41,10 @@ interface ServiceModuleManagerProps {
   businessName: string;
 }
 
-// Mapping des codes de service_types vers les modules
+// Mapping des codes OFFICIELS de service_types vers les modules
+// Les codes legacy sont normalisés via normalizeServiceCode()
 const MODULE_MAP: Record<string, React.FC<{ serviceId: string; businessName?: string }>> = {
-  // ===== Codes actuels de service_types (BDD) =====
+  // ===== Codes officiels (service_types.code en BDD) =====
   'ecommerce': EcommerceModule,
   'restaurant': RestaurantModule,
   'beaute': BeautyModule,
@@ -57,30 +60,16 @@ const MODULE_MAP: Record<string, React.FC<{ serviceId: string; businessName?: st
   'construction': ConstructionModule,
   'agriculture': AgricultureModule,
   'informatique': DeveloperModule,
-  
-  // ===== Legacy service_type des vendors =====
-  'retail': EcommerceModule,
-  'wholesale': EcommerceModule,
-  'mixed': EcommerceModule,
-  'boutique': EcommerceModule,
-  'salon_coiffure': BeautyModule,
-  'garage_auto': RepairModule,
-  'immobilier': RealEstateModule,
-  'services_pro': FreelanceModule,
-  'photographe': PhotoStudioModule,
-  'autre': EcommerceModule,
-  
-  // ===== Extensions / Alias =====
   'vtc': VTCModule,
+  
+  // ===== Extensions (non présents dans service_types mais utilisés) =====
+  'sport': FitnessModule,
   'mode': FashionModule,
   'electronique': ElectronicsModule,
   'maison': HomeDecorModule,
-  'sport': FitnessModule,
   'dropshipping': DropshippingModule,
   'coiff': HairdresserModule,
   'coach': CoachModule,
-  
-  // Produits numériques
   'digital_voyage': TransportModule,
   'digital_logiciel': DeveloperModule,
   'digital_formation': EducationModule,
