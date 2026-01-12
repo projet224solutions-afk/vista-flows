@@ -1,6 +1,6 @@
 /**
  * VendorServiceModule - Charge le module métier approprié pour le vendor
- * Basé sur son professional_service.service_type.code
+ * Intègre le VendorBusinessDashboard avec vue complète de la boutique
  */
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw, Briefcase } from 'lucide-react';
 import { useVendorProfessionalService } from '@/hooks/useVendorProfessionalService';
-import { ServiceModuleManager } from '@/components/professional-services/modules/ServiceModuleManager';
+import { VendorBusinessDashboard } from '@/components/vendor/business-module';
 
 export default function VendorServiceModule() {
   const { 
@@ -27,6 +27,11 @@ export default function VendorServiceModule() {
           <Skeleton className="h-4 w-72 mt-2" />
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full" />
+            ))}
+          </div>
           <Skeleton className="h-32 w-full" />
           <Skeleton className="h-32 w-full" />
         </CardContent>
@@ -83,28 +88,12 @@ export default function VendorServiceModule() {
     );
   }
 
-  // Afficher le module métier approprié via ServiceModuleManager
+  // Afficher le dashboard principal avec vue complète de la boutique
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Briefcase className="w-5 h-5 text-primary" />
-            {serviceTypeName || 'Module Métier'}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {professionalService.business_name}
-          </p>
-        </div>
-      </div>
-
-      <ServiceModuleManager
-        serviceId={professionalService.id}
-        serviceTypeId={professionalService.service_type_id}
-        serviceTypeName={serviceTypeName || 'Service'}
-        serviceTypeCode={serviceTypeCode || undefined}
-        businessName={professionalService.business_name}
-      />
-    </div>
+    <VendorBusinessDashboard
+      businessName={professionalService.business_name}
+      serviceId={professionalService.id}
+      serviceTypeName={serviceTypeName || 'Service'}
+    />
   );
 }
