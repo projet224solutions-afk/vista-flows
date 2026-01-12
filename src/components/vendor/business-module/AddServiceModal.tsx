@@ -272,38 +272,37 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
   };
 
   const renderServiceTypeGrid = () => (
-    <ScrollArea className="h-[400px] pr-2">
-      <div className="grid grid-cols-2 gap-3">
+    <ScrollArea className="h-[500px] pr-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {serviceTypes.map((type) => {
           const Icon = getServiceIcon(type.code);
           return (
             <Card
               key={type.id}
               className={cn(
-                'cursor-pointer transition-all duration-200 hover:shadow-md hover:border-primary/50',
-                'group'
+                'cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-primary hover:scale-[1.02]',
+                'group border-2'
               )}
               onClick={() => handleSelectType(type)}
             >
               <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                    <Icon className="w-5 h-5 text-primary" />
+                <div className="flex flex-col items-center text-center gap-3">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center shrink-0 group-hover:from-primary/20 group-hover:to-primary/30 transition-colors">
+                    <Icon className="w-7 h-7 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-sm text-foreground truncate">
+                    <h4 className="font-semibold text-sm text-foreground leading-tight">
                       {type.name}
                     </h4>
                     {type.category && (
-                      <Badge variant="secondary" className="text-xs mt-1">
+                      <Badge variant="secondary" className="text-[10px] mt-2">
                         {type.category}
                       </Badge>
                     )}
                   </div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                 </div>
                 {type.description && (
-                  <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
+                  <p className="text-[11px] text-muted-foreground mt-3 line-clamp-2 text-center">
                     {type.description}
                   </p>
                 )}
@@ -446,17 +445,17 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-hidden">
+      <DialogContent className="sm:max-w-[750px] lg:max-w-[900px] max-h-[90vh] overflow-hidden">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-              <Plus className="w-4 h-4 text-primary" />
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+              <Plus className="w-5 h-5 text-primary" />
             </div>
             {step === 'select' ? 'Nouveau service professionnel' : 'Configurer votre service'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-base">
             {step === 'select' 
-              ? 'Choisissez le type de service que vous souhaitez créer'
+              ? 'Choisissez le type de service que vous souhaitez créer parmi nos catégories'
               : `Configurez votre ${selectedType?.name || 'service'}`
             }
           </DialogDescription>
