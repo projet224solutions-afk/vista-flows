@@ -115,7 +115,7 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
 
   const handleServiceClick = (serviceId: string) => {
     onOpenChange(false);
-    navigate(`/service/${serviceId}`);
+    navigate(`/services-proximite/${serviceId}`);
   };
 
   const handleCreateServiceClick = () => {
