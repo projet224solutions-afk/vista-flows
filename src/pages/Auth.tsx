@@ -1286,15 +1286,15 @@ export default function Auth() {
             onClick={() => handleRoleClick('client')}
             className={`w-full flex flex-col items-center justify-center gap-1 py-4 rounded-2xl transition-all ${
               selectedRole === 'client' 
-                ? 'bg-gradient-to-r from-blue-700 to-blue-800 text-white shadow-xl scale-[1.02]' 
-                : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-2 border-blue-600 hover:from-blue-600 hover:to-blue-700 hover:shadow-lg'
+                ? 'bg-primary text-primary-foreground shadow-xl scale-[1.02]' 
+                : 'bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90 hover:shadow-lg'
             }`}
           >
             <div className="flex items-center gap-2">
-              <UserIcon className="h-6 w-6 text-white" />
+              <UserIcon className="h-6 w-6 text-primary-foreground" />
               <span className="text-lg font-semibold">{t('auth.client')}</span>
             </div>
-            <span className={`text-sm font-normal ${selectedRole === 'client' ? 'text-blue-100' : 'text-blue-100'}`}>
+            <span className="text-sm font-normal text-primary-foreground/80">
               Acheter des produits et services
             </span>
           </button>
