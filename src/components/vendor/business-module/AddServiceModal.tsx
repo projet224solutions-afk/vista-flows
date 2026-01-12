@@ -24,7 +24,8 @@ import {
   Plus, Store, Utensils, Scissors, Car, Heart, 
   BookOpen, Camera, Truck, Building2, Dumbbell,
   Laptop, Leaf, Hammer, Sparkles, ArrowRight,
-  Loader2, CheckCircle, AlertCircle, MapPin, Navigation
+  Loader2, CheckCircle, AlertCircle, MapPin, Navigation,
+  Home, Plane, Briefcase
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -47,24 +48,30 @@ interface AddServiceModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// Mapping des icônes par code de service (synchronisé avec MerchantOnboarding.tsx)
+// Mapping des icônes - 18 services synchronisés avec Auth.tsx et service_types DB
 const SERVICE_ICONS: Record<string, React.ElementType> = {
-  ecommerce: Store,
+  // Services de Proximité Populaires
   restaurant: Utensils,
   beaute: Scissors,
-  reparation: Car,
-  location: Building2,
+  vtc: Car,
+  reparation: Hammer,
   menage: Sparkles,
-  livraison: Truck,
+  informatique: Laptop,
+  // Services Professionnels
+  sport: Dumbbell,
+  location: Building2,
   media: Camera,
-  education: BookOpen,
-  sante: Heart,
-  voyage: Plus, // Plane not imported, using Plus
-  freelance: Plus, // Wrench not imported, using Plus
   construction: Hammer,
   agriculture: Leaf,
-  informatique: Laptop,
-  vtc: Car,
+  freelance: Briefcase,
+  sante: Heart,
+  maison: Home,
+  // Autres Services
+  education: BookOpen,
+  livraison: Truck,
+  voyage: Plane,
+  ecommerce: Store,
+  // Default
   default: Store
 };
 
