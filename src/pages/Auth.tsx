@@ -1236,8 +1236,8 @@ export default function Auth() {
               onClick={() => handleRoleClick('vendeur')}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
                 selectedRole === 'vendeur' 
-                  ? 'bg-green-600 text-white shadow-lg scale-105' 
-                  : 'bg-white text-green-700 border-2 border-green-200 hover:border-green-400 hover:bg-green-50'
+                  ? 'bg-primary text-primary-foreground shadow-lg scale-105' 
+                  : 'bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90'
               }`}
             >
               <Store className="h-4 w-4" />
