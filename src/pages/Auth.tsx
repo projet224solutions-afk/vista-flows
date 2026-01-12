@@ -38,6 +38,7 @@ export default function Auth() {
   const { toast } = useToast();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<'google' | 'facebook' | null>(null);
   const [oauthRetrying, setOauthRetrying] = useState(false);
   const [oauthAttempts, setOauthAttempts] = useState<{ google: number; facebook: number }>({ google: 0, facebook: 0 });
@@ -255,9 +256,14 @@ export default function Auth() {
     }
   };
 
-  // ⚡ NOUVEAU: Rediriger si l'utilisateur est déjà connecté
+  // Vérifier si l'utilisateur est déjà connecté au chargement de la page
   useEffect(() => {
+    let isMounted = true;
+    
     const checkExistingSession = async () => {
+      // Ne pas vérifier si on est en train de se connecter
+      if (isAuthenticating) return;
+      
       const params = new URLSearchParams(window.location.search);
       const isReset = params.get('reset') === 'true';
       
@@ -266,8 +272,8 @@ export default function Auth() {
       
       const { data: { session } } = await supabase.auth.getSession();
       
-      if (session?.user) {
-        console.log('🔍 [Auth] Utilisateur déjà connecté, vérification profil...');
+      if (session?.user && isMounted) {
+        console.log('🔍 [Auth Mount] Utilisateur déjà connecté détecté');
         
         const { data: profileData } = await supabase
           .from('profiles')
@@ -275,16 +281,20 @@ export default function Auth() {
           .eq('id', session.user.id)
           .maybeSingle();
         
-        if (profileData?.role) {
+        if (profileData?.role && isMounted) {
           const targetRoute = getDashboardRoute(profileData.role);
-          console.log('🚀 [Auth] Redirection utilisateur existant vers:', targetRoute);
+          console.log('🚀 [Auth Mount] Redirection utilisateur existant vers:', targetRoute);
           navigate(targetRoute, { replace: true });
         }
       }
     };
     
     checkExistingSession();
-  }, [navigate]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Seulement au montage, pas de dépendances
 
   // Détecter si on vient d'un lien de réinitialisation et vérifier la session
   useEffect(() => {
@@ -688,23 +698,10 @@ export default function Auth() {
     loadBureaus();
   }, []);
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user && event === 'SIGNED_IN') {
-          console.log('✅ Connexion réussie, redirection vers dashboard...');
-          // Redirection vers le dashboard principal qui gère automatiquement le routage par rôle
-          navigate('/');
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setIsAuthenticating(true);
     setError(null);
     setSuccess(null);
 
@@ -972,6 +969,7 @@ export default function Auth() {
       console.error('Erreur authentification:', err);
     } finally {
       setLoading(false);
+      setIsAuthenticating(false);
     }
   };
 
