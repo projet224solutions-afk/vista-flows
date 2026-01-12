@@ -101,6 +101,26 @@ export function VendorShopDashboard({
 
   return (
     <div className="space-y-6">
+      {/* Call-to-action pour créer un service professionnel - En haut */}
+      {onCreateService && (
+        <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold mb-1">Configurez votre activité professionnelle</h3>
+                <p className="text-sm text-muted-foreground">
+                  Ajoutez un service professionnel pour accéder à plus de fonctionnalités métier
+                </p>
+              </div>
+              <Button onClick={onCreateService}>
+                <Plus className="w-4 h-4 mr-2" />
+                Créer un service
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -422,26 +442,6 @@ export function VendorShopDashboard({
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* Call-to-action pour créer un service professionnel */}
-      {onCreateService && (
-        <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold mb-1">Configurez votre activité professionnelle</h3>
-                <p className="text-sm text-muted-foreground">
-                  Ajoutez un service professionnel pour accéder à plus de fonctionnalités métier
-                </p>
-              </div>
-              <Button onClick={onCreateService}>
-                <Plus className="w-4 h-4 mr-2" />
-                Créer un service
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
