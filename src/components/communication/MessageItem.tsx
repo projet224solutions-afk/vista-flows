@@ -20,7 +20,7 @@ import {
   Dialog,
   DialogContent,
 } from '@/components/ui/dialog';
-import { MoreVertical, Trash2, Copy, Reply, Edit, Download, Play, Pause, Volume2 } from 'lucide-react';
+import { MoreVertical, Trash2, Copy, Reply, Edit, Download, Play, Pause, Volume2, Volume, FileVideo, Image as ImageIcon, Mic } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -53,17 +53,45 @@ export default function MessageItem({
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
   const [showImagePreview, setShowImagePreview] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [isPlayingVideo, setIsPlayingVideo] = useState(false);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     return () => {
-      // Cleanup audio si composant unmount
+      // Cleanup audio/video si composant unmount
       if (audioRef.current) {
         audioRef.current.pause();
       }
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
     };
   }, []);
+
+  useEffect(() => {
+    // Mettre à jour la durée audio
+    const audio = audioRef.current;
+    if (audio) {
+      const handleLoadedMetadata = () => setAudioDuration(audio.duration);
+      const handleTimeUpdate = () => setAudioCurrentTime(audio.currentTime);
+      const handleEnded = () => setIsPlayingAudio(false);
+      
+      audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.addEventListener('timeupdate', handleTimeUpdate);
+      audio.addEventListener('ended', handleEnded);
+      
+      return () => {
+        audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        audio.removeEventListener('timeupdate', handleTimeUpdate);
+        audio.removeEventListener('ended', handleEnded);
+      };
+    }
+  }, [message.file_url, message.type]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
@@ -103,6 +131,30 @@ export default function MessageItem({
       audioRef.current.play();
       setIsPlayingAudio(true);
     }
+  };
+
+  const toggleVideo = () => {
+    if (!videoRef.current) return;
+    
+    if (isPlayingVideo) {
+      videoRef.current.pause();
+      setIsPlayingVideo(false);
+    } else {
+      videoRef.current.play();
+      setIsPlayingVideo(true);
+    }
+  };
+
+  const handleImageClick = (url: string) => {
+    setPreviewImageUrl(url);
+    setShowImagePreview(true);
+  };
+
+  const formatTime = (seconds: number) => {
+    if (isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const formatFileSize = (bytes?: number) => {
@@ -197,33 +249,219 @@ export default function MessageItem({
               {message.attachments && message.attachments.length > 0 && (
                 <div className="mt-2 space-y-2">
                   {message.attachments.map((attachment, index) => (
-                    <div key={index} className="flex items-center gap-2 p-2 bg-background/10 rounded">
-                      {attachment.type.startsWith('image/') ? (
-                        <img 
-                          src={attachment.url} 
-                          alt={attachment.name}
-                          className="max-w-[200px] rounded"
-                        />
-                      ) : attachment.type.startsWith('audio/') || attachment.type === 'voice' ? (
-                        <audio 
-                          controls 
-                          src={attachment.url}
-                          className="max-w-[250px]"
+                    <div key={index} className="rounded overflow-hidden">
+                      {/* Image */}
+                      {attachment.type.startsWith('image/') && (
+                        <div 
+                          className="cursor-pointer hover:opacity-90 transition-opacity relative group"
+                          onClick={() => handleImageClick(attachment.url)}
                         >
-                          Votre navigateur ne supporte pas l'élément audio.
-                        </audio>
-                      ) : (
+                          <img 
+                            src={attachment.url} 
+                            alt={attachment.name}
+                            className="max-w-full w-auto max-h-[300px] rounded-lg"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                            <ImageIcon className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Audio/Vocal */}
+                      {(attachment.type.startsWith('audio/') || attachment.type === 'voice' || attachment.name.includes('vocal')) && (
+                        <div className="flex items-center gap-2 p-3 bg-background/10 rounded-lg">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={toggleAudio}
+                            className="h-10 w-10 rounded-full flex-shrink-0"
+                          >
+                            {isPlayingAudio ? (
+                              <Pause className="w-4 h-4" />
+                            ) : (
+                              <Play className="w-4 h-4" />
+                            )}
+                          </Button>
+                          
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Mic className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                              <span className="text-xs text-muted-foreground truncate">
+                                {attachment.name || 'Message vocal'}
+                              </span>
+                            </div>
+                            
+                            {/* Barre de progression */}
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-1.5 bg-background/20 rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-primary transition-all duration-100"
+                                  style={{ 
+                                    width: audioDuration > 0 
+                                      ? `${(audioCurrentTime / audioDuration) * 100}%` 
+                                      : '0%' 
+                                  }}
+                                />
+                              </div>
+                              <span className="text-xs text-muted-foreground tabular-nums min-w-[35px]">
+                                {formatTime(isPlayingAudio ? audioCurrentTime : audioDuration)}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <audio 
+                            ref={audioRef}
+                            src={attachment.url}
+                            preload="metadata"
+                            className="hidden"
+                          />
+                        </div>
+                      )}
+                      
+                      {/* Vidéo */}
+                      {attachment.type.startsWith('video/') && (
+                        <div className="relative rounded-lg overflow-hidden bg-black">
+                          <video 
+                            ref={videoRef}
+                            src={attachment.url}
+                            className="w-full max-h-[400px]"
+                            controls
+                            preload="metadata"
+                            onPlay={() => setIsPlayingVideo(true)}
+                            onPause={() => setIsPlayingVideo(false)}
+                          />
+                        </div>
+                      )}
+                      
+                      {/* Fichier générique */}
+                      {!attachment.type.startsWith('image/') && 
+                       !attachment.type.startsWith('audio/') && 
+                       !attachment.type.startsWith('video/') &&
+                       attachment.type !== 'voice' &&
+                       !attachment.name.includes('vocal') && (
                         <a 
                           href={attachment.url} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="text-xs underline"
+                          download={attachment.name}
+                          className="flex items-center gap-2 p-2 bg-background/10 rounded hover:bg-background/20 transition-colors"
                         >
-                          {attachment.name}
+                          <Download className="w-4 h-4" />
+                          <span className="text-xs underline truncate">
+                            {attachment.name}
+                          </span>
                         </a>
                       )}
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* Support ancien format (file_url direct) */}
+              {message.file_url && !message.attachments && (
+                <div className="mt-2 rounded overflow-hidden">
+                  {/* Image */}
+                  {message.type === 'image' && (
+                    <div 
+                      className="cursor-pointer hover:opacity-90 transition-opacity relative group"
+                      onClick={() => handleImageClick(message.file_url!)}
+                    >
+                      <img 
+                        src={message.file_url} 
+                        alt={message.file_name || 'Image'}
+                        className="max-w-full w-auto max-h-[300px] rounded-lg"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                        <ImageIcon className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Audio/Vocal */}
+                  {message.type === 'audio' && (
+                    <div className="flex items-center gap-2 p-3 bg-background/10 rounded-lg">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={toggleAudio}
+                        className="h-10 w-10 rounded-full flex-shrink-0"
+                      >
+                        {isPlayingAudio ? (
+                          <Pause className="w-4 h-4" />
+                        ) : (
+                          <Play className="w-4 h-4" />
+                        )}
+                      </Button>
+                      
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Mic className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                          <span className="text-xs text-muted-foreground truncate">
+                            {message.file_name || 'Message vocal'}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-1.5 bg-background/20 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-primary transition-all duration-100"
+                              style={{ 
+                                width: audioDuration > 0 
+                                  ? `${(audioCurrentTime / audioDuration) * 100}%` 
+                                  : '0%' 
+                              }}
+                            />
+                          </div>
+                          <span className="text-xs text-muted-foreground tabular-nums min-w-[35px]">
+                            {formatTime(isPlayingAudio ? audioCurrentTime : audioDuration)}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <audio 
+                        ref={audioRef}
+                        src={message.file_url}
+                        preload="metadata"
+                        className="hidden"
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Vidéo */}
+                  {message.type === 'video' && (
+                    <div className="relative rounded-lg overflow-hidden bg-black">
+                      <video 
+                        ref={videoRef}
+                        src={message.file_url}
+                        className="w-full max-h-[400px]"
+                        controls
+                        preload="metadata"
+                        onPlay={() => setIsPlayingVideo(true)}
+                        onPause={() => setIsPlayingVideo(false)}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Fichier */}
+                  {message.type === 'file' && (
+                    <a 
+                      href={message.file_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      download={message.file_name}
+                      className="flex items-center gap-2 p-2 bg-background/10 rounded hover:bg-background/20 transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span className="text-xs underline truncate">
+                        {message.file_name}
+                      </span>
+                      {message.file_size && (
+                        <span className="text-xs text-muted-foreground">
+                          ({formatFileSize(message.file_size)})
+                        </span>
+                      )}
+                    </a>
+                  )}
                 </div>
               )}
 
@@ -256,17 +494,17 @@ export default function MessageItem({
       </AlertDialog>
 
       {/* Dialog Preview Image */}
-      {message.type === 'image' && message.file_url && (
-        <Dialog open={showImagePreview} onOpenChange={setShowImagePreview}>
-          <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+      <Dialog open={showImagePreview} onOpenChange={setShowImagePreview}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-2">
+          {previewImageUrl && (
             <img
-              src={message.file_url}
-              alt={message.file_name || 'Image'}
-              className="w-full h-auto"
+              src={previewImageUrl}
+              alt="Prévisualisation"
+              className="w-full h-auto rounded"
             />
-          </DialogContent>
-        </Dialog>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
