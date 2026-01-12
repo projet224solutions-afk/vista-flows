@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import OAuthPasswordGate from "@/components/auth/OAuthPasswordGate";
+import { ThemeProvider } from "next-themes";
 
 const MerchantOnboarding = lazyWithRetry(() => import("@/components/onboarding/MerchantOnboarding"));
 import { CartProvider } from "@/contexts/CartContext";
@@ -175,12 +176,13 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <LanguageProvider>
-          <AuthProvider>
-            <OAuthPasswordGate />
-            <CartProvider>
-              <TooltipProvider>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <BrowserRouter>
+          <LanguageProvider>
+            <AuthProvider>
+              <OAuthPasswordGate />
+              <CartProvider>
+                <TooltipProvider>
                 <Toaster />
                 <Sonner />
                 <InstallPromptBanner />
@@ -504,8 +506,9 @@ function App() {
         </TooltipProvider>
       </CartProvider>
     </AuthProvider>
-  </LanguageProvider>
-  </BrowserRouter>
+    </LanguageProvider>
+    </BrowserRouter>
+  </ThemeProvider>
 </QueryClientProvider>
   );
 }

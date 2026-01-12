@@ -10,8 +10,12 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Bell, Lock, Globe, Smartphone, Navigation, Volume2 } from 'lucide-react';
 import { DriverLayout } from '@/components/driver/DriverLayout';
+import { useTheme } from 'next-themes';
 
 export default function DriverSettings() {
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === 'dark';
+
   return (
     <DriverLayout currentPage="settings">
       <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -139,7 +143,10 @@ export default function DriverSettings() {
                 <Label>Mode sombre</Label>
                 <p className="text-sm text-muted-foreground">Activer le thème sombre</p>
               </div>
-              <Switch />
+              <Switch 
+                checked={isDark} 
+                onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+              />
             </div>
           </CardContent>
         </Card>
