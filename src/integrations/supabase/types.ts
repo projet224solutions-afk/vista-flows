@@ -10380,52 +10380,478 @@ export type Database = {
           },
         ]
       }
-      restaurant_orders: {
+      restaurant_delivery_zones: {
+        Row: {
+          created_at: string | null
+          delivery_fee: number | null
+          estimated_time: number | null
+          id: string
+          is_active: boolean | null
+          min_order_amount: number | null
+          professional_service_id: string
+          zone_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          delivery_fee?: number | null
+          estimated_time?: number | null
+          id?: string
+          is_active?: boolean | null
+          min_order_amount?: number | null
+          professional_service_id: string
+          zone_name: string
+        }
+        Update: {
+          created_at?: string | null
+          delivery_fee?: number | null
+          estimated_time?: number | null
+          id?: string
+          is_active?: boolean | null
+          min_order_amount?: number | null
+          professional_service_id?: string
+          zone_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_delivery_zones_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_kitchen_orders: {
+        Row: {
+          assigned_chef_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          estimated_time: number | null
+          id: string
+          order_id: string
+          priority: number | null
+          started_at: string | null
+          station: string | null
+          status: string | null
+        }
+        Insert: {
+          assigned_chef_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          estimated_time?: number | null
+          id?: string
+          order_id: string
+          priority?: number | null
+          started_at?: string | null
+          station?: string | null
+          status?: string | null
+        }
+        Update: {
+          assigned_chef_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          estimated_time?: number | null
+          id?: string
+          order_id?: string
+          priority?: number | null
+          started_at?: string | null
+          station?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_kitchen_orders_assigned_chef_id_fkey"
+            columns: ["assigned_chef_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "restaurant_kitchen_orders_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_loyalty_points: {
         Row: {
           created_at: string | null
           customer_name: string | null
-          customer_phone: string | null
+          customer_phone: string
           id: string
-          items: Json
-          notes: string | null
-          order_type: string | null
+          last_visit_at: string | null
+          points_balance: number | null
           professional_service_id: string
-          status: string | null
-          subtotal: number | null
-          table_number: string | null
-          tax: number | null
-          total: number | null
+          tier: string | null
+          total_points_earned: number | null
+          total_visits: number | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           customer_name?: string | null
-          customer_phone?: string | null
+          customer_phone: string
           id?: string
-          items?: Json
-          notes?: string | null
-          order_type?: string | null
+          last_visit_at?: string | null
+          points_balance?: number | null
           professional_service_id: string
-          status?: string | null
-          subtotal?: number | null
-          table_number?: string | null
-          tax?: number | null
-          total?: number | null
+          tier?: string | null
+          total_points_earned?: number | null
+          total_visits?: number | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           customer_name?: string | null
+          customer_phone?: string
+          id?: string
+          last_visit_at?: string | null
+          points_balance?: number | null
+          professional_service_id?: string
+          tier?: string | null
+          total_points_earned?: number | null
+          total_visits?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_loyalty_points_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_loyalty_transactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          loyalty_id: string
+          order_id: string | null
+          points_change: number
+          reason: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          loyalty_id: string
+          order_id?: string | null
+          points_change: number
+          reason?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          loyalty_id?: string
+          order_id?: string | null
+          points_change?: number
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_loyalty_transactions_loyalty_id_fkey"
+            columns: ["loyalty_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_loyalty_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "restaurant_loyalty_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_menu_categories: {
+        Row: {
+          available_from: string | null
+          available_until: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          icon: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          professional_service_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          available_from?: string | null
+          available_until?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          professional_service_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          available_from?: string | null
+          available_until?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          professional_service_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_menu_categories_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_menu_items: {
+        Row: {
+          allergens: string[] | null
+          calories: number | null
+          category_id: string | null
+          cost_price: number | null
+          created_at: string | null
+          description: string | null
+          dietary_tags: string[] | null
+          display_order: number | null
+          id: string
+          image_url: string | null
+          ingredients: Json | null
+          is_available: boolean | null
+          is_featured: boolean | null
+          is_new: boolean | null
+          name: string
+          preparation_time: number | null
+          price: number
+          professional_service_id: string
+          spicy_level: number | null
+          updated_at: string | null
+          variants: Json | null
+        }
+        Insert: {
+          allergens?: string[] | null
+          calories?: number | null
+          category_id?: string | null
+          cost_price?: number | null
+          created_at?: string | null
+          description?: string | null
+          dietary_tags?: string[] | null
+          display_order?: number | null
+          id?: string
+          image_url?: string | null
+          ingredients?: Json | null
+          is_available?: boolean | null
+          is_featured?: boolean | null
+          is_new?: boolean | null
+          name: string
+          preparation_time?: number | null
+          price?: number
+          professional_service_id: string
+          spicy_level?: number | null
+          updated_at?: string | null
+          variants?: Json | null
+        }
+        Update: {
+          allergens?: string[] | null
+          calories?: number | null
+          category_id?: string | null
+          cost_price?: number | null
+          created_at?: string | null
+          description?: string | null
+          dietary_tags?: string[] | null
+          display_order?: number | null
+          id?: string
+          image_url?: string | null
+          ingredients?: Json | null
+          is_available?: boolean | null
+          is_featured?: boolean | null
+          is_new?: boolean | null
+          name?: string
+          preparation_time?: number | null
+          price?: number
+          professional_service_id?: string
+          spicy_level?: number | null
+          updated_at?: string | null
+          variants?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_menu_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_menu_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "restaurant_menu_items_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_order_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          menu_item_id: string | null
+          name: string
+          order_id: string
+          quantity: number
+          special_instructions: string | null
+          status: string | null
+          total_price: number
+          unit_price: number
+          variant_name: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          menu_item_id?: string | null
+          name: string
+          order_id: string
+          quantity?: number
+          special_instructions?: string | null
+          status?: string | null
+          total_price: number
+          unit_price: number
+          variant_name?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          menu_item_id?: string | null
+          name?: string
+          order_id?: string
+          quantity?: number
+          special_instructions?: string | null
+          status?: string | null
+          total_price?: number
+          unit_price?: number
+          variant_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_order_items_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "restaurant_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_orders: {
+        Row: {
+          assigned_staff_id: string | null
+          cancelled_reason: string | null
+          completed_at: string | null
+          created_at: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          delivery_address: string | null
+          delivery_instructions: string | null
+          discount_amount: number | null
+          id: string
+          items: Json
+          kitchen_notes: string | null
+          notes: string | null
+          order_number: string | null
+          order_type: string | null
+          payment_method: string | null
+          payment_status: string | null
+          professional_service_id: string
+          ready_at: string | null
+          source: string | null
+          started_preparing_at: string | null
+          status: string | null
+          subtotal: number | null
+          table_number: string | null
+          tax: number | null
+          tip_amount: number | null
+          total: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_staff_id?: string | null
+          cancelled_reason?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          customer_name?: string | null
           customer_phone?: string | null
+          delivery_address?: string | null
+          delivery_instructions?: string | null
+          discount_amount?: number | null
           id?: string
           items?: Json
+          kitchen_notes?: string | null
           notes?: string | null
+          order_number?: string | null
           order_type?: string | null
-          professional_service_id?: string
+          payment_method?: string | null
+          payment_status?: string | null
+          professional_service_id: string
+          ready_at?: string | null
+          source?: string | null
+          started_preparing_at?: string | null
           status?: string | null
           subtotal?: number | null
           table_number?: string | null
           tax?: number | null
+          tip_amount?: number | null
+          total?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_staff_id?: string | null
+          cancelled_reason?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          delivery_address?: string | null
+          delivery_instructions?: string | null
+          discount_amount?: number | null
+          id?: string
+          items?: Json
+          kitchen_notes?: string | null
+          notes?: string | null
+          order_number?: string | null
+          order_type?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
+          professional_service_id?: string
+          ready_at?: string | null
+          source?: string | null
+          started_preparing_at?: string | null
+          status?: string | null
+          subtotal?: number | null
+          table_number?: string | null
+          tax?: number | null
+          tip_amount?: number | null
           total?: number | null
           updated_at?: string | null
         }
@@ -10490,6 +10916,77 @@ export type Database = {
             foreignKeyName: "restaurant_reservations_professional_service_id_fkey"
             columns: ["professional_service_id"]
             isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_settings: {
+        Row: {
+          accept_delivery: boolean | null
+          accept_dine_in: boolean | null
+          accept_reservations: boolean | null
+          accept_takeaway: boolean | null
+          auto_accept_orders: boolean | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          loyalty_points_per_unit: number | null
+          loyalty_points_value: number | null
+          max_reservation_advance: number | null
+          min_reservation_advance: number | null
+          opening_hours: Json | null
+          preparation_time_buffer: number | null
+          professional_service_id: string
+          service_charge_rate: number | null
+          tax_rate: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          accept_delivery?: boolean | null
+          accept_dine_in?: boolean | null
+          accept_reservations?: boolean | null
+          accept_takeaway?: boolean | null
+          auto_accept_orders?: boolean | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          loyalty_points_per_unit?: number | null
+          loyalty_points_value?: number | null
+          max_reservation_advance?: number | null
+          min_reservation_advance?: number | null
+          opening_hours?: Json | null
+          preparation_time_buffer?: number | null
+          professional_service_id: string
+          service_charge_rate?: number | null
+          tax_rate?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          accept_delivery?: boolean | null
+          accept_dine_in?: boolean | null
+          accept_reservations?: boolean | null
+          accept_takeaway?: boolean | null
+          auto_accept_orders?: boolean | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          loyalty_points_per_unit?: number | null
+          loyalty_points_value?: number | null
+          max_reservation_advance?: number | null
+          min_reservation_advance?: number | null
+          opening_hours?: Json | null
+          preparation_time_buffer?: number | null
+          professional_service_id?: string
+          service_charge_rate?: number | null
+          tax_rate?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_settings_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: true
             referencedRelation: "professional_services"
             referencedColumns: ["id"]
           },
@@ -10600,6 +11097,65 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "restaurant_stock_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_tables: {
+        Row: {
+          capacity: number
+          created_at: string | null
+          current_order_id: string | null
+          id: string
+          is_active: boolean | null
+          location: string | null
+          position_x: number | null
+          position_y: number | null
+          professional_service_id: string
+          qr_code_url: string | null
+          shape: string | null
+          status: string | null
+          table_number: string
+          updated_at: string | null
+        }
+        Insert: {
+          capacity?: number
+          created_at?: string | null
+          current_order_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          position_x?: number | null
+          position_y?: number | null
+          professional_service_id: string
+          qr_code_url?: string | null
+          shape?: string | null
+          status?: string | null
+          table_number: string
+          updated_at?: string | null
+        }
+        Update: {
+          capacity?: number
+          created_at?: string | null
+          current_order_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          position_x?: number | null
+          position_y?: number | null
+          professional_service_id?: string
+          qr_code_url?: string | null
+          shape?: string | null
+          status?: string | null
+          table_number?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_tables_professional_service_id_fkey"
             columns: ["professional_service_id"]
             isOneToOne: false
             referencedRelation: "professional_services"
