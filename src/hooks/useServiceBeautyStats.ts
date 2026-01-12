@@ -107,6 +107,16 @@ export function useServiceBeautyStats(serviceId?: string) {
       startOfWeek.setDate(now.getDate() - now.getDay());
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
+      // 0. Récupérer le user_id du service professionnel
+      const { data: serviceData } = await supabase
+        .from('professional_services')
+        .select('user_id')
+        .eq('id', serviceId)
+        .single();
+      
+      const userId = serviceData?.user_id;
+      console.log('👤 User ID du service beauté:', userId);
+
       // 1. Charger les rendez-vous
       const { data: appointmentsData, error: appointmentsError } = await supabase
         .from('beauty_appointments')
@@ -118,8 +128,29 @@ export function useServiceBeautyStats(serviceId?: string) {
         console.log('⚠️ Table beauty_appointments peut ne pas exister:', appointmentsError.message);
       }
 
-      const appointments = appointmentsData || [];
-      console.log('📅 Rendez-vous trouvés:', appointments.length);
+      let appointments = appointmentsData || [];
+      console.log('📅 Rendez-vous (beauty) trouvés:', appointments.length);
+
+      // 1b. Charger aussi les service_bookings
+      const { data: bookingsData } = await supabase
+        .from('service_bookings')
+        .select('id, status, total_amount, scheduled_date, client_id')
+        .eq('professional_service_id', serviceId)
+        .order('scheduled_date', { ascending: false });
+      
+      if (bookingsData && bookingsData.length > 0) {
+        const normalizedBookings = bookingsData.map(b => ({
+          id: b.id,
+          status: b.status,
+          total_price: b.total_amount,
+          appointment_date: b.scheduled_date,
+          customer_name: null
+        }));
+        appointments = [...appointments, ...normalizedBookings];
+        console.log('📅 Service bookings trouvés:', bookingsData.length);
+      }
+
+      console.log('📅 Total rendez-vous:', appointments.length);
 
       // Calculate stats
       const appointmentStats = calculateAppointmentStats(appointments);
@@ -135,7 +166,10 @@ export function useServiceBeautyStats(serviceId?: string) {
         ['pending', 'confirmed'].includes(a.status)
       );
 
-      // 2. Charger les services
+      // 2. Charger les services (beauty_services + service_products + products)
+      let services: any[] = [];
+      
+      // 2a. Depuis beauty_services
       const { data: servicesData, error: servicesError } = await supabase
         .from('beauty_services')
         .select('id, is_active')
@@ -144,9 +178,47 @@ export function useServiceBeautyStats(serviceId?: string) {
       if (servicesError) {
         console.log('⚠️ Table beauty_services peut ne pas exister:', servicesError.message);
       }
+      
+      if (servicesData) {
+        services = [...servicesData];
+      }
 
-      const services = servicesData || [];
-      console.log('💇 Services trouvés:', services.length);
+      // 2b. Depuis service_products
+      const { data: serviceProducts } = await supabase
+        .from('service_products')
+        .select('id, is_available')
+        .eq('professional_service_id', serviceId);
+      
+      if (serviceProducts) {
+        const normalized = serviceProducts.map(p => ({
+          id: p.id,
+          is_active: p.is_available
+        }));
+        services = [...services, ...normalized];
+      }
+
+      // 2c. Depuis products (table legacy)
+      if (userId) {
+        const { data: vendorData } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('user_id', userId)
+          .single();
+        
+        if (vendorData?.id) {
+          const { data: vendorProducts } = await supabase
+            .from('products')
+            .select('id, is_active')
+            .eq('vendor_id', vendorData.id);
+          
+          if (vendorProducts) {
+            services = [...services, ...vendorProducts];
+            console.log('📦 Vendor products (beauté) trouvés:', vendorProducts.length);
+          }
+        }
+      }
+      
+      console.log('💇 Total services beauté:', services.length);
 
       // 3. Charger le personnel
       const { data: staffData, error: staffError } = await supabase

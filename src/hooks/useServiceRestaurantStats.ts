@@ -124,7 +124,17 @@ export function useServiceRestaurantStats(serviceId?: string) {
       startOfWeek.setDate(now.getDate() - now.getDay());
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // 1. Charger les commandes restaurant
+      // 1. Récupérer le user_id du service professionnel
+      const { data: serviceData } = await supabase
+        .from('professional_services')
+        .select('user_id')
+        .eq('id', serviceId)
+        .single();
+      
+      const userId = serviceData?.user_id;
+      console.log('👤 User ID du service restaurant:', userId);
+
+      // 2. Charger les commandes restaurant
       const { data: ordersData, error: ordersError } = await supabase
         .from('restaurant_orders')
         .select('id, status, total, order_type, created_at, customer_name, table_number')
@@ -135,8 +145,42 @@ export function useServiceRestaurantStats(serviceId?: string) {
         console.log('⚠️ Table restaurant_orders peut ne pas exister:', ordersError.message);
       }
 
-      const orders = ordersData || [];
-      console.log('📦 Commandes restaurant trouvées:', orders.length);
+      let orders = ordersData || [];
+      console.log('📦 Commandes restaurant (service) trouvées:', orders.length);
+
+      // 2b. Charger aussi les commandes legacy depuis orders si le vendor existe
+      if (userId) {
+        const { data: vendorData } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('user_id', userId)
+          .single();
+        
+        if (vendorData?.id) {
+          const { data: legacyOrders } = await supabase
+            .from('orders')
+            .select('id, status, total_amount, created_at, customer_id')
+            .eq('vendor_id', vendorData.id)
+            .order('created_at', { ascending: false });
+          
+          if (legacyOrders && legacyOrders.length > 0) {
+            // Convertir au format restaurant_orders
+            const normalizedOrders = legacyOrders.map(o => ({
+              id: o.id,
+              status: o.status,
+              total: o.total_amount,
+              order_type: 'delivery', // Par défaut
+              created_at: o.created_at,
+              customer_name: null,
+              table_number: null
+            }));
+            orders = [...orders, ...normalizedOrders];
+            console.log('📦 Legacy orders restaurant trouvés:', legacyOrders.length);
+          }
+        }
+      }
+
+      console.log('📦 Total commandes restaurant:', orders.length);
 
       const dineInOrders = orders.filter(o => o.order_type === 'dine_in' || o.order_type === 'sur_place');
       const deliveryOrders = orders.filter(o => o.order_type === 'delivery' || o.order_type === 'livraison');
@@ -153,7 +197,10 @@ export function useServiceRestaurantStats(serviceId?: string) {
       const salesStatsDelivery = calculateSalesStats(deliveryOrders, startOfDay, startOfWeek, startOfMonth);
       const salesStatsTakeaway = calculateSalesStats(takeawayOrders, startOfDay, startOfWeek, startOfMonth);
 
-      // 2. Charger les éléments du menu (service_products ou restaurant_menu_items)
+      // 3. Charger les éléments du menu (service_products + products)
+      let menuItems: any[] = [];
+      
+      // 3a. Depuis service_products
       const { data: menuData, error: menuError } = await supabase
         .from('service_products')
         .select('id, is_available')
@@ -162,9 +209,37 @@ export function useServiceRestaurantStats(serviceId?: string) {
       if (menuError) {
         console.log('⚠️ Erreur chargement menu:', menuError.message);
       }
+      
+      if (menuData) {
+        menuItems = [...menuData];
+      }
 
-      const menuItems = menuData || [];
-      console.log('🍔 Items menu trouvés:', menuItems.length);
+      // 3b. Depuis products (table legacy)
+      if (userId) {
+        const { data: vendorData } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('user_id', userId)
+          .single();
+        
+        if (vendorData?.id) {
+          const { data: vendorProducts } = await supabase
+            .from('products')
+            .select('id, is_active')
+            .eq('vendor_id', vendorData.id);
+          
+          if (vendorProducts) {
+            const normalizedProducts = vendorProducts.map(p => ({
+              id: p.id,
+              is_available: p.is_active
+            }));
+            menuItems = [...menuItems, ...normalizedProducts];
+            console.log('📦 Vendor products (menu) trouvés:', vendorProducts.length);
+          }
+        }
+      }
+      
+      console.log('🍔 Total items menu:', menuItems.length);
 
       // 3. Charger le stock restaurant
       const { data: stockData } = await supabase

@@ -152,29 +152,103 @@ export function useServiceEcommerceStats(serviceId?: string) {
       const salesStatsPos = calculateSalesStats(posBookings, startOfDay, startOfWeek, startOfMonth);
       const salesStatsOnline = calculateSalesStats(onlineBookings, startOfDay, startOfWeek, startOfMonth);
 
-      // 2. Charger les produits du service professionnel
-      const { data: productsData, error: productsError } = await supabase
+      // 2. Récupérer le user_id et vendor_id du service professionnel
+      const { data: serviceData } = await supabase
+        .from('professional_services')
+        .select('user_id')
+        .eq('id', serviceId)
+        .single();
+      
+      const userId = serviceData?.user_id;
+      console.log('👤 User ID du service:', userId);
+
+      // 3. Charger les produits - PRIORITÉ: table products (vendor) + service_products
+      let allProducts: any[] = [];
+      
+      // 3a. Charger depuis service_products (liés au service professionnel)
+      const { data: serviceProductsData } = await supabase
         .from('service_products')
         .select('id, is_available, stock_quantity')
         .eq('professional_service_id', serviceId);
-
-      if (productsError) {
-        console.error('❌ Erreur chargement produits:', productsError);
+      
+      if (serviceProductsData) {
+        allProducts = [...serviceProductsData];
+        console.log('📦 Service products trouvés:', serviceProductsData.length);
       }
 
-      const products = productsData || [];
-      console.log('📦 Produits trouvés:', products.length);
+      // 3b. Charger depuis products (liés au vendor via user_id)
+      if (userId) {
+        // D'abord récupérer le vendor_id
+        const { data: vendorData } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('user_id', userId)
+          .single();
+        
+        if (vendorData?.id) {
+          const { data: vendorProducts } = await supabase
+            .from('products')
+            .select('id, is_active, stock_quantity')
+            .eq('vendor_id', vendorData.id);
+          
+          if (vendorProducts) {
+            // Convertir au même format
+            const normalizedVendorProducts = vendorProducts.map(p => ({
+              id: p.id,
+              is_available: p.is_active,
+              stock_quantity: p.stock_quantity
+            }));
+            allProducts = [...allProducts, ...normalizedVendorProducts];
+            console.log('📦 Vendor products trouvés:', vendorProducts.length);
+          }
+        }
+      }
+
+      console.log('📦 Total produits:', allProducts.length);
 
       const productStats = {
-        total: products.length,
-        active: products.filter(p => p.is_available !== false).length,
-        inactive: products.filter(p => p.is_available === false).length,
-        lowStock: products.filter(p => (p.stock_quantity || 0) <= 5 && p.is_available !== false).length,
+        total: allProducts.length,
+        active: allProducts.filter(p => p.is_available !== false).length,
+        inactive: allProducts.filter(p => p.is_available === false).length,
+        lowStock: allProducts.filter(p => (p.stock_quantity || 0) <= 5 && p.is_available !== false).length,
       };
 
-      // 3. Compter les clients uniques (utiliser client_id au lieu de customer_id)
-      const uniqueCustomerIds = new Set(bookings.filter(b => b.client_id).map(b => b.client_id));
-      const recentCustomers = bookings
+      // 4. Charger aussi les commandes depuis la table orders (legacy)
+      let allOrders = [...bookings];
+      
+      if (userId) {
+        const { data: vendorData } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('user_id', userId)
+          .single();
+        
+        if (vendorData?.id) {
+          const { data: legacyOrders } = await supabase
+            .from('orders')
+            .select('id, status, total_amount, created_at, payment_status, customer_id')
+            .eq('vendor_id', vendorData.id)
+            .order('created_at', { ascending: false });
+          
+          if (legacyOrders) {
+            // Convertir au format compatible
+            const normalizedOrders = legacyOrders.map(o => ({
+              ...o,
+              client_id: o.customer_id
+            }));
+            allOrders = [...allOrders, ...normalizedOrders];
+            console.log('📦 Legacy orders trouvés:', legacyOrders.length);
+          }
+        }
+      }
+
+      // Recalculer les stats avec toutes les commandes
+      const allOrderStats = calculateOrderStats(allOrders);
+      const allSalesStats = calculateSalesStats(allOrders, startOfDay, startOfWeek, startOfMonth);
+
+      // 5. Compter les clients uniques (depuis toutes les commandes)
+      const uniqueCustomerIds = new Set(allOrders.filter(b => b.client_id).map(b => b.client_id));
+      const recentCustomers = allOrders
         .filter(b => b.client_id && new Date(b.created_at) >= startOfMonth)
         .map(b => b.client_id);
       const newUniqueThisMonth = new Set(recentCustomers);
@@ -184,26 +258,27 @@ export function useServiceEcommerceStats(serviceId?: string) {
         newThisMonth: newUniqueThisMonth.size,
       };
 
+      // Utiliser les stats recalculées avec toutes les données
       setStats({
-        orders: orderStats,
+        orders: allOrderStats,
         ordersPos: orderStatsPos,
         ordersOnline: orderStatsOnline,
         products: productStats,
         clients: clientStats,
-        sales: salesStats,
+        sales: allSalesStats,
         salesPos: salesStatsPos,
         salesOnline: salesStatsOnline,
       });
 
-      // 4. Récentes réservations pour l'affichage
+      // 6. Récentes commandes pour l'affichage (toutes sources)
       setRecentOrders(
-        bookings.slice(0, 10).map(b => ({
+        allOrders.slice(0, 10).map(b => ({
           id: b.id,
-          booking_number: `SRV-${b.id.slice(0, 8).toUpperCase()}`,
+          booking_number: `ORD-${b.id.slice(0, 8).toUpperCase()}`,
           status: b.status,
           total_amount: b.total_amount || 0,
           created_at: b.created_at,
-          source: 'online', // Par défaut online car pas de colonne source
+          source: 'online',
         }))
       );
 
