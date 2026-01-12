@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import OAuthPasswordGate from "@/components/auth/OAuthPasswordGate";
 
 const MerchantOnboarding = lazyWithRetry(() => import("@/components/onboarding/MerchantOnboarding"));
 import { CartProvider } from "@/contexts/CartContext";
@@ -177,6 +178,7 @@ function App() {
       <BrowserRouter>
         <LanguageProvider>
           <AuthProvider>
+            <OAuthPasswordGate />
             <CartProvider>
               <TooltipProvider>
                 <Toaster />
