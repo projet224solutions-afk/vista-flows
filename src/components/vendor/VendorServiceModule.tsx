@@ -1,41 +1,63 @@
 /**
- * VendorServiceModule - Charge le module métier approprié pour le vendor
- * Intègre le VendorBusinessDashboard avec vue complète de la boutique
+ * VendorServiceModule - Module métier du vendeur
+ * Affiche le dashboard complet même sans professional_service
+ * Permet de créer un nouveau service professionnel
  */
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, RefreshCw, Briefcase } from 'lucide-react';
+import { AlertCircle, RefreshCw, Plus, Store } from 'lucide-react';
 import { useVendorProfessionalService } from '@/hooks/useVendorProfessionalService';
+import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { VendorBusinessDashboard } from '@/components/vendor/business-module';
+import { AddServiceModal } from '@/components/vendor/business-module/AddServiceModal';
 
 export default function VendorServiceModule() {
+  const { vendorId, profile, loading: vendorLoading } = useCurrentVendor();
   const { 
     professionalService, 
-    serviceTypeCode, 
     serviceTypeName,
-    loading, 
+    loading: serviceLoading, 
     error 
   } = useVendorProfessionalService();
+  
+  const [showAddService, setShowAddService] = useState(false);
+
+  const loading = vendorLoading || serviceLoading;
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-48" />
-          <Skeleton className="h-4 w-72 mt-2" />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-24 w-full" />
-            ))}
+      <div className="space-y-6">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-8 w-64 mb-2" />
+            <Skeleton className="h-4 w-48" />
           </div>
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
-        </CardContent>
-      </Card>
+          <Skeleton className="h-10 w-28" />
+        </div>
+
+        {/* KPI Cards Skeleton */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-4">
+                <Skeleton className="h-4 w-20 mb-3" />
+                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-3 w-24" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Content Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-64 w-full rounded-lg" />
+          <Skeleton className="h-64 w-full rounded-lg" />
+        </div>
+      </div>
     );
   }
 
@@ -66,34 +88,25 @@ export default function VendorServiceModule() {
     );
   }
 
-  if (!professionalService) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Briefcase className="w-5 h-5" />
-            Module Métier
-          </CardTitle>
-          <CardDescription>
-            Aucun service professionnel associé à votre compte
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Votre compte vendeur n'a pas encore de service professionnel configuré.
-            Contactez le support pour activer votre module métier spécialisé.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Si pas de professional_service, afficher quand même le dashboard avec les données vendor
+  // et permettre de créer un service
+  const businessName = professionalService?.business_name 
+    || profile?.business_name 
+    || profile?.first_name 
+    || 'Ma Boutique';
 
-  // Afficher le dashboard principal avec vue complète de la boutique
   return (
-    <VendorBusinessDashboard
-      businessName={professionalService.business_name}
-      serviceId={professionalService.id}
-      serviceTypeName={serviceTypeName || 'Service'}
-    />
+    <>
+      <VendorBusinessDashboard
+        businessName={businessName}
+        serviceId={professionalService?.id || vendorId || 'default'}
+        serviceTypeName={serviceTypeName || 'Commerce'}
+      />
+
+      <AddServiceModal 
+        open={showAddService} 
+        onOpenChange={setShowAddService}
+      />
+    </>
   );
 }
