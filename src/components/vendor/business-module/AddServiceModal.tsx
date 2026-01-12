@@ -278,10 +278,9 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
     return SERVICE_ICONS[code] || SERVICE_ICONS.default;
   };
 
-  // Services exactement comme sur le formulaire d'inscription
-  // Codes correspondants aux service_types en BDD
+  // Services IDENTIQUES à Auth.tsx - Synchronisation complète
   const DISPLAY_SERVICES = {
-    // Services de Proximité Populaires (6)
+    // Services de Proximité Populaires (6) - Identique à Auth.tsx
     proximity: [
       { code: 'restaurant', name: 'Restaurant', icon: '🍽️', desc: 'Cuisine & plats' },
       { code: 'beaute', name: 'Beauté & Coiffure', icon: '💇', desc: 'Soins & styling' },
@@ -290,23 +289,23 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
       { code: 'menage', name: 'Nettoyage', icon: '✨', desc: 'Ménage & pressing' },
       { code: 'informatique', name: 'Informatique', icon: '💻', desc: 'Tech & dépannage' },
     ],
-    // Services Professionnels (8)
+    // Services Professionnels (8) - Identique à Auth.tsx
     professional: [
       { code: 'sport', name: 'Sport & Fitness', icon: '🏋️', desc: 'Coaching' },
       { code: 'location', name: 'Immobilier', icon: '🏢', desc: 'Location & vente' },
       { code: 'media', name: 'Photo & Vidéo', icon: '📸', desc: 'Événements' },
       { code: 'construction', name: 'Construction & BTP', icon: '🏗️', desc: 'Bâtiment' },
-      { code: 'agriculture', name: 'Agriculture', icon: '🌱', desc: 'Produits locaux' },
-      { code: 'freelance', name: 'Administratif', icon: '📋', desc: 'Secrétariat' },
-      { code: 'sante', name: 'Santé & Bien-être', icon: '❤️', desc: 'Pharmacie & soins' },
+      { code: 'agriculture', name: 'Agriculture', icon: '🌾', desc: 'Produits locaux' },
+      { code: 'freelance', name: 'Administratif', icon: '💼', desc: 'Secrétariat' },
+      { code: 'sante', name: 'Santé & Bien-être', icon: '💊', desc: 'Pharmacie & soins' },
       { code: 'maison', name: 'Maison & Déco', icon: '🏠', desc: 'Intérieur' },
     ],
-    // Produits Numériques (4) - utilise les codes BDD existants
-    digital: [
-      { code: 'ecommerce', name: 'Logiciel', icon: '💻', desc: 'Antivirus & SaaS' },
-      { code: 'livraison', name: 'Dropshipping', icon: '📦', desc: 'Amazon, AliExpress' },
+    // Autres Services (4) - Identique à Auth.tsx
+    other: [
       { code: 'education', name: 'Formation', icon: '🎓', desc: 'Cours & coaching' },
-      { code: 'voyage', name: 'Livres', icon: '📚', desc: 'eBooks & affiliation' },
+      { code: 'livraison', name: 'Livraison', icon: '🚚', desc: 'Coursier & colis' },
+      { code: 'voyage', name: 'Voyage', icon: '✈️', desc: 'Tourisme & voyages' },
+      { code: 'ecommerce', name: 'Boutique', icon: '🏪', desc: 'E-commerce' },
     ]
   };
 
@@ -334,7 +333,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
   const renderServiceTypeGrid = () => (
     <ScrollArea className="h-[500px] pr-4">
       <div className="space-y-6">
-        {/* Section: Services de Proximité Populaires */}
+        {/* Section: Services de Proximité Populaires - Identique à Auth.tsx */}
         <div>
           <h4 className="text-sm font-semibold text-primary mb-3 flex items-center justify-center gap-2">
             <span className="w-8 h-0.5 bg-primary rounded"></span>
@@ -348,43 +347,37 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
             )}
           </div>
           {/* Deuxième ligne - 2 boutons centrés */}
-          <div className="grid grid-cols-2 gap-3 max-w-xs mx-auto">
+          <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
             {DISPLAY_SERVICES.proximity.slice(4).map(s => 
               renderDisplayServiceCard(s, 'from-white to-slate-50', 'border-slate-200 hover:border-primary')
             )}
           </div>
         </div>
 
-        {/* Section: Services Professionnels */}
+        {/* Section: Services Professionnels - Identique à Auth.tsx */}
         <div>
           <h4 className="text-sm font-semibold text-violet-600 mb-3 flex items-center justify-center gap-2">
             <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
             Services Professionnels
             <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
           </h4>
-          {/* Deux lignes de 4 */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-            {DISPLAY_SERVICES.professional.slice(0, 4).map(s => 
-              renderDisplayServiceCard(s, 'from-white to-slate-50', 'border-slate-200 hover:border-violet-500')
-            )}
-          </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {DISPLAY_SERVICES.professional.slice(4).map(s => 
-              renderDisplayServiceCard(s, 'from-white to-slate-50', 'border-slate-200 hover:border-violet-500')
+            {DISPLAY_SERVICES.professional.map(s => 
+              renderDisplayServiceCard(s, 'from-violet-50 to-white', 'border-violet-200 hover:border-violet-500')
             )}
           </div>
         </div>
 
-        {/* Section: Produits Numériques */}
+        {/* Section: Autres Services - Identique à Auth.tsx */}
         <div>
-          <h4 className="text-sm font-semibold text-amber-600 mb-3 flex items-center justify-center gap-2">
-            <span className="w-8 h-0.5 bg-amber-500 rounded"></span>
-            Produits Numériques
-            <span className="w-8 h-0.5 bg-amber-500 rounded"></span>
+          <h4 className="text-sm font-semibold text-cyan-600 mb-3 flex items-center justify-center gap-2">
+            <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
+            Autres Services
+            <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
           </h4>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {DISPLAY_SERVICES.digital.map(s => 
-              renderDisplayServiceCard(s, 'from-white to-slate-50', 'border-slate-200 hover:border-amber-500')
+            {DISPLAY_SERVICES.other.map(s => 
+              renderDisplayServiceCard(s, 'from-cyan-50 to-white', 'border-cyan-200 hover:border-cyan-500')
             )}
           </div>
         </div>

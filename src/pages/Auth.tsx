@@ -1597,25 +1597,27 @@ export default function Auth() {
                     <span className="block mt-2 font-semibold text-primary">
                       ✓ Service sélectionné : {(() => {
                         const allServices = [
-                          // Services synchronisés avec service_types en base de données
-                          { id: 'ecommerce', name: 'Boutique', icon: '🏪' },
+                          // Services de Proximité Populaires (6)
                           { id: 'restaurant', name: 'Restaurant', icon: '🍽️' },
-                          { id: 'livraison', name: 'Livraison', icon: '🚚' },
                           { id: 'beaute', name: 'Beauté & Coiffure', icon: '💇' },
                           { id: 'vtc', name: 'Transport VTC', icon: '🚗' },
                           { id: 'reparation', name: 'Réparation', icon: '🔧' },
                           { id: 'menage', name: 'Nettoyage', icon: '✨' },
                           { id: 'informatique', name: 'Informatique', icon: '💻' },
+                          // Services Professionnels (8)
+                          { id: 'sport', name: 'Sport & Fitness', icon: '🏋️' },
+                          { id: 'location', name: 'Immobilier', icon: '🏢' },
+                          { id: 'media', name: 'Photo & Vidéo', icon: '📸' },
+                          { id: 'construction', name: 'Construction & BTP', icon: '🏗️' },
+                          { id: 'agriculture', name: 'Agriculture', icon: '🌾' },
+                          { id: 'freelance', name: 'Administratif', icon: '💼' },
                           { id: 'sante', name: 'Santé & Bien-être', icon: '💊' },
                           { id: 'maison', name: 'Maison & Déco', icon: '🏠' },
-                          { id: 'location', name: 'Immobilier', icon: '🏢' },
+                          // Autres Services (4)
                           { id: 'education', name: 'Formation', icon: '🎓' },
-                          { id: 'media', name: 'Photo & Vidéo', icon: '📸' },
-                          { id: 'sport', name: 'Sport & Fitness', icon: '🏋️' },
-                          { id: 'freelance', name: 'Administratif', icon: '💼' },
-                          { id: 'agriculture', name: 'Agriculture', icon: '🌾' },
-                          { id: 'construction', name: 'Construction & BTP', icon: '🏗️' },
+                          { id: 'livraison', name: 'Livraison', icon: '🚚' },
                           { id: 'voyage', name: 'Voyage', icon: '✈️' },
+                          { id: 'ecommerce', name: 'Boutique', icon: '🏪' },
                         ];
                         const service = allServices.find(s => s.id === selectedServiceType);
                         return service ? `${service.icon} ${service.name}` : selectedServiceType;

@@ -42,7 +42,7 @@ interface ServiceModuleManagerProps {
 }
 
 // Mapping des 18 codes officiels de service_types vers les modules
-// Synchronisé avec AddServiceModal.tsx et Auth.tsx
+// Synchronisé avec Auth.tsx et AddServiceModal.tsx
 const MODULE_MAP: Record<string, React.FC<{ serviceId: string; businessName?: string }>> = {
   // ===== Services de Proximité Populaires (6) =====
   'restaurant': RestaurantModule,       // Restaurant - Cuisine & plats
@@ -62,11 +62,11 @@ const MODULE_MAP: Record<string, React.FC<{ serviceId: string; businessName?: st
   'sante': HealthModule,                // Santé & Bien-être - Pharmacie & soins
   'maison': HomeDecorModule,            // Maison & Déco - Intérieur
   
-  // ===== Produits Numériques (4) =====
-  'ecommerce': EcommerceModule,         // Logiciel - Antivirus & SaaS (aussi E-commerce)
-  'livraison': DropshippingModule,      // Dropshipping - Amazon, AliExpress
+  // ===== Autres Services (4) =====
   'education': EducationModule,         // Formation - Cours & coaching
-  'voyage': EcommerceModule,            // Livres - eBooks & affiliation (Digital products)
+  'livraison': DeliveryModule,          // Livraison - Coursier & colis
+  'voyage': TransportModule,            // Voyage - Tourisme & voyages
+  'ecommerce': EcommerceModule,         // Boutique - E-commerce
   
   // ===== Extensions legacy (compatibilité) =====
   'mode': FashionModule,
