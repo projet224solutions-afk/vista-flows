@@ -7,33 +7,17 @@ import { useTranslation } from "@/hooks/useTranslation";
 export default function QuickFooter() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const { t } = useTranslation();
 
-  // Déterminer la page d'accueil selon le rôle
-  const getHomePath = () => {
-    if (!profile?.role) return '/home';
-    const roleRoutes: Record<string, string> = {
-      admin: '/pdg',
-      ceo: '/pdg',
-      vendeur: '/vendeur',
-      livreur: '/livreur',
-      taxi: '/taxi-moto/driver',
-      syndicat: '/syndicat',
-      transitaire: '/transitaire',
-      client: '/client',
-      agent: '/agent',
-    };
-    return roleRoutes[profile.role] || '/home';
-  };
-
-  // Navigation basée sur les fonctionnalités réelles de 224Solutions
+  // Navigation principale
   const navigationItems = [
     {
       id: 'home',
       labelKey: 'nav.home',
       icon: Home,
-      path: getHomePath(),
+      // IMPORTANT: Accueil doit toujours aller vers /home (page services)
+      path: '/home',
     },
     {
       id: 'marketplace',
@@ -57,7 +41,7 @@ export default function QuickFooter() {
       id: 'profil',
       labelKey: 'nav.profile',
       icon: User,
-      path: profile ? '/profil' : '/auth',
+      path: user ? '/profil' : '/auth',
     },
   ];
 
