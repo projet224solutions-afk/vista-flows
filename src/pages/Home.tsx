@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useRoleRedirect } from '@/hooks/useRoleRedirect';
 import { useCart } from '@/contexts/CartContext';
 import { useUniversalProducts } from '@/hooks/useUniversalProducts';
 import { useNearbyServiceStats } from '@/hooks/useNearbyServiceStats';
@@ -32,6 +33,9 @@ export default function Home() {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading, profileLoading } = useAuth();
   const { addToCart, getCartCount } = useCart();
+  
+  // ⚡ Redirection automatique vers le dashboard si connecté avec un rôle
+  useRoleRedirect();
 
   // Stats des services à proximité (filtrés par distance 20km)
   const { stats: serviceStats } = useNearbyServiceStats();
