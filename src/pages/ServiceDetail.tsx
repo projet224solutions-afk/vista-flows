@@ -259,8 +259,11 @@ export default function ServiceDetail() {
       return;
     }
 
+    console.log('🔍 handleContact - service:', service);
+    console.log('🔍 handleContact - vendor_user_id:', service?.vendor_user_id);
+
     if (!service?.vendor_user_id) {
-      toast.error('Informations du prestataire non disponibles');
+      toast.error('Informations du prestataire non disponibles. Veuillez réessayer.');
       return;
     }
 

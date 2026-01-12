@@ -125,9 +125,10 @@ export function useServiceEcommerceStats(serviceId?: string) {
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
       // 1. Charger les réservations/commandes du service professionnel
+      // Note: 'source' et 'customer_id' peuvent ne pas exister dans service_bookings
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('service_bookings')
-        .select('id, status, total_amount, created_at, payment_status, source, customer_id')
+        .select('id, status, total_amount, created_at, payment_status, client_id')
         .eq('professional_service_id', serviceId)
         .order('created_at', { ascending: false });
 
@@ -135,11 +136,12 @@ export function useServiceEcommerceStats(serviceId?: string) {
         console.error('❌ Erreur chargement bookings:', bookingsError);
       }
 
-      const bookings = bookingsData || [];
+      const bookings = (bookingsData || []) as any[];
       console.log('📦 Bookings trouvés:', bookings.length);
 
-      const posBookings = bookings.filter(b => b.source === 'pos');
-      const onlineBookings = bookings.filter(b => b.source === 'online' || !b.source);
+      // Pas de séparation POS/Online pour service_bookings (colonne source n'existe pas)
+      const posBookings: any[] = [];
+      const onlineBookings = bookings;
 
       // Calculate stats for all, POS, and Online
       const orderStats = calculateOrderStats(bookings);
@@ -170,11 +172,11 @@ export function useServiceEcommerceStats(serviceId?: string) {
         lowStock: products.filter(p => (p.stock_quantity || 0) <= 5 && p.is_available !== false).length,
       };
 
-      // 3. Compter les clients uniques
-      const uniqueCustomerIds = new Set(bookings.filter(b => b.customer_id).map(b => b.customer_id));
+      // 3. Compter les clients uniques (utiliser client_id au lieu de customer_id)
+      const uniqueCustomerIds = new Set(bookings.filter(b => b.client_id).map(b => b.client_id));
       const recentCustomers = bookings
-        .filter(b => b.customer_id && new Date(b.created_at) >= startOfMonth)
-        .map(b => b.customer_id);
+        .filter(b => b.client_id && new Date(b.created_at) >= startOfMonth)
+        .map(b => b.client_id);
       const newUniqueThisMonth = new Set(recentCustomers);
 
       const clientStats = {
@@ -201,7 +203,7 @@ export function useServiceEcommerceStats(serviceId?: string) {
           status: b.status,
           total_amount: b.total_amount || 0,
           created_at: b.created_at,
-          source: b.source || 'online',
+          source: 'online', // Par défaut online car pas de colonne source
         }))
       );
 

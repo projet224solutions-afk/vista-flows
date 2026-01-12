@@ -1,9 +1,11 @@
-# ================================================================
-# SCRIPT D'UPLOAD APK/EXE VERS SUPABASE STORAGE
-# ================================================================
-# Ce script upload les fichiers d'installation vers Supabase
-# Usage: .\upload-to-supabase.ps1
-# ================================================================
+/**
+ * ================================================================
+ * SCRIPT D'UPLOAD APK/EXE VERS SUPABASE STORAGE
+ * ================================================================
+ * Ce script upload les fichiers d'installation vers Supabase
+ * Usage: node upload-to-supabase.mjs
+ * ================================================================
+ */
 
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
