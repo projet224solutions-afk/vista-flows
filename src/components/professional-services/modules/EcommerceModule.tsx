@@ -1,5 +1,6 @@
 /**
  * MODULE E-COMMERCE - Complet
+ * Utilise serviceId pour afficher les données spécifiques au service professionnel
  */
 
 import { useState } from 'react';
@@ -14,7 +15,7 @@ import {
   Eye, Clock, CheckCircle, XCircle, DollarSign,
   BarChart3, ShoppingBag, AlertTriangle
 } from 'lucide-react';
-import { useEcommerceStats } from '@/hooks/useEcommerceStats';
+import { useServiceEcommerceStats } from '@/hooks/useServiceEcommerceStats';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
@@ -56,7 +57,8 @@ function formatCurrency(amount: number): string {
 }
 
 export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProps) {
-  const { stats, recentOrders, topProducts, loading, error, refresh } = useEcommerceStats();
+  // Utiliser le hook avec serviceId pour charger les données spécifiques au service professionnel
+  const { stats, recentOrders, topProducts, loading, error, refresh } = useServiceEcommerceStats(serviceId);
   const [activeTab, setActiveTab] = useState('overview');
   const navigate = useNavigate();
 

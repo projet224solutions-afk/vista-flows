@@ -1,16 +1,18 @@
 /**
  * VendorServiceModule - Module métier du vendeur
  * Support multi-services avec sélecteur et interface dédiée par service
+ * Utilise ServiceModuleManager pour afficher l'interface spécifique selon le type de service
  */
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, RefreshCw, Plus, Store } from 'lucide-react';
+import { AlertCircle, RefreshCw, Plus, Store, Clock, XCircle } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { useVendorServices } from '@/hooks/useVendorServices';
-import { VendorBusinessDashboard } from '@/components/vendor/business-module';
+import { ServiceModuleManager } from '@/components/professional-services/modules/ServiceModuleManager';
 import { AddServiceModal } from '@/components/vendor/business-module/AddServiceModal';
 import { ServiceSelector } from '@/components/vendor/business-module/ServiceSelector';
 
@@ -101,8 +103,6 @@ export default function VendorServiceModule() {
     || profile?.first_name 
     || 'Ma Boutique';
 
-  const serviceTypeName = selectedService?.service_type?.name || 'Commerce';
-
   return (
     <div className="space-y-6">
       {/* 🆕 Service Selector (si plusieurs services) */}
@@ -123,15 +123,33 @@ export default function VendorServiceModule() {
         </div>
       )}
 
-      {/* Dashboard du service sélectionné */}
+      {/* Status Alerts pour le service sélectionné */}
+      {selectedService?.status === 'pending' && (
+        <Alert variant="default" className="bg-amber-50 border-amber-200 dark:bg-amber-900/20">
+          <Clock className="w-4 h-4 text-amber-600" />
+          <AlertTitle className="text-amber-900 dark:text-amber-100">Service en cours de validation</AlertTitle>
+          <AlertDescription className="text-amber-800 dark:text-amber-200">
+            Votre service "{selectedService.business_name}" est en attente de validation.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {selectedService?.verification_status === 'rejected' && (
+        <Alert variant="destructive">
+          <XCircle className="w-4 h-4" />
+          <AlertTitle>Service rejeté</AlertTitle>
+          <AlertDescription>Contactez le support pour plus d'informations.</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Dashboard du service sélectionné avec interface spécifique au type */}
       {selectedService ? (
-        <VendorBusinessDashboard
-          businessName={businessName}
+        <ServiceModuleManager
           serviceId={selectedService.id}
-          serviceTypeName={serviceTypeName}
+          serviceTypeId={selectedService.service_type_id}
+          serviceTypeName={selectedService.service_type?.name || 'Service'}
           serviceTypeCode={selectedService.service_type?.code}
-          onRefresh={refresh}
-          professionalService={selectedService}
+          businessName={selectedService.business_name || businessName}
         />
       ) : (
         <Card>
