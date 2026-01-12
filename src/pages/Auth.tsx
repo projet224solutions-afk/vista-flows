@@ -1330,7 +1330,7 @@ export default function Auth() {
                     <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl backdrop-blur-sm">
                       <Store className="w-6 h-6" />
                     </div>
-                    <div className="text-left">
+                    <div className="text-center">
                       <span className="block text-lg font-bold">Mode Vendeur E-commerce classique</span>
                       <span className="block text-sm text-white/80">(vente de produits uniquement)</span>
                     </div>
