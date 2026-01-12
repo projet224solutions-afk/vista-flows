@@ -12,6 +12,8 @@ import {
   MessageSquare,
   Calendar,
   Navigation,
+  UtensilsCrossed,
+  Flame,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -63,6 +65,28 @@ interface Review {
   created_at: string;
 }
 
+interface MenuCategory {
+  id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  image_url?: string;
+}
+
+interface MenuItem {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  image_url?: string;
+  category_id?: string;
+  is_available: boolean;
+  is_featured: boolean;
+  spicy_level?: number;
+  dietary_tags?: string[];
+  preparation_time?: number;
+}
+
 export default function ServiceDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -70,6 +94,8 @@ export default function ServiceDetail() {
   const { getDistanceTo, usingRealLocation, positionReady } = useGeoDistance();
   const [service, setService] = useState<ServiceDetail | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [distance, setDistance] = useState<number | null>(null);
@@ -79,6 +105,7 @@ export default function ServiceDetail() {
     if (id && positionReady) {
       loadServiceDetails();
       loadReviews();
+      loadRestaurantMenu();
     }
   }, [id, positionReady]);
 
@@ -251,6 +278,36 @@ export default function ServiceDetail() {
       setReviews(formattedReviews);
     } catch (error) {
       console.error('Erreur chargement avis:', error);
+    }
+  };
+
+  const loadRestaurantMenu = async () => {
+    try {
+      // Charger les catégories du menu
+      const { data: categories } = await supabase
+        .from('restaurant_menu_categories')
+        .select('*')
+        .eq('professional_service_id', id)
+        .eq('is_active', true)
+        .order('display_order');
+
+      if (categories) {
+        setMenuCategories(categories);
+      }
+
+      // Charger les plats du menu
+      const { data: items } = await supabase
+        .from('restaurant_menu_items')
+        .select('*')
+        .eq('professional_service_id', id)
+        .eq('is_available', true)
+        .order('display_order');
+
+      if (items) {
+        setMenuItems(items);
+      }
+    } catch (error) {
+      console.error('Erreur chargement menu:', error);
     }
   };
 
@@ -629,6 +686,125 @@ export default function ServiceDetail() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Section Menu Restaurant */}
+        {isRestaurant && menuItems.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <UtensilsCrossed className="w-6 h-6 text-primary" />
+              <h2 className="text-2xl font-bold">Notre Menu</h2>
+            </div>
+
+            {/* Catégories */}
+            {menuCategories.length > 0 && (
+              <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+                {menuCategories.map((category) => (
+                  <Badge 
+                    key={category.id} 
+                    variant="secondary" 
+                    className="whitespace-nowrap px-3 py-1"
+                  >
+                    {category.icon && <span className="mr-1">{category.icon}</span>}
+                    {category.name}
+                  </Badge>
+                ))}
+              </div>
+            )}
+
+            {/* Grille des plats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {menuItems.map((item) => (
+                <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="flex">
+                    {/* Image du plat */}
+                    <div className="w-32 h-32 flex-shrink-0 bg-muted">
+                      {item.image_url ? (
+                        <img
+                          src={item.image_url}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-4xl bg-gradient-to-br from-orange-100 to-orange-200">
+                          🍽️
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Infos du plat */}
+                    <CardContent className="p-3 flex-1 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <h3 className="font-semibold text-foreground line-clamp-1">
+                            {item.name}
+                          </h3>
+                          {item.is_featured && (
+                            <Badge className="bg-orange-500 text-white text-xs">
+                              ⭐ Populaire
+                            </Badge>
+                          )}
+                        </div>
+                        {item.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                            {item.description}
+                          </p>
+                        )}
+                        
+                        {/* Tags et niveau épicé */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {item.spicy_level && item.spicy_level > 0 && (
+                            <div className="flex items-center text-orange-500">
+                              {[...Array(item.spicy_level)].map((_, i) => (
+                                <Flame key={i} className="w-3 h-3" />
+                              ))}
+                            </div>
+                          )}
+                          {item.dietary_tags?.map((tag, i) => (
+                            <Badge key={i} variant="outline" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                          {item.preparation_time && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {item.preparation_time}min
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Prix */}
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-lg font-bold text-primary">
+                          {item.price.toLocaleString()} FG
+                        </span>
+                        <Button 
+                          size="sm" 
+                          onClick={handleOrderFromRestaurant}
+                          className="bg-orange-500 hover:bg-orange-600"
+                        >
+                          Commander
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            {/* Bouton voir tout le menu */}
+            <div className="text-center mt-4">
+              <Button 
+                variant="outline" 
+                onClick={handleOrderFromRestaurant}
+                className="w-full md:w-auto"
+              >
+                <UtensilsCrossed className="w-4 h-4 mr-2" />
+                Voir le menu complet et commander
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
