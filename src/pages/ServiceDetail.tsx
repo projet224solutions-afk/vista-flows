@@ -507,16 +507,22 @@ export default function ServiceDetail() {
             </p>
 
             {/* Boutons d'action */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className={`grid gap-3 ${isRestaurant ? 'grid-cols-3' : 'grid-cols-2'}`}>
               <Button onClick={handleContact} className="w-full">
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Contacter
               </Button>
               {isRestaurant ? (
-                <Button onClick={handleOrderFromRestaurant} className="w-full bg-orange-500 hover:bg-orange-600">
-                  <span className="mr-2">🍽️</span>
-                  Commander
-                </Button>
+                <>
+                  <Button onClick={handleReservation} variant="outline" className="w-full">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Réserver
+                  </Button>
+                  <Button onClick={handleOrderFromRestaurant} className="w-full bg-orange-500 hover:bg-orange-600">
+                    <span className="mr-2">🍽️</span>
+                    Commander
+                  </Button>
+                </>
               ) : (
                 <Button onClick={handleReservation} variant="outline" className="w-full">
                   <Calendar className="w-4 h-4 mr-2" />
