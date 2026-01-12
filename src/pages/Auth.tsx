@@ -1284,19 +1284,14 @@ export default function Auth() {
           {/* Bouton Client - plus large et stylé en bas avec texte réorganisé */}
           <button
             onClick={() => handleRoleClick('client')}
-            className={`w-full flex flex-col items-center justify-center gap-1 py-4 rounded-2xl transition-all ${
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
               selectedRole === 'client' 
-                ? 'bg-primary text-primary-foreground shadow-xl scale-[1.02]' 
-                : 'bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90 hover:shadow-lg'
+                ? 'bg-primary text-primary-foreground shadow-lg scale-105' 
+                : 'bg-white text-primary border-2 border-primary hover:bg-primary/10'
             }`}
           >
-            <div className="flex items-center gap-2">
-              <UserIcon className="h-6 w-6 text-primary-foreground" />
-              <span className="text-lg font-semibold">{t('auth.client')}</span>
-            </div>
-            <span className="text-sm font-normal text-primary-foreground/80">
-              Acheter des produits et services
-            </span>
+            <UserIcon className="h-4 w-4" />
+            <span>{t('auth.client')}</span>
           </button>
         </div>
       </div>
