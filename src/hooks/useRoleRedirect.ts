@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './useAuth';
 
@@ -87,20 +87,9 @@ export const useRoleRedirect = () => {
   const { profile, user, loading, profileLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const hasRedirectedRef = useRef(false);
-  const lastPathRef = useRef<string>('');
 
   useEffect(() => {
     const currentPath = location.pathname;
-    
-    // Reset le flag si on change de page manuellement
-    if (lastPathRef.current !== currentPath) {
-      lastPathRef.current = currentPath;
-      // Ne pas reset si on vient d'être redirigé
-      if (!hasRedirectedRef.current) {
-        hasRedirectedRef.current = false;
-      }
-    }
 
     console.log('🔍 [useRoleRedirect] État:', {
       loading,
@@ -109,7 +98,6 @@ export const useRoleRedirect = () => {
       hasProfile: !!profile,
       role: profile?.role,
       currentPath,
-      hasRedirected: hasRedirectedRef.current
     });
 
     // ⚡ Attendre que l'auth soit chargée
@@ -133,10 +121,9 @@ export const useRoleRedirect = () => {
         currentPath === route || currentPath === route + '/'
       );
       
-      // ⚡ PRIORITÉ 1: Rediriger depuis les pages d'entrée (/, /home, /auth)
-      if (isOnRedirectTriggerRoute && !hasRedirectedRef.current) {
+      // ⚡ TOUJOURS rediriger depuis les pages d'entrée (/, /home, /auth) vers le dashboard
+      if (isOnRedirectTriggerRoute) {
         console.log(`🚀 [useRoleRedirect] Redirection depuis ${currentPath} vers ${targetRoute} (rôle: ${profile.role})`);
-        hasRedirectedRef.current = true;
         navigate(targetRoute, { replace: true });
         return;
       }
@@ -163,11 +150,4 @@ export const useRoleRedirect = () => {
       console.log('⚠️ [useRoleRedirect] Utilisateur sans profil détecté');
     }
   }, [user, profile, loading, profileLoading, navigate, location.pathname]);
-
-  // Reset le flag quand l'utilisateur se déconnecte
-  useEffect(() => {
-    if (!user) {
-      hasRedirectedRef.current = false;
-    }
-  }, [user]);
 };
