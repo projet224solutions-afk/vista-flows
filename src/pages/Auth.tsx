@@ -1285,7 +1285,7 @@ export default function Auth() {
           <div className="flex justify-center">
             <button
               onClick={() => handleRoleClick('client')}
-              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+              className={`flex items-center justify-center gap-2 px-8 py-2.5 rounded-full text-sm font-medium transition-all ${
                 selectedRole === 'client' 
                   ? 'bg-primary text-primary-foreground shadow-lg scale-105' 
                   : 'bg-white text-primary border-2 border-primary hover:bg-primary/10'
