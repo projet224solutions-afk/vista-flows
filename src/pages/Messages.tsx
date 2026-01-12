@@ -15,6 +15,7 @@ import { universalCommunicationService } from "@/services/UniversalCommunication
 import AgoraVideoCall from "@/components/communication/AgoraVideoCall";
 import AgoraAudioCall from "@/components/communication/AgoraAudioCall";
 import MessageInput from "@/components/communication/MessageInput";
+import MessageItem from "@/components/communication/MessageItem";
 
 interface Message {
   id: string;
@@ -828,47 +829,22 @@ export default function Messages() {
                     const messageStatus = message.status || (message.read_at ? 'read' : 'delivered');
                     
                     return (
-                      <div
+                      <MessageItem
                         key={message.id}
-                        className={cn(
-                          "flex animate-in fade-in slide-in-from-bottom-2 duration-300",
-                          isOwnMessage ? "justify-end" : "justify-start"
-                        )}
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        <div
-                          className={cn(
-                            "max-w-[80%] rounded-2xl px-4 py-2.5 shadow-md transition-all hover:shadow-lg",
-                            isOwnMessage
-                              ? "bg-gradient-to-br from-primary to-primary/90 text-primary-foreground rounded-br-md"
-                              : "bg-card border border-border text-foreground rounded-bl-md"
-                          )}
-                        >
-                          <p className="text-sm leading-relaxed break-words">{message.content}</p>
-                          <div className="flex items-center justify-end gap-1 mt-1">
-                            <p 
-                              className={cn(
-                                "text-[10px] cursor-help",
-                                isOwnMessage ? "text-primary-foreground/70" : "text-muted-foreground"
-                              )}
-                              title={formatDetailedTime(message.created_at)}
-                            >
-                              {new Date(message.created_at).toLocaleTimeString('fr-FR', {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </p>
-                            {isOwnMessage && (
-                              <span className="flex-shrink-0" title={messageStatus === 'read' ? 'Lu' : messageStatus === 'delivered' ? 'Délivré' : messageStatus === 'sent' ? 'Envoyé' : 'Échec'}>
-                                {messageStatus === 'read' && <CheckCheck className="w-3 h-3 text-blue-400" />}
-                                {messageStatus === 'delivered' && <CheckCheck className="w-3 h-3 text-primary-foreground/50" />}
-                                {messageStatus === 'sent' && <Check className="w-3 h-3 text-primary-foreground/50" />}
-                                {messageStatus === 'failed' && <XCircle className="w-3 h-3 text-red-400" />}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                        message={{
+                          id: message.id,
+                          content: message.type !== 'text' ? '' : message.content,
+                          timestamp: new Date(message.created_at).toLocaleTimeString('fr-FR', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          }),
+                          isOwn: isOwnMessage,
+                          type: message.type || 'text',
+                          file_url: message.file_url,
+                          file_name: message.file_name,
+                          file_size: message.file_size
+                        }}
+                      />
                     );
                   })
                 )}
