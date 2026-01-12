@@ -851,7 +851,46 @@ export default function Auth() {
             throw error;
           }
         }
-        setSuccess("✅ Inscription réussie ! Vérifiez votre boîte mail pour confirmer votre compte, puis connectez-vous.");
+        
+        // ✅ NOUVEAU: Redirection immédiate vers le dashboard après inscription réussie
+        if (authData.user) {
+          setSuccess("✅ Inscription réussie ! Redirection vers votre espace...");
+          
+          // Attendre que le profil soit créé avec retry (max 5 secondes)
+          let profileData = null;
+          let attempts = 0;
+          const maxAttempts = 10;
+          
+          while (!profileData && attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            const { data } = await supabase
+              .from('profiles')
+              .select('role')
+              .eq('id', authData.user.id)
+              .maybeSingle();
+            
+            if (data?.role) {
+              profileData = data;
+              break;
+            }
+            
+            attempts++;
+            console.log(`⏳ Attente création profil... (tentative ${attempts}/${maxAttempts})`);
+          }
+          
+          if (profileData?.role) {
+            const targetRoute = getDashboardRoute(profileData.role);
+            console.log('🚀 [Auth Signup] Redirection vers:', targetRoute, '(rôle:', profileData.role, ')');
+            navigate(targetRoute, { replace: true });
+          } else {
+            // Fallback: rediriger vers home qui redirigera vers le bon dashboard via useRoleRedirect
+            console.log('⚠️ [Auth Signup] Profil non trouvé après 5s, redirection vers /home');
+            navigate('/home', { replace: true });
+          }
+        } else {
+          setSuccess("✅ Inscription réussie ! Vérifiez votre boîte mail pour confirmer votre compte, puis connectez-vous.");
+        }
       } else {
         // Connexion
         const validatedData = loginSchema.parse(formData);
