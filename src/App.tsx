@@ -237,6 +237,8 @@ function App() {
               <Route path="/services-proximite/:id" element={<ServiceDetail />} />
               {/* Alias legacy: /service/:id -> /services-proximite/:id */}
               <Route path="/service/:id" element={<ServiceRedirect />} />
+              {/* Service Selection - Protected for logged-in users to create their professional service */}
+              <Route path="/service-selection" element={<ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire']}><ServiceSelection /></ProtectedRoute>} />
               <Route path="/devis" element={<Devis />} />
               <Route path="/delivery-request" element={<DeliveryRequest />} />
               <Route path="/delivery" element={<DeliveryClient />} />
