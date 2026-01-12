@@ -148,37 +148,10 @@ export function useServiceRestaurantStats(serviceId?: string) {
       let orders = ordersData || [];
       console.log('📦 Commandes restaurant (service) trouvées:', orders.length);
 
-      // 2b. Charger aussi les commandes legacy depuis orders si le vendor existe
-      if (userId) {
-        const { data: vendorData } = await supabase
-          .from('vendors')
-          .select('id')
-          .eq('user_id', userId)
-          .single();
-        
-        if (vendorData?.id) {
-          const { data: legacyOrders } = await supabase
-            .from('orders')
-            .select('id, status, total_amount, created_at, customer_id')
-            .eq('vendor_id', vendorData.id)
-            .order('created_at', { ascending: false });
-          
-          if (legacyOrders && legacyOrders.length > 0) {
-            // Convertir au format restaurant_orders
-            const normalizedOrders = legacyOrders.map(o => ({
-              id: o.id,
-              status: o.status,
-              total: o.total_amount,
-              order_type: 'delivery', // Par défaut
-              created_at: o.created_at,
-              customer_name: null,
-              table_number: null
-            }));
-            orders = [...orders, ...normalizedOrders];
-            console.log('📦 Legacy orders restaurant trouvés:', legacyOrders.length);
-          }
-        }
-      }
+      // 2b. NE PAS charger les commandes legacy depuis orders
+      // Les commandes restaurant sont UNIQUEMENT dans restaurant_orders avec professional_service_id
+      // La table orders est réservée aux commandes e-commerce
+      console.log('ℹ️ Restaurant: n\'utilise PAS les commandes legacy (table orders)')
 
       console.log('📦 Total commandes restaurant:', orders.length);
 
@@ -214,30 +187,10 @@ export function useServiceRestaurantStats(serviceId?: string) {
         menuItems = [...menuData];
       }
 
-      // 3b. Depuis products (table legacy)
-      if (userId) {
-        const { data: vendorData } = await supabase
-          .from('vendors')
-          .select('id')
-          .eq('user_id', userId)
-          .single();
-        
-        if (vendorData?.id) {
-          const { data: vendorProducts } = await supabase
-            .from('products')
-            .select('id, is_active')
-            .eq('vendor_id', vendorData.id);
-          
-          if (vendorProducts) {
-            const normalizedProducts = vendorProducts.map(p => ({
-              id: p.id,
-              is_available: p.is_active
-            }));
-            menuItems = [...menuItems, ...normalizedProducts];
-            console.log('📦 Vendor products (menu) trouvés:', vendorProducts.length);
-          }
-        }
-      }
+      // 3b. NE PAS charger les produits legacy depuis products
+      // Les plats du menu restaurant sont UNIQUEMENT dans service_products avec professional_service_id
+      // La table products est réservée aux produits e-commerce
+      console.log('ℹ️ Restaurant: n\'utilise PAS les produits legacy (table products)')
       
       console.log('🍔 Total items menu:', menuItems.length);
 
