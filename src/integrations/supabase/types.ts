@@ -21010,6 +21010,16 @@ export type Database = {
         }
         Returns: string
       }
+      upsert_service_type: {
+        Args: {
+          p_category: string
+          p_code: string
+          p_commission_rate?: number
+          p_description: string
+          p_name: string
+        }
+        Returns: undefined
+      }
       validate_secure_payment: {
         Args: {
           p_amount_paid: number
