@@ -556,9 +556,7 @@ export default function VendeurDashboard() {
                 )
               } />
               <Route path="service-module" element={
-                <ProtectedRoute feature="pos_system">
-                  <VendorServiceModule />
-                </ProtectedRoute>
+                <VendorServiceModule />
               } />
               {/* Produits - Free (avec limite) */}
               <Route path="products" element={

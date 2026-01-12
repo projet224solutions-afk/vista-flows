@@ -235,9 +235,15 @@ export function useEcommerceStats() {
   }, [vendorId]);
 
   useEffect(() => {
-    if (!vendorLoading && vendorId) {
-      loadStats();
+    if (vendorLoading) return;
+    
+    if (!vendorId) {
+      // Pas de vendorId = pas de stats, mais on arrête le loading
+      setLoading(false);
+      return;
     }
+    
+    loadStats();
   }, [vendorId, vendorLoading, loadStats]);
 
   return {
