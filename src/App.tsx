@@ -98,6 +98,7 @@ const ServiceDetail = lazyWithRetry(() => import("./pages/ServiceDetail"));
 const ServiceRedirect = lazyWithRetry(() => import("./pages/ServiceRedirect"));
 const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
 const UniversalLoginPage = lazyWithRetry(() => import("./pages/UniversalLoginPage"));
+const SetPasswordAfterOAuth = lazyWithRetry(() => import("./pages/SetPasswordAfterOAuth"));
 const AgentCreation = lazyWithRetry(() => import("./pages/AgentCreation"));
 const WorkerSettings = lazyWithRetry(() => import("./pages/WorkerSettings"));
 const BadgeVerification = lazyWithRetry(() => import("./pages/BadgeVerification"));
@@ -201,7 +202,8 @@ function App() {
               <Route path="/login" element={<Navigate to="/auth" replace />} />
               <Route path="/auth/google" element={<LoginGoogle />} />
               <Route path="/auth/google/success" element={<AuthGoogleSuccess />} />
-              <Route path="/universal-login" element={<UniversalLoginPage />} />
+<Route path="/universal-login" element={<UniversalLoginPage />} />
+              <Route path="/auth/set-password" element={<SetPasswordAfterOAuth />} />
               <Route path="/agent/create" element={<AgentCreation />} />
               <Route path="/worker/settings" element={<WorkerSettings />} />
               {/* <Route path="/install" element={<InstallPWA />} /> PWA désactivée */}

@@ -119,12 +119,16 @@ export default function EnhancedAuth() {
     provider: 'google' | 'facebook' | null;
   }>({ open: false, email: '', role: '', provider: null });
 
-  // Handle OAuth callback - avec redirection intelligente vers le bon dashboard
+  // Handle OAuth callback - avec redirection vers page de définition de mot de passe
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
         console.log('🔐 [EnhancedAuth] OAuth SIGNED_IN détecté');
         const isNewSignup = localStorage.getItem('oauth_is_new_signup') === 'true';
+        
+        // Vérifier si c'est une connexion OAuth (Google/Facebook)
+        const provider = session.user.app_metadata?.provider;
+        const isOAuthUser = provider === 'google' || provider === 'facebook';
         
         // Attendre que le profil soit créé/chargé
         setTimeout(async () => {
@@ -139,6 +143,18 @@ export default function EnhancedAuth() {
             if (error) {
               console.error('❌ Erreur récupération profil:', error);
               navigate('/');
+              return;
+            }
+
+            // Vérifier si l'utilisateur OAuth a déjà défini un mot de passe
+            const hasSetPassword = localStorage.getItem(`oauth_password_set_${session.user.id}`);
+            const needsPassword = isOAuthUser && !hasSetPassword;
+
+            if (needsPassword) {
+              console.log('🔐 [EnhancedAuth] Utilisateur OAuth sans mot de passe, redirection vers /auth/set-password');
+              localStorage.setItem('needs_oauth_password', 'true');
+              localStorage.removeItem('oauth_is_new_signup');
+              navigate('/auth/set-password', { replace: true });
               return;
             }
 
