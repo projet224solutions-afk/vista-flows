@@ -1,6 +1,14 @@
+/**
+ * 🔔 DJOMY WEBHOOK - VERSION CONFORME À LA DOC OFFICIELLE
+ * https://developers.djomy.africa/#tag/Webhooks
+ * 
+ * Gère les notifications de changement de statut des paiements
+ * Événements: payment.created, payment.pending, payment.success, payment.failed, payment.cancelled
+ */
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { crypto } from "https://deno.land/std@0.190.0/crypto/mod.ts";
+import { verifyWebhookSignature } from "../_shared/djomy-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,47 +16,20 @@ const corsHeaders = {
 };
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
+  const timestamp = new Date().toISOString();
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
-  console.log(`[DJOMY-WEBHOOK] ${step}${detailsStr}`);
+  console.log(`[${timestamp}] [DJOMY-WEBHOOK] ${step}${detailsStr}`);
 };
 
-// Verify HMAC signature from webhook
-async function verifyWebhookSignature(payload: string, signature: string, secret: string): Promise<boolean> {
-  try {
-    // Signature format: v1:signature
-    const signatureParts = signature.split(":");
-    if (signatureParts.length !== 2 || signatureParts[0] !== "v1") {
-      logStep("Invalid signature format");
-      return false;
-    }
-    
-    const providedSignature = signatureParts[1];
-    
-    const encoder = new TextEncoder();
-    const keyData = encoder.encode(secret);
-    const messageData = encoder.encode(payload);
-    
-    const key = await crypto.subtle.importKey(
-      "raw",
-      keyData,
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"]
-    );
-    
-    const signatureBuffer = await crypto.subtle.sign("HMAC", key, messageData);
-    const hashArray = Array.from(new Uint8Array(signatureBuffer));
-    const computedSignature = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-    
-    const isValid = computedSignature === providedSignature;
-    logStep("Signature verification", { isValid });
-    
-    return isValid;
-  } catch (error) {
-    logStep("Signature verification error", { error: String(error) });
-    return false;
-  }
-}
+// Map Djomy event types to internal status
+const statusMap: Record<string, string> = {
+  "payment.created": "CREATED",
+  "payment.redirected": "REDIRECTED",
+  "payment.pending": "PENDING",
+  "payment.success": "SUCCESS",
+  "payment.failed": "FAILED",
+  "payment.cancelled": "CANCELLED",
+};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -58,41 +39,36 @@ serve(async (req) => {
   try {
     logStep("Webhook received");
 
-    const clientSecret = Deno.env.get("JOMY_CLIENT_SECRET");
+    // Get client secret for signature verification
+    const clientSecret = Deno.env.get("DJOMY_CLIENT_SECRET");
     if (!clientSecret) {
-      logStep("Client secret not configured");
-      // Still process but log warning
+      logStep("⚠️ DJOMY_CLIENT_SECRET not configured");
     }
 
-    // Get signature from header
+    // Get signature from header (format: v1:signature)
     const webhookSignature = req.headers.get("X-Webhook-Signature");
-    logStep("Webhook signature header", { hasSignature: !!webhookSignature });
+    logStep("Signature header", { hasSignature: !!webhookSignature });
 
     // Get raw body for signature verification
     const rawBody = await req.text();
-    logStep("Webhook payload received", { bodyLength: rawBody.length });
+    logStep("Payload received", { bodyLength: rawBody.length });
 
-    // Verify signature if provided
+    // Verify signature if both are present
     if (webhookSignature && clientSecret) {
       const isValid = await verifyWebhookSignature(rawBody, webhookSignature, clientSecret);
       if (!isValid) {
-        logStep("Invalid webhook signature - rejecting");
+        logStep("❌ Invalid webhook signature - rejecting");
         return new Response(
           JSON.stringify({ error: "Invalid signature" }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
         );
       }
+      logStep("✅ Signature verified");
     }
 
     // Parse the webhook payload
     const payload = JSON.parse(rawBody);
-    logStep("Webhook payload parsed", {
-      eventType: payload.eventType,
-      eventId: payload.eventId,
-      transactionId: payload.data?.transactionId,
-      status: payload.data?.status,
-    });
-
+    
     const {
       eventType,
       eventId,
@@ -100,7 +76,16 @@ serve(async (req) => {
       paymentLinkReference,
       timestamp,
       message,
+      metadata,
     } = payload;
+
+    logStep("Webhook payload", {
+      eventType,
+      eventId,
+      transactionId: data?.transactionId,
+      status: data?.status,
+      paidAmount: data?.paidAmount,
+    });
 
     // Initialize Supabase admin client
     const supabaseAdmin = createClient(
@@ -109,25 +94,71 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Map Djomy status to our internal status
-    const statusMap: Record<string, string> = {
-      "payment.created": "created",
-      "payment.redirected": "redirected",
-      "payment.pending": "pending",
-      "payment.success": "completed",
-      "payment.failed": "failed",
-      "payment.cancelled": "cancelled",
-    };
-
-    const internalStatus = statusMap[eventType] || "unknown";
+    const internalStatus = statusMap[eventType] || "UNKNOWN";
     logStep("Status mapped", { eventType, internalStatus });
 
-    // Update payment record in database
+    // Find and update the transaction
     if (data?.transactionId) {
-      const { error: updateError } = await supabaseAdmin
+      // First try to find by djomy_transaction_id
+      let { data: transaction, error: findError } = await supabaseAdmin
+        .from("djomy_transactions")
+        .select("id, user_id, vendor_id, order_id, amount, status")
+        .eq("djomy_transaction_id", data.transactionId)
+        .single();
+
+      // If not found, try by merchantPaymentReference (order_id)
+      if (!transaction && data.merchantPaymentReference) {
+        const result = await supabaseAdmin
+          .from("djomy_transactions")
+          .select("id, user_id, vendor_id, order_id, amount, status")
+          .eq("order_id", data.merchantPaymentReference)
+          .single();
+        transaction = result.data;
+      }
+
+      if (transaction) {
+        // Update transaction status
+        const { error: updateError } = await supabaseAdmin
+          .from("djomy_transactions")
+          .update({
+            status: internalStatus,
+            djomy_transaction_id: data.transactionId,
+            paid_amount: data.paidAmount,
+            received_amount: data.receivedAmount,
+            fees: data.fees,
+            webhook_event_id: eventId,
+            webhook_received_at: new Date().toISOString(),
+            djomy_response: payload,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", transaction.id);
+
+        if (updateError) {
+          logStep("Update error", { error: updateError.message });
+        } else {
+          logStep("✅ Transaction updated", { id: transaction.id, newStatus: internalStatus });
+        }
+
+        // Handle successful payment
+        if (eventType === "payment.success" && data.paidAmount) {
+          await handleSuccessfulPayment(supabaseAdmin, transaction, data, metadata);
+        }
+
+        // Handle failed/cancelled payment
+        if (eventType === "payment.failed" || eventType === "payment.cancelled") {
+          await handleFailedPayment(supabaseAdmin, transaction, data);
+        }
+      } else {
+        logStep("⚠️ Transaction not found", { djomyId: data.transactionId });
+      }
+    }
+
+    // Also update djomy_payments if exists
+    if (data?.transactionId) {
+      await supabaseAdmin
         .from("djomy_payments")
         .update({
-          status: internalStatus,
+          status: internalStatus.toLowerCase(),
           paid_amount: data.paidAmount,
           received_amount: data.receivedAmount,
           fees: data.fees,
@@ -137,106 +168,6 @@ serve(async (req) => {
           updated_at: new Date().toISOString(),
         })
         .eq("transaction_id", data.transactionId);
-
-      if (updateError) {
-        logStep("Database update error", { error: updateError.message });
-      } else {
-        logStep("Payment record updated");
-      }
-
-      // If payment is successful, use secure validation system
-      if (eventType === "payment.success" && data.paidAmount) {
-        logStep("Payment successful - calling secure validation", {
-          transactionId: data.transactionId,
-          amount: data.paidAmount,
-        });
-
-        // Get the payment record to find the secure transaction
-        const { data: paymentRecord, error: fetchError } = await supabaseAdmin
-          .from("djomy_payments")
-          .select("user_id, order_id")
-          .eq("transaction_id", data.transactionId)
-          .single();
-
-        if (!fetchError && paymentRecord) {
-          // Check if there's a linked secure_transaction
-          const { data: secureTransaction } = await supabaseAdmin
-            .from("secure_transactions")
-            .select("id, total_amount, signature_hash, status")
-            .eq("external_transaction_id", data.transactionId)
-            .eq("status", "pending")
-            .single();
-
-          if (secureTransaction) {
-            // 🔐 Use secure validation system
-            logStep("Found linked secure transaction, validating...", {
-              secureTransactionId: secureTransaction.id
-            });
-
-            const { data: validationResult, error: validationError } = await supabaseAdmin.rpc("validate_secure_payment", {
-              p_transaction_id: secureTransaction.id,
-              p_external_transaction_id: data.transactionId,
-              p_amount_paid: data.paidAmount,
-              p_payment_status: "SUCCESS",
-              p_signature: secureTransaction.signature_hash
-            });
-
-            if (validationError) {
-              logStep("Secure validation error", { error: validationError.message });
-            } else {
-              logStep("Secure validation result", { result: validationResult });
-            }
-          } else {
-            // Fallback: Legacy wallet update (for existing transactions without secure flow)
-            logStep("No secure transaction found, using legacy flow");
-            
-            if (paymentRecord.user_id) {
-              const { data: wallet, error: walletError } = await supabaseAdmin
-                .from("wallets")
-                .select("id, balance")
-                .eq("user_id", paymentRecord.user_id)
-                .single();
-
-              if (!walletError && wallet) {
-                // Create wallet transaction
-                await supabaseAdmin
-                  .from("wallet_transactions")
-                  .insert({
-                    wallet_id: wallet.id,
-                    user_id: paymentRecord.user_id,
-                    type: "deposit",
-                    amount: data.receivedAmount || data.paidAmount,
-                    description: `Recharge via Djomy - ${data.paymentMethod || "Mobile Money"}`,
-                    status: "completed",
-                    reference: data.transactionId,
-                    metadata: {
-                      provider: "djomy",
-                      payment_method: data.paymentMethod,
-                      fees: data.fees,
-                      payer_identifier: data.payerIdentifier,
-                      legacy_flow: true
-                    },
-                  });
-
-                logStep("Legacy wallet transaction created");
-              }
-            }
-
-            // Update order status if applicable
-            if (paymentRecord.order_id) {
-              await supabaseAdmin
-                .from("orders")
-                .update({
-                  payment_status: "paid",
-                  updated_at: new Date().toISOString(),
-                })
-                .eq("id", paymentRecord.order_id);
-
-              logStep("Order updated to paid");
-            }
-          }
-        }
-      }
     }
 
     // Log webhook event
@@ -250,7 +181,7 @@ serve(async (req) => {
         processed_at: new Date().toISOString(),
       });
 
-    logStep("Webhook processed successfully");
+    logStep("✅ Webhook processed successfully");
 
     return new Response(
       JSON.stringify({ success: true, message: "Webhook processed" }),
@@ -259,12 +190,76 @@ serve(async (req) => {
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR processing webhook", { message: errorMessage });
+    logStep("❌ ERROR processing webhook", { message: errorMessage });
     
-    // Still return 200 to prevent Djomy from retrying
+    // Return 200 to prevent Djomy from retrying (webhook was received)
     return new Response(
       JSON.stringify({ success: false, error: errorMessage }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   }
 });
+
+/**
+ * Handle successful payment - credit wallet, update order, etc.
+ */
+async function handleSuccessfulPayment(
+  supabase: any,
+  transaction: { id: string; user_id: string | null; vendor_id: string | null; order_id: string | null; amount: number },
+  data: { paidAmount: number; receivedAmount?: number; paymentMethod?: string; payerIdentifier?: string; fees?: number },
+  metadata?: Record<string, unknown>
+) {
+  logStep("💰 Processing successful payment", { 
+    transactionId: transaction.id,
+    amount: data.paidAmount 
+  });
+
+  // Credit user wallet if user_id exists
+  if (transaction.user_id) {
+    const { data: wallet } = await supabase
+      .from("wallets")
+      .select("id, balance")
+      .eq("user_id", transaction.user_id)
+      .single();
+
+    if (wallet) {
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wallet.id,
+        user_id: transaction.user_id,
+        type: "deposit",
+        amount: data.receivedAmount || data.paidAmount,
+        description: `Recharge via ${data.paymentMethod || "Mobile Money"}`,
+        status: "completed",
+        reference: transaction.id,
+      });
+      logStep("✅ Wallet credited", { userId: transaction.user_id });
+    }
+  }
+
+  // Update order status if order_id exists
+  if (transaction.order_id) {
+    await supabase
+      .from("orders")
+      .update({ payment_status: "paid", updated_at: new Date().toISOString() })
+      .eq("id", transaction.order_id);
+    logStep("✅ Order updated to paid", { orderId: transaction.order_id });
+  }
+}
+
+/**
+ * Handle failed/cancelled payment
+ */
+async function handleFailedPayment(
+  supabase: any,
+  transaction: { id: string; order_id: string | null },
+  data: { status?: string }
+) {
+  logStep("❌ Processing failed payment", { transactionId: transaction.id });
+
+  if (transaction.order_id) {
+    await supabase
+      .from("orders")
+      .update({ payment_status: "failed", updated_at: new Date().toISOString() })
+      .eq("id", transaction.order_id);
+  }
+}
