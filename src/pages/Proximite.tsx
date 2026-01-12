@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 // Framer-motion supprimé pour réduire TBT de 914ms
 import { 
   Store, 
-  Bike, 
   Package, 
   Scissors, 
   Utensils, 
@@ -15,7 +14,6 @@ import {
   Heart,
   Laptop,
   Home,
-  GraduationCap,
   Camera,
   Dumbbell,
   Search,
@@ -35,43 +33,23 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
 
-// Catégories de services de proximité avec IDs pour mapping dynamique
+/**
+ * SERVICES POPULAIRES - Synchronisés avec Auth.tsx "Services de Proximité Populaires"
+ * Ces services correspondent exactement aux boutons de sélection de type de service
+ */
 const getServiceCategories = (stats: any) => [
+  // Ligne 1 - Services principaux (comme Auth.tsx)
   {
-    id: "boutiques",
-    title: "Boutiques",
-    icon: Store,
-    color: "from-blue-500 to-blue-600",
-    bgColor: "bg-blue-50",
-    textColor: "text-blue-600",
-    count: stats.boutiques,
-    path: "/proximite/boutiques", // Liste des boutiques à proximité avec distance
-    description: "Commerces locaux",
-    trending: stats.boutiques > 5
-  },
-  {
-    id: "taxi-moto",
-    title: "Taxi-Moto",
-    icon: Bike,
-    color: "from-emerald-500 to-emerald-600",
-    bgColor: "bg-emerald-50",
-    textColor: "text-emerald-600",
-    count: stats.taxiMoto,
-    path: "/proximite/taxi-moto", // Liste des motos disponibles à proximité
-    description: "Transport rapide",
-    trending: stats.taxiMoto > 3
-  },
-  {
-    id: "livraison",
-    title: "Livraison",
-    icon: Package,
-    color: "from-orange-500 to-orange-600",
-    bgColor: "bg-orange-50",
-    textColor: "text-orange-600",
-    count: stats.livraison,
-    path: "/proximite/livraison", // Liste des livreurs disponibles à proximité
-    description: "Colis & courses",
-    trending: false
+    id: "restaurant",
+    title: "Restaurants",
+    icon: Utensils,
+    color: "from-red-500 to-red-600",
+    bgColor: "bg-red-50",
+    textColor: "text-red-600",
+    count: stats.restaurant,
+    path: "/services-proximite?type=restaurant",
+    description: "Cuisine & plats",
+    trending: stats.restaurant > 0
   },
   {
     id: "beaute",
@@ -85,18 +63,7 @@ const getServiceCategories = (stats: any) => [
     description: "Soins & styling"
   },
   {
-    id: "restaurant",
-    title: "Restaurants",
-    icon: Utensils,
-    color: "from-red-500 to-red-600",
-    bgColor: "bg-red-50",
-    textColor: "text-red-600",
-    count: stats.restaurant,
-    path: "/services-proximite?type=restaurant",
-    description: "Cuisine locale"
-  },
-  {
-    id: "transport",
+    id: "vtc",
     title: "Transport VTC",
     icon: Car,
     color: "from-slate-600 to-slate-700",
@@ -117,16 +84,52 @@ const getServiceCategories = (stats: any) => [
     path: "/services-proximite?type=reparation",
     description: "Électro & mécanique"
   },
+  // Ligne 2 - Services complémentaires (comme Auth.tsx)
   {
-    id: "nettoyage",
+    id: "menage",
     title: "Nettoyage",
     icon: Sparkles,
     color: "from-cyan-500 to-cyan-600",
     bgColor: "bg-cyan-50",
     textColor: "text-cyan-600",
     count: stats.nettoyage,
-    path: "/services-proximite?type=nettoyage",
+    path: "/services-proximite?type=menage",
     description: "Ménage & pressing"
+  },
+  {
+    id: "informatique",
+    title: "Informatique",
+    icon: Laptop,
+    color: "from-indigo-500 to-indigo-600",
+    bgColor: "bg-indigo-50",
+    textColor: "text-indigo-600",
+    count: stats.informatique,
+    path: "/services-proximite?type=informatique",
+    description: "Tech & dépannage"
+  },
+  // Services supplémentaires pour la proximité (Boutiques, Taxi-Moto, Livraison)
+  {
+    id: "boutiques",
+    title: "Boutiques",
+    icon: Store,
+    color: "from-blue-500 to-blue-600",
+    bgColor: "bg-blue-50",
+    textColor: "text-blue-600",
+    count: stats.boutiques,
+    path: "/proximite/boutiques",
+    description: "Commerces locaux",
+    trending: stats.boutiques > 5
+  },
+  {
+    id: "livraison",
+    title: "Livraison",
+    icon: Package,
+    color: "from-orange-500 to-orange-600",
+    bgColor: "bg-orange-50",
+    textColor: "text-orange-600",
+    count: stats.livraison,
+    path: "/proximite/livraison",
+    description: "Colis & courses"
   }
 ];
 
@@ -138,58 +141,11 @@ interface CategoryWithCount {
   product_count: number;
 }
 
-// Services professionnels avec stats dynamiques
+/**
+ * SERVICES PROFESSIONNELS - Synchronisés avec Auth.tsx "Services Professionnels"
+ * Ces services correspondent exactement aux boutons de la section violette
+ */
 const getProfessionalServices = (stats: any) => [
-  {
-    id: "sante",
-    title: "Santé & Bien-être",
-    icon: Heart,
-    color: "from-rose-500 to-rose-600",
-    bgColor: "bg-rose-50",
-    textColor: "text-rose-600",
-    description: "Soins & consultations",
-    count: stats.sante
-  },
-  {
-    id: "maison",
-    title: "Maison & Déco",
-    icon: Home,
-    color: "from-teal-500 to-teal-600",
-    bgColor: "bg-teal-50",
-    textColor: "text-teal-600",
-    description: "Décoration & aménagement",
-    count: stats.maison
-  },
-  {
-    id: "immobilier",
-    title: "Immobilier",
-    icon: Building2,
-    color: "from-violet-500 to-violet-600",
-    bgColor: "bg-violet-50",
-    textColor: "text-violet-600",
-    description: "Achats, ventes, locations",
-    count: stats.immobilier
-  },
-  {
-    id: "formation",
-    title: "Formation",
-    icon: GraduationCap,
-    color: "from-sky-500 to-sky-600",
-    bgColor: "bg-sky-50",
-    textColor: "text-sky-600",
-    description: "Cours & coaching",
-    count: stats.formation
-  },
-  {
-    id: "photo-video",
-    title: "Photo & Vidéo",
-    icon: Camera,
-    color: "from-fuchsia-500 to-fuchsia-600",
-    bgColor: "bg-fuchsia-50",
-    textColor: "text-fuchsia-600",
-    description: "Événements & création",
-    count: stats.media
-  },
   {
     id: "sport",
     title: "Sport & Fitness",
@@ -199,6 +155,76 @@ const getProfessionalServices = (stats: any) => [
     textColor: "text-lime-600",
     description: "Coaching & salles",
     count: stats.sport
+  },
+  {
+    id: "location",
+    title: "Immobilier",
+    icon: Building2,
+    color: "from-violet-500 to-violet-600",
+    bgColor: "bg-violet-50",
+    textColor: "text-violet-600",
+    description: "Location & vente",
+    count: stats.immobilier
+  },
+  {
+    id: "media",
+    title: "Photo & Vidéo",
+    icon: Camera,
+    color: "from-fuchsia-500 to-fuchsia-600",
+    bgColor: "bg-fuchsia-50",
+    textColor: "text-fuchsia-600",
+    description: "Événements & création",
+    count: stats.media
+  },
+  {
+    id: "construction",
+    title: "Construction & BTP",
+    icon: Building2,
+    color: "from-stone-500 to-stone-600",
+    bgColor: "bg-stone-50",
+    textColor: "text-stone-600",
+    description: "Bâtiment & travaux",
+    count: stats.construction
+  },
+  {
+    id: "agriculture",
+    title: "Agriculture",
+    icon: ShoppingBag,
+    color: "from-green-500 to-green-600",
+    bgColor: "bg-green-50",
+    textColor: "text-green-600",
+    description: "Produits locaux",
+    count: stats.agriculture
+  },
+  {
+    id: "freelance",
+    title: "Administratif",
+    icon: ShoppingBag,
+    color: "from-gray-500 to-gray-600",
+    bgColor: "bg-gray-50",
+    textColor: "text-gray-600",
+    description: "Secrétariat & conseil",
+    count: stats.freelance
+  },
+  {
+    id: "sante",
+    title: "Santé & Bien-être",
+    icon: Heart,
+    color: "from-rose-500 to-rose-600",
+    bgColor: "bg-rose-50",
+    textColor: "text-rose-600",
+    description: "Pharmacie & soins",
+    count: stats.sante
+  },
+  {
+    id: "maison",
+    title: "Maison & Déco",
+    icon: Home,
+    color: "from-teal-500 to-teal-600",
+    bgColor: "bg-teal-50",
+    textColor: "text-teal-600",
+    description: "Intérieur & déco",
+    count: stats.maison
   }
 ];
 
