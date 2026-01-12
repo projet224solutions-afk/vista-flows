@@ -101,22 +101,75 @@ export function HeroSection({ className }: HeroSectionProps) {
           {t('home.professionalCategories')} • {t('home.completeTools') || t('home.withCompleteTools')}
         </p>
 
-        {/* CTA Button - Primary */}
-        <Button
-          onClick={handleStartNowClick}
-          size="lg"
-          className={cn(
-            'w-full gap-2 h-12 rounded-xl text-base font-semibold',
-            'bg-primary hover:bg-primary/90',
-            'shadow-lg shadow-primary/25',
-            'active:scale-[0.98] transition-all duration-200'
-          )}
-        >
-          <Store className="w-5 h-5" />
-          {t('home.startNow')}
-        </Button>
+        {/* CTA Buttons - Différent selon si l'utilisateur est connecté ou non */}
+        {user ? (
+          <>
+            {/* Bouton Mon Dashboard - pour utilisateur connecté */}
+            <Button
+              onClick={() => {
+                // Rediriger vers le dashboard approprié selon le rôle
+                const role = (user as any)?.user_metadata?.role || 'client';
+                const dashboards: Record<string, string> = {
+                  admin: '/pdg',
+                  ceo: '/pdg',
+                  vendeur: '/vendeur',
+                  livreur: '/livreur',
+                  taxi: '/taxi-moto/driver',
+                  syndicat: '/syndicat',
+                  transitaire: '/transitaire',
+                  client: '/client',
+                  agent: '/agent',
+                };
+                navigate(dashboards[role] || '/profil');
+              }}
+              size="lg"
+              className={cn(
+                'w-full gap-2 h-12 rounded-xl text-base font-semibold',
+                'bg-primary hover:bg-primary/90',
+                'shadow-lg shadow-primary/25',
+                'active:scale-[0.98] transition-all duration-200'
+              )}
+            >
+              <Store className="w-5 h-5" />
+              {t('home.myDashboard') || 'Mon Dashboard'}
+            </Button>
 
-        {/* Digital Products & Formation Button */}
+            {/* Bouton Créer un service - pour utilisateur connecté */}
+            <Button
+              onClick={handleStartNowClick}
+              variant="outline"
+              size="lg"
+              className={cn(
+                'w-full gap-2 h-11 rounded-xl text-base font-medium mt-3',
+                'border-primary/30 text-primary',
+                'hover:bg-primary/10 hover:border-primary/50',
+                'active:scale-[0.98] transition-all duration-200'
+              )}
+            >
+              <Sparkles className="w-5 h-5" />
+              {t('home.createService') || 'Créer un service'}
+            </Button>
+          </>
+        ) : (
+          <>
+            {/* Bouton Commencer - pour utilisateur non connecté */}
+            <Button
+              onClick={handleStartNowClick}
+              size="lg"
+              className={cn(
+                'w-full gap-2 h-12 rounded-xl text-base font-semibold',
+                'bg-primary hover:bg-primary/90',
+                'shadow-lg shadow-primary/25',
+                'active:scale-[0.98] transition-all duration-200'
+              )}
+            >
+              <Store className="w-5 h-5" />
+              {t('home.startNow')}
+            </Button>
+          </>
+        )}
+
+        {/* Digital Products & Formation Button - toujours visible */}
         <Button
           onClick={() => navigate('/digital-products')}
           variant="outline"

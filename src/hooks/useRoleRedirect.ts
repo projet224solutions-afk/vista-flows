@@ -8,6 +8,7 @@ import { useAuth } from './useAuth';
  * ⚠️ IMPORTANT: Les liens partagés (/s/, /boutique/, /shop/, /product/) doivent être ici!
  */
 const PUBLIC_ROUTES = [
+  '/',            // Page d'accueil racine - accessible aux utilisateurs connectés
   '/home',        // Page d'accueil - accessible aux utilisateurs connectés
   '/marketplace',
   '/tracking',
