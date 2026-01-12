@@ -95,6 +95,7 @@ const VendorAgentInterface = lazyWithRetry(() => import("./pages/VendorAgentInte
 const VendorContracts = lazyWithRetry(() => import("./pages/VendorContracts"));
 const ClientContracts = lazyWithRetry(() => import("./pages/ClientContracts"));
 const ServiceDetail = lazyWithRetry(() => import("./pages/ServiceDetail"));
+const ServiceRedirect = lazyWithRetry(() => import("./pages/ServiceRedirect"));
 const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
 const UniversalLoginPage = lazyWithRetry(() => import("./pages/UniversalLoginPage"));
 const AgentCreation = lazyWithRetry(() => import("./pages/AgentCreation"));
@@ -234,6 +235,8 @@ function App() {
               
               <Route path="/services-proximite" element={<ServicesProximite />} />
               <Route path="/services-proximite/:id" element={<ServiceDetail />} />
+              {/* Alias legacy: /service/:id -> /services-proximite/:id */}
+              <Route path="/service/:id" element={<ServiceRedirect />} />
               <Route path="/devis" element={<Devis />} />
               <Route path="/delivery-request" element={<DeliveryRequest />} />
               <Route path="/delivery" element={<DeliveryClient />} />

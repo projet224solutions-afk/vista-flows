@@ -431,28 +431,27 @@ export default function Messages() {
         .from('communication-files')
         .getPublicUrl(fileName);
 
-      // Déterminer le type de fichier - utiliser les types acceptés par la DB
-      let fileType: 'image' | 'video' | 'audio' | 'file' = 'file';
+      // Déterminer le type de fichier - utiliser UNIQUEMENT les types acceptés par la DB
+      // (la table messages n'accepte pas "audio"/"video" ici)
+      let fileType: 'image' | 'file' = 'file';
       if (file.type.startsWith('image/')) {
         fileType = 'image';
-      } else if (file.type.startsWith('video/')) {
-        fileType = 'video';
-      } else if (file.type.startsWith('audio/') || file.name.includes('vocal')) {
-        fileType = 'audio';
       }
 
       // Insérer message avec fichier directement
       const { error: messageError } = await supabase
         .from('messages')
-        .insert({
-          sender_id: currentUser.id,
-          recipient_id: selectedConversation,
-          content: file.name,
-          type: fileType,
-          file_url: publicUrl,
-          file_name: file.name,
-          file_size: file.size
-        });
+        .insert([
+          {
+            sender_id: currentUser.id,
+            recipient_id: selectedConversation,
+            content: file.name,
+            type: fileType,
+            file_url: publicUrl,
+            file_name: file.name,
+            file_size: file.size,
+          },
+        ]);
 
       if (messageError) throw messageError;
 
@@ -823,31 +822,36 @@ export default function Messages() {
                       Envoyez votre premier message à {selectedConvData?.other_user_name}
                     </p>
                   </div>
-                ) : (
-                  messages.map((message, index) => {
-                    const isOwnMessage = message.sender_id === currentUser?.id;
-                    const messageStatus = message.status || (message.read_at ? 'read' : 'delivered');
-                    
-                    return (
-                      <MessageItem
-                        key={message.id}
-                        message={{
-                          id: message.id,
-                          content: message.type !== 'text' ? '' : message.content,
-                          timestamp: new Date(message.created_at).toLocaleTimeString('fr-FR', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          }),
-                          isOwn: isOwnMessage,
-                          type: message.type || 'text',
-                          file_url: message.file_url,
-                          file_name: message.file_name,
-                          file_size: message.file_size
-                        }}
-                      />
-                    );
-                  })
-                )}
+                  ) : (
+                    messages.map((message) => {
+                      const isOwnMessage = message.sender_id === currentUser?.id;
+                      const messageStatus = message.status || (message.read_at ? 'read' : 'delivered');
+
+                      const safeType: 'text' | 'image' | 'video' | 'audio' | 'file' =
+                        message.type === 'call' || message.type === 'location'
+                          ? 'text'
+                          : (message.type as any) || 'text';
+                      
+                      return (
+                        <MessageItem
+                          key={message.id}
+                          message={{
+                            id: message.id,
+                            content: safeType !== 'text' ? '' : message.content,
+                            timestamp: new Date(message.created_at).toLocaleTimeString('fr-FR', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }),
+                            isOwn: isOwnMessage,
+                            type: safeType,
+                            file_url: message.file_url,
+                            file_name: message.file_name,
+                            file_size: message.file_size
+                          }}
+                        />
+                      );
+                    })
+                  )}
                 <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
