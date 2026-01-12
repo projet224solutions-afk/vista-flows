@@ -4,11 +4,14 @@
  * Inspired by Uber, Deliveroo, Glovo
  */
 
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Store, Utensils, Truck, Car, Sparkles, ChevronRight, Package, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
+import { AvailableServicesModal } from '@/components/professional-services/AvailableServicesModal';
 
 interface QuickAction {
   id: string;
@@ -51,7 +54,30 @@ interface HeroSectionProps {
 export function HeroSection({ className }: HeroSectionProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { user } = useAuth();
   const quickActions = getQuickActions(t);
+  
+  const [showServicesModal, setShowServicesModal] = useState(false);
+
+  const handleStartNowClick = () => {
+    if (user) {
+      // User is logged in - show available services modal
+      setShowServicesModal(true);
+    } else {
+      // User is not logged in - navigate to services page
+      navigate('/services');
+    }
+  };
+
+  const handleQuickActionClick = (actionId: string) => {
+    if (user) {
+      // User is logged in - show available services modal
+      setShowServicesModal(true);
+    } else {
+      // User is not logged in - navigate to services page
+      navigate('/services');
+    }
+  };
 
   return (
     <section className={cn('relative', className)}>
@@ -77,7 +103,7 @@ export function HeroSection({ className }: HeroSectionProps) {
 
         {/* CTA Button - Primary */}
         <Button
-          onClick={() => navigate('/services')}
+          onClick={handleStartNowClick}
           size="lg"
           className={cn(
             'w-full gap-2 h-12 rounded-xl text-base font-semibold',
@@ -112,7 +138,7 @@ export function HeroSection({ className }: HeroSectionProps) {
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-foreground">{t('home.popularServices') || t('home.nearbyServices')}</h2>
           <button 
-            onClick={() => navigate('/services')}
+            onClick={() => user ? setShowServicesModal(true) : navigate('/services')}
             className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
           >
             {t('home.seeAll')}
@@ -124,7 +150,7 @@ export function HeroSection({ className }: HeroSectionProps) {
           {quickActions.map((action) => (
             <button
               key={action.id}
-              onClick={() => navigate('/services')}
+              onClick={() => handleQuickActionClick(action.id)}
               className={cn(
                 'flex flex-col items-center gap-2 p-3 rounded-2xl',
                 'bg-card border border-border/50',
@@ -148,7 +174,7 @@ export function HeroSection({ className }: HeroSectionProps) {
 
         {/* More Services Chip */}
         <button
-          onClick={() => navigate('/services')}
+          onClick={() => user ? setShowServicesModal(true) : navigate('/services')}
           className={cn(
             'w-full mt-3 flex items-center justify-center gap-2 py-2.5 rounded-xl',
             'bg-muted/50 border border-border/50',
@@ -163,6 +189,12 @@ export function HeroSection({ className }: HeroSectionProps) {
           <ChevronRight className="w-4 h-4 text-muted-foreground" />
         </button>
       </div>
+
+      {/* Available Services Modal - Only shown when user is logged in */}
+      <AvailableServicesModal 
+        open={showServicesModal} 
+        onOpenChange={setShowServicesModal} 
+      />
     </section>
   );
 }
