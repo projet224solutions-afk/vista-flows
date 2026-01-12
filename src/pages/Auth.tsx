@@ -266,6 +266,10 @@ export default function Auth() {
         console.log('🔐 [Auth] SIGNED_IN détecté - vérification du profil...');
         setIsAuthenticating(true);
         
+        // Vérifier si c'est une connexion OAuth (Google/Facebook)
+        const provider = session.user.app_metadata?.provider;
+        const isOAuthUser = provider === 'google' || provider === 'facebook';
+        
         // Petit délai pour laisser le profil se créer/charger
         await new Promise(resolve => setTimeout(resolve, 500));
         
@@ -278,6 +282,19 @@ export default function Auth() {
           
           if (error) {
             console.error('❌ [Auth] Erreur récupération profil:', error);
+          }
+          
+          // Vérifier si l'utilisateur OAuth a déjà défini un mot de passe
+          const hasSetPassword = localStorage.getItem(`oauth_password_set_${session.user.id}`);
+          const needsPassword = isOAuthUser && !hasSetPassword;
+          
+          if (needsPassword) {
+            console.log('🔐 [Auth] Utilisateur OAuth sans mot de passe, redirection vers /auth/set-password');
+            localStorage.setItem('needs_oauth_password', 'true');
+            localStorage.removeItem('oauth_is_new_signup');
+            navigate('/auth/set-password', { replace: true });
+            setIsAuthenticating(false);
+            return;
           }
           
           if (profile?.role) {

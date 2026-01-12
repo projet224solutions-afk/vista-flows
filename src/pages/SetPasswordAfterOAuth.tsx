@@ -48,9 +48,9 @@ export default function SetPasswordAfterOAuth() {
       return;
     }
 
-    // Vérifier si l'utilisateur a déjà défini un mot de passe
+    // Vérifier si l'utilisateur a déjà défini un mot de passe ou passé l'étape
     const hasSetPassword = localStorage.getItem(`oauth_password_set_${user.id}`);
-    if (hasSetPassword === 'true') {
+    if (hasSetPassword === 'true' || hasSetPassword === 'skipped') {
       redirectToProperDashboard();
     }
   }, [user, navigate]);
