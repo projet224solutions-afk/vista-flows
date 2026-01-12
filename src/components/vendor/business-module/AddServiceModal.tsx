@@ -47,22 +47,24 @@ interface AddServiceModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// Mapping des icônes par code de service
+// Mapping des icônes par code de service (synchronisé avec MerchantOnboarding.tsx)
 const SERVICE_ICONS: Record<string, React.ElementType> = {
   ecommerce: Store,
   restaurant: Utensils,
   beaute: Scissors,
-  vtc: Car,
-  sante: Heart,
-  education: BookOpen,
-  media: Camera,
-  livraison: Truck,
+  reparation: Car,
   location: Building2,
-  sport: Dumbbell,
-  informatique: Laptop,
-  agriculture: Leaf,
-  construction: Hammer,
   menage: Sparkles,
+  livraison: Truck,
+  media: Camera,
+  education: BookOpen,
+  sante: Heart,
+  voyage: Plus, // Plane not imported, using Plus
+  freelance: Plus, // Wrench not imported, using Plus
+  construction: Hammer,
+  agriculture: Leaf,
+  informatique: Laptop,
+  vtc: Car,
   default: Store
 };
 
