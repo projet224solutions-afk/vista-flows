@@ -159,15 +159,23 @@ export default function ProductManagement() {
   const checkPremiumStatus = async (): Promise<boolean> => {
     if (!user?.id) return false;
     try {
-      const { data, error } = await supabase
+      const { data: subData, error: subError } = await supabase
         .from('subscriptions')
-        .select('status, plan_type')
+        .select('status, plan_id')
         .eq('user_id', user.id)
         .eq('status', 'active')
         .single();
       
-      if (error) return false;
-      return data?.plan_type === 'premium' || data?.plan_type === 'enterprise';
+      if (subError || !subData?.plan_id) return false;
+      
+      const { data: planData } = await supabase
+        .from('plans')
+        .select('name')
+        .eq('id', subData.plan_id)
+        .single();
+      
+      const planName = (planData?.name as string | undefined)?.toLowerCase() || '';
+      return planName.includes('premium') || planName.includes('enterprise') || planName.includes('pro');
     } catch {
       return false;
     }
