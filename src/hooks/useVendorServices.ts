@@ -76,8 +76,10 @@ export function useVendorServices() {
 
         if (data && data.length > 0) {
           // Normaliser les données (gérer le cas où service_type est un tableau)
-          const normalizedServices = data.map(service => ({
+          const normalizedServices: VendorProfessionalService[] = data.map(service => ({
             ...service,
+            status: service.status as 'active' | 'pending' | 'suspended' | 'inactive',
+            verification_status: service.verification_status as 'unverified' | 'verified' | 'rejected',
             service_type: Array.isArray(service.service_type) 
               ? service.service_type[0] 
               : service.service_type
@@ -145,8 +147,10 @@ export function useVendorServices() {
       if (fetchError) throw fetchError;
 
       if (data && data.length > 0) {
-        const normalizedServices = data.map(service => ({
+        const normalizedServices: VendorProfessionalService[] = data.map(service => ({
           ...service,
+          status: service.status as 'active' | 'pending' | 'suspended' | 'inactive',
+          verification_status: service.verification_status as 'unverified' | 'verified' | 'rejected',
           service_type: Array.isArray(service.service_type) 
             ? service.service_type[0] 
             : service.service_type
