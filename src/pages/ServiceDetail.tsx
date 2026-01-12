@@ -544,19 +544,36 @@ export default function ServiceDetail() {
             <Card>
               <CardContent className="p-6">
                 <div className="space-y-3">
-                  {service.opening_hours && Object.entries(service.opening_hours).map(([day, hours]) => (
-                    <div key={day} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                      <span className="font-medium capitalize">{
-                        day === 'monday' ? 'Lundi' :
-                        day === 'tuesday' ? 'Mardi' :
-                        day === 'wednesday' ? 'Mercredi' :
-                        day === 'thursday' ? 'Jeudi' :
-                        day === 'friday' ? 'Vendredi' :
-                        day === 'saturday' ? 'Samedi' : 'Dimanche'
-                      }</span>
-                      <span className="text-muted-foreground">{hours}</span>
-                    </div>
-                  ))}
+                  {service.opening_hours && Object.entries(service.opening_hours).map(([day, hours]) => {
+                    const dayName = day === 'monday' ? 'Lundi' :
+                      day === 'tuesday' ? 'Mardi' :
+                      day === 'wednesday' ? 'Mercredi' :
+                      day === 'thursday' ? 'Jeudi' :
+                      day === 'friday' ? 'Vendredi' :
+                      day === 'saturday' ? 'Samedi' : 'Dimanche';
+                    
+                    // Handle both string format ("08:00 - 18:00") and object format ({open, close, closed})
+                    let hoursDisplay: string;
+                    if (typeof hours === 'string') {
+                      hoursDisplay = hours;
+                    } else if (typeof hours === 'object' && hours !== null) {
+                      const hoursObj = hours as { open?: string; close?: string; closed?: boolean };
+                      if (hoursObj.closed) {
+                        hoursDisplay = 'Fermé';
+                      } else {
+                        hoursDisplay = `${hoursObj.open || '08:00'} - ${hoursObj.close || '18:00'}`;
+                      }
+                    } else {
+                      hoursDisplay = 'Non défini';
+                    }
+                    
+                    return (
+                      <div key={day} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                        <span className="font-medium capitalize">{dayName}</span>
+                        <span className="text-muted-foreground">{hoursDisplay}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
