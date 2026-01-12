@@ -305,3 +305,6 @@ verify_jwt = true
 
 [functions.mobile-money-withdrawal]
 verify_jwt = true
+
+[functions.djomy-test-sandbox]
+verify_jwt = false

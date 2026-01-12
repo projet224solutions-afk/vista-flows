@@ -219,11 +219,26 @@ export class DjomyClient {
     }
     
     const data = JSON.parse(responseText);
-    const expiresIn = data.expires_in || data.expiresIn || 3600;
+    
+    // La réponse Djomy peut être: { data: { accessToken: "..." } } ou { accessToken: "..." }
+    const tokenData = data.data || data;
+    const accessToken = tokenData.access_token || tokenData.accessToken;
+    const expiresIn = tokenData.expires_in || tokenData.expiresIn || data.expires_in || 3600;
+    
+    if (!accessToken) {
+      logStep("Token parsing failed", { data });
+      throw new Error("Djomy auth response missing access token");
+    }
+    
     const expiresAt = Date.now() + (expiresIn - 300) * 1000; // -5min de marge
     
+    logStep("✅ Token obtained successfully", { 
+      tokenPreview: accessToken.substring(0, 30) + "...",
+      expiresIn 
+    });
+    
     return {
-      accessToken: data.access_token || data.accessToken,
+      accessToken,
       expiresAt
     };
   }
@@ -444,20 +459,47 @@ export class DjomyClient {
 
 /**
  * Crée un client Djomy à partir des variables d'environnement
+ * 
+ * Mode Sandbox (test):
+ *   - Utilise DJOMY_CLIENT_ID_SANDBOX et DJOMY_CLIENT_SECRET_SANDBOX
+ *   - Endpoint: https://sandbox-api.djomy.africa
+ *   - Aucun argent réel n'est transféré
+ * 
+ * Mode Production:
+ *   - Utilise DJOMY_CLIENT_ID et DJOMY_CLIENT_SECRET
+ *   - Endpoint: https://api.djomy.africa
+ *   - Paiements réels avec de l'argent réel
+ * 
+ * @param useSandbox - Force le mode sandbox si true
  */
-export function createDjomyClient(): DjomyClient {
-  const clientId = Deno.env.get("DJOMY_CLIENT_ID")?.trim();
-  const clientSecret = Deno.env.get("DJOMY_CLIENT_SECRET")?.trim();
-  const useSandbox = Deno.env.get("DJOMY_SANDBOX") === "true";
+export function createDjomyClient(useSandbox?: boolean): DjomyClient {
+  // Détermine le mode: paramètre > env var > défaut (production)
+  const sandboxMode = useSandbox ?? Deno.env.get("DJOMY_SANDBOX") === "true";
   
-  if (!clientId || !clientSecret) {
-    throw new Error("DJOMY_CLIENT_ID et DJOMY_CLIENT_SECRET sont requis");
+  let clientId: string | undefined;
+  let clientSecret: string | undefined;
+  
+  if (sandboxMode) {
+    // 🧪 Mode Sandbox - Test sans argent réel
+    clientId = Deno.env.get("DJOMY_CLIENT_ID_SANDBOX")?.trim();
+    clientSecret = Deno.env.get("DJOMY_CLIENT_SECRET_SANDBOX")?.trim();
+    
+    if (!clientId || !clientSecret) {
+      throw new Error("Mode Sandbox: DJOMY_CLIENT_ID_SANDBOX et DJOMY_CLIENT_SECRET_SANDBOX sont requis");
+    }
+    
+    console.log(`[DJOMY] 🧪 Mode SANDBOX activé - ${clientId.substring(0, 25)}...`);
+  } else {
+    // 💰 Mode Production - Paiements réels
+    clientId = Deno.env.get("DJOMY_CLIENT_ID")?.trim();
+    clientSecret = Deno.env.get("DJOMY_CLIENT_SECRET")?.trim();
+    
+    if (!clientId || !clientSecret) {
+      throw new Error("Mode Production: DJOMY_CLIENT_ID et DJOMY_CLIENT_SECRET sont requis");
+    }
+    
+    console.log(`[DJOMY] 💰 Mode PRODUCTION activé - ${clientId.substring(0, 25)}...`);
   }
   
-  // Validation du format du Client ID
-  if (!clientId.startsWith("djomy-merchant-")) {
-    throw new Error(`Format Client ID invalide: doit commencer par "djomy-merchant-"`);
-  }
-  
-  return new DjomyClient({ clientId, clientSecret, useSandbox });
+  return new DjomyClient({ clientId, clientSecret, useSandbox: sandboxMode });
 }
