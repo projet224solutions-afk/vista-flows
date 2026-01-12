@@ -139,19 +139,6 @@ export function useServiceEcommerceStats(serviceId?: string) {
       const bookings = (bookingsData || []) as any[];
       console.log('📦 Bookings trouvés:', bookings.length);
 
-      // Pas de séparation POS/Online pour service_bookings (colonne source n'existe pas)
-      const posBookings: any[] = [];
-      const onlineBookings = bookings;
-
-      // Calculate stats for all, POS, and Online
-      const orderStats = calculateOrderStats(bookings);
-      const orderStatsPos = calculateOrderStats(posBookings);
-      const orderStatsOnline = calculateOrderStats(onlineBookings);
-
-      const salesStats = calculateSalesStats(bookings, startOfDay, startOfWeek, startOfMonth);
-      const salesStatsPos = calculateSalesStats(posBookings, startOfDay, startOfWeek, startOfMonth);
-      const salesStatsOnline = calculateSalesStats(onlineBookings, startOfDay, startOfWeek, startOfMonth);
-
       // 2. Récupérer le user_id et vendor_id du service professionnel
       const { data: serviceData } = await supabase
         .from('professional_services')
@@ -213,7 +200,7 @@ export function useServiceEcommerceStats(serviceId?: string) {
         lowStock: allProducts.filter(p => (p.stock_quantity || 0) <= 5 && p.is_available !== false).length,
       };
 
-      // 4. Charger aussi les commandes depuis la table orders (legacy)
+      // 4. Charger les commandes depuis la table orders (pour service e-commerce uniquement)
       let allOrders = [...bookings];
       
       if (userId) {
@@ -224,9 +211,10 @@ export function useServiceEcommerceStats(serviceId?: string) {
           .single();
         
         if (vendorData?.id) {
+          // Charger les commandes e-commerce depuis la table orders
           const { data: legacyOrders } = await supabase
             .from('orders')
-            .select('id, status, total_amount, created_at, payment_status, customer_id')
+            .select('id, status, total_amount, created_at, payment_status, customer_id, source')
             .eq('vendor_id', vendorData.id)
             .order('created_at', { ascending: false });
           
@@ -237,14 +225,22 @@ export function useServiceEcommerceStats(serviceId?: string) {
               client_id: o.customer_id
             }));
             allOrders = [...allOrders, ...normalizedOrders];
-            console.log('📦 Legacy orders trouvés:', legacyOrders.length);
+            console.log('📦 E-commerce orders trouvés:', legacyOrders.length);
           }
         }
       }
 
-      // Recalculer les stats avec toutes les commandes
+      // Recalculer les stats avec toutes les commandes e-commerce
       const allOrderStats = calculateOrderStats(allOrders);
       const allSalesStats = calculateSalesStats(allOrders, startOfDay, startOfWeek, startOfMonth);
+      
+      // Séparer POS vs Online pour les commandes legacy
+      const posOrders = allOrders.filter(o => (o as any).source === 'pos');
+      const onlineOrders = allOrders.filter(o => (o as any).source !== 'pos');
+      const posOrderStats = calculateOrderStats(posOrders);
+      const onlineOrderStats = calculateOrderStats(onlineOrders);
+      const posSalesStats = calculateSalesStats(posOrders, startOfDay, startOfWeek, startOfMonth);
+      const onlineSalesStats = calculateSalesStats(onlineOrders, startOfDay, startOfWeek, startOfMonth);
 
       // 5. Compter les clients uniques (depuis toutes les commandes)
       const uniqueCustomerIds = new Set(allOrders.filter(b => b.client_id).map(b => b.client_id));
@@ -258,16 +254,16 @@ export function useServiceEcommerceStats(serviceId?: string) {
         newThisMonth: newUniqueThisMonth.size,
       };
 
-      // Utiliser les stats recalculées avec toutes les données
+      // Utiliser les stats recalculées avec toutes les données e-commerce
       setStats({
         orders: allOrderStats,
-        ordersPos: orderStatsPos,
-        ordersOnline: orderStatsOnline,
+        ordersPos: posOrderStats,
+        ordersOnline: onlineOrderStats,
         products: productStats,
         clients: clientStats,
         sales: allSalesStats,
-        salesPos: salesStatsPos,
-        salesOnline: salesStatsOnline,
+        salesPos: posSalesStats,
+        salesOnline: onlineSalesStats,
       });
 
       // 6. Récentes commandes pour l'affichage (toutes sources)
@@ -278,7 +274,7 @@ export function useServiceEcommerceStats(serviceId?: string) {
           status: b.status,
           total_amount: b.total_amount || 0,
           created_at: b.created_at,
-          source: 'online',
+          source: (b as any).source || 'online',
         }))
       );
 
