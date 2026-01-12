@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Lock, Eye, EyeOff, Loader2, CheckCircle2, Shield, 
-  AlertCircle, Mail, ArrowRight, SkipForward
+  AlertCircle, Mail, ArrowRight
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -48,9 +48,9 @@ export default function SetPasswordAfterOAuth() {
       return;
     }
 
-    // Vérifier si l'utilisateur a déjà défini un mot de passe ou passé l'étape
+    // Seul "true" permet de passer - "skipped" n'est plus accepté (mot de passe obligatoire)
     const hasSetPassword = localStorage.getItem(`oauth_password_set_${user.id}`);
-    if (hasSetPassword === 'true' || hasSetPassword === 'skipped') {
+    if (hasSetPassword === 'true') {
       redirectToProperDashboard();
     }
   }, [user, navigate]);
@@ -110,13 +110,8 @@ export default function SetPasswordAfterOAuth() {
     }
   };
 
-  const handleSkip = () => {
-    // Permettre de passer cette étape (optionnel)
-    localStorage.setItem(`oauth_password_set_${user?.id}`, 'skipped');
-    localStorage.removeItem('needs_oauth_password');
-    toast.info('Vous pourrez définir votre mot de passe plus tard dans les paramètres.');
-    redirectToProperDashboard();
-  };
+  // SUPPRIMÉ: La fonction handleSkip n'est plus disponible
+  // Les utilisateurs OAuth DOIVENT définir un mot de passe
 
   if (success) {
     return (
@@ -156,16 +151,15 @@ export default function SetPasswordAfterOAuth() {
         </CardHeader>
 
         <CardContent className="p-6 space-y-6">
-          {/* Message d'information */}
-          <Alert className="bg-blue-50 border-blue-200">
-            <Mail className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-800">
-              <strong>Vous êtes connecté via Google.</strong><br />
-              Définissez un mot de passe pour pouvoir aussi vous connecter par email.
+          {/* Message d'information - OBLIGATOIRE */}
+          <Alert className="bg-amber-50 border-amber-200">
+            <Shield className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800">
+              <strong>Étape obligatoire de sécurité</strong><br />
+              Pour protéger votre compte, vous devez définir un mot de passe avant de continuer.
               <br /><br />
               <span className="text-sm opacity-90">
-                Vous n'avez pas encore de mot de passe. En définissant un mot de passe, 
-                vous pourrez aussi vous connecter avec votre email.
+                Ce mot de passe vous permettra de vous connecter même sans Google.
               </span>
             </AlertDescription>
           </Alert>
@@ -265,8 +259,8 @@ export default function SetPasswordAfterOAuth() {
               </Alert>
             )}
 
-            {/* Boutons d'action */}
-            <div className="space-y-3 pt-2">
+            {/* Bouton d'action - PAS de bouton "Passer" */}
+            <div className="pt-2">
               <Button
                 type="submit"
                 className="w-full h-12 text-base font-semibold"
@@ -280,21 +274,10 @@ export default function SetPasswordAfterOAuth() {
                 ) : (
                   <>
                     <Lock className="mr-2 h-5 w-5" />
-                    Définir le mot de passe
+                    Définir le mot de passe et continuer
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}
-              </Button>
-
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full text-muted-foreground hover:text-foreground"
-                onClick={handleSkip}
-                disabled={loading}
-              >
-                <SkipForward className="mr-2 h-4 w-4" />
-                Passer cette étape
               </Button>
             </div>
           </form>
