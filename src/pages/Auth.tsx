@@ -1305,7 +1305,7 @@ export default function Auth() {
           <div className="max-w-6xl mx-auto px-4 mt-6 relative z-50">
             <Card className="shadow-2xl border-2 border-primary bg-white overflow-hidden">
             <CardContent className="p-6 md:p-8">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-start mb-6">
                 <Button
                   variant="ghost"
                   onClick={() => {
@@ -1317,16 +1317,28 @@ export default function Auth() {
                   <ArrowLeft className="w-4 h-4" />
                   Retour
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleSkipServiceSelection}
-                  className="gap-2 bg-primary/10 hover:bg-primary/20 border-primary"
-                >
-                  <Store className="w-4 h-4" />
-                  Boutique commerce de détail
-                </Button>
               </div>
               
+              {/* 🛒 Bouton E-commerce classique - Centré et stylé */}
+              <div className="flex justify-center mb-6">
+                <button
+                  onClick={handleSkipServiceSelection}
+                  className="group relative flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 text-white rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 border-2 border-white/20"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="relative flex items-center gap-3">
+                    <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl backdrop-blur-sm">
+                      <Store className="w-6 h-6" />
+                    </div>
+                    <div className="text-left">
+                      <span className="block text-lg font-bold">Mode Vendeur E-commerce classique</span>
+                      <span className="block text-sm text-white/80">(vente de produits uniquement)</span>
+                    </div>
+                    <Sparkles className="w-5 h-5 animate-pulse" />
+                  </div>
+                </button>
+              </div>
+
               <div className="text-center mb-6">
                 <h3 className="text-xl md:text-2xl font-bold mb-2">
                   Choisissez votre Type de Service
