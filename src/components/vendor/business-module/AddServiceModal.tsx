@@ -278,7 +278,8 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
     return SERVICE_ICONS[code] || SERVICE_ICONS.default;
   };
 
-  // Services hardcodés identiques au formulaire d'inscription
+  // Services exactement comme sur le formulaire d'inscription
+  // Codes correspondants aux service_types en BDD
   const DISPLAY_SERVICES = {
     // Services de Proximité Populaires (6)
     proximity: [
@@ -300,7 +301,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
       { code: 'sante', name: 'Santé & Bien-être', icon: '❤️', desc: 'Pharmacie & soins' },
       { code: 'maison', name: 'Maison & Déco', icon: '🏠', desc: 'Intérieur' },
     ],
-    // Produits Numériques (4)
+    // Produits Numériques (4) - utilise les codes BDD existants
     digital: [
       { code: 'ecommerce', name: 'Logiciel', icon: '💻', desc: 'Antivirus & SaaS' },
       { code: 'livraison', name: 'Dropshipping', icon: '📦', desc: 'Amazon, AliExpress' },

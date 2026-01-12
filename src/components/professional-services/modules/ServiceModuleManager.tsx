@@ -41,40 +41,39 @@ interface ServiceModuleManagerProps {
   businessName: string;
 }
 
-// Mapping des codes OFFICIELS de service_types vers les modules
-// Les codes legacy sont normalisés via normalizeServiceCode()
+// Mapping des 18 codes officiels de service_types vers les modules
+// Synchronisé avec AddServiceModal.tsx et Auth.tsx
 const MODULE_MAP: Record<string, React.FC<{ serviceId: string; businessName?: string }>> = {
-  // ===== Codes officiels (service_types.code en BDD) =====
-  'ecommerce': EcommerceModule,
-  'restaurant': RestaurantModule,
-  'beaute': BeautyModule,
-  'reparation': RepairModule,
-  'location': RealEstateModule,
-  'menage': CleaningModule,
-  'livraison': DeliveryModule,
-  'media': PhotoStudioModule,
-  'education': EducationModule,
-  'sante': HealthModule,
-  'voyage': TransportModule,
-  'freelance': FreelanceModule,
-  'construction': ConstructionModule,
-  'agriculture': AgricultureModule,
-  'informatique': DeveloperModule,
-  'vtc': VTCModule,
+  // ===== Services de Proximité Populaires (6) =====
+  'restaurant': RestaurantModule,       // Restaurant - Cuisine & plats
+  'beaute': BeautyModule,               // Beauté & Coiffure - Soins & styling
+  'vtc': VTCModule,                     // Transport VTC - Véhicules privés
+  'reparation': RepairModule,           // Réparation - Électro & mécanique
+  'menage': CleaningModule,             // Nettoyage - Ménage & pressing
+  'informatique': DeveloperModule,      // Informatique - Tech & dépannage
   
-  // ===== Extensions (non présents dans service_types mais utilisés) =====
-  'sport': FitnessModule,
+  // ===== Services Professionnels (8) =====
+  'sport': FitnessModule,               // Sport & Fitness - Coaching
+  'location': RealEstateModule,         // Immobilier - Location & vente
+  'media': PhotoStudioModule,           // Photo & Vidéo - Événements
+  'construction': ConstructionModule,   // Construction & BTP - Bâtiment
+  'agriculture': AgricultureModule,     // Agriculture - Produits locaux
+  'freelance': FreelanceModule,         // Administratif - Secrétariat
+  'sante': HealthModule,                // Santé & Bien-être - Pharmacie & soins
+  'maison': HomeDecorModule,            // Maison & Déco - Intérieur
+  
+  // ===== Produits Numériques (4) =====
+  'ecommerce': EcommerceModule,         // Logiciel - Antivirus & SaaS (aussi E-commerce)
+  'livraison': DropshippingModule,      // Dropshipping - Amazon, AliExpress
+  'education': EducationModule,         // Formation - Cours & coaching
+  'voyage': EcommerceModule,            // Livres - eBooks & affiliation (Digital products)
+  
+  // ===== Extensions legacy (compatibilité) =====
   'mode': FashionModule,
   'electronique': ElectronicsModule,
-  'maison': HomeDecorModule,
   'dropshipping': DropshippingModule,
   'coiff': HairdresserModule,
   'coach': CoachModule,
-  'digital_voyage': TransportModule,
-  'digital_logiciel': DeveloperModule,
-  'digital_formation': EducationModule,
-  'digital_livre': EducationModule,
-  'digital_custom': EcommerceModule,
 };
 
 export function ServiceModuleManager({
