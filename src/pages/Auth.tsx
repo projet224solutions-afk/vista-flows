@@ -1357,7 +1357,6 @@ export default function Auth() {
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                   {[
-                    { id: 'ecommerce', name: 'Boutique', icon: '🏪', desc: 'Commerce de détail' },
                     { id: 'restaurant', name: 'Restaurant', icon: '🍽️', desc: 'Cuisine & plats' },
                     { id: 'beaute', name: 'Beauté & Coiffure', icon: '💇', desc: 'Soins & styling' },
                     { id: 'vtc', name: 'Transport VTC', icon: '🚗', desc: 'Véhicules privés' },
