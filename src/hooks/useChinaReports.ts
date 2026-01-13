@@ -187,7 +187,14 @@ export const useChinaReports = (): UseChinaReportsReturn => {
 
     const { data, error } = await query;
     if (error) throw error;
-    return (data as ChinaSupplierOrder[]) || [];
+    // Transform Json fields to proper types
+    return ((data || []) as any[]).map(order => ({
+      ...order,
+      status_history: Array.isArray(order.status_history) 
+        ? order.status_history 
+        : (order.status_history ? [order.status_history] : []),
+      items: Array.isArray(order.items) ? order.items : []
+    })) as ChinaSupplierOrder[];
   };
 
   const fetchLogistics = async (orderIds: string[]) => {
@@ -566,7 +573,16 @@ export const useChinaReports = (): UseChinaReportsReturn => {
         .limit(limit);
 
       if (error) throw error;
-      setReports((data as ChinaDropshipReport[]) || []);
+      // Transform Json fields to proper types
+      setReports(((data || []) as any[]).map(report => ({
+        ...report,
+        top_suppliers: Array.isArray(report.top_suppliers) 
+          ? report.top_suppliers 
+          : (typeof report.top_suppliers === 'string' ? JSON.parse(report.top_suppliers) : []),
+        top_products: Array.isArray(report.top_products)
+          ? report.top_products
+          : (typeof report.top_products === 'string' ? JSON.parse(report.top_products) : [])
+      })) as ChinaDropshipReport[]);
     } catch (error) {
       console.error('Error loading reports:', error);
       toast.error('Erreur chargement rapports');
@@ -584,7 +600,17 @@ export const useChinaReports = (): UseChinaReportsReturn => {
         .single();
 
       if (error) throw error;
-      return data as ChinaDropshipReport;
+      // Transform Json fields to proper types
+      const report = data as any;
+      return {
+        ...report,
+        top_suppliers: Array.isArray(report.top_suppliers) 
+          ? report.top_suppliers 
+          : (typeof report.top_suppliers === 'string' ? JSON.parse(report.top_suppliers) : []),
+        top_products: Array.isArray(report.top_products)
+          ? report.top_products
+          : (typeof report.top_products === 'string' ? JSON.parse(report.top_products) : [])
+      } as ChinaDropshipReport;
     } catch (error) {
       console.error('Error getting report:', error);
       return null;

@@ -295,7 +295,7 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
         import_status: 'pending'
       };
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('china_product_imports')
         .insert(importRecord)
         .select()
@@ -458,7 +458,7 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
         supplier_payment_status: 'pending'
       };
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('china_supplier_orders')
         .insert(orderData)
         .select()
@@ -816,10 +816,12 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
 
   const addLog = useCallback(async (log: Partial<ChinaDropshipLog>) => {
     try {
-      await supabase.from('china_dropship_logs').insert({
+      await (supabase as any).from('china_dropship_logs').insert({
         vendor_id: vendorId,
-        ...log,
-        created_at: new Date().toISOString()
+        log_type: log.log_type || 'sync',
+        message: log.message || '',
+        severity: log.severity || 'info',
+        details: log.details || {}
       });
     } catch (error) {
       console.error('[ChinaDropship] Erreur ajout log:', error);
