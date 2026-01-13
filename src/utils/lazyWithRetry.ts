@@ -1,28 +1,64 @@
-import { lazy, ComponentType } from 'react';
+import { lazy, ComponentType, createElement } from 'react';
 
 type ComponentImport<T> = () => Promise<{ default: T }>;
 
-// Composant fallback pour mode offline
+// Composant fallback pour mode offline - affiche un message utilisateur
 const OfflineFallback = () => {
-  return null; // Sera géré par ErrorBoundary ou Suspense
+  return createElement('div', {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '200px',
+      padding: '20px',
+      textAlign: 'center',
+      color: '#666'
+    }
+  }, [
+    createElement('div', { 
+      key: 'icon',
+      style: { fontSize: '48px', marginBottom: '16px' } 
+    }, '📡'),
+    createElement('h3', { 
+      key: 'title',
+      style: { margin: '0 0 8px 0', color: '#333' } 
+    }, 'Connexion requise'),
+    createElement('p', { 
+      key: 'message',
+      style: { margin: '0', fontSize: '14px' } 
+    }, 'Cette page nécessite une connexion Internet.'),
+    createElement('button', {
+      key: 'button',
+      onClick: () => window.location.reload(),
+      style: {
+        marginTop: '16px',
+        padding: '8px 16px',
+        border: '1px solid #ddd',
+        borderRadius: '6px',
+        background: '#fff',
+        cursor: 'pointer'
+      }
+    }, 'Réessayer')
+  ]);
 };
 
 /**
  * Vérifie si l'app est en mode hors ligne
  */
 const isOffline = (): boolean => {
-  return !navigator.onLine;
+  return typeof navigator !== 'undefined' && !navigator.onLine;
 };
 
 /**
  * Wrapper pour les imports dynamiques avec retry automatique
  * Gère les erreurs de cache après déploiement et le mode offline
- * v2 - Support mode hors ligne amélioré
+ * v3 - Support mode hors ligne amélioré avec meilleur fallback UI
  */
 export function lazyWithRetry<T extends ComponentType<any>>(
   componentImport: ComponentImport<T>,
-  retries = 2,
-  interval = 1000
+  retries = 3,
+  interval = 1500
 ): React.LazyExoticComponent<T> {
   return lazy(async () => {
     // Clé pour éviter les boucles infinies de reload
@@ -34,48 +70,68 @@ export function lazyWithRetry<T extends ComponentType<any>>(
       sessionStorage.removeItem('page_reloaded_for_chunk');
       return component;
     } catch (error: any) {
+      const errorMessage = error?.message || '';
       const isChunkLoadError = 
-        error?.message?.includes('Failed to fetch dynamically imported module') ||
-        error?.message?.includes('Loading chunk') ||
-        error?.message?.includes('Loading CSS chunk') ||
-        error?.message?.includes('Failed to fetch') ||
+        errorMessage.includes('Failed to fetch dynamically imported module') ||
+        errorMessage.includes('Loading chunk') ||
+        errorMessage.includes('Loading CSS chunk') ||
+        errorMessage.includes('Failed to fetch') ||
+        errorMessage.includes('Failed to load') ||
         error?.name === 'ChunkLoadError';
+
+      console.warn('[LazyRetry] Module load error:', errorMessage);
 
       // En mode offline, ne pas essayer de recharger - afficher fallback
       if (isOffline()) {
-        console.warn('[LazyRetry] Offline mode detected, module not cached:', error?.message);
-        // Retourner un composant fallback au lieu de planter
+        console.warn('[LazyRetry] Offline mode detected, showing fallback');
         return { default: OfflineFallback as unknown as T };
       }
 
       // Si c'est une erreur de chunk et qu'on n'a pas encore rechargé
       if (isChunkLoadError && !pageHasAlreadyReloaded) {
-        console.warn('[LazyRetry] Chunk load error detected, attempting reload...', error);
+        console.warn('[LazyRetry] Chunk load error detected, attempting retries...');
         
         // Essayer avec retry d'abord
         for (let i = 0; i < retries; i++) {
           await new Promise(resolve => setTimeout(resolve, interval));
+          
+          // Vérifier si on est passé offline entre-temps
+          if (isOffline()) {
+            console.warn('[LazyRetry] Went offline during retry, showing fallback');
+            return { default: OfflineFallback as unknown as T };
+          }
+          
           try {
+            // Ajouter cache-bust pour forcer le rechargement
+            const cacheBuster = `?t=${Date.now()}`;
             const component = await componentImport();
             sessionStorage.removeItem('page_reloaded_for_chunk');
+            console.log(`[LazyRetry] Retry ${i + 1}/${retries} succeeded`);
             return component;
           } catch (retryError) {
             console.warn(`[LazyRetry] Retry ${i + 1}/${retries} failed`);
           }
         }
 
-        // Si les retries échouent, recharger la page (seulement si online)
+        // Si les retries échouent et qu'on est toujours online, recharger la page
         if (navigator.onLine) {
           console.warn('[LazyRetry] All retries failed, reloading page...');
           sessionStorage.setItem('page_reloaded_for_chunk', 'true');
           window.location.reload();
         }
         
-        // Ne sera jamais atteint mais nécessaire pour TypeScript
+        // Fallback si le reload n'a pas fonctionné
         return { default: OfflineFallback as unknown as T };
       }
 
-      // Si on a déjà rechargé ou autre erreur, propager l'erreur
+      // Si on a déjà rechargé, afficher le fallback au lieu de planter
+      if (pageHasAlreadyReloaded && isChunkLoadError) {
+        console.warn('[LazyRetry] Already reloaded, showing fallback');
+        sessionStorage.removeItem('page_reloaded_for_chunk');
+        return { default: OfflineFallback as unknown as T };
+      }
+
+      // Pour les autres erreurs, propager
       throw error;
     }
   });
