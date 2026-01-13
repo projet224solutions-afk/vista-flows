@@ -4443,6 +4443,303 @@ export type Database = {
           },
         ]
       }
+      dropship_china_costs: {
+        Row: {
+          china_domestic_shipping: number | null
+          created_at: string | null
+          estimated_customs: number | null
+          exchange_rate: number | null
+          exchange_rate_date: string | null
+          final_price_local: number | null
+          id: string
+          international_shipping: number | null
+          is_current: boolean | null
+          local_currency: string | null
+          platform_fees: number | null
+          product_id: string
+          supplier_currency: string | null
+          supplier_price: number
+          total_cost_usd: number | null
+          updated_at: string | null
+          vendor_id: string
+          vendor_margin: number | null
+          vendor_margin_percent: number | null
+        }
+        Insert: {
+          china_domestic_shipping?: number | null
+          created_at?: string | null
+          estimated_customs?: number | null
+          exchange_rate?: number | null
+          exchange_rate_date?: string | null
+          final_price_local?: number | null
+          id?: string
+          international_shipping?: number | null
+          is_current?: boolean | null
+          local_currency?: string | null
+          platform_fees?: number | null
+          product_id: string
+          supplier_currency?: string | null
+          supplier_price: number
+          total_cost_usd?: number | null
+          updated_at?: string | null
+          vendor_id: string
+          vendor_margin?: number | null
+          vendor_margin_percent?: number | null
+        }
+        Update: {
+          china_domestic_shipping?: number | null
+          created_at?: string | null
+          estimated_customs?: number | null
+          exchange_rate?: number | null
+          exchange_rate_date?: string | null
+          final_price_local?: number | null
+          id?: string
+          international_shipping?: number | null
+          is_current?: boolean | null
+          local_currency?: string | null
+          platform_fees?: number | null
+          product_id?: string
+          supplier_currency?: string | null
+          supplier_price?: number
+          total_cost_usd?: number | null
+          updated_at?: string | null
+          vendor_id?: string
+          vendor_margin?: number | null
+          vendor_margin_percent?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dropship_china_costs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "dropship_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dropship_china_imports: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          error_message: string | null
+          extracted_data: Json | null
+          id: string
+          import_status: string | null
+          platform_product_id: string | null
+          platform_type: string
+          product_id: string | null
+          source_url: string
+          vendor_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          extracted_data?: Json | null
+          id?: string
+          import_status?: string | null
+          platform_product_id?: string | null
+          platform_type: string
+          product_id?: string | null
+          source_url: string
+          vendor_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          extracted_data?: Json | null
+          id?: string
+          import_status?: string | null
+          platform_product_id?: string | null
+          platform_type?: string
+          product_id?: string | null
+          source_url?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dropship_china_imports_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "dropship_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dropship_china_logs: {
+        Row: {
+          created_at: string | null
+          details: Json | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          log_type: string
+          message: string
+          severity: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          log_type: string
+          message: string
+          severity?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          log_type?: string
+          message?: string
+          severity?: string | null
+          vendor_id?: string | null
+        }
+        Relationships: []
+      }
+      dropship_china_reports: {
+        Row: {
+          created_at: string | null
+          data: Json
+          id: string
+          period_end: string
+          period_start: string
+          report_type: string
+          summary: Json | null
+          vendor_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json
+          id?: string
+          period_end: string
+          period_start: string
+          report_type: string
+          summary?: Json | null
+          vendor_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json
+          id?: string
+          period_end?: string
+          period_start?: string
+          report_type?: string
+          summary?: Json | null
+          vendor_id?: string | null
+        }
+        Relationships: []
+      }
+      dropship_china_settings: {
+        Row: {
+          auto_block_unavailable: boolean | null
+          auto_disable_low_score: boolean | null
+          auto_update_prices: boolean | null
+          created_at: string | null
+          default_customs_estimate_percent: number | null
+          default_transport_method: string | null
+          id: string
+          min_supplier_score: number | null
+          preferred_incoterm: string | null
+          price_increase_alert_percent: number | null
+          show_origin_to_customer: boolean | null
+          unavailable_threshold_days: number | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          auto_block_unavailable?: boolean | null
+          auto_disable_low_score?: boolean | null
+          auto_update_prices?: boolean | null
+          created_at?: string | null
+          default_customs_estimate_percent?: number | null
+          default_transport_method?: string | null
+          id?: string
+          min_supplier_score?: number | null
+          preferred_incoterm?: string | null
+          price_increase_alert_percent?: number | null
+          show_origin_to_customer?: boolean | null
+          unavailable_threshold_days?: number | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          auto_block_unavailable?: boolean | null
+          auto_disable_low_score?: boolean | null
+          auto_update_prices?: boolean | null
+          created_at?: string | null
+          default_customs_estimate_percent?: number | null
+          default_transport_method?: string | null
+          id?: string
+          min_supplier_score?: number | null
+          preferred_incoterm?: string | null
+          price_increase_alert_percent?: number | null
+          show_origin_to_customer?: boolean | null
+          unavailable_threshold_days?: number | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: []
+      }
+      dropship_china_tracking: {
+        Row: {
+          actual_arrival: string | null
+          carrier_name: string | null
+          created_at: string | null
+          estimated_arrival: string | null
+          id: string
+          location: string | null
+          order_id: string
+          segment_type: string
+          status: string | null
+          status_details: string | null
+          tracking_number: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          actual_arrival?: string | null
+          carrier_name?: string | null
+          created_at?: string | null
+          estimated_arrival?: string | null
+          id?: string
+          location?: string | null
+          order_id: string
+          segment_type: string
+          status?: string | null
+          status_details?: string | null
+          tracking_number?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          actual_arrival?: string | null
+          carrier_name?: string | null
+          created_at?: string | null
+          estimated_arrival?: string | null
+          id?: string
+          location?: string | null
+          order_id?: string
+          segment_type?: string
+          status?: string | null
+          status_details?: string | null
+          tracking_number?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dropship_china_tracking_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dropship_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dropship_incidents: {
         Row: {
           created_at: string | null
@@ -4535,23 +4832,33 @@ export type Database = {
       }
       dropship_orders: {
         Row: {
+          actual_delivery_days: number | null
+          china_internal_tracking: string | null
+          cost_breakdown: Json | null
           created_at: string | null
           customer_currency: string | null
           customer_notes: string | null
           customer_order_id: string
           customer_total: number
+          customs_cleared_at: string | null
+          customs_status: string | null
           delivered_at: string | null
           dropship_product_id: string | null
+          estimated_customs_delay: number | null
           estimated_delivery_date: string | null
           has_issue: boolean | null
           id: string
+          international_tracking: string | null
           issue_description: string | null
           issue_resolved_at: string | null
           issue_type: string | null
           items: Json
+          last_mile_carrier: string | null
           metadata: Json | null
           order_reference: string
           profit_amount: number | null
+          quality_check_notes: string | null
+          quality_check_status: string | null
           quantity: number
           shipped_at: string | null
           shipping_address: Json | null
@@ -4559,12 +4866,16 @@ export type Database = {
           supplier_currency: string | null
           supplier_id: string
           supplier_notes: string | null
+          supplier_order_data: Json | null
+          supplier_order_ref: string | null
           supplier_order_reference: string | null
           supplier_paid_at: string | null
           supplier_payment_status: string | null
           supplier_total: number
           tracking_number: string | null
+          tracking_segments: Json | null
           tracking_url: string | null
+          transport_method: string | null
           updated_at: string | null
           vendor_id: string
           vendor_notes: string | null
@@ -4572,23 +4883,33 @@ export type Database = {
           vendor_payment_status: string | null
         }
         Insert: {
+          actual_delivery_days?: number | null
+          china_internal_tracking?: string | null
+          cost_breakdown?: Json | null
           created_at?: string | null
           customer_currency?: string | null
           customer_notes?: string | null
           customer_order_id: string
           customer_total: number
+          customs_cleared_at?: string | null
+          customs_status?: string | null
           delivered_at?: string | null
           dropship_product_id?: string | null
+          estimated_customs_delay?: number | null
           estimated_delivery_date?: string | null
           has_issue?: boolean | null
           id?: string
+          international_tracking?: string | null
           issue_description?: string | null
           issue_resolved_at?: string | null
           issue_type?: string | null
           items?: Json
+          last_mile_carrier?: string | null
           metadata?: Json | null
           order_reference?: string
           profit_amount?: number | null
+          quality_check_notes?: string | null
+          quality_check_status?: string | null
           quantity?: number
           shipped_at?: string | null
           shipping_address?: Json | null
@@ -4596,12 +4917,16 @@ export type Database = {
           supplier_currency?: string | null
           supplier_id: string
           supplier_notes?: string | null
+          supplier_order_data?: Json | null
+          supplier_order_ref?: string | null
           supplier_order_reference?: string | null
           supplier_paid_at?: string | null
           supplier_payment_status?: string | null
           supplier_total: number
           tracking_number?: string | null
+          tracking_segments?: Json | null
           tracking_url?: string | null
+          transport_method?: string | null
           updated_at?: string | null
           vendor_id: string
           vendor_notes?: string | null
@@ -4609,23 +4934,33 @@ export type Database = {
           vendor_payment_status?: string | null
         }
         Update: {
+          actual_delivery_days?: number | null
+          china_internal_tracking?: string | null
+          cost_breakdown?: Json | null
           created_at?: string | null
           customer_currency?: string | null
           customer_notes?: string | null
           customer_order_id?: string
           customer_total?: number
+          customs_cleared_at?: string | null
+          customs_status?: string | null
           delivered_at?: string | null
           dropship_product_id?: string | null
+          estimated_customs_delay?: number | null
           estimated_delivery_date?: string | null
           has_issue?: boolean | null
           id?: string
+          international_tracking?: string | null
           issue_description?: string | null
           issue_resolved_at?: string | null
           issue_type?: string | null
           items?: Json
+          last_mile_carrier?: string | null
           metadata?: Json | null
           order_reference?: string
           profit_amount?: number | null
+          quality_check_notes?: string | null
+          quality_check_status?: string | null
           quantity?: number
           shipped_at?: string | null
           shipping_address?: Json | null
@@ -4633,12 +4968,16 @@ export type Database = {
           supplier_currency?: string | null
           supplier_id?: string
           supplier_notes?: string | null
+          supplier_order_data?: Json | null
+          supplier_order_ref?: string | null
           supplier_order_reference?: string | null
           supplier_paid_at?: string | null
           supplier_payment_status?: string | null
           supplier_total?: number
           tracking_number?: string | null
+          tracking_segments?: Json | null
           tracking_url?: string | null
+          transport_method?: string | null
           updated_at?: string | null
           vendor_id?: string
           vendor_notes?: string | null
@@ -4683,23 +5022,86 @@ export type Database = {
           },
         ]
       }
+      dropship_price_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          change_percent: number
+          created_at: string | null
+          id: string
+          is_acknowledged: boolean | null
+          new_price: number
+          old_currency: string
+          old_price: number
+          product_id: string
+          vendor_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          change_percent: number
+          created_at?: string | null
+          id?: string
+          is_acknowledged?: boolean | null
+          new_price: number
+          old_currency: string
+          old_price: number
+          product_id: string
+          vendor_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          change_percent?: number
+          created_at?: string | null
+          id?: string
+          is_acknowledged?: boolean | null
+          new_price?: number
+          old_currency?: string
+          old_price?: number
+          product_id?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dropship_price_alerts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "dropship_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dropship_products: {
         Row: {
           auto_sync_enabled: boolean | null
           availability_status: string | null
           category: string | null
+          cost_breakdown: Json | null
           created_at: string | null
           estimated_delivery_max: number | null
           estimated_delivery_min: number | null
           id: string
           images: string[] | null
+          import_source_url: string | null
+          imported_at: string | null
           is_active: boolean | null
           is_available: boolean | null
+          last_price_alert: string | null
           last_sync_at: string | null
           margin_percent: number | null
+          moq: number | null
+          original_images: Json | null
           original_product_id: string | null
+          platform_product_id: string | null
+          platform_type: string | null
+          price_change_percent: number | null
           product_description: string | null
           product_name: string
+          production_time_days: number | null
           rating: number | null
           selling_currency: string | null
           selling_price: number
@@ -4709,6 +5111,7 @@ export type Database = {
           supplier_price: number
           supplier_product_id: string | null
           supplier_product_url: string | null
+          supplier_region: string | null
           supplier_stock: number | null
           sync_errors: string[] | null
           tags: string[] | null
@@ -4722,18 +5125,28 @@ export type Database = {
           auto_sync_enabled?: boolean | null
           availability_status?: string | null
           category?: string | null
+          cost_breakdown?: Json | null
           created_at?: string | null
           estimated_delivery_max?: number | null
           estimated_delivery_min?: number | null
           id?: string
           images?: string[] | null
+          import_source_url?: string | null
+          imported_at?: string | null
           is_active?: boolean | null
           is_available?: boolean | null
+          last_price_alert?: string | null
           last_sync_at?: string | null
           margin_percent?: number | null
+          moq?: number | null
+          original_images?: Json | null
           original_product_id?: string | null
+          platform_product_id?: string | null
+          platform_type?: string | null
+          price_change_percent?: number | null
           product_description?: string | null
           product_name: string
+          production_time_days?: number | null
           rating?: number | null
           selling_currency?: string | null
           selling_price: number
@@ -4743,6 +5156,7 @@ export type Database = {
           supplier_price: number
           supplier_product_id?: string | null
           supplier_product_url?: string | null
+          supplier_region?: string | null
           supplier_stock?: number | null
           sync_errors?: string[] | null
           tags?: string[] | null
@@ -4756,18 +5170,28 @@ export type Database = {
           auto_sync_enabled?: boolean | null
           availability_status?: string | null
           category?: string | null
+          cost_breakdown?: Json | null
           created_at?: string | null
           estimated_delivery_max?: number | null
           estimated_delivery_min?: number | null
           id?: string
           images?: string[] | null
+          import_source_url?: string | null
+          imported_at?: string | null
           is_active?: boolean | null
           is_available?: boolean | null
+          last_price_alert?: string | null
           last_sync_at?: string | null
           margin_percent?: number | null
+          moq?: number | null
+          original_images?: Json | null
           original_product_id?: string | null
+          platform_product_id?: string | null
+          platform_type?: string | null
+          price_change_percent?: number | null
           product_description?: string | null
           product_name?: string
+          production_time_days?: number | null
           rating?: number | null
           selling_currency?: string | null
           selling_price?: number
@@ -4777,6 +5201,7 @@ export type Database = {
           supplier_price?: number
           supplier_product_id?: string | null
           supplier_product_url?: string | null
+          supplier_region?: string | null
           supplier_stock?: number | null
           sync_errors?: string[] | null
           tags?: string[] | null
@@ -4991,32 +5416,112 @@ export type Database = {
           },
         ]
       }
+      dropship_supplier_reviews: {
+        Row: {
+          communication_rating: number | null
+          created_at: string | null
+          delivery_rating: number | null
+          dispute_reason: string | null
+          dispute_resolved: boolean | null
+          id: string
+          is_dispute: boolean | null
+          order_id: string | null
+          quality_rating: number | null
+          rating: number | null
+          review_text: string | null
+          supplier_id: string
+          vendor_id: string
+        }
+        Insert: {
+          communication_rating?: number | null
+          created_at?: string | null
+          delivery_rating?: number | null
+          dispute_reason?: string | null
+          dispute_resolved?: boolean | null
+          id?: string
+          is_dispute?: boolean | null
+          order_id?: string | null
+          quality_rating?: number | null
+          rating?: number | null
+          review_text?: string | null
+          supplier_id: string
+          vendor_id: string
+        }
+        Update: {
+          communication_rating?: number | null
+          created_at?: string | null
+          delivery_rating?: number | null
+          dispute_reason?: string | null
+          dispute_resolved?: boolean | null
+          id?: string
+          is_dispute?: boolean | null
+          order_id?: string | null
+          quality_rating?: number | null
+          rating?: number | null
+          review_text?: string | null
+          supplier_id?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dropship_supplier_reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dropship_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dropship_supplier_reviews_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "dropship_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dropship_suppliers: {
         Row: {
           api_endpoint: string | null
           api_key_encrypted: string | null
           average_delivery_days: number | null
+          chinese_language_support: boolean | null
           commission_rate: number | null
           contact_email: string | null
           contact_phone: string | null
           country: string
           created_at: string | null
           currency: string
+          delivery_success_rate: number | null
           description: string | null
+          dispute_rate: number | null
+          domestic_shipping_days: number | null
           id: string
+          incoterm: string | null
+          international_shipping_days: number | null
           is_active: boolean | null
           is_verified: boolean | null
           logo_url: string | null
           metadata: Json | null
           min_order_value: number | null
+          moq: number | null
           name: string
+          on_time_rate: number | null
           payment_methods: string[] | null
+          platform_shop_url: string | null
+          platform_type: string | null
+          production_time_days: number | null
+          quality_score: number | null
           reliability_score: number | null
           successful_deliveries: number | null
+          successful_orders: number | null
+          supplier_region: string | null
           supplier_type: string
           supported_countries: string[] | null
           total_deliveries: number | null
+          total_orders: number | null
           updated_at: string | null
+          verified_at: string | null
+          verified_by: string | null
           webhook_url: string | null
           website_url: string | null
         }
@@ -5024,27 +5529,44 @@ export type Database = {
           api_endpoint?: string | null
           api_key_encrypted?: string | null
           average_delivery_days?: number | null
+          chinese_language_support?: boolean | null
           commission_rate?: number | null
           contact_email?: string | null
           contact_phone?: string | null
           country?: string
           created_at?: string | null
           currency?: string
+          delivery_success_rate?: number | null
           description?: string | null
+          dispute_rate?: number | null
+          domestic_shipping_days?: number | null
           id?: string
+          incoterm?: string | null
+          international_shipping_days?: number | null
           is_active?: boolean | null
           is_verified?: boolean | null
           logo_url?: string | null
           metadata?: Json | null
           min_order_value?: number | null
+          moq?: number | null
           name: string
+          on_time_rate?: number | null
           payment_methods?: string[] | null
+          platform_shop_url?: string | null
+          platform_type?: string | null
+          production_time_days?: number | null
+          quality_score?: number | null
           reliability_score?: number | null
           successful_deliveries?: number | null
+          successful_orders?: number | null
+          supplier_region?: string | null
           supplier_type?: string
           supported_countries?: string[] | null
           total_deliveries?: number | null
+          total_orders?: number | null
           updated_at?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
           webhook_url?: string | null
           website_url?: string | null
         }
@@ -5052,27 +5574,44 @@ export type Database = {
           api_endpoint?: string | null
           api_key_encrypted?: string | null
           average_delivery_days?: number | null
+          chinese_language_support?: boolean | null
           commission_rate?: number | null
           contact_email?: string | null
           contact_phone?: string | null
           country?: string
           created_at?: string | null
           currency?: string
+          delivery_success_rate?: number | null
           description?: string | null
+          dispute_rate?: number | null
+          domestic_shipping_days?: number | null
           id?: string
+          incoterm?: string | null
+          international_shipping_days?: number | null
           is_active?: boolean | null
           is_verified?: boolean | null
           logo_url?: string | null
           metadata?: Json | null
           min_order_value?: number | null
+          moq?: number | null
           name?: string
+          on_time_rate?: number | null
           payment_methods?: string[] | null
+          platform_shop_url?: string | null
+          platform_type?: string | null
+          production_time_days?: number | null
+          quality_score?: number | null
           reliability_score?: number | null
           successful_deliveries?: number | null
+          successful_orders?: number | null
+          supplier_region?: string | null
           supplier_type?: string
           supported_countries?: string[] | null
           total_deliveries?: number | null
+          total_orders?: number | null
           updated_at?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
           webhook_url?: string | null
           website_url?: string | null
         }
