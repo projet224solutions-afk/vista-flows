@@ -36,7 +36,7 @@ let stripePromise: Promise<Stripe | null> | null = null;
  * Vérifie si l'app est en mode hors ligne
  */
 const isOffline = (): boolean => {
-  return !navigator.onLine;
+  return typeof navigator !== 'undefined' && !navigator.onLine;
 };
 
 const getStripePublishableKey = async (): Promise<string> => {
@@ -51,18 +51,26 @@ const getStripePublishableKey = async (): Promise<string> => {
     return envKey;
   }
 
-  // Sinon, récupérer depuis la base de données
-  const { data, error } = await supabase
-    .from('stripe_config')
-    .select('stripe_publishable_key')
-    .limit(1)
-    .single();
+  // Fallback sur la clé live hardcodée
+  const FALLBACK_KEY = 'pk_live_51RdKJzRxqizQJVjLFseVlmZ7qOJmOIx9PlsGPY600C0CifOqNyNlbfTb2NZAbW1cyVgk8hUt6vGAD3KQqMCIc7NB00F0KjYCqc';
+  
+  try {
+    // Tenter de récupérer depuis la base de données
+    const { data, error } = await supabase
+      .from('stripe_config')
+      .select('stripe_publishable_key')
+      .limit(1)
+      .single();
 
-  if (error || !data?.stripe_publishable_key) {
-    throw new Error('Stripe publishable key not configured');
+    if (!error && data?.stripe_publishable_key) {
+      return data.stripe_publishable_key;
+    }
+  } catch (dbError) {
+    console.warn('⚠️ Could not fetch Stripe key from DB, using fallback:', dbError);
   }
 
-  return data.stripe_publishable_key;
+  // Retourner la clé fallback
+  return FALLBACK_KEY;
 };
 
 const getStripe = async (): Promise<Stripe | null> => {
@@ -72,8 +80,15 @@ const getStripe = async (): Promise<Stripe | null> => {
   }
   
   if (!stripePromise) {
-    const key = await getStripePublishableKey();
-    stripePromise = loadStripe(key);
+    try {
+      const key = await getStripePublishableKey();
+      stripePromise = loadStripe(key);
+    } catch (error) {
+      console.error('❌ Error loading Stripe:', error);
+      // Reset pour permettre un nouveau retry
+      stripePromise = null;
+      throw error;
+    }
   }
   return stripePromise;
 };

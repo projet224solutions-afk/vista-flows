@@ -367,7 +367,9 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium">#{order.order_number}</span>
+                          <span className="font-medium">
+                            #{order.booking_number ?? order.id.slice(0, 8)}
+                          </span>
                           <Badge className={statusColors[order.status] || 'bg-gray-100'}>
                             {statusLabels[order.status] || order.status}
                           </Badge>

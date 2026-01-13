@@ -2,6 +2,7 @@
  * GESTIONNAIRE DE MODULES MÉTIERS
  * Charge dynamiquement le module approprié selon le type de service
  * Utilise les codes de service_types pour le mapping
+ * Synchronisé avec src/config/serviceTypesConfig.ts
  */
 
 // Import des modules complets
@@ -30,6 +31,7 @@ import { AgricultureModule } from './AgricultureModule';
 import { ConstructionModule } from './ConstructionModule';
 import { DropshippingModule } from './DropshippingModule';
 import { CateringModule } from './stubs';
+import { normalizeServiceCode } from '@/config/serviceTypesConfig';
 
 interface ServiceModuleManagerProps {
   serviceId: string;
@@ -39,53 +41,39 @@ interface ServiceModuleManagerProps {
   businessName: string;
 }
 
-// Mapping des codes de service_types vers les modules
+// Mapping des 18 codes officiels de service_types vers les modules
+// Synchronisé avec Auth.tsx et AddServiceModal.tsx
 const MODULE_MAP: Record<string, React.FC<{ serviceId: string; businessName?: string }>> = {
-  // ===== Codes actuels de service_types (BDD) =====
-  'ecommerce': EcommerceModule,
-  'restaurant': RestaurantModule,
-  'beaute': BeautyModule,
-  'reparation': RepairModule,
-  'location': RealEstateModule,
-  'menage': CleaningModule,
-  'livraison': DeliveryModule,
-  'media': PhotoStudioModule,
-  'education': EducationModule,
-  'sante': HealthModule,
-  'voyage': TransportModule,
-  'freelance': FreelanceModule,
-  'construction': ConstructionModule,
-  'agriculture': AgricultureModule,
-  'informatique': DeveloperModule,
+  // ===== Services de Proximité Populaires (6) =====
+  'restaurant': RestaurantModule,       // Restaurant - Cuisine & plats
+  'beaute': BeautyModule,               // Beauté & Coiffure - Soins & styling
+  'vtc': VTCModule,                     // Transport VTC - Véhicules privés
+  'reparation': RepairModule,           // Réparation - Électro & mécanique
+  'menage': CleaningModule,             // Nettoyage - Ménage & pressing
+  'informatique': DeveloperModule,      // Informatique - Tech & dépannage
   
-  // ===== Legacy service_type des vendors =====
-  'retail': EcommerceModule,
-  'wholesale': EcommerceModule,
-  'mixed': EcommerceModule,
-  'boutique': EcommerceModule,
-  'salon_coiffure': BeautyModule,
-  'garage_auto': RepairModule,
-  'immobilier': RealEstateModule,
-  'services_pro': FreelanceModule,
-  'photographe': PhotoStudioModule,
-  'autre': EcommerceModule,
+  // ===== Services Professionnels (8) =====
+  'sport': FitnessModule,               // Sport & Fitness - Coaching
+  'location': RealEstateModule,         // Immobilier - Location & vente
+  'media': PhotoStudioModule,           // Photo & Vidéo - Événements
+  'construction': ConstructionModule,   // Construction & BTP - Bâtiment
+  'agriculture': AgricultureModule,     // Agriculture - Produits locaux
+  'freelance': FreelanceModule,         // Administratif - Secrétariat
+  'sante': HealthModule,                // Santé & Bien-être - Pharmacie & soins
+  'maison': HomeDecorModule,            // Maison & Déco - Intérieur
   
-  // ===== Extensions / Alias =====
-  'vtc': VTCModule,
+  // ===== Autres Services (4) =====
+  'education': EducationModule,         // Formation - Cours & coaching
+  'livraison': DeliveryModule,          // Livraison - Coursier & colis
+  'voyage': TransportModule,            // Voyage - Tourisme & voyages
+  'ecommerce': EcommerceModule,         // Boutique - E-commerce
+  
+  // ===== Extensions legacy (compatibilité) =====
   'mode': FashionModule,
   'electronique': ElectronicsModule,
-  'maison': HomeDecorModule,
-  'sport': FitnessModule,
   'dropshipping': DropshippingModule,
   'coiff': HairdresserModule,
   'coach': CoachModule,
-  
-  // Produits numériques
-  'digital_voyage': TransportModule,
-  'digital_logiciel': DeveloperModule,
-  'digital_formation': EducationModule,
-  'digital_livre': EducationModule,
-  'digital_custom': EcommerceModule,
 };
 
 export function ServiceModuleManager({
@@ -145,6 +133,9 @@ export function ServiceModuleManager({
   }
   if (nameLower.includes('livraison') || nameLower.includes('coursier')) {
     return <DeliveryModule {...props} />;
+  }
+  if (nameLower.includes('dropship') || nameLower.includes('drop ship')) {
+    return <DropshippingModule {...props} />;
   }
   if (nameLower.includes('immobili') || nameLower.includes('location')) {
     return <RealEstateModule {...props} />;

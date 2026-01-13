@@ -178,6 +178,18 @@ export default function DirectConversation() {
     );
   }
 
+  // Si l'utilisateur n'est pas connecté, afficher un message
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <p className="text-muted-foreground mb-4">Veuillez vous connecter pour envoyer des messages</p>
+        <Button onClick={() => navigate('/auth')}>
+          Se connecter
+        </Button>
+      </div>
+    );
+  }
+
   if (!recipient) {
     return null;
   }

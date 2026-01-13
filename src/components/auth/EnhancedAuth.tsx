@@ -119,12 +119,23 @@ export default function EnhancedAuth() {
     provider: 'google' | 'facebook' | null;
   }>({ open: false, email: '', role: '', provider: null });
 
-  // Handle OAuth callback - avec redirection intelligente vers le bon dashboard
+  // État pour afficher le modal si l'utilisateur OAuth existe déjà
+  const [oauthExistingAccountModal, setOauthExistingAccountModal] = useState<{
+    open: boolean;
+    email: string;
+    role: string;
+  }>({ open: false, email: '', role: '' });
+
+  // Handle OAuth callback - avec détection si compte existe déjà
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
         console.log('🔐 [EnhancedAuth] OAuth SIGNED_IN détecté');
         const isNewSignup = localStorage.getItem('oauth_is_new_signup') === 'true';
+        
+        // Vérifier si c'est une connexion OAuth (Google/Facebook)
+        const provider = session.user.app_metadata?.provider;
+        const isOAuthUser = provider === 'google' || provider === 'facebook';
         
         // Attendre que le profil soit créé/chargé
         setTimeout(async () => {
@@ -132,13 +143,50 @@ export default function EnhancedAuth() {
             // Récupérer le profil pour déterminer la redirection
             const { data: profile, error } = await supabase
               .from('profiles')
-              .select('first_name, last_name, phone, role')
+              .select('first_name, last_name, phone, role, created_at')
               .eq('id', session.user.id)
               .maybeSingle();
 
             if (error) {
               console.error('❌ Erreur récupération profil:', error);
               navigate('/');
+              return;
+            }
+
+            // ✅ NOUVEAU: Détecter si l'utilisateur essayait de s'inscrire mais avait déjà un compte
+            if (isNewSignup && profile) {
+              // Vérifier si le profil existait AVANT cette connexion OAuth
+              // (si created_at est plus vieux que quelques secondes, c'est un compte existant)
+              const profileCreatedAt = new Date(profile.created_at || Date.now());
+              const now = new Date();
+              const diffSeconds = (now.getTime() - profileCreatedAt.getTime()) / 1000;
+              
+              // Si le profil a été créé il y a plus de 30 secondes, c'est un compte existant
+              if (diffSeconds > 30) {
+                console.log('⚠️ [EnhancedAuth] Inscription OAuth mais compte existant détecté');
+                
+                // Afficher le modal d'information
+                setOauthExistingAccountModal({
+                  open: true,
+                  email: session.user.email || '',
+                  role: profile.role || 'client',
+                });
+                
+                localStorage.removeItem('oauth_is_new_signup');
+                return; // Ne pas rediriger, laisser l'utilisateur voir le modal
+              }
+            }
+
+            // Vérifier si l'utilisateur OAuth a déjà défini un mot de passe ou passé l'étape
+            const hasSetPassword = localStorage.getItem(`oauth_password_set_${session.user.id}`);
+            const alreadyHandled = hasSetPassword === 'true' || hasSetPassword === 'skipped';
+            const needsPassword = isOAuthUser && !alreadyHandled;
+
+            if (needsPassword) {
+              console.log('🔐 [EnhancedAuth] Utilisateur OAuth sans mot de passe, redirection vers /auth/set-password');
+              localStorage.setItem('needs_oauth_password', 'true');
+              localStorage.removeItem('oauth_is_new_signup');
+              navigate('/auth/set-password', { replace: true });
               return;
             }
 
@@ -186,6 +234,27 @@ export default function EnhancedAuth() {
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  // Fonction pour continuer après le modal "compte existant"
+  const handleContinueWithExistingAccount = () => {
+    setOauthExistingAccountModal({ open: false, email: '', role: '' });
+    
+    // Rediriger vers la page appropriée selon le rôle
+    const roleRoutes: Record<string, string> = {
+      admin: '/pdg',
+      ceo: '/pdg',
+      vendeur: '/vendeur',
+      livreur: '/livreur',
+      taxi: '/taxi-moto/driver',
+      syndicat: '/syndicat',
+      transitaire: '/transitaire',
+      client: '/client',
+      agent: '/agent',
+    };
+    
+    const targetRoute = roleRoutes[oauthExistingAccountModal.role] || '/';
+    navigate(targetRoute, { replace: true });
+  };
 
   // Vérifier si un email existe déjà dans le système
   const checkEmailExists = async (emailToCheck: string): Promise<{ exists: boolean; role?: string }> => {
@@ -294,8 +363,32 @@ export default function EnhancedAuth() {
     setLoading(true);
 
     try {
+      // Mapper le type de compte vers le rôle
+      const mapAccountTypeToRole = (type: AccountType | null) => {
+        switch (type) {
+          case 'marchand':
+            return 'vendeur';
+          case 'livreur':
+            return 'livreur';
+          case 'taxi_moto':
+            return 'taxi';
+          case 'transitaire':
+            return 'transitaire';
+          case 'client':
+          default:
+            return 'client';
+        }
+      };
+
       if (mode === 'signup') {
-        // Inscription
+        // Inscription - passer le rôle mappé ET le account_type
+        const roleToUse = mapAccountTypeToRole(accountType);
+        
+        // Extraire prénom et nom du nom complet
+        const nameParts = fullName.trim().split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+        
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -303,7 +396,10 @@ export default function EnhancedAuth() {
             emailRedirectTo: `${window.location.origin}/`,
             data: {
               full_name: fullName,
-              account_type: accountType
+              first_name: firstName,
+              last_name: lastName,
+              account_type: accountType,
+              role: roleToUse // Ajouter le rôle directement
             }
           }
         });
@@ -722,7 +818,7 @@ export default function EnhancedAuth() {
         </div>
       </Card>
 
-      {/* Modal: Email déjà existant */}
+      {/* Modal: Email déjà existant (pour inscription classique) */}
       <Dialog open={existingEmailModal.open} onOpenChange={(open) => setExistingEmailModal(prev => ({ ...prev, open }))}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -771,6 +867,60 @@ export default function EnhancedAuth() {
             >
               <LogIn className="h-4 w-4" />
               Se connecter
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Compte OAuth existant détecté lors d'une inscription */}
+      <Dialog open={oauthExistingAccountModal.open} onOpenChange={(open) => !open && handleContinueWithExistingAccount()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertCircle className="h-5 w-5" />
+              Compte existant détecté
+            </DialogTitle>
+            <DialogDescription className="pt-2 space-y-3">
+              <p>
+                L'adresse email <strong className="text-foreground">{oauthExistingAccountModal.email}</strong> est 
+                déjà associée à un compte existant.
+              </p>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800">
+                <p className="text-sm font-medium">
+                  Vous avez été connecté à votre compte existant :
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge variant="secondary" className="bg-amber-100">
+                    {(() => {
+                      const roleLabels: Record<string, string> = {
+                        client: 'Client',
+                        vendeur: 'Marchand',
+                        livreur: 'Livreur',
+                        taxi: 'Taxi Moto',
+                        transitaire: 'Transitaire',
+                        admin: 'Administrateur',
+                        ceo: 'PDG',
+                        agent: 'Agent',
+                        syndicat: 'Syndicat',
+                      };
+                      return roleLabels[oauthExistingAccountModal.role] || oauthExistingAccountModal.role;
+                    })()}
+                  </Badge>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Si vous souhaitez créer un compte avec un rôle différent, veuillez utiliser une autre adresse email.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              onClick={handleContinueWithExistingAccount}
+              className="w-full gap-2"
+            >
+              <LogIn className="h-4 w-4" />
+              Continuer avec ce compte
             </Button>
           </DialogFooter>
         </DialogContent>

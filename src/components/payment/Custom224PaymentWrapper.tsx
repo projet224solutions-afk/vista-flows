@@ -77,11 +77,13 @@ export function Custom224PaymentWrapper({
         throw functionError;
       }
 
-      if (!data || !data.clientSecret) {
+      // Supporter les deux formats de réponse (client_secret ou clientSecret)
+      const secret = data?.clientSecret || data?.client_secret;
+      if (!data || !secret) {
         throw new Error('Pas de client secret reçu');
       }
 
-      setClientSecret(data.clientSecret);
+      setClientSecret(secret);
       
       // Rendre disponible globalement pour Custom224PaymentForm
       (window as any).clientSecret = data.clientSecret;

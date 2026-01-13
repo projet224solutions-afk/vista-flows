@@ -39,15 +39,35 @@ interface StripeCardPaymentModalProps {
 
 // Clé publique Stripe (sécuritaire - c'est une clé PUBLIQUE)
 const STRIPE_PUBLISHABLE_KEY =
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 
   'pk_live_51RdKJzRxqizQJVjLFseVlmZ7qOJmOIx9PlsGPY600C0CifOqNyNlbfTb2NZAbW1cyVgk8hUt6vGAD3KQqMCIc7NB00F0KjYCqc';
 
 // Charger Stripe une seule fois
 let stripePromise: Promise<Stripe | null> | null = null;
 
+/**
+ * Vérifie si l'app est en mode hors ligne
+ */
+const isOffline = (): boolean => {
+  return typeof navigator !== 'undefined' && !navigator.onLine;
+};
+
 const getStripe = async (): Promise<Stripe | null> => {
+  // Vérifier mode offline avant de charger Stripe
+  if (isOffline()) {
+    console.warn('⚠️ Mode hors ligne détecté, Stripe non disponible');
+    return null;
+  }
+  
   if (!stripePromise) {
     console.log('✅ Chargement Stripe avec clé publique');
-    stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
+    try {
+      stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
+    } catch (error) {
+      console.error('❌ Erreur chargement Stripe:', error);
+      stripePromise = null;
+      return null;
+    }
   }
   return stripePromise;
 };
@@ -294,9 +314,14 @@ export function StripeCardPaymentModal({
       setError(null);
 
       try {
+        // Vérifier mode offline d'abord
+        if (isOffline()) {
+          throw new Error('Mode hors ligne - paiement indisponible. Veuillez vous reconnecter à Internet.');
+        }
+        
         const stripeInstance = await getStripe();
         if (!stripeInstance) {
-          throw new Error('Clé Stripe non configurée');
+          throw new Error('Impossible de charger Stripe. Vérifiez votre connexion Internet.');
         }
         setStripe(stripeInstance);
 
@@ -324,6 +349,7 @@ export function StripeCardPaymentModal({
         });
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Erreur inconnue';
+        console.error('❌ Payment init error:', message);
         setError(message);
         onError(message);
       } finally {

@@ -266,6 +266,10 @@ export default function Auth() {
         console.log('🔐 [Auth] SIGNED_IN détecté - vérification du profil...');
         setIsAuthenticating(true);
         
+        // Vérifier si c'est une connexion OAuth (Google/Facebook)
+        const provider = session.user.app_metadata?.provider;
+        const isOAuthUser = provider === 'google' || provider === 'facebook';
+        
         // Petit délai pour laisser le profil se créer/charger
         await new Promise(resolve => setTimeout(resolve, 500));
         
@@ -278,6 +282,20 @@ export default function Auth() {
           
           if (error) {
             console.error('❌ [Auth] Erreur récupération profil:', error);
+          }
+          
+          // Vérifier si l'utilisateur OAuth a déjà défini un mot de passe ou passé l'étape
+          const hasSetPassword = localStorage.getItem(`oauth_password_set_${session.user.id}`);
+          const alreadyHandled = hasSetPassword === 'true' || hasSetPassword === 'skipped';
+          const needsPassword = isOAuthUser && !alreadyHandled;
+          
+          if (needsPassword) {
+            console.log('🔐 [Auth] Utilisateur OAuth sans mot de passe, redirection vers /auth/set-password');
+            localStorage.setItem('needs_oauth_password', 'true');
+            localStorage.removeItem('oauth_is_new_signup');
+            navigate('/auth/set-password', { replace: true });
+            setIsAuthenticating(false);
+            return;
           }
           
           if (profile?.role) {
@@ -1498,19 +1516,19 @@ export default function Auth() {
                 </div>
               </div>
 
-              {/* Section: Produits Numériques */}
+              {/* Section: Autres Services */}
               <div className="mb-4">
                 <h4 className="text-sm font-semibold text-cyan-600 mb-3 flex items-center gap-2">
                   <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
-                  Produits Numériques
+                  Autres Services
                   <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
-                    { id: 'digital_logiciel', name: 'Logiciel', icon: '💻', desc: 'Antivirus & SaaS' },
-                    { id: 'dropshipping', name: 'Dropshipping', icon: '📦', desc: 'Amazon, AliExpress' },
                     { id: 'education', name: 'Formation', icon: '🎓', desc: 'Cours & coaching' },
-                    { id: 'digital_livre', name: 'Livres', icon: '📚', desc: 'eBooks & affiliation' },
+                    { id: 'livraison', name: 'Livraison', icon: '🚚', desc: 'Coursier & colis' },
+                    { id: 'voyage', name: 'Voyage', icon: '✈️', desc: 'Tourisme & voyages' },
+                    { id: 'ecommerce', name: 'Boutique', icon: '🏪', desc: 'E-commerce' },
                   ].map((service) => (
                     <button
                       key={service.id}
@@ -1579,31 +1597,27 @@ export default function Auth() {
                     <span className="block mt-2 font-semibold text-primary">
                       ✓ Service sélectionné : {(() => {
                         const allServices = [
-                          { id: 'ecommerce', name: 'Boutique', icon: '🏪' },
+                          // Services de Proximité Populaires (6)
                           { id: 'restaurant', name: 'Restaurant', icon: '🍽️' },
-                          { id: 'livraison', name: 'Livraison', icon: '📦' },
                           { id: 'beaute', name: 'Beauté & Coiffure', icon: '💇' },
                           { id: 'vtc', name: 'Transport VTC', icon: '🚗' },
                           { id: 'reparation', name: 'Réparation', icon: '🔧' },
                           { id: 'menage', name: 'Nettoyage', icon: '✨' },
                           { id: 'informatique', name: 'Informatique', icon: '💻' },
-                          { id: 'mode', name: 'Mode & Vêtements', icon: '👗' },
-                          { id: 'sante', name: 'Santé & Bien-être', icon: '💊' },
-                          { id: 'electronique', name: 'Électronique', icon: '📱' },
-                          { id: 'maison', name: 'Maison & Déco', icon: '🏠' },
-                          { id: 'location', name: 'Immobilier', icon: '🏢' },
-                          { id: 'education', name: 'Formation', icon: '🎓' },
-                          { id: 'media', name: 'Photo & Vidéo', icon: '📸' },
+                          // Services Professionnels (8)
                           { id: 'sport', name: 'Sport & Fitness', icon: '🏋️' },
-                          { id: 'freelance', name: 'Administratif', icon: '💼' },
-                          { id: 'agriculture', name: 'Agriculture', icon: '🌾' },
+                          { id: 'location', name: 'Immobilier', icon: '🏢' },
+                          { id: 'media', name: 'Photo & Vidéo', icon: '📸' },
                           { id: 'construction', name: 'Construction & BTP', icon: '🏗️' },
-                          { id: 'dropshipping', name: 'Dropshipping', icon: '📦' },
-                          { id: 'digital_voyage', name: 'Vol/Hôtel', icon: '✈️' },
-                          { id: 'digital_logiciel', name: 'Logiciel', icon: '💻' },
-                          { id: 'digital_formation', name: 'Formation Numérique', icon: '🎓' },
-                          { id: 'digital_livre', name: 'Livres Numériques', icon: '📚' },
-                          { id: 'digital_custom', name: 'Produit Numérique', icon: '✨' },
+                          { id: 'agriculture', name: 'Agriculture', icon: '🌾' },
+                          { id: 'freelance', name: 'Administratif', icon: '💼' },
+                          { id: 'sante', name: 'Santé & Bien-être', icon: '💊' },
+                          { id: 'maison', name: 'Maison & Déco', icon: '🏠' },
+                          // Autres Services (4)
+                          { id: 'education', name: 'Formation', icon: '🎓' },
+                          { id: 'livraison', name: 'Livraison', icon: '🚚' },
+                          { id: 'voyage', name: 'Voyage', icon: '✈️' },
+                          { id: 'ecommerce', name: 'Boutique', icon: '🏪' },
                         ];
                         const service = allServices.find(s => s.id === selectedServiceType);
                         return service ? `${service.icon} ${service.name}` : selectedServiceType;

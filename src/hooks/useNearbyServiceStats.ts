@@ -13,6 +13,7 @@ interface NearbyStats {
   boutiques: number;
   taxi: number;
   livraison: number;
+  restaurants: number;
 }
 
 interface GeoPosition {
@@ -36,7 +37,7 @@ export function useNearbyServiceStats() {
   const { userPosition, positionReady, DEFAULT_POSITION } = useGeoDistance();
 
   const [stats, setStats] = useState<NearbyStats>(() =>
-    statsCache.data || { boutiques: 0, taxi: 0, livraison: 0 }
+    statsCache.data || { boutiques: 0, taxi: 0, livraison: 0, restaurants: 0 }
   );
   const [loading, setLoading] = useState(true);
   const isLoading = useRef(false);
@@ -55,7 +56,7 @@ export function useNearbyServiceStats() {
     setLoading(true);
 
     try {
-      const [vendorsResult, taxiDriversResult, deliveryDriversResult] = await Promise.all([
+      const [vendorsResult, taxiDriversResult, deliveryDriversResult, restaurantsResult] = await Promise.all([
         supabase
           .from('vendors')
           .select('id, latitude, longitude')
@@ -68,6 +69,12 @@ export function useNearbyServiceStats() {
           .from('drivers')
           .select('id, current_location, last_location, is_online, status')
           .or('is_online.eq.true,status.eq.active,status.eq.online,status.eq.on_trip'),
+        // Compter les restaurants actifs (professional_services avec service_type = restaurant)
+        supabase
+          .from('professional_services')
+          .select('id, latitude, longitude, service_types!inner(code)')
+          .eq('status', 'active')
+          .eq('service_types.code', 'restaurant'),
       ]);
 
       const parsePoint = (value: unknown): { lat: number; lng: number } | null => {
@@ -108,6 +115,12 @@ export function useNearbyServiceStats() {
           return { lat: Number(lat), lng: Number(lng) };
         }),
         livraison: countInRadius(deliveryDriversResult.data, (d) => parsePoint(d?.current_location) || parsePoint(d?.last_location)),
+        restaurants: countInRadius(restaurantsResult.data, (r) => {
+          const lat = r?.latitude;
+          const lng = r?.longitude;
+          if (lat === null || lat === undefined || lng === null || lng === undefined) return null;
+          return { lat: Number(lat), lng: Number(lng) };
+        }),
       };
 
       // Cache

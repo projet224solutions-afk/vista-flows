@@ -2,35 +2,97 @@
  * MODULE DROPSHIPPING PROFESSIONNEL
  * Inspiré de: Shopify, Oberlo, Spocket
  * E-commerce dropshipping avec intégration fournisseurs
+ * Extension Chine: Alibaba, AliExpress, 1688
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Package, Globe, TrendingUp, DollarSign, ShoppingCart, AlertCircle } from 'lucide-react';
+import { Package, Globe, TrendingUp, DollarSign, ShoppingCart, AlertCircle, Flag, RefreshCw, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ChinaDashboard, ChinaProductImport, ChinaSuppliersList, ChinaCostCalculator } from '@/components/dropshipping/china';
+import { useDropshipping } from '@/hooks/useDropshipping';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DropshippingModuleProps {
   serviceId: string;
   businessName?: string;
 }
 
-const SUPPLIERS = [
-  { id: 'aliexpress', name: 'AliExpress', logo: '🇨🇳', products: 50000 },
-  { id: 'amazon', name: 'Amazon', logo: '📦', products: 30000 },
-  { id: 'cjdropshipping', name: 'CJ Dropshipping', logo: '🚚', products: 25000 }
-];
-
 export function DropshippingModule({ serviceId, businessName }: DropshippingModuleProps) {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [stats] = useState({ 
-    importedProducts: 142, 
-    pendingOrders: 8, 
-    revenue: 6750000, 
-    profit: 1350000 
-  });
+  const [vendorId, setVendorId] = useState<string | undefined>();
+  const [loadingVendor, setLoadingVendor] = useState(true);
+
+  // Récupérer le vendor_id depuis le service professionnel
+  useEffect(() => {
+    const fetchVendorId = async () => {
+      try {
+        const { data: service } = await supabase
+          .from('professional_services')
+          .select('user_id')
+          .eq('id', serviceId)
+          .single();
+        
+        if (service?.user_id) {
+          const { data: vendor } = await supabase
+            .from('vendors')
+            .select('id')
+            .eq('user_id', service.user_id)
+            .single();
+          
+          if (vendor?.id) {
+            setVendorId(vendor.id);
+          }
+        }
+      } catch (error) {
+        console.error('Erreur récupération vendor:', error);
+      } finally {
+        setLoadingVendor(false);
+      }
+    };
+    
+    if (serviceId) {
+      fetchVendorId();
+    }
+  }, [serviceId]);
+
+  // Hook dropshipping avec les vraies données
+  const { 
+    stats, 
+    suppliers, 
+    products, 
+    orders, 
+    loading,
+    loadStats,
+    loadProducts,
+    loadOrders,
+    loadSuppliers
+  } = useDropshipping(vendorId);
+
+  const handleRefresh = async () => {
+    await Promise.all([loadStats(), loadProducts(), loadOrders(), loadSuppliers()]);
+  };
+
+  // Formatage monétaire
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('fr-GN', {
+      style: 'decimal',
+      minimumFractionDigits: 0
+    }).format(amount) + ' GNF';
+  };
+
+  // Afficher un loader pendant le chargement
+  if (loadingVendor) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Chargement du module...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -42,10 +104,21 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
           </h2>
           <p className="text-muted-foreground">Vente sans stock avec fournisseurs internationaux</p>
         </div>
-        <Badge variant="outline" className="gap-1">
-          <Globe className="w-3 h-3" />
-          {SUPPLIERS.length} fournisseurs
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="gap-1">
+            <Globe className="w-3 h-3" />
+            {suppliers.length} fournisseurs
+          </Badge>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefresh} 
+            disabled={loading}
+          >
+            <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
+            Actualiser
+          </Button>
+        </div>
       </div>
 
       <Alert>
@@ -63,8 +136,10 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.importedProducts}</div>
-            <p className="text-xs text-muted-foreground">Dans votre catalogue</p>
+            <div className="text-2xl font-bold">{stats?.totalProducts || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats?.activeProducts || 0} actifs dans votre catalogue
+            </p>
           </CardContent>
         </Card>
 
@@ -74,7 +149,7 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
             <ShoppingCart className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingOrders}</div>
+            <div className="text-2xl font-bold">{stats?.pendingOrders || 0}</div>
             <p className="text-xs text-muted-foreground">À traiter</p>
           </CardContent>
         </Card>
@@ -85,8 +160,10 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.revenue.toLocaleString()} GNF</div>
-            <p className="text-xs text-muted-foreground">Ce mois</p>
+            <div className="text-2xl font-bold">{formatCurrency(stats?.totalRevenue || 0)}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats?.completedOrders || 0} commandes complétées
+            </p>
           </CardContent>
         </Card>
 
@@ -96,17 +173,25 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.profit.toLocaleString()} GNF</div>
-            <p className="text-xs text-muted-foreground">Marge: 20%</p>
+            <div className="text-2xl font-bold text-green-600">{formatCurrency(stats?.totalProfit || 0)}</div>
+            <p className="text-xs text-muted-foreground">
+              Marge: {(stats?.averageMargin || 0).toFixed(1)}%
+            </p>
           </CardContent>
         </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="dashboard">Tableau de bord</TabsTrigger>
           <TabsTrigger value="suppliers">Fournisseurs</TabsTrigger>
-          <TabsTrigger value="import">Importer Produits</TabsTrigger>
+          <TabsTrigger value="import">Importer</TabsTrigger>
+          <TabsTrigger value="china" className="flex items-center gap-1">
+            <Flag className="w-3 h-3" />
+            Chine
+          </TabsTrigger>
+          <TabsTrigger value="china-import">Import Chine</TabsTrigger>
+          <TabsTrigger value="china-costs">Coûts</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-4">
@@ -115,13 +200,37 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
               <CardTitle>Commandes Récentes</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-12">
-                <ShoppingCart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">Aucune commande récente</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Les commandes de vos clients seront automatiquement transmises aux fournisseurs
-                </p>
-              </div>
+              {orders.length === 0 ? (
+                <div className="text-center py-12">
+                  <ShoppingCart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">Aucune commande récente</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Les commandes de vos clients seront automatiquement transmises aux fournisseurs
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {orders.slice(0, 5).map((order) => (
+                    <div 
+                      key={order.id} 
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                    >
+                      <div>
+                        <p className="font-medium">{order.order_reference}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {order.quantity} article(s) • {order.supplier?.name || 'Fournisseur'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">{formatCurrency(order.customer_total)}</p>
+                        <Badge variant={order.status === 'completed' ? 'default' : 'secondary'}>
+                          {order.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -129,31 +238,53 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
         <TabsContent value="suppliers" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Fournisseurs Connectés</CardTitle>
+              <CardTitle>Fournisseurs Disponibles ({suppliers.length})</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {SUPPLIERS.map(supplier => (
-                  <Card key={supplier.id} className="border-2">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="text-4xl">{supplier.logo}</div>
-                          <div>
-                            <h3 className="font-bold text-lg">{supplier.name}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              {supplier.products.toLocaleString()} produits disponibles
-                            </p>
+              {suppliers.length === 0 ? (
+                <div className="text-center py-8">
+                  <Globe className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">Aucun fournisseur configuré</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {suppliers.map(supplier => (
+                    <Card key={supplier.id} className="border-2">
+                      <CardContent className="pt-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="text-4xl">
+                              {supplier.country === 'CN' ? '🇨🇳' : 
+                               supplier.country === 'US' ? '🇺🇸' : 
+                               supplier.country === 'FR' ? '🇫🇷' : '📦'}
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-lg">{supplier.name}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                {supplier.country} • {supplier.currency}
+                              </p>
+                              {supplier.reliability_score && (
+                                <p className="text-xs text-muted-foreground">
+                                  Fiabilité: {supplier.reliability_score}%
+                                </p>
+                              )}
+                            </div>
                           </div>
+                          <Badge 
+                            variant="outline" 
+                            className={supplier.is_verified 
+                              ? "bg-green-50 text-green-700 border-green-200" 
+                              : "bg-yellow-50 text-yellow-700 border-yellow-200"
+                            }
+                          >
+                            {supplier.is_verified ? 'Vérifié' : 'Non vérifié'}
+                          </Badge>
                         </div>
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                          Connecté
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -190,6 +321,22 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
               </ul>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* === EXTENSION DROPSHIPPING CHINE === */}
+        <TabsContent value="china" className="space-y-4">
+          <ChinaDashboard />
+        </TabsContent>
+
+        <TabsContent value="china-import" className="space-y-4">
+          <ChinaProductImport />
+        </TabsContent>
+
+        <TabsContent value="china-costs" className="space-y-4">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <ChinaCostCalculator />
+            <ChinaSuppliersList />
+          </div>
         </TabsContent>
       </Tabs>
     </div>

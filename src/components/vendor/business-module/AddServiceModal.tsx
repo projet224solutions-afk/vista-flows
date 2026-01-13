@@ -1,7 +1,6 @@
 /**
  * ADD SERVICE MODAL
  * Permet au vendeur de créer un nouveau service professionnel
- * ✅ SYNCHRONISÉ avec Auth.tsx (formulaire d'inscription)
  * Ex: Restaurant, Boutique en ligne, Salon de beauté, etc.
  */
 
@@ -26,7 +25,7 @@ import {
   BookOpen, Camera, Truck, Building2, Dumbbell,
   Laptop, Leaf, Hammer, Sparkles, ArrowRight,
   Loader2, CheckCircle, AlertCircle, MapPin, Navigation,
-  Wrench, Plane, Briefcase, Home, Package, GraduationCap
+  Home, Plane, Briefcase
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -49,18 +48,16 @@ interface AddServiceModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// ✅ MAPPING SYNCHRONISÉ avec Auth.tsx (formulaire d'inscription)
-// Ces icônes correspondent exactement aux services affichés à l'inscription
+// Mapping des icônes - 18 services synchronisés avec Auth.tsx et service_types DB
 const SERVICE_ICONS: Record<string, React.ElementType> = {
-  // Services de Proximité Populaires (Auth.tsx)
+  // Services de Proximité Populaires
   restaurant: Utensils,
   beaute: Scissors,
   vtc: Car,
-  reparation: Wrench,
+  reparation: Hammer,
   menage: Sparkles,
   informatique: Laptop,
-  
-  // Services Professionnels (Auth.tsx)
+  // Services Professionnels
   sport: Dumbbell,
   location: Building2,
   media: Camera,
@@ -69,45 +66,13 @@ const SERVICE_ICONS: Record<string, React.ElementType> = {
   freelance: Briefcase,
   sante: Heart,
   maison: Home,
-  
-  // Produits Numériques (Auth.tsx)
-  digital_logiciel: Laptop,
-  dropshipping: Package,
-  education: GraduationCap,
-  digital_livre: BookOpen,
-  
-  // E-commerce classique
-  ecommerce: Store,
-  
-  // Services legacy (compatibilité)
+  // Autres Services
+  education: BookOpen,
   livraison: Truck,
   voyage: Plane,
-  
+  ecommerce: Store,
+  // Default
   default: Store
-};
-
-// ✅ CATÉGORIES synchronisées avec Auth.tsx
-const SERVICE_CATEGORIES = {
-  'proximite': {
-    label: 'Services de Proximité Populaires',
-    color: 'primary',
-    codes: ['restaurant', 'beaute', 'vtc', 'reparation', 'menage', 'informatique']
-  },
-  'professionnel': {
-    label: 'Services Professionnels',
-    color: 'violet',
-    codes: ['sport', 'location', 'media', 'construction', 'agriculture', 'freelance', 'sante', 'maison']
-  },
-  'numerique': {
-    label: 'Produits Numériques',
-    color: 'cyan',
-    codes: ['digital_logiciel', 'dropshipping', 'education', 'digital_livre']
-  },
-  'commerce': {
-    label: 'Commerce',
-    color: 'green',
-    codes: ['ecommerce', 'livraison']
-  }
 };
 
 // Schéma de validation Zod
@@ -313,201 +278,109 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
     return SERVICE_ICONS[code] || SERVICE_ICONS.default;
   };
 
-  // Fonction pour obtenir la catégorie d'un service
-  const getServiceCategory = (code: string): string => {
-    for (const [key, category] of Object.entries(SERVICE_CATEGORIES)) {
-      if (category.codes.includes(code)) {
-        return key;
-      }
-    }
-    return 'commerce';
+  // Services IDENTIQUES à Auth.tsx - Synchronisation complète
+  const DISPLAY_SERVICES = {
+    // Services de Proximité Populaires (6) - Identique à Auth.tsx
+    proximity: [
+      { code: 'restaurant', name: 'Restaurant', icon: '🍽️', desc: 'Cuisine & plats' },
+      { code: 'beaute', name: 'Beauté & Coiffure', icon: '💇', desc: 'Soins & styling' },
+      { code: 'vtc', name: 'Transport VTC', icon: '🚗', desc: 'Véhicules privés' },
+      { code: 'reparation', name: 'Réparation', icon: '🔧', desc: 'Électro & mécanique' },
+      { code: 'menage', name: 'Nettoyage', icon: '✨', desc: 'Ménage & pressing' },
+      { code: 'informatique', name: 'Informatique', icon: '💻', desc: 'Tech & dépannage' },
+    ],
+    // Services Professionnels (8) - Identique à Auth.tsx
+    professional: [
+      { code: 'sport', name: 'Sport & Fitness', icon: '🏋️', desc: 'Coaching' },
+      { code: 'location', name: 'Immobilier', icon: '🏢', desc: 'Location & vente' },
+      { code: 'media', name: 'Photo & Vidéo', icon: '📸', desc: 'Événements' },
+      { code: 'construction', name: 'Construction & BTP', icon: '🏗️', desc: 'Bâtiment' },
+      { code: 'agriculture', name: 'Agriculture', icon: '🌾', desc: 'Produits locaux' },
+      { code: 'freelance', name: 'Administratif', icon: '💼', desc: 'Secrétariat' },
+      { code: 'sante', name: 'Santé & Bien-être', icon: '💊', desc: 'Pharmacie & soins' },
+      { code: 'maison', name: 'Maison & Déco', icon: '🏠', desc: 'Intérieur' },
+    ],
+    // Autres Services (4) - Identique à Auth.tsx
+    other: [
+      { code: 'education', name: 'Formation', icon: '🎓', desc: 'Cours & coaching' },
+      { code: 'livraison', name: 'Livraison', icon: '🚚', desc: 'Coursier & colis' },
+      { code: 'voyage', name: 'Voyage', icon: '✈️', desc: 'Tourisme & voyages' },
+      { code: 'ecommerce', name: 'Boutique', icon: '🏪', desc: 'E-commerce' },
+    ]
   };
 
-  // Grouper les services par catégorie (comme dans Auth.tsx)
-  const groupedServices = serviceTypes.reduce((acc, type) => {
-    const category = getServiceCategory(type.code);
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(type);
-    return acc;
-  }, {} as Record<string, ServiceType[]>);
+  const getServiceTypeByCode = (code: string) => {
+    return serviceTypes.find(type => type.code === code);
+  };
 
-  const getCategoryColor = (categoryKey: string) => {
-    switch (categoryKey) {
-      case 'proximite': return 'primary';
-      case 'professionnel': return 'violet-500';
-      case 'numerique': return 'cyan-500';
-      default: return 'green-500';
-    }
+  const renderDisplayServiceCard = (displayService: { code: string; name: string; icon: string; desc: string }, colorClass: string, borderClass: string) => {
+    const dbService = getServiceTypeByCode(displayService.code);
+    if (!dbService) return null;
+    
+    return (
+      <button
+        key={displayService.code}
+        onClick={() => handleSelectType(dbService)}
+        className={`flex flex-col items-center p-3 bg-gradient-to-br ${colorClass} rounded-xl border-2 hover:shadow-lg hover:scale-[1.02] transition-all ${borderClass}`}
+      >
+        <div className="text-3xl mb-1.5">{displayService.icon}</div>
+        <span className="text-sm font-semibold text-foreground">{displayService.name}</span>
+        <span className="text-[10px] text-muted-foreground">{displayService.desc}</span>
+      </button>
+    );
   };
 
   const renderServiceTypeGrid = () => (
-    <ScrollArea className="h-[450px] pr-2">
+    <ScrollArea className="h-[500px] pr-4">
       <div className="space-y-6">
-        {/* Services de Proximité Populaires */}
-        {groupedServices['proximite']?.length > 0 && (
-          <div>
-            <h4 className="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
-              <span className="w-6 h-0.5 bg-primary rounded"></span>
-              Services de Proximité
-              <span className="w-6 h-0.5 bg-primary rounded"></span>
-            </h4>
-            <div className="grid grid-cols-2 gap-2">
-              {groupedServices['proximite'].map((type) => {
-                const Icon = getServiceIcon(type.code);
-                return (
-                  <Card
-                    key={type.id}
-                    className="cursor-pointer transition-all duration-200 hover:shadow-md hover:border-primary group"
-                    onClick={() => handleSelectType(type)}
-                  >
-                    <CardContent className="p-3">
-                      <div className="flex flex-col items-center text-center">
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-2 group-hover:bg-primary/20 transition-colors">
-                          <Icon className="w-5 h-5 text-primary" />
-                        </div>
-                        <h4 className="font-semibold text-xs text-foreground truncate w-full">{type.name}</h4>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+        {/* Section: Services de Proximité Populaires - Identique à Auth.tsx */}
+        <div>
+          <h4 className="text-sm font-semibold text-primary mb-3 flex items-center justify-center gap-2">
+            <span className="w-8 h-0.5 bg-primary rounded"></span>
+            Services de Proximité Populaires
+            <span className="w-8 h-0.5 bg-primary rounded"></span>
+          </h4>
+          {/* Première ligne - 4 boutons */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+            {DISPLAY_SERVICES.proximity.slice(0, 4).map(s => 
+              renderDisplayServiceCard(s, 'from-white to-slate-50', 'border-slate-200 hover:border-primary')
+            )}
           </div>
-        )}
-
-        {/* Services Professionnels */}
-        {groupedServices['professionnel']?.length > 0 && (
-          <div>
-            <h4 className="text-sm font-semibold text-violet-600 mb-3 flex items-center gap-2">
-              <span className="w-6 h-0.5 bg-violet-500 rounded"></span>
-              Services Professionnels
-              <span className="w-6 h-0.5 bg-violet-500 rounded"></span>
-            </h4>
-            <div className="grid grid-cols-2 gap-2">
-              {groupedServices['professionnel'].map((type) => {
-                const Icon = getServiceIcon(type.code);
-                return (
-                  <Card
-                    key={type.id}
-                    className="cursor-pointer transition-all duration-200 hover:shadow-md hover:border-violet-500 group"
-                    onClick={() => handleSelectType(type)}
-                  >
-                    <CardContent className="p-3 bg-gradient-to-br from-violet-50/50 to-white dark:from-violet-900/10 dark:to-background">
-                      <div className="flex flex-col items-center text-center">
-                        <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mb-2 group-hover:bg-violet-200 dark:group-hover:bg-violet-900/50 transition-colors">
-                          <Icon className="w-5 h-5 text-violet-600" />
-                        </div>
-                        <h4 className="font-semibold text-xs text-foreground truncate w-full">{type.name}</h4>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+          {/* Deuxième ligne - 2 boutons centrés */}
+          <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
+            {DISPLAY_SERVICES.proximity.slice(4).map(s => 
+              renderDisplayServiceCard(s, 'from-white to-slate-50', 'border-slate-200 hover:border-primary')
+            )}
           </div>
-        )}
+        </div>
 
-        {/* Produits Numériques */}
-        {groupedServices['numerique']?.length > 0 && (
-          <div>
-            <h4 className="text-sm font-semibold text-cyan-600 mb-3 flex items-center gap-2">
-              <span className="w-6 h-0.5 bg-cyan-500 rounded"></span>
-              Produits Numériques
-              <span className="w-6 h-0.5 bg-cyan-500 rounded"></span>
-            </h4>
-            <div className="grid grid-cols-2 gap-2">
-              {groupedServices['numerique'].map((type) => {
-                const Icon = getServiceIcon(type.code);
-                return (
-                  <Card
-                    key={type.id}
-                    className="cursor-pointer transition-all duration-200 hover:shadow-md hover:border-cyan-500 group"
-                    onClick={() => handleSelectType(type)}
-                  >
-                    <CardContent className="p-3 bg-gradient-to-br from-cyan-50/50 to-white dark:from-cyan-900/10 dark:to-background">
-                      <div className="flex flex-col items-center text-center">
-                        <div className="w-10 h-10 rounded-xl bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center mb-2 group-hover:bg-cyan-200 dark:group-hover:bg-cyan-900/50 transition-colors">
-                          <Icon className="w-5 h-5 text-cyan-600" />
-                        </div>
-                        <h4 className="font-semibold text-xs text-foreground truncate w-full">{type.name}</h4>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+        {/* Section: Services Professionnels - Identique à Auth.tsx */}
+        <div>
+          <h4 className="text-sm font-semibold text-violet-600 mb-3 flex items-center justify-center gap-2">
+            <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
+            Services Professionnels
+            <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
+          </h4>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {DISPLAY_SERVICES.professional.map(s => 
+              renderDisplayServiceCard(s, 'from-violet-50 to-white', 'border-violet-200 hover:border-violet-500')
+            )}
           </div>
-        )}
+        </div>
 
-        {/* Commerce / Autres */}
-        {groupedServices['commerce']?.length > 0 && (
-          <div>
-            <h4 className="text-sm font-semibold text-green-600 mb-3 flex items-center gap-2">
-              <span className="w-6 h-0.5 bg-green-500 rounded"></span>
-              Commerce & Livraison
-              <span className="w-6 h-0.5 bg-green-500 rounded"></span>
-            </h4>
-            <div className="grid grid-cols-2 gap-2">
-              {groupedServices['commerce'].map((type) => {
-                const Icon = getServiceIcon(type.code);
-                return (
-                  <Card
-                    key={type.id}
-                    className="cursor-pointer transition-all duration-200 hover:shadow-md hover:border-green-500 group"
-                    onClick={() => handleSelectType(type)}
-                  >
-                    <CardContent className="p-3 bg-gradient-to-br from-green-50/50 to-white dark:from-green-900/10 dark:to-background">
-                      <div className="flex flex-col items-center text-center">
-                        <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-2 group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
-                          <Icon className="w-5 h-5 text-green-600" />
-                        </div>
-                        <h4 className="font-semibold text-xs text-foreground truncate w-full">{type.name}</h4>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+        {/* Section: Autres Services - Identique à Auth.tsx */}
+        <div>
+          <h4 className="text-sm font-semibold text-cyan-600 mb-3 flex items-center justify-center gap-2">
+            <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
+            Autres Services
+            <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
+          </h4>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {DISPLAY_SERVICES.other.map(s => 
+              renderDisplayServiceCard(s, 'from-cyan-50 to-white', 'border-cyan-200 hover:border-cyan-500')
+            )}
           </div>
-        )}
-
-        {/* Services non catégorisés (fallback) */}
-        {Object.keys(groupedServices).filter(k => !['proximite', 'professionnel', 'numerique', 'commerce'].includes(k)).map(categoryKey => {
-          const services = groupedServices[categoryKey];
-          if (!services?.length) return null;
-          return (
-            <div key={categoryKey}>
-              <h4 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
-                <span className="w-6 h-0.5 bg-muted-foreground rounded"></span>
-                Autres Services
-                <span className="w-6 h-0.5 bg-muted-foreground rounded"></span>
-              </h4>
-              <div className="grid grid-cols-2 gap-2">
-                {services.map((type) => {
-                  const Icon = getServiceIcon(type.code);
-                  return (
-                    <Card
-                      key={type.id}
-                      className="cursor-pointer transition-all duration-200 hover:shadow-md hover:border-primary/50 group"
-                      onClick={() => handleSelectType(type)}
-                    >
-                      <CardContent className="p-3">
-                        <div className="flex flex-col items-center text-center">
-                          <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-2 group-hover:bg-muted/80 transition-colors">
-                            <Icon className="w-5 h-5 text-muted-foreground" />
-                          </div>
-                          <h4 className="font-semibold text-xs text-foreground truncate w-full">{type.name}</h4>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
+        </div>
       </div>
     </ScrollArea>
   );
@@ -643,17 +516,17 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-hidden">
+      <DialogContent className="sm:max-w-[750px] lg:max-w-[900px] max-h-[90vh] overflow-hidden">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-              <Plus className="w-4 h-4 text-primary" />
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+              <Plus className="w-5 h-5 text-primary" />
             </div>
             {step === 'select' ? 'Nouveau service professionnel' : 'Configurer votre service'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-base">
             {step === 'select' 
-              ? 'Choisissez le type de service que vous souhaitez créer'
+              ? 'Choisissez le type de service que vous souhaitez créer parmi nos catégories'
               : `Configurez votre ${selectedType?.name || 'service'}`
             }
           </DialogDescription>

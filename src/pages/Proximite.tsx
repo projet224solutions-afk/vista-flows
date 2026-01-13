@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 // Framer-motion supprimé pour réduire TBT de 914ms
 import { 
   Store, 
-  Bike, 
   Package, 
   Scissors, 
   Utensils, 
@@ -15,7 +14,6 @@ import {
   Heart,
   Laptop,
   Home,
-  GraduationCap,
   Camera,
   Dumbbell,
   Search,
@@ -35,43 +33,22 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
 
-// Catégories de services de proximité avec IDs pour mapping dynamique
-const getServiceCategories = (stats: any) => [
+/**
+ * SERVICES DE PROXIMITÉ POPULAIRES - Synchronisés EXACTEMENT avec Auth.tsx
+ * Structure: 4 services en ligne 1, 2 services centrés en ligne 2
+ */
+const getProximityPopularServices = (stats: any) => [
+  // Ligne 1 - 4 services (comme Auth.tsx ligne 1428-1445)
   {
-    id: "boutiques",
-    title: "Boutiques",
-    icon: Store,
-    color: "from-blue-500 to-blue-600",
-    bgColor: "bg-blue-50",
-    textColor: "text-blue-600",
-    count: stats.boutiques,
-    path: "/proximite/boutiques", // Liste des boutiques à proximité avec distance
-    description: "Commerces locaux",
-    trending: stats.boutiques > 5
-  },
-  {
-    id: "taxi-moto",
-    title: "Taxi-Moto",
-    icon: Bike,
-    color: "from-emerald-500 to-emerald-600",
-    bgColor: "bg-emerald-50",
-    textColor: "text-emerald-600",
-    count: stats.taxiMoto,
-    path: "/proximite/taxi-moto", // Liste des motos disponibles à proximité
-    description: "Transport rapide",
-    trending: stats.taxiMoto > 3
-  },
-  {
-    id: "livraison",
-    title: "Livraison",
-    icon: Package,
-    color: "from-orange-500 to-orange-600",
-    bgColor: "bg-orange-50",
-    textColor: "text-orange-600",
-    count: stats.livraison,
-    path: "/proximite/livraison", // Liste des livreurs disponibles à proximité
-    description: "Colis & courses",
-    trending: false
+    id: "restaurant",
+    title: "Restaurant",
+    icon: Utensils,
+    color: "from-red-500 to-red-600",
+    bgColor: "bg-red-50",
+    textColor: "text-red-600",
+    count: stats.restaurant,
+    path: "/services-proximite?type=restaurant",
+    description: "Cuisine & plats"
   },
   {
     id: "beaute",
@@ -85,18 +62,7 @@ const getServiceCategories = (stats: any) => [
     description: "Soins & styling"
   },
   {
-    id: "restaurant",
-    title: "Restaurants",
-    icon: Utensils,
-    color: "from-red-500 to-red-600",
-    bgColor: "bg-red-50",
-    textColor: "text-red-600",
-    count: stats.restaurant,
-    path: "/services-proximite?type=restaurant",
-    description: "Cuisine locale"
-  },
-  {
-    id: "transport",
+    id: "vtc",
     title: "Transport VTC",
     icon: Car,
     color: "from-slate-600 to-slate-700",
@@ -116,17 +82,64 @@ const getServiceCategories = (stats: any) => [
     count: stats.reparation,
     path: "/services-proximite?type=reparation",
     description: "Électro & mécanique"
-  },
+  }
+];
+
+/**
+ * SERVICES DE PROXIMITÉ COMPLÉMENTAIRES - Ligne 2 Auth.tsx
+ */
+const getProximitySecondaryServices = (stats: any) => [
   {
-    id: "nettoyage",
+    id: "menage",
     title: "Nettoyage",
     icon: Sparkles,
     color: "from-cyan-500 to-cyan-600",
     bgColor: "bg-cyan-50",
     textColor: "text-cyan-600",
     count: stats.nettoyage,
-    path: "/services-proximite?type=nettoyage",
+    path: "/services-proximite?type=menage",
     description: "Ménage & pressing"
+  },
+  {
+    id: "informatique",
+    title: "Informatique",
+    icon: Laptop,
+    color: "from-indigo-500 to-indigo-600",
+    bgColor: "bg-indigo-50",
+    textColor: "text-indigo-600",
+    count: stats.informatique,
+    path: "/services-proximite?type=informatique",
+    description: "Tech & dépannage"
+  }
+];
+
+/**
+ * ACCÈS RAPIDE - Services spécifiques à la proximité (Boutiques, Livraison)
+ * Ces services ne sont pas dans le formulaire d'inscription mais utiles pour les clients
+ */
+const getQuickAccessServices = (stats: any) => [
+  {
+    id: "boutiques",
+    title: "Boutiques",
+    icon: Store,
+    color: "from-blue-500 to-blue-600",
+    bgColor: "bg-blue-50",
+    textColor: "text-blue-600",
+    count: stats.boutiques,
+    path: "/proximite/boutiques",
+    description: "Commerces locaux",
+    trending: stats.boutiques > 5
+  },
+  {
+    id: "livraison",
+    title: "Livraison",
+    icon: Package,
+    color: "from-orange-500 to-orange-600",
+    bgColor: "bg-orange-50",
+    textColor: "text-orange-600",
+    count: stats.livraison,
+    path: "/proximite/livraison",
+    description: "Colis & courses"
   }
 ];
 
@@ -138,58 +151,11 @@ interface CategoryWithCount {
   product_count: number;
 }
 
-// Services professionnels avec stats dynamiques
+/**
+ * SERVICES PROFESSIONNELS - Synchronisés avec Auth.tsx "Services Professionnels"
+ * Ces services correspondent exactement aux boutons de la section violette
+ */
 const getProfessionalServices = (stats: any) => [
-  {
-    id: "sante",
-    title: "Santé & Bien-être",
-    icon: Heart,
-    color: "from-rose-500 to-rose-600",
-    bgColor: "bg-rose-50",
-    textColor: "text-rose-600",
-    description: "Soins & consultations",
-    count: stats.sante
-  },
-  {
-    id: "maison",
-    title: "Maison & Déco",
-    icon: Home,
-    color: "from-teal-500 to-teal-600",
-    bgColor: "bg-teal-50",
-    textColor: "text-teal-600",
-    description: "Décoration & aménagement",
-    count: stats.maison
-  },
-  {
-    id: "immobilier",
-    title: "Immobilier",
-    icon: Building2,
-    color: "from-violet-500 to-violet-600",
-    bgColor: "bg-violet-50",
-    textColor: "text-violet-600",
-    description: "Achats, ventes, locations",
-    count: stats.immobilier
-  },
-  {
-    id: "formation",
-    title: "Formation",
-    icon: GraduationCap,
-    color: "from-sky-500 to-sky-600",
-    bgColor: "bg-sky-50",
-    textColor: "text-sky-600",
-    description: "Cours & coaching",
-    count: stats.formation
-  },
-  {
-    id: "photo-video",
-    title: "Photo & Vidéo",
-    icon: Camera,
-    color: "from-fuchsia-500 to-fuchsia-600",
-    bgColor: "bg-fuchsia-50",
-    textColor: "text-fuchsia-600",
-    description: "Événements & création",
-    count: stats.media
-  },
   {
     id: "sport",
     title: "Sport & Fitness",
@@ -199,6 +165,76 @@ const getProfessionalServices = (stats: any) => [
     textColor: "text-lime-600",
     description: "Coaching & salles",
     count: stats.sport
+  },
+  {
+    id: "location",
+    title: "Immobilier",
+    icon: Building2,
+    color: "from-violet-500 to-violet-600",
+    bgColor: "bg-violet-50",
+    textColor: "text-violet-600",
+    description: "Location & vente",
+    count: stats.immobilier
+  },
+  {
+    id: "media",
+    title: "Photo & Vidéo",
+    icon: Camera,
+    color: "from-fuchsia-500 to-fuchsia-600",
+    bgColor: "bg-fuchsia-50",
+    textColor: "text-fuchsia-600",
+    description: "Événements & création",
+    count: stats.media
+  },
+  {
+    id: "construction",
+    title: "Construction & BTP",
+    icon: Building2,
+    color: "from-stone-500 to-stone-600",
+    bgColor: "bg-stone-50",
+    textColor: "text-stone-600",
+    description: "Bâtiment & travaux",
+    count: stats.construction
+  },
+  {
+    id: "agriculture",
+    title: "Agriculture",
+    icon: ShoppingBag,
+    color: "from-green-500 to-green-600",
+    bgColor: "bg-green-50",
+    textColor: "text-green-600",
+    description: "Produits locaux",
+    count: stats.agriculture
+  },
+  {
+    id: "freelance",
+    title: "Administratif",
+    icon: ShoppingBag,
+    color: "from-gray-500 to-gray-600",
+    bgColor: "bg-gray-50",
+    textColor: "text-gray-600",
+    description: "Secrétariat & conseil",
+    count: stats.freelance
+  },
+  {
+    id: "sante",
+    title: "Santé & Bien-être",
+    icon: Heart,
+    color: "from-rose-500 to-rose-600",
+    bgColor: "bg-rose-50",
+    textColor: "text-rose-600",
+    description: "Pharmacie & soins",
+    count: stats.sante
+  },
+  {
+    id: "maison",
+    title: "Maison & Déco",
+    icon: Home,
+    color: "from-teal-500 to-teal-600",
+    bgColor: "bg-teal-50",
+    textColor: "text-teal-600",
+    description: "Intérieur & déco",
+    count: stats.maison
   }
 ];
 
@@ -294,8 +330,10 @@ export default function Proximite() {
     loadCategoriesWithProducts();
   }, []);
 
-  // Memoize computed categories based on real stats
-  const serviceCategories = useMemo(() => getServiceCategories(stats), [stats]);
+  // Memoize computed categories based on real stats - Structure comme Auth.tsx
+  const proximityPopularServices = useMemo(() => getProximityPopularServices(stats), [stats]);
+  const proximitySecondaryServices = useMemo(() => getProximitySecondaryServices(stats), [stats]);
+  const quickAccessServices = useMemo(() => getQuickAccessServices(stats), [stats]);
   const professionalServices = useMemo(() => getProfessionalServices(stats), [stats]);
 
   const handleServiceClick = (path: string) => {
@@ -359,20 +397,24 @@ export default function Proximite() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
-        {/* Services principaux */}
+        {/* ═══════════════════════════════════════════════════════════════════
+            SERVICES DE PROXIMITÉ POPULAIRES - Comme Auth.tsx
+            Structure: Ligne 1 (4 cards) + Ligne 2 (2 cards centrées)
+        ═══════════════════════════════════════════════════════════════════ */}
         <section>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-primary" />
-                {t('home.popularServices') || t('proximity.popularServices')}
+                Services de Proximité Populaires
               </h2>
-              <p className="text-sm text-muted-foreground">{t('proximity.mostRequested') || 'Les plus demandés près de vous'}</p>
+              <p className="text-sm text-muted-foreground">Les plus demandés près de vous</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {serviceCategories.map((service) => {
+          {/* Ligne 1 - 4 services (comme Auth.tsx) */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+            {proximityPopularServices.map((service) => {
               const Icon = service.icon;
               return (
                 <button
@@ -380,9 +422,85 @@ export default function Proximite() {
                   onClick={() => handleServiceClick(service.path)}
                   className="group relative bg-card rounded-2xl p-4 border border-border/50 hover:border-primary/30 hover:shadow-lg transition-all duration-300 text-left overflow-hidden"
                 >
+                  <div className={cn(
+                    "w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110",
+                    service.bgColor
+                  )}>
+                    <Icon className={cn("w-6 h-6", service.textColor)} />
+                  </div>
+                  
+                  <h3 className="font-semibold text-foreground text-sm mb-1 group-hover:text-primary transition-colors">
+                    {service.title}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-2">{service.description}</p>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-primary">{service.count} disponibles</span>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Ligne 2 - 2 services centrés (comme Auth.tsx) */}
+          <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
+            {proximitySecondaryServices.map((service) => {
+              const Icon = service.icon;
+              return (
+                <button
+                  key={service.id}
+                  onClick={() => handleServiceClick(service.path)}
+                  className="group relative bg-card rounded-2xl p-4 border border-border/50 hover:border-primary/30 hover:shadow-lg transition-all duration-300 text-left overflow-hidden"
+                >
+                  <div className={cn(
+                    "w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110",
+                    service.bgColor
+                  )}>
+                    <Icon className={cn("w-6 h-6", service.textColor)} />
+                  </div>
+                  
+                  <h3 className="font-semibold text-foreground text-sm mb-1 group-hover:text-primary transition-colors">
+                    {service.title}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-2">{service.description}</p>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-primary">{service.count} disponibles</span>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════════════════════
+            ACCÈS RAPIDE - Boutiques & Livraison
+        ═══════════════════════════════════════════════════════════════════ */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <Store className="w-5 h-5 text-blue-500" />
+                Accès Rapide
+              </h2>
+              <p className="text-sm text-muted-foreground">Boutiques & Livraison à proximité</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 max-w-md mx-auto sm:max-w-none sm:grid-cols-2 lg:grid-cols-2">
+            {quickAccessServices.map((service) => {
+              const Icon = service.icon;
+              return (
+                <button
+                  key={service.id}
+                  onClick={() => handleServiceClick(service.path)}
+                  className="group relative bg-gradient-to-br from-card to-muted/30 rounded-2xl p-4 border border-border/50 hover:border-primary/30 hover:shadow-lg transition-all duration-300 text-left overflow-hidden"
+                >
                   {service.trending && (
                     <Badge className="absolute top-2 right-2 bg-primary/10 text-primary border-0 text-[10px] px-1.5">
-                      {t('home.trending') || 'Tendance'}
+                      Tendance
                     </Badge>
                   )}
                   
@@ -399,7 +517,7 @@ export default function Proximite() {
                   <p className="text-xs text-muted-foreground mb-2">{service.description}</p>
                   
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-primary">{service.count} {t('home.available') || 'disponibles'}</span>
+                    <span className="text-xs font-medium text-primary">{service.count} disponibles</span>
                     <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                   </div>
                 </button>

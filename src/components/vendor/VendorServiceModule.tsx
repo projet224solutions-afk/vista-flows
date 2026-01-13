@@ -1,20 +1,21 @@
 /**
  * VendorServiceModule - Module métier du vendeur
- * Support multi-services avec sélecteur et interface dédiée par service
- * Utilise ServiceModuleManager pour afficher l'interface spécifique selon le type de service
+ * Affiche TOUJOURS la vue boutique (statistiques, commandes, produits)
+ * même pour les nouveaux vendeurs sans service professionnel configuré
  */
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, RefreshCw, Plus, Store, Clock, XCircle } from 'lucide-react';
+import { AlertCircle, RefreshCw, Plus, Clock, XCircle } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { useVendorServices } from '@/hooks/useVendorServices';
 import { ServiceModuleManager } from '@/components/professional-services/modules/ServiceModuleManager';
 import { AddServiceModal } from '@/components/vendor/business-module/AddServiceModal';
 import { ServiceSelector } from '@/components/vendor/business-module/ServiceSelector';
+import { VendorShopDashboard } from '@/components/vendor/VendorShopDashboard';
 
 export default function VendorServiceModule() {
   const { vendorId, profile, loading: vendorLoading } = useCurrentVendor();
@@ -44,9 +45,6 @@ export default function VendorServiceModule() {
           </div>
           <Skeleton className="h-10 w-28" />
         </div>
-
-        {/* Service Selector Skeleton */}
-        <Skeleton className="h-12 w-full md:w-[350px]" />
 
         {/* KPI Cards Skeleton */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -105,25 +103,25 @@ export default function VendorServiceModule() {
 
   return (
     <div className="space-y-6">
-      {/* 🆕 Service Selector (toujours visible pour permettre de créer/gérer des services) */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b">
-        <div>
-          <h2 className="text-lg font-semibold mb-1">Mes services professionnels</h2>
-          <p className="text-sm text-muted-foreground">
-            {services.length > 1 
-              ? 'Sélectionnez le service à gérer' 
-              : services.length === 1 
-                ? `Service actif: ${selectedService?.service_type?.name || 'Non défini'}` 
-                : 'Créez votre premier service'}
-          </p>
+      {/* 🆕 Service Selector (seulement si des services existent) */}
+      {services.length > 0 && (
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b">
+          <div>
+            <h2 className="text-lg font-semibold mb-1">Mes services professionnels</h2>
+            <p className="text-sm text-muted-foreground">
+              {services.length > 1 
+                ? 'Sélectionnez le service à gérer' 
+                : `Service actif: ${selectedService?.service_type?.name || 'Non défini'}`}
+            </p>
+          </div>
+          <ServiceSelector
+            services={services}
+            selectedServiceId={selectedServiceId}
+            onSelectService={selectService}
+            onCreateNew={() => setShowAddService(true)}
+          />
         </div>
-        <ServiceSelector
-          services={services}
-          selectedServiceId={selectedServiceId}
-          onSelectService={selectService}
-          onCreateNew={() => setShowAddService(true)}
-        />
-      </div>
+      )}
 
       {/* Status Alerts pour le service sélectionné */}
       {selectedService?.status === 'pending' && (
@@ -144,7 +142,11 @@ export default function VendorServiceModule() {
         </Alert>
       )}
 
-      {/* Dashboard du service sélectionné avec interface spécifique au type */}
+      {/* 
+        ⚡ CHANGEMENT MAJEUR: Afficher TOUJOURS la vue boutique
+        - Si un service professionnel est sélectionné: utiliser ServiceModuleManager
+        - Sinon: utiliser VendorShopDashboard par défaut (vue boutique de base)
+      */}
       {selectedService ? (
         <ServiceModuleManager
           serviceId={selectedService.id}
@@ -154,19 +156,12 @@ export default function VendorServiceModule() {
           businessName={selectedService.business_name || businessName}
         />
       ) : (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Store className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">Aucun service professionnel</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Créez votre premier service professionnel pour commencer
-            </p>
-            <Button onClick={() => setShowAddService(true)} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Créer un service
-            </Button>
-          </CardContent>
-        </Card>
+        // 🆕 Vue boutique par défaut pour les vendeurs sans service professionnel
+        <VendorShopDashboard 
+          vendorId={vendorId} 
+          businessName={businessName}
+          onCreateService={() => setShowAddService(true)}
+        />
       )}
 
       <AddServiceModal 

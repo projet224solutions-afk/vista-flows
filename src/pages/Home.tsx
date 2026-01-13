@@ -94,8 +94,11 @@ export default function Home() {
       case 'livraison':
         setShowDeliveryModal(true);
         break;
+      case 'restaurants':
+        navigate('/services-proximite?type=restaurant');
+        break;
     }
-  }, []);
+  }, [navigate]);
 
   const handleAddToCart = useCallback(
     (product: any) => {

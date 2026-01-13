@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import OAuthPasswordGate from "@/components/auth/OAuthPasswordGate";
+import { ThemeProvider } from "next-themes";
 
 const MerchantOnboarding = lazyWithRetry(() => import("@/components/onboarding/MerchantOnboarding"));
 import { CartProvider } from "@/contexts/CartContext";
@@ -95,8 +97,10 @@ const VendorAgentInterface = lazyWithRetry(() => import("./pages/VendorAgentInte
 const VendorContracts = lazyWithRetry(() => import("./pages/VendorContracts"));
 const ClientContracts = lazyWithRetry(() => import("./pages/ClientContracts"));
 const ServiceDetail = lazyWithRetry(() => import("./pages/ServiceDetail"));
+const ServiceRedirect = lazyWithRetry(() => import("./pages/ServiceRedirect"));
 const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
 const UniversalLoginPage = lazyWithRetry(() => import("./pages/UniversalLoginPage"));
+const SetPasswordAfterOAuth = lazyWithRetry(() => import("./pages/SetPasswordAfterOAuth"));
 const AgentCreation = lazyWithRetry(() => import("./pages/AgentCreation"));
 const WorkerSettings = lazyWithRetry(() => import("./pages/WorkerSettings"));
 const BadgeVerification = lazyWithRetry(() => import("./pages/BadgeVerification"));
@@ -108,6 +112,7 @@ const StripeDiagnostic = lazyWithRetry(() => import("./pages/StripeDiagnostic"))
 const DigitalProducts = lazyWithRetry(() => import("./pages/DigitalProducts"));
 const ShortLinkRedirect = lazyWithRetry(() => import("./pages/ShortLinkRedirect"));
 const UserPublicProfile = lazyWithRetry(() => import("./pages/UserPublicProfile"));
+const RestaurantPublicMenu = lazyWithRetry(() => import("./pages/RestaurantPublicMenu"));
 const Custom224PaymentDemo = lazyWithRetry(() => import("./pages/demos/Custom224PaymentDemo"));
 // Ultra-simple loading component - Pure CSS inline (no Tailwind dependency)
 const PageLoader = memo(() => (
@@ -171,11 +176,13 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <LanguageProvider>
-          <AuthProvider>
-            <CartProvider>
-              <TooltipProvider>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <BrowserRouter>
+          <LanguageProvider>
+            <AuthProvider>
+              <OAuthPasswordGate />
+              <CartProvider>
+                <TooltipProvider>
                 <Toaster />
                 <Sonner />
                 <InstallPromptBanner />
@@ -199,7 +206,8 @@ function App() {
               <Route path="/login" element={<Navigate to="/auth" replace />} />
               <Route path="/auth/google" element={<LoginGoogle />} />
               <Route path="/auth/google/success" element={<AuthGoogleSuccess />} />
-              <Route path="/universal-login" element={<UniversalLoginPage />} />
+<Route path="/universal-login" element={<UniversalLoginPage />} />
+              <Route path="/auth/set-password" element={<SetPasswordAfterOAuth />} />
               <Route path="/agent/create" element={<AgentCreation />} />
               <Route path="/worker/settings" element={<WorkerSettings />} />
               {/* <Route path="/install" element={<InstallPWA />} /> PWA désactivée */}
@@ -234,6 +242,12 @@ function App() {
               
               <Route path="/services-proximite" element={<ServicesProximite />} />
               <Route path="/services-proximite/:id" element={<ServiceDetail />} />
+              {/* Page publique menu restaurant pour commande client */}
+              <Route path="/restaurant/:serviceId/menu" element={<RestaurantPublicMenu />} />
+              {/* Alias legacy: /service/:id -> /services-proximite/:id */}
+              <Route path="/service/:id" element={<ServiceRedirect />} />
+              {/* Service Selection - Protected for logged-in users to create their professional service */}
+              <Route path="/service-selection" element={<ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire']}><ServiceSelection /></ProtectedRoute>} />
               <Route path="/devis" element={<Devis />} />
               <Route path="/delivery-request" element={<DeliveryRequest />} />
               <Route path="/delivery" element={<DeliveryClient />} />
@@ -492,8 +506,9 @@ function App() {
         </TooltipProvider>
       </CartProvider>
     </AuthProvider>
-  </LanguageProvider>
-  </BrowserRouter>
+    </LanguageProvider>
+    </BrowserRouter>
+  </ThemeProvider>
 </QueryClientProvider>
   );
 }

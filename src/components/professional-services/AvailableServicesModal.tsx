@@ -1,7 +1,7 @@
 /**
- * Modal for displaying available professional services
+ * Modal for displaying available service TYPES
  * When user is logged in and clicks "Commencer maintenant"
- * Shows available services or prompts to be the first to create
+ * Shows available service types (Boutique, Restaurant, Salon, etc.) to create
  */
 
 import { useState, useEffect } from 'react';
@@ -23,12 +23,20 @@ import {
   Sparkles, 
   ArrowRight, 
   Search, 
-  MapPin, 
-  Star, 
   Plus,
   Mail,
   AlertCircle,
-  Loader2
+  Loader2,
+  Utensils,
+  Scissors,
+  Car,
+  Truck,
+  ShoppingBag,
+  Briefcase,
+  Heart,
+  GraduationCap,
+  Wrench,
+  Camera
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -36,21 +44,14 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-interface ProfessionalService {
+interface ServiceType {
   id: string;
-  business_name: string;
+  name: string;
   description: string | null;
-  logo_url: string | null;
-  address: string | null;
-  rating: number;
-  total_reviews: number;
-  status: string;
-  service_type?: {
-    id: string;
-    name: string;
-    icon: string;
-    category: string;
-  };
+  icon: string | null;
+  category: string | null;
+  is_active: boolean;
+  services_count?: number;
 }
 
 interface AvailableServicesModalProps {
@@ -58,67 +59,101 @@ interface AvailableServicesModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// Map icon names to Lucide icons
+const getIconComponent = (iconName: string | null) => {
+  const iconMap: Record<string, React.ReactNode> = {
+    'store': <Store className="w-6 h-6" />,
+    'utensils': <Utensils className="w-6 h-6" />,
+    'scissors': <Scissors className="w-6 h-6" />,
+    'car': <Car className="w-6 h-6" />,
+    'truck': <Truck className="w-6 h-6" />,
+    'shopping-bag': <ShoppingBag className="w-6 h-6" />,
+    'briefcase': <Briefcase className="w-6 h-6" />,
+    'heart': <Heart className="w-6 h-6" />,
+    'graduation-cap': <GraduationCap className="w-6 h-6" />,
+    'wrench': <Wrench className="w-6 h-6" />,
+    'camera': <Camera className="w-6 h-6" />,
+  };
+  return iconMap[iconName || ''] || <Store className="w-6 h-6" />;
+};
+
+// Get gradient color based on category
+const getCategoryGradient = (category: string | null) => {
+  const gradients: Record<string, string> = {
+    'commerce': 'from-blue-500 to-indigo-500',
+    'food': 'from-orange-500 to-red-500',
+    'services': 'from-emerald-500 to-teal-500',
+    'transport': 'from-violet-500 to-purple-500',
+    'health': 'from-pink-500 to-rose-500',
+    'education': 'from-amber-500 to-yellow-500',
+    'tech': 'from-cyan-500 to-blue-500',
+    'creative': 'from-fuchsia-500 to-pink-500',
+  };
+  return gradients[category || ''] || 'from-primary to-primary/70';
+};
+
 export function AvailableServicesModal({ open, onOpenChange }: AvailableServicesModalProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
   
-  const [services, setServices] = useState<ProfessionalService[]>([]);
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [selectedServiceType, setSelectedServiceType] = useState<ServiceType | null>(null);
   const [newEmail, setNewEmail] = useState('');
   const [emailError, setEmailError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
-      fetchAvailableServices();
+      fetchServiceTypes();
     }
   }, [open]);
 
-  const fetchAvailableServices = async () => {
+  const fetchServiceTypes = async () => {
     setLoading(true);
     try {
+      // Fetch service types with count of active services
       const { data, error } = await supabase
-        .from('professional_services')
-        .select(`
-          id,
-          business_name,
-          description,
-          logo_url,
-          address,
-          rating,
-          total_reviews,
-          status,
-          service_type:service_types(id, name, icon, category)
-        `)
-        .eq('status', 'active')
-        .order('rating', { ascending: false })
-        .limit(20);
+        .from('service_types')
+        .select('id, name, description, icon, category, is_active')
+        .eq('is_active', true)
+        .order('name');
 
       if (error) throw error;
-      setServices((data || []) as ProfessionalService[]);
+      
+      // Get count of services for each type
+      const typesWithCount = await Promise.all(
+        (data || []).map(async (type) => {
+          const { count } = await supabase
+            .from('professional_services')
+            .select('id', { count: 'exact', head: true })
+            .eq('service_type_id', type.id)
+            .eq('status', 'active');
+          
+          return { ...type, services_count: count || 0 };
+        })
+      );
+      
+      setServiceTypes(typesWithCount);
     } catch (error) {
-      console.error('Error fetching services:', error);
-      toast.error('Erreur lors du chargement des services');
+      console.error('Error fetching service types:', error);
+      toast.error('Erreur lors du chargement des types de services');
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredServices = services.filter(service =>
-    service.business_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    service.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    service.service_type?.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredServiceTypes = serviceTypes.filter(type =>
+    type.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    type.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    type.category?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleServiceClick = (serviceId: string) => {
-    onOpenChange(false);
-    navigate(`/service/${serviceId}`);
-  };
-
-  const handleCreateServiceClick = () => {
+  const handleServiceTypeClick = (serviceType: ServiceType) => {
+    setSelectedServiceType(serviceType);
     setShowCreateForm(true);
     setNewEmail('');
     setEmailError('');
@@ -147,16 +182,21 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
 
     setIsSubmitting(true);
     try {
-      // Store the new email in sessionStorage for the service creation flow
+      // Store the new email and selected service type in sessionStorage
       sessionStorage.setItem('service_creation_email', newEmail);
+      if (selectedServiceType) {
+        sessionStorage.setItem('selected_service_type_id', selectedServiceType.id);
+        sessionStorage.setItem('selected_service_type_name', selectedServiceType.name);
+      }
       
       toast.success('Email enregistré ! Vous allez être redirigé vers la création de service.');
       onOpenChange(false);
       
-      // Navigate to service selection with the new email context
+      // Navigate to service selection with the pre-selected service type
       navigate('/service-selection', { 
         state: { 
           serviceEmail: newEmail,
+          selectedServiceTypeId: selectedServiceType?.id,
           fromServicesModal: true 
         } 
       });
@@ -170,6 +210,7 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
 
   const handleBackToList = () => {
     setShowCreateForm(false);
+    setSelectedServiceType(null);
     setNewEmail('');
     setEmailError('');
   };
@@ -180,26 +221,28 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
         <Store className="w-8 h-8 text-primary" />
       </div>
       <h3 className="font-semibold text-foreground mb-2">
-        Aucun service disponible pour le moment
+        Aucun type de service disponible
       </h3>
       <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
-        Soyez le premier à créer votre service professionnel et commencez à recevoir des clients !
+        Les types de services seront bientôt disponibles. Revenez plus tard !
       </p>
-      <Button onClick={handleCreateServiceClick} className="gap-2">
-        <Plus className="w-4 h-4" />
-        Créer mon service
-      </Button>
     </div>
   );
 
   const renderCreateForm = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Mail className="w-7 h-7 text-primary" />
-        </div>
+        {selectedServiceType && (
+          <div className={cn(
+            'w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4',
+            'bg-gradient-to-br text-white',
+            getCategoryGradient(selectedServiceType.category)
+          )}>
+            {getIconComponent(selectedServiceType.icon)}
+          </div>
+        )}
         <h3 className="font-semibold text-foreground mb-2">
-          Créer votre service professionnel
+          Créer votre {selectedServiceType?.name || 'service'}
         </h3>
         <p className="text-sm text-muted-foreground">
           Pour créer votre service, vous devez utiliser une adresse email différente de celle de votre compte actuel.
@@ -268,125 +311,92 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
     </div>
   );
 
-  const renderServicesList = () => (
+  const renderServiceTypesList = () => (
     <div className="space-y-4">
       {/* Search bar */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Rechercher un service..."
+          placeholder="Rechercher un type de service..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10"
         />
       </div>
 
-      {/* Services list */}
-      <div className="max-h-[350px] overflow-y-auto space-y-3 pr-1">
-        {filteredServices.length === 0 ? (
+      {/* Service types grid - landscape layout */}
+      <div className="max-h-[60vh] overflow-y-auto pr-1">
+        {filteredServiceTypes.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground text-sm">
             Aucun service trouvé pour "{searchQuery}"
           </div>
         ) : (
-          filteredServices.map((service) => (
-            <Card
-              key={service.id}
-              className={cn(
-                'cursor-pointer transition-all duration-200',
-                'hover:border-primary/50 hover:shadow-md'
-              )}
-              onClick={() => handleServiceClick(service.id)}
-            >
-              <CardContent className="p-3">
-                <div className="flex items-start gap-3">
-                  {/* Logo/Icon */}
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center shrink-0">
-                    {service.logo_url ? (
-                      <img 
-                        src={service.logo_url} 
-                        alt={service.business_name}
-                        className="w-10 h-10 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <Store className="w-6 h-6 text-primary" />
-                    )}
-                  </div>
-                  
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h4 className="font-semibold text-foreground text-sm truncate">
-                          {service.business_name}
-                        </h4>
-                        {service.service_type && (
-                          <Badge variant="secondary" className="text-xs mt-1">
-                            {service.service_type.name}
-                          </Badge>
-                        )}
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filteredServiceTypes.map((serviceType) => (
+              <Card
+                key={serviceType.id}
+                className={cn(
+                  'cursor-pointer transition-all duration-200',
+                  'hover:border-primary/50 hover:shadow-md hover:scale-[1.02]'
+                )}
+                onClick={() => handleServiceTypeClick(serviceType)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    {/* Icon with gradient */}
+                    <div className={cn(
+                      'w-14 h-14 rounded-xl flex items-center justify-center',
+                      'bg-gradient-to-br text-white shadow-lg',
+                      getCategoryGradient(serviceType.category)
+                    )}>
+                      {getIconComponent(serviceType.icon)}
                     </div>
                     
-                    {service.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
-                        {service.description}
-                      </p>
-                    )}
-                    
-                    <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                      {service.rating > 0 && (
-                        <span className="flex items-center gap-1">
-                          <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                          {service.rating.toFixed(1)}
-                          {service.total_reviews > 0 && (
-                            <span>({service.total_reviews})</span>
-                          )}
-                        </span>
+                    {/* Content */}
+                    <div className="space-y-1">
+                      <h4 className="font-semibold text-foreground text-sm">
+                        {serviceType.name}
+                      </h4>
+                      {serviceType.category && (
+                        <Badge variant="secondary" className="text-xs capitalize">
+                          {serviceType.category}
+                        </Badge>
                       )}
-                      {service.address && (
-                        <span className="flex items-center gap-1 truncate">
-                          <MapPin className="w-3 h-3 shrink-0" />
-                          <span className="truncate">{service.address}</span>
-                        </span>
+                      {serviceType.description && (
+                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                          {serviceType.description}
+                        </p>
+                      )}
+                      {(serviceType.services_count ?? 0) > 0 && (
+                        <p className="text-xs text-primary font-medium mt-1">
+                          {serviceType.services_count} service{(serviceType.services_count ?? 0) > 1 ? 's' : ''} actif{(serviceType.services_count ?? 0) > 1 ? 's' : ''}
+                        </p>
                       )}
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
-      </div>
-
-      {/* Create service button */}
-      <div className="pt-3 border-t">
-        <Button 
-          variant="outline" 
-          onClick={handleCreateServiceClick}
-          className="w-full gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Créer mon propre service
-        </Button>
       </div>
     </div>
   );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-hidden">
+      <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-primary" />
             </div>
-            {showCreateForm ? 'Créer un service' : 'Services disponibles'}
+            {showCreateForm ? `Créer: ${selectedServiceType?.name}` : 'Types de services disponibles'}
           </DialogTitle>
           <DialogDescription>
             {showCreateForm 
               ? 'Configurez votre nouveau service professionnel'
-              : 'Explorez les services professionnels ou créez le vôtre'
+              : 'Choisissez le type de service que vous souhaitez créer'
             }
           </DialogDescription>
         </DialogHeader>
@@ -398,10 +408,10 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
             </div>
           ) : showCreateForm ? (
             renderCreateForm()
-          ) : services.length === 0 ? (
+          ) : serviceTypes.length === 0 ? (
             renderEmptyState()
           ) : (
-            renderServicesList()
+            renderServiceTypesList()
           )}
         </div>
       </DialogContent>
