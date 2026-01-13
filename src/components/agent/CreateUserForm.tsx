@@ -27,18 +27,32 @@ const USER_ROLES = [
   { value: 'syndicat', label: 'Syndicat', icon: Building2, description: 'Organisation syndicale', color: 'text-pink-600' },
 ];
 
+// ✅ SYNCHRONISÉ avec la migration SQL 20260111_sync_service_types_inscription.sql
+// Les codes correspondent exactement à la table service_types
 const VENDOR_SERVICE_TYPES = [
-  { value: 'boutique', label: 'Boutique / Commerce général' },
+  // Services de Proximité Populaires
+  { value: 'ecommerce', label: 'Boutique / E-commerce' },
   { value: 'restaurant', label: 'Restaurant / Alimentation' },
-  { value: 'salon_coiffure', label: 'Salon de coiffure / Beauté' },
-  { value: 'garage_auto', label: 'Garage auto / Mécanique' },
-  { value: 'immobilier', label: 'Immobilier / Location' },
-  { value: 'services_pro', label: 'Services professionnels' },
-  { value: 'photographe', label: 'Photographe / Vidéaste' },
+  { value: 'beaute', label: 'Beauté & Bien-être (Coiffure, Esthétique)' },
+  { value: 'reparation', label: 'Réparation / Mécanique' },
+  { value: 'vtc', label: 'VTC / Transport' },
+  { value: 'menage', label: 'Ménage & Entretien' },
+  { value: 'informatique', label: 'Informatique / Tech' },
+  
+  // Services Professionnels
+  { value: 'location', label: 'Immobilier / Location' },
+  { value: 'media', label: 'Photographe / Vidéaste' },
   { value: 'education', label: 'Éducation / Formation' },
-  { value: 'sante', label: 'Santé / Pharmacie' },
+  { value: 'sante', label: 'Santé & Bien-être' },
   { value: 'voyage', label: 'Voyage / Tourisme' },
-  { value: 'autre', label: 'Autre service' },
+  { value: 'freelance', label: 'Services Professionnels' },
+  { value: 'construction', label: 'Construction / BTP' },
+  { value: 'agriculture', label: 'Agriculture' },
+  { value: 'livraison', label: 'Livraison / Coursier' },
+  
+  // Produits Numériques (nouveaux)
+  { value: 'sport', label: 'Sport & Fitness' },
+  { value: 'maison', label: 'Maison & Déco' },
 ] as const;
 interface CreateUserFormProps {
   agentId: string;

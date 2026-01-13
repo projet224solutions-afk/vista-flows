@@ -1,6 +1,7 @@
 /**
  * ADD SERVICE MODAL
  * Permet au vendeur de créer un nouveau service professionnel
+ * ✅ SYNCHRONISÉ avec Auth.tsx (formulaire d'inscription)
  * Ex: Restaurant, Boutique en ligne, Salon de beauté, etc.
  */
 
@@ -24,7 +25,8 @@ import {
   Plus, Store, Utensils, Scissors, Car, Heart, 
   BookOpen, Camera, Truck, Building2, Dumbbell,
   Laptop, Leaf, Hammer, Sparkles, ArrowRight,
-  Loader2, CheckCircle, AlertCircle, MapPin, Navigation
+  Loader2, CheckCircle, AlertCircle, MapPin, Navigation,
+  Wrench, Plane, Briefcase, Home, Package, GraduationCap
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -47,25 +49,65 @@ interface AddServiceModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// Mapping des icônes par code de service (synchronisé avec MerchantOnboarding.tsx)
+// ✅ MAPPING SYNCHRONISÉ avec Auth.tsx (formulaire d'inscription)
+// Ces icônes correspondent exactement aux services affichés à l'inscription
 const SERVICE_ICONS: Record<string, React.ElementType> = {
-  ecommerce: Store,
+  // Services de Proximité Populaires (Auth.tsx)
   restaurant: Utensils,
   beaute: Scissors,
-  reparation: Car,
-  location: Building2,
+  vtc: Car,
+  reparation: Wrench,
   menage: Sparkles,
-  livraison: Truck,
+  informatique: Laptop,
+  
+  // Services Professionnels (Auth.tsx)
+  sport: Dumbbell,
+  location: Building2,
   media: Camera,
-  education: BookOpen,
-  sante: Heart,
-  voyage: Plus, // Plane not imported, using Plus
-  freelance: Plus, // Wrench not imported, using Plus
   construction: Hammer,
   agriculture: Leaf,
-  informatique: Laptop,
-  vtc: Car,
+  freelance: Briefcase,
+  sante: Heart,
+  maison: Home,
+  
+  // Produits Numériques (Auth.tsx)
+  digital_logiciel: Laptop,
+  dropshipping: Package,
+  education: GraduationCap,
+  digital_livre: BookOpen,
+  
+  // E-commerce classique
+  ecommerce: Store,
+  
+  // Services legacy (compatibilité)
+  livraison: Truck,
+  voyage: Plane,
+  
   default: Store
+};
+
+// ✅ CATÉGORIES synchronisées avec Auth.tsx
+const SERVICE_CATEGORIES = {
+  'proximite': {
+    label: 'Services de Proximité Populaires',
+    color: 'primary',
+    codes: ['restaurant', 'beaute', 'vtc', 'reparation', 'menage', 'informatique']
+  },
+  'professionnel': {
+    label: 'Services Professionnels',
+    color: 'violet',
+    codes: ['sport', 'location', 'media', 'construction', 'agriculture', 'freelance', 'sante', 'maison']
+  },
+  'numerique': {
+    label: 'Produits Numériques',
+    color: 'cyan',
+    codes: ['digital_logiciel', 'dropshipping', 'education', 'digital_livre']
+  },
+  'commerce': {
+    label: 'Commerce',
+    color: 'green',
+    codes: ['ecommerce', 'livraison']
+  }
 };
 
 // Schéma de validation Zod
@@ -271,44 +313,199 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
     return SERVICE_ICONS[code] || SERVICE_ICONS.default;
   };
 
+  // Fonction pour obtenir la catégorie d'un service
+  const getServiceCategory = (code: string): string => {
+    for (const [key, category] of Object.entries(SERVICE_CATEGORIES)) {
+      if (category.codes.includes(code)) {
+        return key;
+      }
+    }
+    return 'commerce';
+  };
+
+  // Grouper les services par catégorie (comme dans Auth.tsx)
+  const groupedServices = serviceTypes.reduce((acc, type) => {
+    const category = getServiceCategory(type.code);
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(type);
+    return acc;
+  }, {} as Record<string, ServiceType[]>);
+
+  const getCategoryColor = (categoryKey: string) => {
+    switch (categoryKey) {
+      case 'proximite': return 'primary';
+      case 'professionnel': return 'violet-500';
+      case 'numerique': return 'cyan-500';
+      default: return 'green-500';
+    }
+  };
+
   const renderServiceTypeGrid = () => (
-    <ScrollArea className="h-[400px] pr-2">
-      <div className="grid grid-cols-2 gap-3">
-        {serviceTypes.map((type) => {
-          const Icon = getServiceIcon(type.code);
+    <ScrollArea className="h-[450px] pr-2">
+      <div className="space-y-6">
+        {/* Services de Proximité Populaires */}
+        {groupedServices['proximite']?.length > 0 && (
+          <div>
+            <h4 className="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
+              <span className="w-6 h-0.5 bg-primary rounded"></span>
+              Services de Proximité
+              <span className="w-6 h-0.5 bg-primary rounded"></span>
+            </h4>
+            <div className="grid grid-cols-2 gap-2">
+              {groupedServices['proximite'].map((type) => {
+                const Icon = getServiceIcon(type.code);
+                return (
+                  <Card
+                    key={type.id}
+                    className="cursor-pointer transition-all duration-200 hover:shadow-md hover:border-primary group"
+                    onClick={() => handleSelectType(type)}
+                  >
+                    <CardContent className="p-3">
+                      <div className="flex flex-col items-center text-center">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-2 group-hover:bg-primary/20 transition-colors">
+                          <Icon className="w-5 h-5 text-primary" />
+                        </div>
+                        <h4 className="font-semibold text-xs text-foreground truncate w-full">{type.name}</h4>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Services Professionnels */}
+        {groupedServices['professionnel']?.length > 0 && (
+          <div>
+            <h4 className="text-sm font-semibold text-violet-600 mb-3 flex items-center gap-2">
+              <span className="w-6 h-0.5 bg-violet-500 rounded"></span>
+              Services Professionnels
+              <span className="w-6 h-0.5 bg-violet-500 rounded"></span>
+            </h4>
+            <div className="grid grid-cols-2 gap-2">
+              {groupedServices['professionnel'].map((type) => {
+                const Icon = getServiceIcon(type.code);
+                return (
+                  <Card
+                    key={type.id}
+                    className="cursor-pointer transition-all duration-200 hover:shadow-md hover:border-violet-500 group"
+                    onClick={() => handleSelectType(type)}
+                  >
+                    <CardContent className="p-3 bg-gradient-to-br from-violet-50/50 to-white dark:from-violet-900/10 dark:to-background">
+                      <div className="flex flex-col items-center text-center">
+                        <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mb-2 group-hover:bg-violet-200 dark:group-hover:bg-violet-900/50 transition-colors">
+                          <Icon className="w-5 h-5 text-violet-600" />
+                        </div>
+                        <h4 className="font-semibold text-xs text-foreground truncate w-full">{type.name}</h4>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Produits Numériques */}
+        {groupedServices['numerique']?.length > 0 && (
+          <div>
+            <h4 className="text-sm font-semibold text-cyan-600 mb-3 flex items-center gap-2">
+              <span className="w-6 h-0.5 bg-cyan-500 rounded"></span>
+              Produits Numériques
+              <span className="w-6 h-0.5 bg-cyan-500 rounded"></span>
+            </h4>
+            <div className="grid grid-cols-2 gap-2">
+              {groupedServices['numerique'].map((type) => {
+                const Icon = getServiceIcon(type.code);
+                return (
+                  <Card
+                    key={type.id}
+                    className="cursor-pointer transition-all duration-200 hover:shadow-md hover:border-cyan-500 group"
+                    onClick={() => handleSelectType(type)}
+                  >
+                    <CardContent className="p-3 bg-gradient-to-br from-cyan-50/50 to-white dark:from-cyan-900/10 dark:to-background">
+                      <div className="flex flex-col items-center text-center">
+                        <div className="w-10 h-10 rounded-xl bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center mb-2 group-hover:bg-cyan-200 dark:group-hover:bg-cyan-900/50 transition-colors">
+                          <Icon className="w-5 h-5 text-cyan-600" />
+                        </div>
+                        <h4 className="font-semibold text-xs text-foreground truncate w-full">{type.name}</h4>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Commerce / Autres */}
+        {groupedServices['commerce']?.length > 0 && (
+          <div>
+            <h4 className="text-sm font-semibold text-green-600 mb-3 flex items-center gap-2">
+              <span className="w-6 h-0.5 bg-green-500 rounded"></span>
+              Commerce & Livraison
+              <span className="w-6 h-0.5 bg-green-500 rounded"></span>
+            </h4>
+            <div className="grid grid-cols-2 gap-2">
+              {groupedServices['commerce'].map((type) => {
+                const Icon = getServiceIcon(type.code);
+                return (
+                  <Card
+                    key={type.id}
+                    className="cursor-pointer transition-all duration-200 hover:shadow-md hover:border-green-500 group"
+                    onClick={() => handleSelectType(type)}
+                  >
+                    <CardContent className="p-3 bg-gradient-to-br from-green-50/50 to-white dark:from-green-900/10 dark:to-background">
+                      <div className="flex flex-col items-center text-center">
+                        <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-2 group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
+                          <Icon className="w-5 h-5 text-green-600" />
+                        </div>
+                        <h4 className="font-semibold text-xs text-foreground truncate w-full">{type.name}</h4>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Services non catégorisés (fallback) */}
+        {Object.keys(groupedServices).filter(k => !['proximite', 'professionnel', 'numerique', 'commerce'].includes(k)).map(categoryKey => {
+          const services = groupedServices[categoryKey];
+          if (!services?.length) return null;
           return (
-            <Card
-              key={type.id}
-              className={cn(
-                'cursor-pointer transition-all duration-200 hover:shadow-md hover:border-primary/50',
-                'group'
-              )}
-              onClick={() => handleSelectType(type)}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                    <Icon className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-sm text-foreground truncate">
-                      {type.name}
-                    </h4>
-                    {type.category && (
-                      <Badge variant="secondary" className="text-xs mt-1">
-                        {type.category}
-                      </Badge>
-                    )}
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                </div>
-                {type.description && (
-                  <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
-                    {type.description}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+            <div key={categoryKey}>
+              <h4 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+                <span className="w-6 h-0.5 bg-muted-foreground rounded"></span>
+                Autres Services
+                <span className="w-6 h-0.5 bg-muted-foreground rounded"></span>
+              </h4>
+              <div className="grid grid-cols-2 gap-2">
+                {services.map((type) => {
+                  const Icon = getServiceIcon(type.code);
+                  return (
+                    <Card
+                      key={type.id}
+                      className="cursor-pointer transition-all duration-200 hover:shadow-md hover:border-primary/50 group"
+                      onClick={() => handleSelectType(type)}
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex flex-col items-center text-center">
+                          <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-2 group-hover:bg-muted/80 transition-colors">
+                            <Icon className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                          <h4 className="font-semibold text-xs text-foreground truncate w-full">{type.name}</h4>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
           );
         })}
       </div>

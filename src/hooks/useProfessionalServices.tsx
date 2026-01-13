@@ -47,23 +47,32 @@ export function useProfessionalServices() {
   const [userServices, setUserServices] = useState<ProfessionalService[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Services par défaut avec codes (fallback si erreur DB)
+  // Services par défaut avec codes - SYNCHRONISÉ avec migration SQL 20260111_sync_service_types_inscription.sql
+  // Ces codes DOIVENT correspondre exactement aux codes de la table service_types
   const defaultServiceTypes: ServiceType[] = [
-    { id: '1', name: 'Restaurant', code: 'restaurant', description: 'Système complet de gestion de restaurant', category: 'food', icon: '🍽️', commission_rate: 15, features: ['Menu digital', 'Commandes', 'Réservations', 'Livraison'], is_active: true },
-    { id: '2', name: 'E-commerce', code: 'ecommerce', description: 'Boutique en ligne complète', category: 'commerce', icon: '🛍️', commission_rate: 10, features: ['Catalogue produits', 'Panier', 'Paiement', 'Livraison'], is_active: true },
-    { id: '3', name: 'Salon de Beauté', code: 'beaute', description: 'Gestion de rendez-vous et services de beauté', category: 'services', icon: '💅', commission_rate: 12, features: ['Réservations', 'Catalogue services', 'Gestion équipe'], is_active: true },
-    { id: '4', name: 'Taxi/VTC', code: 'voyage', description: 'Service de transport avec réservation', category: 'transport', icon: '🚕', commission_rate: 20, features: ['Réservations', 'Suivi GPS', 'Paiement'], is_active: true },
-    { id: '5', name: 'Cabinet Médical', code: 'sante', description: 'Gestion de cabinet médical', category: 'health', icon: '⚕️', commission_rate: 8, features: ['Rendez-vous', 'Dossiers patients', 'Prescriptions'], is_active: true },
-    { id: '6', name: 'Centre de Formation', code: 'education', description: 'Plateforme de cours et formations', category: 'education', icon: '🎓', commission_rate: 15, features: ['Cours', 'Inscriptions', 'Certificats'], is_active: true },
-    { id: '7', name: 'Studio Photo', code: 'media', description: 'Gestion de studio photo', category: 'creative', icon: '📸', commission_rate: 10, features: ['Portfolio', 'Réservations', 'Galerie'], is_active: true },
-    { id: '8', name: 'Développeur Web', code: 'informatique', description: 'Services de développement web', category: 'tech', icon: '💻', commission_rate: 12, features: ['Portfolio', 'Devis', 'Projets'], is_active: true },
-    { id: '9', name: 'Livraison Express', code: 'livraison', description: 'Service de livraison rapide', category: 'transport', icon: '📦', commission_rate: 18, features: ['Suivi', 'Paiement', 'Notifications'], is_active: true },
-    { id: '10', name: 'Gym/Fitness', code: 'fitness', description: 'Centre de fitness avec abonnements', category: 'services', icon: '💪', commission_rate: 10, features: ['Abonnements', 'Planning cours', 'Suivi'], is_active: true },
-    { id: '11', name: 'Coiffeur', code: 'coiffeur', description: 'Salon de coiffure', category: 'services', icon: '✂️', commission_rate: 12, features: ['Réservations', 'Services', 'Produits'], is_active: true },
-    { id: '12', name: 'Traiteur', code: 'traiteur', description: 'Service de traiteur pour événements', category: 'food', icon: '🍱', commission_rate: 15, features: ['Menus', 'Devis', 'Événements'], is_active: true },
-    { id: '13', name: 'Boutique Mode', code: 'mode', description: 'Boutique de vêtements et accessoires', category: 'commerce', icon: '👗', commission_rate: 10, features: ['Catalogue', 'Tailles', 'Livraison'], is_active: true },
-    { id: '14', name: 'Agence Immobilière', code: 'location', description: 'Gestion de biens immobiliers', category: 'services', icon: '🏠', commission_rate: 8, features: ['Annonces', 'Visites', 'Contacts'], is_active: true },
-    { id: '15', name: 'Coach Sportif', code: 'coach', description: 'Coaching sportif personnalisé', category: 'services', icon: '🏋️', commission_rate: 12, features: ['Programmes', 'Suivi', 'Rendez-vous'], is_active: true }
+    // Services de Proximité Populaires
+    { id: '1', name: 'Restaurant', code: 'restaurant', description: 'Service de restauration, vente de nourriture et boissons', category: 'Alimentation', icon: '🍽️', commission_rate: 10, features: ['Menu digital', 'Commandes', 'Réservations', 'Livraison'], is_active: true },
+    { id: '2', name: 'Boutique / E-commerce', code: 'ecommerce', description: 'Vente de produits en ligne ou en magasin physique', category: 'Commerce', icon: '🛍️', commission_rate: 8, features: ['Catalogue produits', 'Panier', 'Paiement', 'Livraison'], is_active: true },
+    { id: '3', name: 'Beauté & Bien-être', code: 'beaute', description: 'Coiffure, esthétique, massage et soins du corps', category: 'Beauté', icon: '💅', commission_rate: 12, features: ['Réservations', 'Catalogue services', 'Gestion équipe'], is_active: true },
+    { id: '4', name: 'VTC / Transport', code: 'vtc', description: 'Service de transport avec chauffeur', category: 'Transport', icon: '🚕', commission_rate: 15, features: ['Réservations', 'Suivi GPS', 'Paiement'], is_active: true },
+    { id: '5', name: 'Réparation / Mécanique', code: 'reparation', description: 'Réparation automobile, mécanique, électronique', category: 'Réparation', icon: '🔧', commission_rate: 15, features: ['Devis', 'Suivi réparations', 'Pièces'], is_active: true },
+    { id: '6', name: 'Ménage & Entretien', code: 'menage', description: 'Services de nettoyage et d\'entretien', category: 'Services', icon: '✨', commission_rate: 12, features: ['Réservations', 'Planning', 'Tarifs'], is_active: true },
+    { id: '7', name: 'Informatique / Tech', code: 'informatique', description: 'Services informatiques, développement, support technique', category: 'Technologie', icon: '💻', commission_rate: 12, features: ['Portfolio', 'Devis', 'Projets'], is_active: true },
+    
+    // Services Professionnels
+    { id: '8', name: 'Location Immobilière', code: 'location', description: 'Location d\'appartements, maisons, bureaux', category: 'Immobilier', icon: '🏠', commission_rate: 5, features: ['Annonces', 'Visites', 'Contacts'], is_active: true },
+    { id: '9', name: 'Photographe / Vidéaste', code: 'media', description: 'Photographie, vidéographie, production audiovisuelle', category: 'Média', icon: '📸', commission_rate: 15, features: ['Portfolio', 'Réservations', 'Galerie'], is_active: true },
+    { id: '10', name: 'Éducation / Formation', code: 'education', description: 'Cours particuliers, formations professionnelles', category: 'Éducation', icon: '🎓', commission_rate: 10, features: ['Cours', 'Inscriptions', 'Certificats'], is_active: true },
+    { id: '11', name: 'Santé & Bien-être', code: 'sante', description: 'Services de santé, thérapies, consultation', category: 'Santé', icon: '⚕️', commission_rate: 12, features: ['Rendez-vous', 'Dossiers patients', 'Prescriptions'], is_active: true },
+    { id: '12', name: 'Voyage / Tourisme', code: 'voyage', description: 'Agence de voyage, guide touristique, hébergement', category: 'Tourisme', icon: '✈️', commission_rate: 10, features: ['Réservations', 'Itinéraires', 'Hébergements'], is_active: true },
+    { id: '13', name: 'Services Professionnels', code: 'freelance', description: 'Consulting, design, développement, services B2B', category: 'Professionnel', icon: '💼', commission_rate: 12, features: ['Devis', 'Projets', 'Facturation'], is_active: true },
+    { id: '14', name: 'Construction / BTP', code: 'construction', description: 'Construction, rénovation, travaux publics', category: 'Construction', icon: '🏗️', commission_rate: 15, features: ['Devis', 'Projets', 'Suivi travaux'], is_active: true },
+    { id: '15', name: 'Agriculture', code: 'agriculture', description: 'Production agricole, vente de produits fermiers', category: 'Agriculture', icon: '🌾', commission_rate: 8, features: ['Produits', 'Saisons', 'Livraison'], is_active: true },
+    { id: '16', name: 'Livraison / Coursier', code: 'livraison', description: 'Service de livraison à domicile, coursier', category: 'Transport', icon: '📦', commission_rate: 10, features: ['Suivi', 'Paiement', 'Notifications'], is_active: true },
+    
+    // Services additionnels du formulaire Auth.tsx
+    { id: '17', name: 'Sport & Fitness', code: 'sport', description: 'Centre de fitness, coaching sportif', category: 'Sport', icon: '🏋️', commission_rate: 10, features: ['Abonnements', 'Planning cours', 'Suivi'], is_active: true },
+    { id: '18', name: 'Maison & Déco', code: 'maison', description: 'Décoration intérieure, ameublement', category: 'Maison', icon: '🏠', commission_rate: 10, features: ['Catalogue', 'Devis', 'Livraison'], is_active: true },
   ];
 
   useEffect(() => {
