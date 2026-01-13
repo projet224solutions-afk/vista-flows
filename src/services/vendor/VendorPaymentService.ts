@@ -155,7 +155,7 @@ export class VendorPaymentService {
   }
 
   /**
-   * Payer avec Mobile Money (Orange, MTN, Moov)
+   * Payer avec Mobile Money (Orange, MTN, Moov) via ChapChapPay
    */
   static async payWithMobileMoney(
     orderId: string,
@@ -184,25 +184,47 @@ export class VendorPaymentService {
         };
       }
 
-      // TODO: Intégrer l'API du provider (Orange Money, MTN, Moov)
-      console.log(`[MobileMoney] Processing ${provider} payment for ${phoneNumber}`);
+      // Mapper provider vers ChapChapPay method
+      const providerMap: Record<string, string> = {
+        'orange': 'orange_money',
+        'mtn': 'mtn_momo',
+        'moov': 'orange_money' // Fallback to orange for now
+      };
+
+      // Appeler ChapChapPay via edge function
+      const { data, error } = await supabase.functions.invoke('chapchappay-pull', {
+        body: {
+          amount,
+          currency: 'XOF',
+          paymentMethod: providerMap[provider],
+          customerPhone: phoneNumber,
+          description: `Paiement commande ${orderId}`,
+          orderId
+        }
+      });
+
+      if (error || !data?.success) {
+        throw new Error(data?.error || error?.message || 'Échec du paiement ChapChapPay');
+      }
+
+      console.log(`[ChapChapPay] Processing ${provider} payment for ${phoneNumber}`);
 
       // Mettre à jour le statut
       const { error: updateError } = await supabase
         .from('orders')
         .update({
-          payment_status: 'paid',
+          payment_status: 'pending',
           payment_method: 'mobile_money'
         })
         .eq('id', orderId);
 
       if (updateError) throw updateError;
 
-      await this.logPayment(orderId, customerId, amount, 'mobile_money', 'success', `Provider: ${provider}`);
+      await this.logPayment(orderId, customerId, amount, 'mobile_money', 'success', `Provider: ${provider} via ChapChapPay`);
 
       return {
         success: true,
-        transaction_id: `mm-${provider}-${orderId}`
+        transaction_id: data.transactionId || `ccp-${provider}-${orderId}`
       };
     } catch (error: any) {
       console.error('[VendorPayment] Mobile Money payment error:', error);

@@ -121,13 +121,14 @@ export class TaxiMotoPaymentService {
   }
 
   /**
-   * Payer une course avec Mobile Money (idempotent)
+   * Payer une course avec Mobile Money via ChapChapPay (idempotent)
    */
   static async payWithMobileMoney(
     rideId: string,
     amount: number,
     customerId: string,
-    phoneNumber: string
+    phoneNumber: string,
+    provider: 'orange' | 'mtn' | 'moov' = 'orange'
   ): Promise<PaymentResult> {
     try {
       // Vérifier si déjà payé (idempotence)
@@ -145,14 +146,38 @@ export class TaxiMotoPaymentService {
         };
       }
 
-      // TODO: Intégrer avec Orange Money, MTN Money, Moov Money
-      // Simulation pour l'instant avec validation du numéro
+      // Validation du numéro de téléphone
       if (!phoneNumber || phoneNumber.length < 8) {
         return {
           success: false,
           error: 'Numéro de téléphone invalide'
         };
       }
+
+      // Mapper provider vers ChapChapPay method
+      const providerMap: Record<string, string> = {
+        'orange': 'orange_money',
+        'mtn': 'mtn_momo',
+        'moov': 'orange_money'
+      };
+
+      // Appeler ChapChapPay via edge function
+      const { data, error } = await supabase.functions.invoke('chapchappay-pull', {
+        body: {
+          amount,
+          currency: 'XOF',
+          paymentMethod: providerMap[provider],
+          customerPhone: phoneNumber,
+          description: `Paiement course taxi ${rideId}`,
+          orderId: rideId
+        }
+      });
+
+      if (error || !data?.success) {
+        throw new Error(data?.error || error?.message || 'Échec du paiement ChapChapPay');
+      }
+
+      console.log(`[ChapChapPay] Processing taxi ${provider} payment for ${phoneNumber}`);
       
       // Mettre à jour le statut
       await supabase
@@ -160,7 +185,7 @@ export class TaxiMotoPaymentService {
         .update({
           payment_status: 'paid',
           payment_method: 'mobile_money',
-          payment_reference: phoneNumber,
+          payment_reference: data.transactionId || phoneNumber,
           paid_at: new Date().toISOString()
         })
         .eq('id', rideId);
@@ -170,15 +195,15 @@ export class TaxiMotoPaymentService {
         user_id: customerId,
         operation: 'taxi_payment_mobile_money',
         amount,
-        context: { ride_id: rideId, phone: phoneNumber }
+        context: { ride_id: rideId, phone: phoneNumber, provider, transaction_id: data.transactionId }
       });
 
       return {
         success: true,
-        transaction_id: `MM-${Date.now()}`
+        transaction_id: data.transactionId || `CCP-${Date.now()}`
       };
     } catch (err: any) {
-      console.error('[Payment] Mobile Money error:', err);
+      console.error('[Payment] ChapChapPay Mobile Money error:', err);
       // Log échec
       await (supabase.from as any)('wallet_logs').insert({
         user_id: customerId,

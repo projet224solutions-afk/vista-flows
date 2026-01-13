@@ -1,7 +1,7 @@
 /**
  * 💳 SÉLECTEUR DE PAIEMENT - MULTI-PROVIDERS
- * Stripe pour les cartes bancaires, Jomy pour Mobile Money
- * Méthodes: Carte Bancaire (Stripe), Orange Money, Mobile Money (Jomy)
+ * Stripe pour les cartes bancaires, ChapChapPay pour Mobile Money (Orange, MTN, PayCard)
+ * Méthodes: Carte Bancaire (Stripe), Orange Money, MTN MoMo, PayCard (ChapChapPay)
  */
 
 import { useState, useEffect } from 'react';
@@ -22,6 +22,8 @@ import {
   Truck
 } from 'lucide-react';
 import { useDjomyPayment, type DjomyPaymentMethod } from '@/hooks/useDjomyPayment';
+import { useChapChapPay } from '@/hooks/useChapChapPay';
+import { CCPPaymentMethod } from '@/services/payment/ChapChapPayService';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -44,7 +46,7 @@ interface JomyPaymentSelectorProps {
   sellerId?: string; // ID vendeur pour Stripe
 }
 
-type PaymentMethodId = 'STRIPE_CARD' | 'WALLET' | 'CASH_ON_DELIVERY' | DjomyPaymentMethod;
+type PaymentMethodId = 'STRIPE_CARD' | 'WALLET' | 'CASH_ON_DELIVERY' | 'CCP_ORANGE' | 'CCP_MTN' | 'CCP_PAYCARD' | DjomyPaymentMethod;
 
 interface PaymentMethodOption {
   id: PaymentMethodId;
@@ -55,6 +57,7 @@ interface PaymentMethodOption {
   requiresPhone: boolean;
   phonePrefix?: string;
   phonePlaceholder?: string;
+  provider?: 'chapchappay' | 'jomy' | 'stripe' | 'wallet';
 }
 
 export function JomyPaymentSelector({
@@ -74,6 +77,7 @@ export function JomyPaymentSelector({
 }: JomyPaymentSelectorProps) {
   const { user } = useAuth();
   const { initializePayment, pollPaymentStatus, isLoading, error } = useDjomyPayment();
+  const { initiatePullPayment, pollStatus, isLoading: ccpLoading, error: ccpError } = useChapChapPay();
   
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>(recipientId ? 'WALLET' : 'STRIPE_CARD');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -120,7 +124,8 @@ export function JomyPaymentSelector({
       description: `Solde: ${walletBalance !== null ? walletBalance.toLocaleString() : '...'} GNF`,
       icon: <Wallet className="h-5 w-5 text-green-600" />,
       iconBg: 'bg-green-100',
-      requiresPhone: false
+      requiresPhone: false,
+      provider: 'wallet' as const
     }] : []),
     {
       id: 'STRIPE_CARD' as const,
@@ -128,27 +133,42 @@ export function JomyPaymentSelector({
       description: 'Paiement sécurisé VISA / Mastercard via Stripe',
       icon: <CreditCard className="h-5 w-5 text-blue-600" />,
       iconBg: 'bg-blue-100',
-      requiresPhone: false
+      requiresPhone: false,
+      provider: 'stripe' as const
     },
+    // ChapChapPay - Orange Money (prioritaire)
     {
-      id: 'OM' as const,
+      id: 'CCP_ORANGE' as const,
       name: 'Orange Money',
-      description: 'Paiement instantané via Orange Money',
+      description: 'Paiement instantané via ChapChapPay',
       icon: <Smartphone className="h-5 w-5 text-orange-500" />,
       iconBg: 'bg-orange-100',
       requiresPhone: true,
       phonePrefix: '620',
-      phonePlaceholder: '620 XX XX XX'
+      phonePlaceholder: '620 XX XX XX',
+      provider: 'chapchappay' as const
     },
+    // ChapChapPay - MTN MoMo
     {
-      id: 'MOMO' as const,
-      name: 'Mobile Money',
-      description: 'Paiement via MTN Mobile Money',
+      id: 'CCP_MTN' as const,
+      name: 'MTN Mobile Money',
+      description: 'Paiement via MTN MoMo (ChapChapPay)',
       icon: <Smartphone className="h-5 w-5 text-yellow-600" />,
       iconBg: 'bg-yellow-100',
       requiresPhone: true,
       phonePrefix: '660',
-      phonePlaceholder: '660 XX XX XX'
+      phonePlaceholder: '660 XX XX XX',
+      provider: 'chapchappay' as const
+    },
+    // ChapChapPay - PayCard
+    {
+      id: 'CCP_PAYCARD' as const,
+      name: 'PayCard',
+      description: 'Carte de paiement locale (ChapChapPay)',
+      icon: <CreditCard className="h-5 w-5 text-green-600" />,
+      iconBg: 'bg-green-100',
+      requiresPhone: false,
+      provider: 'chapchappay' as const
     },
     // Paiement à la livraison - uniquement pour produits physiques
     ...(productType === 'physical' && transactionType === 'product' && onCashOnDelivery ? [{
@@ -157,7 +177,8 @@ export function JomyPaymentSelector({
       description: 'Vous serez contacté pour confirmer l\'adresse de livraison',
       icon: <Truck className="h-5 w-5 text-emerald-600" />,
       iconBg: 'bg-emerald-100',
-      requiresPhone: false
+      requiresPhone: false,
+      provider: undefined
     }] : [])
   ];
 
@@ -246,7 +267,80 @@ export function JomyPaymentSelector({
       return;
     }
 
-    // Paiements Mobile Money (Jomy.africa)
+    // ChapChapPay - Orange Money, MTN MoMo, PayCard
+    const isChapChapPayMethod = selectedMethod === 'CCP_ORANGE' || selectedMethod === 'CCP_MTN' || selectedMethod === 'CCP_PAYCARD';
+    
+    if (isChapChapPayMethod) {
+      if (requiresPhone && (!phoneNumber || phoneNumber.length < 9)) {
+        toast.error('Numéro de téléphone invalide');
+        return;
+      }
+
+      setProcessing(true);
+      setPaymentStatus('processing');
+
+      try {
+        // Mapper vers les méthodes ChapChapPay
+        const ccpMethodMap: Record<string, CCPPaymentMethod> = {
+          'CCP_ORANGE': 'orange_money',
+          'CCP_MTN': 'mtn_momo',
+          'CCP_PAYCARD': 'paycard'
+        };
+
+        const result = await initiatePullPayment({
+          amount,
+          currency: 'XOF',
+          paymentMethod: ccpMethodMap[selectedMethod],
+          customerPhone: phoneNumber,
+          description: description || `Paiement ${transactionType}`,
+          orderId: orderId || `${transactionType}-${Date.now()}`
+        });
+
+        if (!result.success) {
+          throw new Error(result.error || 'Échec du paiement');
+        }
+
+        // Polling pour vérifier le statut ChapChapPay
+        if (result.transactionId) {
+          setPaymentStatus('polling');
+          
+          const finalStatus = await pollStatus(result.transactionId, (status) => {
+            if (status.status === 'success' || status.status === 'completed') {
+              setPaymentStatus('success');
+              toast.success('🎉 Paiement réussi via ChapChapPay !');
+              onPaymentSuccess(result.transactionId!, 'SUCCESS');
+            } else if (status.status === 'failed' || status.status === 'cancelled') {
+              setPaymentStatus('failed');
+              toast.error('Paiement échoué');
+              onPaymentFailed?.(status.error || 'Paiement refusé');
+            }
+          });
+
+          if (finalStatus) {
+            if (finalStatus.status === 'success' || finalStatus.status === 'completed') {
+              setPaymentStatus('success');
+              onPaymentSuccess(result.transactionId, 'SUCCESS');
+            } else if (finalStatus.status === 'pending') {
+              onPaymentPending?.(result.transactionId);
+              toast.info('Paiement en attente de confirmation');
+            } else {
+              setPaymentStatus('failed');
+              onPaymentFailed?.(finalStatus.error || 'Paiement échoué');
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[ChapChapPay] Payment error:', err);
+        setPaymentStatus('failed');
+        toast.error(err instanceof Error ? err.message : 'Erreur de paiement');
+        onPaymentFailed?.(err instanceof Error ? err.message : 'Erreur inconnue');
+      } finally {
+        setProcessing(false);
+      }
+      return;
+    }
+
+    // Paiements Mobile Money (Jomy.africa) - legacy fallback
     if (requiresPhone && (!phoneNumber || phoneNumber.length < 9)) {
       toast.error('Numéro de téléphone invalide');
       return;
