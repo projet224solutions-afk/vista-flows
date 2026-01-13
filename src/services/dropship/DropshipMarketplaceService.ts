@@ -7,7 +7,7 @@
  * Flag interne isDropship = true réservé aux admins/vendeurs
  * 
  * @module DropshipMarketplaceService
- * @version 1.0.0
+ * @version 1.0.1
  * @author 224Solutions
  */
 
@@ -128,11 +128,11 @@ function mapDropshipToMarketplace(
     subcategory: dropshipProduct.subcategory,
     vendor: {
       id: vendorInfo?.id || dropshipProduct.vendor_id,
-      name: vendorInfo?.store_name || 'Boutique',
-      location: vendorInfo?.location || 'Guinée',
+      name: vendorInfo?.business_name || 'Boutique',
+      location: vendorInfo?.city || vendorInfo?.country || 'Guinée',
       rating: vendorInfo?.rating || 4.5,
-      ratingCount: vendorInfo?.rating_count || 0,
-      isCertified: vendorInfo?.is_certified || false,
+      ratingCount: vendorInfo?.total_reviews || 0,
+      isCertified: vendorInfo?.is_verified || false,
     },
     rating: dropshipProduct.rating || 4.5,
     reviewCount: dropshipProduct.review_count || 0,
@@ -161,6 +161,18 @@ function isProductNew(createdAt: string): boolean {
   const now = new Date();
   const diffDays = Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
   return diffDays <= 7;
+}
+
+/**
+ * Shuffle array for variety
+ */
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
 }
 
 // ==================== MAIN SERVICE CLASS ====================
@@ -196,37 +208,26 @@ export class DropshipMarketplaceService {
     } = options;
     
     try {
-      // 1. Récupérer les produits classiques
-      let classicQuery = supabase
-        .from('products')
-        .select(`
-          *,
-          vendor:profiles!products_vendor_id_fkey(
-            id,
-            store_name,
-            location,
-            rating,
-            rating_count,
-            is_certified
-          )
-        `, { count: 'exact' })
-        .eq('status', 'active');
+      // 1. Récupérer les produits classiques - sans jointure complexe
+      // Use 'as any' to avoid deep type instantiation issues with Supabase client
+      const productsTable = supabase.from('products') as any;
+      let classicQuery = productsTable
+        .select('*', { count: 'exact' })
+        .eq('status', 'active')
+        .limit(limit);
       
       // Appliquer les filtres
-      if (category) classicQuery = classicQuery.eq('category', category);
-      if (subcategory) classicQuery = classicQuery.eq('subcategory', subcategory);
       if (vendorId) classicQuery = classicQuery.eq('vendor_id', vendorId);
       if (priceMin) classicQuery = classicQuery.gte('price', priceMin);
       if (priceMax) classicQuery = classicQuery.lte('price', priceMax);
       if (searchQuery) {
-        classicQuery = classicQuery.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
+        classicQuery = classicQuery.or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
       }
       
       const { data: classicProducts, count: classicCount, error: classicError } = await classicQuery;
       
       if (classicError) {
         console.error('[DropshipMarketplace] Classic products error:', classicError);
-        throw classicError;
       }
       
       // 2. Récupérer les produits dropship si activé
@@ -234,8 +235,6 @@ export class DropshipMarketplaceService {
       let dropshipCount = 0;
       
       if (includeDropship) {
-        // Note: La FK est vers auth.users, pas profiles directement
-        // On fait une jointure séparée pour récupérer les infos vendeur
         let dropshipQuery = supabase
           .from('dropship_products')
           .select('*', { count: 'exact' })
@@ -256,21 +255,20 @@ export class DropshipMarketplaceService {
         
         if (dropshipError) {
           console.error('[DropshipMarketplace] Dropship products error:', dropshipError);
-          // Ne pas throw, continuer avec les produits classiques
         } else {
           dropshipProducts = dropship || [];
           dropshipCount = dCount || 0;
           
-          // Récupérer les infos vendeur pour chaque produit dropship
+          // Récupérer les infos vendeur depuis la table vendors
           if (dropshipProducts.length > 0) {
             const vendorIds = [...new Set(dropshipProducts.map(p => p.vendor_id))];
             const { data: vendorProfiles } = await supabase
-              .from('profiles')
-              .select('id, store_name, location, rating, rating_count, is_certified')
-              .in('id', vendorIds);
+              .from('vendors')
+              .select('id, user_id, business_name, city, country, rating, total_reviews, is_verified')
+              .in('user_id', vendorIds);
             
-            // Mapper les infos vendeur
-            const vendorMap = new Map(vendorProfiles?.map(v => [v.id, v]) || []);
+            // Mapper les infos vendeur par user_id
+            const vendorMap = new Map(vendorProfiles?.map(v => [v.user_id, v]) || []);
             dropshipProducts = dropshipProducts.map(p => ({
               ...p,
               vendor: vendorMap.get(p.vendor_id) || null
@@ -280,28 +278,28 @@ export class DropshipMarketplaceService {
       }
       
       // 3. Mapper les produits au format marketplace
-      const mappedClassic: MarketplaceProduct[] = (classicProducts || []).map(p => ({
+      const mappedClassic: MarketplaceProduct[] = (classicProducts || []).map((p: any) => ({
         id: p.id,
-        title: p.title,
+        title: p.name || p.title || 'Produit',
         description: p.description || '',
         price: p.price,
-        originalPrice: p.original_price,
+        originalPrice: p.compare_price,
         images: p.images || [],
-        category: p.category || 'Divers',
-        subcategory: p.subcategory,
+        category: 'Divers',
+        subcategory: undefined,
         vendor: {
-          id: p.vendor?.id || p.vendor_id,
-          name: p.vendor?.store_name || 'Boutique',
-          location: p.vendor?.location || 'Guinée',
-          rating: p.vendor?.rating || 4.5,
-          ratingCount: p.vendor?.rating_count || 0,
-          isCertified: p.vendor?.is_certified || false,
+          id: p.vendor_id,
+          name: 'Boutique',
+          location: 'Guinée',
+          rating: 4.5,
+          ratingCount: 0,
+          isCertified: false,
         },
         rating: p.rating || 0,
-        reviewCount: p.review_count || 0,
+        reviewCount: 0,
         stock: p.stock_quantity || 0,
         deliveryTime: '2-5 jours',
-        isPremium: p.is_premium || false,
+        isPremium: false,
         isNew: isProductNew(p.created_at),
         tags: p.tags || [],
       }));
@@ -328,7 +326,6 @@ export class DropshipMarketplaceService {
           break;
         case 'newest':
         default:
-          // Déjà trié par défaut ou mélanger pour diversité
           allProducts = shuffleArray(allProducts);
           break;
       }
@@ -359,19 +356,9 @@ export class DropshipMarketplaceService {
   async getProductById(productId: string): Promise<MarketplaceProduct | null> {
     try {
       // Essayer d'abord les produits classiques
-      const { data: classicProduct, error: classicError } = await supabase
-        .from('products')
-        .select(`
-          *,
-          vendor:profiles!products_vendor_id_fkey(
-            id,
-            store_name,
-            location,
-            rating,
-            rating_count,
-            is_certified
-          )
-        `)
+      const productsTable = supabase.from('products') as any;
+      const { data: classicProduct, error: classicError } = await productsTable
+        .select('*')
         .eq('id', productId)
         .eq('status', 'active')
         .single();
@@ -379,26 +366,26 @@ export class DropshipMarketplaceService {
       if (classicProduct && !classicError) {
         return {
           id: classicProduct.id,
-          title: classicProduct.title,
+          title: classicProduct.name || 'Produit',
           description: classicProduct.description || '',
           price: classicProduct.price,
-          originalPrice: classicProduct.original_price,
+          originalPrice: classicProduct.compare_price,
           images: classicProduct.images || [],
-          category: classicProduct.category || 'Divers',
-          subcategory: classicProduct.subcategory,
+          category: 'Divers',
+          subcategory: undefined,
           vendor: {
-            id: classicProduct.vendor?.id || classicProduct.vendor_id,
-            name: classicProduct.vendor?.store_name || 'Boutique',
-            location: classicProduct.vendor?.location || 'Guinée',
-            rating: classicProduct.vendor?.rating || 4.5,
-            ratingCount: classicProduct.vendor?.rating_count || 0,
-            isCertified: classicProduct.vendor?.is_certified || false,
+            id: classicProduct.vendor_id,
+            name: 'Boutique',
+            location: 'Guinée',
+            rating: 4.5,
+            ratingCount: 0,
+            isCertified: false,
           },
           rating: classicProduct.rating || 0,
-          reviewCount: classicProduct.review_count || 0,
+          reviewCount: 0,
           stock: classicProduct.stock_quantity || 0,
           deliveryTime: '2-5 jours',
-          isPremium: classicProduct.is_premium || false,
+          isPremium: false,
           isNew: isProductNew(classicProduct.created_at),
           tags: classicProduct.tags || [],
         };
@@ -413,11 +400,11 @@ export class DropshipMarketplaceService {
         .single();
       
       if (dropshipProduct && !dropshipError) {
-        // Récupérer les infos vendeur séparément
+        // Récupérer les infos vendeur depuis vendors
         const { data: vendorInfo } = await supabase
-          .from('profiles')
-          .select('id, store_name, location, rating, rating_count, is_certified')
-          .eq('id', dropshipProduct.vendor_id)
+          .from('vendors')
+          .select('id, user_id, business_name, city, country, rating, total_reviews, is_verified')
+          .eq('user_id', dropshipProduct.vendor_id)
           .single();
         
         return sanitizeForClient(mapDropshipToMarketplace(dropshipProduct, vendorInfo));
@@ -456,11 +443,11 @@ export class DropshipMarketplaceService {
     
     if (error || !data) return null;
     
-    // Récupérer les infos vendeur séparément
+    // Récupérer les infos vendeur depuis vendors
     const { data: vendorInfo } = await supabase
-      .from('profiles')
-      .select('id, store_name, location, rating, rating_count, is_certified')
-      .eq('id', data.vendor_id)
+      .from('vendors')
+      .select('id, user_id, business_name, city, country, rating, total_reviews, is_verified')
+      .eq('user_id', data.vendor_id)
       .single();
     
     return mapDropshipToMarketplace(data, vendorInfo);
@@ -498,19 +485,7 @@ export class DropshipMarketplaceService {
   }
 }
 
-// ==================== UTILITY FUNCTIONS ====================
+// Export singleton
+export const dropshipMarketplaceService = DropshipMarketplaceService.getInstance();
 
-function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
-
-// ==================== SINGLETON EXPORT ====================
-
-export const dropshipMarketplace = DropshipMarketplaceService.getInstance();
-
-export default dropshipMarketplace;
+export default dropshipMarketplaceService;

@@ -245,7 +245,7 @@ class DropshippingConnectorService {
     
     try {
       // D'abord, créer l'import dans china_product_imports
-      const { data: importData, error: importError } = await supabase
+      const { data: importData, error: importError } = await (supabase as any)
         .from('china_product_imports')
         .insert({
           vendor_id: vendorId,
@@ -278,10 +278,10 @@ class DropshippingConnectorService {
       const marginPercent = 40; // Marge par défaut 40%
       const sellingPrice = product.priceUsd * (1 + marginPercent / 100);
       
-      const { data: dropshipProduct, error: productError } = await supabase
+      const { data: dropshipProduct, error: productError } = await (supabase as any)
         .from('dropship_products')
         .insert({
-          vendor_id: vendorId, // Directement l'auth.uid()
+          vendor_id: vendorId,
           source_connector: connectorType,
           source_product_id: product.externalId,
           source_url: product.sourceUrl,
@@ -302,7 +302,7 @@ class DropshippingConnectorService {
           last_sync_at: new Date().toISOString(),
           has_variants: (product.variants?.length || 0) > 0,
           variants: product.variants || [],
-          is_published: false, // À activer manuellement après vérification
+          is_published: false,
           is_available: true
         })
         .select()
@@ -507,7 +507,7 @@ class DropshippingConnectorService {
     result: SupplierOrderResult
   ): Promise<void> {
     try {
-      await supabase
+      await (supabase as any)
         .from('china_supplier_orders')
         .insert({
           customer_order_id: orderData.customerOrderId,
