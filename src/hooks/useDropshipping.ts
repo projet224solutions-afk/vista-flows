@@ -31,10 +31,19 @@ export function useDropshipping(vendorId?: string) {
         .eq('is_active', true)
         .order('reliability_score', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        // Table n'existe pas encore - retourner vide
+        if (error.code === '42P01' || error.message?.includes('does not exist')) {
+          console.warn('Table dropship_suppliers non trouvée - migrations à appliquer');
+          setSuppliers([]);
+          return;
+        }
+        throw error;
+      }
       setSuppliers((data || []) as unknown as DropshipSupplier[]);
     } catch (error: any) {
       console.error('Erreur chargement fournisseurs:', error);
+      setSuppliers([]);
     }
   }, []);
 
@@ -52,10 +61,17 @@ export function useDropshipping(vendorId?: string) {
         .eq('vendor_id', vendorId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '42P01' || error.message?.includes('does not exist')) {
+          setProducts([]);
+          return;
+        }
+        throw error;
+      }
       setProducts((data || []) as unknown as DropshipProduct[]);
     } catch (error: any) {
       console.error('Erreur chargement produits:', error);
+      setProducts([]);
     }
   }, [vendorId]);
 
@@ -74,10 +90,17 @@ export function useDropshipping(vendorId?: string) {
         .eq('vendor_id', vendorId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '42P01' || error.message?.includes('does not exist')) {
+          setOrders([]);
+          return;
+        }
+        throw error;
+      }
       setOrders((data || []) as unknown as DropshipOrder[]);
     } catch (error: any) {
       console.error('Erreur chargement commandes:', error);
+      setOrders([]);
     }
   }, [vendorId]);
 
@@ -92,16 +115,35 @@ export function useDropshipping(vendorId?: string) {
         .eq('vendor_id', vendorId)
         .single();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error && error.code !== 'PGRST116') {
+        if (error.code === '42P01' || error.message?.includes('does not exist')) {
+          setSettings(null);
+          return;
+        }
+        throw error;
+      }
       setSettings(data as unknown as DropshipSettings | null);
     } catch (error: any) {
       console.error('Erreur chargement paramètres:', error);
+      setSettings(null);
     }
   }, [vendorId]);
 
   // Calculer les statistiques
   const loadStats = useCallback(async () => {
-    if (!vendorId) return;
+    if (!vendorId) {
+      setStats({
+        totalProducts: 0,
+        activeProducts: 0,
+        pendingOrders: 0,
+        completedOrders: 0,
+        totalRevenue: 0,
+        totalProfit: 0,
+        averageMargin: 0,
+        suppliersCount: 0
+      });
+      return;
+    }
     
     try {
       const [productsRes, ordersRes] = await Promise.all([
@@ -114,6 +156,21 @@ export function useDropshipping(vendorId?: string) {
           .select('id, status, customer_total, profit_amount')
           .eq('vendor_id', vendorId)
       ]);
+
+      // Gérer le cas où les tables n'existent pas
+      if (productsRes.error?.code === '42P01' || ordersRes.error?.code === '42P01') {
+        setStats({
+          totalProducts: 0,
+          activeProducts: 0,
+          pendingOrders: 0,
+          completedOrders: 0,
+          totalRevenue: 0,
+          totalProfit: 0,
+          averageMargin: 0,
+          suppliersCount: 0
+        });
+        return;
+      }
 
       const productsList = productsRes.data || [];
       const ordersList = ordersRes.data || [];
@@ -146,6 +203,16 @@ export function useDropshipping(vendorId?: string) {
       });
     } catch (error: any) {
       console.error('Erreur calcul statistiques:', error);
+      setStats({
+        totalProducts: 0,
+        activeProducts: 0,
+        pendingOrders: 0,
+        completedOrders: 0,
+        totalRevenue: 0,
+        totalProfit: 0,
+        averageMargin: 0,
+        suppliersCount: 0
+      });
     }
   }, [vendorId]);
 
