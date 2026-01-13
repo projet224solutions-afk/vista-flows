@@ -134,6 +134,9 @@ export function ServiceModuleManager({
   if (nameLower.includes('livraison') || nameLower.includes('coursier')) {
     return <DeliveryModule {...props} />;
   }
+  if (nameLower.includes('dropship') || nameLower.includes('drop ship')) {
+    return <DropshippingModule {...props} />;
+  }
   if (nameLower.includes('immobili') || nameLower.includes('location')) {
     return <RealEstateModule {...props} />;
   }
