@@ -2,6 +2,7 @@
  * MODULE DROPSHIPPING PROFESSIONNEL
  * Inspiré de: Shopify, Oberlo, Spocket
  * E-commerce dropshipping avec intégration fournisseurs
+ * Extension Chine: Alibaba, AliExpress, 1688
  */
 
 import { useState } from 'react';
@@ -9,8 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Package, Globe, TrendingUp, DollarSign, ShoppingCart, AlertCircle } from 'lucide-react';
+import { Package, Globe, TrendingUp, DollarSign, ShoppingCart, AlertCircle, Flag } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ChinaDashboard, ChinaProductImport, ChinaSuppliersList, ChinaCostCalculator } from '@/components/dropshipping/china';
 
 interface DropshippingModuleProps {
   serviceId: string;
@@ -103,10 +105,16 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="dashboard">Tableau de bord</TabsTrigger>
           <TabsTrigger value="suppliers">Fournisseurs</TabsTrigger>
-          <TabsTrigger value="import">Importer Produits</TabsTrigger>
+          <TabsTrigger value="import">Importer</TabsTrigger>
+          <TabsTrigger value="china" className="flex items-center gap-1">
+            <Flag className="w-3 h-3" />
+            Chine
+          </TabsTrigger>
+          <TabsTrigger value="china-import">Import Chine</TabsTrigger>
+          <TabsTrigger value="china-costs">Coûts</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-4">
@@ -190,6 +198,22 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
               </ul>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* === EXTENSION DROPSHIPPING CHINE === */}
+        <TabsContent value="china" className="space-y-4">
+          <ChinaDashboard />
+        </TabsContent>
+
+        <TabsContent value="china-import" className="space-y-4">
+          <ChinaProductImport />
+        </TabsContent>
+
+        <TabsContent value="china-costs" className="space-y-4">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <ChinaCostCalculator />
+            <ChinaSuppliersList />
+          </div>
         </TabsContent>
       </Tabs>
     </div>

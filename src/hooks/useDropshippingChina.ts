@@ -227,7 +227,7 @@ export function useDropshippingChina() {
       .from('dropship_china_imports')
       .update({
         import_status: 'completed',
-        extracted_data: extractedData as unknown as Record<string, unknown>,
+        extracted_data: JSON.parse(JSON.stringify(extractedData)),
         completed_at: new Date().toISOString()
       })
       .eq('id', importId);
@@ -424,7 +424,7 @@ export function useDropshippingChina() {
           log_type: logType,
           severity,
           message,
-          details: details as Record<string, unknown>,
+          details: JSON.parse(JSON.stringify(details)),
           vendor_id: user?.id
         }]);
     } catch (error) {
