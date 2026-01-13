@@ -10,7 +10,7 @@
 // Marketplace Integration (pour les clients)
 export { 
   DropshipMarketplaceService,
-  dropshipMarketplace 
+  dropshipMarketplaceService as dropshipMarketplace 
 } from './DropshipMarketplaceService';
 
 export type {

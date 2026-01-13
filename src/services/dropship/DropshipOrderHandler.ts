@@ -194,23 +194,24 @@ export class DropshipOrderHandler {
     order: CustomerOrder,
     item: OrderItem & { dropshipInfo: any }
   ): Promise<void> {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('china_supplier_orders')
       .insert({
+        customer_order_id: order.id,
         vendor_id: order.vendorId,
-        internal_order_id: order.id,
-        supplier_type: item.dropshipInfo.source_connector,
-        source_product_id: item.dropshipInfo.source_product_id,
-        product_title: item.title,
-        quantity: item.quantity,
-        unit_cost: item.dropshipInfo.cost_price,
-        total_cost: item.dropshipInfo.cost_price * item.quantity,
-        cost_currency: item.dropshipInfo.cost_currency || 'USD',
-        status: 'pending',
+        supplier_id: item.dropshipInfo.china_supplier_id || null,
+        status: 'pending_supplier_confirm',
+        items: [{
+          product_id: item.productId,
+          title: item.title,
+          quantity: item.quantity,
+          unit_cost: item.dropshipInfo.cost_price,
+          total_cost: item.dropshipInfo.cost_price * item.quantity
+        }],
         shipping_address: order.shippingAddress,
-        customer_name: order.customerName,
-        customer_phone: order.customerPhone,
-        created_at: new Date().toISOString()
+        supplier_total_usd: item.dropshipInfo.cost_price * item.quantity,
+        supplier_total_cny: (item.dropshipInfo.cost_price * item.quantity) * 7.2,
+        notes_internal: `Source: ${item.dropshipInfo.source_connector} | Product: ${item.dropshipInfo.source_product_id}`
       });
     
     if (error) {
@@ -406,7 +407,7 @@ export class DropshipOrderHandler {
     // Récupérer l'ID de la commande client
     const { data: supplierOrder } = await supabase
       .from('china_supplier_orders')
-      .select('internal_order_id')
+      .select('customer_order_id')
       .eq('id', supplierOrderId)
       .single();
     
@@ -416,7 +417,7 @@ export class DropshipOrderHandler {
     const { data: allItems } = await supabase
       .from('china_supplier_orders')
       .select('status')
-      .eq('internal_order_id', supplierOrder.internal_order_id);
+      .eq('customer_order_id', supplierOrder.customer_order_id);
     
     if (!allItems) return;
     
@@ -426,14 +427,37 @@ export class DropshipOrderHandler {
     );
     
     if (allSameOrHigher) {
+      // Map status to valid order status
+      const orderStatus = this.mapToOrderStatus(status);
       await supabase
         .from('orders')
         .update({
-          status,
+          status: orderStatus,
           updated_at: new Date().toISOString()
         })
-        .eq('id', supplierOrder.internal_order_id);
+        .eq('id', supplierOrder.customer_order_id);
     }
+  }
+  
+  /**
+   * Map supplier status to order status
+   */
+  private mapToOrderStatus(status: string): 'pending' | 'confirmed' | 'processing' | 'preparing' | 'ready' | 'in_transit' | 'delivered' | 'completed' | 'cancelled' {
+    const mapping: Record<string, 'pending' | 'confirmed' | 'processing' | 'preparing' | 'ready' | 'in_transit' | 'delivered' | 'completed' | 'cancelled'> = {
+      'pending': 'pending',
+      'pending_supplier_confirm': 'processing',
+      'ordered': 'processing',
+      'processing': 'processing',
+      'shipped': 'in_transit',
+      'shipped_international': 'in_transit',
+      'customs_clearance': 'in_transit',
+      'last_mile_delivery': 'in_transit',
+      'delivered': 'delivered',
+      'completed': 'completed',
+      'cancelled': 'cancelled',
+      'error': 'cancelled'
+    };
+    return mapping[status] || 'pending';
   }
   
   /**
@@ -457,23 +481,23 @@ export class DropshipOrderHandler {
    */
   private mapSupplierOrder(data: any): DropshipOrderItem {
     return {
-      orderId: data.internal_order_id,
+      orderId: data.customer_order_id,
       orderItemId: data.id,
-      productId: data.source_product_id,
-      sourceConnector: data.supplier_type,
-      sourceProductId: data.source_product_id,
-      quantity: data.quantity,
-      supplierCost: data.total_cost,
-      supplierCurrency: data.cost_currency || 'USD',
-      supplierOrderId: data.supplier_order_id,
-      supplierOrderStatus: data.status,
-      trackingNumber: data.tracking_number,
-      trackingCarrier: data.tracking_carrier,
-      trackingUrl: data.tracking_url,
+      productId: data.items?.[0]?.product_id || '',
+      sourceConnector: data.notes_internal?.split('Source: ')[1]?.split(' |')[0] || 'UNKNOWN',
+      sourceProductId: data.items?.[0]?.product_id || '',
+      quantity: data.items?.[0]?.quantity || 0,
+      supplierCost: data.supplier_total_usd || 0,
+      supplierCurrency: 'USD',
+      supplierOrderId: data.id,
+      supplierOrderStatus: data.status as any,
+      trackingNumber: undefined,
+      trackingCarrier: undefined,
+      trackingUrl: undefined,
       createdAt: data.created_at,
-      orderedAt: data.ordered_at,
-      shippedAt: data.shipped_at,
-      deliveredAt: data.delivered_at
+      orderedAt: data.supplier_payment_date,
+      shippedAt: data.expected_ship_date,
+      deliveredAt: data.expected_delivery_date
     };
   }
   
@@ -489,18 +513,18 @@ export class DropshipOrderHandler {
     // Récupérer la commande client
     const { data: order } = await supabase
       .from('orders')
-      .select('total')
+      .select('total_amount')
       .eq('id', orderId)
       .single();
     
     // Récupérer les coûts fournisseur
     const { data: supplierOrders } = await supabase
       .from('china_supplier_orders')
-      .select('total_cost')
-      .eq('internal_order_id', orderId);
+      .select('supplier_total_usd')
+      .eq('customer_order_id', orderId);
     
-    const revenue = order?.total || 0;
-    const supplierCost = (supplierOrders || []).reduce((sum, o) => sum + (o.total_cost || 0), 0);
+    const revenue = order?.total_amount || 0;
+    const supplierCost = (supplierOrders || []).reduce((sum, o) => sum + (o.supplier_total_usd || 0), 0);
     const profit = revenue - supplierCost;
     const marginPercent = revenue > 0 ? (profit / revenue) * 100 : 0;
     
