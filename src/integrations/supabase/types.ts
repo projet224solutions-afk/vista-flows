@@ -4443,6 +4443,707 @@ export type Database = {
           },
         ]
       }
+      dropship_incidents: {
+        Row: {
+          created_at: string | null
+          description: string
+          financial_impact: number | null
+          id: string
+          incident_type: string
+          metadata: Json | null
+          order_id: string | null
+          resolution: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string | null
+          status: string | null
+          supplier_id: string
+          updated_at: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          financial_impact?: number | null
+          id?: string
+          incident_type: string
+          metadata?: Json | null
+          order_id?: string | null
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string | null
+          status?: string | null
+          supplier_id: string
+          updated_at?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          financial_impact?: number | null
+          id?: string
+          incident_type?: string
+          metadata?: Json | null
+          order_id?: string | null
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string | null
+          status?: string | null
+          supplier_id?: string
+          updated_at?: string | null
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dropship_incidents_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "dropship_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dropship_incidents_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "dropship_suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dropship_incidents_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "dropship_incidents_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "dropship_incidents_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dropship_orders: {
+        Row: {
+          created_at: string | null
+          customer_currency: string | null
+          customer_notes: string | null
+          customer_order_id: string
+          customer_total: number
+          delivered_at: string | null
+          dropship_product_id: string | null
+          estimated_delivery_date: string | null
+          has_issue: boolean | null
+          id: string
+          issue_description: string | null
+          issue_resolved_at: string | null
+          issue_type: string | null
+          items: Json
+          metadata: Json | null
+          order_reference: string
+          profit_amount: number | null
+          quantity: number
+          shipped_at: string | null
+          shipping_address: Json | null
+          status: string | null
+          supplier_currency: string | null
+          supplier_id: string
+          supplier_notes: string | null
+          supplier_order_reference: string | null
+          supplier_paid_at: string | null
+          supplier_payment_status: string | null
+          supplier_total: number
+          tracking_number: string | null
+          tracking_url: string | null
+          updated_at: string | null
+          vendor_id: string
+          vendor_notes: string | null
+          vendor_paid_at: string | null
+          vendor_payment_status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_currency?: string | null
+          customer_notes?: string | null
+          customer_order_id: string
+          customer_total: number
+          delivered_at?: string | null
+          dropship_product_id?: string | null
+          estimated_delivery_date?: string | null
+          has_issue?: boolean | null
+          id?: string
+          issue_description?: string | null
+          issue_resolved_at?: string | null
+          issue_type?: string | null
+          items?: Json
+          metadata?: Json | null
+          order_reference?: string
+          profit_amount?: number | null
+          quantity?: number
+          shipped_at?: string | null
+          shipping_address?: Json | null
+          status?: string | null
+          supplier_currency?: string | null
+          supplier_id: string
+          supplier_notes?: string | null
+          supplier_order_reference?: string | null
+          supplier_paid_at?: string | null
+          supplier_payment_status?: string | null
+          supplier_total: number
+          tracking_number?: string | null
+          tracking_url?: string | null
+          updated_at?: string | null
+          vendor_id: string
+          vendor_notes?: string | null
+          vendor_paid_at?: string | null
+          vendor_payment_status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_currency?: string | null
+          customer_notes?: string | null
+          customer_order_id?: string
+          customer_total?: number
+          delivered_at?: string | null
+          dropship_product_id?: string | null
+          estimated_delivery_date?: string | null
+          has_issue?: boolean | null
+          id?: string
+          issue_description?: string | null
+          issue_resolved_at?: string | null
+          issue_type?: string | null
+          items?: Json
+          metadata?: Json | null
+          order_reference?: string
+          profit_amount?: number | null
+          quantity?: number
+          shipped_at?: string | null
+          shipping_address?: Json | null
+          status?: string | null
+          supplier_currency?: string | null
+          supplier_id?: string
+          supplier_notes?: string | null
+          supplier_order_reference?: string | null
+          supplier_paid_at?: string | null
+          supplier_payment_status?: string | null
+          supplier_total?: number
+          tracking_number?: string | null
+          tracking_url?: string | null
+          updated_at?: string | null
+          vendor_id?: string
+          vendor_notes?: string | null
+          vendor_paid_at?: string | null
+          vendor_payment_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dropship_orders_dropship_product_id_fkey"
+            columns: ["dropship_product_id"]
+            isOneToOne: false
+            referencedRelation: "dropship_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dropship_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "dropship_suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dropship_orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "dropship_orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "dropship_orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dropship_products: {
+        Row: {
+          auto_sync_enabled: boolean | null
+          availability_status: string | null
+          category: string | null
+          created_at: string | null
+          estimated_delivery_max: number | null
+          estimated_delivery_min: number | null
+          id: string
+          images: string[] | null
+          is_active: boolean | null
+          is_available: boolean | null
+          last_sync_at: string | null
+          margin_percent: number | null
+          original_product_id: string | null
+          product_description: string | null
+          product_name: string
+          rating: number | null
+          selling_currency: string | null
+          selling_price: number
+          shipping_cost: number | null
+          supplier_currency: string | null
+          supplier_id: string
+          supplier_price: number
+          supplier_product_id: string | null
+          supplier_product_url: string | null
+          supplier_stock: number | null
+          sync_errors: string[] | null
+          tags: string[] | null
+          total_orders: number | null
+          total_sold: number | null
+          updated_at: string | null
+          variants: Json | null
+          vendor_id: string
+        }
+        Insert: {
+          auto_sync_enabled?: boolean | null
+          availability_status?: string | null
+          category?: string | null
+          created_at?: string | null
+          estimated_delivery_max?: number | null
+          estimated_delivery_min?: number | null
+          id?: string
+          images?: string[] | null
+          is_active?: boolean | null
+          is_available?: boolean | null
+          last_sync_at?: string | null
+          margin_percent?: number | null
+          original_product_id?: string | null
+          product_description?: string | null
+          product_name: string
+          rating?: number | null
+          selling_currency?: string | null
+          selling_price: number
+          shipping_cost?: number | null
+          supplier_currency?: string | null
+          supplier_id: string
+          supplier_price: number
+          supplier_product_id?: string | null
+          supplier_product_url?: string | null
+          supplier_stock?: number | null
+          sync_errors?: string[] | null
+          tags?: string[] | null
+          total_orders?: number | null
+          total_sold?: number | null
+          updated_at?: string | null
+          variants?: Json | null
+          vendor_id: string
+        }
+        Update: {
+          auto_sync_enabled?: boolean | null
+          availability_status?: string | null
+          category?: string | null
+          created_at?: string | null
+          estimated_delivery_max?: number | null
+          estimated_delivery_min?: number | null
+          id?: string
+          images?: string[] | null
+          is_active?: boolean | null
+          is_available?: boolean | null
+          last_sync_at?: string | null
+          margin_percent?: number | null
+          original_product_id?: string | null
+          product_description?: string | null
+          product_name?: string
+          rating?: number | null
+          selling_currency?: string | null
+          selling_price?: number
+          shipping_cost?: number | null
+          supplier_currency?: string | null
+          supplier_id?: string
+          supplier_price?: number
+          supplier_product_id?: string | null
+          supplier_product_url?: string | null
+          supplier_stock?: number | null
+          sync_errors?: string[] | null
+          tags?: string[] | null
+          total_orders?: number | null
+          total_sold?: number | null
+          updated_at?: string | null
+          variants?: Json | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dropship_products_original_product_id_fkey"
+            columns: ["original_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dropship_products_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "dropship_suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dropship_products_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "dropship_products_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "dropship_products_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dropship_reports: {
+        Row: {
+          average_delivery_days: number | null
+          average_margin_percent: number | null
+          cancelled_orders: number | null
+          completed_orders: number | null
+          created_at: string | null
+          disputed_orders: number | null
+          id: string
+          on_time_delivery_rate: number | null
+          report_date: string
+          report_period: string
+          top_products: Json | null
+          top_suppliers: Json | null
+          total_costs: number | null
+          total_orders: number | null
+          total_profit: number | null
+          total_revenue: number | null
+          vendor_id: string
+        }
+        Insert: {
+          average_delivery_days?: number | null
+          average_margin_percent?: number | null
+          cancelled_orders?: number | null
+          completed_orders?: number | null
+          created_at?: string | null
+          disputed_orders?: number | null
+          id?: string
+          on_time_delivery_rate?: number | null
+          report_date: string
+          report_period: string
+          top_products?: Json | null
+          top_suppliers?: Json | null
+          total_costs?: number | null
+          total_orders?: number | null
+          total_profit?: number | null
+          total_revenue?: number | null
+          vendor_id: string
+        }
+        Update: {
+          average_delivery_days?: number | null
+          average_margin_percent?: number | null
+          cancelled_orders?: number | null
+          completed_orders?: number | null
+          created_at?: string | null
+          disputed_orders?: number | null
+          id?: string
+          on_time_delivery_rate?: number | null
+          report_date?: string
+          report_period?: string
+          top_products?: Json | null
+          top_suppliers?: Json | null
+          total_costs?: number | null
+          total_orders?: number | null
+          total_profit?: number | null
+          total_revenue?: number | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dropship_reports_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "dropship_reports_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "dropship_reports_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dropship_settings: {
+        Row: {
+          auto_release_on_delivery: boolean | null
+          auto_sync_enabled: boolean | null
+          created_at: string | null
+          default_margin_percent: number | null
+          hold_payment_days: number | null
+          id: string
+          is_enabled: boolean | null
+          last_full_sync_at: string | null
+          low_stock_threshold: number | null
+          min_margin_percent: number | null
+          notify_low_stock: boolean | null
+          notify_price_changes: boolean | null
+          notify_supplier_issues: boolean | null
+          show_estimated_delivery: boolean | null
+          show_supplier_name: boolean | null
+          sync_frequency_hours: number | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          auto_release_on_delivery?: boolean | null
+          auto_sync_enabled?: boolean | null
+          created_at?: string | null
+          default_margin_percent?: number | null
+          hold_payment_days?: number | null
+          id?: string
+          is_enabled?: boolean | null
+          last_full_sync_at?: string | null
+          low_stock_threshold?: number | null
+          min_margin_percent?: number | null
+          notify_low_stock?: boolean | null
+          notify_price_changes?: boolean | null
+          notify_supplier_issues?: boolean | null
+          show_estimated_delivery?: boolean | null
+          show_supplier_name?: boolean | null
+          sync_frequency_hours?: number | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          auto_release_on_delivery?: boolean | null
+          auto_sync_enabled?: boolean | null
+          created_at?: string | null
+          default_margin_percent?: number | null
+          hold_payment_days?: number | null
+          id?: string
+          is_enabled?: boolean | null
+          last_full_sync_at?: string | null
+          low_stock_threshold?: number | null
+          min_margin_percent?: number | null
+          notify_low_stock?: boolean | null
+          notify_price_changes?: boolean | null
+          notify_supplier_issues?: boolean | null
+          show_estimated_delivery?: boolean | null
+          show_supplier_name?: boolean | null
+          sync_frequency_hours?: number | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dropship_settings_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: true
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "dropship_settings_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: true
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "dropship_settings_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: true
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dropship_suppliers: {
+        Row: {
+          api_endpoint: string | null
+          api_key_encrypted: string | null
+          average_delivery_days: number | null
+          commission_rate: number | null
+          contact_email: string | null
+          contact_phone: string | null
+          country: string
+          created_at: string | null
+          currency: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_verified: boolean | null
+          logo_url: string | null
+          metadata: Json | null
+          min_order_value: number | null
+          name: string
+          payment_methods: string[] | null
+          reliability_score: number | null
+          successful_deliveries: number | null
+          supplier_type: string
+          supported_countries: string[] | null
+          total_deliveries: number | null
+          updated_at: string | null
+          webhook_url: string | null
+          website_url: string | null
+        }
+        Insert: {
+          api_endpoint?: string | null
+          api_key_encrypted?: string | null
+          average_delivery_days?: number | null
+          commission_rate?: number | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          country?: string
+          created_at?: string | null
+          currency?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          logo_url?: string | null
+          metadata?: Json | null
+          min_order_value?: number | null
+          name: string
+          payment_methods?: string[] | null
+          reliability_score?: number | null
+          successful_deliveries?: number | null
+          supplier_type?: string
+          supported_countries?: string[] | null
+          total_deliveries?: number | null
+          updated_at?: string | null
+          webhook_url?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          api_endpoint?: string | null
+          api_key_encrypted?: string | null
+          average_delivery_days?: number | null
+          commission_rate?: number | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          country?: string
+          created_at?: string | null
+          currency?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          logo_url?: string | null
+          metadata?: Json | null
+          min_order_value?: number | null
+          name?: string
+          payment_methods?: string[] | null
+          reliability_score?: number | null
+          successful_deliveries?: number | null
+          supplier_type?: string
+          supported_countries?: string[] | null
+          total_deliveries?: number | null
+          updated_at?: string | null
+          webhook_url?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      dropship_sync_logs: {
+        Row: {
+          changes_detected: Json | null
+          completed_at: string | null
+          duration_ms: number | null
+          errors: string[] | null
+          id: string
+          prices_updated: number | null
+          product_id: string | null
+          products_updated: number | null
+          started_at: string | null
+          status: string | null
+          stocks_updated: number | null
+          supplier_id: string | null
+          sync_scope: string | null
+          sync_type: string
+        }
+        Insert: {
+          changes_detected?: Json | null
+          completed_at?: string | null
+          duration_ms?: number | null
+          errors?: string[] | null
+          id?: string
+          prices_updated?: number | null
+          product_id?: string | null
+          products_updated?: number | null
+          started_at?: string | null
+          status?: string | null
+          stocks_updated?: number | null
+          supplier_id?: string | null
+          sync_scope?: string | null
+          sync_type: string
+        }
+        Update: {
+          changes_detected?: Json | null
+          completed_at?: string | null
+          duration_ms?: number | null
+          errors?: string[] | null
+          id?: string
+          prices_updated?: number | null
+          product_id?: string | null
+          products_updated?: number | null
+          started_at?: string | null
+          status?: string | null
+          stocks_updated?: number | null
+          supplier_id?: string | null
+          sync_scope?: string | null
+          sync_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dropship_sync_logs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "dropship_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dropship_sync_logs_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "dropship_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       education_courses: {
         Row: {
           category: string | null
