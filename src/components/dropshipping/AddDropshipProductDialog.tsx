@@ -212,10 +212,6 @@ export function AddDropshipProductDialog({
               </p>
             </div>
           )}
-                </span>
-              </p>
-            </div>
-          )}
 
           {/* Catégorie */}
           <div className="space-y-2">
