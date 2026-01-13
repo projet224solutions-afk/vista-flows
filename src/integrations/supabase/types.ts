@@ -12437,6 +12437,24 @@ export type Database = {
           },
         ]
       }
+      service_type_code_mapping: {
+        Row: {
+          created_at: string | null
+          new_code: string
+          old_code: string
+        }
+        Insert: {
+          created_at?: string | null
+          new_code: string
+          old_code: string
+        }
+        Update: {
+          created_at?: string | null
+          new_code?: string
+          old_code?: string
+        }
+        Relationships: []
+      }
       service_types: {
         Row: {
           category: string | null
@@ -21566,16 +21584,28 @@ export type Database = {
         }
         Returns: string
       }
-      upsert_service_type: {
-        Args: {
-          p_category: string
-          p_code: string
-          p_commission_rate?: number
-          p_description: string
-          p_name: string
-        }
-        Returns: undefined
-      }
+      upsert_service_type:
+        | {
+            Args: {
+              p_category: string
+              p_code: string
+              p_commission_rate?: number
+              p_description: string
+              p_name: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_category: string
+              p_code: string
+              p_commission_rate?: number
+              p_description: string
+              p_icon?: string
+              p_name: string
+            }
+            Returns: undefined
+          }
       validate_secure_payment: {
         Args: {
           p_amount_paid: number
