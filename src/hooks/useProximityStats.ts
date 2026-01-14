@@ -21,6 +21,16 @@ interface ProximityStats {
   sport: number;
 }
 
+/** Debug info returned by hook */
+export interface ProximityDebugInfo {
+  vendors: { total: number; noGps: number; outOfRadius: number; inRadius: number };
+  services: { total: number; noGps: number; outOfRadius: number; inRadius: number };
+  taxiMoto: { total: number; noGps: number; outOfRadius: number; inRadius: number };
+  drivers: { total: number; noGps: number; outOfRadius: number; inRadius: number };
+  positionUsed: { latitude: number; longitude: number };
+  usingRealGps: boolean;
+}
+
 interface UserPosition {
   latitude: number;
   longitude: number;
@@ -52,6 +62,7 @@ export function useProximityStats() {
   });
 
   const [loading, setLoading] = useState(true);
+  const [debugInfo, setDebugInfo] = useState<ProximityDebugInfo | null>(null);
 
   // Compat UI: message quand on utilise la position fallback
   const locationError = useMemo(() => {
@@ -139,15 +150,32 @@ export function useProximityStats() {
         sport: 0,
       };
 
+      // Debug counters
+      const dbg: ProximityDebugInfo = {
+        vendors: { total: vendors.length, noGps: 0, outOfRadius: 0, inRadius: 0 },
+        services: { total: professionalServices.length, noGps: 0, outOfRadius: 0, inRadius: 0 },
+        taxiMoto: { total: taxiDrivers.length, noGps: 0, outOfRadius: 0, inRadius: 0 },
+        drivers: { total: drivers.length, noGps: 0, outOfRadius: 0, inRadius: 0 },
+        positionUsed: { latitude: position.latitude, longitude: position.longitude },
+        usingRealGps: usingRealLocation,
+      };
+
       // 1) Boutiques (vendors) — strict GPS + rayon
       vendors.forEach((vendor: any) => {
         const lat = vendor?.latitude;
         const lng = vendor?.longitude;
-        if (lat === null || lat === undefined || lng === null || lng === undefined) return;
+        if (lat === null || lat === undefined || lng === null || lng === undefined) {
+          dbg.vendors.noGps++;
+          return;
+        }
 
         const distance = calcDistanceFn(position.latitude, position.longitude, Number(lat), Number(lng));
-        if (!Number.isFinite(distance) || distance > RADIUS_KM) return;
+        if (!Number.isFinite(distance) || distance > RADIUS_KM) {
+          dbg.vendors.outOfRadius++;
+          return;
+        }
 
+        dbg.vendors.inRadius++;
         newStats.boutiques++;
         if (vendor.business_type === 'restaurant' || vendor.service_type === 'restaurant') {
           newStats.restaurant++;
@@ -169,11 +197,18 @@ export function useProximityStats() {
       // 2) Drivers (livraison + vtc) — strict GPS + rayon
       drivers.forEach((driver: any) => {
         const p = parsePoint(driver.current_location);
-        if (!p) return;
+        if (!p) {
+          dbg.drivers.noGps++;
+          return;
+        }
 
         const distance = calcDistanceFn(position.latitude, position.longitude, p.lat, p.lng);
-        if (!Number.isFinite(distance) || distance > RADIUS_KM) return;
+        if (!Number.isFinite(distance) || distance > RADIUS_KM) {
+          dbg.drivers.outOfRadius++;
+          return;
+        }
 
+        dbg.drivers.inRadius++;
         if (driver.vehicle_type === 'car') newStats.vtc++;
         newStats.livraison++;
       });
@@ -182,11 +217,18 @@ export function useProximityStats() {
       taxiDrivers.forEach((driver: any) => {
         const lat = driver?.last_lat;
         const lng = driver?.last_lng;
-        if (lat === null || lat === undefined || lng === null || lng === undefined) return;
+        if (lat === null || lat === undefined || lng === null || lng === undefined) {
+          dbg.taxiMoto.noGps++;
+          return;
+        }
 
         const distance = calcDistanceFn(position.latitude, position.longitude, Number(lat), Number(lng));
-        if (!Number.isFinite(distance) || distance > RADIUS_KM) return;
+        if (!Number.isFinite(distance) || distance > RADIUS_KM) {
+          dbg.taxiMoto.outOfRadius++;
+          return;
+        }
 
+        dbg.taxiMoto.inRadius++;
         newStats.taxiMoto++;
         newStats.livraison++;
       });
@@ -196,10 +238,18 @@ export function useProximityStats() {
       professionalServices.forEach((service: any) => {
         const lat = service?.latitude;
         const lng = service?.longitude;
-        if (lat === null || lat === undefined || lng === null || lng === undefined) return;
+        if (lat === null || lat === undefined || lng === null || lng === undefined) {
+          dbg.services.noGps++;
+          return;
+        }
 
         const distance = calcDistanceFn(position.latitude, position.longitude, Number(lat), Number(lng));
-        if (!Number.isFinite(distance) || distance > RADIUS_KM) return;
+        if (!Number.isFinite(distance) || distance > RADIUS_KM) {
+          dbg.services.outOfRadius++;
+          return;
+        }
+
+        dbg.services.inRadius++;
 
         const code = service?.service_types?.code;
         if (!code) return;
@@ -261,13 +311,17 @@ export function useProximityStats() {
         newStats.sante = Math.ceil(total * 0.25);
       }
 
+      // Debug log for developers
+      console.log('[ProximityStats] Debug info:', dbg);
+
       setStats(newStats);
+      setDebugInfo(dbg);
     } catch (error) {
       console.error('Erreur lors du chargement des statistiques:', error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [usingRealLocation]);
 
   // Chargement initial dès que la position est prête (réelle OU fallback) — cohérent avec le reste
   useEffect(() => {
@@ -289,5 +343,6 @@ export function useProximityStats() {
     refresh,
     radiusKm: RADIUS_KM,
     usingRealLocation,
+    debugInfo,
   };
 }
