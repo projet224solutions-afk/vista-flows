@@ -276,15 +276,31 @@ export default function OrderManagement() {
 
       console.log('✅ Orders fetched:', enrichedOrders?.length || 0);
 
-      // Charger les infos escrow pour chaque commande
-      const ordersWithEscrow = await Promise.all(enrichedOrders.map(async (order) => {
-        const { data: escrow } = await supabase
+      // Charger les infos escrow en une seule requête batch (optimisation)
+      const orderIds = enrichedOrders.map(o => o.id);
+      let escrowMap: Record<string, EscrowInfo> = {};
+      
+      if (orderIds.length > 0) {
+        const { data: escrowData } = await supabase
           .from('escrow_transactions')
-          .select('id, status, amount, created_at')
-          .eq('order_id', order.id)
-          .maybeSingle();
+          .select('id, status, amount, created_at, order_id')
+          .in('order_id', orderIds);
         
-        return { ...order, escrow: escrow || undefined };
+        if (escrowData) {
+          escrowData.forEach(e => {
+            escrowMap[e.order_id] = {
+              id: e.id,
+              status: e.status,
+              amount: e.amount,
+              created_at: e.created_at
+            };
+          });
+        }
+      }
+      
+      const ordersWithEscrow = enrichedOrders.map(order => ({
+        ...order,
+        escrow: escrowMap[order.id] || undefined
       }));
 
       console.log('📦 ALL orders loaded (online + POS):', ordersWithEscrow.length);
@@ -537,14 +553,38 @@ export default function OrderManagement() {
         key="refund" 
         size="sm"
         className="bg-red-600 hover:bg-red-700 text-white"
-        onClick={(e) => {
+        onClick={async (e) => {
           e.stopPropagation();
           if (confirm(`Êtes-vous sûr de vouloir rembourser la commande ${order.order_number} ?`)) {
-            toast({
-              title: "💰 Remboursement",
-              description: `Le remboursement de ${order.total_amount.toLocaleString()} GNF est en cours...`
-            });
-            // TODO: Implémenter la logique de remboursement
+            try {
+              // Mettre à jour le statut de paiement en "refunded"
+              const { error } = await supabase
+                .from('orders')
+                .update({ 
+                  payment_status: 'refunded',
+                  status: 'cancelled',
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', order.id)
+                .eq('vendor_id', vendorId);
+              
+              if (error) throw error;
+              
+              toast({
+                title: "✅ Remboursement effectué",
+                description: `La commande ${order.order_number} a été remboursée (${order.total_amount.toLocaleString()} GNF)`
+              });
+              
+              // Rafraîchir les commandes
+              await fetchOrders();
+            } catch (err) {
+              console.error('Erreur remboursement:', err);
+              toast({
+                title: "❌ Erreur",
+                description: "Impossible de traiter le remboursement.",
+                variant: "destructive"
+              });
+            }
           }
         }}
       >
@@ -583,8 +623,8 @@ export default function OrderManagement() {
       {/* Titre et actions - Mobile optimisé */}
       <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center">
         <div className="min-w-0">
-          <h2 className="text-lg md:text-2xl font-bold truncate">Gestion des Commandes</h2>
-          <p className="text-xs md:text-sm text-muted-foreground truncate">Suivez et gérez vos commandes</p>
+          <h2 className="text-lg md:text-2xl font-bold truncate">Ventes & Commandes</h2>
+          <p className="text-xs md:text-sm text-muted-foreground truncate">Ventes POS (en boutique) et Commandes en ligne</p>
         </div>
         <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
           <Button 
@@ -697,10 +737,10 @@ export default function OrderManagement() {
         >
           <CardHeader className="p-3 md:p-6 pb-2 md:pb-4">
             <CardTitle className="flex items-center gap-2 text-blue-700 text-base md:text-lg">
-              🌐 Ventes En Ligne
+              📦 Commandes En Ligne
             </CardTitle>
             <p className="text-xs md:text-sm text-muted-foreground line-clamp-1">
-              Commandes via compte client
+              Commandes clients à préparer et livrer
             </p>
           </CardHeader>
           <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
@@ -731,7 +771,7 @@ export default function OrderManagement() {
               </div>
             </div>
             <Button className="w-full mt-3 md:mt-4 bg-blue-600 hover:bg-blue-700 h-9 text-xs md:text-sm">
-              Voir les ventes en ligne
+              Voir les commandes
             </Button>
           </CardContent>
         </Card>
@@ -961,26 +1001,26 @@ export default function OrderManagement() {
       </Card>
       )}
 
-      {/* Section des Ventes En Ligne */}
+      {/* Section des Commandes En Ligne */}
       {activeView === 'online' && (
         <Card className="border-2 border-blue-200 bg-blue-50/30 online-orders-section">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-blue-700">
-            🌐 Ventes En Ligne ({onlineOrders.length})
+            📦 Commandes En Ligne ({onlineOrders.length})
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Commandes passées via le compte client
+            Commandes à préparer et livrer aux clients
           </p>
         </CardHeader>
         <CardContent>
-          {/* Statistiques Ventes En Ligne - Compte Client */}
+          {/* Statistiques Commandes En Ligne */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             <Card 
               className={`bg-white/80 cursor-pointer transition-all hover:shadow-md ${onlineStatusFilter === 'all' ? 'ring-2 ring-blue-500' : ''}`}
               onClick={() => setOnlineStatusFilter('all')}
             >
               <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground mb-1">Total ventes</p>
+                <p className="text-sm text-muted-foreground mb-1">Total commandes</p>
                 <p className="text-3xl font-bold text-blue-700">
                   {totalOnlineOrders}
                 </p>
@@ -1021,7 +1061,7 @@ export default function OrderManagement() {
             </Card>
           </div>
 
-          {/* Liste des ventes En Ligne */}
+          {/* Liste des Commandes En Ligne */}
           <div className="space-y-4">
             {onlineOrders.filter(order => {
               if (onlineStatusFilter === 'all') return true;
@@ -1034,7 +1074,7 @@ export default function OrderManagement() {
                 <ShoppingCart className="w-12 h-12 mx-auto mb-2 opacity-50" />
                 <p>
                   {onlineStatusFilter === 'all' 
-                    ? 'Aucune vente en ligne pour le moment'
+                    ? 'Aucune commande en ligne pour le moment'
                     : `Aucune commande ${onlineStatusFilter === 'pending' ? 'en attente' : onlineStatusFilter === 'processing' ? 'en cours' : 'livrée'}`
                   }
                 </p>
@@ -1056,7 +1096,7 @@ export default function OrderManagement() {
                           ID: {order.id.slice(0, 8)}
                         </Badge>
                         <Badge className="bg-blue-500 text-white">
-                          🌐 Vente En Ligne
+                          📦 Commande En Ligne
                         </Badge>
                       </div>
                       
