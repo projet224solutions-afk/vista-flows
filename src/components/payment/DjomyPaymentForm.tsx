@@ -326,7 +326,7 @@ export function DjomyPaymentForm({
           )}
 
           <p className="text-xs text-center text-muted-foreground">
-            🔒 Paiement sécurisé via Djomy - 224Solutions
+            🔒 Paiement sécurisé via ChapChapPay - 224Solutions
           </p>
         </CardFooter>
       </form>

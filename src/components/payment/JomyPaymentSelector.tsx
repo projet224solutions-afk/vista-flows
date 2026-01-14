@@ -21,7 +21,6 @@ import {
   Wallet,
   Truck
 } from 'lucide-react';
-import { useDjomyPayment, type DjomyPaymentMethod } from '@/hooks/useDjomyPayment';
 import { useChapChapPay } from '@/hooks/useChapChapPay';
 import { CCPPaymentMethod } from '@/services/payment/ChapChapPayService';
 import { useAuth } from '@/hooks/useAuth';
@@ -46,7 +45,7 @@ interface JomyPaymentSelectorProps {
   sellerId?: string; // ID vendeur pour Stripe
 }
 
-type PaymentMethodId = 'STRIPE_CARD' | 'WALLET' | 'CASH_ON_DELIVERY' | 'CCP_ORANGE' | 'CCP_MTN' | 'CCP_PAYCARD' | DjomyPaymentMethod;
+type PaymentMethodId = 'STRIPE_CARD' | 'WALLET' | 'CASH_ON_DELIVERY' | 'CCP_ORANGE' | 'CCP_MTN' | 'CCP_PAYCARD';
 
 interface PaymentMethodOption {
   id: PaymentMethodId;
@@ -57,7 +56,7 @@ interface PaymentMethodOption {
   requiresPhone: boolean;
   phonePrefix?: string;
   phonePlaceholder?: string;
-  provider?: 'chapchappay' | 'jomy' | 'stripe' | 'wallet';
+  provider?: 'chapchappay' | 'stripe' | 'wallet';
 }
 
 export function JomyPaymentSelector({
@@ -76,8 +75,8 @@ export function JomyPaymentSelector({
   sellerId
 }: JomyPaymentSelectorProps) {
   const { user } = useAuth();
-  const { initializePayment, pollPaymentStatus, isLoading, error } = useDjomyPayment();
-  const { initiatePullPayment, pollStatus, isLoading: ccpLoading, error: ccpError } = useChapChapPay();
+  const { initiatePullPayment, pollStatus, isLoading, error } = useChapChapPay();
+  const chapchapLoading = isLoading;
   
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>(recipientId ? 'WALLET' : 'STRIPE_CARD');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -340,76 +339,9 @@ export function JomyPaymentSelector({
       return;
     }
 
-    // Paiements Mobile Money (Jomy.africa) - legacy fallback
-    if (requiresPhone && (!phoneNumber || phoneNumber.length < 9)) {
-      toast.error('Numéro de téléphone invalide');
-      return;
-    }
-
-    setProcessing(true);
-    setPaymentStatus('processing');
-
-    try {
-      const paymentPayload = {
-        amount,
-        payerPhone: phoneNumber,
-        paymentMethod: selectedMethod as DjomyPaymentMethod,
-        orderId: orderId || `${transactionType}-${Date.now()}`,
-        description: description || `Paiement ${transactionType}`,
-        successUrl: `${window.location.origin}/payment/success`,
-        failureUrl: `${window.location.origin}/payment/failed`,
-        callbackUrl: `${window.location.origin}/payment/callback`,
-        useGateway: false
-      };
-      
-      const result = await initializePayment(paymentPayload);
-
-      if (!result.success) {
-        throw new Error(result.error || 'Échec du paiement');
-      }
-
-      // Polling pour vérifier le statut
-      if (result.transactionId) {
-        setPaymentStatus('polling');
-        
-        const finalStatus = await pollPaymentStatus(result.transactionId, {
-          maxAttempts: 60,
-          intervalMs: 5000,
-          onStatusChange: (status) => {
-            if (status.status === 'SUCCESS' || status.status === 'completed') {
-              setPaymentStatus('success');
-              toast.success('🎉 Paiement réussi !');
-              onPaymentSuccess(result.transactionId!, 'SUCCESS');
-            } else if (status.status === 'FAILED' || status.status === 'failed') {
-              setPaymentStatus('failed');
-              toast.error('Paiement échoué');
-              onPaymentFailed?.(status.error || 'Paiement refusé');
-            }
-          }
-        });
-
-        if (finalStatus) {
-          if (finalStatus.status === 'SUCCESS' || finalStatus.status === 'completed') {
-            setPaymentStatus('success');
-            onPaymentSuccess(result.transactionId, 'SUCCESS');
-          } else if (finalStatus.status === 'PENDING' || finalStatus.status === 'pending') {
-            onPaymentPending?.(result.transactionId);
-            toast.info('Paiement en attente de confirmation');
-          } else {
-            setPaymentStatus('failed');
-            onPaymentFailed?.(finalStatus.error || 'Paiement échoué');
-          }
-        }
-      }
-
-    } catch (err) {
-      console.error('[Jomy] Payment error:', err);
-      setPaymentStatus('failed');
-      toast.error(err instanceof Error ? err.message : 'Erreur de paiement');
-      onPaymentFailed?.(err instanceof Error ? err.message : 'Erreur inconnue');
-    } finally {
-      setProcessing(false);
-    }
+    // Ce bloc n'est plus utilisé - ChapChapPay gère tous les paiements Mobile Money
+    toast.error('Méthode de paiement non supportée');
+    setProcessing(false);
   };
 
   const handleStripeSuccess = (paymentIntentId: string) => {

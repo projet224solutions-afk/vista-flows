@@ -451,7 +451,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       return;
     }
 
-    // Si Mobile Money, utiliser Djomy
+    // Si Mobile Money, utiliser ChapChapPay
     if (depositMethod === 'mobile_money') {
       await handleMobileMoneyDeposit(amount);
       return;

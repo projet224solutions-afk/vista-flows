@@ -583,7 +583,7 @@ export default function Payment() {
     }
   };
 
-  // Fonction pour paiement Mobile Money via Djomy
+  // Fonction pour paiement Mobile Money via ChapChapPay
   const handleMobileMoneyPayment = async (method: 'orange_money' | 'mtn_money', phone: string) => {
     if (!user?.id || !paymentAmount) return;
 
@@ -592,8 +592,8 @@ export default function Payment() {
       const provider = method === 'orange_money' ? 'orange' : 'mtn';
       
       toast({
-        title: "📱 Paiement Djomy",
-        description: `Redirection vers Djomy pour paiement ${provider.toUpperCase()}`
+        title: "📱 Paiement ChapChapPay",
+        description: `Initialisation du paiement ${provider.toUpperCase()}...`
       });
 
       // Utiliser Djomy directement
