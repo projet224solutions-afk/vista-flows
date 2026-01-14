@@ -1,46 +1,26 @@
 /**
- * 🔐 CINETPAY/MOBILE MONEY API CLIENT - 224SOLUTIONS
- * Client partagé pour les paiements Mobile Money via CinetPay
+ * 🔐 CHAPCHAPPAY API CLIENT - 224SOLUTIONS
+ * Client partagé pour les paiements Mobile Money via ChapChapPay
  * 
- * Documentation: https://cinetpay.com/developer
- * Supports: Orange Money, MTN MoMo, Wave, Moov Money, etc.
+ * Documentation: https://chapchappay.com/guide/
+ * Supports: Orange Money, MTN MoMo, Wave, etc.
  */
-
-// Utiliser l'API Web Crypto native de Deno
-const encoder = new TextEncoder();
-
-async function hmacSha256(key: string, message: string): Promise<string> {
-  const keyData = encoder.encode(key);
-  const messageData = encoder.encode(message);
-  
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    keyData,
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  
-  const signature = await crypto.subtle.sign("HMAC", cryptoKey, messageData);
-  const hashArray = Array.from(new Uint8Array(signature));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
 
 // ============= TYPES =============
 
 export interface ChapChapPayConfig {
   apiKey: string;
-  secretKey: string;
-  merchantId: string;
+  secretKey?: string;
   useSandbox?: boolean;
 }
 
 export interface CCPPaymentRequest {
   amount: number;
   currency?: string; // GNF, XOF, etc.
-  paymentMethod: 'orange_money' | 'mtn_momo' | 'paycard' | 'card';
-  customerPhone: string;
+  paymentMethod?: 'orange_money' | 'mtn_momo' | 'paycard' | 'wave' | 'card';
+  customerPhone?: string;
   customerName?: string;
+  customerEmail?: string;
   description?: string;
   orderId?: string;
   returnUrl?: string;
@@ -62,6 +42,7 @@ export interface CCPPushRequest {
 export interface CCPPaymentResponse {
   success: boolean;
   transactionId?: string;
+  operationId?: string;
   paymentUrl?: string;
   status?: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
   requiresOtp?: boolean;
@@ -72,6 +53,7 @@ export interface CCPPaymentResponse {
 export interface CCPStatusResponse {
   success: boolean;
   transactionId?: string;
+  operationId?: string;
   status?: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
   amount?: number;
   paidAmount?: number;
@@ -91,34 +73,7 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[${timestamp}] [CHAPCHAPPAY] ${step}${detailsStr}`);
 };
 
-/**
- * Génère la signature HMAC-SHA256 pour l'authentification
- */
-export async function generateSignature(data: string, secretKey: string): Promise<string> {
-  return await hmacSha256(secretKey, data);
-}
-
-/**
- * Génère les headers d'authentification ChapChapPay
- */
-export async function getAuthHeaders(config: ChapChapPayConfig, body?: unknown): Promise<Record<string, string>> {
-  const timestamp = Date.now().toString();
-  const bodyString = body ? JSON.stringify(body) : "";
-  const signatureData = `${timestamp}${config.merchantId}${bodyString}`;
-  const signature = await generateSignature(signatureData, config.secretKey);
-
-  return {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    "X-API-Key": config.apiKey,
-    "X-Merchant-ID": config.merchantId,
-    "X-Timestamp": timestamp,
-    "X-Signature": signature,
-    "User-Agent": "224Solutions/2.0",
-  };
-}
-
-// ============= CINETPAY CLIENT CLASS =============
+// ============= CHAPCHAPPAY CLIENT CLASS =============
 
 export class ChapChapPayClient {
   private config: ChapChapPayConfig;
@@ -126,76 +81,75 @@ export class ChapChapPayClient {
 
   constructor(config: ChapChapPayConfig) {
     this.config = config;
-    // CinetPay API URLs
-    this.baseUrl = config.useSandbox 
-      ? "https://api-checkout.cinetpay.com/v2" 
-      : "https://api-checkout.cinetpay.com/v2";
+    // ChapChapPay API URL
+    this.baseUrl = "https://chapchappay.com";
     
-    logStep("CinetPay Client initialized", { 
-      siteId: config.merchantId,
+    logStep("ChapChapPay Client initialized", { 
       environment: config.useSandbox ? "sandbox" : "production",
       baseUrl: this.baseUrl
     });
   }
 
   /**
-   * E-Commerce: Créer une session de paiement avec redirection (CinetPay)
+   * E-Commerce: Créer une session de paiement avec redirection
    */
   async createEcommercePayment(request: CCPPaymentRequest): Promise<CCPPaymentResponse> {
-    logStep("Creating E-Commerce payment (CinetPay)", { 
+    logStep("Creating E-Commerce payment", { 
       amount: request.amount, 
       method: request.paymentMethod 
     });
 
     try {
-      const transactionId = request.orderId || `224SOL-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const phoneNumber = this.formatPhoneNumber(request.customerPhone);
+      const orderId = request.orderId || `224SOL-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      // Format CinetPay payload - tous les champs requis
-      const payload = {
-        apikey: this.config.apiKey,
-        site_id: this.config.merchantId,
-        transaction_id: transactionId,
+      // Format ChapChapPay payload
+      const payload: Record<string, unknown> = {
         amount: Math.round(request.amount),
-        currency: request.currency || "GNF",
-        description: request.description || "Paiement 224Solutions",
-        return_url: request.returnUrl || "https://224solutions.com/payment/success",
-        notify_url: request.webhookUrl || "https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1/chapchappay-webhook",
-        channels: this.mapPaymentMethod(request.paymentMethod),
-        // Informations client - tous requis par CinetPay
-        customer_name: request.customerName?.split(' ')[0] || "Client",
-        customer_surname: request.customerName?.split(' ').slice(1).join(' ') || "224Solutions",
-        customer_phone_number: phoneNumber,
-        customer_email: `client.${phoneNumber}@224solutions.com`, // Email généré si non fourni
-        customer_address: "Conakry",
-        customer_city: "Conakry",
-        customer_country: "GN",
-        customer_state: "CK",
-        customer_zip_code: "00224",
-        metadata: JSON.stringify(request.metadata || {}),
+        order_id: orderId,
       };
 
-      logStep("CinetPay payload", { transactionId, amount: payload.amount, phone: phoneNumber });
+      // Ajouter les champs optionnels
+      if (request.description) payload.description = request.description;
+      if (request.returnUrl) payload.return_url = request.returnUrl;
+      if (request.webhookUrl) payload.notify_url = request.webhookUrl;
+      if (request.customerName) payload.customer_name = request.customerName;
+      if (request.customerPhone) payload.customer_phone = this.formatPhoneNumber(request.customerPhone);
+      if (request.customerEmail) payload.customer_email = request.customerEmail;
+      if (request.metadata) payload.metadata = JSON.stringify(request.metadata);
+
+      logStep("ChapChapPay payload", { orderId, amount: payload.amount });
       
-      const response = await fetch(`${this.baseUrl}/payment`, {
+      const response = await fetch(`${this.baseUrl}/api/ecommerce/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json",
+          "CCP-Api-Key": this.config.apiKey,
+          "User-Agent": "224Solutions/2.0",
         },
         body: JSON.stringify(payload),
       });
 
       const responseText = await response.text();
-      logStep("CinetPay response", { status: response.status, body: responseText.substring(0, 500) });
+      logStep("ChapChapPay response", { status: response.status, body: responseText.substring(0, 500) });
 
-      const data = JSON.parse(responseText);
+      let data: Record<string, unknown>;
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        return {
+          success: false,
+          error: `Réponse invalide: ${responseText.substring(0, 100)}`
+        };
+      }
       
-      // CinetPay retourne code "201" pour succès
-      if (data.code === "201" || data.code === 201 || data.code === "00") {
+      // ChapChapPay retourne success ou payment_url
+      if (data.payment_url || data.operation_id || response.ok) {
         return {
           success: true,
-          transactionId: data.data?.payment_token || transactionId,
-          paymentUrl: data.data?.payment_url,
+          transactionId: String(data.operation_id || orderId),
+          operationId: String(data.operation_id || ""),
+          paymentUrl: String(data.payment_url || ""),
           status: "pending",
           data
         };
@@ -203,10 +157,10 @@ export class ChapChapPayClient {
 
       return {
         success: false,
-        error: data.message || `Erreur CinetPay: ${data.code}`
+        error: String(data.error || data.message || `Erreur ChapChapPay: ${response.status}`)
       };
     } catch (error) {
-      logStep("CinetPay E-Commerce error", { error: String(error) });
+      logStep("ChapChapPay E-Commerce error", { error: String(error) });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error)
@@ -215,91 +169,78 @@ export class ChapChapPayClient {
   }
 
   /**
-   * Mapper le type de paiement vers les canaux CinetPay
-   * Valeurs valides: ALL, MOBILE_MONEY, WALLET, CREDIT_CARD, INTERNATIONAL_CARD
-   */
-  private mapPaymentMethod(method: string): string {
-    const mapping: Record<string, string> = {
-      'orange_money': 'MOBILE_MONEY',
-      'mtn_momo': 'MOBILE_MONEY',
-      'mtn_money': 'MOBILE_MONEY',
-      'wave': 'WALLET',
-      'moov_money': 'MOBILE_MONEY',
-      'paycard': 'CREDIT_CARD',
-      'card': 'ALL',
-    };
-    return mapping[method] || 'ALL';
-  }
-
-  /**
-   * PULL: Débiter le compte Mobile Money du client (utilise E-Commerce)
+   * PULL: Débiter le compte Mobile Money du client
+   * Utilise la méthode E-Commerce avec redirection
    */
   async initiatePullPayment(request: CCPPaymentRequest): Promise<CCPPaymentResponse> {
-    logStep("Initiating PULL payment via CinetPay", { 
+    logStep("Initiating PULL payment", { 
       amount: request.amount, 
       method: request.paymentMethod 
     });
 
-    // Pour CinetPay, PULL = E-Commerce avec webhook
+    // Pour ChapChapPay, PULL = E-Commerce avec webhook
+    const webhookUrl = request.webhookUrl || 
+      `${Deno.env.get("SUPABASE_URL")}/functions/v1/chapchappay-webhook`;
+
     return this.createEcommercePayment({
       ...request,
-      webhookUrl: request.webhookUrl || "https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1/chapchappay-webhook",
+      webhookUrl,
     });
   }
 
   /**
    * PUSH: Envoyer de l'argent vers un compte Mobile Money
-   * Note: CinetPay Transfer API - nécessite configuration spéciale
+   * Note: Nécessite des permissions spéciales sur ChapChapPay
    */
   async initiatePushPayment(request: CCPPushRequest): Promise<CCPPaymentResponse> {
-    logStep("Initiating PUSH payment (CinetPay Transfer)", { 
+    logStep("Initiating PUSH payment", { 
       amount: request.amount, 
       method: request.paymentMethod 
     });
 
     try {
-      const transactionId = request.orderId || `224SOL-PUSH-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const orderId = request.orderId || `224SOL-PUSH-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      // CinetPay Transfer API payload
+      // ChapChapPay Transfer payload
       const payload = {
-        apikey: this.config.apiKey,
-        site_id: this.config.merchantId,
-        transaction_id: transactionId,
         amount: Math.round(request.amount),
-        currency: request.currency || "GNF",
-        description: request.description || "Transfert 224Solutions",
-        recipient_phone_number: this.formatPhoneNumber(request.recipientPhone),
+        order_id: orderId,
+        recipient_phone: this.formatPhoneNumber(request.recipientPhone),
         recipient_name: request.recipientName || "Destinataire",
-        transfer_type: this.mapPaymentMethod(request.paymentMethod),
+        payment_method: request.paymentMethod,
+        description: request.description || "Transfert 224Solutions",
       };
 
-      logStep("CinetPay Transfer payload", { transactionId, amount: payload.amount });
+      logStep("ChapChapPay Transfer payload", { orderId, amount: payload.amount });
       
-      // CinetPay Transfer endpoint
-      const response = await fetch("https://api-transfer.cinetpay.com/v1/transfer", {
+      const response = await fetch(`${this.baseUrl}/api/transfer/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json",
+          "CCP-Api-Key": this.config.apiKey,
+          "User-Agent": "224Solutions/2.0",
         },
         body: JSON.stringify(payload),
       });
 
       const responseText = await response.text();
-      logStep("CinetPay Transfer response", { status: response.status });
+      logStep("ChapChapPay Transfer response", { status: response.status });
 
       if (!response.ok) {
         return {
           success: false,
-          error: `Erreur ${response.status}: ${responseText}`
+          error: `Erreur ${response.status}: ${responseText.substring(0, 200)}`
         };
       }
 
       const data = JSON.parse(responseText);
       
-      if (data.code === "00" || data.status === "SUCCESS") {
+      if (data.success || data.operation_id) {
         return {
           success: true,
-          transactionId: data.transaction_id || transactionId,
+          transactionId: data.operation_id || orderId,
+          operationId: data.operation_id,
           status: data.status || "pending",
           data
         };
@@ -307,10 +248,10 @@ export class ChapChapPayClient {
 
       return {
         success: false,
-        error: data.message || "Erreur lors du transfert"
+        error: data.message || data.error || "Erreur lors du transfert"
       };
     } catch (error) {
-      logStep("CinetPay Transfer error", { error: String(error) });
+      logStep("ChapChapPay Transfer error", { error: String(error) });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error)
@@ -319,60 +260,75 @@ export class ChapChapPayClient {
   }
 
   /**
-   * Vérifier le statut d'une transaction (CinetPay)
+   * Vérifier le statut d'une transaction
    */
   async checkStatus(transactionId?: string, orderId?: string): Promise<CCPStatusResponse> {
-    logStep("Checking payment status (CinetPay)", { transactionId, orderId });
+    logStep("Checking payment status", { transactionId, orderId });
 
     try {
-      const payload = {
-        apikey: this.config.apiKey,
-        site_id: this.config.merchantId,
-        transaction_id: transactionId || orderId,
-      };
-      
-      const response = await fetch(`${this.baseUrl}/payment/check`, {
+      const identifier = transactionId || orderId;
+      if (!identifier) {
+        return { success: false, error: "Transaction ID ou Order ID requis" };
+      }
+
+      const response = await fetch(`${this.baseUrl}/api/payment/status`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json",
+          "CCP-Api-Key": this.config.apiKey,
+          "User-Agent": "224Solutions/2.0",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          operation_id: transactionId,
+          order_id: orderId,
+        }),
       });
 
       const responseText = await response.text();
-      logStep("CinetPay Status response", { status: response.status, body: responseText.substring(0, 500) });
+      logStep("ChapChapPay Status response", { status: response.status, body: responseText.substring(0, 500) });
 
-      const data = JSON.parse(responseText);
+      let data: Record<string, unknown>;
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        return { success: false, error: "Réponse invalide du serveur" };
+      }
       
-      if (data.code === "00") {
-        // Mapper les statuts CinetPay vers nos statuts
+      if (response.ok) {
+        // Mapper les statuts ChapChapPay vers nos statuts
         const statusMapping: Record<string, string> = {
-          'ACCEPTED': 'completed',
-          'REFUSED': 'failed',
-          'PENDING': 'pending',
+          'SUCCESS': 'completed',
+          'COMPLETED': 'completed',
+          'PAID': 'completed',
+          'FAILED': 'failed',
           'CANCELLED': 'cancelled',
+          'PENDING': 'pending',
+          'PROCESSING': 'processing',
         };
+        
+        const rawStatus = String(data.status || 'pending').toUpperCase();
         
         return {
           success: true,
-          transactionId: data.data?.payment_token || transactionId,
-          status: statusMapping[data.data?.status] || data.data?.status?.toLowerCase() || 'pending',
-          amount: data.data?.amount,
-          paidAmount: data.data?.payment_amount,
-          fees: data.data?.payment_method_fee,
-          paymentMethod: data.data?.payment_method,
-          customerPhone: data.data?.phone_number,
-          createdAt: data.data?.payment_date,
-          completedAt: data.data?.payment_date,
+          transactionId: String(data.operation_id || transactionId),
+          operationId: String(data.operation_id || ""),
+          status: (statusMapping[rawStatus] || 'pending') as CCPStatusResponse['status'],
+          amount: Number(data.amount) || undefined,
+          paidAmount: Number(data.paid_amount || data.amount) || undefined,
+          paymentMethod: String(data.payment_method || ""),
+          customerPhone: String(data.customer_phone || ""),
+          createdAt: String(data.created_at || ""),
+          completedAt: String(data.completed_at || ""),
         };
       }
 
       return {
         success: false,
-        error: data.message || `Code: ${data.code}`
+        error: String(data.message || data.error || `Code: ${response.status}`)
       };
     } catch (error) {
-      logStep("CinetPay Status check error", { error: String(error) });
+      logStep("ChapChapPay Status check error", { error: String(error) });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error)
@@ -381,7 +337,7 @@ export class ChapChapPayClient {
   }
 
   /**
-   * Formater le numéro de téléphone au format international
+   * Formater le numéro de téléphone au format international guinéen
    */
   private formatPhoneNumber(phone: string): string {
     // Nettoyer le numéro
@@ -407,24 +363,19 @@ export class ChapChapPayClient {
 }
 
 /**
- * Créer un client CinetPay/ChapChapPay à partir des variables d'environnement
+ * Créer un client ChapChapPay à partir des variables d'environnement
  */
 export function createChapChapPayClient(useSandbox: boolean = false): ChapChapPayClient {
-  // Utiliser les credentials CinetPay
-  const apiKey = Deno.env.get("CINETPAY_API_KEY") || Deno.env.get("CCP_API_KEY");
-  const siteId = Deno.env.get("CINETPAY_SITE_ID") || Deno.env.get("CCP_MERCHANT_ID");
-  const secretKey = Deno.env.get("CCP_SECRET_KEY") || Deno.env.get("CCP_ENCRYPTION_KEY") || apiKey;
+  const apiKey = Deno.env.get("CCP_API_KEY");
+  const secretKey = Deno.env.get("CCP_SECRET_KEY");
 
-  if (!apiKey || !siteId) {
-    throw new Error(
-      "CinetPay: CINETPAY_API_KEY et CINETPAY_SITE_ID requis"
-    );
+  if (!apiKey) {
+    throw new Error("ChapChapPay: CCP_API_KEY requis");
   }
 
   return new ChapChapPayClient({
     apiKey,
-    secretKey: secretKey || apiKey,
-    merchantId: siteId,
+    secretKey,
     useSandbox
   });
 }

@@ -127,7 +127,7 @@ serve(async (req) => {
     const ccpResult = await ccpClient.initiatePullPayment({
       amount,
       currency,
-      paymentMethod: paymentMethod as 'orange_money' | 'mtn_momo' | 'paycard' | 'card',
+      paymentMethod: paymentMethod as 'orange_money' | 'mtn_momo' | 'paycard' | 'wave' | 'card',
       customerPhone,
       customerName,
       description: description || `Paiement 224Solutions - ${finalOrderId}`,
