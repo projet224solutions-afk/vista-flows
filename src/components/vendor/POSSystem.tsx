@@ -60,7 +60,6 @@ import { POSReceipt } from './pos/POSReceipt';
 import { BarcodeScannerModal } from './pos/BarcodeScannerModal';
 import { Scan } from 'lucide-react';
 import { useChapChapPay } from '@/hooks/useChapChapPay';
-import { CCPPaymentMethod } from '@/services/payment/ChapChapPayService';
 import { StripeCardPaymentModal } from '@/components/pos/StripeCardPaymentModal';
 
 interface Product {
@@ -100,8 +99,8 @@ export function POSSystem() {
   const isMobile = useIsMobile();
   const [mobileTab, setMobileTab] = useState<'products' | 'cart'>('products');
   
-  // Hook ChapChapPay pour paiements Mobile Money sécurisés
-  const { initiatePullPayment, pollStatus, isLoading: ccpLoading, error: ccpError } = useChapChapPay();
+  // Hook ChapChapPay pour paiements Mobile Money sécurisés (E-Commerce API)
+  const { createEcommercePayment, pollStatus, isLoading: ccpLoading, error: ccpError } = useChapChapPay();
   
   // Récupérer le vendor_id de l'utilisateur connecté ou du contexte agent
   const [vendorId, setVendorId] = useState<string | null>(agentVendorId || null);
@@ -789,12 +788,9 @@ export function POSSystem() {
     }
 
     try {
-      // Pour Mobile Money, utiliser ChapChapPay (paiement sécurisé)
+      // Pour Mobile Money, utiliser ChapChapPay E-Commerce (redirection vers page de paiement)
       if (paymentMethod === 'mobile_money') {
         toast.loading('Initialisation du paiement ChapChapPay...');
-        
-        // Mapper le provider vers le format ChapChapPay
-        const ccpPaymentMethod: CCPPaymentMethod = mobileMoneyProvider === 'orange' ? 'orange_money' : 'mtn_momo';
         
         // Créer la commande d'abord pour avoir l'orderId
         const customerId = await getOrCreateCustomerId();
@@ -838,14 +834,12 @@ export function POSSystem() {
 
         await supabase.from('order_items').insert(orderItems);
 
-        // Initialiser le paiement ChapChapPay sécurisé
-        const ccpResult = await initiatePullPayment({
+        // Utiliser l'API E-Commerce ChapChapPay (redirige vers page de paiement)
+        const ccpResult = await createEcommercePayment({
           amount: total,
-          currency: 'GNF',
-          paymentMethod: ccpPaymentMethod,
-          customerPhone: mobileMoneyPhone,
           orderId: order.order_number || order.id,
           description: `Vente POS - ${cart.length} article(s)`,
+          notifyUrl: `${window.location.origin}/api/chapchappay-webhook`,
         });
 
         toast.dismiss();
@@ -863,54 +857,65 @@ export function POSSystem() {
         // Mettre à jour la commande avec l'ID de transaction ChapChapPay
         await supabase.from('orders')
           .update({ 
-            notes: `Paiement ChapChapPay (${mobileMoneyProvider === 'orange' ? 'Orange Money' : 'MTN MoMo'}) - ${mobileMoneyPhone} - Transaction: ${ccpResult.transactionId}` 
+            notes: `Paiement ChapChapPay - Transaction: ${ccpResult.transactionId}` 
           })
           .eq('id', order.id);
 
-        // Notification: demande de paiement envoyée
-        toast.info('Demande de paiement envoyée', {
-          description: `Confirmez le paiement sur votre téléphone ${mobileMoneyProvider === 'orange' ? 'Orange Money' : 'MTN MoMo'}.`
-        });
-
-        // Polling pour vérifier le statut du paiement
-        if (ccpResult.transactionId) {
-          toast.loading('En attente de confirmation...', { id: 'payment-polling' });
+        // Rediriger vers la page de paiement ChapChapPay
+        if (ccpResult.paymentUrl) {
+          toast.success('Redirection vers ChapChapPay...', {
+            description: 'Vous allez être redirigé vers la page de paiement sécurisée.'
+          });
           
-          const finalStatus = await pollStatus(ccpResult.transactionId, async (status) => {
-            console.log('[POS] Payment status:', status);
-            
-            if (status.status === 'success' || status.status === 'completed') {
-              toast.dismiss('payment-polling');
-              toast.success('🎉 Paiement confirmé !');
-              
-              // Mettre à jour la commande
-              await supabase.from('orders')
-                .update({ payment_status: 'paid', status: 'processing' })
-                .eq('id', order.id);
-              
-              setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
-              setShowOrderSummary(false);
-              setShowReceipt(true);
-              clearCart();
-              await loadVendorProducts();
-            } else if (status.status === 'failed' || status.status === 'cancelled') {
-              toast.dismiss('payment-polling');
-              toast.error('Paiement échoué ou refusé');
-              
-              // Marquer la commande comme échouée
-              await supabase.from('orders')
-                .update({ payment_status: 'failed' })
-                .eq('id', order.id);
-            }
+          // Ouvrir dans un nouvel onglet pour ne pas perdre l'état du POS
+          window.open(ccpResult.paymentUrl, '_blank');
+          
+          // Informer l'utilisateur
+          toast.info('Page de paiement ouverte', {
+            description: 'Demandez au client de compléter le paiement. Le statut sera mis à jour automatiquement.',
+            duration: 10000
           });
 
-          toast.dismiss('payment-polling');
-
-          if (!finalStatus || (finalStatus.status !== 'success' && finalStatus.status !== 'completed')) {
-            // Paiement non confirmé après le délai
-            toast.warning('Paiement en attente', {
-              description: 'Le statut du paiement sera mis à jour automatiquement.'
+          // Polling pour vérifier le statut du paiement
+          if (ccpResult.transactionId) {
+            toast.loading('En attente de confirmation du paiement...', { id: 'payment-polling' });
+            
+            const finalStatus = await pollStatus(ccpResult.transactionId, async (status) => {
+              console.log('[POS] Payment status:', status);
+              
+              if (status.status === 'success' || status.status === 'completed') {
+                toast.dismiss('payment-polling');
+                toast.success('🎉 Paiement confirmé !');
+                
+                // Mettre à jour la commande
+                await supabase.from('orders')
+                  .update({ payment_status: 'paid', status: 'processing' })
+                  .eq('id', order.id);
+                
+                setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
+                setShowOrderSummary(false);
+                setShowReceipt(true);
+                clearCart();
+                await loadVendorProducts();
+              } else if (status.status === 'failed' || status.status === 'cancelled' || status.status === 'expired') {
+                toast.dismiss('payment-polling');
+                toast.error('Paiement échoué, annulé ou expiré');
+                
+                // Marquer la commande comme échouée
+                await supabase.from('orders')
+                  .update({ payment_status: 'failed' })
+                  .eq('id', order.id);
+              }
             });
+
+            toast.dismiss('payment-polling');
+
+            if (!finalStatus || (finalStatus.status !== 'success' && finalStatus.status !== 'completed')) {
+              // Paiement non confirmé après le délai
+              toast.warning('Paiement en attente', {
+                description: 'Le statut du paiement sera mis à jour via webhook.'
+              });
+            }
           }
         }
 
