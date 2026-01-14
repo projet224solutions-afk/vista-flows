@@ -1,7 +1,7 @@
 /**
- * 💳 SÉLECTEUR DE MÉTHODE DE PAIEMENT - JOMY.AFRICA UNIQUEMENT
- * Intégration exclusive Jomy.africa
- * Orange Money, MTN MoMo, VISA, Mastercard, KULU
+ * 💳 SÉLECTEUR DE MÉTHODE DE PAIEMENT - CHAPCHAPPAY
+ * Intégration exclusive ChapChapPay
+ * Orange Money, MTN MoMo, VISA, Mastercard, PayCard
  */
 
 export { JomyPaymentSelector as PaymentMethodSelector } from './JomyPaymentSelector';

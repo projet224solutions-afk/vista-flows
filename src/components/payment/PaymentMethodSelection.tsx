@@ -1,7 +1,6 @@
 /**
- * 💳 PAYMENT METHOD SELECTION - JOMY.AFRICA UNIQUEMENT
- * Re-export du composant Jomy unifié
+ * 💳 PAYMENT METHOD SELECTION - CHAPCHAPPAY
+ * Re-export du composant ChapChapPay unifié
  */
 
 export { JomyPaymentSelector as PaymentMethodSelection } from './JomyPaymentSelector';
-export type { } from './JomyPaymentSelector';

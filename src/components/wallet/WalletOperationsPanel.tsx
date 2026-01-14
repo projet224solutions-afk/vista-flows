@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-// Jomy uniquement - Suppression de carte bancaire
+// ChapChapPay - Mobile Money
 const PAYMENT_METHODS = [
   { value: 'orange_money', label: 'Orange Money', icon: Smartphone, color: 'text-orange-600' },
   { value: 'mtn_money', label: 'MTN Money', icon: Smartphone, color: 'text-yellow-600' },

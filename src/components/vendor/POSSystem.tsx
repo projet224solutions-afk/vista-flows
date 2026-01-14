@@ -59,7 +59,8 @@ import { QuantityKeypadPopup } from './pos/QuantityKeypadPopup';
 import { POSReceipt } from './pos/POSReceipt';
 import { BarcodeScannerModal } from './pos/BarcodeScannerModal';
 import { Scan } from 'lucide-react';
-import { useDjomyPayment, type DjomyPaymentMethod } from '@/hooks/useDjomyPayment';
+import { useChapChapPay } from '@/hooks/useChapChapPay';
+import { CCPPaymentMethod } from '@/services/payment/ChapChapPayService';
 import { StripeCardPaymentModal } from '@/components/pos/StripeCardPaymentModal';
 
 interface Product {
@@ -99,8 +100,8 @@ export function POSSystem() {
   const isMobile = useIsMobile();
   const [mobileTab, setMobileTab] = useState<'products' | 'cart'>('products');
   
-  // Hook Jomy pour paiements sécurisés
-  const { initializePayment, pollPaymentStatus, isLoading: djomyLoading, error: djomyError } = useDjomyPayment();
+  // Hook ChapChapPay pour paiements Mobile Money sécurisés
+  const { initiatePullPayment, pollStatus, isLoading: ccpLoading, error: ccpError } = useChapChapPay();
   
   // Récupérer le vendor_id de l'utilisateur connecté ou du contexte agent
   const [vendorId, setVendorId] = useState<string | null>(agentVendorId || null);
@@ -788,15 +789,12 @@ export function POSSystem() {
     }
 
     try {
-      // Pour Mobile Money, utiliser Jomy.africa (paiement sécurisé)
+      // Pour Mobile Money, utiliser ChapChapPay (paiement sécurisé)
       if (paymentMethod === 'mobile_money') {
-        toast.loading('Initialisation du paiement Jomy.africa...');
+        toast.loading('Initialisation du paiement ChapChapPay...');
         
-        // Mapper le provider vers le format Jomy
-        const jomyPaymentMethod: DjomyPaymentMethod = mobileMoneyProvider === 'orange' ? 'OM' : 'MOMO';
-        
-        // Formater le numéro de téléphone pour Jomy (format 00224XXXXXXXXX)
-        const formattedPhone = `00224${mobileMoneyPhone}`;
+        // Mapper le provider vers le format ChapChapPay
+        const ccpPaymentMethod: CCPPaymentMethod = mobileMoneyProvider === 'orange' ? 'orange_money' : 'mtn_momo';
         
         // Créer la commande d'abord pour avoir l'orderId
         const customerId = await getOrCreateCustomerId();
@@ -840,33 +838,32 @@ export function POSSystem() {
 
         await supabase.from('order_items').insert(orderItems);
 
-        // Initialiser le paiement Jomy sécurisé
-        const jomyResult = await initializePayment({
+        // Initialiser le paiement ChapChapPay sécurisé
+        const ccpResult = await initiatePullPayment({
           amount: total,
-          payerPhone: formattedPhone,
-          paymentMethod: jomyPaymentMethod,
+          currency: 'GNF',
+          paymentMethod: ccpPaymentMethod,
+          customerPhone: mobileMoneyPhone,
           orderId: order.order_number || order.id,
           description: `Vente POS - ${cart.length} article(s)`,
-          useGateway: false, // Paiement direct sans redirection
-          useSandbox: false, // ⚠️ Production mode: paiements réels
         });
 
         toast.dismiss();
 
-        if (!jomyResult.success) {
-          console.error('[POS] Jomy payment error:', jomyResult.error);
+        if (!ccpResult.success) {
+          console.error('[POS] ChapChapPay payment error:', ccpResult.error);
           toast.error('Erreur lors de l\'initialisation du paiement', {
-            description: jomyResult.error || 'Veuillez réessayer',
+            description: ccpResult.error || 'Veuillez réessayer',
           });
           // Annuler la commande si le paiement échoue
           await supabase.from('orders').update({ status: 'cancelled', payment_status: 'failed' }).eq('id', order.id);
           return;
         }
 
-        // Mettre à jour la commande avec l'ID de transaction Jomy
+        // Mettre à jour la commande avec l'ID de transaction ChapChapPay
         await supabase.from('orders')
           .update({ 
-            notes: `Paiement Jomy (${mobileMoneyProvider === 'orange' ? 'Orange Money' : 'MTN MoMo'}) - ${mobileMoneyPhone} - Transaction: ${jomyResult.transactionId}` 
+            notes: `Paiement ChapChapPay (${mobileMoneyProvider === 'orange' ? 'Orange Money' : 'MTN MoMo'}) - ${mobileMoneyPhone} - Transaction: ${ccpResult.transactionId}` 
           })
           .eq('id', order.id);
 
@@ -876,44 +873,40 @@ export function POSSystem() {
         });
 
         // Polling pour vérifier le statut du paiement
-        if (jomyResult.transactionId) {
+        if (ccpResult.transactionId) {
           toast.loading('En attente de confirmation...', { id: 'payment-polling' });
           
-          const finalStatus = await pollPaymentStatus(jomyResult.transactionId, {
-            maxAttempts: 36, // 3 minutes max (36 x 5s)
-            intervalMs: 5000,
-            onStatusChange: async (status) => {
-              console.log('[POS] Payment status:', status);
+          const finalStatus = await pollStatus(ccpResult.transactionId, async (status) => {
+            console.log('[POS] Payment status:', status);
+            
+            if (status.status === 'success' || status.status === 'completed') {
+              toast.dismiss('payment-polling');
+              toast.success('🎉 Paiement confirmé !');
               
-              if (status.status === 'SUCCESS' || status.status === 'completed') {
-                toast.dismiss('payment-polling');
-                toast.success('🎉 Paiement confirmé !');
-                
-                // Mettre à jour la commande
-                await supabase.from('orders')
-                  .update({ payment_status: 'paid', status: 'processing' })
-                  .eq('id', order.id);
-                
-                setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
-                setShowOrderSummary(false);
-                setShowReceipt(true);
-                clearCart();
-                await loadVendorProducts();
-              } else if (status.status === 'FAILED' || status.status === 'failed') {
-                toast.dismiss('payment-polling');
-                toast.error('Paiement échoué ou refusé');
-                
-                // Marquer la commande comme échouée
-                await supabase.from('orders')
-                  .update({ payment_status: 'failed' })
-                  .eq('id', order.id);
-              }
+              // Mettre à jour la commande
+              await supabase.from('orders')
+                .update({ payment_status: 'paid', status: 'processing' })
+                .eq('id', order.id);
+              
+              setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
+              setShowOrderSummary(false);
+              setShowReceipt(true);
+              clearCart();
+              await loadVendorProducts();
+            } else if (status.status === 'failed' || status.status === 'cancelled') {
+              toast.dismiss('payment-polling');
+              toast.error('Paiement échoué ou refusé');
+              
+              // Marquer la commande comme échouée
+              await supabase.from('orders')
+                .update({ payment_status: 'failed' })
+                .eq('id', order.id);
             }
           });
 
           toast.dismiss('payment-polling');
 
-          if (!finalStatus || (finalStatus.status !== 'SUCCESS' && finalStatus.status !== 'completed')) {
+          if (!finalStatus || (finalStatus.status !== 'success' && finalStatus.status !== 'completed')) {
             // Paiement non confirmé après le délai
             toast.warning('Paiement en attente', {
               description: 'Le statut du paiement sera mis à jour automatiquement.'
@@ -2055,7 +2048,7 @@ export function POSSystem() {
                 <strong>Mode de paiement:</strong> {
                   paymentMethod === 'cash' ? 'Espèces' : 
                   paymentMethod === 'card' ? 'Carte bancaire (Stripe)' :
-                  'Mobile Money (Jomy.africa)'
+                  'Mobile Money (ChapChapPay)'
                 }
               </div>
               {paymentMethod === 'cash' && receivedAmount > 0 && (

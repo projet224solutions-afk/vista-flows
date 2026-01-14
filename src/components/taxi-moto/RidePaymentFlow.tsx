@@ -1,6 +1,6 @@
 /**
  * COMPOSANT FLOW DE PAIEMENT POUR COURSE TERMINÉE
- * Intégration exclusive Jomy.africa
+ * Intégration exclusive ChapChapPay
  * 224Solutions - Taxi-Moto System
  */
 

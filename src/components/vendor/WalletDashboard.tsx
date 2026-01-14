@@ -360,17 +360,17 @@ export default function WalletDashboard() {
 
           <TabsContent value="deposit" className="space-y-4">
             <div className="space-y-4">
-              {/* Djomy - Mobile Money */}
+              {/* ChapChapPay - Mobile Money */}
               <div className="p-4 border rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50">
                 <div className="flex items-center gap-2 mb-3">
                   <Smartphone className="w-5 h-5 text-blue-600" />
-                  <h4 className="font-semibold">{t('wallet.rechargeViaDjomy')}</h4>
+                  <h4 className="font-semibold">Recharge via Mobile Money</h4>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  {t('wallet.djomyDesc')}
+                  Rechargez votre portefeuille via Orange Money ou MTN MoMo (ChapChapPay)
                 </p>
                 <Button 
-                  onClick={() => {/* TODO: Ouvrir dialogue Djomy */}} 
+                  onClick={() => {/* TODO: Ouvrir dialogue ChapChapPay */}} 
                   className="w-full bg-blue-600 hover:bg-blue-700"
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
@@ -389,7 +389,7 @@ export default function WalletDashboard() {
                       size="sm"
                       onClick={() => {
                         setDepositAmount(amount.toString());
-                        /* TODO: Ouvrir dialogue Djomy */
+                        /* TODO: Ouvrir dialogue ChapChapPay */
                       }}
                     >
                       {amount.toLocaleString()} {wallet?.currency || 'GNF'}
@@ -515,7 +515,7 @@ export default function WalletDashboard() {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Dialog Mobile Money Jomy - fonctionnalité à implémenter */}
+        {/* Dialog Mobile Money ChapChapPay - fonctionnalité à implémenter */}
         <AlertDialog open={showFedaPayDialog} onOpenChange={setShowFedaPayDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>

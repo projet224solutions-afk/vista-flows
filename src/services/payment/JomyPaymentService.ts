@@ -1,6 +1,7 @@
 /**
- * 🔐 SERVICE DE PAIEMENT JOMY.AFRICA
- * Service centralisé unique pour tous les paiements Mobile Money
+ * 🔐 SERVICE DE PAIEMENT (LEGACY)
+ * Note: ChapChapPay est maintenant le provider principal
+ * Ce service est conservé pour rétrocompatibilité uniquement
  */
 
 import { supabase } from '@/integrations/supabase/client';
