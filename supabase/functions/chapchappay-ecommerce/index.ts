@@ -6,7 +6,9 @@ const corsHeaders = {
 };
 
 // ChapChapPay API - Documentation: https://chapchappay.com/guide/
-// Note: Some APIs use different base paths - trying without /api suffix
+// NOTE: The public guide states POST /api/ecommerce/operation, but our live calls
+// currently return 405 for POST. This function automatically falls back to GET
+// (with query params) if POST is not allowed.
 const CCP_API_URL = "https://chapchappay.com";
 
 interface EcommercePaymentRequest {
@@ -27,6 +29,16 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[${timestamp}] [CCP-ECOM] ${step}${detailsStr}`);
 };
 
+const buildQueryUrl = (base: string, data: Record<string, unknown>) => {
+  const params = new URLSearchParams();
+  for (const [k, v] of Object.entries(data)) {
+    if (v === undefined || v === null) continue;
+    // ChapChapPay expects snake_case keys (amount, order_id, notify_url, ...)
+    params.set(k, String(v));
+  }
+  return `${base}?${params.toString()}`;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -38,114 +50,140 @@ serve(async (req) => {
     logStep("E-Commerce payment started");
 
     const apiKey = Deno.env.get("CCP_API_KEY");
-    
+
     if (!apiKey) {
       logStep("❌ CCP_API_KEY not configured");
       return new Response(
         JSON.stringify({ success: false, error: "Service de paiement non configuré" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
     const body: EcommercePaymentRequest = await req.json();
-    
+
     logStep("Request received", {
       amount: body.amount,
-      orderId: body.orderId
+      orderId: body.orderId,
     });
 
-    // Validate required fields
     if (!body.amount || body.amount <= 0) {
       return new Response(
         JSON.stringify({ success: false, error: "Montant invalide" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
-    // According to documentation: POST /api/ecommerce/operation with { amount: number }
+    // According to guide: POST /api/ecommerce/operation with { amount }
+    // Optional: order_id, notify_url, return_url, description
     const paymentData: Record<string, unknown> = {
-      amount: body.amount
+      amount: body.amount,
     };
 
-    // Optional fields
-    if (body.orderId) {
-      paymentData.order_id = body.orderId;
-    }
-    if (body.notifyUrl) {
-      paymentData.notify_url = body.notifyUrl;
-    }
-    if (body.returnUrl) {
-      paymentData.return_url = body.returnUrl;
-    }
-    if (body.description) {
-      paymentData.description = body.description;
-    }
+    if (body.orderId) paymentData.order_id = body.orderId;
+    if (body.notifyUrl) paymentData.notify_url = body.notifyUrl;
+    if (body.returnUrl) paymentData.return_url = body.returnUrl;
+    if (body.description) paymentData.description = body.description;
 
-    // Try /api/ecommerce/operation without trailing slash (as per docs)
-    const endpoint = `${CCP_API_URL}/api/ecommerce/operation`;
-    
-    logStep("Calling ChapChapPay API", { 
-      endpoint, 
-      amount: body.amount, 
+    const endpointBase = `${CCP_API_URL}/api/ecommerce/operation`;
+
+    logStep("Calling ChapChapPay API", {
+      endpoint: endpointBase,
+      amount: body.amount,
       apiKeyPrefix: apiKey.substring(0, 8),
-      payload: paymentData 
+      payload: paymentData,
     });
 
-    const response = await fetch(endpoint, {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "CCP-Api-Key": apiKey,
+      // Defensive duplicates (some backends incorrectly treat header names as case-sensitive)
+      "CCP-API-KEY": apiKey,
+      "User-Agent": "Vista-Flows/1.0",
+    };
+
+    // Attempt #1: POST JSON body (as per docs)
+    let response = await fetch(endpointBase, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "CCP-Api-Key": apiKey,
-        "User-Agent": "Vista-Flows/1.0"
-      },
-      body: JSON.stringify(paymentData)
+      headers,
+      body: JSON.stringify(paymentData),
     });
+
+    // Attempt #2: if POST is not allowed, fall back to GET with query params
+    if (response.status === 405) {
+      const endpointGet = buildQueryUrl(endpointBase, paymentData);
+      logStep("POST not allowed, retrying with GET", {
+        endpoint: endpointGet.substring(0, 300),
+      });
+
+      response = await fetch(endpointGet, {
+        method: "GET",
+        headers: {
+          ...headers,
+          // No body for GET
+          "Content-Type": "application/json",
+        },
+      });
+    }
 
     const responseText = await response.text();
-    logStep("ChapChapPay response", { status: response.status, body: responseText.substring(0, 500) });
+    logStep("ChapChapPay response", {
+      status: response.status,
+      allow: response.headers.get("allow"),
+      body: responseText.substring(0, 500),
+    });
 
-    let result;
+    let result: any;
     try {
       result = JSON.parse(responseText);
     } catch {
       logStep("❌ Failed to parse response", { raw: responseText.substring(0, 200) });
       return new Response(
-        JSON.stringify({ success: false, error: "Erreur de réponse du service", details: responseText.substring(0, 200) }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          success: false,
+          error: "Erreur de réponse du service",
+          details: responseText.substring(0, 200),
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
-    if (!response.ok || result.error) {
+    if (!response.ok || result?.error) {
       const duration = Date.now() - startTime;
-      logStep("❌ ChapChapPay error", { 
+      logStep("❌ ChapChapPay error", {
         status: response.status,
-        error: result.error || result.message,
-        duration 
+        error: result?.error || result?.message,
+        duration,
       });
+
       return new Response(
-        JSON.stringify({ success: false, error: result.error || result.message || "Échec de création du paiement" }),
-        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          success: false,
+          error: result?.error || result?.message || "Échec de création du paiement",
+          details: result,
+        }),
+        {
+          status: response.status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
     const duration = Date.now() - startTime;
-    logStep("✅ Payment created", { 
+    logStep("✅ Payment created", {
       operationId: result.operation_id,
       paymentUrl: result.payment_url,
-      duration 
+      duration,
     });
-
-    // Response format from documentation:
-    // {
-    //   "business_name": "Ma Boutique",
-    //   "operation_id": "2db401d7-cad3-449f-9e3e-ec2cf9e48472",
-    //   "order_id": "ORD12345",
-    //   "amount": 10000,
-    //   "amount_formatted": "10 000 GNF",
-    //   "payment_url": "https://chapchappay.com/pay/...",
-    //   "payment_methods": ["paycard", "orange_money", "mtn_momo"]
-    // }
 
     return new Response(
       JSON.stringify({
@@ -157,20 +195,19 @@ serve(async (req) => {
         amountFormatted: result.amount_formatted,
         currency: "GNF",
         businessName: result.business_name,
-        paymentMethods: result.payment_methods
+        paymentMethods: result.payment_methods,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-
   } catch (error) {
     const duration = Date.now() - startTime;
     const errorMessage = error instanceof Error ? error.message : "Erreur interne";
-    
+
     logStep("❌ ERROR", { message: errorMessage, duration });
-    
+
     return new Response(
       JSON.stringify({ success: false, error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
