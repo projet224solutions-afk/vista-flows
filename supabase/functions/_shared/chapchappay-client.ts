@@ -216,14 +216,15 @@ export class ChapChapPayClient {
 
   /**
    * Mapper le type de paiement vers les canaux CinetPay
+   * Valeurs valides: ALL, MOBILE_MONEY, WALLET, CREDIT_CARD, INTERNATIONAL_CARD
    */
   private mapPaymentMethod(method: string): string {
     const mapping: Record<string, string> = {
-      'orange_money': 'ORANGE_MONEY',
-      'mtn_momo': 'MTN_MONEY',
-      'mtn_money': 'MTN_MONEY',
-      'wave': 'WAVE',
-      'moov_money': 'MOOV_MONEY',
+      'orange_money': 'MOBILE_MONEY',
+      'mtn_momo': 'MOBILE_MONEY',
+      'mtn_money': 'MOBILE_MONEY',
+      'wave': 'WALLET',
+      'moov_money': 'MOBILE_MONEY',
       'paycard': 'CREDIT_CARD',
       'card': 'ALL',
     };
