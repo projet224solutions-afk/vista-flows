@@ -49,10 +49,9 @@ export default function QuickFooter() {
     <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border z-[100] shadow-elegant pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]" role="navigation" aria-label="Navigation principale">
       <div className="flex items-center justify-around px-2 max-w-screen-xl mx-auto">
         {navigationItems.map((item) => {
-          // Détecter si c'est le bouton Home et si on est sur un dashboard
-          const isDashboard = ['/pdg', '/vendeur', '/livreur', '/taxi-moto/driver', '/syndicat', '/transitaire', '/client', '/agent'].some(path => location.pathname.startsWith(path));
+          // Le bouton Home n'est actif QUE sur /home, pas sur les dashboards
           const isActive = item.id === 'home' 
-            ? isDashboard || location.pathname === item.path
+            ? location.pathname === '/home'
             : location.pathname === item.path || (item.id === 'profil' && !profile && location.pathname === '/auth');
           const Icon = item.icon;
 
