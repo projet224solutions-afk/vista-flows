@@ -1,3 +1,8 @@
+/**
+ * 🪝 HOOK CHAPCHAPPAY - 224SOLUTIONS
+ * Hook React pour utiliser les paiements Mobile Money via ChapChapPay
+ */
+
 import { useState, useCallback } from "react";
 import { 
   chapChapPayService, 
@@ -8,6 +13,9 @@ import {
   CCPStatusResult 
 } from "@/services/payment/ChapChapPayService";
 import { toast } from "sonner";
+
+// Type exporté pour les méthodes de paiement ChapChapPay
+export type ChapChapPayMethod = 'orange_money' | 'mtn_momo' | 'paycard' | 'card';
 
 export function useChapChapPay() {
   const [isLoading, setIsLoading] = useState(false);

@@ -565,17 +565,17 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     const loadingToast = toast.loading('Initialisation du paiement Mobile Money...');
 
     try {
-      const paymentMethodCode = mobileMoneyProvider === 'orange' ? 'OM' : 'MOMO';
+      // ✅ ChapChapPay au lieu de Djomy
+      const paymentMethod = mobileMoneyProvider === 'orange' ? 'orange_money' : 'mtn_momo';
       
-      const { data, error } = await supabase.functions.invoke('djomy-init-payment', {
+      const { data, error } = await supabase.functions.invoke('chapchappay-pull', {
         body: {
           amount: amount,
-          payerPhone: `224${cleanPhone}`,
-          paymentMethod: paymentMethodCode,
+          currency: 'GNF',
+          paymentMethod: paymentMethod,
+          customerPhone: `224${cleanPhone}`,
           description: `Recharge wallet - ${amount.toLocaleString()} GNF`,
           orderId: `WLT-${Date.now()}`,
-          useSandbox: false, // ✅ MODE PRODUCTION
-          countryCode: 'GN',
         }
       });
 
@@ -585,13 +585,13 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
       if (data?.success) {
         toast.success('Demande de paiement envoyée!', {
-          description: `Confirmez le paiement sur votre téléphone ${paymentMethodCode}`
+          description: `Confirmez le paiement sur votre téléphone ${paymentMethod === 'orange_money' ? 'Orange Money' : 'MTN MoMo'}`
         });
 
         // Polling pour vérifier le statut
         pollPaymentStatus(data.transactionId, amount);
       } else {
-        throw new Error(data?.message || 'Erreur initialisation paiement');
+        throw new Error(data?.error || data?.message || 'Erreur initialisation paiement');
       }
     } catch (error: any) {
       toast.dismiss(loadingToast);

@@ -155,7 +155,7 @@ export const useVendorCopilot = () => {
   };
 
   /**
-   * �💬 TRAITER UNE QUESTION INTELLIGENTE
+   * 💬 TRAITER UNE QUESTION INTELLIGENTE
    */
   const processQuery = async (query: string, vendorId: string) => {
     setLoading(true);
@@ -177,88 +177,148 @@ export const useVendorCopilot = () => {
       const clientIdMatch = query.match(uuidRegex);
       
       if ((lowerQuery.includes('client') || lowerQuery.includes('analyse')) && clientIdMatch) {
-        // Analyser un client spécifique
+        // Analyser un client spécifique - sans double message utilisateur
+        setLoading(false); // Reset car analyzeSpecificCustomer va le mettre à true
         const customerId = clientIdMatch[0];
+        // Supprimer le message utilisateur ajouté car analyzeSpecificCustomer va l'ajouter
+        setMessages(prev => prev.filter(m => m.id !== userMessage.id));
         await analyzeSpecificCustomer(customerId, vendorId);
         return;
       }
 
-      // Détection d'intention
+      // Détection d'intention - utiliser les données en cache si disponibles
+      const cachedAnalysis = currentAnalysis;
+
       if (lowerQuery.includes('combien') && lowerQuery.includes('produit')) {
         // Question sur le nombre de produits
-        if (!currentAnalysis) {
+        if (!cachedAnalysis) {
+          // Supprimer le message utilisateur car analyzeFullDashboard va l'ajouter
+          setMessages(prev => prev.filter(m => m.id !== userMessage.id));
+          setLoading(false);
           await analyzeFullDashboard(vendorId);
         } else {
           const responseMessage: CopilotMessage = {
             id: `msg-${Date.now() + 1}`,
             role: 'assistant',
-            content: formatProductsInfo(currentAnalysis),
+            content: formatProductsInfo(cachedAnalysis),
             timestamp: new Date(),
             type: 'analysis',
           };
           setMessages(prev => [...prev, responseMessage]);
+          setLoading(false);
         }
-      } else if (lowerQuery.includes('analyse') || lowerQuery.includes('dashboard') || lowerQuery.includes('interface')) {
+      } else if (lowerQuery.includes('analyse') || lowerQuery.includes('dashboard') || lowerQuery.includes('interface') || lowerQuery.includes('tableau de bord')) {
         // Analyse complète
+        setMessages(prev => prev.filter(m => m.id !== userMessage.id));
+        setLoading(false);
         await analyzeFullDashboard(vendorId);
-      } else if (lowerQuery.includes('vente') || lowerQuery.includes('commande')) {
+      } else if (lowerQuery.includes('vente') || lowerQuery.includes('commande') || lowerQuery.includes('order')) {
         // Info sur les ventes
-        if (!currentAnalysis) {
+        if (!cachedAnalysis) {
+          setMessages(prev => prev.filter(m => m.id !== userMessage.id));
+          setLoading(false);
           await analyzeFullDashboard(vendorId);
         } else {
           const responseMessage: CopilotMessage = {
             id: `msg-${Date.now() + 1}`,
             role: 'assistant',
-            content: formatOrdersInfo(currentAnalysis),
+            content: formatOrdersInfo(cachedAnalysis),
             timestamp: new Date(),
             type: 'analysis',
           };
           setMessages(prev => [...prev, responseMessage]);
+          setLoading(false);
         }
-      } else if (lowerQuery.includes('client')) {
+      } else if (lowerQuery.includes('client') || lowerQuery.includes('customer')) {
         // Info sur les clients
-        if (!currentAnalysis) {
+        if (!cachedAnalysis) {
+          setMessages(prev => prev.filter(m => m.id !== userMessage.id));
+          setLoading(false);
           await analyzeFullDashboard(vendorId);
         } else {
           const responseMessage: CopilotMessage = {
             id: `msg-${Date.now() + 1}`,
             role: 'assistant',
-            content: formatCustomersInfo(currentAnalysis),
+            content: formatCustomersInfo(cachedAnalysis),
             timestamp: new Date(),
             type: 'analysis',
           };
           setMessages(prev => [...prev, responseMessage]);
+          setLoading(false);
         }
-      } else if (lowerQuery.includes('finance') || lowerQuery.includes('wallet') || lowerQuery.includes('solde')) {
+      } else if (lowerQuery.includes('finance') || lowerQuery.includes('wallet') || lowerQuery.includes('solde') || lowerQuery.includes('argent') || lowerQuery.includes('revenu')) {
         // Info financières
-        if (!currentAnalysis) {
+        if (!cachedAnalysis) {
+          setMessages(prev => prev.filter(m => m.id !== userMessage.id));
+          setLoading(false);
           await analyzeFullDashboard(vendorId);
         } else {
           const responseMessage: CopilotMessage = {
             id: `msg-${Date.now() + 1}`,
             role: 'assistant',
-            content: formatFinancesInfo(currentAnalysis),
+            content: formatFinancesInfo(cachedAnalysis),
             timestamp: new Date(),
             type: 'analysis',
           };
           setMessages(prev => [...prev, responseMessage]);
+          setLoading(false);
         }
-      } else if (lowerQuery.includes('inventaire') || lowerQuery.includes('stock')) {
+      } else if (lowerQuery.includes('inventaire') || lowerQuery.includes('stock') || lowerQuery.includes('rupture')) {
         // Info sur l'inventaire
-        if (!currentAnalysis) {
+        if (!cachedAnalysis) {
+          setMessages(prev => prev.filter(m => m.id !== userMessage.id));
+          setLoading(false);
           await analyzeFullDashboard(vendorId);
         } else {
           const responseMessage: CopilotMessage = {
             id: `msg-${Date.now() + 1}`,
             role: 'assistant',
-            content: formatInventoryInfo(currentAnalysis),
+            content: formatInventoryInfo(cachedAnalysis),
             timestamp: new Date(),
             type: 'analysis',
           };
           setMessages(prev => [...prev, responseMessage]);
+          setLoading(false);
         }
+      } else if (lowerQuery.includes('aide') || lowerQuery.includes('help') || lowerQuery.includes('bonjour') || lowerQuery.includes('salut')) {
+        // Message d'aide
+        const helpMessage: CopilotMessage = {
+          id: `msg-${Date.now() + 1}`,
+          role: 'assistant',
+          content: `# 🤖 **AIDE - COPILOTE VENDEUR ENTERPRISE**
+
+Je suis votre assistant IA pour gérer votre boutique. Voici ce que je peux faire :
+
+## 📊 **Analyses disponibles**
+- \`analyse\` ou \`dashboard\` → Analyse complète de votre interface
+- \`produits\` → Informations sur vos produits
+- \`ventes\` ou \`commandes\` → Statistiques de ventes
+- \`clients\` → Analyse de votre clientèle
+- \`finances\` ou \`wallet\` → Situation financière
+- \`inventaire\` ou \`stock\` → État des stocks
+
+## 👤 **Analyse client**
+Envoyez un UUID client pour obtenir son profil détaillé :
+\`analyse client 123e4567-e89b-12d3-a456-426614174000\`
+
+## 💡 **Exemples de questions**
+- "Combien de produits ai-je ?"
+- "Quelles sont mes ventes du mois ?"
+- "Montre-moi mes clients fidèles"
+- "Quel est mon solde wallet ?"
+- "Y a-t-il des produits en rupture ?"
+
+**Posez votre question !** 😊
+          `.trim(),
+          timestamp: new Date(),
+          type: 'system',
+        };
+        setMessages(prev => [...prev, helpMessage]);
+        setLoading(false);
       } else {
-        // Question générique - analyse complète
+        // Question générique - analyse complète par défaut
+        setMessages(prev => prev.filter(m => m.id !== userMessage.id));
+        setLoading(false);
         await analyzeFullDashboard(vendorId);
       }
 
@@ -269,12 +329,11 @@ export const useVendorCopilot = () => {
       const errorMessage: CopilotMessage = {
         id: `msg-${Date.now() + 1}`,
         role: 'assistant',
-        content: `❌ Erreur: ${err.message}`,
+        content: `❌ **Erreur:** ${err.message}\n\nVeuillez réessayer. Si le problème persiste, contactez le support.`,
         timestamp: new Date(),
         type: 'error',
       };
       setMessages(prev => [...prev, errorMessage]);
-    } finally {
       setLoading(false);
     }
   };

@@ -71,6 +71,37 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Synchroniser les messages du vendorCopilot avec l'état local en mode Enterprise
+  useEffect(() => {
+    if (useEnterpriseMode && vendorCopilot.messages.length > 0) {
+      setMessages(vendorCopilot.messages.map(msg => ({
+        id: msg.id,
+        role: msg.role === 'system' ? 'assistant' : msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp.toISOString(),
+      })));
+    }
+  }, [useEnterpriseMode, vendorCopilot.messages]);
+
+  // Initialiser le message de bienvenue au chargement
+  useEffect(() => {
+    if (messages.length === 0 && userRole === 'vendeur' && !useEnterpriseMode) {
+      setMessages([{
+        id: 'welcome',
+        role: 'assistant',
+        content: '👋 Bonjour ! Je suis votre Copilote IA. Je peux vous aider à analyser vos ventes, gérer votre inventaire, et optimiser votre boutique. Que puis-je faire pour vous ?',
+        timestamp: new Date().toISOString(),
+      }]);
+    } else if (messages.length === 0 && userRole === 'client') {
+      setMessages([{
+        id: 'welcome',
+        role: 'assistant',
+        content: '👋 Bonjour ! Je suis votre assistant pour vos achats sur 224Solutions. Comment puis-je vous aider ?',
+        timestamp: new Date().toISOString(),
+      }]);
+    }
+  }, [userRole, useEnterpriseMode, messages.length]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -150,23 +181,25 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
 
   const sendMessage = async () => {
     console.log('📤 Copilote: Envoi message, isLoading =', isLoading);
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || vendorCopilot.loading) return;
 
     // NOUVEAU: Mode Enterprise pour vendeur avec analyse complète
     if (userRole === 'vendeur' && useEnterpriseMode && vendorId) {
-      setIsLoading(true);
-      await vendorCopilot.processQuery(input.trim(), vendorId);
-      
-      // Synchroniser les messages
-      setMessages(vendorCopilot.messages.map(msg => ({
-        id: msg.id,
-        role: msg.role === 'system' ? 'assistant' : msg.role,
-        content: msg.content,
-        timestamp: msg.timestamp.toISOString(),
-      })));
-      
+      const messageToSend = input.trim();
       setInput('');
-      setIsLoading(false);
+      setIsLoading(true);
+      setIsTyping(true);
+
+      try {
+        await vendorCopilot.processQuery(messageToSend, vendorId);
+        // La synchronisation est gérée par le useEffect
+      } catch (err: any) {
+        console.error('❌ Erreur Copilote Enterprise:', err);
+        toast.error(err.message || 'Erreur lors de l\'analyse');
+      } finally {
+        setIsLoading(false);
+        setIsTyping(false);
+      }
       return;
     }
 

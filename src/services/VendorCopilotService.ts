@@ -566,8 +566,7 @@ export class VendorCopilotService {
           user_id,
           is_active,
           created_at,
-          updated_at,
-          users!inner(email, phone, raw_user_meta_data)
+          updated_at
         `)
         .eq('id', vendorId)
         .single();
@@ -576,6 +575,20 @@ export class VendorCopilotService {
         console.error('Vendeur non trouvé:', vendorError);
         return null;
       }
+
+      // Récupérer les infos utilisateur séparément via profiles
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('email, phone, raw_user_meta_data')
+        .eq('id', vendor.user_id)
+        .single();
+
+      // Créer un objet users compatible
+      vendor.users = {
+        email: userProfile?.email || 'N/A',
+        phone: userProfile?.phone || null,
+        raw_user_meta_data: userProfile?.raw_user_meta_data || {}
+      };
 
       // 2. ANALYSE PRODUITS
       const productsAnalysis = await this.analyzeProducts(vendorId);

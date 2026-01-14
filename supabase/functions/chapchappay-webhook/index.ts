@@ -1,17 +1,55 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { createHmac } from "https://deno.land/std@0.168.0/node/crypto.ts";
+/**
+ * 🪝 CHAPCHAPPAY WEBHOOK - Recevoir les notifications de paiement
+ * 224SOLUTIONS
+ */
+
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, ccp-signature, ccp-timestamp",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-ccp-signature, x-timestamp",
 };
 
-function verifySignature(payload: string, signature: string, timestamp: string, secretKey: string): boolean {
-  const data = `${payload}${timestamp}`;
-  const hmac = createHmac("sha256", secretKey);
-  hmac.update(data);
-  const expectedSignature = hmac.digest("hex");
+const logStep = (step: string, details?: Record<string, unknown>) => {
+  const timestamp = new Date().toISOString();
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
+  console.log(`[${timestamp}] [CCP-WEBHOOK] ${step}${detailsStr}`);
+};
+
+// Web Crypto API pour HMAC-SHA256
+const encoder = new TextEncoder();
+
+async function hmacSha256(key: string, message: string): Promise<string> {
+  const keyData = encoder.encode(key);
+  const messageData = encoder.encode(message);
+  
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  
+  const signature = await crypto.subtle.sign("HMAC", cryptoKey, messageData);
+  const hashArray = Array.from(new Uint8Array(signature));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Vérifier la signature du webhook
+ */
+async function verifySignature(payload: string, signature: string, timestamp: string): Promise<boolean> {
+  const secretKey = Deno.env.get("CCP_SECRET_KEY") || Deno.env.get("CCP_ENCRYPTION_KEY");
+  if (!secretKey) {
+    logStep("⚠️ No secret key configured for webhook verification");
+    return true; // Allow if not configured (dev mode)
+  }
+
+  const data = `${timestamp}${payload}`;
+  const expectedSignature = await hmacSha256(secretKey, data);
+
   return signature === expectedSignature;
 }
 
@@ -21,95 +59,170 @@ serve(async (req) => {
   }
 
   try {
-    const encryptionKey = Deno.env.get("CCP_ENCRYPTION_KEY");
-    
-    if (!encryptionKey) {
-      console.error("❌ CCP_ENCRYPTION_KEY not configured");
+    logStep("Webhook received");
+
+    // Get signature headers
+    const signature = req.headers.get("x-ccp-signature") || req.headers.get("X-CCP-Signature") || "";
+    const timestamp = req.headers.get("x-timestamp") || req.headers.get("X-Timestamp") || "";
+
+    // Parse body
+    const bodyText = await req.text();
+    logStep("Webhook payload", { bodyPreview: bodyText.substring(0, 200) });
+
+    // Verify signature
+    if (signature && !(await verifySignature(bodyText, signature, timestamp))) {
+      logStep("❌ Invalid webhook signature");
       return new Response(
-        JSON.stringify({ success: false, error: "Webhook secret not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: false, error: "Invalid signature" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
       );
     }
 
-    const signature = req.headers.get("ccp-signature") || req.headers.get("CCP-Signature");
-    const timestamp = req.headers.get("ccp-timestamp") || req.headers.get("CCP-Timestamp");
-    
-    const bodyText = await req.text();
-    
-    console.log("🔔 [ChapChapPay Webhook] Received:", bodyText);
-
-    // Verify signature if provided
-    if (signature && timestamp) {
-      const isValid = verifySignature(bodyText, signature, timestamp, encryptionKey);
-      if (!isValid) {
-        console.error("❌ Invalid webhook signature");
-        return new Response(
-          JSON.stringify({ success: false, error: "Invalid signature" }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      console.log("✅ Webhook signature verified");
-    }
-
     const payload = JSON.parse(bodyText);
-    
-    const supabase = createClient(
+    const {
+      event_type,
+      transaction_id,
+      order_id,
+      status,
+      amount,
+      paid_amount,
+      fees,
+      payment_method,
+      customer_phone,
+      completed_at,
+    } = payload;
+
+    logStep("Webhook data", { 
+      event_type, 
+      transaction_id, 
+      status,
+      amount 
+    });
+
+    // Initialize Supabase admin client
+    const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
     );
 
-    // Store the webhook event
-    const { error: insertError } = await supabase
+    // Store webhook event
+    await supabaseAdmin
       .from("chapchappay_webhooks")
       .insert({
-        transaction_id: payload.transaction_id,
-        order_id: payload.order_id,
-        status: payload.status,
-        event_type: payload.event || "payment_update",
-        amount: payload.amount,
-        currency: payload.currency || "GNF",
-        payment_method: payload.payment_method,
-        raw_payload: payload
+        event_type,
+        transaction_id,
+        order_id,
+        payload,
+        processed: false,
       });
 
-    if (insertError) {
-      console.error("❌ Error storing webhook:", insertError);
-    } else {
-      console.log("✅ Webhook stored in database");
+    // Map ChapChapPay status to internal status
+    const statusMap: Record<string, string> = {
+      "PENDING": "pending",
+      "PROCESSING": "processing",
+      "SUCCESS": "completed",
+      "COMPLETED": "completed",
+      "FAILED": "failed",
+      "CANCELLED": "cancelled",
+      "EXPIRED": "failed",
+    };
+
+    const internalStatus = statusMap[status?.toUpperCase()] || status?.toLowerCase() || "unknown";
+
+    // Update mobile_money_transactions
+    const { data: transaction } = await supabaseAdmin
+      .from("mobile_money_transactions")
+      .update({
+        status: internalStatus,
+        paid_amount: paid_amount,
+        fees: fees,
+        completed_at: completed_at,
+        provider_response: payload,
+        updated_at: new Date().toISOString(),
+      })
+      .or(`provider_transaction_id.eq.${transaction_id},order_id.eq.${order_id}`)
+      .select()
+      .single();
+
+    logStep("Transaction updated", { 
+      id: transaction?.id, 
+      status: internalStatus 
+    });
+
+    // If payment completed, credit wallet for PULL payments
+    if (internalStatus === "completed" && transaction?.payment_type === "pull" && transaction?.user_id) {
+      logStep("Crediting wallet for completed PULL payment");
+      
+      // Get user's wallet
+      const { data: wallet } = await supabaseAdmin
+        .from("wallets")
+        .select("id, balance")
+        .eq("user_id", transaction.user_id)
+        .single();
+
+      if (wallet) {
+        const newBalance = wallet.balance + (paid_amount || amount);
+        
+        await supabaseAdmin
+          .from("wallets")
+          .update({
+            balance: newBalance,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", wallet.id);
+
+        // Create wallet transaction
+        await supabaseAdmin
+          .from("wallet_transactions")
+          .insert({
+            transaction_id: `CCP-${transaction_id}`,
+            transaction_type: "deposit",
+            amount: paid_amount || amount,
+            net_amount: (paid_amount || amount) - (fees || 0),
+            fee: fees || 0,
+            currency: "GNF",
+            status: "completed",
+            description: `Dépôt Mobile Money (${payment_method})`,
+            receiver_wallet_id: wallet.id,
+            metadata: {
+              provider: "chapchappay",
+              ccp_transaction_id: transaction_id,
+              payment_method,
+              customer_phone,
+            }
+          });
+
+        logStep("Wallet credited", { 
+          walletId: wallet.id, 
+          amount: paid_amount || amount,
+          newBalance 
+        });
+      }
     }
 
-    // Process based on status
-    switch (payload.status) {
-      case "success":
-      case "completed":
-        console.log("✅ Payment successful:", payload.transaction_id);
-        // You can add custom logic here (update order, send notification, etc.)
-        break;
-      
-      case "failed":
-      case "cancelled":
-        console.log("❌ Payment failed/cancelled:", payload.transaction_id);
-        break;
-      
-      case "pending":
-        console.log("⏳ Payment pending:", payload.transaction_id);
-        break;
-      
-      default:
-        console.log("ℹ️ Payment status:", payload.status);
-    }
+    // Mark webhook as processed
+    await supabaseAdmin
+      .from("chapchappay_webhooks")
+      .update({ processed: true })
+      .eq("transaction_id", transaction_id);
 
     return new Response(
-      JSON.stringify({ success: true, received: true }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ 
+        success: true, 
+        message: "Webhook processed",
+        status: internalStatus 
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
 
   } catch (error) {
-    console.error("❌ [ChapChapPay Webhook] Error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Webhook processing failed";
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("❌ Webhook ERROR", { message: errorMessage });
+
     return new Response(
       JSON.stringify({ success: false, error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   }
 });

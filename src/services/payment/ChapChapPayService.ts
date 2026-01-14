@@ -1,3 +1,9 @@
+/**
+ * 💳 CHAPCHAPPAY SERVICE - 224SOLUTIONS
+ * Service pour intégrer les paiements Mobile Money via ChapChapPay
+ * Supports: Orange Money, MTN MoMo, PayCard
+ */
+
 import { supabase } from "@/integrations/supabase/client";
 
 export type CCPPaymentMethod = "orange_money" | "mtn_momo" | "paycard" | "card";
@@ -5,12 +11,13 @@ export type CCPPaymentMethod = "orange_money" | "mtn_momo" | "paycard" | "card";
 export interface CCPEcommerceRequest {
   amount: number;
   currency?: string;
-  description?: string;
   orderId?: string;
+  description?: string;
   customerName?: string;
   customerPhone?: string;
-  returnUrl?: string;
+  returnUrl: string;
   cancelUrl?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface CCPPullRequest {
@@ -27,7 +34,7 @@ export interface CCPPullRequest {
 export interface CCPPushRequest {
   amount: number;
   currency?: string;
-  paymentMethod: Exclude<CCPPaymentMethod, "card">;
+  paymentMethod: 'orange_money' | 'mtn_momo';
   recipientPhone: string;
   recipientName?: string;
   description?: string;
@@ -37,9 +44,9 @@ export interface CCPPushRequest {
 export interface CCPPaymentResult {
   success: boolean;
   transactionId?: string;
-  paymentUrl?: string;
+  ccpTransactionId?: string;
   orderId?: string;
-  amount?: number;
+  paymentUrl?: string;
   status?: string;
   requiresOtp?: boolean;
   message?: string;
@@ -49,11 +56,12 @@ export interface CCPPaymentResult {
 export interface CCPStatusResult {
   success: boolean;
   transactionId?: string;
-  orderId?: string;
-  status?: string;
+  status?: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
   amount?: number;
-  currency?: string;
+  paidAmount?: number;
+  fees?: number;
   paymentMethod?: string;
+  customerPhone?: string;
   createdAt?: string;
   completedAt?: string;
   error?: string;
@@ -77,7 +85,7 @@ class ChapChapPayService {
       return data as CCPPaymentResult;
     } catch (error) {
       console.error("E-Commerce payment exception:", error);
-      return { success: false, error: "Payment initialization failed" };
+      return { success: false, error: "Payment session creation failed" };
     }
   }
 
@@ -159,39 +167,54 @@ class ChapChapPayService {
   }
 
   /**
-   * Poll payment status until completed or timeout
+   * Poll payment status until completion
    */
   async pollStatus(
-    transactionId: string,
-    options?: {
-      maxAttempts?: number;
+    transactionId: string, 
+    options?: { 
+      maxAttempts?: number; 
       intervalMs?: number;
       onStatusChange?: (status: CCPStatusResult) => void;
     }
   ): Promise<CCPStatusResult> {
-    const maxAttempts = options?.maxAttempts || 30;
-    const intervalMs = options?.intervalMs || 5000;
+    const maxAttempts = options?.maxAttempts || 60; // 5 minutes max
+    const intervalMs = options?.intervalMs || 5000; // 5 seconds
     
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const status = await this.checkStatus(transactionId);
-      
-      if (options?.onStatusChange) {
-        options.onStatusChange(status);
-      }
-      
-      if (status.status === "success" || status.status === "completed") {
-        return status;
-      }
-      
-      if (status.status === "failed" || status.status === "cancelled") {
-        return status;
-      }
-      
-      // Wait before next attempt
-      await new Promise(resolve => setTimeout(resolve, intervalMs));
-    }
+    let attempts = 0;
     
-    return { success: false, error: "Payment status check timeout" };
+    return new Promise((resolve) => {
+      const checkStatus = setInterval(async () => {
+        attempts++;
+        
+        const result = await this.checkStatus(transactionId);
+        
+        if (options?.onStatusChange) {
+          options.onStatusChange(result);
+        }
+        
+        if (
+          result.status === 'completed' || 
+          result.status === 'failed' || 
+          result.status === 'cancelled' ||
+          attempts >= maxAttempts
+        ) {
+          clearInterval(checkStatus);
+          resolve(result);
+        }
+      }, intervalMs);
+    });
+  }
+
+  /**
+   * Map provider name to payment method
+   */
+  mapProviderToMethod(provider: 'orange' | 'mtn' | 'moov'): CCPPaymentMethod {
+    const map: Record<string, CCPPaymentMethod> = {
+      'orange': 'orange_money',
+      'mtn': 'mtn_momo',
+      'moov': 'orange_money' // Fallback to Orange Money
+    };
+    return map[provider] || 'orange_money';
   }
 }
 

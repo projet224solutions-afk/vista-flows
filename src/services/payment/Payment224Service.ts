@@ -157,24 +157,25 @@ export class Payment224Service {
 
       // Normaliser le numéro: 9 chiffres -> 00224XXXXXXXXX
       const compact = phoneNumber.replace(/\s/g, '');
-      const payerPhone = compact.startsWith('00') || compact.startsWith('+')
-        ? compact.replace('+', '00')
-        : `00224${compact}`;
+      // Normaliser le numéro pour ChapChapPay: format 224XXXXXXXXX
+      const customerPhone = compact.startsWith('00') 
+        ? compact.substring(2) 
+        : compact.startsWith('+') 
+          ? compact.substring(1) 
+          : compact.length === 9 
+            ? `224${compact}` 
+            : compact;
 
-      const paymentMethod = provider === 'orange_money' ? 'OM' : 'MOMO';
+      const paymentMethod = provider === 'orange_money' ? 'orange_money' : 'mtn_momo';
 
-      const { data, error } = await supabase.functions.invoke('djomy-payment', {
+      const { data, error } = await supabase.functions.invoke('chapchappay-pull', {
         body: {
           amount,
-          payerPhone,
+          customerPhone,
           paymentMethod,
           description: description || `Paiement livraison ${deliveryId}`,
           orderId: `DELIVERY-${deliveryId}`,
-          returnUrl: `${origin}/payment/success`,
-          cancelUrl: `${origin}/payment/failed`,
-          countryCode: 'GN',
-          useGateway: false,
-          useSandbox: false, // ⚠️ Production mode: paiements réels
+          webhookUrl: `${origin}/api/chapchappay/webhook`,
         },
       });
 
@@ -196,11 +197,11 @@ export class Payment224Service {
   }
 
   /**
-   * Vérifier le statut d'un paiement Jomy
+   * Vérifier le statut d'un paiement ChapChapPay
    */
-  static async verifyJomyPayment(transactionId: string): Promise<{ status: string; completed: boolean }> {
+  static async verifyChapChapPayPayment(transactionId: string): Promise<{ status: string; completed: boolean }> {
     try {
-      const { data, error } = await supabase.functions.invoke('djomy-verify', {
+      const { data, error } = await supabase.functions.invoke('chapchappay-status', {
         body: { transactionId },
       });
 
