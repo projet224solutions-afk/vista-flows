@@ -46,10 +46,10 @@ const PUBLIC_ROUTES = [
  * Ce sont les pages d'entrée principales où un utilisateur connecté doit être redirigé
  * ⚡ IMPORTANT: Les utilisateurs connectés avec un rôle (livreur, vendeur, etc.)
  *    seront automatiquement redirigés vers leur dashboard depuis ces routes
+ * ⚠️ NOTE: /home est exclu pour permettre l'accès via le bouton Accueil du footer
  */
 const REDIRECT_TRIGGER_ROUTES = [
   '/',
-  '/home',
   '/auth',
 ];
 
