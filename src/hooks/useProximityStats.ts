@@ -233,27 +233,37 @@ export function useProximityStats() {
         newStats.livraison++;
       });
 
-      // 4) Services pro — strict GPS + rayon
+      // 4) Services pro — GPS optionnel : on compte tous les services actifs
+      // Si le service a un GPS valide et est dans le rayon => inRadius
+      // Si le service n'a pas de GPS => on le compte quand même (noGps mais inclus)
+      // Si le service a un GPS mais hors rayon => exclu
       const serviceTypeCounts: Record<string, number> = {};
       professionalServices.forEach((service: any) => {
         const lat = service?.latitude;
         const lng = service?.longitude;
-        if (lat === null || lat === undefined || lng === null || lng === undefined) {
+        const hasGps = lat !== null && lat !== undefined && lng !== null && lng !== undefined;
+        
+        if (!hasGps) {
           dbg.services.noGps++;
+          // ✅ On inclut quand même les services sans GPS (ils sont actifs)
+          const code = service?.service_types?.code;
+          if (code) {
+            serviceTypeCounts[code] = (serviceTypeCounts[code] || 0) + 1;
+          }
           return;
         }
 
         const distance = calcDistanceFn(position.latitude, position.longitude, Number(lat), Number(lng));
         if (!Number.isFinite(distance) || distance > RADIUS_KM) {
           dbg.services.outOfRadius++;
-          return;
+          return; // Hors rayon = exclu
         }
 
         dbg.services.inRadius++;
-
         const code = service?.service_types?.code;
-        if (!code) return;
-        serviceTypeCounts[code] = (serviceTypeCounts[code] || 0) + 1;
+        if (code) {
+          serviceTypeCounts[code] = (serviceTypeCounts[code] || 0) + 1;
+        }
       });
 
       newStats.beaute = serviceTypeCounts['beaute'] || 0;
