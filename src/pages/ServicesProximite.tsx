@@ -101,20 +101,26 @@ export default function ServicesProximite() {
         service_type: item.service_types,
       }));
 
-      // Calculer les distances
+      // Calculer les distances - uniquement pour les services avec coordonnées GPS valides
       list = list
         .map((s) => {
-          const distance = getDistanceTo(s.latitude, s.longitude);
+          // Si pas de coordonnées GPS, distance = null
+          const hasValidCoords = 
+            s.latitude !== null && s.latitude !== undefined && 
+            s.longitude !== null && s.longitude !== undefined &&
+            Number.isFinite(Number(s.latitude)) && Number.isFinite(Number(s.longitude));
+          
+          const distance = hasValidCoords ? getDistanceTo(s.latitude, s.longitude) : null;
           return { ...s, distance };
         })
-        .filter((s) => (s.distance === null ? true : s.distance <= RADIUS_KM));
+        // FILTRE STRICT: exclure les services sans GPS ET ceux hors du rayon de 20km
+        .filter((s) => s.distance !== null && s.distance <= RADIUS_KM);
 
-      // Tri: plus proches d'abord, sinon par note
+      // Tri: plus proches d'abord (tous ont une distance valide maintenant)
       list.sort((a, b) => {
-        if (a.distance === null && b.distance === null) return (b.rating || 0) - (a.rating || 0);
-        if (a.distance === null) return 1;
-        if (b.distance === null) return -1;
-        return a.distance - b.distance;
+        // Les deux ont forcément une distance valide après le filtre
+        if (a.distance === b.distance) return (b.rating || 0) - (a.rating || 0);
+        return (a.distance || 0) - (b.distance || 0);
       });
 
       setServices(list);
@@ -255,16 +261,11 @@ export default function ServicesProximite() {
                 )}
                 style={{ animationDelay: `${index * 30}ms` }}
               >
-                {service.distance !== null ? (
-                  <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-md flex items-center gap-1">
-                    <MapPin className="w-3 h-3" />
-                    {formatDistance(service.distance)}
-                  </div>
-                ) : (
-                  <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full bg-muted text-muted-foreground text-[10px] font-medium shadow-sm">
-                    Pas de GPS
-                  </div>
-                )}
+                {/* Tous les services affichés ont maintenant une distance valide */}
+                <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-md flex items-center gap-1">
+                  <MapPin className="w-3 h-3" />
+                  {formatDistance(service.distance)}
+                </div>
 
                 <div className="w-14 h-14 rounded-xl bg-muted/40 flex items-center justify-center overflow-hidden mb-3 group-hover:scale-105 transition-transform">
                   {service.logo_url ? (
