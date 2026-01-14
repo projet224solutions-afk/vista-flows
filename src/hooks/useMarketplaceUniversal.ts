@@ -1,7 +1,10 @@
 /**
  * Hook Universel Marketplace - 224SOLUTIONS
- * Charge TOUS les types de contenus: Produits E-commerce, Services Professionnels, Produits Numériques
- * Sans affecter l'affichage de la page Proximité (qui reste géolocalisée)
+ * Charge les produits E-commerce et les produits numériques (articles des services pro)
+ * 
+ * IMPORTANT: Les services professionnels eux-mêmes sont EXCLUS du marketplace
+ * Ils s'affichent uniquement sur la page Proximité (géolocalisée)
+ * Seuls leurs PRODUITS/ARTICLES (service_products) apparaissent ici
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -22,7 +25,7 @@ export interface MarketplaceItem {
   service_type?: string;
   rating: number;
   reviews_count: number;
-  item_type: 'product' | 'professional_service' | 'digital_product'; // Type d'item
+  item_type: 'product' | 'digital_product'; // Services professionnels EXCLUS du marketplace
   free_shipping?: boolean;
   created_at: string;
   // Champs spécifiques aux services professionnels
@@ -44,7 +47,7 @@ interface UseMarketplaceUniversalOptions {
   maxPrice?: number;
   minRating?: number;
   vendorId?: string;
-  itemType?: 'all' | 'product' | 'professional_service' | 'digital_product';
+  itemType?: 'all' | 'product' | 'digital_product'; // 'professional_service' EXCLU - disponible uniquement sur Proximité
   sortBy?: 'popular' | 'price_asc' | 'price_desc' | 'rating' | 'newest';
   autoLoad?: boolean;
 }
@@ -144,84 +147,10 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
   };
 
   /**
-   * Charge les services professionnels
+   * NOTE: Les services professionnels ne sont PAS chargés sur le marketplace
+   * Ils sont uniquement affichés sur la page Proximité (géolocalisée)
+   * Cette fonction est conservée mais désactivée pour le marketplace
    */
-  const loadProfessionalServices = async (categoryName?: string): Promise<MarketplaceItem[]> => {
-    if (itemType !== 'all' && itemType !== 'professional_service') return [];
-
-    try {
-      let query = supabase
-        .from('professional_services')
-        .select(`
-          id,
-          user_id,
-          service_type_id,
-          business_name,
-          description,
-          logo_url,
-          cover_image_url,
-          address,
-          phone,
-          opening_hours,
-          rating,
-          total_reviews,
-          created_at,
-          service_types(code, name, category, commission_rate)
-        `)
-        .in('status', ['active', 'pending']); // Afficher les services actifs ET en attente
-
-      // Filtres
-      if (vendorId) {
-        query = query.eq('user_id', vendorId);
-      }
-      if (searchQuery?.trim()) {
-        query = query.or(`business_name.ilike.%${searchQuery.trim()}%,description.ilike.%${searchQuery.trim()}%`);
-      }
-      if (minRating && minRating > 0) query = query.gte('rating', minRating);
-
-      const { data, error } = await query;
-      if (error) throw error;
-
-      let results = (data || []).map(service => {
-        const serviceType = service.service_types as any;
-        const servicePrice = 0;
-
-        return {
-          id: service.id,
-          name: service.business_name,
-          price: servicePrice,
-          description: service.description || '',
-          images: [service.cover_image_url, service.logo_url].filter(Boolean) as string[],
-          vendor_id: service.user_id,
-          vendor_name: service.business_name,
-          vendor_user_id: service.user_id,
-          category_name: serviceType?.name || 'Service',
-          service_type: serviceType?.code,
-          rating: service.rating || 0,
-          reviews_count: service.total_reviews || 0,
-          item_type: 'professional_service' as const,
-          business_name: service.business_name,
-          address: service.address,
-          phone: service.phone,
-          opening_hours: service.opening_hours,
-          created_at: service.created_at
-        };
-      });
-
-      // Filtre par nom de catégorie (post-query car service_types.name est une jointure)
-      if (categoryName) {
-        results = results.filter(item => 
-          item.category_name?.toLowerCase().includes(categoryName.toLowerCase()) ||
-          item.service_type?.toLowerCase().includes(categoryName.toLowerCase())
-        );
-      }
-
-      return results;
-    } catch (error) {
-      console.error('Erreur chargement services professionnels:', error);
-      return [];
-    }
-  };
 
   /**
    * Charge les produits numériques (service_products)
@@ -331,7 +260,8 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
   };
 
   /**
-   * Charge tous les items (produits + services + numériques)
+   * Charge tous les items (produits e-commerce + produits numériques)
+   * NOTE: Les services professionnels sont EXCLUS - ils s'affichent sur Proximité uniquement
    */
   const loadAllItems = useCallback(async (reset = false) => {
     const requestId = ++requestIdRef.current;
@@ -342,21 +272,19 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       // Récupérer le nom de la catégorie si c'est un UUID
       const categoryName = category && category !== 'all' ? await getCategoryName(category) : null;
 
-      // Optimisation: charger seulement le type filtré
+      // Charger uniquement produits e-commerce et numériques (PAS les services pro)
       let allItems: MarketplaceItem[] = [];
       if (itemType === 'product') {
         allItems = await loadProducts();
-      } else if (itemType === 'professional_service') {
-        allItems = await loadProfessionalServices(categoryName || undefined);
       } else if (itemType === 'digital_product') {
         allItems = await loadDigitalProducts(categoryName || undefined);
       } else {
-        const [products, professionalServices, digitalProducts] = await Promise.all([
+        // 'all' = produits + numériques (SANS services professionnels)
+        const [products, digitalProducts] = await Promise.all([
           loadProducts(),
-          loadProfessionalServices(categoryName || undefined),
           loadDigitalProducts(categoryName || undefined)
         ]);
-        allItems = [...products, ...professionalServices, ...digitalProducts];
+        allItems = [...products, ...digitalProducts];
       }
 
       // Filtrage global par prix
