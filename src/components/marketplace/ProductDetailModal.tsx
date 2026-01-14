@@ -218,17 +218,49 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
         }
       }
 
-      // Vérifier que le vendeur a un profil
-      const { data: recipientProfile, error: recipientError } = await supabase
+      // Vérifier que le vendeur a un profil, sinon le créer automatiquement
+      let { data: recipientProfile, error: recipientError } = await supabase
         .from('profiles')
         .select('id, full_name')
         .eq('id', product.vendors.user_id)
         .maybeSingle();
 
       if (!recipientProfile) {
-        console.error('Profil vendeur non trouvé pour user_id:', product.vendors.user_id);
-        toast.error('Ce vendeur n\'a pas encore configuré son profil de messagerie');
-        return;
+        console.log('Profil vendeur non trouvé, création automatique pour:', product.vendors.user_id);
+        
+        // Récupérer l'email du vendeur depuis auth.users
+        const { data: vendorAuthData } = await supabase.auth.admin.getUserById(product.vendors.user_id).catch(() => ({ data: null }));
+        
+        const vendorName = product.vendors.business_name || 'Vendeur';
+        const vendorEmail = vendorAuthData?.user?.email || `vendeur_${product.vendors.user_id.slice(0, 8)}@placeholder.com`;
+        
+        const { data: createdProfile, error: createVendorError } = await supabase
+          .from('profiles')
+          .insert({
+            id: product.vendors.user_id,
+            email: vendorEmail,
+            full_name: vendorName
+          })
+          .select('id, full_name')
+          .single();
+
+        if (createVendorError) {
+          console.error('Erreur création profil vendeur:', createVendorError);
+          // Si erreur de conflit (profil existe déjà), réessayer de récupérer
+          if (createVendorError.code === '23505') {
+            const { data: existingProfile } = await supabase
+              .from('profiles')
+              .select('id, full_name')
+              .eq('id', product.vendors.user_id)
+              .maybeSingle();
+            recipientProfile = existingProfile;
+          } else {
+            toast.error('Impossible de contacter ce vendeur pour le moment');
+            return;
+          }
+        } else {
+          recipientProfile = createdProfile;
+        }
       }
 
       // Créer un message initial
