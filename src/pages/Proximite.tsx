@@ -254,10 +254,11 @@ const itemVariants = {
 export default function Proximite() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const { stats, loading, userPosition, locationError, refresh, radiusKm } = useProximityStats();
+  const { stats, loading, userPosition, locationError, refresh, radiusKm, usingRealLocation, debugInfo } = useProximityStats();
   const { t } = useTranslation();
   const [productCategories, setProductCategories] = useState<CategoryWithCount[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [showDebug, setShowDebug] = useState(false);
 
   // Charger uniquement les catégories qui contiennent des produits avec comptage
   useEffect(() => {
@@ -370,10 +371,19 @@ export default function Proximite() {
             </Button>
           </div>
 
-          {/* Location indicator */}
-          <div className="flex items-center gap-2 mb-3 text-xs">
-            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-primary">
+          {/* Location indicator + Debug toggle */}
+          <div className="flex items-center gap-2 mb-3 text-xs flex-wrap">
+            <button 
+              onClick={() => setShowDebug(!showDebug)}
+              className={cn(
+                "flex items-center gap-1 px-2 py-1 rounded-full transition-colors",
+                usingRealLocation ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+              )}
+            >
               <MapPin className="w-3 h-3" />
+              <span>{usingRealLocation ? "GPS actif" : "GPS désactivé"}</span>
+            </button>
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-primary">
               <span>Rayon: {radiusKm} km</span>
             </div>
             {loading && (
@@ -383,6 +393,67 @@ export default function Proximite() {
               </span>
             )}
           </div>
+
+          {/* Debug Panel */}
+          {showDebug && debugInfo && (
+            <div className="mb-3 p-3 rounded-xl bg-muted/50 border border-border text-xs space-y-2">
+              <div className="font-semibold text-foreground flex items-center gap-2">
+                🔍 Debug GPS & Rayon {radiusKm}km
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-muted-foreground">Position utilisée:</span>
+                  <div className="font-mono text-[10px]">
+                    {debugInfo.positionUsed.latitude.toFixed(5)}, {debugInfo.positionUsed.longitude.toFixed(5)}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Source:</span>
+                  <div className={cn("font-medium", debugInfo.usingRealGps ? "text-green-600" : "text-amber-600")}>
+                    {debugInfo.usingRealGps ? "GPS réel" : "Position par défaut (Coyah)"}
+                  </div>
+                </div>
+              </div>
+              <div className="border-t border-border pt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="bg-background p-2 rounded-lg">
+                  <div className="font-medium text-foreground">Boutiques</div>
+                  <div className="text-muted-foreground">
+                    Total: {debugInfo.vendors.total} | 
+                    <span className="text-red-500"> Sans GPS: {debugInfo.vendors.noGps}</span> | 
+                    <span className="text-amber-500"> Hors rayon: {debugInfo.vendors.outOfRadius}</span> | 
+                    <span className="text-green-600"> ✓ {debugInfo.vendors.inRadius}</span>
+                  </div>
+                </div>
+                <div className="bg-background p-2 rounded-lg">
+                  <div className="font-medium text-foreground">Services Pro</div>
+                  <div className="text-muted-foreground">
+                    Total: {debugInfo.services.total} | 
+                    <span className="text-red-500"> Sans GPS: {debugInfo.services.noGps}</span> | 
+                    <span className="text-amber-500"> Hors rayon: {debugInfo.services.outOfRadius}</span> | 
+                    <span className="text-green-600"> ✓ {debugInfo.services.inRadius}</span>
+                  </div>
+                </div>
+                <div className="bg-background p-2 rounded-lg">
+                  <div className="font-medium text-foreground">Taxi-Moto</div>
+                  <div className="text-muted-foreground">
+                    Total: {debugInfo.taxiMoto.total} | 
+                    <span className="text-red-500"> Sans GPS: {debugInfo.taxiMoto.noGps}</span> | 
+                    <span className="text-amber-500"> Hors rayon: {debugInfo.taxiMoto.outOfRadius}</span> | 
+                    <span className="text-green-600"> ✓ {debugInfo.taxiMoto.inRadius}</span>
+                  </div>
+                </div>
+                <div className="bg-background p-2 rounded-lg">
+                  <div className="font-medium text-foreground">Livreurs</div>
+                  <div className="text-muted-foreground">
+                    Total: {debugInfo.drivers.total} | 
+                    <span className="text-red-500"> Sans GPS: {debugInfo.drivers.noGps}</span> | 
+                    <span className="text-amber-500"> Hors rayon: {debugInfo.drivers.outOfRadius}</span> | 
+                    <span className="text-green-600"> ✓ {debugInfo.drivers.inRadius}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
