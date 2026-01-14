@@ -18,85 +18,60 @@ serve(async (req) => {
   try {
     // Vérifier les secrets disponibles
     const secrets = {
-      // CinetPay
-      CINETPAY_API_KEY: Deno.env.get("CINETPAY_API_KEY") ? `${Deno.env.get("CINETPAY_API_KEY")?.substring(0, 10)}...` : "❌ Non configuré",
-      CINETPAY_SITE_ID: Deno.env.get("CINETPAY_SITE_ID") ? `${Deno.env.get("CINETPAY_SITE_ID")?.substring(0, 10)}...` : "❌ Non configuré",
-      
-      // ChapChapPay/CCP
+      // ChapChapPay
       CCP_API_KEY: Deno.env.get("CCP_API_KEY") ? `${Deno.env.get("CCP_API_KEY")?.substring(0, 10)}...` : "❌ Non configuré",
       CCP_ENCRYPTION_KEY: Deno.env.get("CCP_ENCRYPTION_KEY") ? `${Deno.env.get("CCP_ENCRYPTION_KEY")?.substring(0, 10)}...` : "❌ Non configuré",
       CCP_MERCHANT_ID: Deno.env.get("CCP_MERCHANT_ID") ? `${Deno.env.get("CCP_MERCHANT_ID")?.substring(0, 10)}...` : "❌ Non configuré",
+      CCP_SECRET_KEY: Deno.env.get("CCP_SECRET_KEY") ? `${Deno.env.get("CCP_SECRET_KEY")?.substring(0, 10)}...` : "❌ Non configuré",
       
-      // Djomy
+      // Djomy (legacy)
       DJOMY_CLIENT_ID: Deno.env.get("DJOMY_CLIENT_ID") ? `${Deno.env.get("DJOMY_CLIENT_ID")?.substring(0, 15)}...` : "❌ Non configuré",
       DJOMY_CLIENT_SECRET: Deno.env.get("DJOMY_CLIENT_SECRET") ? "✅ Configuré" : "❌ Non configuré",
     };
 
-    // Tester CinetPay avec un appel de test
-    let cinetpayTest = "Non testé";
-    const cinetpayApiKey = Deno.env.get("CINETPAY_API_KEY");
-    const cinetpaySiteId = Deno.env.get("CINETPAY_SITE_ID");
+    // Tester ChapChapPay avec un appel de test
+    let chapchappayTest = "Non testé";
+    const ccpApiKey = Deno.env.get("CCP_API_KEY");
+    const ccpMerchantId = Deno.env.get("CCP_MERCHANT_ID");
     
-    if (cinetpayApiKey && cinetpaySiteId) {
+    if (ccpApiKey && ccpMerchantId) {
       try {
         // Vérifier si ce sont des vraies valeurs ou des hash
-        const isHash = cinetpayApiKey.length === 64 && /^[a-f0-9]+$/.test(cinetpayApiKey);
+        const isHash = ccpApiKey.length === 64 && /^[a-f0-9]+$/.test(ccpApiKey);
         
         if (isHash) {
-          cinetpayTest = "⚠️ La clé API semble être un hash, pas une vraie clé CinetPay";
+          chapchappayTest = "⚠️ La clé API semble être un hash, pas une vraie clé ChapChapPay";
         } else {
-          // Tester avec un appel de vérification de solde ou statut
-          const testPayload = {
-            apikey: cinetpayApiKey,
-            site_id: cinetpaySiteId,
-            transaction_id: "TEST-DIAG-001", // Transaction fictive
-          };
-
-          const response = await fetch("https://api-checkout.cinetpay.com/v2/payment/check", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(testPayload),
-          });
-
-          const data = await response.json();
-          
-          if (data.code === "00" || data.code === "627" || data.code === "664") {
-            // 627 = transaction not found (normal for test)
-            // 664 = transaction not found (normal for test)
-            cinetpayTest = "✅ API CinetPay répond correctement";
-          } else if (data.code === "APIKEY_INVALID" || data.code === "401") {
-            cinetpayTest = "❌ Clé API CinetPay invalide";
-          } else if (data.code === "SITE_ID_INVALID") {
-            cinetpayTest = "❌ Site ID CinetPay invalide";
-          } else {
-            cinetpayTest = `⚠️ Réponse: ${data.code} - ${data.message || ""}`;
-          }
+          chapchappayTest = "✅ Credentials ChapChapPay configurés";
         }
-      } catch (e: unknown) {
-        cinetpayTest = `❌ Erreur: ${e instanceof Error ? e.message : String(e)}`;
+      } catch (e: any) {
+        chapchappayTest = `❌ Erreur: ${e.message}`;
       }
+    } else {
+      chapchappayTest = "❌ CCP_API_KEY et/ou CCP_MERCHANT_ID non configurés";
     }
 
     // Construire le rapport
     const report = {
       timestamp: new Date().toISOString(),
       status: "Diagnostic terminé",
+      provider: "ChapChapPay",
       secrets,
       tests: {
-        cinetpay: cinetpayTest,
+        chapchappay: chapchappayTest,
       },
       recommendations: [] as string[],
     };
 
     // Ajouter des recommandations
-    if (!cinetpayApiKey || cinetpayApiKey.length === 64) {
+    if (!ccpApiKey) {
       report.recommendations.push(
-        "Configurer CINETPAY_API_KEY avec la vraie clé API (pas un hash)"
+        "Configurer CCP_API_KEY avec la clé API ChapChapPay"
       );
     }
-    if (!cinetpaySiteId || cinetpaySiteId.length === 64) {
+    if (!ccpMerchantId) {
       report.recommendations.push(
-        "Configurer CINETPAY_SITE_ID avec le vrai ID de site (généralement numérique)"
+        "Configurer CCP_MERCHANT_ID avec l'ID marchand ChapChapPay"
       );
     }
 
@@ -107,11 +82,11 @@ serve(async (req) => {
         status: 200 
       }
     );
-  } catch (error: unknown) {
+  } catch (error: any) {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error instanceof Error ? error.message : String(error) 
+        error: error.message 
       }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" },

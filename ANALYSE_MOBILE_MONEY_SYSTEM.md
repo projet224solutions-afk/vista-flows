@@ -113,12 +113,9 @@
 - **Pays**: Guinée (GN)
 - **Statut**: ✅ Intégré (via Djomy)
 
-#### Autres alternatives présentes dans le code:
-- **CinetPay**: ✅ Déployé mais non testé
-- **PawaPay**: ✅ Déployé mais non testé
-- **FedaPay**: ✅ Déployé mais non testé
-- **Moneroo**: ✅ Déployé mais non testé
-- **Stripe**: ✅ Fonctionnel (pour cartes bancaires)
+#### Autres méthodes de paiement:
+- **ChapChapPay**: ✅ Actif (Orange Money, MTN MoMo, PayCard)
+- **Stripe**: ✅ Fonctionnel (pour cartes bancaires internationales)
 
 ---
 
@@ -193,7 +190,7 @@ La table `djomy_webhooks` est probablement vide (ou n'existe pas), ce qui signif
 
 1. **Court terme**: Utiliser le mode sandbox pour les tests et démonstrations
 2. **Moyen terme**: Activer les credentials production Djomy
-3. **Long terme**: Implémenter un fallback vers d'autres providers (CinetPay, PawaPay) en cas d'indisponibilité Djomy
+3. **Long terme**: Utiliser ChapChapPay comme provider principal pour Mobile Money
 
 ---
 
