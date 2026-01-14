@@ -90,7 +90,7 @@ serve(async (req) => {
     if (body.returnUrl) paymentData.return_url = body.returnUrl;
     if (body.description) paymentData.description = body.description;
 
-    const endpointBase = `${CCP_API_URL}/api/ecommerce/operation`;
+    const endpointBase = `${CCP_API_URL}/api/ecommerce/create`;
 
     logStep("Calling ChapChapPay API", {
       endpoint: endpointBase,
