@@ -1,38 +1,29 @@
-/**
- * 🛒 CHAPCHAPPAY E-COMMERCE - Paiement avec redirection
- * Edge Function pour créer une session de paiement e-commerce
- * 224SOLUTIONS
- */
-
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { createChapChapPayClient } from "../_shared/chapchappay-client.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const logStep = (step: string, details?: Record<string, unknown>) => {
+// ChapChapPay API - Documentation: https://chapchappay.com/guide/
+const CCP_API_URL = "https://chapchappay.com";
+
+interface EcommercePaymentRequest {
+  amount: number;
+  currency?: string;
+  description?: string;
+  orderId?: string;
+  customerName?: string;
+  customerPhone?: string;
+  returnUrl?: string;
+  cancelUrl?: string;
+  notifyUrl?: string;
+}
+
+const logEcom = (step: string, details?: Record<string, unknown>) => {
   const timestamp = new Date().toISOString();
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[${timestamp}] [CCP-ECOM] ${step}${detailsStr}`);
-};
-
-const logStep = (step: string, details?: Record<string, unknown>) => {
-  const timestamp = new Date().toISOString();
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
-  console.log(`[${timestamp}] [CCP-ECOM] ${step}${detailsStr}`);
-};
-
-const buildQueryUrl = (base: string, data: Record<string, unknown>) => {
-  const params = new URLSearchParams();
-  for (const [k, v] of Object.entries(data)) {
-    if (v === undefined || v === null) continue;
-    // ChapChapPay expects snake_case keys (amount, order_id, notify_url, ...)
-    params.set(k, String(v));
-  }
-  return `${base}?${params.toString()}`;
 };
 
 serve(async (req) => {
@@ -41,173 +32,145 @@ serve(async (req) => {
   }
 
   const startTime = Date.now();
-  
+
   try {
-    logStep("E-Commerce payment started");
+    logEcom("E-Commerce payment started");
 
-    const body = await req.json();
-    const {
-      amount,
-      currency = "GNF",
-      orderId,
-      description,
-      customerName,
-      customerPhone,
-      returnUrl,
-      cancelUrl,
-      useSandbox = false,
-      metadata = {},
-    } = body;
+    const apiKey = Deno.env.get("CCP_API_KEY");
 
-    logStep("Request received", { amount, orderId, useSandbox });
-
-    // Validation
-    if (!amount || amount <= 0) {
-      throw new Error("Montant invalide - doit être supérieur à 0");
-    }
-    if (!returnUrl) {
-      throw new Error("returnUrl requis pour le paiement e-commerce");
-    }
-
-    // Initialize Supabase admin client
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
-
-    // Get authenticated user (optional)
-    const authHeader = req.headers.get("Authorization");
-    let userId: string | null = null;
-
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      const supabaseAnon = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    if (!apiKey) {
+      logEcom("❌ CCP_API_KEY not configured");
+      return new Response(
+        JSON.stringify({ success: false, error: "Service de paiement non configuré" }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
-      const token = authHeader.replace("Bearer ", "");
-      const { data: userData } = await supabaseAnon.auth.getUser(token);
-      if (userData.user) {
-        userId = userData.user.id;
-        logStep("User authenticated", { userId });
-      }
     }
 
-    // Generate unique order ID
-    const finalOrderId = orderId || `CCP-ECOM-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    const body: EcommercePaymentRequest = await req.json();
 
-    // Create transaction record
-    const { data: newTransaction, error: insertError } = await supabaseAdmin
-      .from("mobile_money_transactions")
-      .insert({
-        order_id: finalOrderId,
-        user_id: userId,
-        amount,
-        currency,
-        payment_type: "ecommerce",
-        status: "pending",
-        customer_phone: customerPhone?.replace(/\s/g, ""),
-        customer_name: customerName,
-        description: description || `Paiement E-Commerce - ${finalOrderId}`,
-        provider: "chapchappay",
-        metadata: metadata,
-        ip_address: req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip"),
-      })
-      .select()
-      .single();
-
-    if (insertError) {
-      logStep("DB insert error", { error: insertError.message });
-    } else {
-      logStep("Transaction created", { id: newTransaction?.id, orderId: finalOrderId });
-    }
-
-    // Initialize ChapChapPay client
-    const ccpClient = createChapChapPayClient(useSandbox);
-
-    // Get webhook URL
-    const webhookUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/chapchappay-webhook`;
-
-    // Call ChapChapPay E-Commerce API
-    const ccpResult = await ccpClient.createEcommercePayment({
-      amount,
-      currency,
-      customerPhone,
-      customerName,
-      description: description || `Paiement 224Solutions - ${finalOrderId}`,
-      orderId: finalOrderId,
-      returnUrl,
-      cancelUrl: cancelUrl || returnUrl,
-      webhookUrl,
-      metadata,
-      paymentMethod: 'orange_money', // Default, user can choose on ChapChapPay page
+    logEcom("Request received", {
+      amount: body.amount,
+      orderId: body.orderId,
     });
 
-    logStep("ChapChapPay API response", { 
-      success: ccpResult.success, 
-      transactionId: ccpResult.transactionId,
-      paymentUrl: ccpResult.paymentUrl 
+    if (!body.amount || body.amount <= 0) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Montant invalide" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    // Build payment data according to ChapChapPay docs
+    const paymentData: Record<string, unknown> = {
+      amount: body.amount,
+    };
+
+    if (body.orderId) paymentData.order_id = body.orderId;
+    if (body.notifyUrl) paymentData.notify_url = body.notifyUrl;
+    if (body.returnUrl) paymentData.return_url = body.returnUrl;
+    if (body.description) paymentData.description = body.description;
+
+    const endpoint = `${CCP_API_URL}/api/ecommerce/create`;
+
+    logEcom("Calling ChapChapPay API", {
+      endpoint,
+      amount: body.amount,
+      apiKeyPrefix: apiKey.substring(0, 12),
+      payload: paymentData,
     });
 
-    if (!ccpResult.success) {
-      if (newTransaction?.id) {
-        await supabaseAdmin
-          .from("mobile_money_transactions")
-          .update({
-            status: "failed",
-            error_message: ccpResult.error,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", newTransaction.id);
-      }
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "CCP-Api-Key": apiKey,
+        "User-Agent": "Vista-Flows/1.0",
+      },
+      body: JSON.stringify(paymentData),
+    });
 
-      throw new Error(ccpResult.error || "Erreur ChapChapPay inconnue");
+    const responseText = await response.text();
+    logEcom("ChapChapPay response", {
+      status: response.status,
+      body: responseText.substring(0, 500),
+    });
+
+    let result: Record<string, unknown>;
+    try {
+      result = JSON.parse(responseText);
+    } catch {
+      logEcom("❌ Failed to parse response", { raw: responseText.substring(0, 200) });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Erreur de réponse du service",
+          details: responseText.substring(0, 200),
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
-    // Update transaction
-    if (newTransaction?.id) {
-      await supabaseAdmin
-        .from("mobile_money_transactions")
-        .update({
-          status: "processing",
-          provider_transaction_id: ccpResult.transactionId,
-          provider_response: ccpResult.data,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", newTransaction.id);
+    if (!response.ok || result?.error) {
+      const duration = Date.now() - startTime;
+      logEcom("❌ ChapChapPay error", {
+        status: response.status,
+        error: result?.error || result?.message,
+        duration,
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: result?.error || result?.message || "Échec de création du paiement",
+          details: result,
+        }),
+        {
+          status: response.status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
-    const totalDuration = Date.now() - startTime;
-    logStep("✅ E-Commerce session created", { 
-      transactionId: newTransaction?.id, 
-      ccpId: ccpResult.transactionId,
-      totalDuration 
+    const duration = Date.now() - startTime;
+    logEcom("✅ Payment created", {
+      operationId: result.operation_id,
+      paymentUrl: result.payment_url,
+      duration,
     });
 
     return new Response(
       JSON.stringify({
         success: true,
-        transactionId: newTransaction?.id || ccpResult.transactionId,
-        ccpTransactionId: ccpResult.transactionId,
-        orderId: finalOrderId,
-        paymentUrl: ccpResult.paymentUrl,
-        status: "processing",
-        message: "Redirection vers la page de paiement ChapChapPay",
+        transactionId: result.operation_id,
+        paymentUrl: result.payment_url,
+        orderId: result.order_id || body.orderId,
+        amount: result.amount || body.amount,
+        amountFormatted: result.amount_formatted,
+        currency: "GNF",
+        businessName: result.business_name,
+        paymentMethods: result.payment_methods,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
     const duration = Date.now() - startTime;
-    
-    logStep("❌ ERROR", { message: errorMessage, duration });
+    const errorMessage = error instanceof Error ? error.message : "Erreur interne";
+
+    logEcom("❌ ERROR", { message: errorMessage, duration });
 
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: errorMessage,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      JSON.stringify({ success: false, error: errorMessage }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
