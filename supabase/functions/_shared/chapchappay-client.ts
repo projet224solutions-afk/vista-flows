@@ -1,9 +1,13 @@
 /**
  * 🔐 CHAPCHAPPAY API CLIENT - 224SOLUTIONS
  * Client partagé pour les paiements Mobile Money via ChapChapPay
- * 
- * Documentation: https://chapchappay.com/guide/
- * Supports: Orange Money, MTN MoMo, Wave, etc.
+ *
+ * Docs publiques: https://chapchappay.com/guide/
+ *
+ * NOTE IMPORTANTE:
+ * - Le mode E-Commerce génère un payment_url (le client doit ouvrir un lien)
+ * - Le mode PULL API déclenche une demande de débit sur le téléphone du client
+ *   (nécessite un Agent API + permission PULL + signature HMAC)
  */
 
 // ============= TYPES =============
@@ -11,13 +15,14 @@
 export interface ChapChapPayConfig {
   apiKey: string;
   secretKey?: string;
+  encryptionKey?: string;
   useSandbox?: boolean;
 }
 
 export interface CCPPaymentRequest {
   amount: number;
   currency?: string; // GNF, XOF, etc.
-  paymentMethod?: 'orange_money' | 'mtn_momo' | 'paycard' | 'wave' | 'card';
+  paymentMethod?: "orange_money" | "mtn_momo" | "paycard" | "wave" | "card";
   customerPhone?: string;
   customerName?: string;
   customerEmail?: string;
@@ -32,7 +37,7 @@ export interface CCPPaymentRequest {
 export interface CCPPushRequest {
   amount: number;
   currency?: string;
-  paymentMethod: 'orange_money' | 'mtn_momo';
+  paymentMethod: "orange_money" | "mtn_momo";
   recipientPhone: string;
   recipientName?: string;
   description?: string;
@@ -44,8 +49,10 @@ export interface CCPPaymentResponse {
   transactionId?: string;
   operationId?: string;
   paymentUrl?: string;
-  status?: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
   requiresOtp?: boolean;
+  /** true si ChapChapPay a déclenché la demande sur le téléphone */
+  ussdTriggered?: boolean;
   error?: string;
   data?: unknown;
 }
@@ -54,7 +61,7 @@ export interface CCPStatusResponse {
   success: boolean;
   transactionId?: string;
   operationId?: string;
-  status?: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
   amount?: number;
   paidAmount?: number;
   fees?: number;
@@ -65,7 +72,7 @@ export interface CCPStatusResponse {
   error?: string;
 }
 
-// ============= UTILITY FUNCTIONS =============
+// ============= UTILS =============
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const timestamp = new Date().toISOString();
@@ -73,7 +80,52 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[${timestamp}] [CHAPCHAPPAY] ${step}${detailsStr}`);
 };
 
-// ============= CHAPCHAPPAY CLIENT CLASS =============
+function toHex(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let hex = "";
+  for (const b of bytes) hex += b.toString(16).padStart(2, "0");
+  return hex;
+}
+
+async function hmacSha256Hex(secret: string, message: string): Promise<string> {
+  const enc = new TextEncoder();
+  const keyData = enc.encode(secret);
+  const msgData = enc.encode(message);
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+
+  const sig = await crypto.subtle.sign("HMAC", key, msgData);
+  return toHex(sig);
+}
+
+async function postJson(url: string, payload: unknown, headers: Record<string, string>) {
+  const body = JSON.stringify(payload);
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...headers,
+    },
+    body,
+  });
+  const text = await res.text();
+  let json: any = null;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    // ignore
+  }
+  return { res, text, json };
+}
+
+// ============= CLIENT =============
 
 export class ChapChapPayClient {
   private config: ChapChapPayConfig;
@@ -81,127 +133,227 @@ export class ChapChapPayClient {
 
   constructor(config: ChapChapPayConfig) {
     this.config = config;
-    // ChapChapPay API URL
     this.baseUrl = "https://chapchappay.com";
-    
-    logStep("ChapChapPay Client initialized", { 
+
+    logStep("ChapChapPay Client initialized", {
       environment: config.useSandbox ? "sandbox" : "production",
-      baseUrl: this.baseUrl
+      baseUrl: this.baseUrl,
+      hasEncryptionKey: !!(config.encryptionKey || config.secretKey),
     });
   }
 
+  private getSignatureKey(): string {
+    const key = this.config.encryptionKey || this.config.secretKey;
+    if (!key) throw new Error("ChapChapPay: CCP_ENCRYPTION_KEY/CCP_SECRET_KEY requis pour PULL/PUSH");
+    return key;
+  }
+
+  private formatPhoneNumber(phone: string): string {
+    const cleaned = phone.replace(/\D/g, "");
+
+    if (cleaned.startsWith("224") && cleaned.length === 12) return cleaned;
+    if (cleaned.startsWith("00224")) return cleaned.substring(2);
+    if (cleaned.length === 9) return `224${cleaned}`;
+
+    return cleaned;
+  }
+
   /**
-   * E-Commerce: Créer une session de paiement avec redirection
+   * E-Commerce: crée une opération et retourne payment_url
    */
   async createEcommercePayment(request: CCPPaymentRequest): Promise<CCPPaymentResponse> {
-    logStep("Creating E-Commerce payment", { 
-      amount: request.amount, 
-      method: request.paymentMethod 
-    });
+    logStep("Creating E-Commerce payment", { amount: request.amount, method: request.paymentMethod });
 
-    try {
-      const orderId = request.orderId || `224SOL-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Format ChapChapPay payload
-      const payload: Record<string, unknown> = {
-        amount: Math.round(request.amount),
-        order_id: orderId,
-      };
+    const orderId = request.orderId || `224SOL-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const payload: Record<string, unknown> = {
+      amount: Math.round(request.amount),
+      order_id: orderId,
+    };
 
-      // Ajouter les champs optionnels
-      if (request.description) payload.description = request.description;
-      if (request.returnUrl) payload.return_url = request.returnUrl;
-      if (request.webhookUrl) payload.notify_url = request.webhookUrl;
-      if (request.customerName) payload.customer_name = request.customerName;
-      if (request.customerPhone) payload.customer_phone = this.formatPhoneNumber(request.customerPhone);
-      if (request.customerEmail) payload.customer_email = request.customerEmail;
-      if (request.metadata) payload.metadata = JSON.stringify(request.metadata);
+    if (request.description) payload.description = request.description;
+    if (request.returnUrl) payload.return_url = request.returnUrl;
+    if (request.webhookUrl) payload.notify_url = request.webhookUrl;
+    if (request.customerName) payload.customer_name = request.customerName;
+    if (request.customerPhone) payload.customer_phone = this.formatPhoneNumber(request.customerPhone);
+    if (request.customerEmail) payload.customer_email = request.customerEmail;
+    if (request.metadata) payload.metadata = JSON.stringify(request.metadata);
 
-      logStep("ChapChapPay payload", { orderId, amount: payload.amount });
-      
-      const response = await fetch(`${this.baseUrl}/api/ecommerce/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "CCP-Api-Key": this.config.apiKey,
-          "User-Agent": "224Solutions/2.0",
-        },
-        body: JSON.stringify(payload),
+    const endpoints = [
+      `${this.baseUrl}/api/ecommerce/operation`,
+      `${this.baseUrl}/api/ecommerce/create`,
+    ];
+
+    let lastError = "";
+
+    for (const url of endpoints) {
+      const { res, text, json } = await postJson(url, payload, {
+        "CCP-Api-Key": this.config.apiKey,
+        "User-Agent": "224Solutions/2.0",
       });
 
-      const responseText = await response.text();
-      logStep("ChapChapPay response", { status: response.status, body: responseText.substring(0, 500) });
+      logStep("E-Commerce response", { url, status: res.status, body: text.substring(0, 200) });
 
-      let data: Record<string, unknown>;
-      try {
-        data = JSON.parse(responseText);
-      } catch {
-        return {
-          success: false,
-          error: `Réponse invalide: ${responseText.substring(0, 100)}`
-        };
+      if (!res.ok) {
+        lastError = (json?.error || json?.message || text || `HTTP ${res.status}`) as string;
+        continue;
       }
-      
-      // ChapChapPay retourne success ou payment_url
-      if (data.payment_url || data.operation_id || response.ok) {
+
+      const paymentUrl = String(json?.payment_url || "");
+      const opId = String(json?.operation_id || "");
+
+      if (paymentUrl || opId) {
         return {
           success: true,
-          transactionId: String(data.operation_id || orderId),
-          operationId: String(data.operation_id || ""),
-          paymentUrl: String(data.payment_url || ""),
+          transactionId: opId || orderId,
+          operationId: opId,
+          paymentUrl,
           status: "pending",
-          data
+          ussdTriggered: false,
+          data: json,
         };
       }
 
-      return {
-        success: false,
-        error: String(data.error || data.message || `Erreur ChapChapPay: ${response.status}`)
-      };
-    } catch (error) {
-      logStep("ChapChapPay E-Commerce error", { error: String(error) });
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error)
-      };
+      lastError = "Réponse ChapChapPay inattendue";
     }
+
+    return { success: false, error: lastError || "Erreur ChapChapPay E-Commerce" };
   }
 
   /**
-   * PULL: Débiter le compte Mobile Money du client
-   * Utilise la méthode E-Commerce avec redirection
+   * PULL API: doit déclencher la demande de paiement sur le téléphone
    */
   async initiatePullPayment(request: CCPPaymentRequest): Promise<CCPPaymentResponse> {
-    logStep("Initiating PULL payment", { 
-      amount: request.amount, 
-      method: request.paymentMethod 
+    const orderId = request.orderId || `224SOL-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const phone = this.formatPhoneNumber(request.customerPhone || "");
+
+    logStep("Initiating PULL payment", {
+      amount: request.amount,
+      method: request.paymentMethod,
+      phone: phone ? `${phone.slice(0, 6)}...` : "",
     });
 
-    // Pour ChapChapPay, PULL = E-Commerce avec webhook
-    const webhookUrl = request.webhookUrl || 
-      `${Deno.env.get("SUPABASE_URL")}/functions/v1/chapchappay-webhook`;
+    const notifyUrl = request.webhookUrl || `${Deno.env.get("SUPABASE_URL")}/functions/v1/chapchappay-webhook`;
 
-    return this.createEcommercePayment({
-      ...request,
-      webhookUrl,
-    });
+    const payload: Record<string, unknown> = {
+      amount: Math.round(request.amount),
+      order_id: orderId,
+      payment_method: request.paymentMethod || "orange_money",
+      description: request.description || "Paiement 224Solutions",
+      notify_url: notifyUrl,
+      // champs téléphone (les APIs varient, on en met 2 pour compat)
+      customer_phone: phone,
+      phone,
+    };
+
+    if (request.customerName) payload.customer_name = request.customerName;
+    if (request.customerEmail) payload.customer_email = request.customerEmail;
+    if (request.metadata) payload.metadata = request.metadata;
+
+    const payloadStr = JSON.stringify(payload);
+    const signature = await hmacSha256Hex(this.getSignatureKey(), payloadStr);
+
+    // Tous les endpoints sont sur chapchappay.com (pas de sous-domaine api.*)
+    const candidates: string[] = [
+      `${this.baseUrl}/api/pull/operation`,
+      `${this.baseUrl}/api/pull/collect`,
+      `${this.baseUrl}/api/pull/initiate`,
+      `${this.baseUrl}/api/collect/create`,
+    ];
+
+    let lastStatus = 0;
+    let lastBody = "";
+
+    for (const url of candidates) {
+      logStep("PULL attempt", { url });
+
+      try {
+        const { res, text, json } = await postJson(url, payload, {
+          "CCP-Api-Key": this.config.apiKey,
+          "CCP-HMAC-Signature": signature,
+          "User-Agent": "224Solutions/2.0",
+        });
+
+        lastStatus = res.status;
+        lastBody = text;
+
+        logStep("PULL response", { url, status: res.status, body: text.substring(0, 200) });
+
+        // Endpoint inexistant -> on essaie le prochain
+        if (res.status === 404) continue;
+
+        // Permission/Signature
+        if (res.status === 401 || res.status === 403) {
+          return {
+            success: false,
+            error: "ChapChapPay PULL API non autorisée (permission PULL / signature HMAC).",
+            data: { status: res.status, body: json || text },
+          };
+        }
+
+        if (!res.ok) {
+          return {
+            success: false,
+            error: (json?.error || json?.message || `Erreur PULL: ${res.status}`) as string,
+            data: { status: res.status, body: json || text },
+          };
+        }
+
+        const opId = String(json?.operation_id || json?.transaction_id || "");
+        if (opId || json?.success) {
+          return {
+            success: true,
+            transactionId: opId || orderId,
+            operationId: opId,
+            status: "processing",
+            ussdTriggered: true,
+            data: json,
+          };
+        }
+
+        // Réponse OK mais inattendue -> stop
+        return {
+          success: false,
+          error: "Réponse PULL inattendue",
+          data: json,
+        };
+      } catch (err) {
+        // Erreur réseau (DNS, connexion) -> on passe au suivant
+        logStep("PULL network error", { url, error: err instanceof Error ? err.message : String(err) });
+        continue;
+      }
+    }
+
+    // Si aucun endpoint PULL n'a répondu (404 partout), on fallback E-Commerce
+    logStep("PULL endpoints not found - falling back to E-Commerce", { lastStatus, lastBody: lastBody.substring(0, 100) });
+    const fallback = await this.createEcommercePayment({ ...request, orderId, customerPhone: phone, webhookUrl: notifyUrl });
+
+    if (fallback.success) {
+      return {
+        ...fallback,
+        ussdTriggered: false,
+        data: {
+          ...(typeof fallback.data === "object" && fallback.data ? (fallback.data as Record<string, unknown>) : {}),
+          pull_fallback: true,
+          pull_last_status: lastStatus,
+        },
+      };
+    }
+
+    return {
+      success: false,
+      error: "PULL indisponible (endpoint introuvable) et E-Commerce a échoué",
+    };
   }
 
   /**
-   * PUSH: Envoyer de l'argent vers un compte Mobile Money
-   * Note: Nécessite des permissions spéciales sur ChapChapPay
+   * PUSH: (inchangé côté logique, si besoin on pourra aussi signer pareil)
    */
   async initiatePushPayment(request: CCPPushRequest): Promise<CCPPaymentResponse> {
-    logStep("Initiating PUSH payment", { 
-      amount: request.amount, 
-      method: request.paymentMethod 
-    });
+    logStep("Initiating PUSH payment", { amount: request.amount, method: request.paymentMethod });
 
     try {
-      const orderId = request.orderId || `224SOL-PUSH-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
-      // ChapChapPay Transfer payload
+      const orderId = request.orderId || `224SOL-PUSH-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
       const payload = {
         amount: Math.round(request.amount),
         order_id: orderId,
@@ -211,171 +363,96 @@ export class ChapChapPayClient {
         description: request.description || "Transfert 224Solutions",
       };
 
-      logStep("ChapChapPay Transfer payload", { orderId, amount: payload.amount });
-      
-      const response = await fetch(`${this.baseUrl}/api/transfer/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "CCP-Api-Key": this.config.apiKey,
-          "User-Agent": "224Solutions/2.0",
-        },
-        body: JSON.stringify(payload),
+      const { res, text, json } = await postJson(`${this.baseUrl}/api/transfer/create`, payload, {
+        "CCP-Api-Key": this.config.apiKey,
+        "User-Agent": "224Solutions/2.0",
       });
 
-      const responseText = await response.text();
-      logStep("ChapChapPay Transfer response", { status: response.status });
+      logStep("PUSH response", { status: res.status, body: text.substring(0, 200) });
 
-      if (!response.ok) {
-        return {
-          success: false,
-          error: `Erreur ${response.status}: ${responseText.substring(0, 200)}`
-        };
+      if (!res.ok) {
+        return { success: false, error: (json?.error || json?.message || `Erreur ${res.status}`) as string };
       }
 
-      const data = JSON.parse(responseText);
-      
-      if (data.success || data.operation_id) {
-        return {
-          success: true,
-          transactionId: data.operation_id || orderId,
-          operationId: data.operation_id,
-          status: data.status || "pending",
-          data
-        };
-      }
-
+      const opId = String(json?.operation_id || "");
       return {
-        success: false,
-        error: data.message || data.error || "Erreur lors du transfert"
+        success: true,
+        transactionId: opId || orderId,
+        operationId: opId,
+        status: (json?.status || "pending") as CCPPaymentResponse["status"],
+        data: json,
       };
     } catch (error) {
-      logStep("ChapChapPay Transfer error", { error: String(error) });
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error)
-      };
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }
 
   /**
-   * Vérifier le statut d'une transaction
+   * Statut: notre endpoint actuel renvoie 404 chez vous, on le gardera à corriger ensuite.
    */
   async checkStatus(transactionId?: string, orderId?: string): Promise<CCPStatusResponse> {
     logStep("Checking payment status", { transactionId, orderId });
 
     try {
       const identifier = transactionId || orderId;
-      if (!identifier) {
-        return { success: false, error: "Transaction ID ou Order ID requis" };
-      }
+      if (!identifier) return { success: false, error: "Transaction ID ou Order ID requis" };
 
-      const response = await fetch(`${this.baseUrl}/api/payment/status`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "CCP-Api-Key": this.config.apiKey,
-          "User-Agent": "224Solutions/2.0",
-        },
-        body: JSON.stringify({
-          operation_id: transactionId,
-          order_id: orderId,
-        }),
+      const { res, text, json } = await postJson(`${this.baseUrl}/api/payment/status`, {
+        operation_id: transactionId,
+        order_id: orderId,
+      }, {
+        "CCP-Api-Key": this.config.apiKey,
+        "User-Agent": "224Solutions/2.0",
       });
 
-      const responseText = await response.text();
-      logStep("ChapChapPay Status response", { status: response.status, body: responseText.substring(0, 500) });
+      logStep("Status response", { status: res.status, body: text.substring(0, 200) });
 
-      let data: Record<string, unknown>;
-      try {
-        data = JSON.parse(responseText);
-      } catch {
-        return { success: false, error: "Réponse invalide du serveur" };
+      if (!res.ok) {
+        return { success: false, error: (json?.error || json?.message || `HTTP ${res.status}`) as string };
       }
-      
-      if (response.ok) {
-        // Mapper les statuts ChapChapPay vers nos statuts
-        const statusMapping: Record<string, string> = {
-          'SUCCESS': 'completed',
-          'COMPLETED': 'completed',
-          'PAID': 'completed',
-          'FAILED': 'failed',
-          'CANCELLED': 'cancelled',
-          'PENDING': 'pending',
-          'PROCESSING': 'processing',
-        };
-        
-        const rawStatus = String(data.status || 'pending').toUpperCase();
-        
-        return {
-          success: true,
-          transactionId: String(data.operation_id || transactionId),
-          operationId: String(data.operation_id || ""),
-          status: (statusMapping[rawStatus] || 'pending') as CCPStatusResponse['status'],
-          amount: Number(data.amount) || undefined,
-          paidAmount: Number(data.paid_amount || data.amount) || undefined,
-          paymentMethod: String(data.payment_method || ""),
-          customerPhone: String(data.customer_phone || ""),
-          createdAt: String(data.created_at || ""),
-          completedAt: String(data.completed_at || ""),
-        };
-      }
+
+      const statusMapping: Record<string, CCPStatusResponse["status"]> = {
+        SUCCESS: "completed",
+        COMPLETED: "completed",
+        PAID: "completed",
+        FAILED: "failed",
+        CANCELLED: "cancelled",
+        CANCELED: "cancelled",
+        PENDING: "pending",
+        PROCESSING: "processing",
+      };
+
+      const rawStatus = String(json?.status || "pending").toUpperCase();
 
       return {
-        success: false,
-        error: String(data.message || data.error || `Code: ${response.status}`)
+        success: true,
+        transactionId: String(json?.operation_id || transactionId),
+        operationId: String(json?.operation_id || ""),
+        status: statusMapping[rawStatus] || "pending",
+        amount: Number(json?.amount) || undefined,
+        paidAmount: Number(json?.paid_amount || json?.amount) || undefined,
+        paymentMethod: String(json?.payment_method || ""),
+        customerPhone: String(json?.customer_phone || ""),
+        createdAt: String(json?.created_at || ""),
+        completedAt: String(json?.completed_at || ""),
       };
     } catch (error) {
-      logStep("ChapChapPay Status check error", { error: String(error) });
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error)
-      };
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
-  }
-
-  /**
-   * Formater le numéro de téléphone au format international guinéen
-   */
-  private formatPhoneNumber(phone: string): string {
-    // Nettoyer le numéro
-    const cleaned = phone.replace(/\D/g, "");
-    
-    // Si déjà au format international (224...)
-    if (cleaned.startsWith("224") && cleaned.length === 12) {
-      return cleaned;
-    }
-    
-    // Si commence par 00224
-    if (cleaned.startsWith("00224")) {
-      return cleaned.substring(2);
-    }
-    
-    // Si 9 chiffres (numéro local guinéen)
-    if (cleaned.length === 9) {
-      return `224${cleaned}`;
-    }
-    
-    return cleaned;
   }
 }
 
-/**
- * Créer un client ChapChapPay à partir des variables d'environnement
- */
-export function createChapChapPayClient(useSandbox: boolean = false): ChapChapPayClient {
+export function createChapChapPayClient(useSandbox = false): ChapChapPayClient {
   const apiKey = Deno.env.get("CCP_API_KEY");
   const secretKey = Deno.env.get("CCP_SECRET_KEY");
+  const encryptionKey = Deno.env.get("CCP_ENCRYPTION_KEY");
 
-  if (!apiKey) {
-    throw new Error("ChapChapPay: CCP_API_KEY requis");
-  }
+  if (!apiKey) throw new Error("ChapChapPay: CCP_API_KEY requis");
 
   return new ChapChapPayClient({
     apiKey,
-    secretKey,
-    useSandbox
+    secretKey: secretKey || undefined,
+    encryptionKey: encryptionKey || undefined,
+    useSandbox,
   });
 }
