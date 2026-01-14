@@ -878,77 +878,37 @@ export function POSSystem() {
         if (chapchapResult.transactionId) {
           toast.loading('En attente de confirmation...', { id: 'payment-polling' });
           
-          const finalStatus = await pollStatus(chapchapResult.transactionId, {
-            maxAttempts: 36, // 3 minutes max (36 x 5s)
-            intervalMs: 5000,
-            onStatusChange: async (status) => {
-              console.log('[POS] Payment status:', status);
-              
-              if (status.status === 'completed') {
-                toast.dismiss('payment-polling');
-                toast.success('🎉 Paiement confirmé !');
-              
-              // Mettre à jour la commande
-              await supabase.from('orders')
-                .update({ payment_status: 'paid', status: 'processing' })
-                .eq('id', order.id);
-              
-              setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
-              setShowOrderSummary(false);
-              setShowReceipt(true);
-              clearCart();
-              await loadVendorProducts();
-            } else if (status.status === 'failed' || status.status === 'cancelled') {
-              toast.dismiss('payment-polling');
-              toast.error('Paiement échoué ou refusé');
-              
-              // Marquer la commande comme échouée
-              await supabase.from('orders')
-                .update({ payment_status: 'failed' })
-                .eq('id', order.id);
-            }
+          const finalStatus = await pollStatus(chapchapResult.transactionId, (status) => {
+            console.log('[POS] Payment status:', status);
           });
 
-          // Polling pour vérifier le statut du paiement
-          if (ccpResult.transactionId) {
-            toast.loading('En attente de confirmation du paiement...', { id: 'payment-polling' });
+          toast.dismiss('payment-polling');
+
+          if (finalStatus?.status === 'completed' || finalStatus?.status === 'success') {
+            toast.success('🎉 Paiement confirmé !');
             
-            const finalStatus = await pollStatus(ccpResult.transactionId, async (status) => {
-              console.log('[POS] Payment status:', status);
-              
-              if (status.status === 'success' || status.status === 'completed') {
-                toast.dismiss('payment-polling');
-                toast.success('🎉 Paiement confirmé !');
-                
-                // Mettre à jour la commande
-                await supabase.from('orders')
-                  .update({ payment_status: 'paid', status: 'processing' })
-                  .eq('id', order.id);
-                
-                setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
-                setShowOrderSummary(false);
-                setShowReceipt(true);
-                clearCart();
-                await loadVendorProducts();
-              } else if (status.status === 'failed' || status.status === 'cancelled' || status.status === 'expired') {
-                toast.dismiss('payment-polling');
-                toast.error('Paiement échoué, annulé ou expiré');
-                
-                // Marquer la commande comme échouée
-                await supabase.from('orders')
-                  .update({ payment_status: 'failed' })
-                  .eq('id', order.id);
-              }
+            // Mettre à jour la commande
+            await supabase.from('orders')
+              .update({ payment_status: 'paid', status: 'processing' })
+              .eq('id', order.id);
+            
+            setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
+            setShowOrderSummary(false);
+            setShowReceipt(true);
+            clearCart();
+            await loadVendorProducts();
+          } else if (finalStatus?.status === 'failed' || finalStatus?.status === 'cancelled' || finalStatus?.status === 'expired') {
+            toast.error('Paiement échoué, annulé ou expiré');
+            
+            // Marquer la commande comme échouée
+            await supabase.from('orders')
+              .update({ payment_status: 'failed' })
+              .eq('id', order.id);
+          } else {
+            // Paiement en attente
+            toast.warning('Paiement en attente', {
+              description: 'Le statut du paiement sera mis à jour via webhook.'
             });
-
-            toast.dismiss('payment-polling');
-
-            if (!finalStatus || (finalStatus.status !== 'success' && finalStatus.status !== 'completed')) {
-              // Paiement non confirmé après le délai
-              toast.warning('Paiement en attente', {
-                description: 'Le statut du paiement sera mis à jour via webhook.'
-              });
-            }
           }
         }
 
