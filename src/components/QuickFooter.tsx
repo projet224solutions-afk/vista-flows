@@ -50,9 +50,11 @@ export default function QuickFooter() {
       <div className="flex items-center justify-around px-2 max-w-screen-xl mx-auto">
         {navigationItems.map((item) => {
           // Le bouton Home n'est actif QUE sur /home, pas sur les dashboards
-          const isActive = item.id === 'home' 
+          const isActive = item.id === 'home'
             ? location.pathname === '/home'
-            : location.pathname === item.path || (item.id === 'profil' && !profile && location.pathname === '/auth');
+            : item.id === 'proximite'
+              ? (location.pathname === '/proximite' || location.pathname.startsWith('/proximite/') || location.pathname.startsWith('/services-proximite'))
+              : location.pathname === item.path || (item.id === 'profil' && !profile && location.pathname === '/auth');
           const Icon = item.icon;
 
           return (
