@@ -6,7 +6,8 @@ const corsHeaders = {
 };
 
 // ChapChapPay API - Documentation: https://chapchappay.com/guide/
-const CCP_API_URL = "https://chapchappay.com/api";
+// Note: Some APIs use different base paths - trying without /api suffix
+const CCP_API_URL = "https://chapchappay.com";
 
 interface EcommercePaymentRequest {
   amount: number;
@@ -80,17 +81,23 @@ serve(async (req) => {
       paymentData.description = body.description;
     }
 
-    // Try with trailing slash as some APIs require it
-    const endpoint = `${CCP_API_URL}/ecommerce/operation/`;
+    // Try /api/ecommerce/operation without trailing slash (as per docs)
+    const endpoint = `${CCP_API_URL}/api/ecommerce/operation`;
     
-    logStep("Calling ChapChapPay API", { endpoint, amount: body.amount, apiKeyPrefix: apiKey.substring(0, 8) });
+    logStep("Calling ChapChapPay API", { 
+      endpoint, 
+      amount: body.amount, 
+      apiKeyPrefix: apiKey.substring(0, 8),
+      payload: paymentData 
+    });
 
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "CCP-Api-Key": apiKey
+        "CCP-Api-Key": apiKey,
+        "User-Agent": "Vista-Flows/1.0"
       },
       body: JSON.stringify(paymentData)
     });
