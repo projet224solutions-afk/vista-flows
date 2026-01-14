@@ -112,11 +112,13 @@ export function useProximityStats() {
 
       if (vendorsError) throw vendorsError;
 
-      // Fetch all professional services with their types
+      // Fetch all professional services with their types AND location
       const { data: professionalServices, error: psError } = await supabase
         .from('professional_services')
         .select(`
           id,
+          latitude,
+          longitude,
           service_type_id,
           service_types (code, name)
         `)
@@ -263,17 +265,33 @@ export function useProximityStats() {
         }
       });
 
-      // Count professional services by type
+      // Count professional services by type - ONLY those with GPS within radius
       const serviceTypeCounts: Record<string, number> = {};
       professionalServices?.forEach(service => {
-        const code = (service.service_types as any)?.code;
-        if (code) {
-          serviceTypeCounts[code] = (serviceTypeCounts[code] || 0) + 1;
+        // Skip services without location data
+        if (!service.latitude || !service.longitude) {
+          return;
+        }
+        
+        const distance = calculateDistance(
+          position.latitude, 
+          position.longitude, 
+          Number(service.latitude), 
+          Number(service.longitude)
+        );
+        
+        // Only count if within radius
+        if (distance <= RADIUS_KM) {
+          const code = (service.service_types as any)?.code;
+          if (code) {
+            serviceTypeCounts[code] = (serviceTypeCounts[code] || 0) + 1;
+          }
         }
       });
 
       // Map service codes to stats (aligned with database service_types.code)
       newStats.beaute = serviceTypeCounts['beaute'] || 0;
+      newStats.restaurant += serviceTypeCounts['restaurant'] || 0; // Add to existing vendor restaurant count
       newStats.reparation = serviceTypeCounts['reparation'] || 0;
       newStats.nettoyage = serviceTypeCounts['menage'] || 0;
       newStats.immobilier = serviceTypeCounts['location'] || 0;
