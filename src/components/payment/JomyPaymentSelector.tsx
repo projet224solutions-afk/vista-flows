@@ -304,7 +304,7 @@ export function JomyPaymentSelector({
           setPaymentStatus('polling');
           
           const finalStatus = await pollStatus(result.transactionId, (status) => {
-            if (status.status === 'success' || status.status === 'completed') {
+            if (status.status === 'completed') {
               setPaymentStatus('success');
               toast.success('🎉 Paiement réussi via ChapChapPay !');
               onPaymentSuccess(result.transactionId!, 'SUCCESS');
@@ -316,7 +316,7 @@ export function JomyPaymentSelector({
           });
 
           if (finalStatus) {
-            if (finalStatus.status === 'success' || finalStatus.status === 'completed') {
+            if (finalStatus.status === 'completed') {
               setPaymentStatus('success');
               onPaymentSuccess(result.transactionId, 'SUCCESS');
             } else if (finalStatus.status === 'pending') {

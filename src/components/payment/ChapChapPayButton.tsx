@@ -206,7 +206,7 @@ export function ChapChapPayButton({
             console.log('[ChapChapPay] Status update:', status);
           });
 
-          if (finalStatus.status === 'success' || finalStatus.status === 'completed') {
+          if (finalStatus.status === 'completed') {
             setPaymentStatus('success');
             toast.success('🎉 Paiement réussi !');
             onPaymentSuccess?.(result.transactionId, 'SUCCESS');

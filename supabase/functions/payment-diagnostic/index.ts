@@ -72,8 +72,8 @@ serve(async (req) => {
             cinetpayTest = `⚠️ Réponse: ${data.code} - ${data.message || ""}`;
           }
         }
-      } catch (e) {
-        cinetpayTest = `❌ Erreur: ${e.message}`;
+      } catch (e: unknown) {
+        cinetpayTest = `❌ Erreur: ${e instanceof Error ? e.message : String(e)}`;
       }
     }
 
@@ -107,11 +107,11 @@ serve(async (req) => {
         status: 200 
       }
     );
-  } catch (error) {
+  } catch (error: unknown) {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error) 
       }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" },

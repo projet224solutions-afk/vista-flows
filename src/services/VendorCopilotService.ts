@@ -579,15 +579,15 @@ export class VendorCopilotService {
       // Récupérer les infos utilisateur séparément via profiles
       const { data: userProfile } = await supabase
         .from('profiles')
-        .select('email, phone, raw_user_meta_data')
+        .select('email, phone')
         .eq('id', vendor.user_id)
         .single();
 
       // Créer un objet users compatible
       vendor.users = {
-        email: userProfile?.email || 'N/A',
-        phone: userProfile?.phone || null,
-        raw_user_meta_data: userProfile?.raw_user_meta_data || {}
+        email: (userProfile as { email?: string })?.email || 'N/A',
+        phone: (userProfile as { phone?: string })?.phone || null,
+        raw_user_meta_data: {}
       };
 
       // 2. ANALYSE PRODUITS
