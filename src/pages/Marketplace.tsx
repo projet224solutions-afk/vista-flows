@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon, Camera, MapPin, Globe, Share2, Filter, Package, Briefcase, Laptop } from "lucide-react";
+import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon, MapPin, Globe, Share2, Filter, Package, Briefcase, Laptop } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -282,26 +282,20 @@ export default function Marketplace() {
             </div>
           </div>
           
-          {/* Barre de recherche */}
-          <div className="mt-3 flex gap-2">
-            <div className="flex-1 min-w-0">
-              <SearchBar
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder={t('marketplace.searchProducts')}
-                showFilter
-                onFilter={() => setShowFilters(!showFilters)}
-              />
-            </div>
-            <Button 
-              variant="outline" 
-              size="icon"
-              onClick={() => navigate('/marketplace/visual-search')}
-              className="shrink-0 h-11 w-11 border-primary/30 hover:bg-primary/10"
-              title="Recherche par image"
-            >
-              <Camera className="w-5 h-5 text-primary" />
-            </Button>
+          {/* Barre de recherche avec bouton caméra intégré */}
+          <div className="mt-3">
+            <SearchBar
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder={t('marketplace.searchProducts')}
+              showFilter
+              onFilter={() => setShowFilters(!showFilters)}
+              showCamera
+              onCameraCapture={(file) => {
+                // Naviguer vers la recherche visuelle avec l'image capturée
+                navigate('/marketplace/visual-search', { state: { capturedImage: file } });
+              }}
+            />
           </div>
         </div>
       </header>
