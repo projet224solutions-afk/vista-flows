@@ -130,6 +130,10 @@ export default function Home() {
         onChange={setSearchQuery}
         placeholder="Rechercher des produits, services..."
         showFilter
+        showCamera
+        onCameraCapture={(file) => {
+          navigate('/marketplace/visual-search', { state: { capturedImage: file } });
+        }}
       />
 
       {/* Hero Section - Create Service */}
