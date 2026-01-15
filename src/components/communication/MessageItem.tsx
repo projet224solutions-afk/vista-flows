@@ -399,34 +399,64 @@ export default function MessageItem({
                     </div>
                   )}
                   
-                  {/* Audio/Vocal */}
-                  {message.type === 'audio' && (
-                    <div className="flex items-center gap-2 p-3 bg-background/10 rounded-lg">
+                  {/* Audio/Vocal - détection améliorée pour .webm et fichiers vocaux */}
+                  {(message.type === 'audio' || 
+                    message.file_name?.includes('vocal') || 
+                    message.file_name?.endsWith('.webm') ||
+                    message.file_name?.endsWith('.mp3') ||
+                    message.file_name?.endsWith('.wav') ||
+                    message.file_name?.endsWith('.ogg') ||
+                    message.file_name?.endsWith('.m4a')) && (
+                    <div className={cn(
+                      "flex items-center gap-3 p-3 rounded-xl",
+                      message.isOwn 
+                        ? "bg-primary-foreground/10" 
+                        : "bg-muted/50"
+                    )}>
+                      {/* Bouton Play/Pause */}
                       <Button
                         size="sm"
-                        variant="ghost"
+                        variant={message.isOwn ? "secondary" : "outline"}
                         onClick={() => toggleAudio('direct-audio')}
-                        className="h-10 w-10 rounded-full flex-shrink-0"
+                        className="h-11 w-11 rounded-full flex-shrink-0 shadow-sm"
                       >
                         {playingAudioId === 'direct-audio' ? (
-                          <Pause className="w-4 h-4" />
+                          <Pause className="w-5 h-5" />
                         ) : (
-                          <Play className="w-4 h-4" />
+                          <Play className="w-5 h-5 ml-0.5" />
                         )}
                       </Button>
                       
-                      <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        {/* Indicateur vocal */}
                         <div className="flex items-center gap-2">
-                          <Mic className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                          <span className="text-xs text-muted-foreground truncate">
-                            {message.file_name || 'Message vocal'}
+                          <Mic className="w-3.5 h-3.5 flex-shrink-0 opacity-70" />
+                          <span className="text-xs font-medium opacity-80">
+                            Message vocal
                           </span>
                         </div>
                         
+                        {/* Barre de progression interactive */}
                         <div className="flex items-center gap-2">
-                          <div className="flex-1 h-1.5 bg-background/20 rounded-full overflow-hidden">
+                          <div 
+                            className={cn(
+                              "flex-1 h-2 rounded-full overflow-hidden cursor-pointer",
+                              message.isOwn ? "bg-primary-foreground/20" : "bg-muted"
+                            )}
+                            onClick={(e) => {
+                              const audio = audioRefs.current['direct-audio'];
+                              if (audio && audioDurations['direct-audio']) {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const percent = (e.clientX - rect.left) / rect.width;
+                                audio.currentTime = percent * audioDurations['direct-audio'];
+                              }
+                            }}
+                          >
                             <div 
-                              className="h-full bg-primary transition-all duration-100"
+                              className={cn(
+                                "h-full transition-all duration-100 rounded-full",
+                                message.isOwn ? "bg-primary-foreground" : "bg-primary"
+                              )}
                               style={{ 
                                 width: audioDurations['direct-audio'] > 0 
                                   ? `${(audioCurrentTimes['direct-audio'] / audioDurations['direct-audio']) * 100}%` 
@@ -434,7 +464,7 @@ export default function MessageItem({
                               }}
                             />
                           </div>
-                          <span className="text-xs text-muted-foreground tabular-nums min-w-[35px]">
+                          <span className="text-xs tabular-nums min-w-[40px] opacity-70">
                             {formatTime(playingAudioId === 'direct-audio'
                               ? audioCurrentTimes['direct-audio'] || 0
                               : audioDurations['direct-audio'] || 0
@@ -442,6 +472,22 @@ export default function MessageItem({
                           </span>
                         </div>
                       </div>
+                      
+                      {/* Bouton Télécharger */}
+                      <a
+                        href={message.file_url}
+                        download={message.file_name || 'vocal.webm'}
+                        onClick={(e) => e.stopPropagation()}
+                        className={cn(
+                          "h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
+                          message.isOwn 
+                            ? "hover:bg-primary-foreground/20" 
+                            : "hover:bg-muted"
+                        )}
+                        title="Télécharger"
+                      >
+                        <Download className="w-4 h-4 opacity-70" />
+                      </a>
                       
                       <audio 
                         ref={(el) => setAudioRef('direct-audio', el)}
@@ -467,12 +513,16 @@ export default function MessageItem({
                     </div>
                   )}
                   
-                  {/* Fichier */}
-                  {message.type === 'file' && (
+                  {/* Fichier - exclure les fichiers audio */}
+                  {message.type === 'file' && 
+                   !message.file_name?.includes('vocal') &&
+                   !message.file_name?.endsWith('.webm') &&
+                   !message.file_name?.endsWith('.mp3') &&
+                   !message.file_name?.endsWith('.wav') &&
+                   !message.file_name?.endsWith('.ogg') &&
+                   !message.file_name?.endsWith('.m4a') && (
                     <a 
                       href={message.file_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
                       download={message.file_name}
                       className="flex items-center gap-2 p-2 bg-background/10 rounded hover:bg-background/20 transition-colors"
                     >
