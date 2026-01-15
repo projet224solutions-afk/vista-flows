@@ -139,9 +139,6 @@
   -->
   <script>
     (function () {
-      var isLovablePreview = location.hostname.indexOf('lovableproject.com') !== -1;
-      if (!isLovablePreview) return;
-
       var params = new URLSearchParams(location.search);
       if (!params.has('resetSw')) return;
 
@@ -298,12 +295,13 @@
       // Détecter tôt les erreurs globales (utile si main.tsx ne se charge pas)
       window.addEventListener('error', function (event) {
         if (isMounted()) return;
-        showFailureUI(event && (event.message || (event.error && event.error.message)));
+        // Souvent causé par un cache/SW incohérent après déploiement (chunks mélangés)
+        attemptRecovery(false);
       }, true);
 
       window.addEventListener('unhandledrejection', function (event) {
         if (isMounted()) return;
-        showFailureUI(event && event.reason);
+        attemptRecovery(false);
       });
 
       // Poll: si React a monté, on cache le loader
