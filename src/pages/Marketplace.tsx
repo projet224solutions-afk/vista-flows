@@ -322,9 +322,10 @@ export default function Marketplace() {
         </div>
       </section>
 
-      {/* Filtres de type - Boutons icônes stylés */}
+      {/* Filtres de type - Boutons icônes stylés - Services Pro en premier */}
       <section className="px-4 py-3 border-b border-border bg-gradient-to-r from-muted/50 via-background to-muted/50">
         <div className="flex justify-center gap-3 sm:gap-6">
+          {/* Services Pro - EN PREMIER */}
           <button
             onClick={() => setSelectedItemType('professional_service')}
             className={`group relative w-28 h-16 sm:w-36 sm:h-20 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center gap-1 sm:gap-1.5 transition-all duration-300 ${
@@ -352,6 +353,7 @@ export default function Marketplace() {
             )}
           </button>
 
+          {/* Produits Numériques */}
           <button
             onClick={() => setSelectedItemType('digital_product')}
             className={`group relative w-28 h-16 sm:w-36 sm:h-20 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center gap-1 sm:gap-1.5 transition-all duration-300 ${
