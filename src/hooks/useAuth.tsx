@@ -16,6 +16,7 @@ export interface Profile {
   country?: string;
   is_active: boolean;
   kyc_status?: string;
+  has_password?: boolean;
 }
 
 interface AuthContextType {

@@ -1,6 +1,11 @@
 /**
  * Page de définition de mot de passe pour les utilisateurs OAuth
  * Affichée après la première connexion via Google/Facebook
+ * 
+ * WORKFLOW:
+ * - Utilisateur OAuth (Google/Facebook) → DOIT définir un mot de passe (obligatoire)
+ * - Utilisateur email/password → Redirigé automatiquement vers son dashboard
+ * - Une fois le mot de passe défini, l'utilisateur ne reverra jamais cette page
  */
 
 import { useState, useEffect } from 'react';
@@ -17,16 +22,18 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { getDashboardRoute } from '@/hooks/useRoleRedirect';
 
 export default function SetPasswordAfterOAuth() {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading, profileLoading } = useAuth();
   
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -41,49 +48,61 @@ export default function SetPasswordAfterOAuth() {
 
   const isPasswordValid = Object.values(passwordChecks).every(Boolean);
 
-  // Rediriger si pas d'utilisateur ou si pas un utilisateur OAuth
-  useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
-
-    // ✅ Vérifier si c'est un utilisateur OAuth (Google/Facebook)
-    const provider = user.app_metadata?.provider;
-    const isOAuthUser = provider === 'google' || provider === 'facebook';
-    
-    // ✅ Si ce n'est PAS un utilisateur OAuth (connexion email/password), rediriger directement
-    if (!isOAuthUser) {
-      console.log('🔐 Utilisateur email détecté, redirection vers le dashboard...');
-      // Nettoyer les flags au cas où
-      localStorage.removeItem('needs_oauth_password');
-      redirectToProperDashboard();
-      return;
-    }
-
-    // Pour les utilisateurs OAuth: vérifier s'ils ont déjà défini un mot de passe
-    const hasSetPassword = localStorage.getItem(`oauth_password_set_${user.id}`);
-    if (hasSetPassword === 'true') {
-      redirectToProperDashboard();
-    }
-  }, [user, navigate, profile]);
-
+  // Fonction pour rediriger vers le bon dashboard
   const redirectToProperDashboard = () => {
-    const roleRoutes: Record<string, string> = {
-      admin: '/pdg',
-      ceo: '/pdg',
-      vendeur: '/vendeur',
-      livreur: '/livreur',
-      taxi: '/taxi-moto/driver',
-      syndicat: '/syndicat',
-      transitaire: '/transitaire',
-      client: '/client',
-      agent: '/agent',
-    };
-    
-    const targetRoute = profile?.role ? roleRoutes[profile.role] || '/' : '/';
+    const targetRoute = getDashboardRoute(profile?.role);
+    console.log(`🚀 [SetPasswordAfterOAuth] Redirection vers ${targetRoute}`);
     navigate(targetRoute, { replace: true });
   };
+
+  // Vérifier si l'utilisateur doit voir cette page
+  useEffect(() => {
+    const checkUserStatus = async () => {
+      // Attendre que l'auth soit chargée
+      if (authLoading) return;
+
+      // Pas d'utilisateur → rediriger vers /auth
+      if (!user) {
+        navigate('/auth', { replace: true });
+        return;
+      }
+
+      // Attendre que le profil soit chargé
+      if (profileLoading) return;
+
+      // ✅ Vérifier si c'est un utilisateur OAuth (Google/Facebook)
+      const provider = user.app_metadata?.provider;
+      const isOAuthUser = provider === 'google' || provider === 'facebook';
+      
+      console.log('🔍 [SetPasswordAfterOAuth] Vérification:', { 
+        provider, 
+        isOAuthUser,
+        hasPassword: profile?.has_password 
+      });
+
+      // ✅ Si ce n'est PAS un utilisateur OAuth (email/password), rediriger directement
+      if (!isOAuthUser) {
+        console.log('🔐 [SetPasswordAfterOAuth] Utilisateur email détecté, redirection...');
+        localStorage.removeItem('needs_oauth_password');
+        redirectToProperDashboard();
+        return;
+      }
+
+      // ✅ Si l'utilisateur OAuth a déjà défini un mot de passe (vérifié en BDD)
+      if (profile?.has_password === true) {
+        console.log('✅ [SetPasswordAfterOAuth] Mot de passe déjà défini, redirection...');
+        localStorage.removeItem('needs_oauth_password');
+        redirectToProperDashboard();
+        return;
+      }
+
+      // L'utilisateur OAuth doit définir son mot de passe
+      console.log('🔐 [SetPasswordAfterOAuth] Utilisateur OAuth sans mot de passe, affichage du formulaire');
+      setCheckingStatus(false);
+    };
+
+    checkUserStatus();
+  }, [user, profile, authLoading, profileLoading, navigate]);
 
   const handleSetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,15 +116,27 @@ export default function SetPasswordAfterOAuth() {
     setLoading(true);
 
     try {
+      // 1. Mettre à jour le mot de passe dans Supabase Auth
       const { error: updateError } = await supabase.auth.updateUser({
         password: password
       });
 
       if (updateError) throw updateError;
 
-      // Marquer que le mot de passe a été défini
-      localStorage.setItem(`oauth_password_set_${user?.id}`, 'true');
+      // 2. Marquer has_password = true dans le profil (persisté en BDD)
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ has_password: true })
+        .eq('id', user?.id);
+
+      if (profileError) {
+        console.error('Erreur mise à jour profil:', profileError);
+        // Ne pas bloquer, le mot de passe est déjà défini
+      }
+
+      // 3. Nettoyer les flags localStorage (backup)
       localStorage.removeItem('needs_oauth_password');
+      localStorage.setItem(`oauth_password_set_${user?.id}`, 'true');
       
       setSuccess(true);
       toast.success('Mot de passe défini avec succès !');
@@ -123,8 +154,17 @@ export default function SetPasswordAfterOAuth() {
     }
   };
 
-  // SUPPRIMÉ: La fonction handleSkip n'est plus disponible
-  // Les utilisateurs OAuth DOIVENT définir un mot de passe
+  // Affichage pendant la vérification
+  if (checkingStatus || authLoading || profileLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Vérification en cours...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (success) {
     return (
@@ -272,7 +312,7 @@ export default function SetPasswordAfterOAuth() {
               </Alert>
             )}
 
-            {/* Bouton d'action - PAS de bouton "Passer" */}
+            {/* Bouton d'action */}
             <div className="pt-2">
               <Button
                 type="submit"

@@ -11858,6 +11858,7 @@ export type Database = {
           first_name: string | null
           full_name: string | null
           geo_detection_method: string | null
+          has_password: boolean | null
           id: string
           is_active: boolean | null
           last_geo_update: string | null
@@ -11881,6 +11882,7 @@ export type Database = {
           first_name?: string | null
           full_name?: string | null
           geo_detection_method?: string | null
+          has_password?: boolean | null
           id: string
           is_active?: boolean | null
           last_geo_update?: string | null
@@ -11904,6 +11906,7 @@ export type Database = {
           first_name?: string | null
           full_name?: string | null
           geo_detection_method?: string | null
+          has_password?: boolean | null
           id?: string
           is_active?: boolean | null
           last_geo_update?: string | null
