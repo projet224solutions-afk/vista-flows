@@ -142,12 +142,11 @@ export default function RestaurantPublicMenu() {
         if (catError) throw catError;
         setCategories(categoriesData || []);
 
-        // Load menu items
+        // Load menu items - afficher TOUS les plats (is_available pour filtrer l'affichage)
         const { data: itemsData, error: itemsError } = await supabase
           .from('restaurant_menu_items')
           .select('*')
           .eq('professional_service_id', serviceId)
-          .eq('is_available', true)
           .order('display_order', { ascending: true });
 
         if (itemsError) throw itemsError;
@@ -232,6 +231,94 @@ export default function RestaurantPublicMenu() {
   );
 
   // Submit order (from cart or quick order)
+  // Fonction pour créditer le wallet du restaurant
+  const creditRestaurantWallet = async (restaurantServiceId: string, amount: number, orderNumber: string) => {
+    try {
+      // Récupérer le user_id du restaurant (propriétaire du service professionnel)
+      const { data: serviceData, error: serviceError } = await supabase
+        .from('professional_services')
+        .select('user_id, business_name')
+        .eq('id', restaurantServiceId)
+        .single();
+
+      if (serviceError || !serviceData?.user_id) {
+        console.error('Erreur récupération user_id restaurant:', serviceError);
+        return false;
+      }
+
+      // Vérifier/créer le wallet du restaurant
+      let { data: wallet, error: walletError } = await supabase
+        .from('wallets')
+        .select('id, balance')
+        .eq('user_id', serviceData.user_id)
+        .single();
+
+      if (walletError && walletError.code === 'PGRST116') {
+        // Créer le wallet s'il n'existe pas
+        const { data: newWallet, error: createError } = await supabase
+          .from('wallets')
+          .insert({
+            user_id: serviceData.user_id,
+            balance: 0,
+            currency: 'GNF'
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Erreur création wallet restaurant:', createError);
+          return false;
+        }
+        wallet = newWallet;
+      }
+
+      if (!wallet) {
+        console.error('Wallet restaurant introuvable');
+        return false;
+      }
+
+      // Créditer le wallet
+      const newBalance = (wallet.balance || 0) + amount;
+      const { error: updateError } = await supabase
+        .from('wallets')
+        .update({ balance: newBalance })
+        .eq('id', wallet.id);
+
+      if (updateError) {
+        console.error('Erreur crédit wallet restaurant:', updateError);
+        return false;
+      }
+
+      // Créer le log de transaction (bypass type check car les types générés sont incorrects)
+      try {
+        await (supabase.from('wallet_logs') as any).insert({
+          wallet_id: wallet.id,
+          user_id: serviceData.user_id,
+          action: 'credit',
+          amount: amount,
+          currency: 'GNF',
+          balance_before: wallet.balance || 0,
+          balance_after: newBalance,
+          status: 'completed',
+          payment_method: 'online',
+          metadata: {
+            source: 'restaurant_order',
+            order_number: orderNumber,
+            restaurant_name: serviceData.business_name
+          }
+        });
+      } catch (logError) {
+        console.warn('Erreur log transaction:', logError);
+      }
+
+      console.log(`✅ Wallet restaurant crédité: +${amount} GNF`);
+      return true;
+    } catch (err) {
+      console.error('Erreur creditRestaurantWallet:', err);
+      return false;
+    }
+  };
+
   const handleSubmitOrder = async (isQuickOrder: boolean = false) => {
     if (!customerName.trim()) {
       toast.error('Veuillez entrer votre nom');
@@ -274,6 +361,9 @@ export default function RestaurantPublicMenu() {
       }));
 
       const orderNumber = `CMD-${Date.now().toString(36).toUpperCase()}`;
+      
+      // Déterminer le statut de paiement
+      const isPaid = paymentMethod === 'card' || paymentMethod === 'mobile';
 
       const { data: order, error } = await supabase
         .from('restaurant_orders')
@@ -291,7 +381,7 @@ export default function RestaurantPublicMenu() {
           total: total,
           notes: orderNotes || null,
           status: 'pending',
-          payment_status: paymentMethod === 'cash' ? 'pending' : 'processing',
+          payment_status: isPaid ? 'paid' : 'pending',
           payment_method: paymentMethod,
           source: 'online',
         })
@@ -299,6 +389,14 @@ export default function RestaurantPublicMenu() {
         .single();
 
       if (error) throw error;
+
+      // Créditer le wallet du restaurant si paiement en ligne (card ou mobile)
+      if (isPaid && serviceId) {
+        const credited = await creditRestaurantWallet(serviceId, total, orderNumber);
+        if (credited) {
+          toast.success('💰 Paiement reçu par le restaurant');
+        }
+      }
 
       setLastOrderNumber(orderNumber);
       
@@ -499,7 +597,10 @@ export default function RestaurantPublicMenu() {
             {filteredItems.map(item => {
               const qty = getItemQuantity(item.id);
               return (
-                <Card key={item.id} className="overflow-hidden">
+                <Card key={item.id} className={cn(
+                  "overflow-hidden",
+                  !item.is_available && "opacity-60"
+                )}>
                   <CardContent className="p-0">
                     <div className="flex gap-3 p-3">
                       {/* Image */}
@@ -511,8 +612,15 @@ export default function RestaurantPublicMenu() {
                             <ChefHat className="w-8 h-8 text-muted-foreground" />
                           </div>
                         )}
-                        {item.is_new && (
+                        {item.is_new && item.is_available && (
                           <Badge className="absolute top-1 left-1 text-[10px] px-1.5 py-0">Nouveau</Badge>
+                        )}
+                        {!item.is_available && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5">
+                              Indisponible
+                            </Badge>
+                          </div>
                         )}
                       </div>
 
@@ -520,7 +628,10 @@ export default function RestaurantPublicMenu() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <h3 className="font-semibold text-sm line-clamp-1">{item.name}</h3>
+                            <h3 className={cn(
+                              "font-semibold text-sm line-clamp-1",
+                              !item.is_available && "line-through text-muted-foreground"
+                            )}>{item.name}</h3>
                             {item.description && (
                               <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
                                 {item.description}
@@ -531,6 +642,11 @@ export default function RestaurantPublicMenu() {
 
                         {/* Tags */}
                         <div className="flex flex-wrap gap-1 mt-1.5">
+                          {!item.is_available && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-orange-500 border-orange-200">
+                              <Clock className="w-2.5 h-2.5 mr-0.5" /> Bientôt disponible
+                            </Badge>
+                          )}
                           {item.spicy_level > 0 && (
                             <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-red-500 border-red-200">
                               🌶️ {item.spicy_level > 2 ? 'Très épicé' : 'Épicé'}
@@ -550,37 +666,46 @@ export default function RestaurantPublicMenu() {
 
                         {/* Price & Add button */}
                         <div className="flex items-center justify-between mt-2">
-                          <span className="font-bold text-primary">{item.price.toLocaleString()} GNF</span>
+                          <span className={cn(
+                            "font-bold",
+                            item.is_available ? "text-primary" : "text-muted-foreground"
+                          )}>{item.price.toLocaleString()} GNF</span>
                           
-                          {qty > 0 ? (
-                            <div className="flex items-center gap-2 bg-primary/10 rounded-full px-2 py-1">
+                          {item.is_available ? (
+                            qty > 0 ? (
+                              <div className="flex items-center gap-2 bg-primary/10 rounded-full px-2 py-1">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="w-6 h-6 rounded-full"
+                                  onClick={(e) => { e.stopPropagation(); removeFromCart(item.id); }}
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </Button>
+                                <span className="font-semibold text-sm w-5 text-center">{qty}</span>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="w-6 h-6 rounded-full"
+                                  onClick={(e) => { e.stopPropagation(); addToCart(item); }}
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            ) : (
                               <Button
-                                size="icon"
-                                variant="ghost"
-                                className="w-6 h-6 rounded-full"
-                                onClick={(e) => { e.stopPropagation(); removeFromCart(item.id); }}
+                                size="sm"
+                                className="h-8 gap-1 bg-green-600 hover:bg-green-700"
+                                onClick={() => openQuickOrder(item)}
                               >
-                                <Minus className="w-3 h-3" />
+                                <ShoppingCart className="w-3.5 h-3.5" />
+                                Commander
                               </Button>
-                              <span className="font-semibold text-sm w-5 text-center">{qty}</span>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="w-6 h-6 rounded-full"
-                                onClick={(e) => { e.stopPropagation(); addToCart(item); }}
-                              >
-                                <Plus className="w-3 h-3" />
-                              </Button>
-                            </div>
+                            )
                           ) : (
-                            <Button
-                              size="sm"
-                              className="h-8 gap-1 bg-green-600 hover:bg-green-700"
-                              onClick={() => openQuickOrder(item)}
-                            >
-                              <ShoppingCart className="w-3.5 h-3.5" />
-                              Commander
-                            </Button>
+                            <Badge variant="secondary" className="text-xs">
+                              Non disponible
+                            </Badge>
                           )}
                         </div>
                       </div>
