@@ -2,6 +2,7 @@
  * Modal de réservation restaurant professionnel
  * Inspiré des systèmes OpenTable, TheFork, et des restaurants étoilés Michelin
  * Experience utilisateur premium avec sélection de date, heure, menu et paiement
+ * v2 - Ajout paiement carte bancaire, reçu et suivi statut
  */
 
 import { useState, useEffect } from 'react';
@@ -10,7 +11,7 @@ import { fr } from 'date-fns/locale';
 import { 
   Calendar, Clock, Users, Phone, Mail, User, Sparkles, Check, AlertCircle,
   UtensilsCrossed, CreditCard, ShoppingCart, Plus, Minus, Trash2, ChevronRight,
-  Flame, Leaf, Info
+  Flame, Leaf, Info, Download, Receipt, Eye, Wallet
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -24,12 +25,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useRestaurantReservations, TimeSlot, ReservationFormData } from '@/hooks/useRestaurantReservations';
 import { useRestaurantMenu, MenuItem, MenuCategory } from '@/hooks/useRestaurantMenu';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { StripePaymentWrapper } from '@/components/payment/StripePaymentWrapper';
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -78,10 +81,13 @@ export function ReservationModal({
   
   // Paiement
   const [wantToPrepay, setWantToPrepay] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'mobile'>('mobile');
   const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [showStripePayment, setShowStripePayment] = useState(false);
   
   // Confirmation data
   const [confirmationData, setConfirmationData] = useState<any>(null);
+  const [showReceiptDownload, setShowReceiptDownload] = useState(false);
 
   // Préremplir avec les infos de l'utilisateur connecté
   useEffect(() => {
@@ -150,7 +156,7 @@ export function ReservationModal({
     ? menuItems.filter(i => i.is_available)
     : menuItems.filter(i => i.is_available && i.category_id === selectedCategory);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (paymentIntentId?: string) => {
     if (!selectedDate || !selectedTime || !customerName) {
       toast.error('Veuillez remplir tous les champs obligatoires');
       return;
@@ -169,6 +175,10 @@ export function ReservationModal({
           })))
         : null;
 
+      const paymentInfo = paymentIntentId 
+        ? `\n\n💳 Paiement carte effectué (Réf: ${paymentIntentId.substring(0, 12)})`
+        : (wantToPrepay ? '\n\n📱 Paiement mobile en attente' : '');
+
       const reservationData: ReservationFormData = {
         customer_name: customerName,
         customer_phone: customerPhone,
@@ -178,11 +188,11 @@ export function ReservationModal({
         reservation_time: selectedTime,
         special_requests: specialRequests 
           ? (preorderData 
-            ? `${specialRequests}\n\n--- Précommande ---\n${cart.map(c => `${c.quantity}x ${c.menuItem.name}`).join(', ')}\nTotal: ${cartTotal.toLocaleString()} GNF`
-            : specialRequests)
+            ? `${specialRequests}\n\n--- Précommande ---\n${cart.map(c => `${c.quantity}x ${c.menuItem.name}`).join(', ')}\nTotal: ${cartTotal.toLocaleString()} GNF${paymentInfo}`
+            : `${specialRequests}${paymentInfo}`)
           : (preorderData 
-            ? `--- Précommande ---\n${cart.map(c => `${c.quantity}x ${c.menuItem.name}`).join(', ')}\nTotal: ${cartTotal.toLocaleString()} GNF`
-            : undefined),
+            ? `--- Précommande ---\n${cart.map(c => `${c.quantity}x ${c.menuItem.name}`).join(', ')}\nTotal: ${cartTotal.toLocaleString()} GNF${paymentInfo}`
+            : (paymentInfo ? paymentInfo.trim() : undefined)),
       };
 
       const result = await createReservation(reservationData);
@@ -191,8 +201,11 @@ export function ReservationModal({
         setConfirmationData({
           ...result,
           preorder: wantToPreorder ? cart : null,
-          preorderTotal: cartTotal
+          preorderTotal: cartTotal,
+          paymentMethod: wantToPrepay ? paymentMethod : 'on_site',
+          paymentIntentId
         });
+        setShowReceiptDownload(true);
         setStep('confirmation');
         toast.success('Réservation confirmée !');
       }
@@ -216,11 +229,79 @@ export function ReservationModal({
     setCart([]);
     setWantToPreorder(false);
     setWantToPrepay(false);
+    setPaymentMethod('mobile');
+    setShowStripePayment(false);
+    setShowReceiptDownload(false);
   };
 
   const handleClose = () => {
     resetForm();
     onClose();
+  };
+
+  // Générer et télécharger le reçu
+  const generateReceipt = () => {
+    if (!confirmationData) return;
+    
+    const receiptContent = `
+╔═══════════════════════════════════════════════╗
+║           REÇU DE RÉSERVATION                 ║
+║               224Solutions                    ║
+╠═══════════════════════════════════════════════╣
+║                                               ║
+║  Restaurant: ${restaurantName.substring(0, 30).padEnd(30)}║
+║                                               ║
+║  Date: ${format(selectedDate!, 'EEEE d MMMM yyyy', { locale: fr }).substring(0, 35).padEnd(35)}║
+║  Heure: ${selectedTime.padEnd(34)}║
+║  Convives: ${partySize.toString().padEnd(31)}║
+║                                               ║
+╠═══════════════════════════════════════════════╣
+║  Réservation au nom de:                       ║
+║  ${customerName.substring(0, 43).padEnd(43)}║
+║  Tel: ${(customerPhone || 'Non renseigné').substring(0, 37).padEnd(37)}║
+║  Email: ${(customerEmail || 'Non renseigné').substring(0, 35).padEnd(35)}║
+║                                               ║
+${cart.length > 0 ? `╠═══════════════════════════════════════════════╣
+║  PRÉCOMMANDE:                                 ║
+${cart.map(c => `║  ${c.quantity}x ${c.menuItem.name.substring(0, 25).padEnd(25)} ${(c.menuItem.price * c.quantity).toLocaleString().padStart(10)} GNF║`).join('\n')}
+║                                               ║
+║  TOTAL: ${cartTotal.toLocaleString().padStart(35)} GNF║
+║                                               ║` : ''}
+╠═══════════════════════════════════════════════╣
+║  Statut: EN ATTENTE DE CONFIRMATION           ║
+║  Référence: ${confirmationData.id?.substring(0, 8).toUpperCase().padEnd(30) || 'N/A'.padEnd(30)}║
+║  Créée le: ${format(new Date(), 'dd/MM/yyyy à HH:mm').padEnd(31)}║
+║                                               ║
+╚═══════════════════════════════════════════════╝
+
+Merci pour votre réservation !
+Contact restaurant: ${restaurantPhone || 'Non disponible'}
+    `;
+
+    const blob = new Blob([receiptContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `recu-reservation-${restaurantName.replace(/\s+/g, '-')}-${format(selectedDate!, 'dd-MM-yyyy')}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.success('Reçu téléchargé !');
+  };
+
+  // Callback paiement Stripe réussi
+  const handleStripeSuccess = async (paymentIntentId: string) => {
+    toast.success('Paiement par carte effectué avec succès !');
+    setShowStripePayment(false);
+    await handleSubmit(paymentIntentId);
+  };
+
+  // Callback erreur paiement Stripe
+  const handleStripeError = (error: string) => {
+    toast.error(`Erreur de paiement: ${error}`);
+    setShowStripePayment(false);
   };
 
   // Navigation entre étapes
@@ -762,13 +843,43 @@ export function ReservationModal({
         );
 
       case 'payment':
+        // Si on affiche Stripe
+        if (showStripePayment) {
+          return (
+            <div className="space-y-6">
+              <div className="text-center mb-4">
+                <h3 className="text-xl font-semibold">Paiement par carte</h3>
+                <p className="text-muted-foreground">Montant: {cartTotal.toLocaleString()} GNF</p>
+              </div>
+
+              <StripePaymentWrapper
+                amount={cartTotal}
+                currency="GNF"
+                sellerId={serviceId}
+                sellerName={restaurantName}
+                orderDescription={`Précommande restaurant - ${restaurantName}`}
+                onSuccess={handleStripeSuccess}
+                onError={handleStripeError}
+              />
+
+              <Button 
+                variant="ghost" 
+                className="w-full" 
+                onClick={() => setShowStripePayment(false)}
+              >
+                Retour aux options de paiement
+              </Button>
+            </div>
+          );
+        }
+
         return (
           <div className="space-y-6">
             <div className="text-center mb-4">
               <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CreditCard className="w-8 h-8 text-green-600" />
+                <Wallet className="w-8 h-8 text-green-600" />
               </div>
-              <h3 className="text-xl font-semibold">Paiement sécurisé</h3>
+              <h3 className="text-xl font-semibold">Choisissez votre mode de paiement</h3>
               <p className="text-muted-foreground">Payez votre précommande en avance</p>
             </div>
 
@@ -789,22 +900,81 @@ export function ReservationModal({
               </CardContent>
             </Card>
 
-            {/* Options de paiement (simplifié) */}
+            {/* Sélection méthode de paiement */}
+            <RadioGroup 
+              value={paymentMethod} 
+              onValueChange={(value) => setPaymentMethod(value as 'card' | 'mobile')}
+              className="space-y-3"
+            >
+              <div className={cn(
+                "flex items-center space-x-3 p-4 rounded-lg border transition-all cursor-pointer",
+                paymentMethod === 'card' && "border-primary bg-primary/5"
+              )}>
+                <RadioGroupItem value="card" id="card" />
+                <Label htmlFor="card" className="flex items-center gap-3 cursor-pointer flex-1">
+                  <CreditCard className="w-6 h-6 text-blue-600" />
+                  <div>
+                    <p className="font-medium">Carte bancaire</p>
+                    <p className="text-xs text-muted-foreground">Visa, Mastercard, etc.</p>
+                  </div>
+                </Label>
+              </div>
+
+              <div className={cn(
+                "flex items-center space-x-3 p-4 rounded-lg border transition-all cursor-pointer",
+                paymentMethod === 'mobile' && "border-primary bg-primary/5"
+              )}>
+                <RadioGroupItem value="mobile" id="mobile" />
+                <Label htmlFor="mobile" className="flex items-center gap-3 cursor-pointer flex-1">
+                  <img 
+                    src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Orange_Money_logo.png" 
+                    alt="Orange Money" 
+                    className="w-6 h-6 rounded" 
+                  />
+                  <div>
+                    <p className="font-medium">Orange Money</p>
+                    <p className="text-xs text-muted-foreground">Paiement mobile</p>
+                  </div>
+                </Label>
+              </div>
+            </RadioGroup>
+
+            {/* Options de paiement */}
             <div className="space-y-3">
               <Button 
-                className="w-full h-14 bg-orange-500 hover:bg-orange-600"
-                onClick={handleSubmit}
+                className={cn(
+                  "w-full h-14",
+                  paymentMethod === 'card' ? "bg-blue-600 hover:bg-blue-700" : "bg-orange-500 hover:bg-orange-600"
+                )}
+                onClick={() => {
+                  if (paymentMethod === 'card') {
+                    setShowStripePayment(true);
+                  } else {
+                    handleSubmit();
+                  }
+                }}
                 disabled={isSubmitting}
               >
-                <img src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Orange_Money_logo.png" 
-                     alt="Orange Money" 
-                     className="w-6 h-6 mr-2 rounded" />
-                Payer avec Orange Money
+                {paymentMethod === 'card' ? (
+                  <>
+                    <CreditCard className="w-5 h-5 mr-2" />
+                    Payer par carte bancaire
+                  </>
+                ) : (
+                  <>
+                    <img 
+                      src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Orange_Money_logo.png" 
+                      alt="Orange Money" 
+                      className="w-5 h-5 mr-2 rounded" 
+                    />
+                    Payer avec Orange Money
+                  </>
+                )}
               </Button>
               
               <Button 
                 variant="outline"
-                className="w-full h-14"
+                className="w-full h-12"
                 onClick={() => {
                   setWantToPrepay(false);
                   handleSubmit();
@@ -837,6 +1007,19 @@ export function ReservationModal({
               </p>
             </div>
 
+            {/* Statut en attente de confirmation restaurant */}
+            <Card className="bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200">
+              <CardContent className="p-4 flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
+                <div className="text-left">
+                  <p className="font-medium text-yellow-800 dark:text-yellow-200">En attente de confirmation</p>
+                  <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                    Le restaurant confirmera votre réservation sous peu. Vous recevrez une notification.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
             <div className="bg-muted/50 rounded-xl p-6 text-left space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Date</span>
@@ -864,9 +1047,43 @@ export function ReservationModal({
                       {confirmationData.preorderTotal.toLocaleString()} GNF
                     </span>
                   </div>
+                  {confirmationData?.paymentIntentId && (
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-muted-foreground">Paiement</span>
+                      <Badge className="bg-green-500">
+                        <Check className="w-3 h-3 mr-1" />
+                        Carte payée
+                      </Badge>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
+
+            {/* Bouton télécharger le reçu */}
+            <Button 
+              variant="outline" 
+              className="w-full h-12"
+              onClick={generateReceipt}
+            >
+              <Receipt className="w-4 h-4 mr-2" />
+              Télécharger le reçu
+            </Button>
+
+            {/* Lien pour suivre la réservation */}
+            <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <Eye className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                  <div className="text-left flex-1">
+                    <p className="font-medium text-blue-800 dark:text-blue-200">Suivez votre réservation</p>
+                    <p className="text-xs text-blue-700 dark:text-blue-300">
+                      Consultez vos réservations dans votre espace client pour voir le statut de confirmation
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {restaurantPhone && (
               <p className="text-sm text-muted-foreground">
