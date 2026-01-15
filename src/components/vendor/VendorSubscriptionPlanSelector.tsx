@@ -211,7 +211,7 @@ export function VendorSubscriptionPlanSelector({
                 <p className="font-medium mt-2">{BILLING_CYCLE_LABELS[cycle]}</p>
                 {cycle === 'yearly' && (
                   <Badge variant="secondary" className="mt-2 text-xs">
-                    Économisez jusqu'à 20%
+                    Économisez {plans[0]?.yearly_discount_percentage || 5}%
                   </Badge>
                 )}
               </Card>
