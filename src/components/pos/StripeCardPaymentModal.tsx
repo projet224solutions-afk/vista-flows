@@ -306,8 +306,24 @@ export function StripeCardPaymentModal({
     totalAmount: amount,
   });
 
+  // ✅ Charger Stripe UNE SEULE FOIS au montage
   useEffect(() => {
-    if (!isOpen) return;
+    const loadStripeInstance = async () => {
+      if (isOffline()) return;
+      const stripeInstance = await getStripe();
+      if (stripeInstance) {
+        setStripe(stripeInstance);
+      }
+    };
+    loadStripeInstance();
+  }, []);
+
+  // ✅ Initialiser le paiement seulement quand le modal s'ouvre avec un nouveau orderId
+  useEffect(() => {
+    if (!isOpen || !orderId) return;
+    
+    // Éviter la réinitialisation si on a déjà un clientSecret pour cette commande
+    if (clientSecret) return;
 
     const initPayment = async () => {
       setLoading(true);
@@ -319,11 +335,13 @@ export function StripeCardPaymentModal({
           throw new Error('Mode hors ligne - paiement indisponible. Veuillez vous reconnecter à Internet.');
         }
         
-        const stripeInstance = await getStripe();
-        if (!stripeInstance) {
-          throw new Error('Impossible de charger Stripe. Vérifiez votre connexion Internet.');
+        if (!stripe) {
+          const stripeInstance = await getStripe();
+          if (!stripeInstance) {
+            throw new Error('Impossible de charger Stripe. Vérifiez votre connexion Internet.');
+          }
+          setStripe(stripeInstance);
         }
-        setStripe(stripeInstance);
 
         const { data, error: fnError } = await supabase.functions.invoke('stripe-pos-payment', {
           body: {
@@ -358,7 +376,8 @@ export function StripeCardPaymentModal({
     };
 
     initPayment();
-  }, [isOpen, amount, currency, orderId, sellerId, description, onError]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, orderId]);
 
   const handleClose = () => {
     setClientSecret(null);
