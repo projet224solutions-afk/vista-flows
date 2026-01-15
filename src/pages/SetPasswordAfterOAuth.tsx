@@ -96,6 +96,15 @@ export default function SetPasswordAfterOAuth() {
         return;
       }
 
+      // ✅ Fallback: si l'utilisateur a déjà validé/ignoré cette étape en local
+      const localStatus = localStorage.getItem(`oauth_password_set_${user.id}`);
+      if (localStatus === 'true' || localStatus === 'skipped') {
+        console.log('✅ [SetPasswordAfterOAuth] Étape déjà traitée (localStorage), redirection...', { localStatus });
+        localStorage.removeItem('needs_oauth_password');
+        redirectToProperDashboard();
+        return;
+      }
+
       // L'utilisateur OAuth doit définir son mot de passe
       console.log('🔐 [SetPasswordAfterOAuth] Utilisateur OAuth sans mot de passe, affichage du formulaire');
       setCheckingStatus(false);
@@ -103,6 +112,14 @@ export default function SetPasswordAfterOAuth() {
 
     checkUserStatus();
   }, [user, profile, authLoading, profileLoading, navigate]);
+
+  const handleSkipPassword = () => {
+    if (!user) return;
+    localStorage.removeItem('needs_oauth_password');
+    localStorage.setItem(`oauth_password_set_${user.id}`, 'skipped');
+    toast.message('Vous pourrez définir un mot de passe plus tard depuis votre profil.');
+    redirectToProperDashboard();
+  };
 
   const handleSetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,8 +147,8 @@ export default function SetPasswordAfterOAuth() {
         .eq('id', user?.id);
 
       if (profileError) {
-        console.error('Erreur mise à jour profil:', profileError);
-        // Ne pas bloquer, le mot de passe est déjà défini
+        console.error('Erreur mise à jour profil (has_password):', profileError);
+        // Ne pas bloquer, le mot de passe est déjà défini dans Auth
       }
 
       // 3. Nettoyer les flags localStorage (backup)
@@ -144,7 +161,7 @@ export default function SetPasswordAfterOAuth() {
       // Rediriger après un court délai
       setTimeout(() => {
         redirectToProperDashboard();
-      }, 2000);
+      }, 1200);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur lors de la définition du mot de passe';
       setError(message);
@@ -312,8 +329,8 @@ export default function SetPasswordAfterOAuth() {
               </Alert>
             )}
 
-            {/* Bouton d'action */}
-            <div className="pt-2">
+            {/* Boutons d'action */}
+            <div className="pt-2 space-y-3">
               <Button
                 type="submit"
                 className="w-full h-12 text-base font-semibold"
@@ -331,6 +348,16 @@ export default function SetPasswordAfterOAuth() {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-12"
+                onClick={handleSkipPassword}
+                disabled={loading}
+              >
+                Continuer sans mot de passe
               </Button>
             </div>
           </form>
