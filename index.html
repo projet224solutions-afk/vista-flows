@@ -172,41 +172,168 @@
   <script type="module" src="/src/main.tsx"></script>
   
   <script>
-    // Hide loader when app is ready - ultra simple version
-    (function() {
+    // Watchdog loader: évite l'écran blanc si le bundle ne démarre pas (souvent cache/SW sur mobile)
+    (function () {
       var loader = document.getElementById('app-loader');
-      var maxWait = 10000; // 10 seconds max
-      
+      if (!loader) return;
+
+      var maxWait = 12000; // 12s
+      var intervalMs = 150;
+      var recoveryKey = '__boot_recover_v2';
+
       function hide() {
-        if (loader) {
-          loader.classList.add('fade-out');
-          setTimeout(function() { 
-            if (loader) loader.style.display = 'none'; 
-          }, 400);
+        loader.classList.add('fade-out');
+        setTimeout(function () {
+          loader.style.display = 'none';
+        }, 400);
+      }
+
+      function isMounted() {
+        try {
+          var root = document.getElementById('root');
+          var hasDom = !!(root && root.innerHTML && root.innerHTML.length > 50);
+          var hasFlag = !!window.__APP_MOUNTED;
+          return hasDom || hasFlag;
+        } catch (e) {
+          return false;
         }
       }
-      
-      // Check if React mounted
-      function check() {
-        var root = document.getElementById('root');
-        return root && root.innerHTML.length > 50;
+
+      function showFailureUI(details) {
+        try {
+          var text = loader.querySelector('.text');
+          if (text) {
+            text.textContent = 'Impossible de charger l\'application. Vérifiez votre connexion puis réessayez.';
+          }
+
+          // Boutons (créés une seule fois)
+          if (!loader.querySelector('[data-loader-actions]')) {
+            var actions = document.createElement('div');
+            actions.setAttribute('data-loader-actions', '1');
+            actions.style.marginTop = '14px';
+            actions.style.display = 'flex';
+            actions.style.gap = '10px';
+
+            var reloadBtn = document.createElement('button');
+            reloadBtn.textContent = 'Recharger';
+            reloadBtn.style.padding = '10px 14px';
+            reloadBtn.style.borderRadius = '10px';
+            reloadBtn.style.border = '1px solid #d1d5db';
+            reloadBtn.style.background = '#fff';
+            reloadBtn.style.cursor = 'pointer';
+            reloadBtn.onclick = function () { location.reload(); };
+
+            var repairBtn = document.createElement('button');
+            repairBtn.textContent = 'Réparer (vider cache)';
+            repairBtn.style.padding = '10px 14px';
+            repairBtn.style.borderRadius = '10px';
+            repairBtn.style.border = '1px solid #1d4ed8';
+            repairBtn.style.background = '#2563eb';
+            repairBtn.style.color = '#fff';
+            repairBtn.style.cursor = 'pointer';
+            repairBtn.onclick = function () {
+              try { sessionStorage.removeItem(recoveryKey); } catch (e) {}
+              attemptRecovery(true);
+            };
+
+            actions.appendChild(reloadBtn);
+            actions.appendChild(repairBtn);
+            loader.appendChild(actions);
+          }
+
+          // Détails techniques optionnels (debug)
+          if (details && !loader.querySelector('[data-loader-details]')) {
+            var pre = document.createElement('pre');
+            pre.setAttribute('data-loader-details', '1');
+            pre.style.marginTop = '12px';
+            pre.style.maxWidth = '90vw';
+            pre.style.whiteSpace = 'pre-wrap';
+            pre.style.wordBreak = 'break-word';
+            pre.style.fontSize = '12px';
+            pre.style.color = '#6b7280';
+            pre.textContent = String(details).slice(0, 800);
+            loader.appendChild(pre);
+          }
+        } catch (e) {
+          // ignore
+        }
       }
-      
-      // Poll every 100ms
-      var interval = setInterval(function() {
-        if (check()) {
+
+      function attemptRecovery(force) {
+        // Si l'app est montée, ne rien faire
+        if (isMounted()) return;
+
+        var alreadyTried = false;
+        try { alreadyTried = sessionStorage.getItem(recoveryKey) === '1'; } catch (e) {}
+
+        if (alreadyTried && !force) {
+          showFailureUI('Recovery déjà tenté.');
+          return;
+        }
+
+        try { sessionStorage.setItem(recoveryKey, '1'); } catch (e) {}
+
+        // Tentative: unregister SW + clear caches + reload cache-bust
+        Promise.resolve()
+          .then(function () {
+            if (!('serviceWorker' in navigator)) return;
+            return navigator.serviceWorker.getRegistrations().then(function (regs) {
+              return Promise.all((regs || []).map(function (r) { return r.unregister(); }));
+            });
+          })
+          .then(function () {
+            if (!('caches' in window)) return;
+            return caches.keys().then(function (keys) {
+              return Promise.all((keys || []).map(function (k) { return caches.delete(k); }));
+            });
+          })
+          .finally(function () {
+            var u = new URL(location.href);
+            u.searchParams.set('cb', String(Date.now()));
+            u.searchParams.set('recovered', '1');
+            location.replace(u.toString());
+          });
+      }
+
+      // Détecter tôt les erreurs globales (utile si main.tsx ne se charge pas)
+      window.addEventListener('error', function (event) {
+        if (isMounted()) return;
+        showFailureUI(event && (event.message || (event.error && event.error.message)));
+      }, true);
+
+      window.addEventListener('unhandledrejection', function (event) {
+        if (isMounted()) return;
+        showFailureUI(event && event.reason);
+      });
+
+      // Poll: si React a monté, on cache le loader
+      var interval = setInterval(function () {
+        if (isMounted()) {
           clearInterval(interval);
           hide();
         }
-      }, 100);
-      
-      // Force hide after max wait
-      setTimeout(function() {
+      }, intervalMs);
+
+      // Timeout: si pas monté, on tente une réparation automatique (1 fois), sinon on affiche un message
+      setTimeout(function () {
         clearInterval(interval);
-        hide();
+        if (isMounted()) {
+          hide();
+          return;
+        }
+
+        // Si le bundle n'a même pas démarré, c'est typiquement un cache/SW ou un problème de chargement du JS
+        var bootstrapped = !!window.__APP_BOOTSTRAPPED;
+        if (!bootstrapped) {
+          attemptRecovery(false);
+          return;
+        }
+
+        // Sinon l'app a démarré mais n'a pas monté -> on garde le loader + message
+        showFailureUI('Timeout: app non montée.');
       }, maxWait);
-      
-      // Expose globally for manual hide
+
+      // Expose pour debug
       window.__hideLoader = hide;
     })();
   </script>
