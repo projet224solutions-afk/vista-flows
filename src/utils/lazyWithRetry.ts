@@ -61,17 +61,27 @@ export function lazyWithRetry<T extends ComponentType<any>>(
   interval = 1500
 ): React.LazyExoticComponent<T> {
   return lazy(async () => {
-    // Clé pour éviter les boucles infinies de reload
-    const pageHasAlreadyReloaded = sessionStorage.getItem('page_reloaded_for_chunk') === 'true';
+    // Clés anti-boucles (mobile/PWA) : sessionStorage peut être instable sur certains navigateurs
+    const reloadedInSession = sessionStorage.getItem('page_reloaded_for_chunk') === 'true';
+    const lastRecoveryAt = Number(localStorage.getItem('chunk_recovery_last_at') || '0');
+    const recentlyRecovered = Date.now() - lastRecoveryAt < 5 * 60 * 1000; // 5 min
+
+    // Guard global pour éviter plusieurs reloads simultanés (plusieurs chunks peuvent échouer)
+    const w = window as any;
+    if (w.__chunkRecoveryInProgress) {
+      return { default: OfflineFallback as unknown as T };
+    }
 
     try {
       const component = await componentImport();
-      // Succès - réinitialiser le flag
+      // Succès - réinitialiser les flags
       sessionStorage.removeItem('page_reloaded_for_chunk');
+      localStorage.removeItem('chunk_recovery_last_at');
+      w.__chunkRecoveryInProgress = false;
       return component;
     } catch (error: any) {
       const errorMessage = error?.message || '';
-      const isChunkLoadError = 
+      const isChunkLoadError =
         errorMessage.includes('Failed to fetch dynamically imported module') ||
         errorMessage.includes('Loading chunk') ||
         errorMessage.includes('Loading CSS chunk') ||
@@ -87,47 +97,63 @@ export function lazyWithRetry<T extends ComponentType<any>>(
         return { default: OfflineFallback as unknown as T };
       }
 
-      // Si c'est une erreur de chunk et qu'on n'a pas encore rechargé
-      if (isChunkLoadError && !pageHasAlreadyReloaded) {
-        console.warn('[LazyRetry] Chunk load error detected, attempting retries...');
-        
-        // Essayer avec retry d'abord
+      // ✅ Stratégie robuste mobile/PWA:
+      // 1) tenter quelques retries
+      // 2) si échec: nettoyer SW+caches puis recharger UNE seule fois (avec cache-bust)
+      // 3) si déjà tenté récemment: afficher fallback (pas de boucle infinie)
+      if (isChunkLoadError) {
+        // Retries rapides
         for (let i = 0; i < retries; i++) {
           await new Promise(resolve => setTimeout(resolve, interval));
-          
-          // Vérifier si on est passé offline entre-temps
           if (isOffline()) {
             console.warn('[LazyRetry] Went offline during retry, showing fallback');
             return { default: OfflineFallback as unknown as T };
           }
-          
           try {
-            // Ajouter cache-bust pour forcer le rechargement
-            const cacheBuster = `?t=${Date.now()}`;
             const component = await componentImport();
             sessionStorage.removeItem('page_reloaded_for_chunk');
+            localStorage.removeItem('chunk_recovery_last_at');
+            w.__chunkRecoveryInProgress = false;
             console.log(`[LazyRetry] Retry ${i + 1}/${retries} succeeded`);
             return component;
-          } catch (retryError) {
+          } catch {
             console.warn(`[LazyRetry] Retry ${i + 1}/${retries} failed`);
           }
         }
 
-        // Si les retries échouent et qu'on est toujours online, recharger la page
-        if (navigator.onLine) {
-          console.warn('[LazyRetry] All retries failed, reloading page...');
-          sessionStorage.setItem('page_reloaded_for_chunk', 'true');
-          window.location.reload();
+        // Si on a déjà fait une recovery récemment, STOP: on affiche un fallback au lieu de boucler
+        if (reloadedInSession || recentlyRecovered) {
+          console.warn('[LazyRetry] Recovery already attempted recently, showing fallback');
+          sessionStorage.removeItem('page_reloaded_for_chunk');
+          w.__chunkRecoveryInProgress = false;
+          return { default: OfflineFallback as unknown as T };
         }
-        
-        // Fallback si le reload n'a pas fonctionné
-        return { default: OfflineFallback as unknown as T };
-      }
 
-      // Si on a déjà rechargé, afficher le fallback au lieu de planter
-      if (pageHasAlreadyReloaded && isChunkLoadError) {
-        console.warn('[LazyRetry] Already reloaded, showing fallback');
-        sessionStorage.removeItem('page_reloaded_for_chunk');
+        // Marquer une tentative de recovery
+        sessionStorage.setItem('page_reloaded_for_chunk', 'true');
+        localStorage.setItem('chunk_recovery_last_at', String(Date.now()));
+        w.__chunkRecoveryInProgress = true;
+
+        // Nettoyage best-effort (résout les chunks manquants après déploiement)
+        try {
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map(r => r.unregister()));
+          }
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+          }
+        } catch (cleanupError) {
+          console.warn('[LazyRetry] Cache/SW cleanup failed:', cleanupError);
+        }
+
+        // Reload avec cache-bust pour forcer un index.html frais
+        const url = new URL(window.location.href);
+        url.searchParams.set('v', String(Date.now()));
+        window.location.replace(url.toString());
+
+        // Si jamais le navigateur bloque le reload, fallback
         return { default: OfflineFallback as unknown as T };
       }
 
