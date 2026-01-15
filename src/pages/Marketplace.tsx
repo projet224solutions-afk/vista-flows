@@ -10,6 +10,7 @@ import { MarketplaceGrid } from "@/components/marketplace/MarketplaceGrid";
 import { MarketplaceProductCard } from "@/components/marketplace/MarketplaceProductCard";
 import { UniversalMarketplaceCard } from "@/components/marketplace/UniversalMarketplaceCard";
 import { ProfessionalServiceCard } from "@/components/marketplace/ProfessionalServiceCard";
+import { ServiceTypesGrid } from "@/components/marketplace/ServiceTypesGrid";
 import { CurrencyIndicator } from "@/components/marketplace/CurrencyIndicator";
 import QuickFooter from "@/components/QuickFooter";
 import ProductDetailModal from "@/components/marketplace/ProductDetailModal";
@@ -490,107 +491,100 @@ export default function Marketplace() {
 
       {/* Results */}
       <section className="px-4 py-3">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-xs text-muted-foreground">
-            {marketplaceItems.length} / {marketplaceTotal} résultats
-            {selectedItemType !== 'all' && (
-              <span className="ml-2">
-                ({selectedItemType === 'product' ? 'Produits' : 
-                  selectedItemType === 'professional_service' ? 'Services professionnels' : 
-                  'Produits numériques'})
-              </span>
-            )}
-          </p>
-        </div>
-
-        {marketplaceLoading ? (
-          <div className="marketplace-grid">
-            {/* Skeleton Loading */}
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="marketplace-card animate-pulse">
-                <div className="marketplace-card-image-container bg-muted" />
-                <div className="marketplace-card-content space-y-2">
-                  <div className="h-4 bg-muted rounded w-3/4" />
-                  <div className="h-3 bg-muted rounded w-1/2" />
-                  <div className="h-5 bg-muted rounded w-1/3" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : marketplaceItems.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground mb-2">
-              {selectedItemType === 'all' ? 'Aucun article trouvé' :
-               selectedItemType === 'product' ? 'Aucun produit trouvé' :
-               selectedItemType === 'professional_service' ? 'Aucun service professionnel trouvé' :
-               'Aucun produit numérique trouvé'}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Essayez de modifier vos filtres de recherche
-            </p>
-          </div>
+        {/* Si "Services Pro" est sélectionné, afficher la grille des types de services */}
+        {selectedItemType === 'professional_service' ? (
+          <ServiceTypesGrid 
+            onBack={() => setSelectedItemType('all')} 
+            searchQuery={searchQuery}
+          />
         ) : (
-          <MarketplaceGrid>
-            {marketplaceItems.map((item) => {
-              // Pour les services professionnels, utiliser UniversalMarketplaceCard
-              if (item.item_type === 'professional_service') {
-                return (
-                  <ProfessionalServiceCard
-                    key={item.id}
-                    item={item}
-                    onViewDetails={() => navigate(`/services-proximite/${item.id}`)}
-                  />
-                );
-              }
-              
-              // Pour les produits physiques et numériques, utiliser MarketplaceProductCard
-              return (
-                <MarketplaceProductCard
-                  key={item.id}
-                  id={item.id}
-                  image={item.images || []}
-                  title={item.name}
-                  price={item.price}
-                  originalPrice={item.originalPrice}
-                  vendor={item.vendor_name}
-                  vendorId={item.vendor_id}
-                  vendorLocation={item.address}
-                  vendorRating={item.rating}
-                  vendorRatingCount={item.reviews_count}
-                  rating={item.rating}
-                  reviewCount={item.reviews_count}
-                  isPremium={item.is_premium || item.is_featured}
-                  stock={item.stock}
-                  category={item.category_name}
-                  onBuy={() => handleProductClick(item.id)}
-                  onAddToCart={() => {
-                    addToCart({
-                      id: item.id,
-                      name: item.name,
-                      price: item.price,
-                      image: item.images?.[0],
-                      vendor_id: item.vendor_id,
-                      vendor_name: item.vendor_name
-                    });
-                    toast.success('Ajouté au panier');
-                  }}
-                  onContact={() => handleContactVendor(item.id)}
-                />
-              );
-            })}
-          </MarketplaceGrid>
-        )}
+          <>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-muted-foreground">
+                {marketplaceItems.length} / {marketplaceTotal} résultats
+                {selectedItemType !== 'all' && (
+                  <span className="ml-2">
+                    ({selectedItemType === 'product' ? 'Produits' : 'Produits numériques'})
+                  </span>
+                )}
+              </p>
+            </div>
 
-        {marketplaceHasMore && !marketplaceLoading && (
-          <div className="text-center mt-4 md:mt-6">
-            <Button 
-              onClick={marketplaceLoadMore} 
-              disabled={marketplaceLoading}
-              size={isMobile ? "sm" : "default"}
-            >
-              {marketplaceLoading ? 'Chargement...' : 'Voir plus'}
-            </Button>
-          </div>
+            {marketplaceLoading ? (
+              <div className="marketplace-grid">
+                {/* Skeleton Loading */}
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <div key={i} className="marketplace-card animate-pulse">
+                    <div className="marketplace-card-image-container bg-muted" />
+                    <div className="marketplace-card-content space-y-2">
+                      <div className="h-4 bg-muted rounded w-3/4" />
+                      <div className="h-3 bg-muted rounded w-1/2" />
+                      <div className="h-5 bg-muted rounded w-1/3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : marketplaceItems.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground mb-2">
+                  {selectedItemType === 'all' ? 'Aucun article trouvé' :
+                   selectedItemType === 'product' ? 'Aucun produit trouvé' :
+                   'Aucun produit numérique trouvé'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Essayez de modifier vos filtres de recherche
+                </p>
+              </div>
+            ) : (
+              <MarketplaceGrid>
+                {marketplaceItems.filter(item => item.item_type !== 'professional_service').map((item) => (
+                  <MarketplaceProductCard
+                    key={item.id}
+                    id={item.id}
+                    image={item.images || []}
+                    title={item.name}
+                    price={item.price}
+                    originalPrice={item.originalPrice}
+                    vendor={item.vendor_name}
+                    vendorId={item.vendor_id}
+                    vendorLocation={item.address}
+                    vendorRating={item.rating}
+                    vendorRatingCount={item.reviews_count}
+                    rating={item.rating}
+                    reviewCount={item.reviews_count}
+                    isPremium={item.is_premium || item.is_featured}
+                    stock={item.stock}
+                    category={item.category_name}
+                    onBuy={() => handleProductClick(item.id)}
+                    onAddToCart={() => {
+                      addToCart({
+                        id: item.id,
+                        name: item.name,
+                        price: item.price,
+                        image: item.images?.[0],
+                        vendor_id: item.vendor_id,
+                        vendor_name: item.vendor_name
+                      });
+                      toast.success('Ajouté au panier');
+                    }}
+                    onContact={() => handleContactVendor(item.id)}
+                  />
+                ))}
+              </MarketplaceGrid>
+            )}
+
+            {marketplaceHasMore && !marketplaceLoading && (
+              <div className="text-center mt-4 md:mt-6">
+                <Button 
+                  onClick={marketplaceLoadMore} 
+                  disabled={marketplaceLoading}
+                  size={isMobile ? "sm" : "default"}
+                >
+                  {marketplaceLoading ? 'Chargement...' : 'Voir plus'}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </section>
 
