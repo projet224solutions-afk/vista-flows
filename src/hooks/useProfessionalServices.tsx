@@ -198,11 +198,39 @@ export function useProfessionalServices() {
     phone?: string;
     email?: string;
     website?: string;
+    city?: string;
+    latitude?: number;
+    longitude?: number;
   }) => {
     try {
       if (!user) {
         toast.error('Vous devez être connecté');
         return null;
+      }
+
+      // 🔥 Capturer automatiquement la position GPS si non fournie
+      let latitude = serviceData.latitude;
+      let longitude = serviceData.longitude;
+
+      if (!latitude || !longitude) {
+        try {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            if (!navigator.geolocation) {
+              reject(new Error('GPS non disponible'));
+              return;
+            }
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 60000
+            });
+          });
+          latitude = position.coords.latitude;
+          longitude = position.coords.longitude;
+          console.log('📍 Position GPS capturée:', { latitude, longitude });
+        } catch (gpsError) {
+          console.warn('⚠️ GPS non disponible, service créé sans coordonnées:', gpsError);
+        }
       }
 
       // Créer le service dans la DB
@@ -217,6 +245,9 @@ export function useProfessionalServices() {
           phone: serviceData.phone || null,
           email: serviceData.email || null,
           website: serviceData.website || null,
+          city: serviceData.city || null,
+          latitude: latitude || null,
+          longitude: longitude || null,
           status: 'pending',
           verification_status: 'unverified',
           rating: 0,
