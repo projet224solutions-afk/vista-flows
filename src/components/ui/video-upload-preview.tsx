@@ -29,7 +29,7 @@ interface VideoUploadPreviewProps {
 }
 
 export function VideoUploadPreview({
-  maxDuration = 5,
+  maxDuration = 40,
   maxSizeMB = 20,
   onVideoSelect,
   currentVideoUrl,
