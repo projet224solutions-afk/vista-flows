@@ -212,7 +212,7 @@ export default function ProductManagement() {
       return;
     }
 
-    // Validate video duration (max 10 seconds)
+    // Validate video duration (max 40 seconds)
     try {
       setUploadingVideo(true);
       const video = document.createElement('video');
@@ -221,7 +221,7 @@ export default function ProductManagement() {
       await new Promise<void>((resolve, reject) => {
         video.onloadedmetadata = () => {
           window.URL.revokeObjectURL(video.src);
-          if (video.duration > 10) {
+          if (video.duration > 40) {
             reject(new Error('Durée maximale dépassée'));
           } else {
             resolve();
@@ -235,7 +235,7 @@ export default function ProductManagement() {
       toast.success('✅ Vidéo publicitaire ajoutée');
     } catch (error: any) {
       if (error.message === 'Durée maximale dépassée') {
-        toast.error('Vidéo trop longue. Durée maximale : 10 secondes');
+        toast.error('Vidéo trop longue. Durée maximale : 40 secondes');
       } else {
         toast.error('Erreur lors de la validation de la vidéo');
       }
@@ -1466,7 +1466,7 @@ export default function ProductManagement() {
                       </>
                     )}
                     <span className="text-xs">
-                      {uploadingVideo ? 'Validation...' : 'Vidéo pub (10s)'}
+                      {uploadingVideo ? 'Validation...' : 'Vidéo pub (40s)'}
                     </span>
                   </Button>
                 </div>
@@ -1493,7 +1493,7 @@ export default function ProductManagement() {
                   <Label className="flex items-center gap-2">
                     <Video className="h-4 w-4" />
                     Vidéo publicitaire Premium
-                    <Badge variant="secondary" className="text-[10px]">Max 10s</Badge>
+                    <Badge variant="secondary" className="text-[10px]">Max 40s</Badge>
                   </Label>
                   <div className="relative aspect-video rounded-lg overflow-hidden border-2 border-primary/20 bg-black">
                     <video
