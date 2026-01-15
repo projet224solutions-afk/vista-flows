@@ -39,7 +39,7 @@ const DEFAULT_CONFIG: CircuitBreakerConfig = {
   monitorInterval: 5000 // 5 secondes
 };
 
-class CircuitBreakerManager {
+export class CircuitBreakerManager {
   private circuits: Map<string, CircuitBreakerInstance> = new Map();
   private listeners: Map<string, Set<(state: CircuitState) => void>> = new Map();
   private monitorInterval: NodeJS.Timeout | null = null;
@@ -318,6 +318,10 @@ export class CircuitBreakerError extends Error {
 
 // Export singleton
 export const circuitBreaker = new CircuitBreakerManager();
+
+// Backward-compatible aliases
+export type CircuitBreakerState = CircuitState;
+export type CircuitBreaker = CircuitBreakerManager;
 
 // Export types
 export type { CircuitBreakerConfig, CircuitMetrics, CircuitBreakerInstance };
