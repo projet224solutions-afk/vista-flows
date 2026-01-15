@@ -22,15 +22,22 @@ interface IOSInstallGuideProps {
 export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
   const [step, setStep] = useState(1);
   const [isSafari, setIsSafari] = useState(true);
+  const [isIOS, setIsIOS] = useState(true);
+  const [isMac, setIsMac] = useState(false);
 
   useEffect(() => {
-    // Détecter si on est sur Safari (seul navigateur supportant PWA sur iOS)
+    // Détecter si on est sur Safari (seul navigateur supportant PWA sur iOS/Mac)
     const ua = navigator.userAgent;
-    const safari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua);
+    const safari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome/i.test(ua);
+    const ios = /iPhone|iPad|iPod/i.test(ua);
+    const mac = /Macintosh|MacIntel|MacPPC|Mac68K/i.test(ua) && !ios;
     setIsSafari(safari);
+    setIsIOS(ios);
+    setIsMac(mac);
   }, []);
 
-  const steps = [
+  // Instructions différentes pour iOS et Mac
+  const iosSteps = [
     {
       title: "Étape 1 : Ouvrir le menu Partager",
       description: "Appuyez sur l'icône de partage en bas de l'écran",
@@ -51,9 +58,32 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
     },
   ];
 
+  const macSteps = [
+    {
+      title: "Étape 1 : Ouvrir le menu Fichier",
+      description: "Dans la barre de menu en haut, cliquez sur Fichier",
+      icon: <Share className="w-12 h-12 text-primary" />,
+      note: "Ou utilisez le raccourci ⌘ + Maj + A",
+    },
+    {
+      title: "Étape 2 : Ajouter au Dock",
+      description: "Cliquez sur \"Ajouter au Dock\" dans le menu",
+      icon: <Plus className="w-12 h-12 text-primary p-2 border-2 border-primary rounded-lg" />,
+      note: "L'application sera ajoutée à votre Dock",
+    },
+    {
+      title: "Étape 3 : Lancer l'application",
+      description: "Cliquez sur l'icône dans votre Dock pour ouvrir",
+      icon: <Smartphone className="w-12 h-12 text-green-600" />,
+      note: "224Solutions est maintenant installée sur votre Mac !",
+    },
+  ];
+
+  const steps = isMac ? macSteps : iosSteps;
+
   const currentStep = steps[step - 1];
 
-  if (!isSafari) {
+  if (!isSafari && (isIOS || isMac)) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
@@ -63,14 +93,17 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
               Ouvrir dans Safari
             </DialogTitle>
             <DialogDescription>
-              Pour installer l'application sur iOS, vous devez utiliser Safari.
+              {isMac 
+                ? "Pour installer l'application sur Mac, vous devez utiliser Safari."
+                : "Pour installer l'application sur iOS, vous devez utiliser Safari."
+              }
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
             <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
               <p className="text-sm text-amber-800 dark:text-amber-200">
-                <strong>Chrome, Firefox et autres navigateurs</strong> ne supportent pas l'installation PWA sur iOS.
+                <strong>Chrome, Firefox et autres navigateurs</strong> ne supportent pas l'installation PWA sur {isMac ? 'Mac' : 'iOS'}.
               </p>
             </div>
             
@@ -106,10 +139,13 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Smartphone className="w-5 h-5 text-primary" />
-            Installer sur iPhone/iPad
+            {isMac ? 'Installer sur Mac' : 'Installer sur iPhone/iPad'}
           </DialogTitle>
           <DialogDescription>
-            Suivez ces étapes pour ajouter 224Solutions à votre écran d'accueil
+            {isMac 
+              ? "Suivez ces étapes pour ajouter 224Solutions à votre Dock"
+              : "Suivez ces étapes pour ajouter 224Solutions à votre écran d'accueil"
+            }
           </DialogDescription>
         </DialogHeader>
 
