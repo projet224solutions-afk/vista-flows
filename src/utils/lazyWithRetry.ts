@@ -50,10 +50,74 @@ const isOffline = (): boolean => {
   return typeof navigator !== 'undefined' && !navigator.onLine;
 };
 
+const IMPORT_TIMEOUT_MS = 15000;
+
+const withTimeout = async <T,>(p: Promise<T>, ms: number, label = 'dynamic import'): Promise<T> => {
+  let t: number | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    t = window.setTimeout(() => {
+      const err = new Error(`${label} timeout after ${ms}ms`);
+      (err as any).name = 'TimeoutError';
+      reject(err);
+    }, ms);
+  });
+
+  try {
+    return await Promise.race([p, timeout]);
+  } finally {
+    if (t) window.clearTimeout(t);
+  }
+};
+
+const safeStorage = {
+  getSession(key: string) {
+    try {
+      return sessionStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setSession(key: string, value: string) {
+    try {
+      sessionStorage.setItem(key, value);
+    } catch {
+      // ignore
+    }
+  },
+  removeSession(key: string) {
+    try {
+      sessionStorage.removeItem(key);
+    } catch {
+      // ignore
+    }
+  },
+  getLocal(key: string) {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setLocal(key: string, value: string) {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      // ignore
+    }
+  },
+  removeLocal(key: string) {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // ignore
+    }
+  },
+};
+
 /**
  * Wrapper pour les imports dynamiques avec retry automatique
  * Gère les erreurs de cache après déploiement et le mode offline
- * v3 - Support mode hors ligne amélioré avec meilleur fallback UI
+ * v4 - Ajoute un timeout (mobile) pour éviter un chargement infini
  */
 export function lazyWithRetry<T extends ComponentType<any>>(
   componentImport: ComponentImport<T>,
@@ -62,8 +126,8 @@ export function lazyWithRetry<T extends ComponentType<any>>(
 ): React.LazyExoticComponent<T> {
   return lazy(async () => {
     // Clés anti-boucles (mobile/PWA) : sessionStorage peut être instable sur certains navigateurs
-    const reloadedInSession = sessionStorage.getItem('page_reloaded_for_chunk') === 'true';
-    const lastRecoveryAt = Number(localStorage.getItem('chunk_recovery_last_at') || '0');
+    const reloadedInSession = safeStorage.getSession('page_reloaded_for_chunk') === 'true';
+    const lastRecoveryAt = Number(safeStorage.getLocal('chunk_recovery_last_at') || '0');
     const recentlyRecovered = Date.now() - lastRecoveryAt < 5 * 60 * 1000; // 5 min
 
     // Guard global pour éviter plusieurs reloads simultanés (plusieurs chunks peuvent échouer)
@@ -73,10 +137,10 @@ export function lazyWithRetry<T extends ComponentType<any>>(
     }
 
     try {
-      const component = await componentImport();
+      const component = await withTimeout(componentImport(), IMPORT_TIMEOUT_MS);
       // Succès - réinitialiser les flags
-      sessionStorage.removeItem('page_reloaded_for_chunk');
-      localStorage.removeItem('chunk_recovery_last_at');
+      safeStorage.removeSession('page_reloaded_for_chunk');
+      safeStorage.removeLocal('chunk_recovery_last_at');
       w.__chunkRecoveryInProgress = false;
       return component;
     } catch (error: any) {
@@ -87,7 +151,9 @@ export function lazyWithRetry<T extends ComponentType<any>>(
         errorMessage.includes('Loading CSS chunk') ||
         errorMessage.includes('Failed to fetch') ||
         errorMessage.includes('Failed to load') ||
-        error?.name === 'ChunkLoadError';
+        errorMessage.toLowerCase().includes('timeout') ||
+        error?.name === 'ChunkLoadError' ||
+        error?.name === 'TimeoutError';
 
       console.warn('[LazyRetry] Module load error:', errorMessage);
 
@@ -110,9 +176,9 @@ export function lazyWithRetry<T extends ComponentType<any>>(
             return { default: OfflineFallback as unknown as T };
           }
           try {
-            const component = await componentImport();
-            sessionStorage.removeItem('page_reloaded_for_chunk');
-            localStorage.removeItem('chunk_recovery_last_at');
+            const component = await withTimeout(componentImport(), IMPORT_TIMEOUT_MS, 'dynamic import retry');
+            safeStorage.removeSession('page_reloaded_for_chunk');
+            safeStorage.removeLocal('chunk_recovery_last_at');
             w.__chunkRecoveryInProgress = false;
             console.log(`[LazyRetry] Retry ${i + 1}/${retries} succeeded`);
             return component;
@@ -122,17 +188,17 @@ export function lazyWithRetry<T extends ComponentType<any>>(
         }
 
         // Si on a déjà fait une recovery récemment, STOP: on affiche un fallback au lieu de boucler
-        if (reloadedInSession || recentlyRecovered) {
-          console.warn('[LazyRetry] Recovery already attempted recently, showing fallback');
-          sessionStorage.removeItem('page_reloaded_for_chunk');
-          w.__chunkRecoveryInProgress = false;
-          return { default: OfflineFallback as unknown as T };
-        }
+          if (reloadedInSession || recentlyRecovered) {
+            console.warn('[LazyRetry] Recovery already attempted recently, showing fallback');
+            safeStorage.removeSession('page_reloaded_for_chunk');
+            w.__chunkRecoveryInProgress = false;
+            return { default: OfflineFallback as unknown as T };
+          }
 
-        // Marquer une tentative de recovery
-        sessionStorage.setItem('page_reloaded_for_chunk', 'true');
-        localStorage.setItem('chunk_recovery_last_at', String(Date.now()));
-        w.__chunkRecoveryInProgress = true;
+          // Marquer une tentative de recovery
+          safeStorage.setSession('page_reloaded_for_chunk', 'true');
+          safeStorage.setLocal('chunk_recovery_last_at', String(Date.now()));
+          w.__chunkRecoveryInProgress = true;
 
         // Nettoyage best-effort (résout les chunks manquants après déploiement)
         try {
