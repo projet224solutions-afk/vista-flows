@@ -4,20 +4,26 @@ import { SubscriptionService, ActiveSubscription, Plan } from '@/services/subscr
 import { toast } from 'sonner';
 
 export function useVendorSubscription() {
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading, profileLoading } = useAuth();
   const [subscription, setSubscription] = useState<ActiveSubscription | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
 
   useEffect(() => {
+    // ⏳ Attendre que le profil soit chargé avant de décider
+    if (authLoading || profileLoading) {
+      return; // Ne rien faire pendant le chargement auth
+    }
+
     // ✅ Optimisation: Utiliser uniquement les IDs (primitives) pour éviter rechargements
     if (user?.id && profile?.role === 'vendeur') {
       loadSubscriptionData();
-    } else if (!user?.id) {
+    } else {
+      // ✅ FIX: Toujours terminer le loading si pas vendeur ou pas connecté
       setLoading(false);
     }
-  }, [user?.id, profile?.role]); // ✅ Dépendances stables
+  }, [user?.id, profile?.role, authLoading, profileLoading]); // ✅ Dépendances stables
 
   const loadSubscriptionData = async () => {
     if (!user) return;
