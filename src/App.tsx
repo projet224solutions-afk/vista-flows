@@ -67,7 +67,6 @@ const PdgSecurity = lazyWithRetry(() => import("./pages/PdgSecurity"));
 const CompetitiveAnalysis = lazyWithRetry(() => import("./pages/pdg/CompetitiveAnalysis"));
 const ApiSupervision = lazyWithRetry(() => import("./pages/pdg/ApiSupervision"));
 const SystemDebugPage = lazyWithRetry(() => import("./pages/pdg/SystemDebugPage"));
-const SimpleDiagnostic = lazyWithRetry(() => import("./pages/SimpleDiagnostic"));
 const PDGCopilotDashboard = lazyWithRetry(() => import("./components/pdg/PDGCopilotDashboard"));
 const BureauDashboard = lazyWithRetry(() => import("./pages/BureauDashboard"));
 const BureauMonitoringPage = lazyWithRetry(() => import("./pages/BureauMonitoringPage"));
@@ -108,13 +107,10 @@ const BadgeVerification = lazyWithRetry(() => import("./pages/BadgeVerification"
 const StolenMotoDeclaration = lazyWithRetry(() => import("./pages/StolenMotoDeclaration"));
 const VisualSearch = lazyWithRetry(() => import("./pages/VisualSearch"));
 const Categories = lazyWithRetry(() => import("./pages/Categories"));
-const StripePaymentTest = lazyWithRetry(() => import("./pages/StripePaymentTest"));
-const StripeDiagnostic = lazyWithRetry(() => import("./pages/StripeDiagnostic"));
 const DigitalProducts = lazyWithRetry(() => import("./pages/DigitalProducts"));
 const ShortLinkRedirect = lazyWithRetry(() => import("./pages/ShortLinkRedirect"));
 const UserPublicProfile = lazyWithRetry(() => import("./pages/UserPublicProfile"));
 const RestaurantPublicMenu = lazyWithRetry(() => import("./pages/RestaurantPublicMenu"));
-const Custom224PaymentDemo = lazyWithRetry(() => import("./pages/demos/Custom224PaymentDemo"));
 // Ultra-simple loading component - Pure CSS inline (no Tailwind dependency)
 const PageLoader = memo(() => (
   <div style={{ 
@@ -201,7 +197,6 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               {/* Accueil application (avec footer + services) */}
               <Route path="/home" element={<Home />} />
-              <Route path="/diagnostic" element={<SimpleDiagnostic />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/login" element={<Navigate to="/auth" replace />} />
@@ -237,9 +232,6 @@ function App() {
               <Route path="/categories" element={<Categories />} />
               <Route path="/digital-products" element={<DigitalProducts />} />
               <Route path="/boutiques" element={<NearbyBoutiques />} />
-              
-              {/* Demo Pages */}
-              <Route path="/demos/custom-payment" element={<Custom224PaymentDemo />} />
               
               <Route path="/services-proximite" element={<ServicesProximite />} />
               <Route path="/services-proximite/:id" element={<ServiceDetail />} />
@@ -345,12 +337,6 @@ function App() {
                 path="/payment-core"
                 element={<PaymentCorePage />}
               />
-              
-              {/* Test Stripe Payment */}
-              <Route path="/test-stripe-payment" element={<StripePaymentTest />} />
-              
-              {/* Diagnostic Stripe */}
-              <Route path="/stripe-diagnostic" element={<StripeDiagnostic />} />
               
               <Route path="/orders" element={<Orders />} />
               <Route
