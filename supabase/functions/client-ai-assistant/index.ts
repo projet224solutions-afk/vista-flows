@@ -17,13 +17,13 @@ async function searchProducts(supabaseClient: any, query: string, category?: str
       name,
       description,
       price,
-      compare_at_price,
+      compare_price,
       images,
       category_id,
       stock_quantity,
       is_active,
       is_hot,
-      is_new,
+      is_featured,
       rating,
       reviews_count,
       vendor_id,
@@ -39,7 +39,11 @@ async function searchProducts(supabaseClient: any, query: string, category?: str
         country,
         rating,
         is_verified,
-        delivery_options
+        is_active,
+        delivery_enabled,
+        delivery_base_price,
+        delivery_price_per_km,
+        delivery_rush_bonus
       ),
       category:categories(name)
     `)
@@ -132,12 +136,19 @@ async function getVendorDetails(supabaseClient: any, vendorId?: string, vendorNa
       email,
       address,
       city,
+      neighborhood,
       country,
+      latitude,
+      longitude,
       rating,
       is_verified,
-      delivery_options,
-      opening_hours,
-      social_links,
+      is_active,
+      delivery_enabled,
+      delivery_base_price,
+      delivery_price_per_km,
+      delivery_rush_bonus,
+      business_type,
+      service_type,
       created_at
     `);
 
@@ -544,10 +555,14 @@ async function getTopVendors(supabaseClient: any, limit = 10) {
       email,
       rating,
       is_verified,
-      delivery_options,
+      is_active,
+      delivery_enabled,
+      delivery_base_price,
+      delivery_price_per_km,
+      delivery_rush_bonus,
       created_at
     `)
-    .eq('status', 'active')
+    .eq('is_active', true)
     .order('rating', { ascending: false })
     .limit(limit);
 
@@ -575,7 +590,12 @@ async function getTopVendors(supabaseClient: any, limit = 10) {
       email: v.email,
       rating: v.rating,
       isVerified: v.is_verified,
-      deliveryOptions: v.delivery_options,
+      delivery: {
+        enabled: v.delivery_enabled,
+        basePrice: v.delivery_base_price,
+        pricePerKm: v.delivery_price_per_km,
+        rushBonus: v.delivery_rush_bonus,
+      },
       productCount: productCount || 0,
       memberSince: v.created_at
     };
@@ -624,7 +644,7 @@ async function globalMarketplaceSearch(supabaseClient: any, query: string, limit
   const { data: vendors } = await supabaseClient
     .from('vendors')
     .select('id, business_name, logo_url, description, rating, city, is_verified')
-    .eq('status', 'active')
+    .eq('is_active', true)
     .ilike('business_name', `%${query}%`)
     .order('rating', { ascending: false })
     .limit(limit);
@@ -691,7 +711,7 @@ async function getMarketplaceStats(supabaseClient: any) {
 
   const [productsCount, vendorsCount, categoriesCount, reviewsCount] = await Promise.all([
     supabaseClient.from('products').select('id', { count: 'exact', head: true }).eq('is_active', true),
-    supabaseClient.from('vendors').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+    supabaseClient.from('vendors').select('id', { count: 'exact', head: true }).eq('is_active', true),
     supabaseClient.from('categories').select('id', { count: 'exact', head: true }).eq('is_active', true),
     supabaseClient.from('product_reviews').select('id', { count: 'exact', head: true }).eq('is_approved', true)
   ]);
@@ -1092,8 +1112,9 @@ Tu as accès à des fonctions de RECHERCHE COMPLÈTES sur tout le système.
 - Pour les meilleurs vendeurs: utilise get_top_vendors
 - Pour les avis: utilise search_product_reviews
 - Présente les résultats de façon claire et structurée
-- Inclus toujours: nom, prix, note, vendeur pour les produits
-- Inclus toujours: nom, note, nb produits, ville pour les vendeurs
+- Pour les produits: affiche **Nom**, **Prix**, **Stock**, **Note**, et **Boutique** (Nom + ID vendeur + Téléphone + Adresse)
+- Pour les vendeurs: affiche **Nom**, **Note**, **Ville**, **Téléphone**, **Adresse**, **ID vendeur**
+- Si plusieurs produits: propose 3 à 5 choix max, puis demande lequel le client veut acheter
 
 ❌ RESTRICTIONS:
 - NE PAS aider avec les fonctionnalités vendeur/admin
