@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { SubscriptionService, ActiveSubscription, ProductLimit } from '@/services/subscriptionService';
 
@@ -7,16 +7,20 @@ export function useSubscription() {
   const [productLimit, setProductLimit] = useState<ProductLimit | null>(null);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  
+  // ✅ Ref pour éviter les appels multiples
+  const isMountedRef = useRef(true);
+  const hasFetchedRef = useRef(false);
 
-  useEffect(() => {
-    fetchSubscriptionData();
-    setupRealtimeSubscription();
-  }, []);
-
-  const fetchSubscriptionData = async () => {
+  const fetchSubscriptionData = useCallback(async () => {
+    // ✅ Éviter les appels multiples
+    if (hasFetchedRef.current) return;
+    
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!isMountedRef.current) return;
       
       if (!user) {
         setSubscription(null);
@@ -26,22 +30,33 @@ export function useSubscription() {
       }
 
       setUserId(user.id);
+      hasFetchedRef.current = true;
 
       const [subscriptionData, limitData] = await Promise.all([
         SubscriptionService.getActiveSubscription(user.id),
         SubscriptionService.checkProductLimit(user.id),
       ]);
 
+      if (!isMountedRef.current) return;
+
       setSubscription(subscriptionData);
       setProductLimit(limitData);
     } catch (error) {
       console.error('Error fetching subscription data:', error);
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
-  };
+  }, []);
 
-  const setupRealtimeSubscription = () => {
+  useEffect(() => {
+    isMountedRef.current = true;
+    hasFetchedRef.current = false;
+    
+    fetchSubscriptionData();
+
+    // ✅ Setup realtime avec cleanup correct
     const channel = supabase
       .channel('subscription_updates')
       .on(
@@ -52,15 +67,17 @@ export function useSubscription() {
           table: 'subscriptions',
         },
         () => {
+          hasFetchedRef.current = false;
           fetchSubscriptionData();
         }
       )
       .subscribe();
 
     return () => {
+      isMountedRef.current = false;
       supabase.removeChannel(channel);
     };
-  };
+  }, [fetchSubscriptionData]);
 
   const canAddProduct = (): boolean => {
     return productLimit?.can_add ?? false;
@@ -94,6 +111,9 @@ export function useSubscription() {
     isFreePlan,
     isPremiumPlan,
     getDaysRemaining,
-    refetch: fetchSubscriptionData,
+    refetch: () => {
+      hasFetchedRef.current = false;
+      return fetchSubscriptionData();
+    },
   };
 }
