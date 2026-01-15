@@ -13,7 +13,7 @@ import {
   UtensilsCrossed, ClipboardList, Users, Calendar,
   TrendingUp, RefreshCw, Clock, CheckCircle, XCircle,
   DollarSign, ShoppingBag, Package, Truck, MapPin, Eye,
-  Sparkles, Settings, Plus, LayoutGrid
+  Sparkles, Settings, Plus, LayoutGrid, CalendarCheck
 } from 'lucide-react';
 import { useServiceRestaurantStats } from '@/hooks/useServiceRestaurantStats';
 import { formatDistanceToNow } from 'date-fns';
@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { RestaurantMenuManager } from '@/components/restaurant/RestaurantMenuManager';
 import { RestaurantTableManager } from '@/components/restaurant/RestaurantTableManager';
 import { RestaurantSettings } from '@/components/restaurant/RestaurantSettings';
+import { RestaurantReservationsManager } from '@/components/restaurant/RestaurantReservationsManager';
 
 interface RestaurantModuleProps {
   serviceId: string;
@@ -237,10 +238,14 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
           <TabsTrigger value="overview">
             <DollarSign className="w-4 h-4 mr-2 hidden md:block" />
-            Vue d'ensemble
+            Aperçu
+          </TabsTrigger>
+          <TabsTrigger value="reservations">
+            <CalendarCheck className="w-4 h-4 mr-2 hidden md:block" />
+            Réservations
           </TabsTrigger>
           <TabsTrigger value="orders">
             <ShoppingBag className="w-4 h-4 mr-2 hidden md:block" />
@@ -256,7 +261,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
           </TabsTrigger>
           <TabsTrigger value="settings">
             <Settings className="w-4 h-4 mr-2 hidden md:block" />
-            Paramètres
+            Config
           </TabsTrigger>
         </TabsList>
 
@@ -421,6 +426,10 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="reservations" className="mt-4">
+          <RestaurantReservationsManager serviceId={serviceId} />
         </TabsContent>
 
         <TabsContent value="menu" className="mt-4">
