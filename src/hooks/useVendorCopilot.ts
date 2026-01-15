@@ -1,6 +1,7 @@
 /**
  * 🤖 HOOK COPILOTE VENDEUR ENTERPRISE
- * Gestion des requêtes IA pour les vendeurs avec contexte complet
+ * Gestion des requêtes IA pour les vendeurs via edge function vendor-ai-assistant
+ * Interface complète avec analyse dashboard, inventaire, ventes, clients
  */
 
 import { useState, useCallback } from 'react';
@@ -12,6 +13,8 @@ export interface CopilotMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
+  data?: any;
+  type?: 'analysis' | 'recommendation' | 'alert' | 'success' | 'error' | 'system';
 }
 
 export interface VendorCopilotState {
@@ -22,7 +25,15 @@ export interface VendorCopilotState {
 }
 
 export function useVendorCopilot() {
-  const [messages, setMessages] = useState<CopilotMessage[]>([]);
+  const [messages, setMessages] = useState<CopilotMessage[]>([
+    {
+      id: 'welcome',
+      role: 'system',
+      content: '👋 Bonjour ! Je suis votre Copilote IA ENTERPRISE. Je peux analyser vos ventes, gérer votre inventaire, répondre aux avis clients, et optimiser votre boutique. Que puis-je faire pour vous ?',
+      timestamp: new Date(),
+      type: 'system',
+    }
+  ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [vendorContext, setVendorContext] = useState<any | null>(null);
@@ -45,7 +56,7 @@ export function useVendorCopilot() {
           .limit(100),
         supabase
           .from('vendors')
-          .select('user_id')
+          .select('user_id, business_name')
           .eq('id', vendorId)
           .single()
       ]);
@@ -78,6 +89,7 @@ export function useVendorCopilot() {
 
       const context = {
         vendorId,
+        businessName: walletRes.data?.business_name || 'Boutique',
         totalOrders: orders.length,
         pendingOrders,
         totalRevenue,
@@ -96,7 +108,7 @@ export function useVendorCopilot() {
     }
   }, []);
 
-  // Traiter une requête au copilote
+  // Traiter une requête au copilote via l'edge function
   const processQuery = useCallback(async (query: string, vendorId: string) => {
     setLoading(true);
     setError(null);
@@ -125,43 +137,87 @@ export function useVendorCopilot() {
         throw new Error('Session expirée, veuillez vous reconnecter');
       }
 
+      // Préparer l'historique des messages pour l'IA
+      const messageHistory = messages
+        .filter(m => m.role !== 'system')
+        .map(m => ({ role: m.role, content: m.content }));
+
       // Appeler l'edge function vendor-ai-assistant
+      // IMPORTANT: stream: false pour recevoir JSON au lieu de SSE
       const { data, error: funcError } = await supabase.functions.invoke('vendor-ai-assistant', {
         body: {
           message: query,
           vendorContext: context,
-          messages: messages.map(m => ({ role: m.role, content: m.content }))
+          messages: [...messageHistory, { role: 'user', content: query }],
+          stream: false // Mode JSON pour compatibilité avec invoke
         }
       });
 
       if (funcError) {
+        console.error('Edge function error:', funcError);
         throw new Error(funcError.message || 'Erreur de communication avec l\'IA');
+      }
+
+      // Extraire la réponse - gérer différents formats
+      let responseContent = '';
+      
+      if (data?.reply) {
+        responseContent = data.reply;
+      } else if (data?.message) {
+        responseContent = data.message;
+      } else if (data?.answer) {
+        responseContent = data.answer;
+      } else if (typeof data === 'string') {
+        responseContent = data;
+      } else if (data?.error) {
+        throw new Error(data.error);
+      } else {
+        console.warn('Format de réponse inattendu:', data);
+        responseContent = 'Je n\'ai pas pu générer une réponse. Veuillez reformuler votre question.';
       }
 
       // Ajouter la réponse de l'assistant
       const assistantMessage: CopilotMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: data?.reply || data?.message || 'Je n\'ai pas pu générer de réponse.',
-        timestamp: new Date()
+        content: responseContent,
+        timestamp: new Date(),
+        type: 'analysis'
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+      
+      return responseContent;
 
     } catch (err: any) {
       console.error('Erreur processQuery:', err);
       setError(err.message);
       
+      // Construire un message d'erreur informatif
+      let errorContent = '❌ ';
+      if (err.message?.includes('402')) {
+        errorContent += 'Crédits IA insuffisants. Veuillez recharger vos crédits dans les paramètres.';
+      } else if (err.message?.includes('429')) {
+        errorContent += 'Limite de requêtes atteinte. Veuillez réessayer dans quelques instants.';
+      } else if (err.message?.includes('Session')) {
+        errorContent += 'Session expirée. Veuillez vous reconnecter.';
+      } else {
+        errorContent += err.message || 'Une erreur est survenue lors de la communication avec l\'IA.';
+      }
+      
       // Ajouter un message d'erreur
       const errorMessage: CopilotMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `❌ ${err.message || 'Une erreur est survenue'}`,
-        timestamp: new Date()
+        content: errorContent,
+        timestamp: new Date(),
+        type: 'error'
       };
       setMessages(prev => [...prev, errorMessage]);
       
       toast.error(err.message || 'Erreur lors de la communication avec le Copilote');
+      
+      return null;
     } finally {
       setLoading(false);
     }
@@ -169,19 +225,34 @@ export function useVendorCopilot() {
 
   // Effacer les messages
   const clearMessages = useCallback(() => {
-    setMessages([]);
+    setMessages([
+      {
+        id: 'welcome',
+        role: 'system',
+        content: '👋 Conversation réinitialisée. Comment puis-je vous aider ?',
+        timestamp: new Date(),
+        type: 'system',
+      }
+    ]);
     setError(null);
   }, []);
 
   // Générer une analyse automatique
-  const generateAnalysis = useCallback(async (vendorId: string, analysisType: 'sales' | 'inventory' | 'performance') => {
+  const generateAnalysis = useCallback(async (vendorId: string, analysisType: 'sales' | 'inventory' | 'performance' | 'reviews' | 'dashboard') => {
     const prompts = {
       sales: 'Analyse mes ventes des 30 derniers jours et donne-moi des recommandations pour augmenter mon chiffre d\'affaires.',
       inventory: 'Analyse mon inventaire et identifie les produits en rupture de stock ou à faible rotation.',
-      performance: 'Évalue la performance globale de ma boutique et suggère des améliorations.'
+      performance: 'Évalue la performance globale de ma boutique et suggère des améliorations.',
+      reviews: 'Analyse les avis clients récents et propose des réponses appropriées.',
+      dashboard: 'Effectue une analyse complète de mon tableau de bord vendeur.'
     };
 
-    await processQuery(prompts[analysisType], vendorId);
+    return await processQuery(prompts[analysisType], vendorId);
+  }, [processQuery]);
+
+  // Analyser un client spécifique
+  const analyzeCustomer = useCallback(async (customerId: string, vendorId: string) => {
+    return await processQuery(`Analyse le client ${customerId} en détail: historique d'achats, valeur, comportement et recommandations.`, vendorId);
   }, [processQuery]);
 
   return {
@@ -192,6 +263,7 @@ export function useVendorCopilot() {
     processQuery,
     clearMessages,
     generateAnalysis,
+    analyzeCustomer,
     loadVendorContext
   };
 }
