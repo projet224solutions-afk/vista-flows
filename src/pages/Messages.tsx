@@ -808,14 +808,14 @@ export default function Messages() {
             </header>
 
             {/* Messages */}
-            <ScrollArea className="flex-1 px-4 py-4">
-              <div className="space-y-3 pb-4">
+            <ScrollArea className="flex-1 px-4 py-2">
+              <div className="space-y-2 pb-2">
                 {messages.length === 0 ? (
-                  <div className="text-center py-16 animate-in fade-in duration-500">
-                    <div className="bg-primary/5 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
-                      <MessageCircle className="w-12 h-12 text-primary" />
+                  <div className="text-center py-8 animate-in fade-in duration-500">
+                    <div className="bg-primary/5 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                      <MessageCircle className="w-8 h-8 text-primary" />
                     </div>
-                    <p className="text-lg font-medium text-foreground mb-2">
+                    <p className="text-base font-medium text-foreground mb-1">
                       Démarrez la conversation
                     </p>
                     <p className="text-sm text-muted-foreground max-w-xs mx-auto">
