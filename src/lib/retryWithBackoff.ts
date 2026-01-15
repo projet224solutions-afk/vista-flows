@@ -4,15 +4,19 @@
  */
 
 export interface RetryConfig {
-  maxRetries: number;           // Nombre maximum de tentatives
-  initialDelayMs: number;       // Délai initial en ms
-  maxDelayMs: number;           // Délai maximum en ms
-  backoffMultiplier: number;    // Multiplicateur de backoff
-  jitter: boolean;              // Ajouter du jitter pour éviter les thundering herds
-  retryableErrors?: string[];   // Erreurs à réessayer (vide = toutes)
-  nonRetryableErrors?: string[];// Erreurs à ne pas réessayer
+  maxRetries: number;            // Nombre maximum de tentatives
+  initialDelayMs: number;        // Délai initial en ms
+  maxDelayMs: number;            // Délai maximum en ms
+  backoffMultiplier: number;     // Multiplicateur de backoff
+  jitter: boolean;               // Ajouter du jitter pour éviter les thundering herds
+  retryableErrors?: string[];    // Erreurs à réessayer (vide = toutes)
+  nonRetryableErrors?: string[]; // Erreurs à ne pas réessayer
   onRetry?: (attempt: number, error: any, nextDelayMs: number) => void;
   shouldRetry?: (error: any, attempt: number) => boolean;
+
+  /** Legacy aliases (kept for backwards compatibility) */
+  baseDelay?: number;
+  backoffFactor?: number;
 }
 
 interface RetryResult<T> {
@@ -39,7 +43,16 @@ export async function retryWithBackoff<T>(
   fn: () => Promise<T>,
   config: Partial<RetryConfig> = {}
 ): Promise<T> {
-  const finalConfig: RetryConfig = { ...DEFAULT_CONFIG, ...config };
+  // Normalize legacy config fields (baseDelay/backoffFactor)
+  const normalizedConfig: Partial<RetryConfig> = { ...config };
+  if (normalizedConfig.baseDelay != null && normalizedConfig.initialDelayMs == null) {
+    normalizedConfig.initialDelayMs = normalizedConfig.baseDelay;
+  }
+  if (normalizedConfig.backoffFactor != null && normalizedConfig.backoffMultiplier == null) {
+    normalizedConfig.backoffMultiplier = normalizedConfig.backoffFactor;
+  }
+
+  const finalConfig: RetryConfig = { ...DEFAULT_CONFIG, ...normalizedConfig };
   const startTime = Date.now();
   let lastError: any;
 
