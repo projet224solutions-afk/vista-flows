@@ -319,9 +319,16 @@ export class CircuitBreakerError extends Error {
 // Export singleton
 export const circuitBreaker = new CircuitBreakerManager();
 
-// Backward-compatible aliases
+// Backward-compatible aliases (some legacy code imports these)
+export { CircuitBreakerManager as CircuitBreaker };
+
+// Provide both a value and a type for CircuitBreakerState
+export const CircuitBreakerState = {
+  CLOSED: 'CLOSED',
+  OPEN: 'OPEN',
+  HALF_OPEN: 'HALF_OPEN'
+} as const;
 export type CircuitBreakerState = CircuitState;
-export type CircuitBreaker = CircuitBreakerManager;
 
 // Export types
 export type { CircuitBreakerConfig, CircuitMetrics, CircuitBreakerInstance };
