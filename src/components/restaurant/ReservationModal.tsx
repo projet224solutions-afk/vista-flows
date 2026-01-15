@@ -33,6 +33,7 @@ import { useRestaurantMenu, MenuItem, MenuCategory } from '@/hooks/useRestaurant
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { StripePaymentWrapper } from '@/components/payment/StripePaymentWrapper';
+import { useFormPersistence, useAppPersistence } from '@/hooks/useAppPersistence';
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -65,27 +66,92 @@ export function ReservationModal({
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   
-  // Form data
-  const [partySize, setPartySize] = useState(2);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [selectedTime, setSelectedTime] = useState<string>('');
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
-  const [specialRequests, setSpecialRequests] = useState('');
+  // Persistance du formulaire de réservation avec useAppPersistence (supporte serialize/deserialize)
+  interface ReservationFormState {
+    partySize: number;
+    selectedDate: Date | undefined;
+    selectedTime: string;
+    customerName: string;
+    customerPhone: string;
+    customerEmail: string;
+    specialRequests: string;
+    wantToPreorder: boolean;
+    wantToPrepay: boolean;
+    paymentMethod: 'card' | 'mobile';
+    selectedCategory: string;
+  }
   
-  // Menu / Précommande
-  const [wantToPreorder, setWantToPreorder] = useState(false);
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const defaultReservationForm: ReservationFormState = {
+    partySize: 2,
+    selectedDate: undefined,
+    selectedTime: '',
+    customerName: '',
+    customerPhone: '',
+    customerEmail: '',
+    specialRequests: '',
+    wantToPreorder: false,
+    wantToPrepay: false,
+    paymentMethod: 'mobile',
+    selectedCategory: 'all',
+  };
   
-  // Paiement
-  const [wantToPrepay, setWantToPrepay] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'mobile'>('mobile');
+  const reservationPersistence = useAppPersistence<ReservationFormState>({
+    key: `reservation_${serviceId}`,
+    defaultState: defaultReservationForm,
+    enabled: !!serviceId && isOpen, 
+    maxAge: 30 * 60 * 1000, // 30 minutes
+    serialize: (state) => ({
+      ...state,
+      selectedDate: state.selectedDate?.toISOString(),
+    }),
+    deserialize: (data) => ({
+      ...data,
+      selectedDate: data.selectedDate ? new Date(data.selectedDate) : undefined,
+    }),
+  });
+  
+  const reservationForm = reservationPersistence.state;
+  const setReservationForm = reservationPersistence.setState;
+  const resetReservationForm = reservationPersistence.clear;
+  
+  // Persistance du panier de précommande
+  const cartPersistence = useAppPersistence<CartItem[]>({
+    key: `reservation_cart_${serviceId}`,
+    defaultState: [],
+    enabled: !!serviceId && isOpen,
+    maxAge: 30 * 60 * 1000,
+  });
+  
+  // Aliases pour compatibilité
+  const partySize = reservationForm.partySize;
+  const setPartySize = (v: number) => setReservationForm(prev => ({ ...prev, partySize: v }));
+  const selectedDate = reservationForm.selectedDate;
+  const setSelectedDate = (v: Date | undefined) => setReservationForm(prev => ({ ...prev, selectedDate: v }));
+  const selectedTime = reservationForm.selectedTime;
+  const setSelectedTime = (v: string) => setReservationForm(prev => ({ ...prev, selectedTime: v }));
+  const customerName = reservationForm.customerName;
+  const setCustomerName = (v: string) => setReservationForm(prev => ({ ...prev, customerName: v }));
+  const customerPhone = reservationForm.customerPhone;
+  const setCustomerPhone = (v: string) => setReservationForm(prev => ({ ...prev, customerPhone: v }));
+  const customerEmail = reservationForm.customerEmail;
+  const setCustomerEmail = (v: string) => setReservationForm(prev => ({ ...prev, customerEmail: v }));
+  const specialRequests = reservationForm.specialRequests;
+  const setSpecialRequests = (v: string) => setReservationForm(prev => ({ ...prev, specialRequests: v }));
+  const wantToPreorder = reservationForm.wantToPreorder;
+  const setWantToPreorder = (v: boolean) => setReservationForm(prev => ({ ...prev, wantToPreorder: v }));
+  const wantToPrepay = reservationForm.wantToPrepay;
+  const setWantToPrepay = (v: boolean) => setReservationForm(prev => ({ ...prev, wantToPrepay: v }));
+  const paymentMethod = reservationForm.paymentMethod;
+  const setPaymentMethod = (v: 'card' | 'mobile') => setReservationForm(prev => ({ ...prev, paymentMethod: v }));
+  const selectedCategory = reservationForm.selectedCategory;
+  const setSelectedCategory = (v: string) => setReservationForm(prev => ({ ...prev, selectedCategory: v }));
+  
+  const cart = cartPersistence.state;
+  const setCart = cartPersistence.setState;
+  
+  // États non persistés (temporaires)
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [showStripePayment, setShowStripePayment] = useState(false);
-  
-  // Confirmation data
   const [confirmationData, setConfirmationData] = useState<any>(null);
   const [showReceiptDownload, setShowReceiptDownload] = useState(false);
 

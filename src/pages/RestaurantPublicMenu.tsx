@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAppPersistence, useFormPersistence } from '@/hooks/useAppPersistence';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -92,7 +93,6 @@ export default function RestaurantPublicMenu() {
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showCheckout, setShowCheckout] = useState(false);
   
@@ -103,15 +103,49 @@ export default function RestaurantPublicMenu() {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [lastOrderNumber, setLastOrderNumber] = useState('');
   
-  // Checkout form
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [orderType, setOrderType] = useState<'dine_in' | 'takeaway' | 'delivery'>('takeaway');
-  const [tableNumber, setTableNumber] = useState('');
-  const [deliveryAddress, setDeliveryAddress] = useState('');
-  const [orderNotes, setOrderNotes] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'mobile' | 'card'>('cash');
+  // États persistés - Checkout form + Cart
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Persistance du panier restaurant
+  const persistedCart = useAppPersistence<CartItem[]>({
+    key: `restaurant_cart_${serviceId}`,
+    defaultState: [],
+    maxAge: 2 * 60 * 60 * 1000, // 2 heures
+    enabled: !!serviceId,
+  });
+  
+  // Persistance du formulaire checkout
+  const { values: checkoutForm, setValues: setCheckoutForm, resetForm: resetCheckoutForm } = useFormPersistence(
+    `restaurant_checkout_${serviceId}`,
+    {
+      customerName: '',
+      customerPhone: '',
+      orderType: 'takeaway' as 'dine_in' | 'takeaway' | 'delivery',
+      tableNumber: '',
+      deliveryAddress: '',
+      orderNotes: '',
+      paymentMethod: 'cash' as 'cash' | 'mobile' | 'card',
+    },
+    { enabled: !!serviceId, maxAge: 30 * 60 * 1000 }
+  );
+  
+  // Aliases pour compatibilité avec le code existant
+  const cart = persistedCart.state;
+  const setCart = persistedCart.setState;
+  const customerName = checkoutForm.customerName;
+  const setCustomerName = (v: string) => setCheckoutForm(prev => ({ ...prev, customerName: v }));
+  const customerPhone = checkoutForm.customerPhone;
+  const setCustomerPhone = (v: string) => setCheckoutForm(prev => ({ ...prev, customerPhone: v }));
+  const orderType = checkoutForm.orderType;
+  const setOrderType = (v: 'dine_in' | 'takeaway' | 'delivery') => setCheckoutForm(prev => ({ ...prev, orderType: v }));
+  const tableNumber = checkoutForm.tableNumber;
+  const setTableNumber = (v: string) => setCheckoutForm(prev => ({ ...prev, tableNumber: v }));
+  const deliveryAddress = checkoutForm.deliveryAddress;
+  const setDeliveryAddress = (v: string) => setCheckoutForm(prev => ({ ...prev, deliveryAddress: v }));
+  const orderNotes = checkoutForm.orderNotes;
+  const setOrderNotes = (v: string) => setCheckoutForm(prev => ({ ...prev, orderNotes: v }));
+  const paymentMethod = checkoutForm.paymentMethod;
+  const setPaymentMethod = (v: 'cash' | 'mobile' | 'card') => setCheckoutForm(prev => ({ ...prev, paymentMethod: v }));
 
   // Load restaurant and menu data
   useEffect(() => {
