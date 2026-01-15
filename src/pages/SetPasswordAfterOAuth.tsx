@@ -70,19 +70,47 @@ export default function SetPasswordAfterOAuth() {
       // Attendre que le profil soit chargé
       if (profileLoading) return;
 
-      // ✅ Vérifier si c'est un utilisateur OAuth (Google/Facebook)
+      // ⚡ Récupérer la session actuelle pour vérifier la méthode de connexion
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData?.session;
+      
+      // ⚡ Vérifier le AMR (Authentication Methods Reference) pour savoir
+      // COMMENT l'utilisateur s'est connecté dans cette session
+      const amr = (session?.user as any)?.amr as Array<{ method?: string }> | undefined;
+      const currentAuthMethod = amr?.[0]?.method;
+      
       const provider = user.app_metadata?.provider;
-      const isOAuthUser = provider === 'google' || provider === 'facebook';
+      const isOAuthProvider = provider === 'google' || provider === 'facebook';
+      
+      // ✅ Si l'utilisateur s'est connecté avec mot de passe (peu importe le provider d'origine)
+      // → Il a DÉJÀ un mot de passe, rediriger directement
+      if (currentAuthMethod === 'password') {
+        console.log('🔐 [SetPasswordAfterOAuth] Connexion par mot de passe détectée, mise à jour et redirection...');
+        
+        // Marquer has_password = true en BDD
+        if (profile?.has_password !== true) {
+          await supabase
+            .from('profiles')
+            .update({ has_password: true })
+            .eq('id', user.id);
+        }
+        
+        localStorage.removeItem('needs_oauth_password');
+        localStorage.setItem(`oauth_password_set_${user.id}`, 'true');
+        redirectToProperDashboard();
+        return;
+      }
       
       console.log('🔍 [SetPasswordAfterOAuth] Vérification:', { 
         provider, 
-        isOAuthUser,
+        isOAuthProvider,
+        currentAuthMethod,
         hasPassword: profile?.has_password 
       });
 
-      // ✅ Si ce n'est PAS un utilisateur OAuth (email/password), rediriger directement
-      if (!isOAuthUser) {
-        console.log('🔐 [SetPasswordAfterOAuth] Utilisateur email détecté, redirection...');
+      // ✅ Si ce n'est PAS un utilisateur OAuth d'origine, rediriger directement
+      if (!isOAuthProvider) {
+        console.log('🔐 [SetPasswordAfterOAuth] Utilisateur email d\'origine, redirection...');
         localStorage.removeItem('needs_oauth_password');
         redirectToProperDashboard();
         return;
@@ -90,8 +118,9 @@ export default function SetPasswordAfterOAuth() {
 
       // ✅ Si l'utilisateur OAuth a déjà défini un mot de passe (vérifié en BDD)
       if (profile?.has_password === true) {
-        console.log('✅ [SetPasswordAfterOAuth] Mot de passe déjà défini, redirection...');
+        console.log('✅ [SetPasswordAfterOAuth] Mot de passe déjà défini (BDD), redirection...');
         localStorage.removeItem('needs_oauth_password');
+        localStorage.setItem(`oauth_password_set_${user.id}`, 'true');
         redirectToProperDashboard();
         return;
       }

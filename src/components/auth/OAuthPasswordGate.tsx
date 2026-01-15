@@ -45,26 +45,23 @@ export default function OAuthPasswordGate() {
       const amr = (session.user as any)?.amr as Array<{ method?: string }> | undefined;
       const currentAuthMethod = amr?.[0]?.method;
       
-      // Si l'utilisateur s'est connecté avec email/password, marquer has_password et ne PAS rediriger
+      // ✅ Si l'utilisateur s'est connecté avec email/password, il a DÉJÀ un mot de passe
+      // → Ne PAS afficher la page de définition de mot de passe
       if (currentAuthMethod === "password") {
-        console.log("🔐 [OAuthPasswordGate] Connexion par mot de passe détectée");
+        console.log("🔐 [OAuthPasswordGate] Connexion par mot de passe détectée, bypass de la gate");
         
-        // Marquer has_password = true si ce n'est pas déjà fait
+        // Marquer has_password = true en BDD (async, non-bloquant)
         if (profile && profile.has_password !== true) {
-          setIsChecking(true);
-          try {
-            await supabase
-              .from('profiles')
-              .update({ has_password: true })
-              .eq('id', user.id);
-            console.log("✅ [OAuthPasswordGate] has_password mis à jour en BDD");
-          } catch (err) {
-            console.error("Erreur mise à jour has_password:", err);
-          }
-          setIsChecking(false);
+          supabase
+            .from('profiles')
+            .update({ has_password: true })
+            .eq('id', user.id)
+            .then(() => {
+              console.log("✅ [OAuthPasswordGate] has_password mis à jour en BDD");
+            });
         }
         
-        // Nettoyer les flags localStorage
+        // Nettoyer les flags localStorage et marquer comme traité
         localStorage.removeItem("needs_oauth_password");
         localStorage.setItem(`oauth_password_set_${user.id}`, "true");
         return;
