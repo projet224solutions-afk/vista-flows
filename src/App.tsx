@@ -114,6 +114,7 @@ const ShortLinkRedirect = lazyWithRetry(() => import("./pages/ShortLinkRedirect"
 const UserPublicProfile = lazyWithRetry(() => import("./pages/UserPublicProfile"));
 const RestaurantPublicMenu = lazyWithRetry(() => import("./pages/RestaurantPublicMenu"));
 const Custom224PaymentDemo = lazyWithRetry(() => import("./pages/demos/Custom224PaymentDemo"));
+const VendorSubscriptionPage = lazyWithRetry(() => import("./pages/VendorSubscriptionPage"));
 // Ultra-simple loading component - Pure CSS inline (no Tailwind dependency)
 const PageLoader = memo(() => (
   <div style={{ 
@@ -256,10 +257,10 @@ function App() {
               <Route path="/taxi-moto/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
               {/* Redirection 301 depuis l'alias vers la route normalisée */}
               <Route path="/taxi-moto-driver" element={<Navigate to="/taxi-moto/driver" replace />} />
-              {/* Abonnement conducteur: disponible pour taxi/driver et vendeur */}
-              {/* Abonnement conducteur: disponible pour taxi/driver et vendeur */}
+              {/* Abonnement conducteur: disponible pour taxi/driver */}
               <Route path="/driver-subscription" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'livreur', 'admin']}><DriverSubscriptionPage /></ProtectedRoute>} />
-              <Route path="/vendeur/subscription" element={<ProtectedRoute allowedRoles={['vendeur', 'admin']}><DriverSubscriptionPage /></ProtectedRoute>} />
+              {/* Abonnement vendeur: page dédiée */}
+              <Route path="/vendeur/subscription" element={<ProtectedRoute allowedRoles={['vendeur', 'admin']}><VendorSubscriptionPage /></ProtectedRoute>} />
               <Route path="/tracking" element={<ClientTrackingPage />} />
               <Route path="/client-tracking" element={<ClientTrackingPage />} />
               <Route path="/profil" element={<Profil />} />
