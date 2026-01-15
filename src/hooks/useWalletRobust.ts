@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { CircuitBreaker } from '@/lib/circuitBreaker';
+import { circuitBreaker } from '@/lib/circuitBreaker';
 import { retryWithBackoff, RetryConfig } from '@/lib/retryWithBackoff';
 
 export interface WalletData {
@@ -51,24 +51,24 @@ interface OperationResult {
 }
 
 // Configuration ultra-robuste pour les transactions financières
-const FINANCIAL_RETRY_CONFIG: RetryConfig = {
+const FINANCIAL_RETRY_CONFIG: Partial<RetryConfig> = {
   maxRetries: 5,
-  baseDelay: 2000,
-  maxDelay: 30000,
-  backoffFactor: 2,
+  initialDelayMs: 2000,
+  maxDelayMs: 30000,
+  backoffMultiplier: 2,
   jitter: true,
-  retryCondition: (error) => {
+  shouldRetry: (error) => {
     // Ne pas retry les erreurs métier
     const nonRetryable = ['insufficient_funds', 'blocked', 'limit_exceeded'];
     return !nonRetryable.some(code => error?.message?.includes(code));
   }
 };
 
-const QUERY_RETRY_CONFIG: RetryConfig = {
+const QUERY_RETRY_CONFIG: Partial<RetryConfig> = {
   maxRetries: 3,
-  baseDelay: 1000,
-  maxDelay: 10000,
-  backoffFactor: 2,
+  initialDelayMs: 1000,
+  maxDelayMs: 10000,
+  backoffMultiplier: 2,
   jitter: true
 };
 
@@ -86,23 +86,19 @@ export const useWalletRobust = () => {
   const pendingOperationsRef = useRef<Set<string>>(new Set());
   const operationLockRef = useRef<Map<string, number>>(new Map());
   
-  // Circuit breaker séparé pour les opérations financières
-  const queryCircuitRef = useRef(new CircuitBreaker({
-    failureThreshold: 5,
-    successThreshold: 3,
-    timeout: 30000
-  }));
-
-  const transactionCircuitRef = useRef(new CircuitBreaker({
-    failureThreshold: 3,
-    successThreshold: 2,
-    timeout: 60000,
-    onStateChange: (state) => {
+  // Circuit breaker names
+  const queryCircuitName = 'wallet-query';
+  const transactionCircuitName = 'wallet-transaction';
+  
+  // Subscribe to circuit state changes
+  useEffect(() => {
+    const unsubscribe = circuitBreaker.subscribe(transactionCircuitName, (state) => {
       if (state === 'OPEN') {
         toast.error('Service de paiement temporairement indisponible');
       }
-    }
-  }));
+    });
+    return unsubscribe;
+  }, []);
 
   // Générer une clé d'idempotence
   const generateIdempotencyKey = useCallback((
@@ -153,7 +149,7 @@ export const useWalletRobust = () => {
       setLoading(true);
       setLastError(null);
 
-      const walletData = await queryCircuitRef.current.execute(async () => {
+      const walletData = await circuitBreaker.execute(queryCircuitName, async () => {
         return await retryWithBackoff(async () => {
           let { data: existingWallet, error: walletError } = await supabase
             .from('wallets')
@@ -237,7 +233,7 @@ export const useWalletRobust = () => {
     if (!user?.id) return false;
 
     try {
-      const data = await queryCircuitRef.current.execute(async () => {
+      const data = await circuitBreaker.execute(queryCircuitName, async () => {
         return await retryWithBackoff(async () => {
           const { data, error } = await (supabase
             .from('enhanced_transactions' as any)
@@ -295,7 +291,7 @@ export const useWalletRobust = () => {
     setLastError(null);
 
     try {
-      const result = await transactionCircuitRef.current.execute(async () => {
+      const result = await circuitBreaker.execute(transactionCircuitName, async () => {
         return await retryWithBackoff(
           () => operation(idempotencyKey),
           FINANCIAL_RETRY_CONFIG

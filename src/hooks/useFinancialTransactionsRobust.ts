@@ -3,10 +3,10 @@
  * Gestion ultra-sécurisée des transactions inter-systèmes
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { CircuitBreaker } from '@/lib/circuitBreaker';
+import { circuitBreaker } from '@/lib/circuitBreaker';
 import { retryWithBackoff, RetryConfig } from '@/lib/retryWithBackoff';
 
 export interface FinancialTransaction {
@@ -35,13 +35,13 @@ interface TransactionResult {
 }
 
 // Configuration pour transactions critiques
-const CRITICAL_RETRY_CONFIG: RetryConfig = {
+const CRITICAL_RETRY_CONFIG: Partial<RetryConfig> = {
   maxRetries: 5,
-  baseDelay: 2000,
-  maxDelay: 30000,
-  backoffFactor: 2,
+  initialDelayMs: 2000,
+  maxDelayMs: 30000,
+  backoffMultiplier: 2,
   jitter: true,
-  retryCondition: (error) => {
+  shouldRetry: (error) => {
     // Erreurs non-retryables
     const permanent = [
       'insufficient_balance',
@@ -52,16 +52,16 @@ const CRITICAL_RETRY_CONFIG: RetryConfig = {
     ];
     return !permanent.some(code => 
       error?.message?.toLowerCase().includes(code.replace('_', ' ')) ||
-      error?.code === code
+      (error as any)?.code === code
     );
   }
 };
 
-const QUERY_RETRY_CONFIG: RetryConfig = {
+const QUERY_RETRY_CONFIG: Partial<RetryConfig> = {
   maxRetries: 3,
-  baseDelay: 1000,
-  maxDelay: 10000,
-  backoffFactor: 2,
+  initialDelayMs: 1000,
+  maxDelayMs: 10000,
+  backoffMultiplier: 2,
   jitter: true
 };
 
@@ -76,23 +76,19 @@ export function useFinancialTransactionsRobust() {
   const pendingTransactionsRef = useRef<Set<string>>(new Set());
   const transactionLockRef = useRef<Map<string, number>>(new Map());
 
-  // Circuit breakers séparés par type d'opération
-  const cardOmCircuitRef = useRef(new CircuitBreaker({
-    failureThreshold: 3,
-    successThreshold: 2,
-    timeout: 60000,
-    onStateChange: (state) => {
+  // Circuit breakers names par type d'opération
+  const cardOmCircuitName = 'financial-card-om';
+  const walletCardCircuitName = 'financial-wallet-card';
+  
+  // Subscribe to circuit state changes
+  useEffect(() => {
+    const unsubscribe = circuitBreaker.subscribe(cardOmCircuitName, (state) => {
       if (state === 'OPEN') {
         toast.error('Service Orange Money temporairement indisponible');
       }
-    }
-  }));
-
-  const walletCardCircuitRef = useRef(new CircuitBreaker({
-    failureThreshold: 3,
-    successThreshold: 2,
-    timeout: 45000
-  }));
+    });
+    return unsubscribe;
+  }, []);
 
   // Générer clé d'idempotence unique
   const generateIdempotencyKey = useCallback((
@@ -230,7 +226,7 @@ export function useFinancialTransactionsRobust() {
     try {
       console.log('💳→📱 Lancement transfert carte vers Orange Money');
 
-      const result = await cardOmCircuitRef.current.execute(async () => {
+      const result = await circuitBreaker.execute(cardOmCircuitName, async () => {
         return await retryWithBackoff(async () => {
           const { data, error } = await supabase.functions.invoke('card-to-orange-money', {
             body: { 
@@ -315,7 +311,7 @@ export function useFinancialTransactionsRobust() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Non authentifié');
 
-      const result = await walletCardCircuitRef.current.execute(async () => {
+      const result = await circuitBreaker.execute(walletCardCircuitName, async () => {
         return await retryWithBackoff(async () => {
           const { data, error } = await supabase.rpc('process_wallet_to_card', {
             p_user_id: user.id,
@@ -386,7 +382,7 @@ export function useFinancialTransactionsRobust() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Non authentifié');
 
-      const result = await walletCardCircuitRef.current.execute(async () => {
+      const result = await circuitBreaker.execute(walletCardCircuitName, async () => {
         return await retryWithBackoff(async () => {
           const { data, error } = await supabase.rpc('process_card_to_wallet', {
             p_user_id: user.id,

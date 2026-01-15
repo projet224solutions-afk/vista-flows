@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { CircuitBreaker, CircuitBreakerState } from '@/lib/circuitBreaker';
+import { circuitBreaker, CircuitState } from '@/lib/circuitBreaker';
 import { retryWithBackoff, RetryConfig } from '@/lib/retryWithBackoff';
 import { toast } from 'sonner';
 
@@ -41,19 +41,19 @@ interface CacheEntry<T> {
 }
 
 // Configuration robuste
-const RETRY_CONFIG: RetryConfig = {
+const RETRY_CONFIG: Partial<RetryConfig> = {
   maxRetries: 3,
-  baseDelay: 1000,
-  maxDelay: 10000,
-  backoffFactor: 2,
+  initialDelayMs: 1000,
+  maxDelayMs: 10000,
+  backoffMultiplier: 2,
   jitter: true
 };
 
-const MUTATION_RETRY_CONFIG: RetryConfig = {
+const MUTATION_RETRY_CONFIG: Partial<RetryConfig> = {
   maxRetries: 2,
-  baseDelay: 1500,
-  maxDelay: 8000,
-  backoffFactor: 2,
+  initialDelayMs: 1500,
+  maxDelayMs: 8000,
+  backoffMultiplier: 2,
   jitter: true
 };
 
@@ -67,25 +67,26 @@ export const useAgentManagementRobust = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
-  const [circuitState, setCircuitState] = useState<CircuitBreakerState>('CLOSED');
+  const [circuitState, setCircuitState] = useState<CircuitState>('CLOSED');
 
   // Caches
   const rolesCacheRef = useRef<CacheEntry<Role[]> | null>(null);
   const permissionsCacheRef = useRef<CacheEntry<Permission[]> | null>(null);
   const agentsCacheRef = useRef<CacheEntry<Agent[]> | null>(null);
 
-  // Circuit breaker
-  const circuitBreakerRef = useRef(new CircuitBreaker({
-    failureThreshold: 5,
-    successThreshold: 3,
-    timeout: 30000,
-    onStateChange: (state) => {
+  // Circuit breaker name
+  const circuitName = 'agent-management';
+  
+  // Subscribe to circuit state changes
+  useEffect(() => {
+    const unsubscribe = circuitBreaker.subscribe(circuitName, (state) => {
       setCircuitState(state);
       if (state === 'OPEN') {
         toast.warning('Service agents temporairement indisponible');
       }
-    }
-  }));
+    });
+    return unsubscribe;
+  }, []);
 
   // Vérifier le cache
   const isCacheValid = <T,>(cache: CacheEntry<T> | null): boolean => {
@@ -100,7 +101,7 @@ export const useAgentManagementRobust = () => {
     }
 
     try {
-      const result = await circuitBreakerRef.current.execute(async () => {
+      const result = await circuitBreaker.execute(circuitName, async () => {
         return await retryWithBackoff(async () => {
           const { data, error } = await supabase
             .from('roles')
@@ -144,7 +145,7 @@ export const useAgentManagementRobust = () => {
     }
 
     try {
-      const result = await circuitBreakerRef.current.execute(async () => {
+      const result = await circuitBreaker.execute(circuitName, async () => {
         return await retryWithBackoff(async () => {
           const { data, error } = await supabase
             .from('permissions')
@@ -194,7 +195,7 @@ export const useAgentManagementRobust = () => {
       setLoading(true);
       setError(null);
 
-      const result = await circuitBreakerRef.current.execute(async () => {
+      const result = await circuitBreaker.execute(circuitName, async () => {
         return await retryWithBackoff(async () => {
           const { data, error } = await supabase
             .from('agents')
@@ -284,7 +285,7 @@ export const useAgentManagementRobust = () => {
           seller_id: result.seller_id,
           user_id: result.user_id,
           role_id: result.role_id,
-          status: result.status,
+          status: (result.status as 'active' | 'inactive') || 'active',
           created_at: result.created_at,
           role: result.roles ? {
             id: result.roles.id,
