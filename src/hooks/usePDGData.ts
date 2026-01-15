@@ -5,9 +5,9 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { CircuitBreaker, CircuitBreakerState } from '@/lib/circuitBreaker';
+import { circuitBreaker, CircuitState } from '@/lib/circuitBreaker';
 import { retryWithBackoff, RetryConfig } from '@/lib/retryWithBackoff';
 
 interface UserAccount {
@@ -64,11 +64,11 @@ interface LoadingState {
 }
 
 // Configuration robuste
-const RETRY_CONFIG: RetryConfig = {
+const RETRY_CONFIG: Partial<RetryConfig> = {
   maxRetries: 3,
-  baseDelay: 1000,
-  maxDelay: 10000,
-  backoffFactor: 2,
+  initialDelayMs: 1000,
+  maxDelayMs: 10000,
+  backoffMultiplier: 2,
   jitter: true
 };
 
@@ -96,23 +96,24 @@ export function usePDGData() {
   
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-  const [circuitState, setCircuitState] = useState<CircuitBreakerState>('CLOSED');
+  const [circuitState, setCircuitState] = useState<CircuitState>('CLOSED');
 
-  // Références pour le cache et circuit breaker
+  // Références pour le cache
   const cacheRef = useRef<Map<string, CacheEntry<any>>>(new Map());
-  const circuitBreakerRef = useRef(new CircuitBreaker({
-    failureThreshold: 5,
-    successThreshold: 3,
-    timeout: 30000,
-    onStateChange: (state) => {
+  const circuitName = 'pdg-data';
+  
+  // Subscribe to circuit state changes
+  useEffect(() => {
+    const unsubscribe = circuitBreaker.subscribe(circuitName, (state) => {
       setCircuitState(state);
       if (state === 'OPEN') {
         toast.warning('Service temporairement indisponible, récupération en cours...');
       } else if (state === 'CLOSED') {
         toast.success('Service restauré');
       }
-    }
-  }));
+    });
+    return unsubscribe;
+  }, []);
 
   // Helpers de cache
   const getFromCache = <T,>(key: string): T | null => {
@@ -159,7 +160,7 @@ export function usePDGData() {
     }
 
     try {
-      const result = await circuitBreakerRef.current.execute(async () => {
+      const result = await circuitBreaker.execute(circuitName, async () => {
         return await retryWithBackoff(operation, RETRY_CONFIG);
       });
 
@@ -258,7 +259,7 @@ export function usePDGData() {
         if (transactionsError) throw transactionsError;
 
         return walletTransactions?.map(tx => ({
-          id: tx.id,
+          id: String(tx.id),
           type: tx.transaction_type || 'Transaction',
           amount: tx.amount,
           method: 'mobile_money',
@@ -292,7 +293,7 @@ export function usePDGData() {
             id,
             name,
             price,
-            status,
+            is_active,
             created_at,
             vendors(business_name)
           `)
@@ -301,13 +302,13 @@ export function usePDGData() {
 
         if (productsError) throw productsError;
 
-        return productsData?.map(product => {
-          const vendor = product.vendors as any;
+        return productsData?.map((product: any) => {
+          const vendor = product.vendors;
           return {
             id: product.id,
             name: product.name,
             vendor: vendor?.business_name || 'Vendeur',
-            status: product.status || 'active',
+            status: product.is_active ? 'active' : 'inactive',
             price: product.price,
             sales: 0,
             compliance: 'compliant'
@@ -341,7 +342,7 @@ export function usePDGData() {
           supabase.from('profiles').select('*', { count: 'exact', head: true }),
           supabase.from('profiles')
             .select('*', { count: 'exact', head: true })
-            .eq('role', 'vendor')
+            .eq('role', 'vendeur')
             .eq('status', 'active'),
           supabase.from('orders')
             .select('*', { count: 'exact', head: true })
@@ -450,7 +451,7 @@ export function usePDGData() {
         } else {
           const { error } = await supabase
             .from('products')
-            .update({ status: action === 'block' ? 'blocked' : 'active' })
+            .update({ is_active: action !== 'block' })
             .eq('id', productId);
           if (error) throw error;
         }

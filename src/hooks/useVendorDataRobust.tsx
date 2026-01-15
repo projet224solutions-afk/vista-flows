@@ -6,7 +6,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { CircuitBreaker, CircuitBreakerState } from '@/lib/circuitBreaker';
+import { circuitBreaker, CircuitState } from '@/lib/circuitBreaker';
 import { retryWithBackoff, RetryConfig } from '@/lib/retryWithBackoff';
 import { toast } from 'sonner';
 
@@ -71,19 +71,19 @@ interface CacheEntry<T> {
 }
 
 // Configuration robuste
-const RETRY_CONFIG: RetryConfig = {
+const RETRY_CONFIG: Partial<RetryConfig> = {
   maxRetries: 3,
-  baseDelay: 1000,
-  maxDelay: 10000,
-  backoffFactor: 2,
+  initialDelayMs: 1000,
+  maxDelayMs: 10000,
+  backoffMultiplier: 2,
   jitter: true
 };
 
-const MUTATION_RETRY_CONFIG: RetryConfig = {
+const MUTATION_RETRY_CONFIG: Partial<RetryConfig> = {
   maxRetries: 2,
-  baseDelay: 1500,
-  maxDelay: 8000,
-  backoffFactor: 2,
+  initialDelayMs: 1500,
+  maxDelayMs: 8000,
+  backoffMultiplier: 2,
   jitter: true
 };
 
@@ -95,15 +95,16 @@ export function useVendorStatsRobust() {
   const [stats, setStats] = useState<VendorStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [circuitState, setCircuitState] = useState<CircuitBreakerState>('CLOSED');
+  const [circuitState, setCircuitState] = useState<CircuitState>('CLOSED');
 
   const cacheRef = useRef<CacheEntry<VendorStats> | null>(null);
-  const circuitBreakerRef = useRef(new CircuitBreaker({
-    failureThreshold: 5,
-    successThreshold: 3,
-    timeout: 30000,
-    onStateChange: setCircuitState
-  }));
+  const circuitName = 'vendor-stats';
+  
+  // Subscribe to circuit state changes
+  useEffect(() => {
+    const unsubscribe = circuitBreaker.subscribe(circuitName, setCircuitState);
+    return unsubscribe;
+  }, []);
 
   const fetchStats = useCallback(async (silent = false) => {
     if (!user) return;
@@ -119,7 +120,7 @@ export function useVendorStatsRobust() {
       if (!silent) setLoading(true);
       setError(null);
 
-      const result = await circuitBreakerRef.current.execute(async () => {
+      const result = await circuitBreaker.execute(circuitName, async () => {
         return await retryWithBackoff(async () => {
           // Get vendor ID
           const { data: vendor, error: vendorError } = await supabase
@@ -224,11 +225,7 @@ export function useProspectsRobust() {
   const [processing, setProcessing] = useState(false);
 
   const vendorIdRef = useRef<string | null>(null);
-  const circuitBreakerRef = useRef(new CircuitBreaker({
-    failureThreshold: 5,
-    successThreshold: 3,
-    timeout: 30000
-  }));
+  const prospectsCircuitName = 'vendor-prospects';
 
   const getVendorId = useCallback(async (): Promise<string | null> => {
     if (vendorIdRef.current) return vendorIdRef.current;
@@ -253,7 +250,7 @@ export function useProspectsRobust() {
       if (!silent) setLoading(true);
       setError(null);
 
-      const result = await circuitBreakerRef.current.execute(async () => {
+      const result = await circuitBreaker.execute(prospectsCircuitName, async () => {
         return await retryWithBackoff(async () => {
           const vendorId = await getVendorId();
           if (!vendorId) return [];
