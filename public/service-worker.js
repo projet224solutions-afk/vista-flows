@@ -1,5 +1,5 @@
-// Service Worker v8 - PWA + Firebase Cloud Messaging + Mode Offline Desktop & Mobile
-const CACHE_VERSION = "v8";
+// Service Worker v9 - PWA + Firebase Cloud Messaging + Mode Offline Desktop & Mobile
+const CACHE_VERSION = "v9";
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
 const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
