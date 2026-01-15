@@ -331,7 +331,7 @@ export function ReservationModal({
                     }
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 z-[9999] bg-background border shadow-lg" align="start" sideOffset={5}>
                   <CalendarComponent
                     mode="single"
                     selected={selectedDate}
@@ -341,7 +341,7 @@ export function ReservationModal({
                       isBefore(addDays(new Date(), 60), date)
                     }
                     initialFocus
-                    className="pointer-events-auto"
+                    className="pointer-events-auto p-3"
                   />
                 </PopoverContent>
               </Popover>
