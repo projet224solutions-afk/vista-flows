@@ -108,11 +108,14 @@ export function ServiceTypesGrid({ onBack, searchQuery }: ServiceTypesGridProps)
 
   const loadServiceTypes = async () => {
     try {
-      // Charger les types de services
+      // Charger les types de services SAUF les numériques (qui vont dans le bouton "Numériques")
+      // Les services numériques (dropshipping, logiciel, ebooks) n'ont pas de GPS
       const { data: types, error } = await supabase
         .from('service_types')
         .select('*')
         .eq('is_active', true)
+        .neq('category', 'Numérique') // Exclure les services numériques
+        .not('code', 'in', '(dropshipping,digital_logiciel,digital_livre)') // Double sécurité
         .order('name');
 
       if (error) throw error;
