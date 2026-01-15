@@ -38,15 +38,19 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
   const [isInstalling, setIsInstalling] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isMac, setIsMac] = useState(false);
   const [isSafari, setIsSafari] = useState(false);
   const [isInIframe, setIsInIframe] = useState(false);
   const [isInAppBrowser, setIsInAppBrowser] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [hasChecked, setHasChecked] = useState(false);
 
   useEffect(() => {
     const ua = navigator.userAgent;
     const mobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
     const ios = /iPhone|iPad|iPod/i.test(ua);
+    // Détection Mac (macOS)
+    const mac = /Macintosh|MacIntel|MacPPC|Mac68K/i.test(ua) && !ios;
     const safari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome/i.test(ua);
     const inIframe = (() => {
       try {
@@ -64,15 +68,17 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
 
     setIsMobile(mobile);
     setIsIOS(ios);
+    setIsMac(mac);
     setIsSafari(safari);
     setIsInIframe(inIframe);
     setIsInAppBrowser(inApp);
     setIsStandalone(standalone);
+    setHasChecked(true);
   }, []);
 
   const handleInstallClick = () => {
-    // Sur iOS, ouvrir directement le guide
-    if (isIOS) {
+    // Sur iOS ou Mac avec Safari, ouvrir directement le guide
+    if (isIOS || (isMac && isSafari)) {
       setIosGuideOpen(true);
       return;
     }
@@ -98,18 +104,18 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
         return;
       }
 
-      // 1) iOS - Ouvrir le guide visuel
-      if (isIOS) {
+      // 1) iOS ou Mac avec Safari - Ouvrir le guide visuel
+      if (isIOS || (isMac && isSafari)) {
         setConfirmOpen(false);
         
-        if (!isSafari && !isInAppBrowser) {
+        if (isIOS && !isSafari && !isInAppBrowser) {
           toast.info('Ouvrir dans Safari', {
             description: "L'installation PWA sur iOS fonctionne uniquement avec Safari.",
             duration: 6000,
           });
         }
         
-        // Afficher le guide iOS
+        // Afficher le guide iOS/Mac
         setIosGuideOpen(true);
         return;
       }
@@ -173,8 +179,17 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
     }
   };
 
+  // Ne pas afficher tant que la vérification n'est pas faite
+  if (!hasChecked) {
+    return null;
+  }
+
   // Ne pas afficher si déjà installé (standalone mode)
   if (isInstalled || isStandalone) {
+    // Pour le variant floating, ne rien afficher du tout
+    if (variant === 'floating') {
+      return null;
+    }
     return (
       <div className={`flex items-center gap-2 text-green-600 ${className}`}>
         <CheckCircle2 className="w-5 h-5" />
@@ -202,13 +217,22 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
       return "L'installation démarrera automatiquement après confirmation.";
     }
 
-    if (isIOS) {
+    if (isIOS || isMac) {
       return (
         <span className="flex flex-col gap-2 text-left">
-          <span className="font-medium">Sur iPhone/iPad :</span>
-          <span>1. Appuyez sur <Share className="inline w-4 h-4" /> (Partager)</span>
-          <span>2. Faites défiler et appuyez sur "Sur l'écran d'accueil"</span>
-          <span>3. Appuyez sur "Ajouter"</span>
+          <span className="font-medium">{isMac ? 'Sur Mac :' : 'Sur iPhone/iPad :'}</span>
+          {isMac ? (
+            <>
+              <span>1. Cliquez sur Fichier dans la barre de menu</span>
+              <span>2. Cliquez sur "Ajouter au Dock"</span>
+            </>
+          ) : (
+            <>
+              <span>1. Appuyez sur <Share className="inline w-4 h-4" /> (Partager)</span>
+              <span>2. Faites défiler et appuyez sur "Sur l'écran d'accueil"</span>
+              <span>3. Appuyez sur "Ajouter"</span>
+            </>
+          )}
         </span>
       );
     }
