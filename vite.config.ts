@@ -32,10 +32,11 @@ export default defineConfig(({ mode }) => ({
         manualChunks(id) {
           // Vendor dependencies - OPTIMISÉ POUR RÉDUIRE TBT
           if (id.includes('node_modules')) {
-            // Core React - séparer pour cache optimal
-            if (id.includes('react-dom')) return 'vendor-react-dom';
-            if (id.includes('react-router')) return 'vendor-router';
-            if (id.includes('/react/') || id.includes('\\react\\')) return 'vendor-react';
+          // 🚀 Core React - CRITIQUE: Premier chunk à charger
+          if (id.includes('react-dom') || id.includes('/react/') || id.includes('\\react\\')) {
+            return 'vendor-react-core'; // Un seul chunk React pour cache optimal
+          }
+          if (id.includes('react-router')) return 'vendor-router';
             
             // UI Libraries - SÉPARER RADIX PAR COMPOSANT (lazy load)
             if (id.includes('@radix-ui')) {
