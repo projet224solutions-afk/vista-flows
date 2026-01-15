@@ -1,13 +1,17 @@
 /**
  * Modal de réservation restaurant professionnel
  * Inspiré des systèmes OpenTable, TheFork, et des restaurants étoilés Michelin
- * Experience utilisateur premium avec sélection de date, heure, et préférences
+ * Experience utilisateur premium avec sélection de date, heure, menu et paiement
  */
 
 import { useState, useEffect } from 'react';
 import { format, addDays, isBefore, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Calendar, Clock, Users, Phone, Mail, User, Sparkles, Check, AlertCircle } from 'lucide-react';
+import { 
+  Calendar, Clock, Users, Phone, Mail, User, Sparkles, Check, AlertCircle,
+  UtensilsCrossed, CreditCard, ShoppingCart, Plus, Minus, Trash2, ChevronRight,
+  Flame, Leaf, Info
+} from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,12 +19,17 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useRestaurantReservations, TimeSlot, ReservationFormData } from '@/hooks/useRestaurantReservations';
+import { useRestaurantMenu, MenuItem, MenuCategory } from '@/hooks/useRestaurantMenu';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -30,7 +39,12 @@ interface ReservationModalProps {
   restaurantPhone?: string;
 }
 
-type Step = 'guests' | 'datetime' | 'details' | 'confirmation';
+interface CartItem {
+  menuItem: MenuItem;
+  quantity: number;
+}
+
+type Step = 'guests' | 'datetime' | 'menu' | 'details' | 'payment' | 'confirmation';
 
 export function ReservationModal({
   isOpen,
@@ -41,6 +55,7 @@ export function ReservationModal({
 }: ReservationModalProps) {
   const { user } = useAuth();
   const { createReservation, checkAvailability } = useRestaurantReservations(serviceId);
+  const { categories, menuItems, loading: menuLoading } = useRestaurantMenu(serviceId);
   
   const [step, setStep] = useState<Step>('guests');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,6 +70,15 @@ export function ReservationModal({
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
+  
+  // Menu / Précommande
+  const [wantToPreorder, setWantToPreorder] = useState(false);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  
+  // Paiement
+  const [wantToPrepay, setWantToPrepay] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
   
   // Confirmation data
   const [confirmationData, setConfirmationData] = useState<any>(null);
@@ -89,6 +113,43 @@ export function ReservationModal({
     }
   };
 
+  // Fonctions panier
+  const addToCart = (item: MenuItem) => {
+    setCart(prev => {
+      const existing = prev.find(c => c.menuItem.id === item.id);
+      if (existing) {
+        return prev.map(c => 
+          c.menuItem.id === item.id 
+            ? { ...c, quantity: c.quantity + 1 }
+            : c
+        );
+      }
+      return [...prev, { menuItem: item, quantity: 1 }];
+    });
+  };
+
+  const removeFromCart = (itemId: string) => {
+    setCart(prev => {
+      const existing = prev.find(c => c.menuItem.id === itemId);
+      if (existing && existing.quantity > 1) {
+        return prev.map(c => 
+          c.menuItem.id === itemId 
+            ? { ...c, quantity: c.quantity - 1 }
+            : c
+        );
+      }
+      return prev.filter(c => c.menuItem.id !== itemId);
+    });
+  };
+
+  const cartTotal = cart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0);
+  const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Filtrer les plats
+  const filteredMenuItems = selectedCategory === 'all' 
+    ? menuItems.filter(i => i.is_available)
+    : menuItems.filter(i => i.is_available && i.category_id === selectedCategory);
+
   const handleSubmit = async () => {
     if (!selectedDate || !selectedTime || !customerName) {
       toast.error('Veuillez remplir tous les champs obligatoires');
@@ -97,6 +158,17 @@ export function ReservationModal({
 
     setIsSubmitting(true);
     try {
+      // Préparer les données de précommande
+      const preorderData = wantToPreorder && cart.length > 0 
+        ? JSON.stringify(cart.map(c => ({
+            item_id: c.menuItem.id,
+            name: c.menuItem.name,
+            quantity: c.quantity,
+            unit_price: c.menuItem.price,
+            total: c.menuItem.price * c.quantity
+          })))
+        : null;
+
       const reservationData: ReservationFormData = {
         customer_name: customerName,
         customer_phone: customerPhone,
@@ -104,13 +176,23 @@ export function ReservationModal({
         party_size: partySize,
         reservation_date: format(selectedDate, 'yyyy-MM-dd'),
         reservation_time: selectedTime,
-        special_requests: specialRequests || undefined,
+        special_requests: specialRequests 
+          ? (preorderData 
+            ? `${specialRequests}\n\n--- Précommande ---\n${cart.map(c => `${c.quantity}x ${c.menuItem.name}`).join(', ')}\nTotal: ${cartTotal.toLocaleString()} GNF`
+            : specialRequests)
+          : (preorderData 
+            ? `--- Précommande ---\n${cart.map(c => `${c.quantity}x ${c.menuItem.name}`).join(', ')}\nTotal: ${cartTotal.toLocaleString()} GNF`
+            : undefined),
       };
 
       const result = await createReservation(reservationData);
       
       if (result) {
-        setConfirmationData(result);
+        setConfirmationData({
+          ...result,
+          preorder: wantToPreorder ? cart : null,
+          preorderTotal: cartTotal
+        });
         setStep('confirmation');
         toast.success('Réservation confirmée !');
       }
@@ -131,11 +213,40 @@ export function ReservationModal({
     setCustomerPhone('');
     setSpecialRequests('');
     setConfirmationData(null);
+    setCart([]);
+    setWantToPreorder(false);
+    setWantToPrepay(false);
   };
 
   const handleClose = () => {
     resetForm();
     onClose();
+  };
+
+  // Navigation entre étapes
+  const goToNextStep = () => {
+    switch (step) {
+      case 'guests': setStep('datetime'); break;
+      case 'datetime': setStep('menu'); break;
+      case 'menu': setStep('details'); break;
+      case 'details': 
+        if (wantToPrepay && cartTotal > 0) {
+          setStep('payment');
+        } else {
+          handleSubmit();
+        }
+        break;
+      case 'payment': handleSubmit(); break;
+    }
+  };
+
+  const goToPreviousStep = () => {
+    switch (step) {
+      case 'datetime': setStep('guests'); break;
+      case 'menu': setStep('datetime'); break;
+      case 'details': setStep('menu'); break;
+      case 'payment': setStep('details'); break;
+    }
   };
 
   // Séparer les créneaux midi et soir
@@ -185,9 +296,10 @@ export function ReservationModal({
 
             <Button 
               className="w-full h-12 text-lg" 
-              onClick={() => setStep('datetime')}
+              onClick={goToNextStep}
             >
               Continuer
+              <ChevronRight className="w-5 h-5 ml-2" />
             </Button>
           </div>
         );
@@ -245,7 +357,6 @@ export function ReservationModal({
                   </div>
                 ) : (
                   <>
-                    {/* Service du midi */}
                     {lunchSlots.length > 0 && (
                       <div>
                         <Label className="text-sm font-medium mb-2 block flex items-center gap-2">
@@ -271,7 +382,6 @@ export function ReservationModal({
                       </div>
                     )}
 
-                    {/* Service du soir */}
                     {dinnerSlots.length > 0 && (
                       <div>
                         <Label className="text-sm font-medium mb-2 block flex items-center gap-2">
@@ -305,16 +415,211 @@ export function ReservationModal({
               <Button 
                 variant="outline" 
                 className="flex-1 h-12" 
-                onClick={() => setStep('guests')}
+                onClick={goToPreviousStep}
               >
                 Retour
               </Button>
               <Button 
                 className="flex-1 h-12" 
-                onClick={() => setStep('details')}
+                onClick={goToNextStep}
                 disabled={!selectedDate || !selectedTime}
               >
                 Continuer
+                <ChevronRight className="w-5 h-5 ml-2" />
+              </Button>
+            </div>
+          </div>
+        );
+
+      case 'menu':
+        return (
+          <div className="space-y-4">
+            <div className="text-center mb-4">
+              <h3 className="text-xl font-semibold">Découvrez notre menu</h3>
+              <p className="text-muted-foreground">Précommandez vos plats préférés</p>
+            </div>
+
+            {/* Toggle précommande */}
+            <Card className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <UtensilsCrossed className="w-5 h-5 text-orange-600" />
+                  <div>
+                    <p className="font-medium">Précommander des plats</p>
+                    <p className="text-xs text-muted-foreground">Vos plats seront prêts à votre arrivée</p>
+                  </div>
+                </div>
+                <Switch checked={wantToPreorder} onCheckedChange={setWantToPreorder} />
+              </CardContent>
+            </Card>
+
+            {wantToPreorder && (
+              <>
+                {/* Catégories */}
+                {categories.length > 0 && (
+                  <ScrollArea className="w-full whitespace-nowrap">
+                    <div className="flex gap-2 pb-2">
+                      <Badge 
+                        variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                        className="cursor-pointer"
+                        onClick={() => setSelectedCategory('all')}
+                      >
+                        Tous
+                      </Badge>
+                      {categories.map(cat => (
+                        <Badge
+                          key={cat.id}
+                          variant={selectedCategory === cat.id ? 'default' : 'outline'}
+                          className="cursor-pointer whitespace-nowrap"
+                          onClick={() => setSelectedCategory(cat.id)}
+                        >
+                          {cat.icon && <span className="mr-1">{cat.icon}</span>}
+                          {cat.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+
+                {/* Liste des plats */}
+                <ScrollArea className="h-[250px] pr-4">
+                  {menuLoading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto" />
+                    </div>
+                  ) : filteredMenuItems.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <UtensilsCrossed className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>Aucun plat disponible</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {filteredMenuItems.map(item => {
+                        const inCart = cart.find(c => c.menuItem.id === item.id);
+                        return (
+                          <div 
+                            key={item.id}
+                            className={cn(
+                              "flex items-center gap-3 p-3 rounded-lg border transition-all",
+                              inCart ? "border-primary bg-primary/5" : "hover:bg-muted/50"
+                            )}
+                          >
+                            {/* Image */}
+                            {item.image_url && (
+                              <img 
+                                src={item.image_url} 
+                                alt={item.name}
+                                className="w-16 h-16 rounded-lg object-cover"
+                              />
+                            )}
+                            
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium truncate">{item.name}</span>
+                                {item.is_featured && (
+                                  <Badge variant="secondary" className="text-xs">⭐</Badge>
+                                )}
+                                {item.spicy_level && item.spicy_level > 0 && (
+                                  <span className="text-red-500">
+                                    {Array(item.spicy_level).fill('🌶️').join('')}
+                                  </span>
+                                )}
+                              </div>
+                              {item.description && (
+                                <p className="text-xs text-muted-foreground line-clamp-1">
+                                  {item.description}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="font-semibold text-primary">
+                                  {item.price.toLocaleString()} GNF
+                                </span>
+                                {item.preparation_time && (
+                                  <span className="text-xs text-muted-foreground">
+                                    ~{item.preparation_time}min
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex items-center gap-2">
+                              {inCart ? (
+                                <div className="flex items-center gap-2">
+                                  <Button 
+                                    size="icon" 
+                                    variant="outline" 
+                                    className="h-8 w-8"
+                                    onClick={() => removeFromCart(item.id)}
+                                  >
+                                    <Minus className="w-4 h-4" />
+                                  </Button>
+                                  <span className="w-6 text-center font-semibold">
+                                    {inCart.quantity}
+                                  </span>
+                                  <Button 
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => addToCart(item)}
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button 
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => addToCart(item)}
+                                >
+                                  <Plus className="w-4 h-4 mr-1" />
+                                  Ajouter
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </ScrollArea>
+
+                {/* Panier récapitulatif */}
+                {cart.length > 0 && (
+                  <Card className="bg-muted/50">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium flex items-center gap-2">
+                          <ShoppingCart className="w-4 h-4" />
+                          Votre précommande
+                        </span>
+                        <Badge>{cartItemsCount} article{cartItemsCount > 1 ? 's' : ''}</Badge>
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        {cart.map(c => (
+                          <div key={c.menuItem.id} className="flex justify-between">
+                            <span>{c.quantity}x {c.menuItem.name}</span>
+                            <span>{(c.menuItem.price * c.quantity).toLocaleString()} GNF</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="border-t mt-2 pt-2 flex justify-between font-semibold">
+                        <span>Total</span>
+                        <span className="text-primary">{cartTotal.toLocaleString()} GNF</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            )}
+
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1 h-12" onClick={goToPreviousStep}>
+                Retour
+              </Button>
+              <Button className="flex-1 h-12" onClick={goToNextStep}>
+                Continuer
+                <ChevronRight className="w-5 h-5 ml-2" />
               </Button>
             </div>
           </div>
@@ -331,7 +636,7 @@ export function ReservationModal({
             </div>
 
             {/* Récapitulatif */}
-            <div className="bg-muted/50 rounded-lg p-4 flex items-center gap-4">
+            <div className="bg-muted/50 rounded-lg p-4 flex items-center gap-4 flex-wrap">
               <Badge variant="secondary" className="h-10 px-4">
                 <Users className="w-4 h-4 mr-2" />
                 {partySize} pers.
@@ -344,6 +649,12 @@ export function ReservationModal({
                 <Clock className="w-4 h-4 mr-2" />
                 {selectedTime}
               </Badge>
+              {cart.length > 0 && (
+                <Badge className="h-10 px-4 bg-orange-500">
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  {cartTotal.toLocaleString()} GNF
+                </Badge>
+              )}
             </div>
 
             <div className="space-y-4">
@@ -372,7 +683,7 @@ export function ReservationModal({
                   type="tel"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
-                  placeholder="+33 6 12 34 56 78"
+                  placeholder="+224 620 00 00 00"
                   className="h-12 mt-1"
                 />
               </div>
@@ -405,19 +716,31 @@ export function ReservationModal({
                   className="mt-1 min-h-[80px]"
                 />
               </div>
+
+              {/* Option paiement */}
+              {cartTotal > 0 && (
+                <Card className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <CreditCard className="w-5 h-5 text-green-600" />
+                      <div>
+                        <p className="font-medium">Payer maintenant</p>
+                        <p className="text-xs text-muted-foreground">Payez votre précommande en avance</p>
+                      </div>
+                    </div>
+                    <Switch checked={wantToPrepay} onCheckedChange={setWantToPrepay} />
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             <div className="flex gap-3">
-              <Button 
-                variant="outline" 
-                className="flex-1 h-12" 
-                onClick={() => setStep('datetime')}
-              >
+              <Button variant="outline" className="flex-1 h-12" onClick={goToPreviousStep}>
                 Retour
               </Button>
               <Button 
                 className="flex-1 h-12" 
-                onClick={handleSubmit}
+                onClick={goToNextStep}
                 disabled={!customerName || isSubmitting}
               >
                 {isSubmitting ? (
@@ -425,11 +748,76 @@ export function ReservationModal({
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
                     Confirmation...
                   </>
+                ) : wantToPrepay && cartTotal > 0 ? (
+                  <>
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Passer au paiement
+                  </>
                 ) : (
                   'Confirmer la réservation'
                 )}
               </Button>
             </div>
+          </div>
+        );
+
+      case 'payment':
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CreditCard className="w-8 h-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold">Paiement sécurisé</h3>
+              <p className="text-muted-foreground">Payez votre précommande en avance</p>
+            </div>
+
+            {/* Récapitulatif de la commande */}
+            <Card>
+              <CardContent className="p-4 space-y-3">
+                <h4 className="font-medium">Récapitulatif</h4>
+                {cart.map(c => (
+                  <div key={c.menuItem.id} className="flex justify-between text-sm">
+                    <span>{c.quantity}x {c.menuItem.name}</span>
+                    <span>{(c.menuItem.price * c.quantity).toLocaleString()} GNF</span>
+                  </div>
+                ))}
+                <div className="border-t pt-2 flex justify-between font-bold">
+                  <span>Total à payer</span>
+                  <span className="text-primary">{cartTotal.toLocaleString()} GNF</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Options de paiement (simplifié) */}
+            <div className="space-y-3">
+              <Button 
+                className="w-full h-14 bg-orange-500 hover:bg-orange-600"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+              >
+                <img src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Orange_Money_logo.png" 
+                     alt="Orange Money" 
+                     className="w-6 h-6 mr-2 rounded" />
+                Payer avec Orange Money
+              </Button>
+              
+              <Button 
+                variant="outline"
+                className="w-full h-14"
+                onClick={() => {
+                  setWantToPrepay(false);
+                  handleSubmit();
+                }}
+                disabled={isSubmitting}
+              >
+                Payer sur place
+              </Button>
+            </div>
+
+            <Button variant="ghost" className="w-full" onClick={goToPreviousStep}>
+              Retour
+            </Button>
           </div>
         );
 
@@ -468,18 +856,28 @@ export function ReservationModal({
                 <span className="text-muted-foreground">Nom</span>
                 <span className="font-semibold">{customerName}</span>
               </div>
+              {confirmationData?.preorder && confirmationData.preorder.length > 0 && (
+                <div className="border-t pt-3 mt-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Précommande</span>
+                    <span className="font-semibold text-orange-600">
+                      {confirmationData.preorderTotal.toLocaleString()} GNF
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {restaurantPhone && (
               <p className="text-sm text-muted-foreground">
-                Besoin de modifier ? Appelez le <a href={`tel:${restaurantPhone}`} className="text-primary underline">{restaurantPhone}</a>
+                Besoin de modifier ? Appelez le{' '}
+                <a href={`tel:${restaurantPhone}`} className="text-primary underline">
+                  {restaurantPhone}
+                </a>
               </p>
             )}
 
-            <Button 
-              className="w-full h-12" 
-              onClick={handleClose}
-            >
+            <Button className="w-full h-12" onClick={handleClose}>
               Terminé
             </Button>
           </div>
@@ -489,7 +887,7 @@ export function ReservationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary" />
@@ -500,12 +898,12 @@ export function ReservationModal({
         {/* Progress indicator */}
         {step !== 'confirmation' && (
           <div className="flex gap-1 mb-4">
-            {['guests', 'datetime', 'details'].map((s, i) => (
+            {['guests', 'datetime', 'menu', 'details', ...(wantToPrepay && cartTotal > 0 ? ['payment'] : [])].map((s, i) => (
               <div
                 key={s}
                 className={cn(
                   'h-1 flex-1 rounded-full transition-colors',
-                  ['guests', 'datetime', 'details'].indexOf(step) >= i
+                  ['guests', 'datetime', 'menu', 'details', 'payment'].indexOf(step) >= i
                     ? 'bg-primary'
                     : 'bg-muted'
                 )}
