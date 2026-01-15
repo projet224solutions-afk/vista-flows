@@ -122,6 +122,19 @@ export function usePOSPersistence(
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isRestoringRef = useRef(false);
   const hasRestoredRef = useRef(false);
+  
+  // Refs stables pour éviter les re-renders
+  const stateRef = useRef(state);
+  const onRestoreRef = useRef(onRestore);
+
+  // Mise à jour des refs sans déclencher de re-render
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  useEffect(() => {
+    onRestoreRef.current = onRestore;
+  });
 
   // Sauvegarde avec debounce
   const debouncedSave = useCallback((newState: Partial<POSPersistedState>) => {
@@ -136,38 +149,38 @@ export function usePOSPersistence(
     }, SAVE_DEBOUNCE_MS);
   }, [enabled]);
 
-  // Sauvegarde immédiate (pour événements critiques)
-  const saveImmediately = useCallback((newState: Partial<POSPersistedState>) => {
+  // Sauvegarde immédiate (pour événements critiques) - utilise stateRef
+  const saveImmediately = useCallback(() => {
     if (!enabled) return;
     
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
     
-    savePOSState(newState);
+    savePOSState(stateRef.current);
   }, [enabled]);
 
-  // Restaurer l'état au montage
+  // Restaurer l'état au montage - s'exécute une seule fois
   useEffect(() => {
     if (!enabled || hasRestoredRef.current) return;
+    hasRestoredRef.current = true;
     
     const savedState = loadPOSState();
-    if (savedState && savedState.cart.length > 0 && onRestore) {
+    if (savedState && savedState.cart.length > 0) {
       isRestoringRef.current = true;
-      onRestore(savedState);
-      hasRestoredRef.current = true;
       
-      // Attendre un peu avant de réactiver la sauvegarde
+      // Appeler onRestore de manière asynchrone
       setTimeout(() => {
+        onRestoreRef.current?.(savedState);
         isRestoringRef.current = false;
-      }, 1000);
+      }, 0);
       
       console.log('[POS Persistence] État restauré:', {
         cartItems: savedState.cart.length,
         timestamp: new Date(savedState.timestamp).toLocaleString()
       });
     }
-  }, [enabled, onRestore]);
+  }, [enabled]); // Dépendances stables uniquement
 
   // Sauvegarder lors des changements d'état
   useEffect(() => {
@@ -181,16 +194,20 @@ export function usePOSPersistence(
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
-        saveImmediately(state);
+        saveImmediately();
       }
     };
 
     const handleBeforeUnload = () => {
-      saveImmediately(state);
+      saveImmediately();
     };
 
     const handlePageHide = () => {
-      saveImmediately(state);
+      saveImmediately();
+    };
+
+    const handleBlur = () => {
+      saveImmediately();
     };
 
     // Événements pour desktop
@@ -199,19 +216,19 @@ export function usePOSPersistence(
     
     // Événements pour mobile (PWA)
     window.addEventListener('pagehide', handlePageHide);
-    window.addEventListener('blur', () => saveImmediately(state));
+    window.addEventListener('blur', handleBlur);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('pagehide', handlePageHide);
-      window.removeEventListener('blur', () => saveImmediately(state));
+      window.removeEventListener('blur', handleBlur);
       
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [enabled, state, saveImmediately]);
+  }, [enabled, saveImmediately]);
 
   return {
     save: debouncedSave,
