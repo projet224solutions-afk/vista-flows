@@ -23912,7 +23912,14 @@ export type Database = {
         | "SUSPICIOUS_PATTERN"
         | "CARD_TESTING"
         | "DEVICE_MISMATCH"
-      message_type: "text" | "image" | "file" | "call" | "location"
+      message_type:
+        | "text"
+        | "image"
+        | "file"
+        | "call"
+        | "location"
+        | "audio"
+        | "video"
       order_source: "online" | "pos"
       order_status:
         | "pending"
@@ -24180,7 +24187,15 @@ export const Constants = {
         "CARD_TESTING",
         "DEVICE_MISMATCH",
       ],
-      message_type: ["text", "image", "file", "call", "location"],
+      message_type: [
+        "text",
+        "image",
+        "file",
+        "call",
+        "location",
+        "audio",
+        "video",
+      ],
       order_source: ["online", "pos"],
       order_status: [
         "pending",
