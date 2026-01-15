@@ -67,12 +67,17 @@ export const useVendorAnalytics = () => {
         .order('date', { ascending: false });
 
       // Récupérer les produits les plus vendus
-      const { data: topProducts } = await supabase
+      const { data: topProducts, error: topProductsError } = await supabase
         .from('payment_links' as any)
         .select('produit, id')
-        .eq('vendor_id', vendorId)
+        // ✅ Colonne correcte dans la table: vendeur_id (et non vendor_id)
+        .eq('vendeur_id', vendorId)
         .eq('status', 'completed')
         .limit(5);
+
+      if (topProductsError) {
+        console.error('Error loading top products:', topProductsError);
+      }
 
       // Récupérer le nombre de produits actifs
       const { count: activeProductsCount } = await supabase
