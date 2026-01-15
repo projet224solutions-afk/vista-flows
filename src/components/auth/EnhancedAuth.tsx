@@ -389,7 +389,7 @@ export default function EnhancedAuth() {
         const firstName = nameParts[0] || '';
         const lastName = nameParts.slice(1).join(' ') || '';
         
-        const { error } = await supabase.auth.signUp({
+        const { error, data } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -399,12 +399,20 @@ export default function EnhancedAuth() {
               first_name: firstName,
               last_name: lastName,
               account_type: accountType,
-              role: roleToUse // Ajouter le rôle directement
+              role: roleToUse,
+              has_password: true // Marquer que l'utilisateur a défini un mot de passe
             }
           }
         });
         
         if (error) throw error;
+        
+        // ✅ Marquer has_password = true dans le profil (au cas où le trigger ne le fait pas)
+        if (data.user) {
+          // Note: Le profil sera créé par le trigger, on mettra à jour has_password après confirmation
+          localStorage.setItem(`oauth_password_set_${data.user.id}`, 'true');
+        }
+        
         toast.success('Vérifiez votre email pour confirmer votre inscription !');
       } else {
         // Connexion
