@@ -113,8 +113,19 @@ export default function SetPasswordAfterOAuth() {
     checkUserStatus();
   }, [user, profile, authLoading, profileLoading, navigate]);
 
-  const handleSkipPassword = () => {
+  const handleSkipPassword = async () => {
     if (!user) return;
+    
+    // Marquer has_password = true en BDD même si "skipped" pour ne plus revoir cette page
+    try {
+      await supabase
+        .from('profiles')
+        .update({ has_password: true })
+        .eq('id', user.id);
+    } catch (err) {
+      console.error('Erreur mise à jour profil:', err);
+    }
+    
     localStorage.removeItem('needs_oauth_password');
     localStorage.setItem(`oauth_password_set_${user.id}`, 'skipped');
     toast.message('Vous pourrez définir un mot de passe plus tard depuis votre profil.');

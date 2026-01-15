@@ -32,6 +32,14 @@ export default function OAuthPasswordGate() {
       // Ne pas boucler si on est déjà sur la page cible
       if (location.pathname === "/auth/set-password") return;
 
+      // ⚡ VÉRIFICATION PRIORITAIRE: localStorage (cache rapide)
+      const localStatus = localStorage.getItem(`oauth_password_set_${user.id}`);
+      if (localStatus === "true" || localStatus === "skipped") {
+        console.log("✅ [OAuthPasswordGate] Étape mot de passe déjà traitée (localStorage)", { status: localStatus });
+        localStorage.removeItem("needs_oauth_password");
+        return;
+      }
+
       // ⚡ Vérifier le AMR (Authentication Methods Reference) pour savoir
       // COMMENT l'utilisateur s'est connecté dans cette session
       const amr = (session.user as any)?.amr as Array<{ method?: string }> | undefined;
@@ -92,17 +100,7 @@ export default function OAuthPasswordGate() {
       if (profile?.has_password === true) {
         console.log("✅ [OAuthPasswordGate] Mot de passe déjà défini (BDD), pas de redirection");
         localStorage.removeItem("needs_oauth_password");
-        return;
-      }
-
-      // Fallback: vérifier localStorage si le profil n'a pas encore été mis à jour
-      // - "true" = mot de passe défini
-      // - "skipped" = l'utilisateur a choisi de continuer sans définir de mot de passe
-      const hasSetPasswordLocal = localStorage.getItem(`oauth_password_set_${user.id}`);
-      if (hasSetPasswordLocal === "true" || hasSetPasswordLocal === "skipped") {
-        console.log("✅ [OAuthPasswordGate] Étape mot de passe déjà traitée (localStorage), pas de redirection", {
-          status: hasSetPasswordLocal,
-        });
+        localStorage.setItem(`oauth_password_set_${user.id}`, "true");
         return;
       }
 
