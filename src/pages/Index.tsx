@@ -2,10 +2,11 @@
  * Index.tsx - Page d'accueil principale
  * Composant léger qui charge rapidement et redirige vers Home
  */
-import { Suspense, lazy } from "react";
+import { Suspense } from "react";
+import { lazyWithRetry } from "@/utils/lazyWithRetry";
 
-// Lazy load Home pour un premier affichage rapide
-const Home = lazy(() => import("./Home"));
+// Lazy load Home avec retry automatique pour éviter le blocage mobile
+const Home = lazyWithRetry(() => import("./Home"));
 
 // Loader minimal inline
 const QuickLoader = () => (
