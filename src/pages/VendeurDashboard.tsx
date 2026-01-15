@@ -218,11 +218,12 @@ export default function VendeurDashboard() {
     }
   }, [signOut, toast, navigate, t]);
 
-  // ✅ Correction : Ajoute un petit écran de chargement tant que user/profile ne sont pas prêts
-  const isLoading = !user || typeof profile === 'undefined' || statsLoading;
+  // 🚀 OPTIMISATION: Loading rapide avec skeleton au lieu d'attendre
+  // On affiche le skeleton uniquement si pas de profil du tout
+  const isInitialLoading = !user || typeof profile === 'undefined';
   
-  // Afficher un message d'erreur si les stats ne chargent pas
-  if (!isLoading && stats === null) {
+  // Afficher un message d'erreur si les stats ne chargent pas (après loading initial)
+  if (!isInitialLoading && !statsLoading && stats === null && statsError) {
     const isVendorMissing = statsError === 'Vendor profile not found';
 
     return (
@@ -260,7 +261,8 @@ export default function VendeurDashboard() {
     );
   }
   
-  if (isLoading) {
+  // 🚀 SKELETON INSTANTANÉ: Afficher skeleton pendant chargement initial seulement
+  if (isInitialLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="flex items-center gap-3 text-slate-700">
@@ -272,6 +274,9 @@ export default function VendeurDashboard() {
       </div>
     );
   }
+  
+  // 🚀 NOTE: On affiche le dashboard même si statsLoading=true
+  // Les stats se mettront à jour automatiquement grâce au cache
 
   // (stats déplacées plus haut via useMemo)
 
