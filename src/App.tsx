@@ -55,6 +55,7 @@ const DriverSettings = lazyWithRetry(() => import("./pages/driver/DriverSettings
 const DriverHelp = lazyWithRetry(() => import("./pages/driver/DriverHelp"));
 const TaxiMotoDriver = lazyWithRetry(() => import("./pages/TaxiMotoDriver"));
 const DriverSubscriptionPage = lazyWithRetry(() => import("./pages/DriverSubscriptionPage"));
+const VendorSubscriptionPage = lazyWithRetry(() => import("./pages/VendorSubscriptionPage"));
 const TaxiMotoClient = lazyWithRetry(() => import("./pages/TaxiMotoClient"));
 const TaxiMotoRouter = lazyWithRetry(() => import("./components/taxi-moto/TaxiMotoRouter"));
 const SyndicatDashboardUltraPro = lazyWithRetry(() => import("./pages/SyndicatDashboardUltraPro"));
@@ -259,7 +260,7 @@ function App() {
               {/* Abonnement conducteur: disponible pour taxi/driver et vendeur */}
               {/* Abonnement conducteur: disponible pour taxi/driver et vendeur */}
               <Route path="/driver-subscription" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'livreur', 'admin']}><DriverSubscriptionPage /></ProtectedRoute>} />
-              <Route path="/vendeur/subscription" element={<ProtectedRoute allowedRoles={['vendeur', 'admin']}><DriverSubscriptionPage /></ProtectedRoute>} />
+              <Route path="/vendeur/subscription" element={<ProtectedRoute allowedRoles={['vendeur', 'admin']}><VendorSubscriptionPage /></ProtectedRoute>} />
               <Route path="/tracking" element={<ClientTrackingPage />} />
               <Route path="/client-tracking" element={<ClientTrackingPage />} />
               <Route path="/profil" element={<Profil />} />
