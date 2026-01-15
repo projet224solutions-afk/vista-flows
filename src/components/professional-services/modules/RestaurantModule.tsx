@@ -23,6 +23,7 @@ import { RestaurantMenuManager } from '@/components/restaurant/RestaurantMenuMan
 import { RestaurantTableManager } from '@/components/restaurant/RestaurantTableManager';
 import { RestaurantSettings } from '@/components/restaurant/RestaurantSettings';
 import { RestaurantReservationsManager } from '@/components/restaurant/RestaurantReservationsManager';
+import { RestaurantOrdersPanel } from '@/components/restaurant/RestaurantOrdersPanel';
 
 interface RestaurantModuleProps {
   serviceId: string;
@@ -374,58 +375,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
         </TabsContent>
 
         <TabsContent value="orders" className="mt-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Commandes récentes</CardTitle>
-              <Button variant="outline" size="sm">
-                <Eye className="w-4 h-4 mr-2" />
-                Voir tout
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {recentOrders.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <ClipboardList className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucune commande pour le moment</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {recentOrders.map((order) => (
-                    <div 
-                      key={order.id} 
-                      className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium">#{order.order_number}</span>
-                          <Badge className={statusColors[order.status] || 'bg-gray-100'}>
-                            {statusLabels[order.status] || order.status}
-                          </Badge>
-                          {order.order_type && (
-                            <Badge variant="outline" className="text-xs flex items-center gap-1">
-                              {orderTypeIcons[order.order_type]}
-                              {orderTypeLabels[order.order_type] || order.order_type}
-                            </Badge>
-                          )}
-                          {order.table_number && (
-                            <Badge variant="secondary" className="text-xs">
-                              Table {order.table_number}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {order.customer_name || 'Client'} • {formatDistanceToNow(new Date(order.created_at), { addSuffix: true, locale: fr })}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold">{formatCurrency(order.total)}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <RestaurantOrdersPanel serviceId={serviceId} />
         </TabsContent>
 
         <TabsContent value="reservations" className="mt-4">
