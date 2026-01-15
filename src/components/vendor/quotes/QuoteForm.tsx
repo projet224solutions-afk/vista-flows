@@ -2,7 +2,7 @@
  * FORMULAIRE CRÉATION DEVIS - INTERFACE VENDEUR
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import { Plus, Trash2, FilePlus, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useVendorId } from '@/hooks/useVendorId';
+import { useFormPersistence, useAppPersistence } from '@/hooks/useAppPersistence';
 
 interface QuoteItem {
   name: string;
@@ -24,21 +25,47 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
   const { vendorId } = useVendorId();
   const [loading, setLoading] = useState(false);
   
-  // Client info
-  const [clientName, setClientName] = useState('');
-  const [clientEmail, setClientEmail] = useState('');
-  const [clientPhone, setClientPhone] = useState('');
-  const [clientAddress, setClientAddress] = useState('');
+  // Persistance du formulaire client
+  const { values: clientForm, setValues: setClientForm, resetForm: resetClientForm } = useFormPersistence(
+    `quote_client_${vendorId}`,
+    {
+      clientName: '',
+      clientEmail: '',
+      clientPhone: '',
+      clientAddress: '',
+      discount: 0,
+      tax: 0,
+      notes: '',
+    },
+    { enabled: !!vendorId, maxAge: 60 * 60 * 1000 } // 1 heure
+  );
   
-  // Items
-  const [items, setItems] = useState<QuoteItem[]>([
-    { name: '', quantity: 1, unit_price: 0, total: 0 }
-  ]);
+  // Persistance des items du devis
+  const itemsPersistence = useAppPersistence<QuoteItem[]>({
+    key: `quote_items_${vendorId}`,
+    defaultState: [{ name: '', quantity: 1, unit_price: 0, total: 0 }],
+    enabled: !!vendorId,
+    maxAge: 60 * 60 * 1000,
+  });
   
-  // Montants
-  const [discount, setDiscount] = useState(0);
-  const [tax, setTax] = useState(0);
-  const [notes, setNotes] = useState('');
+  // Aliases pour compatibilité
+  const clientName = clientForm.clientName;
+  const setClientName = (v: string) => setClientForm(prev => ({ ...prev, clientName: v }));
+  const clientEmail = clientForm.clientEmail;
+  const setClientEmail = (v: string) => setClientForm(prev => ({ ...prev, clientEmail: v }));
+  const clientPhone = clientForm.clientPhone;
+  const setClientPhone = (v: string) => setClientForm(prev => ({ ...prev, clientPhone: v }));
+  const clientAddress = clientForm.clientAddress;
+  const setClientAddress = (v: string) => setClientForm(prev => ({ ...prev, clientAddress: v }));
+  const discount = clientForm.discount;
+  const setDiscount = (v: number) => setClientForm(prev => ({ ...prev, discount: v }));
+  const tax = clientForm.tax;
+  const setTax = (v: number) => setClientForm(prev => ({ ...prev, tax: v }));
+  const notes = clientForm.notes;
+  const setNotes = (v: string) => setClientForm(prev => ({ ...prev, notes: v }));
+  
+  const items = itemsPersistence.state;
+  const setItems = itemsPersistence.setState;
 
   const addItem = () => {
     setItems([...items, { name: '', quantity: 1, unit_price: 0, total: 0 }]);
@@ -129,15 +156,9 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
         toast.success('Devis créé avec succès!');
       }
 
-      // Reset form
-      setClientName('');
-      setClientEmail('');
-      setClientPhone('');
-      setClientAddress('');
-      setItems([{ name: '', quantity: 1, unit_price: 0, total: 0 }]);
-      setDiscount(0);
-      setTax(0);
-      setNotes('');
+      // Reset form avec persistance
+      resetClientForm();
+      itemsPersistence.clear();
       
       onSuccess?.();
     } catch (error: any) {

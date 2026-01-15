@@ -18,6 +18,7 @@ import WalletMonthlyStats from "@/components/WalletMonthlyStats";
 import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 import { PaymentMethodsManager } from "@/components/payment/PaymentMethodsManager";
 import { JomyPaymentSelector } from "@/components/payment/JomyPaymentSelector";
+import { useFormPersistence } from "@/hooks/useAppPersistence";
 
 export default function Payment() {
   const navigate = useNavigate();
@@ -48,10 +49,24 @@ export default function Payment() {
     receiver_id?: string;
   } | null>(null);
   
-  // États pour la sélection de méthode de paiement
-  const [paymentStep, setPaymentStep] = useState<'form' | 'method'>('form');
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
-  const [mobileMoneyPhone, setMobileMoneyPhone] = useState('');
+  // Persistance des préférences de paiement
+  const { values: paymentPrefs, setValues: setPaymentPrefs, resetForm: resetPaymentPrefs } = useFormPersistence(
+    `payment_prefs_${user?.id}`,
+    {
+      paymentStep: 'form' as 'form' | 'method',
+      selectedPaymentMethod: null as string | null,
+      mobileMoneyPhone: '',
+    },
+    { enabled: !!user?.id, maxAge: 60 * 60 * 1000 } // 1 heure
+  );
+  
+  // Aliases pour compatibilité
+  const paymentStep = paymentPrefs.paymentStep;
+  const setPaymentStep = (v: 'form' | 'method') => setPaymentPrefs(prev => ({ ...prev, paymentStep: v }));
+  const selectedPaymentMethod = paymentPrefs.selectedPaymentMethod;
+  const setSelectedPaymentMethod = (v: string | null) => setPaymentPrefs(prev => ({ ...prev, selectedPaymentMethod: v }));
+  const mobileMoneyPhone = paymentPrefs.mobileMoneyPhone;
+  const setMobileMoneyPhone = (v: string) => setPaymentPrefs(prev => ({ ...prev, mobileMoneyPhone: v }));
 
   // Vérification d'authentification pour les achats
   useEffect(() => {
