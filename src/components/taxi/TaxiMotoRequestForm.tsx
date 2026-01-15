@@ -1,16 +1,40 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { TaxiMotoService } from '@/services/taxi/TaxiMotoService';
 import { MapPin, Calculator, Send } from 'lucide-react';
+import { useFormPersistence } from '@/hooks/useAppPersistence';
+import { toast } from 'sonner';
+
+interface TaxiFormData {
+  pickupLat: string;
+  pickupLng: string;
+  dropLat: string;
+  dropLng: string;
+}
 
 export default function TaxiMotoRequestForm() {
-  const [pickupLat, setPickupLat] = useState<string>('');
-  const [pickupLng, setPickupLng] = useState<string>('');
-  const [dropLat, setDropLat] = useState<string>('');
-  const [dropLng, setDropLng] = useState<string>('');
+  // Utiliser la persistence pour les données du formulaire
+  const { values, updateField, resetForm, isRestored } = useFormPersistence<TaxiFormData>(
+    'taxi_moto_request',
+    {
+      pickupLat: '',
+      pickupLng: '',
+      dropLat: '',
+      dropLng: '',
+    },
+    {
+      maxAge: 30 * 60 * 1000, // 30 minutes
+      onRestore: (data) => {
+        if (data.pickupLat || data.dropLat) {
+          toast.success('🚖 Formulaire taxi restauré', { duration: 2000 });
+        }
+      }
+    }
+  );
+
   const [distanceKm, setDistanceKm] = useState<number>(0);
   const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -20,7 +44,7 @@ export default function TaxiMotoRequestForm() {
     setLoading(true);
     try {
       // Simple distance estimate (replace with real geodesic)
-      const d = Math.max(0.5, Math.abs(parseFloat(dropLat) - parseFloat(pickupLat)) + Math.abs(parseFloat(dropLng) - parseFloat(pickupLng)));
+      const d = Math.max(0.5, Math.abs(parseFloat(values.dropLat) - parseFloat(values.pickupLat)) + Math.abs(parseFloat(values.dropLng) - parseFloat(values.pickupLng)));
       setDistanceKm(d);
       const durationEstimate = Math.ceil(d * 10); // Simple: 10 min per km
       const fareResult = await TaxiMotoService.calculateFare(d, durationEstimate);
@@ -37,17 +61,21 @@ export default function TaxiMotoRequestForm() {
     setLoading(true);
     try {
       const ride = await TaxiMotoService.createRide({
-        pickupLat: parseFloat(pickupLat),
-        pickupLng: parseFloat(pickupLng),
+        pickupLat: parseFloat(values.pickupLat),
+        pickupLng: parseFloat(values.pickupLng),
         pickupAddress: 'Adresse de départ',
-        dropoffLat: parseFloat(dropLat),
-        dropoffLng: parseFloat(dropLng),
+        dropoffLat: parseFloat(values.dropLat),
+        dropoffLng: parseFloat(values.dropLng),
         dropoffAddress: 'Adresse d\'arrivée',
         distanceKm: distanceKm || 1,
         durationMin: Math.ceil((distanceKm || 1) * 10),
         estimatedPrice: estimatedPrice || 0
       });
       setLastRideId(ride.id);
+      // Réinitialiser le formulaire après création
+      resetForm();
+      setEstimatedPrice(null);
+      setDistanceKm(0);
     } catch (e) {
       console.error('Create ride error:', e);
     } finally {
@@ -62,19 +90,19 @@ export default function TaxiMotoRequestForm() {
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <label className="text-xs">Départ lat</label>
-            <Input value={pickupLat} onChange={e=>setPickupLat(e.target.value)} placeholder="9.5" />
+            <Input value={values.pickupLat} onChange={e => updateField('pickupLat', e.target.value)} placeholder="9.5" />
           </div>
           <div className="space-y-2">
             <label className="text-xs">Départ lng</label>
-            <Input value={pickupLng} onChange={e=>setPickupLng(e.target.value)} placeholder="-13.7" />
+            <Input value={values.pickupLng} onChange={e => updateField('pickupLng', e.target.value)} placeholder="-13.7" />
           </div>
           <div className="space-y-2">
             <label className="text-xs">Arrivée lat</label>
-            <Input value={dropLat} onChange={e=>setDropLat(e.target.value)} placeholder="9.52" />
+            <Input value={values.dropLat} onChange={e => updateField('dropLat', e.target.value)} placeholder="9.52" />
           </div>
           <div className="space-y-2">
             <label className="text-xs">Arrivée lng</label>
-            <Input value={dropLng} onChange={e=>setDropLng(e.target.value)} placeholder="-13.69" />
+            <Input value={values.dropLng} onChange={e => updateField('dropLng', e.target.value)} placeholder="-13.69" />
           </div>
         </div>
         <div className="flex items-center gap-2">

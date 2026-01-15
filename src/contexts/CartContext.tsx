@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import { toast } from 'sonner';
+import { useListPersistence } from '@/hooks/useAppPersistence';
 
 export interface CartItem {
   id: string;
@@ -24,45 +25,41 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-
-  // Charger le panier depuis localStorage au montage
-  useEffect(() => {
-    const savedCart = localStorage.getItem('224solutions_cart');
-    if (savedCart) {
-      try {
-        setCartItems(JSON.parse(savedCart));
-      } catch (error) {
-        console.error('Erreur chargement panier:', error);
+  // Utiliser le hook de persistence universel avec sauvegarde automatique
+  const { 
+    items: cartItems, 
+    setItems: setCartItems, 
+    addItem,
+    removeItem,
+    updateItem,
+    clearList,
+    isRestored 
+  } = useListPersistence<CartItem>('marketplace_cart', {
+    enabled: true,
+    maxAge: 24 * 60 * 60 * 1000, // 24 heures pour le panier
+    onRestore: (items) => {
+      if (items.length > 0) {
+        toast.success(`🛒 Panier restauré (${items.length} article${items.length > 1 ? 's' : ''})`, {
+          duration: 3000
+        });
       }
     }
-  }, []);
-
-  // Sauvegarder le panier dans localStorage à chaque changement
-  useEffect(() => {
-    localStorage.setItem('224solutions_cart', JSON.stringify(cartItems));
-  }, [cartItems]);
+  });
 
   const addToCart = (item: Omit<CartItem, 'quantity'>) => {
-    setCartItems(prev => {
-      const existingItem = prev.find(i => i.id === item.id);
-      
-      if (existingItem) {
-        toast.success('Quantité augmentée dans le panier');
-        return prev.map(i =>
-          i.id === item.id
-            ? { ...i, quantity: i.quantity + 1 }
-            : i
-        );
-      }
-      
+    const existingItem = cartItems.find(i => i.id === item.id);
+    
+    if (existingItem) {
+      updateItem(item.id, { quantity: existingItem.quantity + 1 });
+      toast.success('Quantité augmentée dans le panier');
+    } else {
+      addItem({ ...item, quantity: 1 });
       toast.success('Produit ajouté au panier');
-      return [...prev, { ...item, quantity: 1 }];
-    });
+    }
   };
 
   const removeFromCart = (itemId: string) => {
-    setCartItems(prev => prev.filter(item => item.id !== itemId));
+    removeItem(itemId);
     toast.info('Produit retiré du panier');
   };
 
@@ -71,18 +68,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       removeFromCart(itemId);
       return;
     }
-    
-    setCartItems(prev =>
-      prev.map(item =>
-        item.id === itemId
-          ? { ...item, quantity }
-          : item
-      )
-    );
+    updateItem(itemId, { quantity });
   };
 
   const clearCart = () => {
-    setCartItems([]);
+    clearList();
     toast.info('Panier vidé');
   };
 
