@@ -95,28 +95,30 @@ async function searchProducts(supabaseClient: any, query: string, category?: str
     name: p.name,
     description: p.description?.substring(0, 150) + (p.description?.length > 150 ? '...' : ''),
     price: p.price,
-    oldPrice: p.compare_at_price,
+    oldPrice: p.compare_price,
     image: p.images?.[0] || null,
     stock: p.stock_quantity,
     rating: p.rating,
     reviewsCount: p.reviews_count,
     isHot: p.is_hot,
-    isNew: p.is_new,
+    isFeatured: p.is_featured,
     category: p.category?.name || 'Non catégorisé',
     // Informations enrichies de la boutique
     vendorId: p.vendor_id,
     boutique: {
+      id: p.vendor?.id,
       name: p.vendor?.business_name || 'Vendeur 224',
       logo: p.vendor?.logo_url,
       description: p.vendor?.description,
-      phone: p.vendor?.phone,
+      phone: p.vendor?.phone || 'Non renseigné',
       email: p.vendor?.email,
-      address: p.vendor?.address,
-      city: p.vendor?.city,
+      address: p.vendor?.address || 'Adresse non renseignée',
+      city: p.vendor?.city || 'Guinée',
       country: p.vendor?.country || 'Guinée',
       rating: p.vendor?.rating,
       isVerified: p.vendor?.is_verified,
-      deliveryOptions: p.vendor?.delivery_options
+      deliveryEnabled: p.vendor?.delivery_enabled,
+      deliveryBasePrice: p.vendor?.delivery_base_price
     }
   })) || [];
 }
@@ -237,8 +239,8 @@ async function getVendorProducts(supabaseClient: any, vendorId?: string, vendorN
   const { data: products } = await supabaseClient
     .from('products')
     .select(`
-      id, name, description, price, compare_at_price, images, 
-      rating, reviews_count, stock_quantity, is_hot, is_new,
+      id, name, description, price, compare_price, images, 
+      rating, reviews_count, stock_quantity, is_hot, is_featured,
       category:categories(name)
     `)
     .eq('vendor_id', vendorIdToUse)
@@ -252,14 +254,14 @@ async function getVendorProducts(supabaseClient: any, vendorId?: string, vendorN
     name: p.name,
     description: p.description?.substring(0, 100),
     price: p.price,
-    oldPrice: p.compare_at_price,
+    oldPrice: p.compare_price,
     image: p.images?.[0],
     rating: p.rating,
     reviewsCount: p.reviews_count,
     stock: p.stock_quantity,
     category: p.category?.name,
     isHot: p.is_hot,
-    isNew: p.is_new
+    isFeatured: p.is_featured
   })) || [];
 }
 
