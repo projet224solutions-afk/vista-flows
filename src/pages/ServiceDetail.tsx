@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useGeoDistance, formatDistance } from "@/hooks/useGeoDistance";
+import { ReservationModal } from "@/components/restaurant/ReservationModal";
 
 interface ServiceDetail {
   id: string;
@@ -98,6 +99,7 @@ export default function ServiceDetail() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
   const [distance, setDistance] = useState<number | null>(null);
 
 
@@ -342,7 +344,13 @@ export default function ServiceDetail() {
       return;
     }
     
-    toast.success('Système de réservation à venir');
+    // Ouvrir le modal de réservation professionnel pour les restaurants
+    if (isRestaurant) {
+      setIsReservationModalOpen(true);
+    } else {
+      // Pour les autres types de services, rediriger vers la réservation générique
+      toast.info('Contactez le prestataire pour réserver');
+    }
   };
 
   // Naviguer vers le menu restaurant pour passer commande
@@ -812,6 +820,17 @@ export default function ServiceDetail() {
           </div>
         )}
       </div>
+
+      {/* Modal de réservation restaurant professionnel */}
+      {isRestaurant && service && (
+        <ReservationModal
+          isOpen={isReservationModalOpen}
+          onClose={() => setIsReservationModalOpen(false)}
+          serviceId={service.id}
+          restaurantName={service.name}
+          restaurantPhone={service.phone}
+        />
+      )}
     </div>
   );
 }
