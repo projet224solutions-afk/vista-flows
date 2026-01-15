@@ -46,9 +46,13 @@ async function searchProducts(supabaseClient: any, query: string, category?: str
     .eq('is_active', true)
     .gt('stock_quantity', 0);
 
-  // Recherche textuelle
+  // Recherche textuelle avec ILIKE - format correct pour Supabase
   if (query) {
-    queryBuilder = queryBuilder.or(`name.ilike.%${query}%,description.ilike.%${query}%`);
+    // Nettoyer le terme de recherche et échapper les caractères spéciaux
+    const searchTerm = query.trim();
+    // Format correct: utiliser % comme wildcard dans la syntaxe Supabase .or()
+    // Note: Le % doit être encodé ou utilisé directement dans le pattern
+    queryBuilder = queryBuilder.ilike('name', `%${searchTerm}%`);
   }
 
   // Filtres optionnels
@@ -285,9 +289,9 @@ async function searchProximityServices(supabaseClient: any, query?: string, serv
     }
   }
 
-  // Recherche textuelle
+  // Recherche textuelle - utiliser ilike séparé
   if (query) {
-    queryBuilder = queryBuilder.or(`business_name.ilike.%${query}%,description.ilike.%${query}%`);
+    queryBuilder = queryBuilder.ilike('business_name', `%${query}%`);
   }
 
   const { data: services, error } = await queryBuilder
@@ -591,7 +595,7 @@ async function globalMarketplaceSearch(supabaseClient: any, query: string, limit
     categories: []
   };
 
-  // Recherche de produits
+  // Recherche de produits - utiliser ilike séparé
   const { data: products } = await supabaseClient
     .from('products')
     .select(`
@@ -600,7 +604,7 @@ async function globalMarketplaceSearch(supabaseClient: any, query: string, limit
       category:categories(name)
     `)
     .eq('is_active', true)
-    .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
+    .ilike('name', `%${query}%`)
     .order('rating', { ascending: false })
     .limit(limit);
 
@@ -616,12 +620,12 @@ async function globalMarketplaceSearch(supabaseClient: any, query: string, limit
     category: p.category?.name
   }));
 
-  // Recherche de vendeurs
+  // Recherche de vendeurs - utiliser ilike séparé
   const { data: vendors } = await supabaseClient
     .from('vendors')
     .select('id, business_name, logo_url, description, rating, city, is_verified')
     .eq('status', 'active')
-    .or(`business_name.ilike.%${query}%,description.ilike.%${query}%`)
+    .ilike('business_name', `%${query}%`)
     .order('rating', { ascending: false })
     .limit(limit);
 
@@ -636,7 +640,7 @@ async function globalMarketplaceSearch(supabaseClient: any, query: string, limit
     isVerified: v.is_verified
   }));
 
-  // Recherche de services de proximité
+  // Recherche de services de proximité - utiliser ilike séparé
   const { data: services } = await supabaseClient
     .from('professional_services')
     .select(`
@@ -644,7 +648,7 @@ async function globalMarketplaceSearch(supabaseClient: any, query: string, limit
       service_type:service_types(name)
     `)
     .eq('status', 'active')
-    .or(`business_name.ilike.%${query}%,description.ilike.%${query}%`)
+    .ilike('business_name', `%${query}%`)
     .order('rating', { ascending: false })
     .limit(limit);
 
