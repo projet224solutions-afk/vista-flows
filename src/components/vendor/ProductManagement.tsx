@@ -45,7 +45,7 @@ interface Product {
   category_id?: string;
   category?: { id: string; name: string } | null;
   images?: string[];
-  promotional_video?: string; // URL de la vidéo publicitaire
+  promotional_videos?: string[]; // URLs des vidéos publicitaires (max 2)
   tags?: string[];
   weight?: number;
   created_at?: string;
@@ -103,7 +103,7 @@ export default function ProductManagement() {
   const [showDialog, setShowDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
-  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [selectedVideos, setSelectedVideos] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const [generatingDescription, setGeneratingDescription] = useState(false);
@@ -181,10 +181,17 @@ export default function ProductManagement() {
     }
   };
 
-  // Handle video upload with 10 second validation
+  // Handle video upload with 40 second validation (max 2 videos)
   const handleVideoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Check max 2 videos limit
+    const currentCount = selectedVideos.length + (editingProduct?.promotional_videos?.length || 0);
+    if (currentCount >= 2) {
+      toast.error('Maximum 2 vidéos par produit');
+      return;
+    }
 
     // Check if user has premium subscription
     const isPremium = await checkPremiumStatus();
@@ -231,7 +238,7 @@ export default function ProductManagement() {
         video.src = URL.createObjectURL(file);
       });
 
-      setSelectedVideo(file);
+      setSelectedVideos(prev => [...prev, file]);
       toast.success('✅ Vidéo publicitaire ajoutée');
     } catch (error: any) {
       if (error.message === 'Durée maximale dépassée') {
@@ -239,7 +246,6 @@ export default function ProductManagement() {
       } else {
         toast.error('Erreur lors de la validation de la vidéo');
       }
-      setSelectedVideo(null);
     } finally {
       setUploadingVideo(false);
     }
@@ -361,12 +367,12 @@ export default function ProductManagement() {
           payload,
           selectedImages,
           editingProduct.images || [],
-          selectedVideo,
-          editingProduct.promotional_video
+          selectedVideos[0] || null,
+          editingProduct.promotional_videos?.[0] || null
         );
         console.log('[ProductSave] Update result:', result);
       } else {
-        const result = await createProduct(payload, selectedImages, selectedVideo);
+        const result = await createProduct(payload, selectedImages, selectedVideos[0] || null);
         console.log('[ProductSave] Create result:', result);
         if (!result.success) {
           console.error('[ProductSave] Creation failed');
@@ -473,7 +479,7 @@ export default function ProductManagement() {
     });
     setEditingProduct(null);
     setSelectedImages([]);
-    setSelectedVideo(null);
+    setSelectedVideos([]);
     setCategoryMode('existing');
   };
 
@@ -1452,7 +1458,7 @@ export default function ProductManagement() {
                     type="button"
                     variant="outline"
                     onClick={() => videoInputRef.current?.click()}
-                    disabled={uploadingVideo}
+                    disabled={uploadingVideo || (selectedVideos.length + (editingProduct?.promotional_videos?.length || 0)) >= 2}
                     className="h-20 flex-col gap-2 relative"
                   >
                     {uploadingVideo ? (
@@ -1466,7 +1472,10 @@ export default function ProductManagement() {
                       </>
                     )}
                     <span className="text-xs">
-                      {uploadingVideo ? 'Validation...' : 'Vidéo pub (40s)'}
+                      {uploadingVideo 
+                        ? 'Validation...' 
+                        : `Vidéo (${selectedVideos.length + (editingProduct?.promotional_videos?.length || 0)}/2)`
+                      }
                     </span>
                   </Button>
                 </div>
@@ -1488,41 +1497,53 @@ export default function ProductManagement() {
               </div>
 
               {/* Video Preview */}
-              {(selectedVideo || editingProduct?.promotional_video) && (
+              {(selectedVideos.length > 0 || (editingProduct?.promotional_videos?.length || 0) > 0) && (
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
                     <Video className="h-4 w-4" />
-                    Vidéo publicitaire Premium
-                    <Badge variant="secondary" className="text-[10px]">Max 40s</Badge>
+                    Vidéos publicitaires Premium
+                    <Badge variant="secondary" className="text-[10px]">Max 2 vidéos • 40s chacune</Badge>
                   </Label>
-                  <div className="relative aspect-video rounded-lg overflow-hidden border-2 border-primary/20 bg-black">
-                    <video
-                      src={selectedVideo ? URL.createObjectURL(selectedVideo) : editingProduct?.promotional_video}
-                      controls
-                      className="w-full h-full"
-                    />
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      className="absolute top-2 right-2 h-8 w-8 p-0"
-                      onClick={() => {
-                        setSelectedVideo(null);
-                        if (editingProduct) {
-                          setEditingProduct({ ...editingProduct, promotional_video: undefined });
-                        }
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                    {selectedVideo ? (
-                      <Badge className="absolute bottom-2 left-2 text-xs" variant="default">
-                        {(selectedVideo.size / (1024 * 1024)).toFixed(1)} MB
-                      </Badge>
-                    ) : (
-                      <Badge className="absolute bottom-2 left-2 text-xs" variant="secondary">
-                        Vidéo actuelle
-                      </Badge>
-                    )}
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Existing videos */}
+                    {editingProduct?.promotional_videos?.map((videoUrl, index) => (
+                      <div key={`existing-video-${index}`} className="relative aspect-video rounded-lg overflow-hidden border-2 border-primary/20 bg-black">
+                        <video src={videoUrl} controls className="w-full h-full" />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute top-2 right-2 h-8 w-8 p-0"
+                          onClick={() => {
+                            if (editingProduct) {
+                              const newVideos = editingProduct.promotional_videos?.filter((_, i) => i !== index) || [];
+                              setEditingProduct({ ...editingProduct, promotional_videos: newVideos });
+                            }
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                        <Badge className="absolute bottom-2 left-2 text-xs" variant="secondary">
+                          Vidéo {index + 1}
+                        </Badge>
+                      </div>
+                    ))}
+                    {/* New videos */}
+                    {selectedVideos.map((video, index) => (
+                      <div key={`new-video-${index}`} className="relative aspect-video rounded-lg overflow-hidden border-2 border-green-500/30 bg-black">
+                        <video src={URL.createObjectURL(video)} controls className="w-full h-full" />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute top-2 right-2 h-8 w-8 p-0"
+                          onClick={() => setSelectedVideos(prev => prev.filter((_, i) => i !== index))}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                        <Badge className="absolute bottom-2 left-2 text-xs" variant="default">
+                          {(video.size / (1024 * 1024)).toFixed(1)} MB • Nouvelle
+                        </Badge>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

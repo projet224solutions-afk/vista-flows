@@ -11666,7 +11666,7 @@ export type Database = {
           name: string
           price: number
           price_carton: number | null
-          promotional_video: string | null
+          promotional_videos: string[] | null
           public_id: string | null
           rating: number | null
           reviews_count: number | null
@@ -11700,7 +11700,7 @@ export type Database = {
           name: string
           price: number
           price_carton?: number | null
-          promotional_video?: string | null
+          promotional_videos?: string[] | null
           public_id?: string | null
           rating?: number | null
           reviews_count?: number | null
@@ -11734,7 +11734,7 @@ export type Database = {
           name?: string
           price?: number
           price_carton?: number | null
-          promotional_video?: string | null
+          promotional_videos?: string[] | null
           public_id?: string | null
           rating?: number | null
           reviews_count?: number | null
