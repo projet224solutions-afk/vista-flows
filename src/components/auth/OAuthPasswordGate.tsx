@@ -96,9 +96,13 @@ export default function OAuthPasswordGate() {
       }
 
       // Fallback: vérifier localStorage si le profil n'a pas encore été mis à jour
+      // - "true" = mot de passe défini
+      // - "skipped" = l'utilisateur a choisi de continuer sans définir de mot de passe
       const hasSetPasswordLocal = localStorage.getItem(`oauth_password_set_${user.id}`);
-      if (hasSetPasswordLocal === "true") {
-        console.log("✅ [OAuthPasswordGate] Mot de passe défini (localStorage), pas de redirection");
+      if (hasSetPasswordLocal === "true" || hasSetPasswordLocal === "skipped") {
+        console.log("✅ [OAuthPasswordGate] Étape mot de passe déjà traitée (localStorage), pas de redirection", {
+          status: hasSetPasswordLocal,
+        });
         return;
       }
 
