@@ -1,6 +1,7 @@
 // @ts-nocheck
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { usePOSPersistence, clearPOSState, type POSPersistedState } from '@/hooks/usePOSPersistence';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -437,7 +438,54 @@ export function POSSystem() {
   
   // Historique des 3 derniers produits sélectionnés
   const [recentlySelected, setRecentlySelected] = useState<string[]>([]);
-  
+
+  // ✨ PERSISTANCE: Restaurer l'état au montage et sauvegarder automatiquement
+  const handleRestorePOSState = useCallback((savedState: POSPersistedState) => {
+    // Vérifier que c'est le bon vendor
+    if (savedState.vendorId && savedState.vendorId !== vendorId) {
+      clearPOSState();
+      return;
+    }
+    
+    if (savedState.cart.length > 0) {
+      setCart(savedState.cart as CartItem[]);
+      toast.success(`🔄 Panier restauré (${savedState.cart.length} article${savedState.cart.length > 1 ? 's' : ''})`, {
+        description: 'Votre session précédente a été récupérée.',
+        duration: 3000
+      });
+    }
+    if (savedState.selectedCustomer) setSelectedCustomer(savedState.selectedCustomer as Customer);
+    if (savedState.paymentMethod) setPaymentMethod(savedState.paymentMethod);
+    if (savedState.mobileMoneyPhone) setMobileMoneyPhone(savedState.mobileMoneyPhone);
+    if (savedState.mobileMoneyProvider) setMobileMoneyProvider(savedState.mobileMoneyProvider);
+    if (savedState.receivedAmount) setReceivedAmount(savedState.receivedAmount);
+    if (savedState.discountPercent) setDiscountPercent(savedState.discountPercent);
+    if (savedState.discountAmount) setDiscountAmount(savedState.discountAmount);
+    if (savedState.discountMode) setDiscountMode(savedState.discountMode);
+    if (savedState.recentlySelected) setRecentlySelected(savedState.recentlySelected);
+  }, [vendorId]);
+
+  // Hook de persistance automatique
+  const { saveImmediately } = usePOSPersistence(
+    {
+      cart,
+      selectedCustomer,
+      paymentMethod,
+      mobileMoneyPhone,
+      mobileMoneyProvider,
+      receivedAmount,
+      discountPercent,
+      discountAmount,
+      discountMode,
+      recentlySelected,
+      vendorId,
+    },
+    {
+      enabled: !!vendorId,
+      onRestore: handleRestorePOSState,
+    }
+  );
+
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.barcode?.includes(searchTerm);
@@ -657,6 +705,8 @@ export function POSSystem() {
     setDiscountPercent(0);
     setDiscountAmount(0);
     setDiscountMode('percent');
+    // Effacer aussi les données persistées
+    clearPOSState();
     toast.info('Panier vidé');
   };
 

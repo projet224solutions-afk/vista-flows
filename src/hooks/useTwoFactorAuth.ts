@@ -60,10 +60,11 @@ const calculateTOTP = (secret: string): string => {
   const timeStep = 30;
   const counter = Math.floor(epoch / timeStep);
   
-  // Simplified TOTP - in production, use a proper library
+  // Simplified TOTP - using Utf8 encoding since CryptoJS doesn't have native Base32
+  // In production, consider using a proper TOTP library like otpauth
   const hmac = CryptoJS.HmacSHA1(
     CryptoJS.enc.Hex.parse(counter.toString(16).padStart(16, '0')),
-    CryptoJS.enc.Base32 ? CryptoJS.enc.Base32.parse(secret) : CryptoJS.enc.Utf8.parse(secret)
+    CryptoJS.enc.Utf8.parse(secret)
   );
   
   const offset = hmac.words[hmac.words.length - 1] & 0xf;
