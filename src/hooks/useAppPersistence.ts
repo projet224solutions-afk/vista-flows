@@ -129,22 +129,37 @@ export function useAppPersistence<T>(config: PersistenceConfig<T>) {
   const [isRestored, setIsRestored] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isRestoringRef = useRef(false);
+  const hasRestoredRef = useRef(false);
   const stateRef = useRef(state);
 
-  // Garder la référence à jour
+  // Refs stables pour les callbacks - évite les re-renders
+  const onRestoreRef = useRef(onRestore);
+  const validateRef = useRef(validate);
+  const serializeRef = useRef(serialize);
+  const deserializeRef = useRef(deserialize);
+
+  // Mise à jour des refs sans déclencher de re-render
+  useEffect(() => {
+    onRestoreRef.current = onRestore;
+    validateRef.current = validate;
+    serializeRef.current = serialize;
+    deserializeRef.current = deserialize;
+  });
+
+  // Garder la référence d'état à jour
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
 
-  // Sauvegarde immédiate
+  // Sauvegarde immédiate - stable car utilise des refs
   const saveImmediately = useCallback(() => {
     if (!enabled || isRestoringRef.current) return;
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = null;
     }
-    saveToStorage(key, stateRef.current, serialize);
-  }, [key, enabled, serialize]);
+    saveToStorage(key, stateRef.current, serializeRef.current);
+  }, [key, enabled]);
 
   // Sauvegarde avec debounce
   const saveLater = useCallback(() => {
@@ -153,31 +168,32 @@ export function useAppPersistence<T>(config: PersistenceConfig<T>) {
       clearTimeout(saveTimeoutRef.current);
     }
     saveTimeoutRef.current = setTimeout(() => {
-      saveToStorage(key, stateRef.current, serialize);
+      saveToStorage(key, stateRef.current, serializeRef.current);
     }, debounceMs);
-  }, [key, enabled, debounceMs, serialize]);
+  }, [key, enabled, debounceMs]);
 
-  // Restauration initiale
+  // Restauration initiale - s'exécute une seule fois
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || hasRestoredRef.current) return;
+    hasRestoredRef.current = true;
 
-    const savedState = loadFromStorage<T>(key, maxAge, validate, deserialize);
+    const savedState = loadFromStorage<T>(key, maxAge, validateRef.current, deserializeRef.current);
     if (savedState !== null) {
       isRestoringRef.current = true;
       setState(savedState);
       setIsRestored(true);
-      onRestore?.(savedState);
-
-      // Réactiver la sauvegarde après restauration
+      
+      // Appeler onRestore de manière asynchrone pour éviter les mises à jour en cascade
       setTimeout(() => {
+        onRestoreRef.current?.(savedState);
         isRestoringRef.current = false;
-      }, 500);
+      }, 0);
 
       console.log(`[Persistence] ${key} restauré`);
     } else {
       setIsRestored(true);
     }
-  }, [key, enabled, maxAge, validate, deserialize, onRestore]);
+  }, [key, enabled, maxAge]); // Dépendances stables uniquement
 
   // Sauvegarde automatique lors des changements d'état
   useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useRef, useMemo, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useListPersistence } from '@/hooks/useAppPersistence';
 
@@ -25,28 +25,33 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Ref pour éviter les toasts multiples
+  const hasShownRestoreToast = useRef(false);
+
+  // Callback mémorisé pour onRestore - évite les re-renders
+  const handleRestore = useCallback((items: CartItem[]) => {
+    if (items.length > 0 && !hasShownRestoreToast.current) {
+      hasShownRestoreToast.current = true;
+      toast.success(`🛒 Panier restauré (${items.length} article${items.length > 1 ? 's' : ''})`, {
+        duration: 3000
+      });
+    }
+  }, []);
+
   // Utiliser le hook de persistence universel avec sauvegarde automatique
   const { 
     items: cartItems, 
-    setItems: setCartItems, 
     addItem,
     removeItem,
     updateItem,
     clearList,
-    isRestored 
   } = useListPersistence<CartItem>('marketplace_cart', {
     enabled: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 heures pour le panier
-    onRestore: (items) => {
-      if (items.length > 0) {
-        toast.success(`🛒 Panier restauré (${items.length} article${items.length > 1 ? 's' : ''})`, {
-          duration: 3000
-        });
-      }
-    }
+    onRestore: handleRestore,
   });
 
-  const addToCart = (item: Omit<CartItem, 'quantity'>) => {
+  const addToCart = useCallback((item: Omit<CartItem, 'quantity'>) => {
     const existingItem = cartItems.find(i => i.id === item.id);
     
     if (existingItem) {
@@ -56,46 +61,48 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addItem({ ...item, quantity: 1 });
       toast.success('Produit ajouté au panier');
     }
-  };
+  }, [cartItems, updateItem, addItem]);
 
-  const removeFromCart = (itemId: string) => {
+  const removeFromCart = useCallback((itemId: string) => {
     removeItem(itemId);
     toast.info('Produit retiré du panier');
-  };
+  }, [removeItem]);
 
-  const updateQuantity = (itemId: string, quantity: number) => {
+  const updateQuantity = useCallback((itemId: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(itemId);
+      removeItem(itemId);
+      toast.info('Produit retiré du panier');
       return;
     }
     updateItem(itemId, { quantity });
-  };
+  }, [updateItem, removeItem]);
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     clearList();
     toast.info('Panier vidé');
-  };
+  }, [clearList]);
 
-  const getCartTotal = () => {
+  const getCartTotal = useCallback(() => {
     return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  };
+  }, [cartItems]);
 
-  const getCartCount = () => {
+  const getCartCount = useCallback(() => {
     return cartItems.reduce((count, item) => count + item.quantity, 0);
-  };
+  }, [cartItems]);
+
+  // Mémoiser la valeur du contexte pour éviter les re-renders inutiles
+  const contextValue = useMemo(() => ({
+    cartItems,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    getCartTotal,
+    getCartCount,
+  }), [cartItems, addToCart, removeFromCart, updateQuantity, clearCart, getCartTotal, getCartCount]);
 
   return (
-    <CartContext.Provider
-      value={{
-        cartItems,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart,
-        getCartTotal,
-        getCartCount,
-      }}
-    >
+    <CartContext.Provider value={contextValue}>
       {children}
     </CartContext.Provider>
   );
