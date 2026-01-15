@@ -9,6 +9,7 @@ import SearchBar from "@/components/SearchBar";
 import { MarketplaceGrid } from "@/components/marketplace/MarketplaceGrid";
 import { MarketplaceProductCard } from "@/components/marketplace/MarketplaceProductCard";
 import { UniversalMarketplaceCard } from "@/components/marketplace/UniversalMarketplaceCard";
+import { ProfessionalServiceCard } from "@/components/marketplace/ProfessionalServiceCard";
 import { CurrencyIndicator } from "@/components/marketplace/CurrencyIndicator";
 import QuickFooter from "@/components/QuickFooter";
 import ProductDetailModal from "@/components/marketplace/ProductDetailModal";
@@ -534,10 +535,9 @@ export default function Marketplace() {
               // Pour les services professionnels, utiliser UniversalMarketplaceCard
               if (item.item_type === 'professional_service') {
                 return (
-                  <UniversalMarketplaceCard
+                  <ProfessionalServiceCard
                     key={item.id}
                     item={item}
-                    onAddToCart={() => navigate(`/services-proximite/${item.id}`)}
                     onViewDetails={() => navigate(`/services-proximite/${item.id}`)}
                   />
                 );
