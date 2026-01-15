@@ -48,12 +48,25 @@ export default function SetPasswordAfterOAuth() {
       return;
     }
 
-    // Seul "true" permet de passer - "skipped" n'est plus accepté (mot de passe obligatoire)
+    // ✅ Vérifier si c'est un utilisateur OAuth (Google/Facebook)
+    const provider = user.app_metadata?.provider;
+    const isOAuthUser = provider === 'google' || provider === 'facebook';
+    
+    // ✅ Si ce n'est PAS un utilisateur OAuth (connexion email/password), rediriger directement
+    if (!isOAuthUser) {
+      console.log('🔐 Utilisateur email détecté, redirection vers le dashboard...');
+      // Nettoyer les flags au cas où
+      localStorage.removeItem('needs_oauth_password');
+      redirectToProperDashboard();
+      return;
+    }
+
+    // Pour les utilisateurs OAuth: vérifier s'ils ont déjà défini un mot de passe
     const hasSetPassword = localStorage.getItem(`oauth_password_set_${user.id}`);
     if (hasSetPassword === 'true') {
       redirectToProperDashboard();
     }
-  }, [user, navigate]);
+  }, [user, navigate, profile]);
 
   const redirectToProperDashboard = () => {
     const roleRoutes: Record<string, string> = {
