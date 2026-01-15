@@ -329,8 +329,8 @@ export default function SetPasswordAfterOAuth() {
               </Alert>
             )}
 
-            {/* Boutons d'action */}
-            <div className="pt-2 space-y-3">
+            {/* Bouton d'action */}
+            <div className="pt-2">
               <Button
                 type="submit"
                 className="w-full h-12 text-base font-semibold"
@@ -348,16 +348,6 @@ export default function SetPasswordAfterOAuth() {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full h-12"
-                onClick={handleSkipPassword}
-                disabled={loading}
-              >
-                Continuer sans mot de passe
               </Button>
             </div>
           </form>
