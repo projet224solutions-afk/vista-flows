@@ -292,17 +292,19 @@
           });
       }
 
-      function shouldRecoverFromError(message) {
-        var m = String(message || '').toLowerCase();
-        return (
-          m.includes('loading chunk') ||
-          m.includes('chunkloaderror') ||
-          m.includes('loading css chunk') ||
-          m.includes('failed to fetch dynamically imported module') ||
-          m.includes('importing a module script failed') ||
-          (m.includes('failed to fetch') && m.includes('/assets/'))
-        );
-      }
+       function shouldRecoverFromError(message) {
+         var m = String(message || '').toLowerCase();
+         return (
+           m.includes('loading chunk') ||
+           m.includes('chunkloaderror') ||
+           m.includes('loading css chunk') ||
+           m.includes('failed to fetch dynamically imported module') ||
+           m.includes('importing a module script failed') ||
+           (m.includes('failed to fetch') && m.includes('/assets/')) ||
+           // Cas réel observé après déploiement (bundles mélangés via cache/SW)
+           m.includes('forwardref')
+         );
+       }
 
       // Détecter tôt les erreurs globales (utile si main.tsx ne se charge pas)
       window.addEventListener('error', function (event) {
