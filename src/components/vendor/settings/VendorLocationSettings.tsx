@@ -142,46 +142,123 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
     }
   };
 
-  const getCurrentLocation = () => {
+  const [gpsProgress, setGpsProgress] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
+
+  // Fonction de récupération GPS avec retry et fallback
+  const getCurrentLocation = async () => {
     if (!navigator.geolocation) {
       toast.error("La géolocalisation n'est pas supportée par votre navigateur");
       return;
     }
 
-    // Dans certains environnements (iframe / paramètres navigateur), la géoloc est bloquée
     if (!window.isSecureContext) {
       toast.error("La géolocalisation nécessite une connexion sécurisée (HTTPS)");
       return;
     }
 
     setGettingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
+    setGpsProgress('Demande de permission...');
+    setRetryCount(0);
+
+    // Fonction pour tenter la géolocalisation
+    const attemptGeolocation = (highAccuracy: boolean, timeout: number, attempt: number): Promise<GeolocationPosition> => {
+      return new Promise((resolve, reject) => {
+        setGpsProgress(
+          highAccuracy 
+            ? `Recherche GPS haute précision... (essai ${attempt}/3)` 
+            : 'Utilisation position approximative...'
+        );
+
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          reject,
+          { 
+            enableHighAccuracy: highAccuracy, 
+            timeout: timeout, 
+            maximumAge: highAccuracy ? 0 : 60000 
+          }
+        );
+      });
+    };
+
+    try {
+      let position: GeolocationPosition | null = null;
+
+      // Essai 1: Haute précision, 20 secondes
+      try {
+        setRetryCount(1);
+        position = await attemptGeolocation(true, 20000, 1);
+      } catch (e1) {
+        console.log('GPS essai 1 échoué, réessai...');
+        
+        // Essai 2: Haute précision, 15 secondes
+        try {
+          setRetryCount(2);
+          position = await attemptGeolocation(true, 15000, 2);
+        } catch (e2) {
+          console.log('GPS essai 2 échoué, tentative basse précision...');
+          
+          // Essai 3: Basse précision (fallback réseau/WiFi), 10 secondes
+          try {
+            setRetryCount(3);
+            position = await attemptGeolocation(false, 10000, 3);
+          } catch (e3) {
+            throw e3; // Tous les essais ont échoué
+          }
+        }
+      }
+
+      if (position) {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
+        const accuracy = position.coords.accuracy;
 
         setLatitude(lat);
         setLongitude(lng);
-        toast.success('Position GPS récupérée avec succès');
-        void fillAddressFromCoords(lat, lng);
-        setGettingLocation(false);
-      },
-      (error) => {
-        console.error('Erreur géolocalisation:', error);
-        const code = (error as GeolocationPositionError).code;
-        if (code === 1) {
-          toast.error("Permission refusée : autorisez la localisation puis rechargez la page");
-        } else if (code === 2) {
-          toast.error("Position indisponible : activez le GPS / localisation de l'appareil");
-        } else if (code === 3) {
-          toast.error("Délai dépassé : réessayez (ou saisissez les coordonnées manuellement)");
+        
+        setGpsProgress('');
+        
+        if (accuracy > 100) {
+          toast.success(`Position récupérée (précision: ~${Math.round(accuracy)}m)`, {
+            description: 'Position approximative - vous pouvez affiner manuellement'
+          });
         } else {
-          toast.error("Impossible de récupérer votre position. Vérifiez les permissions.");
+          toast.success('Position GPS précise récupérée !', {
+            description: `Précision: ~${Math.round(accuracy)}m`
+          });
         }
-        setGettingLocation(false);
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-    );
+        
+        void fillAddressFromCoords(lat, lng);
+      }
+    } catch (error) {
+      console.error('Erreur géolocalisation après tous les essais:', error);
+      const code = (error as GeolocationPositionError)?.code;
+      
+      setGpsProgress('');
+      
+      if (code === 1) {
+        toast.error("Permission refusée", {
+          description: "Autorisez la localisation dans les paramètres du navigateur puis rechargez la page"
+        });
+      } else if (code === 2) {
+        toast.error("Position indisponible", {
+          description: "Activez le GPS/localisation de l'appareil et réessayez"
+        });
+      } else if (code === 3) {
+        toast.error("Délai dépassé après 3 tentatives", {
+          description: "Saisissez les coordonnées manuellement ou déplacez-vous vers un endroit avec meilleur signal"
+        });
+      } else {
+        toast.error("Erreur de géolocalisation", {
+          description: "Vérifiez les permissions et réessayez"
+        });
+      }
+    } finally {
+      setGettingLocation(false);
+      setGpsProgress('');
+      setRetryCount(0);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -302,13 +379,27 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
               variant="outline"
               onClick={getCurrentLocation}
               disabled={gettingLocation}
-              className="w-full"
+              className="w-full h-auto min-h-10 py-3"
             >
               {gettingLocation ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Récupération en cours...
-                </>
+                <div className="flex flex-col items-center gap-1">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>{gpsProgress || 'Récupération en cours...'}</span>
+                  </div>
+                  {retryCount > 0 && (
+                    <div className="flex gap-1 mt-1">
+                      {[1, 2, 3].map((i) => (
+                        <div 
+                          key={i}
+                          className={`w-2 h-2 rounded-full transition-colors ${
+                            i <= retryCount ? 'bg-primary' : 'bg-muted'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               ) : (
                 <>
                   <Navigation className="w-4 h-4 mr-2" />
