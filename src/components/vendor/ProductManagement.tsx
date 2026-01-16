@@ -103,7 +103,7 @@ export default function ProductManagement() {
   const [showDialog, setShowDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
-  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [selectedVideos, setSelectedVideos] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const [generatingDescription, setGeneratingDescription] = useState(false);
@@ -212,7 +212,13 @@ export default function ProductManagement() {
       return;
     }
 
-    // Validate video duration (max 10 seconds)
+    // Check max 2 videos
+    if (selectedVideos.length >= 2) {
+      toast.error('Maximum 2 vidéos par produit');
+      return;
+    }
+
+    // Validate video duration (max 45 seconds)
     try {
       setUploadingVideo(true);
       const video = document.createElement('video');
@@ -221,7 +227,7 @@ export default function ProductManagement() {
       await new Promise<void>((resolve, reject) => {
         video.onloadedmetadata = () => {
           window.URL.revokeObjectURL(video.src);
-          if (video.duration > 10) {
+          if (video.duration > 45) {
             reject(new Error('Durée maximale dépassée'));
           } else {
             resolve();
@@ -231,15 +237,14 @@ export default function ProductManagement() {
         video.src = URL.createObjectURL(file);
       });
 
-      setSelectedVideo(file);
-      toast.success('✅ Vidéo publicitaire ajoutée');
+      setSelectedVideos(prev => [...prev, file]);
+      toast.success(`✅ Vidéo ${selectedVideos.length + 1}/2 ajoutée`);
     } catch (error: any) {
       if (error.message === 'Durée maximale dépassée') {
-        toast.error('Vidéo trop longue. Durée maximale : 10 secondes');
+        toast.error('Vidéo trop longue. Durée maximale : 45 secondes');
       } else {
         toast.error('Erreur lors de la validation de la vidéo');
       }
-      setSelectedVideo(null);
     } finally {
       setUploadingVideo(false);
     }
@@ -361,12 +366,12 @@ export default function ProductManagement() {
           payload,
           selectedImages,
           editingProduct.images || [],
-          selectedVideo,
+          selectedVideos.length > 0 ? selectedVideos[0] : null,
           editingProduct.promotional_video
         );
         console.log('[ProductSave] Update result:', result);
       } else {
-        const result = await createProduct(payload, selectedImages, selectedVideo);
+        const result = await createProduct(payload, selectedImages, selectedVideos.length > 0 ? selectedVideos[0] : null);
         console.log('[ProductSave] Create result:', result);
         if (!result.success) {
           console.error('[ProductSave] Creation failed');
@@ -473,7 +478,7 @@ export default function ProductManagement() {
     });
     setEditingProduct(null);
     setSelectedImages([]);
-    setSelectedVideo(null);
+    setSelectedVideos([]);
     setCategoryMode('existing');
   };
 
@@ -1466,7 +1471,7 @@ export default function ProductManagement() {
                       </>
                     )}
                     <span className="text-xs">
-                      {uploadingVideo ? 'Validation...' : 'Vidéo pub (10s)'}
+                      {uploadingVideo ? 'Validation...' : `Vidéos pub (${selectedVideos.length}/2)`}
                     </span>
                   </Button>
                 </div>
@@ -1488,40 +1493,59 @@ export default function ProductManagement() {
               </div>
 
               {/* Video Preview */}
-              {(selectedVideo || editingProduct?.promotional_video) && (
+              {(selectedVideos.length > 0 || editingProduct?.promotional_video) && (
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
                     <Video className="h-4 w-4" />
-                    Vidéo publicitaire Premium
-                    <Badge variant="secondary" className="text-[10px]">Max 10s</Badge>
+                    Vidéos publicitaires Premium ({selectedVideos.length}/2)
+                    <Badge variant="secondary" className="text-[10px]">Max 45s</Badge>
                   </Label>
-                  <div className="relative aspect-video rounded-lg overflow-hidden border-2 border-primary/20 bg-black">
-                    <video
-                      src={selectedVideo ? URL.createObjectURL(selectedVideo) : editingProduct?.promotional_video}
-                      controls
-                      className="w-full h-full"
-                    />
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      className="absolute top-2 right-2 h-8 w-8 p-0"
-                      onClick={() => {
-                        setSelectedVideo(null);
-                        if (editingProduct) {
-                          setEditingProduct({ ...editingProduct, promotional_video: undefined });
-                        }
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                    {selectedVideo ? (
-                      <Badge className="absolute bottom-2 left-2 text-xs" variant="default">
-                        {(selectedVideo.size / (1024 * 1024)).toFixed(1)} MB
-                      </Badge>
-                    ) : (
-                      <Badge className="absolute bottom-2 left-2 text-xs" variant="secondary">
-                        Vidéo actuelle
-                      </Badge>
+                  <div className="grid grid-cols-2 gap-2">
+                    {selectedVideos.map((video, index) => (
+                      <div key={index} className="relative aspect-video rounded-lg overflow-hidden border-2 border-primary/20 bg-black">
+                        <video
+                          src={URL.createObjectURL(video)}
+                          controls
+                          className="w-full h-full"
+                        />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute top-2 right-2 h-6 w-6 p-0"
+                          onClick={() => {
+                            setSelectedVideos(prev => prev.filter((_, i) => i !== index));
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                        <Badge className="absolute bottom-2 left-2 text-xs" variant="default">
+                          {(video.size / (1024 * 1024)).toFixed(1)} MB
+                        </Badge>
+                      </div>
+                    ))}
+                    {editingProduct?.promotional_video && selectedVideos.length === 0 && (
+                      <div className="relative aspect-video rounded-lg overflow-hidden border-2 border-primary/20 bg-black">
+                        <video
+                          src={editingProduct.promotional_video}
+                          controls
+                          className="w-full h-full"
+                        />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute top-2 right-2 h-6 w-6 p-0"
+                          onClick={() => {
+                            if (editingProduct) {
+                              setEditingProduct({ ...editingProduct, promotional_video: undefined });
+                            }
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                        <Badge className="absolute bottom-2 left-2 text-xs" variant="secondary">
+                          Vidéo actuelle
+                        </Badge>
+                      </div>
                     )}
                   </div>
                 </div>
