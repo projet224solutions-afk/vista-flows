@@ -1,5 +1,5 @@
-// Service Worker v11 - PWA + Firebase Cloud Messaging + Mode Offline Desktop & Mobile
-const CACHE_VERSION = "v11";
+// Service Worker v12 - PWA + Firebase Cloud Messaging + Mode Offline Desktop & Mobile
+const CACHE_VERSION = "v12";
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
 const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
@@ -333,10 +333,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Assets avec hash (immutables) - Network First (anti "bundles mélangés")
-  // Objectif: si un fichier /assets/* a été mal caché (SW/HTTP/CDN) après un déploiement,
-  // on force une revalidation en ligne pour récupérer la bonne version.
-  if (url.pathname.match(/\/assets\/.*\.[a-f0-9]{8}\./)) {
+  // Assets Vite (/assets/*) - Network First (anti "bundles mélangés")
+  // IMPORTANT: les hashes Vite ne sont pas forcément en hexadécimal (ex: -BSk9CUdM),
+  // donc on ne peut pas se baser sur une regex hex.
+  if (url.pathname.startsWith('/assets/')) {
     event.respondWith(
       (async () => {
         try {
