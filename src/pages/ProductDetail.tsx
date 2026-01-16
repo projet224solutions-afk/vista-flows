@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ProductPaymentModal from "@/components/ecommerce/ProductPaymentModal";
 import { ShareButton } from "@/components/shared/ShareButton";
+import { Play } from "lucide-react";
+
 interface Product {
   id: string;
   name: string;
@@ -15,6 +17,7 @@ interface Product {
   currency?: string;
   description?: string;
   images?: string[];
+  promotional_videos?: string[];
   stock_quantity?: number;
   vendor_id: string;
   vendors?: {
@@ -38,6 +41,7 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [showVideo, setShowVideo] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -90,6 +94,7 @@ export default function ProductDetail() {
         .from('products')
         .select(`
           *,
+          promotional_videos,
           vendors:vendor_id(business_name, id, shop_slug),
           categories:category_id(name)
         `)
@@ -203,31 +208,58 @@ export default function ProductDetail() {
 
       <div className="max-w-6xl mx-auto p-4">
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Images */}
+          {/* Images & Video */}
           <div className="space-y-4">
             <div className="h-[600px] rounded-lg overflow-hidden bg-white flex items-center justify-center p-3 border border-border/20">
-              <img
-                src={images[selectedImage]}
-                alt={product.name}
-                className="max-w-full max-h-full w-auto h-auto object-contain"
-                style={{ maxWidth: '100%', maxHeight: '100%' }}
-              />
+              {showVideo && product.promotional_videos && product.promotional_videos.length > 0 ? (
+                <video
+                  src={product.promotional_videos[0]}
+                  controls
+                  autoPlay
+                  className="max-w-full max-h-full w-auto h-auto object-contain"
+                  style={{ maxWidth: '100%', maxHeight: '100%' }}
+                />
+              ) : (
+                <img
+                  src={images[selectedImage]}
+                  alt={product.name}
+                  className="max-w-full max-h-full w-auto h-auto object-contain"
+                  style={{ maxWidth: '100%', maxHeight: '100%' }}
+                />
+              )}
             </div>
-            {images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
-                {images.map((img, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSelectedImage(idx)}
-                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
-                      selectedImage === idx ? 'border-primary' : 'border-transparent'
-                    }`}
-                  >
-                    <img loading="lazy" src={img} alt={`${product.name} ${idx + 1}`} className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
+            
+            {/* Thumbnails - Video + Images */}
+            <div className="grid grid-cols-5 gap-2">
+              {/* Video thumbnail si disponible */}
+              {product.promotional_videos && product.promotional_videos.length > 0 && (
+                <button
+                  onClick={() => setShowVideo(true)}
+                  className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-colors bg-black flex items-center justify-center ${
+                    showVideo ? 'border-primary' : 'border-transparent hover:border-primary/50'
+                  }`}
+                >
+                  <Play className="w-8 h-8 text-white" />
+                  <span className="absolute bottom-1 left-1 text-[10px] text-white bg-black/60 px-1 rounded">Vidéo</span>
+                </button>
+              )}
+              
+              {/* Image thumbnails */}
+              {images.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setSelectedImage(idx);
+                    setShowVideo(false);
+                  }}
+                  className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                    !showVideo && selectedImage === idx ? 'border-primary' : 'border-transparent'
+                  }`}
+                >
+                  <img loading="lazy" src={img} alt={`${product.name} ${idx + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Info */}
