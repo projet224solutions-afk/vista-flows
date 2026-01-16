@@ -111,6 +111,7 @@ export default function ProductManagement() {
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [categoryMode, setCategoryMode] = useState<'existing' | 'new'>('existing');
   const [saving, setSaving] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
   const [productLimit, setProductLimit] = useState<{
     current_count: number;
     max_products: number | null;
@@ -147,6 +148,7 @@ export default function ProductManagement() {
     if (!vendorId || vendorLoading) return;
     fetchData();
     loadProductLimit();
+    loadPremiumStatus();
   }, [vendorId, vendorLoading]);
 
   const loadProductLimit = async () => {
@@ -155,30 +157,51 @@ export default function ProductManagement() {
     setProductLimit(limit);
   };
 
-  // Check if user has premium subscription
-  const checkPremiumStatus = async (): Promise<boolean> => {
-    if (!user?.id) return false;
+  // Check and cache premium status
+  const loadPremiumStatus = async () => {
+    if (!user?.id) {
+      setIsPremium(false);
+      return;
+    }
     try {
+      // Get ALL active subscriptions (user might have multiple)
       const { data: subData, error: subError } = await supabase
         .from('subscriptions')
-        .select('status, plan_id')
+        .select('plan_id')
         .eq('user_id', user.id)
-        .eq('status', 'active')
-        .single();
+        .eq('status', 'active');
       
-      if (subError || !subData?.plan_id) return false;
+      if (subError || !subData || subData.length === 0) {
+        setIsPremium(false);
+        return;
+      }
       
+      // Check if ANY subscription is premium/pro/business/enterprise
+      const planIds = subData.map(s => s.plan_id);
       const { data: planData } = await supabase
         .from('plans')
         .select('name')
-        .eq('id', subData.plan_id)
-        .single();
+        .in('id', planIds);
       
-      const planName = (planData?.name as string | undefined)?.toLowerCase() || '';
-      return planName.includes('premium') || planName.includes('enterprise') || planName.includes('pro');
-    } catch {
-      return false;
+      const hasPremium = (planData || []).some(p => {
+        const name = (p.name as string || '').toLowerCase();
+        return name.includes('premium') || name.includes('enterprise') || name.includes('pro') || name.includes('business');
+      });
+      
+      console.log('[Premium Check] Has premium:', hasPremium, planData);
+      setIsPremium(hasPremium);
+    } catch (e) {
+      console.error('[Premium Check] Error:', e);
+      setIsPremium(false);
     }
+  };
+
+  // Check if user has premium subscription (for immediate validation)
+  const checkPremiumStatus = async (): Promise<boolean> => {
+    if (isPremium) return true;
+    // Refresh and return
+    await loadPremiumStatus();
+    return isPremium;
   };
 
   // Handle video upload with 10 second validation
@@ -1456,22 +1479,37 @@ export default function ProductManagement() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => videoInputRef.current?.click()}
-                    disabled={uploadingVideo}
-                    className="h-20 flex-col gap-2 relative"
+                    onClick={() => {
+                      if (!isPremium) {
+                        toast.error('⭐ Fonctionnalité Premium uniquement', {
+                          description: 'Passez à un abonnement Premium/Pro/Business pour ajouter des vidéos',
+                          action: {
+                            label: 'Voir les offres',
+                            onClick: () => navigate('/subscriptions')
+                          }
+                        });
+                        return;
+                      }
+                      videoInputRef.current?.click();
+                    }}
+                    disabled={uploadingVideo || selectedVideos.length >= 2}
+                    className={`h-20 flex-col gap-2 relative ${!isPremium ? 'opacity-60' : ''}`}
                   >
                     {uploadingVideo ? (
                       <Loader2 className="h-6 w-6 animate-spin" />
                     ) : (
                       <>
                         <Video className="h-6 w-6" />
-                        <Badge variant="secondary" className="absolute top-1 right-1 text-[10px] px-1">
-                          Premium
+                        <Badge 
+                          variant={isPremium ? "default" : "secondary"} 
+                          className={`absolute top-1 right-1 text-[10px] px-1 ${isPremium ? 'bg-green-500' : ''}`}
+                        >
+                          {isPremium ? '✓ Premium' : '🔒 Premium'}
                         </Badge>
                       </>
                     )}
                     <span className="text-xs">
-                      {uploadingVideo ? 'Validation...' : `Vidéos pub (${selectedVideos.length}/2)`}
+                      {uploadingVideo ? 'Validation...' : `Vidéos (${selectedVideos.length}/2)`}
                     </span>
                   </Button>
                 </div>
