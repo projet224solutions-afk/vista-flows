@@ -37,20 +37,20 @@ const categoryIcons: Record<string, React.ComponentType<any>> = {
 };
 
 const categoryColors: Record<string, string> = {
-  voyage: "bg-blue-100 text-blue-700",
-  logiciel: "bg-purple-100 text-purple-700",
-  formation: "bg-green-100 text-green-700",
-  livre: "bg-orange-100 text-orange-700",
-  dropshipping: "bg-cyan-100 text-cyan-700",
-  custom: "bg-gray-100 text-gray-700",
+  voyage: "bg-accent text-accent-foreground",
+  logiciel: "bg-accent text-accent-foreground",
+  formation: "bg-accent text-accent-foreground",
+  livre: "bg-accent text-accent-foreground",
+  dropshipping: "bg-accent text-accent-foreground",
+  custom: "bg-accent text-accent-foreground",
 };
 
 const statusColors: Record<string, string> = {
-  published: "bg-green-100 text-green-700",
-  draft: "bg-gray-100 text-gray-700",
-  pending: "bg-yellow-100 text-yellow-700",
-  rejected: "bg-red-100 text-red-700",
-  archived: "bg-slate-100 text-slate-700",
+  published: "bg-primary text-primary-foreground",
+  draft: "bg-muted text-foreground",
+  pending: "bg-secondary text-secondary-foreground",
+  rejected: "bg-destructive text-destructive-foreground",
+  archived: "bg-muted text-muted-foreground",
 };
 
 const statusLabels: Record<string, string> = {

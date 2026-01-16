@@ -77,13 +77,14 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
   const loadProduct = async () => {
     if (!productId) return;
-    
+
     setLoading(true);
     try {
-      // D'abord essayer de charger depuis products (produits physiques)
+      // 1) Produits physiques (products)
       const { data: physicalProduct, error: physicalError } = await supabase
-        .from('products')
-        .select(`
+        .from("products")
+        .select(
+          `
           id,
           name,
           price,
@@ -98,19 +99,22 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             user_id,
             shop_slug
           )
-        `)
-        .eq('id', productId)
+        `
+        )
+        .eq("id", productId)
         .maybeSingle();
 
+      if (physicalError) throw physicalError;
       if (physicalProduct) {
         setProduct(physicalProduct);
         return;
       }
 
-      // Si pas trouvé, essayer service_products (produits numériques)
-      const { data: digitalProduct } = await supabase
-        .from('service_products')
-        .select(`
+      // 2) Ancien flux "service_products" (legacy)
+      const { data: serviceProduct, error: serviceError } = await supabase
+        .from("service_products")
+        .select(
+          `
           id,
           name,
           price,
@@ -122,41 +126,96 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             user_id,
             status
           )
-        `)
-        .eq('id', productId)
+        `
+        )
+        .eq("id", productId)
         .maybeSingle();
 
-      if (digitalProduct) {
-        const proService = digitalProduct.professional_services as any;
+      if (serviceError) throw serviceError;
 
-        // Ne pas afficher un produit numérique si sa boutique/service n'est plus actif
-        if (!proService || proService.status !== 'active') {
-          throw new Error('Produit introuvable');
+      if (serviceProduct) {
+        const proService = serviceProduct.professional_services as any;
+
+        // Ne pas afficher si le service n'est plus actif
+        if (!proService || proService.status !== "active") {
+          throw new Error("Produit introuvable");
         }
 
         setProduct({
-          id: digitalProduct.id,
-          name: digitalProduct.name,
-          price: digitalProduct.price,
-          description: digitalProduct.description,
-          images: Array.isArray(digitalProduct.images) ? digitalProduct.images as string[] : [],
-          vendor_id: digitalProduct.professional_service_id,
+          id: serviceProduct.id,
+          name: serviceProduct.name,
+          price: serviceProduct.price,
+          description: serviceProduct.description,
+          images: Array.isArray(serviceProduct.images) ? (serviceProduct.images as string[]) : [],
+          promotional_videos: [],
+          vendor_id: serviceProduct.professional_service_id,
           category_id: undefined,
           is_active: true,
           vendors: {
-            business_name: proService.business_name || 'Vendeur',
+            business_name: proService.business_name || "Vendeur",
             user_id: proService.user_id,
-            shop_slug: undefined
-          }
+            shop_slug: undefined,
+          },
         });
         return;
       }
 
-      // Aucun produit trouvé
-      throw new Error('Produit introuvable');
+      // 3) Produits numériques (digital_products) ✅
+      const { data: digitalProduct, error: digitalError } = await supabase
+        .from("digital_products")
+        .select(
+          `
+          id,
+          title,
+          price,
+          description,
+          images,
+          status,
+          vendor_id,
+          merchant_id,
+          vendors:vendors!digital_products_vendor_id_fkey (
+            business_name,
+            user_id,
+            shop_slug
+          )
+        `
+        )
+        .eq("id", productId)
+        .maybeSingle();
+
+      if (digitalError) throw digitalError;
+
+      if (digitalProduct) {
+        if (digitalProduct.status !== "published") {
+          throw new Error("Produit introuvable");
+        }
+
+        const v = (digitalProduct.vendors as any) || null;
+
+        setProduct({
+          id: digitalProduct.id,
+          name: digitalProduct.title,
+          price: digitalProduct.price || 0,
+          description: digitalProduct.description || undefined,
+          images: Array.isArray(digitalProduct.images) ? (digitalProduct.images as string[]) : [],
+          promotional_videos: [],
+          // ✅ Utiliser vendor_id si dispo; sinon fallback sur merchant_id
+          vendor_id: digitalProduct.vendor_id || digitalProduct.merchant_id,
+          category_id: undefined,
+          is_active: true,
+          vendors: {
+            business_name: v?.business_name || "Vendeur",
+            user_id: v?.user_id || digitalProduct.merchant_id,
+            shop_slug: v?.shop_slug || undefined,
+          },
+        });
+        return;
+      }
+
+      throw new Error("Produit introuvable");
     } catch (error) {
-      console.error('Erreur chargement produit:', error);
-      toast.error('Impossible de charger le produit');
+      console.error("Erreur chargement produit:", error);
+      toast.error("Impossible de charger le produit");
       onClose();
     } finally {
       setLoading(false);
@@ -330,8 +389,11 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
     return (
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="sr-only">Chargement du produit</DialogTitle>
+          </DialogHeader>
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
           </div>
         </DialogContent>
       </Dialog>
