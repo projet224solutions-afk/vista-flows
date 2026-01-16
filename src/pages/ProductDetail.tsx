@@ -1,6 +1,6 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { ArrowLeft, ShoppingCart, MessageCircle, Star, Shield, Truck, ExternalLink } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { ArrowLeft, ShoppingCart, MessageCircle, Star, Shield, Truck, ExternalLink, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ProductPaymentModal from "@/components/ecommerce/ProductPaymentModal";
 import { ShareButton } from "@/components/shared/ShareButton";
-import { Play } from "lucide-react";
+import { useAutoCarousel } from "@/hooks/useAutoCarousel";
 
 interface Product {
   id: string;
@@ -39,12 +39,36 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [showVideo, setShowVideo] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+
+  // Mémoriser les vidéos et images pour le carrousel
+  const videos = useMemo(() => product?.promotional_videos || [], [product?.promotional_videos]);
+  const images = useMemo(() => 
+    product?.images && product.images.length > 0 
+      ? product.images 
+      : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop'],
+    [product?.images]
+  );
+
+  // Hook de carrousel automatique
+  const {
+    currentVideoIndex,
+    currentImageIndex,
+    isPlayingVideo,
+    isAutoPlaying,
+    videoRef,
+    goToVideo,
+    goToImage,
+    toggleAutoPlay
+  } = useAutoCarousel({
+    videos,
+    images,
+    imageDisplayDuration: 3000,
+    enabled: true
+  });
 
   useEffect(() => {
     if (id) {
@@ -190,10 +214,6 @@ export default function ProductDetail() {
     );
   }
 
-  const images = product.images && product.images.length > 0 
-    ? product.images 
-    : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop'];
-
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
@@ -208,52 +228,76 @@ export default function ProductDetail() {
 
       <div className="max-w-6xl mx-auto p-4">
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Images & Video */}
+          {/* Images & Video Carousel */}
           <div className="space-y-4">
-            <div className="h-[600px] rounded-lg overflow-hidden bg-white flex items-center justify-center p-3 border border-border/20">
-              {showVideo && product.promotional_videos && product.promotional_videos.length > 0 ? (
+            <div className="relative h-[600px] rounded-lg overflow-hidden bg-white flex items-center justify-center p-3 border border-border/20">
+              {/* Bouton Play/Pause */}
+              <button
+                onClick={toggleAutoPlay}
+                className="absolute top-3 right-3 z-10 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-colors"
+              >
+                {isAutoPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              </button>
+
+              {isPlayingVideo && videos.length > 0 ? (
                 <video
-                  src={product.promotional_videos[0]}
+                  ref={videoRef}
+                  src={videos[currentVideoIndex]}
                   controls
                   autoPlay
+                  muted
                   className="max-w-full max-h-full w-auto h-auto object-contain"
                   style={{ maxWidth: '100%', maxHeight: '100%' }}
                 />
               ) : (
                 <img
-                  src={images[selectedImage]}
+                  src={images[currentImageIndex]}
                   alt={product.name}
                   className="max-w-full max-h-full w-auto h-auto object-contain"
                   style={{ maxWidth: '100%', maxHeight: '100%' }}
                 />
               )}
+
+              {/* Indicateur de progression */}
+              {!isPlayingVideo && images.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-1">
+                  {images.map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`w-2 h-2 rounded-full transition-colors ${
+                        currentImageIndex === idx ? 'bg-primary' : 'bg-white/50'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
             
-            {/* Thumbnails - Video + Images */}
-            <div className="grid grid-cols-5 gap-2">
-              {/* Video thumbnail si disponible */}
-              {product.promotional_videos && product.promotional_videos.length > 0 && (
+            {/* Thumbnails - Videos + Images */}
+            <div className="grid grid-cols-6 gap-2">
+              {/* Video thumbnails */}
+              {videos.map((_, index) => (
                 <button
-                  onClick={() => setShowVideo(true)}
+                  key={`video-${index}`}
+                  onClick={() => goToVideo(index)}
                   className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-colors bg-black flex items-center justify-center ${
-                    showVideo ? 'border-primary' : 'border-transparent hover:border-primary/50'
+                    isPlayingVideo && currentVideoIndex === index ? 'border-primary' : 'border-transparent hover:border-primary/50'
                   }`}
                 >
-                  <Play className="w-8 h-8 text-white" />
-                  <span className="absolute bottom-1 left-1 text-[10px] text-white bg-black/60 px-1 rounded">Vidéo</span>
+                  <Play className="w-6 h-6 text-white" />
+                  <span className="absolute bottom-0.5 left-0.5 text-[8px] text-white bg-black/60 px-1 rounded">
+                    {index + 1}
+                  </span>
                 </button>
-              )}
+              ))}
               
               {/* Image thumbnails */}
               {images.map((img, idx) => (
                 <button
-                  key={idx}
-                  onClick={() => {
-                    setSelectedImage(idx);
-                    setShowVideo(false);
-                  }}
+                  key={`img-${idx}`}
+                  onClick={() => goToImage(idx)}
                   className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
-                    !showVideo && selectedImage === idx ? 'border-primary' : 'border-transparent'
+                    !isPlayingVideo && currentImageIndex === idx ? 'border-primary' : 'border-transparent'
                   }`}
                 >
                   <img loading="lazy" src={img} alt={`${product.name} ${idx + 1}`} className="w-full h-full object-cover" />
