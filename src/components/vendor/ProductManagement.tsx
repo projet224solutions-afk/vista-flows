@@ -45,7 +45,7 @@ interface Product {
   category_id?: string;
   category?: { id: string; name: string } | null;
   images?: string[];
-  promotional_video?: string; // URL de la vidéo publicitaire
+  promotional_videos?: string[]; // URLs des vidéos publicitaires (max 2)
   tags?: string[];
   weight?: number;
   created_at?: string;
@@ -390,7 +390,7 @@ export default function ProductManagement() {
           selectedImages,
           editingProduct.images || [],
           selectedVideos.length > 0 ? selectedVideos[0] : null,
-          editingProduct.promotional_video
+          editingProduct.promotional_videos?.[0] || null
         );
         console.log('[ProductSave] Update result:', result);
       } else {
@@ -1531,7 +1531,7 @@ export default function ProductManagement() {
               </div>
 
               {/* Video Preview */}
-              {(selectedVideos.length > 0 || editingProduct?.promotional_video) && (
+              {(selectedVideos.length > 0 || (editingProduct?.promotional_videos?.length || 0) > 0) && (
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
                     <Video className="h-4 w-4" />
@@ -1561,10 +1561,10 @@ export default function ProductManagement() {
                         </Badge>
                       </div>
                     ))}
-                    {editingProduct?.promotional_video && selectedVideos.length === 0 && (
-                      <div className="relative aspect-video rounded-lg overflow-hidden border-2 border-primary/20 bg-black">
+                    {editingProduct?.promotional_videos && selectedVideos.length === 0 && editingProduct.promotional_videos.map((videoUrl, index) => (
+                      <div key={`existing-video-${index}`} className="relative aspect-video rounded-lg overflow-hidden border-2 border-primary/20 bg-black">
                         <video
-                          src={editingProduct.promotional_video}
+                          src={videoUrl}
                           controls
                           className="w-full h-full"
                         />
@@ -1574,7 +1574,8 @@ export default function ProductManagement() {
                           className="absolute top-2 right-2 h-6 w-6 p-0"
                           onClick={() => {
                             if (editingProduct) {
-                              setEditingProduct({ ...editingProduct, promotional_video: undefined });
+                              const updatedVideos = editingProduct.promotional_videos?.filter((_, i) => i !== index) || [];
+                              setEditingProduct({ ...editingProduct, promotional_videos: updatedVideos.length > 0 ? updatedVideos : undefined });
                             }
                           }}
                         >
@@ -1584,7 +1585,7 @@ export default function ProductManagement() {
                           Vidéo actuelle
                         </Badge>
                       </div>
-                    )}
+                    ))}
                   </div>
                 </div>
               )}
