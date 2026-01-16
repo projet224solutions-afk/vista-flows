@@ -225,7 +225,7 @@ export class DropshipMarketplaceService {
       const productsTable = supabase.from('products') as any;
       let classicQuery = productsTable
         .select('*', { count: 'exact' })
-        .eq('status', 'active')
+        .eq('is_active', true)
         .limit(limit * 3); // Récupérer plus pour compenser le filtrage
       
       // Appliquer les filtres

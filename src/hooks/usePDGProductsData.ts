@@ -15,6 +15,8 @@ export interface Product {
   created_at: string;
   updated_at?: string;
   total_stock?: number;
+  vendor_name?: string;
+  vendor_is_active?: boolean;
 }
 
 export interface ProductStats {
@@ -24,11 +26,14 @@ export interface ProductStats {
   lowStock: number;
   totalValue: number;
   totalStock: number;
+  orphanProducts: number; // Produits sans boutique active
 }
 
 export interface VendorInfo {
   id: string;
   user_id: string;
+  business_name: string;
+  is_active: boolean;
 }
 
 export function usePDGProductsData() {
@@ -41,10 +46,11 @@ export function usePDGProductsData() {
     inactive: 0,
     lowStock: 0,
     totalValue: 0,
-    totalStock: 0
+    totalStock: 0,
+    orphanProducts: 0
   });
 
-  // Charger les produits avec leur stock
+  // Charger les produits avec leur stock et infos vendeur
   const loadProducts = async () => {
     try {
       setLoading(true);
@@ -62,6 +68,25 @@ export function usePDGProductsData() {
         .from('inventory')
         .select('product_id, quantity');
 
+      // Récupérer tous les vendeurs avec leurs infos
+      const { data: vendorsData } = await supabase
+        .from('vendors')
+        .select('id, user_id, business_name, is_active');
+
+      // Créer un map pour les vendeurs
+      const vendorByIdMap = new Map<string, VendorInfo>();
+      const vendorByUserIdMap = new Map<string, VendorInfo>();
+      (vendorsData || []).forEach((v: any) => {
+        const vendor: VendorInfo = {
+          id: v.id,
+          user_id: v.user_id,
+          business_name: v.business_name || 'Boutique inconnue',
+          is_active: v.is_active ?? true
+        };
+        vendorByIdMap.set(v.id, vendor);
+        vendorByUserIdMap.set(v.user_id, vendor);
+      });
+
       // Créer un map pour le stock par produit
       const stockMap = new Map<string, number>();
       (inventoryData || []).forEach(inv => {
@@ -69,16 +94,22 @@ export function usePDGProductsData() {
         stockMap.set(inv.product_id, current + (inv.quantity || 0));
       });
 
-      // Ajouter le stock à chaque produit
-      const productsWithStock = (productsData || []).map(product => ({
-        ...product,
-        total_stock: stockMap.get(product.id) || 0
-      }));
+      // Ajouter le stock et les infos vendeur à chaque produit
+      const productsWithStock = (productsData || []).map(product => {
+        const vendor = vendorByIdMap.get(product.vendor_id) || vendorByUserIdMap.get(product.vendor_id);
+        return {
+          ...product,
+          total_stock: stockMap.get(product.id) || 0,
+          vendor_name: vendor?.business_name || 'Boutique supprimée',
+          vendor_is_active: vendor?.is_active ?? false
+        };
+      });
 
       setProducts(productsWithStock);
 
       // Calculer les statistiques
       const activeProducts = productsWithStock.filter(p => p.is_active);
+      const orphanProducts = productsWithStock.filter(p => !p.vendor_is_active);
       const totalValue = productsWithStock.reduce((sum, p) => sum + ((p.price || 0) * (p.total_stock || 0)), 0);
       const totalStock = productsWithStock.reduce((sum, p) => sum + (p.total_stock || 0), 0);
 
@@ -88,7 +119,8 @@ export function usePDGProductsData() {
         inactive: productsWithStock.length - activeProducts.length,
         lowStock: productsWithStock.filter(p => (p.total_stock || 0) <= 10).length,
         totalValue,
-        totalStock
+        totalStock,
+        orphanProducts: orphanProducts.length
       });
     } catch (error) {
       console.error('Erreur chargement produits:', error);
@@ -103,11 +135,16 @@ export function usePDGProductsData() {
     try {
       const { data, error } = await supabase
         .from('vendors')
-        .select('id, user_id')
-        .order('user_id', { ascending: true });
+        .select('id, user_id, business_name, is_active')
+        .order('business_name', { ascending: true });
 
       if (error) throw error;
-      setVendors(data || []);
+      setVendors((data || []).map((v: any) => ({
+        id: v.id,
+        user_id: v.user_id,
+        business_name: v.business_name || 'Boutique inconnue',
+        is_active: v.is_active ?? true
+      })));
     } catch (error) {
       console.error('Erreur chargement vendeurs:', error);
     }
