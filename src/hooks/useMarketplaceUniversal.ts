@@ -217,55 +217,28 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
   };
 
   /**
-   * Charge les produits numériques (service_products)
+   * Charge les produits numériques depuis la table digital_products
    */
   const loadDigitalProducts = async (categoryName?: string): Promise<MarketplaceItem[]> => {
     if (itemType === 'professional_service' || itemType === 'product') return [];
 
     try {
       let query = supabase
-        .from('service_products')
-        .select(`
-          id,
-          professional_service_id,
-          name,
-          description,
-          price,
-          compare_at_price,
-          images,
-          category,
-          metadata,
-          created_at,
-          professional_services!inner(
-            business_name,
-            user_id,
-            status,
-            service_types(name, code)
-          )
-        `)
-        .eq('is_available', true)
-        .eq('professional_services.status', 'active');
+        .from('digital_products')
+        .select('*')
+        .eq('status', 'published');
 
       // Filtres
       if (vendorId) {
-        const { data: services } = await supabase
-          .from('professional_services')
-          .select('id')
-          .eq('user_id', vendorId);
-        const serviceIds = services?.map(s => s.id) || [];
-        if (serviceIds.length > 0) {
-          query = query.in('professional_service_id', serviceIds);
-        } else {
-          return [];
-        }
+        query = query.eq('merchant_id', vendorId);
       }
       if (searchQuery?.trim()) {
-        query = query.ilike('name', `%${searchQuery.trim()}%`);
+        query = query.or(`title.ilike.%${searchQuery.trim()}%,description.ilike.%${searchQuery.trim()}%`);
       }
       if (minPrice && minPrice > 0) query = query.gte('price', minPrice);
       if (maxPrice && maxPrice > 0) query = query.lte('price', maxPrice);
       
-      // Filtre par catégorie (champ texte dans service_products)
+      // Filtre par catégorie
       if (categoryName) {
         query = query.ilike('category', `%${categoryName}%`);
       }
@@ -274,27 +247,26 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       if (error) throw error;
 
       return (data || []).map(product => {
-        const service = product.professional_services as any;
-        const metadata = product.metadata as any || {};
-
+        const images = Array.isArray(product.images) ? (product.images as string[]) : [];
+        
         return {
           id: product.id,
-          name: product.name,
-          price: product.price,
-          originalPrice: product.compare_at_price || undefined,
+          name: product.title,
+          price: product.price || 0,
+          originalPrice: product.original_price || undefined,
           description: product.description || '',
-          images: Array.isArray(product.images) ? (product.images as string[]) : [],
-          vendor_id: product.professional_service_id,
-          vendor_name: service?.business_name || 'Vendeur',
-          vendor_user_id: service?.user_id,
-          category_name: product.category || service?.service_types?.name || 'Numérique',
-          service_type: service?.service_types?.code,
-          rating: 0, // Les service_products n'ont pas de rating pour l'instant
-          reviews_count: 0,
+          images,
+          vendor_id: product.merchant_id,
+          vendor_name: 'Vendeur Numérique',
+          vendor_user_id: product.merchant_id,
+          category_name: product.category || 'Numérique',
+          service_type: product.product_mode,
+          rating: product.rating || 0,
+          reviews_count: product.reviews_count || 0,
           item_type: 'digital_product' as const,
-          download_url: metadata.download_url,
-          file_size: metadata.file_size,
-          license_type: metadata.license_type,
+          download_url: product.affiliate_url || undefined,
+          file_size: product.file_type || undefined,
+          license_type: product.product_mode === 'affiliate' ? 'Affiliation' : 'Vente directe',
           created_at: product.created_at
         };
       });
