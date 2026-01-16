@@ -543,7 +543,7 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
           </CardHeader>
           <CardContent>
             <VideoUploadPreview
-              maxDuration={40}
+              maxDuration={5}
               maxSizeMB={20}
               onVideoSelect={handleVideoSelect}
               currentVideoUrl={videoPreviewUrl}

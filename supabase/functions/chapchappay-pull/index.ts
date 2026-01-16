@@ -174,25 +174,11 @@ serve(async (req) => {
     }
 
     const totalDuration = Date.now() - startTime;
-    
-    // Vérifier si c'est un fallback E-Commerce (pas de déclenchement USSD direct)
-    const isEcommerceFallback = ccpResult.ussdTriggered === false && ccpResult.paymentUrl;
-    
     logStep("✅ PULL payment initiated", { 
       transactionId: newTransaction?.id, 
       ccpId: ccpResult.transactionId,
-      isEcommerceFallback,
-      hasPaymentUrl: !!ccpResult.paymentUrl,
       totalDuration 
     });
-
-    // Message adapté selon si USSD direct ou fallback E-Commerce
-    let userMessage = "Paiement initié - Confirmez sur votre téléphone";
-    if (ccpResult.requiresOtp) {
-      userMessage = "Code OTP envoyé sur votre téléphone";
-    } else if (isEcommerceFallback) {
-      userMessage = "Vous allez être redirigé vers ChapChapPay pour finaliser le paiement";
-    }
 
     return new Response(
       JSON.stringify({
@@ -200,12 +186,11 @@ serve(async (req) => {
         transactionId: newTransaction?.id || ccpResult.transactionId,
         ccpTransactionId: ccpResult.transactionId,
         orderId: finalOrderId,
-        status: isEcommerceFallback ? "pending" : "processing",
+        status: "processing",
         requiresOtp: ccpResult.requiresOtp || false,
-        // IMPORTANT: Inclure paymentUrl pour le fallback E-Commerce
-        paymentUrl: ccpResult.paymentUrl || null,
-        ussdTriggered: ccpResult.ussdTriggered ?? !isEcommerceFallback,
-        message: userMessage,
+        message: ccpResult.requiresOtp 
+          ? "Code OTP envoyé sur votre téléphone" 
+          : "Paiement initié - Confirmez sur votre téléphone",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );

@@ -905,7 +905,7 @@ export function POSSystem() {
         if (!chapchapResult.success) {
           console.error('[POS] ChapChapPay payment error:', chapchapResult.error);
           toast.error('Erreur lors de l\'initialisation du paiement', {
-            description: chapchapResult.error || 'Veuillez réessayer'
+            description: chapchapResult.error || 'Veuillez réessayer',
           });
           // Annuler la commande si le paiement échoue
           await supabase.from('orders').update({ status: 'cancelled', payment_status: 'failed' }).eq('id', order.id);

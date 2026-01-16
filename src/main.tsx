@@ -5,16 +5,6 @@ import "./index.css";
 import { registerServiceWorker, unregisterServiceWorker } from "./lib/serviceWorkerRegistration";
 import { initPWAInstallPromptListener } from "./lib/pwaInstallPrompt";
 
-declare global {
-  interface Window {
-    __APP_BOOTSTRAPPED?: boolean;
-    __APP_MOUNTED?: boolean;
-  }
-}
-
-// Flag très tôt pour permettre au loader HTML de détecter si le bundle a démarré
-window.__APP_BOOTSTRAPPED = true;
-
 // Initialiser le listener PWA le plus tôt possible (évite de rater beforeinstallprompt)
 initPWAInstallPromptListener();
 
@@ -75,10 +65,7 @@ const initApp = () => {
     );
     
     console.log("✅ React app mounted");
-
-    // Marquer l'app comme montée (utilisé par le loader HTML comme watchdog)
-    window.__APP_MOUNTED = true;
-
+    
     // Hide loader after React renders
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {

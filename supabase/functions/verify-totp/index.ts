@@ -1,5 +1,6 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { hmac } from "https://deno.land/x/hmac@v2.0.1/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,22 +32,8 @@ function base32Decode(input: string): Uint8Array {
   return new Uint8Array(bytes);
 }
 
-// HMAC-SHA1 using Web Crypto API (native, no external deps)
-async function hmacSha1(key: Uint8Array, message: Uint8Array): Promise<Uint8Array> {
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    key,
-    { name: "HMAC", hash: "SHA-1" },
-    false,
-    ["sign"]
-  );
-  
-  const signature = await crypto.subtle.sign("HMAC", cryptoKey, message);
-  return new Uint8Array(signature);
-}
-
 // Calcule le code TOTP
-async function calculateTOTP(secret: string, timestamp?: number): Promise<string> {
+function calculateTOTP(secret: string, timestamp?: number): string {
   const time = timestamp || Math.floor(Date.now() / 1000);
   const counter = Math.floor(time / 30);
   
@@ -61,8 +48,8 @@ async function calculateTOTP(secret: string, timestamp?: number): Promise<string
   // Decode secret
   const secretBytes = base32Decode(secret);
   
-  // HMAC-SHA1 using Web Crypto API
-  const hmacResult = await hmacSha1(secretBytes, counterBytes);
+  // HMAC-SHA1
+  const hmacResult = hmac("sha1", secretBytes, counterBytes);
   
   // Dynamic truncation
   const offset = hmacResult[hmacResult.length - 1] & 0x0f;
@@ -77,12 +64,12 @@ async function calculateTOTP(secret: string, timestamp?: number): Promise<string
 }
 
 // Vérifie le code avec une fenêtre de tolérance
-async function verifyTOTP(secret: string, code: string, window: number = 1): Promise<boolean> {
+function verifyTOTP(secret: string, code: string, window: number = 1): boolean {
   const time = Math.floor(Date.now() / 1000);
   
   for (let i = -window; i <= window; i++) {
     const timestamp = time + (i * 30);
-    const expectedCode = await calculateTOTP(secret, timestamp);
+    const expectedCode = calculateTOTP(secret, timestamp);
     if (code === expectedCode) {
       return true;
     }
@@ -134,7 +121,7 @@ serve(async (req) => {
         });
       }
 
-      const isValid = await verifyTOTP(secret, code);
+      const isValid = verifyTOTP(secret, code);
       
       // Logger la tentative
       await supabase.from("totp_verification_attempts").insert({

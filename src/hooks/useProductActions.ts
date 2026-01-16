@@ -351,7 +351,7 @@ export function useProductActions({
         is_active: formData.is_active,
         vendor_id: vendorId,
         images: imageUrls.length > 0 ? imageUrls : null,
-        promotional_videos: videoUrl ? [videoUrl] : null,
+        promotional_video: videoUrl,
         // Champs carton
         sell_by_carton: formData.sell_by_carton || false,
         units_per_carton: formData.units_per_carton ? parseInt(formData.units_per_carton) : 1,
@@ -445,7 +445,7 @@ export function useProductActions({
         tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()) : null,
         is_active: formData.is_active,
         images: allImages.length > 0 ? allImages : null,
-        promotional_videos: videoUrl ? [videoUrl] : null,
+        promotional_video: videoUrl,
         // Champs carton
         sell_by_carton: formData.sell_by_carton || false,
         units_per_carton: formData.units_per_carton ? parseInt(formData.units_per_carton) : 1,

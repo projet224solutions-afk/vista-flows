@@ -1,9 +1,8 @@
-// Service Worker v12 - PWA + Firebase Cloud Messaging + Mode Offline Desktop & Mobile
-const CACHE_VERSION = "v12";
+// Service Worker v8 - PWA + Firebase Cloud Messaging + Mode Offline Desktop & Mobile
+const CACHE_VERSION = "v8";
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
 const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
-
 
 // --- Firebase Cloud Messaging (FCM) ---
 let firebaseAvailable = false;
@@ -98,11 +97,32 @@ const PRECACHE_ASSETS = [
   "/apple-touch-icon.png"
 ];
 
-// IMPORTANT:
-// Ne PAS précacher les routes SPA (ex: /vendeur/...) individuellement.
-// Sinon on risque de garder un ancien index.html (avec d'anciens /assets/*) et de créer des bundles "mélangés"
-// après déploiement -> erreurs runtime (dont "forwardRef is not defined").
+// Routes principales de l'app vendeur à mettre en cache dynamiquement (desktop & mobile)
+const VENDOR_ROUTES = [
+  "/vendeur",
+  "/vendeur/dashboard",
+  "/vendeur/products",
+  "/vendeur/orders",
+  "/vendeur/pos",
+  "/vendeur/clients",
+  "/vendeur/inventory",
+  "/vendeur/wallet",
+  "/vendeur/settings",
+  "/vendeur/analytics",
+  "/vendeur/marketing",
+  "/vendeur/support",
+  "/vendeur/agents",
+  "/vendeur/expenses",
+  "/vendeur/payments"
+];
 
+// Routes additionnelles pour marketplace/auth (desktop)
+const CORE_ROUTES = [
+  "/",
+  "/marketplace",
+  "/login",
+  "/signup"
+];
 
 // Pré-cache robuste: index.html + assets build (/assets/...) pour éviter l'écran blanc au redémarrage offline (iOS)
 async function precacheIndexAndBuildAssets() {
@@ -152,7 +172,7 @@ async function precacheIndexAndBuildAssets() {
 
 // INSTALL - Précacher les assets essentiels (mobile + desktop)
 self.addEventListener("install", (event) => {
-  console.log(`[SW] Installation ${CACHE_VERSION} - Mode offline desktop & mobile activé`);
+  console.log("[SW] Installation v8 - Mode offline desktop & mobile activé");
 
   event.waitUntil(
     precacheIndexAndBuildAssets().then(() => {
@@ -162,9 +182,9 @@ self.addEventListener("install", (event) => {
   );
 });
 
-// ACTIVATE - Nettoyer anciens caches + re-précacher app shell
+// ACTIVATE - Nettoyer anciens caches et mettre en cache les routes vendeur + core
 self.addEventListener("activate", (event) => {
-  console.log(`[SW] Activation ${CACHE_VERSION}`);
+  console.log("[SW] Activation v8");
 
   event.waitUntil(
     Promise.all([
@@ -181,12 +201,26 @@ self.addEventListener("activate", (event) => {
       ),
       // Prendre le contrôle immédiatement
       self.clients.claim(),
-      // Assurer un app shell frais (index.html + assets build)
-      precacheIndexAndBuildAssets(),
+      // Précacher les routes vendeur + core en arrière-plan
+      caches.open(DYNAMIC_CACHE).then((cache) => {
+        console.log("[SW] Mise en cache des routes vendeur + core...");
+        const allRoutes = [...VENDOR_ROUTES, ...CORE_ROUTES];
+        return Promise.allSettled(
+          allRoutes.map(route => 
+            fetch(route, { cache: 'reload' })
+              .then(response => {
+                if (response.ok) {
+                  cache.put(route, response);
+                  console.log(`[SW] Route en cache: ${route}`);
+                }
+              })
+              .catch(() => {})
+          )
+        );
+      })
     ])
   );
 });
-
 
 // FETCH - Stratégie optimisée pour mode offline vendeur
 self.addEventListener("fetch", (event) => {
@@ -333,25 +367,19 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Assets Vite (/assets/*) - Network First (anti "bundles mélangés")
-  // IMPORTANT: les hashes Vite ne sont pas forcément en hexadécimal (ex: -BSk9CUdM),
-  // donc on ne peut pas se baser sur une regex hex.
-  if (url.pathname.startsWith('/assets/')) {
+  // Assets avec hash (immutables) - Cache First
+  if (url.pathname.match(/\/assets\/.*\.[a-f0-9]{8}\./)) {
     event.respondWith(
-      (async () => {
-        try {
-          const response = await fetch(event.request, { cache: 'reload' });
-          if (response && response.ok) {
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((response) => {
+          if (response.ok) {
             const clone = response.clone();
             caches.open(STATIC_CACHE).then((cache) => cache.put(event.request, clone));
           }
           return response;
-        } catch (err) {
-          const cached = await caches.match(event.request);
-          if (cached) return cached;
-          throw err;
-        }
-      })()
+        });
+      })
     );
     return;
   }
@@ -463,4 +491,4 @@ self.addEventListener("notificationclose", (event) => {
   console.log("[FCM SW] Notification fermée:", event.notification.tag);
 });
 
-console.log(`[SW] Service Worker chargé (${CACHE_VERSION} - Desktop & Mobile Offline)`);
+console.log("[SW] Service Worker chargé (v8 - Desktop & Mobile Offline)");

@@ -50,74 +50,10 @@ const isOffline = (): boolean => {
   return typeof navigator !== 'undefined' && !navigator.onLine;
 };
 
-const IMPORT_TIMEOUT_MS = 15000;
-
-const withTimeout = async <T,>(p: Promise<T>, ms: number, label = 'dynamic import'): Promise<T> => {
-  let t: number | undefined;
-  const timeout = new Promise<never>((_, reject) => {
-    t = window.setTimeout(() => {
-      const err = new Error(`${label} timeout after ${ms}ms`);
-      (err as any).name = 'TimeoutError';
-      reject(err);
-    }, ms);
-  });
-
-  try {
-    return await Promise.race([p, timeout]);
-  } finally {
-    if (t) window.clearTimeout(t);
-  }
-};
-
-const safeStorage = {
-  getSession(key: string) {
-    try {
-      return sessionStorage.getItem(key);
-    } catch {
-      return null;
-    }
-  },
-  setSession(key: string, value: string) {
-    try {
-      sessionStorage.setItem(key, value);
-    } catch {
-      // ignore
-    }
-  },
-  removeSession(key: string) {
-    try {
-      sessionStorage.removeItem(key);
-    } catch {
-      // ignore
-    }
-  },
-  getLocal(key: string) {
-    try {
-      return localStorage.getItem(key);
-    } catch {
-      return null;
-    }
-  },
-  setLocal(key: string, value: string) {
-    try {
-      localStorage.setItem(key, value);
-    } catch {
-      // ignore
-    }
-  },
-  removeLocal(key: string) {
-    try {
-      localStorage.removeItem(key);
-    } catch {
-      // ignore
-    }
-  },
-};
-
 /**
  * Wrapper pour les imports dynamiques avec retry automatique
  * Gère les erreurs de cache après déploiement et le mode offline
- * v4 - Ajoute un timeout (mobile) pour éviter un chargement infini
+ * v3 - Support mode hors ligne amélioré avec meilleur fallback UI
  */
 export function lazyWithRetry<T extends ComponentType<any>>(
   componentImport: ComponentImport<T>,
@@ -125,35 +61,23 @@ export function lazyWithRetry<T extends ComponentType<any>>(
   interval = 1500
 ): React.LazyExoticComponent<T> {
   return lazy(async () => {
-    // Clés anti-boucles (mobile/PWA) : sessionStorage peut être instable sur certains navigateurs
-    const reloadedInSession = safeStorage.getSession('page_reloaded_for_chunk') === 'true';
-    const lastRecoveryAt = Number(safeStorage.getLocal('chunk_recovery_last_at') || '0');
-    const recentlyRecovered = Date.now() - lastRecoveryAt < 5 * 60 * 1000; // 5 min
-
-    // Guard global pour éviter plusieurs reloads simultanés (plusieurs chunks peuvent échouer)
-    const w = window as any;
-    if (w.__chunkRecoveryInProgress) {
-      return { default: OfflineFallback as unknown as T };
-    }
+    // Clé pour éviter les boucles infinies de reload
+    const pageHasAlreadyReloaded = sessionStorage.getItem('page_reloaded_for_chunk') === 'true';
 
     try {
-      const component = await withTimeout(componentImport(), IMPORT_TIMEOUT_MS);
-      // Succès - réinitialiser les flags
-      safeStorage.removeSession('page_reloaded_for_chunk');
-      safeStorage.removeLocal('chunk_recovery_last_at');
-      w.__chunkRecoveryInProgress = false;
+      const component = await componentImport();
+      // Succès - réinitialiser le flag
+      sessionStorage.removeItem('page_reloaded_for_chunk');
       return component;
     } catch (error: any) {
       const errorMessage = error?.message || '';
-      const isChunkLoadError =
+      const isChunkLoadError = 
         errorMessage.includes('Failed to fetch dynamically imported module') ||
         errorMessage.includes('Loading chunk') ||
         errorMessage.includes('Loading CSS chunk') ||
         errorMessage.includes('Failed to fetch') ||
         errorMessage.includes('Failed to load') ||
-        errorMessage.toLowerCase().includes('timeout') ||
-        error?.name === 'ChunkLoadError' ||
-        error?.name === 'TimeoutError';
+        error?.name === 'ChunkLoadError';
 
       console.warn('[LazyRetry] Module load error:', errorMessage);
 
@@ -163,63 +87,47 @@ export function lazyWithRetry<T extends ComponentType<any>>(
         return { default: OfflineFallback as unknown as T };
       }
 
-      // ✅ Stratégie robuste mobile/PWA:
-      // 1) tenter quelques retries
-      // 2) si échec: nettoyer SW+caches puis recharger UNE seule fois (avec cache-bust)
-      // 3) si déjà tenté récemment: afficher fallback (pas de boucle infinie)
-      if (isChunkLoadError) {
-        // Retries rapides
+      // Si c'est une erreur de chunk et qu'on n'a pas encore rechargé
+      if (isChunkLoadError && !pageHasAlreadyReloaded) {
+        console.warn('[LazyRetry] Chunk load error detected, attempting retries...');
+        
+        // Essayer avec retry d'abord
         for (let i = 0; i < retries; i++) {
           await new Promise(resolve => setTimeout(resolve, interval));
+          
+          // Vérifier si on est passé offline entre-temps
           if (isOffline()) {
             console.warn('[LazyRetry] Went offline during retry, showing fallback');
             return { default: OfflineFallback as unknown as T };
           }
+          
           try {
-            const component = await withTimeout(componentImport(), IMPORT_TIMEOUT_MS, 'dynamic import retry');
-            safeStorage.removeSession('page_reloaded_for_chunk');
-            safeStorage.removeLocal('chunk_recovery_last_at');
-            w.__chunkRecoveryInProgress = false;
+            // Ajouter cache-bust pour forcer le rechargement
+            const cacheBuster = `?t=${Date.now()}`;
+            const component = await componentImport();
+            sessionStorage.removeItem('page_reloaded_for_chunk');
             console.log(`[LazyRetry] Retry ${i + 1}/${retries} succeeded`);
             return component;
-          } catch {
+          } catch (retryError) {
             console.warn(`[LazyRetry] Retry ${i + 1}/${retries} failed`);
           }
         }
 
-        // Si on a déjà fait une recovery récemment, STOP: on affiche un fallback au lieu de boucler
-          if (reloadedInSession || recentlyRecovered) {
-            console.warn('[LazyRetry] Recovery already attempted recently, showing fallback');
-            safeStorage.removeSession('page_reloaded_for_chunk');
-            w.__chunkRecoveryInProgress = false;
-            return { default: OfflineFallback as unknown as T };
-          }
-
-          // Marquer une tentative de recovery
-          safeStorage.setSession('page_reloaded_for_chunk', 'true');
-          safeStorage.setLocal('chunk_recovery_last_at', String(Date.now()));
-          w.__chunkRecoveryInProgress = true;
-
-        // Nettoyage best-effort (résout les chunks manquants après déploiement)
-        try {
-          if ('serviceWorker' in navigator) {
-            const regs = await navigator.serviceWorker.getRegistrations();
-            await Promise.all(regs.map(r => r.unregister()));
-          }
-          if ('caches' in window) {
-            const keys = await caches.keys();
-            await Promise.all(keys.map(k => caches.delete(k)));
-          }
-        } catch (cleanupError) {
-          console.warn('[LazyRetry] Cache/SW cleanup failed:', cleanupError);
+        // Si les retries échouent et qu'on est toujours online, recharger la page
+        if (navigator.onLine) {
+          console.warn('[LazyRetry] All retries failed, reloading page...');
+          sessionStorage.setItem('page_reloaded_for_chunk', 'true');
+          window.location.reload();
         }
+        
+        // Fallback si le reload n'a pas fonctionné
+        return { default: OfflineFallback as unknown as T };
+      }
 
-        // Reload avec cache-bust pour forcer un index.html frais
-        const url = new URL(window.location.href);
-        url.searchParams.set('v', String(Date.now()));
-        window.location.replace(url.toString());
-
-        // Si jamais le navigateur bloque le reload, fallback
+      // Si on a déjà rechargé, afficher le fallback au lieu de planter
+      if (pageHasAlreadyReloaded && isChunkLoadError) {
+        console.warn('[LazyRetry] Already reloaded, showing fallback');
+        sessionStorage.removeItem('page_reloaded_for_chunk');
         return { default: OfflineFallback as unknown as T };
       }
 

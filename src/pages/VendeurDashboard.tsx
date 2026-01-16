@@ -4,7 +4,7 @@
  * @updated 2025-12-20 - Ajout du panneau Avis Clients
  */
 
-import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
+import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,77 +23,50 @@ import { VendorSidebar } from "@/components/vendor/VendorSidebar";
 import { useVendorStats } from "@/hooks/useVendorData";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentVendor } from "@/hooks/useCurrentVendor";
-import { lazyWithRetry } from "@/utils/lazyWithRetry";
 
 // Import des modules vendeur (Lazy Loading pour optimisation)
-const ProductManagement = lazyWithRetry(() => import("@/components/vendor/ProductManagement"));
-const OrderManagement = lazyWithRetry(() => import("@/components/vendor/OrderManagement"));
-const ClientManagement = lazyWithRetry(() => import("@/components/vendor/ClientManagement"));
-const AgentManagement = lazyWithRetry(() => import("@/components/vendor/AgentManagement"));
-const ExpenseManagementDashboard = lazyWithRetry(() => import("@/components/vendor/ExpenseManagementDashboard"));
-const PaymentLinksManager = lazyWithRetry(() => import("@/components/vendor/PaymentLinksManager"));
-const VendorAnalyticsDashboard = lazyWithRetry(() =>
-  import("@/components/vendor/VendorAnalyticsDashboard").then((m) => ({ default: m.VendorAnalyticsDashboard }))
-);
-const InventoryManagement = lazyWithRetry(() => import("@/components/vendor/InventoryManagement"));
-const MarketingManagement = lazyWithRetry(() => import("@/components/vendor/MarketingManagement"));
-const ProspectManagement = lazyWithRetry(() => import("@/components/vendor/ProspectManagement"));
-const SupportTickets = lazyWithRetry(() => import("@/components/vendor/SupportTickets"));
-const WarehouseManagement = lazyWithRetry(() => import("@/components/vendor/WarehouseManagement"));
-const POSSystemWrapper = lazyWithRetry(() => import("@/components/vendor/POSSystemWrapper"));
-const PaymentManagement = lazyWithRetry(() => import("@/components/vendor/PaymentManagement"));
-const VendorDebtManagement = lazyWithRetry(() =>
-  import("@/components/vendor/debts/VendorDebtManagement").then((m) => ({ default: m.VendorDebtManagement }))
-);
-const UniversalCommunicationHub = lazyWithRetry(() => import("@/components/communication/UniversalCommunicationHub"));
-const AffiliateManagement = lazyWithRetry(() => import("@/components/vendor/AffiliateManagement"));
-const SupplierManagement = lazyWithRetry(() => import("@/components/vendor/SupplierManagement"));
-const UniversalWalletTransactions = lazyWithRetry(() => import("@/components/wallet/UniversalWalletTransactions"));
-const ProfessionalVirtualCard = lazyWithRetry(() =>
-  import("@/components/virtual-card").then((m) => ({ default: m.ProfessionalVirtualCard }))
-);
-const WalletBalanceWidget = lazyWithRetry(() =>
-  import("@/components/wallet/WalletBalanceWidget").then((m) => ({ default: m.WalletBalanceWidget }))
-);
-const QuickTransferButton = lazyWithRetry(() =>
-  import("@/components/wallet/QuickTransferButton").then((m) => ({ default: m.QuickTransferButton }))
-);
-const OfflineSyncPanel = lazyWithRetry(() => import("@/components/vendor/OfflineSyncPanel"));
-const NetworkStatusIndicator = lazyWithRetry(() => import("@/components/vendor/NetworkStatusIndicator"));
-const OfflineBanner = lazyWithRetry(() => import("@/components/vendor/OfflineBanner"));
-const PWADiagnostic = lazyWithRetry(() => import("@/components/pwa/PWADiagnostic"));
-const VendorIdDisplay = lazyWithRetry(() =>
-  import("@/components/vendor/VendorIdDisplay").then((m) => ({ default: m.VendorIdDisplay }))
-);
-const VendorNotificationsPanel = lazyWithRetry(() =>
-  import("@/components/vendor/VendorNotificationsPanel").then((m) => ({ default: m.VendorNotificationsPanel }))
-);
-const CommunicationWidget = lazyWithRetry(() => import("@/components/communication/CommunicationWidget"));
-const VendorDeliveriesPanel = lazyWithRetry(() =>
-  import("@/components/vendor/VendorDeliveriesPanel").then((m) => ({ default: m.VendorDeliveriesPanel }))
-);
-const VendorRatingsPanel = lazyWithRetry(() => import("@/components/vendor/VendorRatingsPanel"));
-const PushNotificationButton = lazyWithRetry(() =>
-  import("@/components/vendor/PushNotificationButton").then((m) => ({ default: m.PushNotificationButton }))
-);
-const ProtectedRoute = lazyWithRetry(() =>
-  import("@/components/subscription/ProtectedRoute").then((m) => ({ default: m.ProtectedRoute }))
-);
-const VendorSubscriptionButton = lazyWithRetry(() =>
-  import("@/components/vendor/VendorSubscriptionButton").then((m) => ({ default: m.VendorSubscriptionButton }))
-);
-const VendorSubscriptionBanner = lazyWithRetry(() =>
-  import("@/components/vendor/VendorSubscriptionBanner").then((m) => ({ default: m.VendorSubscriptionBanner }))
-);
-const SubscriptionExpiryBanner = lazyWithRetry(() =>
-  import("@/components/vendor/SubscriptionExpiryBanner").then((m) => ({ default: m.SubscriptionExpiryBanner }))
-);
-const VendorQuotesInvoices = lazyWithRetry(() => import("@/pages/VendorQuotesInvoices"));
-const VendorContracts = lazyWithRetry(() => import("@/pages/VendorContracts"));
-const VendorSettings = lazyWithRetry(() => import("@/pages/vendor/Settings"));
-const CopiloteChat = lazyWithRetry(() => import("@/components/copilot/CopiloteChat"));
-const ReviewsManagement = lazyWithRetry(() => import("@/components/vendor/ReviewsManagement"));
-const VendorServiceModule = lazyWithRetry(() => import("@/components/vendor/VendorServiceModule"));
+const ProductManagement = lazy(() => import("@/components/vendor/ProductManagement"));
+const OrderManagement = lazy(() => import("@/components/vendor/OrderManagement"));
+const ClientManagement = lazy(() => import("@/components/vendor/ClientManagement"));
+const AgentManagement = lazy(() => import("@/components/vendor/AgentManagement"));
+const ExpenseManagementDashboard = lazy(() => import("@/components/vendor/ExpenseManagementDashboard"));
+const PaymentLinksManager = lazy(() => import("@/components/vendor/PaymentLinksManager"));
+const VendorAnalyticsDashboard = lazy(() => import("@/components/vendor/VendorAnalyticsDashboard").then(m => ({ default: m.VendorAnalyticsDashboard })));
+const InventoryManagement = lazy(() => import("@/components/vendor/InventoryManagement"));
+const MarketingManagement = lazy(() => import("@/components/vendor/MarketingManagement"));
+const ProspectManagement = lazy(() => import("@/components/vendor/ProspectManagement"));
+const SupportTickets = lazy(() => import("@/components/vendor/SupportTickets"));
+const WarehouseManagement = lazy(() => import("@/components/vendor/WarehouseManagement"));
+const POSSystemWrapper = lazy(() => import("@/components/vendor/POSSystemWrapper"));
+const PaymentManagement = lazy(() => import("@/components/vendor/PaymentManagement"));
+const VendorDebtManagement = lazy(() => import("@/components/vendor/debts/VendorDebtManagement").then(m => ({ default: m.VendorDebtManagement })));
+const UniversalCommunicationHub = lazy(() => import("@/components/communication/UniversalCommunicationHub"));
+const AffiliateManagement = lazy(() => import("@/components/vendor/AffiliateManagement"));
+const SupplierManagement = lazy(() => import("@/components/vendor/SupplierManagement"));
+const UniversalWalletTransactions = lazy(() => import("@/components/wallet/UniversalWalletTransactions"));
+const ProfessionalVirtualCard = lazy(() => import("@/components/virtual-card").then(m => ({ default: m.ProfessionalVirtualCard })));
+const WalletBalanceWidget = lazy(() => import("@/components/wallet/WalletBalanceWidget").then(m => ({ default: m.WalletBalanceWidget })));
+const QuickTransferButton = lazy(() => import("@/components/wallet/QuickTransferButton").then(m => ({ default: m.QuickTransferButton })));
+const OfflineSyncPanel = lazy(() => import("@/components/vendor/OfflineSyncPanel"));
+const NetworkStatusIndicator = lazy(() => import("@/components/vendor/NetworkStatusIndicator"));
+const OfflineBanner = lazy(() => import("@/components/vendor/OfflineBanner"));
+const PWADiagnostic = lazy(() => import("@/components/pwa/PWADiagnostic"));
+const VendorIdDisplay = lazy(() => import("@/components/vendor/VendorIdDisplay").then(m => ({ default: m.VendorIdDisplay })));
+const VendorNotificationsPanel = lazy(() => import("@/components/vendor/VendorNotificationsPanel").then(m => ({ default: m.VendorNotificationsPanel })));
+const CommunicationWidget = lazy(() => import("@/components/communication/CommunicationWidget"));
+const VendorDeliveriesPanel = lazy(() => import("@/components/vendor/VendorDeliveriesPanel").then(m => ({ default: m.VendorDeliveriesPanel })));
+const VendorRatingsPanel = lazy(() => import("@/components/vendor/VendorRatingsPanel"));
+const PushNotificationButton = lazy(() => import("@/components/vendor/PushNotificationButton").then(m => ({ default: m.PushNotificationButton })));
+const ProtectedRoute = lazy(() => import("@/components/subscription/ProtectedRoute").then(m => ({ default: m.ProtectedRoute })));
+const VendorSubscriptionButton = lazy(() => import("@/components/vendor/VendorSubscriptionButton").then(m => ({ default: m.VendorSubscriptionButton })));
+const VendorSubscriptionBanner = lazy(() => import("@/components/vendor/VendorSubscriptionBanner").then(m => ({ default: m.VendorSubscriptionBanner })));
+const SubscriptionExpiryBanner = lazy(() => import("@/components/vendor/SubscriptionExpiryBanner").then(m => ({ default: m.SubscriptionExpiryBanner })));
+const VendorQuotesInvoices = lazy(() => import("@/pages/VendorQuotesInvoices"));
+const VendorContracts = lazy(() => import("@/pages/VendorContracts"));
+const VendorSettings = lazy(() => import("@/pages/vendor/Settings"));
+const CopiloteChat = lazy(() => import("@/components/copilot/CopiloteChat"));
+const ReviewsManagement = lazy(() => import("@/components/vendor/ReviewsManagement"));
+const VendorServiceModule = lazy(() => import("@/components/vendor/VendorServiceModule"));
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useVendorErrorBoundary } from "@/hooks/useVendorErrorBoundary";
 
@@ -245,12 +218,11 @@ export default function VendeurDashboard() {
     }
   }, [signOut, toast, navigate, t]);
 
-  // 🚀 OPTIMISATION: Loading rapide avec skeleton au lieu d'attendre
-  // On affiche le skeleton uniquement si pas de profil du tout
-  const isInitialLoading = !user || typeof profile === 'undefined';
+  // ✅ Correction : Ajoute un petit écran de chargement tant que user/profile ne sont pas prêts
+  const isLoading = !user || typeof profile === 'undefined' || statsLoading;
   
-  // Afficher un message d'erreur si les stats ne chargent pas (après loading initial)
-  if (!isInitialLoading && !statsLoading && stats === null && statsError) {
+  // Afficher un message d'erreur si les stats ne chargent pas
+  if (!isLoading && stats === null) {
     const isVendorMissing = statsError === 'Vendor profile not found';
 
     return (
@@ -288,8 +260,7 @@ export default function VendeurDashboard() {
     );
   }
   
-  // 🚀 SKELETON INSTANTANÉ: Afficher skeleton pendant chargement initial seulement
-  if (isInitialLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="flex items-center gap-3 text-slate-700">
@@ -301,9 +272,6 @@ export default function VendeurDashboard() {
       </div>
     );
   }
-  
-  // 🚀 NOTE: On affiche le dashboard même si statsLoading=true
-  // Les stats se mettront à jour automatiquement grâce au cache
 
   // (stats déplacées plus haut via useMemo)
 
