@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus, ExternalLink } from "lucide-react";
+import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus, ExternalLink, Play, Video } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ interface Product {
   price: number;
   description?: string;
   images?: string[];
+  promotional_videos?: string[];
   vendor_id: string;
   category_id?: string;
   is_active: boolean;
@@ -39,6 +40,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [showVideo, setShowVideo] = useState(false);
   const navigate = useNavigate();
   const { addToCart } = useCart();
 
@@ -62,6 +64,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           price,
           description,
           images,
+          promotional_videos,
           vendor_id,
           category_id,
           is_active,
@@ -327,31 +330,58 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
           <TabsContent value="details">
             <div className="grid md:grid-cols-2 gap-6">
-          {/* Images */}
+          {/* Images & Video */}
           <div className="space-y-4">
             <div className="relative h-[600px] rounded-lg overflow-hidden bg-white flex items-center justify-center p-3 border border-border/20">
-              <img
-                src={images[selectedImage]}
-                alt={product.name}
-                className="max-w-full max-h-full w-auto h-auto object-contain"
-                style={{ maxWidth: '100%', maxHeight: '100%' }}
-              />
+              {showVideo && product.promotional_videos && product.promotional_videos.length > 0 ? (
+                <video
+                  src={product.promotional_videos[0]}
+                  controls
+                  autoPlay
+                  className="max-w-full max-h-full w-auto h-auto object-contain"
+                  style={{ maxWidth: '100%', maxHeight: '100%' }}
+                />
+              ) : (
+                <img
+                  src={images[selectedImage]}
+                  alt={product.name}
+                  className="max-w-full max-h-full w-auto h-auto object-contain"
+                  style={{ maxWidth: '100%', maxHeight: '100%' }}
+                />
+              )}
             </div>
-            {images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
-                {images.map((img, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImage(index)}
-                    className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all ${
-                      selectedImage === index ? 'border-primary' : 'border-transparent'
-                    }`}
-                  >
-                    <img loading="lazy" src={img} alt={`${product.name} ${index + 1}`} className="w-full h-full object-contain" />
-                  </button>
-                ))}
-              </div>
-            )}
+            
+            {/* Thumbnails - Images + Video */}
+            <div className="grid grid-cols-5 gap-2">
+              {/* Video thumbnail si disponible */}
+              {product.promotional_videos && product.promotional_videos.length > 0 && (
+                <button
+                  onClick={() => setShowVideo(true)}
+                  className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all bg-black flex items-center justify-center ${
+                    showVideo ? 'border-primary' : 'border-transparent hover:border-primary/50'
+                  }`}
+                >
+                  <Play className="w-8 h-8 text-white" />
+                  <span className="absolute bottom-1 left-1 text-[10px] text-white bg-black/60 px-1 rounded">Vidéo</span>
+                </button>
+              )}
+              
+              {/* Image thumbnails */}
+              {images.map((img, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setSelectedImage(index);
+                    setShowVideo(false);
+                  }}
+                  className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all ${
+                    !showVideo && selectedImage === index ? 'border-primary' : 'border-transparent'
+                  }`}
+                >
+                  <img loading="lazy" src={img} alt={`${product.name} ${index + 1}`} className="w-full h-full object-contain" />
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Détails */}
