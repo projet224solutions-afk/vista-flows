@@ -28,6 +28,10 @@ interface Product {
     user_id: string;
     shop_slug?: string;
   };
+  // ✅ Champs pour les produits d'affiliation
+  is_affiliate?: boolean;
+  affiliate_url?: string;
+  product_mode?: string;
 }
 
 interface ProductDetailModalProps {
@@ -173,6 +177,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           status,
           vendor_id,
           merchant_id,
+          product_mode,
+          affiliate_url,
           vendors:vendors!digital_products_vendor_id_fkey (
             business_name,
             user_id,
@@ -199,7 +205,6 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           description: digitalProduct.description || undefined,
           images: Array.isArray(digitalProduct.images) ? (digitalProduct.images as string[]) : [],
           promotional_videos: [],
-          // ✅ Utiliser vendor_id si dispo; sinon fallback sur merchant_id
           vendor_id: digitalProduct.vendor_id || digitalProduct.merchant_id,
           category_id: undefined,
           is_active: true,
@@ -208,6 +213,10 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             user_id: v?.user_id || digitalProduct.merchant_id,
             shop_slug: v?.shop_slug || undefined,
           },
+          // ✅ Champs affiliation
+          is_affiliate: digitalProduct.product_mode === "affiliate",
+          affiliate_url: digitalProduct.affiliate_url || undefined,
+          product_mode: digitalProduct.product_mode || undefined,
         });
         return;
       }
@@ -225,6 +234,20 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
   const handleBuy = async () => {
     if (!product) return;
 
+    // ✅ Si c'est un produit d'affiliation, rediriger vers le fournisseur
+    if (product.is_affiliate && product.affiliate_url) {
+      toast.success("Redirection vers le fournisseur...", {
+        description: "Vous allez être redirigé vers la page de paiement du partenaire",
+        duration: 2000,
+      });
+      
+      // Ouvrir dans un nouvel onglet après un court délai
+      setTimeout(() => {
+        window.open(product.affiliate_url, "_blank", "noopener,noreferrer");
+      }, 500);
+      return;
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -234,7 +257,6 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
         return;
       }
 
-      // Créer un lien de paiement
       const totalAmount = product.price * quantity;
       
       toast.success('Redirection vers le paiement...');
@@ -503,7 +525,14 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                 <span className="text-3xl font-bold text-primary">
                   {product.price.toLocaleString()} GNF
                 </span>
-                <Badge variant="secondary">En stock</Badge>
+                {product.is_affiliate ? (
+                  <Badge className="bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white border-0">
+                    <ExternalLink className="w-3 h-3 mr-1" />
+                    Affiliation
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary">En stock</Badge>
+                )}
               </div>
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm text-muted-foreground min-w-0">
@@ -543,55 +572,87 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
             <Separator />
 
-            {/* Quantité */}
-            <div>
-              <label className="text-sm font-medium mb-2 block">Quantité</label>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                >
-                  -
-                </Button>
-                <span className="text-lg font-semibold w-12 text-center">{quantity}</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setQuantity(quantity + 1)}
-                >
-                  +
-                </Button>
+            {/* Quantité - masquer pour les affiliations */}
+            {!product.is_affiliate && (
+              <div>
+                <label className="text-sm font-medium mb-2 block">Quantité</label>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  >
+                    -
+                  </Button>
+                  <span className="text-lg font-semibold w-12 text-center">{quantity}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setQuantity(quantity + 1)}
+                  >
+                    +
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
 
-            <Separator />
+            {!product.is_affiliate && <Separator />}
 
-            {/* Total */}
-            <div className="bg-accent p-4 rounded-lg">
-              <div className="flex items-center justify-between text-lg font-semibold">
-                <span className="text-accent-foreground">Total</span>
-                <span className="text-accent-foreground">{(product.price * quantity).toLocaleString()} GNF</span>
+            {/* Total - masquer pour les affiliations */}
+            {!product.is_affiliate && (
+              <div className="bg-accent p-4 rounded-lg">
+                <div className="flex items-center justify-between text-lg font-semibold">
+                  <span className="text-accent-foreground">Total</span>
+                  <span className="text-accent-foreground">{(product.price * quantity).toLocaleString()} GNF</span>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Notice affiliation */}
+            {product.is_affiliate && (
+              <div className="bg-gradient-to-r from-purple-50 to-fuchsia-50 dark:from-purple-950/30 dark:to-fuchsia-950/30 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-full">
+                    <ExternalLink className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-purple-900 dark:text-purple-100">Produit partenaire</h4>
+                    <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
+                      En cliquant sur "Acheter", vous serez redirigé vers le site du fournisseur pour finaliser votre achat en toute sécurité.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Actions */}
             <div className="space-y-2">
               <Button 
-                className="w-full" 
+                className={`w-full ${product.is_affiliate ? 'bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700' : ''}`}
                 onClick={handleBuy}
               >
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                Acheter maintenant
+                {product.is_affiliate ? (
+                  <>
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Acheter chez le partenaire
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    Acheter maintenant
+                  </>
+                )}
               </Button>
-              <Button 
-                variant="outline" 
-                className="w-full" 
-                onClick={handleAddToCart}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Ajouter au panier ({quantity})
-              </Button>
+              {!product.is_affiliate && (
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={handleAddToCart}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Ajouter au panier ({quantity})
+                </Button>
+              )}
               <div className="flex gap-2">
                 <Button 
                   variant="outline" 
@@ -618,12 +679,14 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             <div className="space-y-2 pt-4 pb-6">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Shield className="w-4 h-4" />
-                <span>Paiement sécurisé</span>
+                <span>{product.is_affiliate ? 'Achat sécurisé chez le partenaire' : 'Paiement sécurisé'}</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Truck className="w-4 h-4" />
-                <span>Livraison rapide disponible</span>
-              </div>
+              {!product.is_affiliate && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Truck className="w-4 h-4" />
+                  <span>Livraison rapide disponible</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
