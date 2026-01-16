@@ -64,7 +64,20 @@ export function useChapChapPay() {
     setError(null);
     
     try {
+      console.log('[ChapChapPay] Initiating PULL payment...', { 
+        amount: request.amount, 
+        method: request.paymentMethod 
+      });
+      
       const result = await chapChapPayService.initiatePullPayment(request);
+      
+      console.log('[ChapChapPay] PULL result received:', {
+        success: result.success,
+        hasPaymentUrl: !!result.paymentUrl,
+        paymentUrl: result.paymentUrl,
+        ussdTriggered: result.ussdTriggered,
+        status: result.status
+      });
       
       if (!result.success) {
         setError(result.error || "Payment failed");
@@ -73,22 +86,31 @@ export function useChapChapPay() {
       }
       
       // Si ChapChapPay renvoie un paymentUrl (fallback E-Commerce au lieu de PULL USSD)
-      if (result.paymentUrl) {
-        console.log('[ChapChapPay] PULL fallback to E-Commerce, redirecting to:', result.paymentUrl);
+      // ou si ussdTriggered est explicitement false
+      if (result.paymentUrl && (result.ussdTriggered === false || !result.ussdTriggered)) {
+        console.log('[ChapChapPay] ⚠️ PULL fallback to E-Commerce detected!');
+        console.log('[ChapChapPay] Opening payment URL:', result.paymentUrl);
         
         // Auto-redirect si demandé (par défaut: true)
         if (options?.autoRedirectOnEcommerce !== false) {
-          toast.info("Redirection vers la page de paiement...", {
-            description: "Vous allez être redirigé vers ChapChapPay pour finaliser le paiement"
+          toast.info("Redirection vers ChapChapPay...", {
+            description: "Ouvrez la page pour finaliser votre paiement Orange Money",
+            duration: 5000
           });
           
-          // Ouvrir dans un nouvel onglet pour ne pas perdre l'état de l'app
-          const popup = window.open(result.paymentUrl, '_blank', 'noopener,noreferrer');
-          
-          // Si popup bloquée, rediriger dans le même onglet
-          if (!popup) {
-            window.location.href = result.paymentUrl;
-          }
+          // Petit délai pour laisser le toast s'afficher
+          setTimeout(() => {
+            // Ouvrir dans un nouvel onglet
+            const popup = window.open(result.paymentUrl, '_blank', 'noopener,noreferrer');
+            
+            console.log('[ChapChapPay] Popup opened:', !!popup);
+            
+            // Si popup bloquée, rediriger dans le même onglet
+            if (!popup) {
+              console.log('[ChapChapPay] Popup blocked, redirecting in same tab');
+              window.location.href = result.paymentUrl!;
+            }
+          }, 500);
         }
         
         return result;
