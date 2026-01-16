@@ -1,5 +1,5 @@
-// Service Worker v10 - PWA + Firebase Cloud Messaging + Mode Offline Desktop & Mobile
-const CACHE_VERSION = "v10";
+// Service Worker v11 - PWA + Firebase Cloud Messaging + Mode Offline Desktop & Mobile
+const CACHE_VERSION = "v11";
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
 const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
@@ -333,19 +333,25 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Assets avec hash (immutables) - Cache First
+  // Assets avec hash (immutables) - Network First (anti "bundles mélangés")
+  // Objectif: si un fichier /assets/* a été mal caché (SW/HTTP/CDN) après un déploiement,
+  // on force une revalidation en ligne pour récupérer la bonne version.
   if (url.pathname.match(/\/assets\/.*\.[a-f0-9]{8}\./)) {
     event.respondWith(
-      caches.match(event.request).then((cached) => {
-        if (cached) return cached;
-        return fetch(event.request).then((response) => {
-          if (response.ok) {
+      (async () => {
+        try {
+          const response = await fetch(event.request, { cache: 'reload' });
+          if (response && response.ok) {
             const clone = response.clone();
             caches.open(STATIC_CACHE).then((cache) => cache.put(event.request, clone));
           }
           return response;
-        });
-      })
+        } catch (err) {
+          const cached = await caches.match(event.request);
+          if (cached) return cached;
+          throw err;
+        }
+      })()
     );
     return;
   }
