@@ -15,6 +15,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { MarketplaceItem } from '@/hooks/useMarketplaceUniversal';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
+import { ExternalLink } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useDisplayCurrency } from './CurrencyIndicator';
@@ -53,6 +54,15 @@ export function UniversalMarketplaceCard({
   // Badge selon le type
   const getTypeBadge = () => {
     if (item.item_type === 'digital_product') {
+      // Distinction affiliation vs vente directe
+      if (item.license_type === 'Affiliation') {
+        return (
+          <Badge className="absolute top-2 left-2 bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white border-0">
+            <ExternalLink className="w-3 h-3 mr-1" />
+            Affiliation
+          </Badge>
+        );
+      }
       return (
         <Badge className="absolute top-2 left-2 bg-purple-500 text-white">
           <Download className="w-3 h-3 mr-1" />
@@ -79,6 +89,9 @@ export function UniversalMarketplaceCard({
 
   const getMainActionLabel = () => {
     if (item.item_type === 'digital_product') {
+      if (item.license_type === 'Affiliation') {
+        return 'Voir l\'offre';
+      }
       return t('marketplace.card.action.buy') || 'Acheter';
     }
     return t('marketplace.card.action.addToCart') || 'Ajouter au panier';
@@ -86,6 +99,9 @@ export function UniversalMarketplaceCard({
 
   const getMainActionIcon = () => {
     if (item.item_type === 'digital_product') {
+      if (item.license_type === 'Affiliation') {
+        return <ExternalLink className="w-4 h-4" />;
+      }
       return <Download className="w-4 h-4" />;
     }
     return <ShoppingCart className="w-4 h-4" />;
