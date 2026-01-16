@@ -49,6 +49,7 @@ export interface CCPPaymentResult {
   paymentUrl?: string;
   status?: string;
   requiresOtp?: boolean;
+  ussdTriggered?: boolean;
   message?: string;
   error?: string;
 }

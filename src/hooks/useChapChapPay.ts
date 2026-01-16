@@ -52,9 +52,13 @@ export function useChapChapPay() {
 
   /**
    * Initiate PULL payment (debit customer)
+   * Options:
+   * - autoRedirectOnEcommerce: Si ChapChapPay renvoie un lien E-Commerce (fallback),
+   *   ouvre automatiquement le lien dans une nouvelle fenêtre
    */
   const initiatePullPayment = useCallback(async (
-    request: CCPPullRequest
+    request: CCPPullRequest,
+    options?: { autoRedirectOnEcommerce?: boolean }
   ): Promise<CCPPaymentResult> => {
     setIsLoading(true);
     setError(null);
@@ -68,10 +72,32 @@ export function useChapChapPay() {
         return result;
       }
       
+      // Si ChapChapPay renvoie un paymentUrl (fallback E-Commerce au lieu de PULL USSD)
+      if (result.paymentUrl) {
+        console.log('[ChapChapPay] PULL fallback to E-Commerce, redirecting to:', result.paymentUrl);
+        
+        // Auto-redirect si demandé (par défaut: true)
+        if (options?.autoRedirectOnEcommerce !== false) {
+          toast.info("Redirection vers la page de paiement...", {
+            description: "Vous allez être redirigé vers ChapChapPay pour finaliser le paiement"
+          });
+          
+          // Ouvrir dans un nouvel onglet pour ne pas perdre l'état de l'app
+          const popup = window.open(result.paymentUrl, '_blank', 'noopener,noreferrer');
+          
+          // Si popup bloquée, rediriger dans le même onglet
+          if (!popup) {
+            window.location.href = result.paymentUrl;
+          }
+        }
+        
+        return result;
+      }
+      
       if (result.requiresOtp) {
         toast.info("Un code OTP a été envoyé sur votre téléphone");
       } else {
-        toast.success("Paiement initié avec succès");
+        toast.success("Paiement initié - Confirmez sur votre téléphone");
       }
       
       return result;
