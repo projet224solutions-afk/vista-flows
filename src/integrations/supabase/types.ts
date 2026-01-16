@@ -22490,7 +22490,7 @@ export type Database = {
       generate_unique_id: { Args: { prefix: string }; Returns: string }
       generate_unique_invitation_token: { Args: never; Returns: string }
       generate_unique_public_id: {
-        Args: { user_role_param?: string }
+        Args: { user_role_param: string }
         Returns: string
       }
       generate_user_custom_id: { Args: never; Returns: string }
