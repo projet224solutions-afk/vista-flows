@@ -11,7 +11,7 @@ import {
   Wallet, Receipt, Truck, Megaphone, FileText, Settings,
   Target, TrendingUp, Box, MessageSquare, HeadphonesIcon,
   Store, DollarSign, Boxes, AlertTriangle, Link, Building2,
-  LayoutDashboard, ChevronRight, Star, Smartphone, Bot, Lock, MessagesSquare, Briefcase
+  LayoutDashboard, ChevronRight, Star, Smartphone, Bot, Lock, MessagesSquare, Briefcase, Laptop
 } from "lucide-react";
 
 import {
@@ -135,6 +135,7 @@ export function VendorSidebar() {
       icon: Package,
       items: [
         { title: t('sidebar.products'), icon: Package, path: "products" },
+        { title: "Produits Numériques", icon: Laptop, path: "digital-products" },
         { title: t('sidebar.orders'), icon: ShoppingCart, path: "orders" },
         { title: t('sidebar.inventory'), icon: Box, path: "inventory" },
         { title: t('sidebar.warehouses'), icon: Boxes, path: "warehouse" },

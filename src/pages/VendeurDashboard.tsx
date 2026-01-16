@@ -67,6 +67,7 @@ const VendorSettings = lazy(() => import("@/pages/vendor/Settings"));
 const CopiloteChat = lazy(() => import("@/components/copilot/CopiloteChat"));
 const ReviewsManagement = lazy(() => import("@/components/vendor/ReviewsManagement"));
 const VendorServiceModule = lazy(() => import("@/components/vendor/VendorServiceModule"));
+const VendorDigitalProducts = lazy(() => import("@/components/vendor/VendorDigitalProducts"));
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useVendorErrorBoundary } from "@/hooks/useVendorErrorBoundary";
 
@@ -563,6 +564,10 @@ export default function VendeurDashboard() {
                 <ProtectedRoute feature="products_basic">
                   <ProductManagement />
                 </ProtectedRoute>
+              } />
+              {/* Produits Numériques - Free */}
+              <Route path="digital-products" element={
+                <VendorDigitalProducts />
               } />
               {/* Commandes - Free */}
               <Route path="orders" element={
