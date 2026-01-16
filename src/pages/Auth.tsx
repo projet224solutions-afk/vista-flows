@@ -48,6 +48,7 @@ export default function Auth() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showNewPasswordForm, setShowNewPasswordForm] = useState(false);
+  const [checkingResetLink, setCheckingResetLink] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -464,28 +465,73 @@ export default function Auth() {
   useEffect(() => {
     const checkResetSession = async () => {
       const params = new URLSearchParams(window.location.search);
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const isReset = params.get('reset') === 'true' || hashParams.get('type') === 'recovery';
+      const hash = window.location.hash;
+      const hashParams = new URLSearchParams(hash.substring(1));
       
-      if (isReset) {
+      // Détecter tous les cas de réinitialisation possibles
+      const isResetQuery = params.get('reset') === 'true';
+      const isRecoveryType = hashParams.get('type') === 'recovery';
+      const hasAccessToken = hash.includes('access_token');
+      const hasErrorInHash = hashParams.get('error_description');
+      
+      console.log('🔍 [Auth] Vérification reset:', { 
+        isResetQuery, 
+        isRecoveryType, 
+        hasAccessToken, 
+        hasErrorInHash,
+        hash: hash.substring(0, 50) + '...'
+      });
+      
+      // Si erreur dans le hash (lien expiré)
+      if (hasErrorInHash) {
+        const errorDesc = decodeURIComponent(hashParams.get('error_description') || '');
+        console.error('❌ Erreur dans le lien:', errorDesc);
+        setError(`Le lien de réinitialisation est invalide ou a expiré. ${errorDesc.includes('expired') ? 'Veuillez demander un nouveau lien.' : ''}`);
+        setShowResetPassword(true);
+        setShowNewPasswordForm(false);
+        // Nettoyer l'URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+      }
+      
+      const isReset = isResetQuery || isRecoveryType || (hasAccessToken && hash.includes('type=recovery'));
+      
+      if (isReset || (hasAccessToken && !hash.includes('type=signup'))) {
         console.log('🔑 Lien de réinitialisation détecté, vérification de la session...');
+        setCheckingResetLink(true);
+        setLoading(true);
         
-        // Attendre un moment pour que Supabase traite le hash
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Attendre que Supabase traite le hash (plus long pour les connexions lentes)
+        await new Promise(resolve => setTimeout(resolve, 2500));
         
         // Vérifier qu'on a bien une session active
         const { data: { session }, error } = await supabase.auth.getSession();
         
+        console.log('🔐 Session après attente:', { 
+          hasSession: !!session, 
+          userId: session?.user?.id?.substring(0, 8),
+          error 
+        });
+        
         if (session) {
-          console.log('✅ Session de réinitialisation active');
+          console.log('✅ Session de réinitialisation active - affichage du formulaire');
           setShowNewPasswordForm(true);
           setShowResetPassword(false);
           setIsLogin(false);
+          setError(null);
+          // Nettoyer l'URL pour éviter les re-traitements
+          window.history.replaceState({}, document.title, window.location.pathname + '?reset=true');
         } else {
-          console.error('❌ Aucune session trouvée:', error);
-          setError('Session de réinitialisation expirée ou invalide. Veuillez demander un nouveau lien de réinitialisation.');
+          console.error('❌ Aucune session trouvée après traitement du hash:', error);
+          setError('Le lien de réinitialisation est invalide ou a expiré. Veuillez demander un nouveau lien.');
           setShowResetPassword(true);
+          setShowNewPasswordForm(false);
+          // Nettoyer l'URL
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
+        
+        setLoading(false);
+        setCheckingResetLink(false);
       }
     };
     
@@ -1659,6 +1705,19 @@ export default function Auth() {
         <div className="max-w-md mx-auto px-6 mt-8">
         <Card className="shadow-lg border-2 border-primary/20">
           <CardContent className="p-8">
+            {/* Écran de chargement pendant la vérification du lien de réinitialisation */}
+            {checkingResetLink ? (
+              <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                <Loader2 className="w-12 h-12 animate-spin text-primary" />
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold text-foreground">🔐 Vérification en cours...</h3>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Validation de votre lien de réinitialisation
+                  </p>
+                </div>
+              </div>
+            ) : (
+            <>
             {/* Bouton retour pour le reset password */}
             {showResetPassword && (
               <Button
@@ -2292,6 +2351,8 @@ export default function Auth() {
                 </button>
               </div>
             </form>
+            )}
+            </>
             )}
           </CardContent>
         </Card>
