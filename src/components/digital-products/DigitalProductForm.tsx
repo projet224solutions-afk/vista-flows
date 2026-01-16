@@ -333,12 +333,18 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
   };
 
   const renderStepContent = () => {
+    console.log('[DigitalProductForm] Rendering step:', currentStep, 'salesMode:', salesMode);
+    
     switch (currentStep) {
       case 'mode':
+        console.log('[DigitalProductForm] Rendering SalesModeSelector');
         return (
           <SalesModeSelector
             value={salesMode}
-            onChange={setSalesMode}
+            onChange={(mode) => {
+              console.log('[DigitalProductForm] Mode changed to:', mode);
+              setSalesMode(mode);
+            }}
             disabled={!config.allowDirectSale && !config.allowAffiliate}
           />
         );

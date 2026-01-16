@@ -3,12 +3,10 @@
  * Inspiré de ClickBank, ShareASale, CJ Affiliate
  */
 
-import { useState } from 'react';
 import { 
   Store, 
   Link2, 
   ChevronRight, 
-  DollarSign, 
   Users, 
   TrendingUp,
   Globe,
@@ -20,8 +18,6 @@ import {
   Percent,
   ExternalLink
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
