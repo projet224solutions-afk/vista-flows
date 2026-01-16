@@ -69,12 +69,9 @@ serve(async (req) => {
         const { error } = await supabaseAdmin.from(table).delete().eq(column, value);
         if (error) {
           const code = (error as any)?.code;
-          if (code === '42P01' || code === '42703') {
-            console.log(`  ⚠ ${table}: table/colonne inexistante`);
-            return;
-          }
-          if (code === '23503') {
-            console.log(`  ⚠ ${table}: contrainte FK, ignoré`);
+          // Ignorer tables/colonnes manquantes et contraintes FK
+          if (['42P01', '42703', '23503'].includes(code)) {
+            console.log(`  ⚠ ${table}: ignoré (${code})`);
             return;
           }
           console.log(`  ❌ ${table}: ${error.message}`);
@@ -86,8 +83,39 @@ serve(async (req) => {
       }
     };
 
-    // 1. Supprimer les données liées aux commandes
-    console.log('📦 Suppression des données commandes...');
+    // Helper pour désactiver au lieu de supprimer
+    const safeDeactivate = async (table: string, column: string, value: string) => {
+      try {
+        const { error } = await supabaseAdmin
+          .from(table)
+          .update({ is_active: false, updated_at: new Date().toISOString() })
+          .eq(column, value);
+        if (error) {
+          const code = (error as any)?.code;
+          if (['42P01', '42703'].includes(code)) {
+            console.log(`  ⚠ ${table}: ignoré (${code})`);
+            return;
+          }
+          console.log(`  ❌ ${table} (désactivation): ${error.message}`);
+        } else {
+          console.log(`  ✓ ${table} (désactivé)`);
+        }
+      } catch (e) {
+        console.log(`  ⚠ ${table} (désactivation): ${e}`);
+      }
+    };
+
+    // ✅ ÉTAPE 1: Désactiver immédiatement la boutique et ses produits
+    // Cela garantit qu'elle ne s'affiche plus nulle part même si on ne peut pas tout supprimer
+    console.log('🔒 Désactivation immédiate...');
+    await safeDeactivate('vendors', 'id', vendor.id);
+    await safeDeactivate('products', 'vendor_id', vendor.id);
+    await safeDeactivate('professional_services', 'vendor_id', vendor.id);
+
+    // ÉTAPE 2: Tenter les suppressions (ordre important pour éviter les FK)
+    console.log('📦 Suppression des données liées...');
+
+    // Supprimer les données liées aux commandes
     const { data: orders } = await supabaseAdmin.from('orders').select('id').eq('vendor_id', vendor.id);
     if (orders && orders.length > 0) {
       for (const order of orders) {
@@ -98,34 +126,31 @@ serve(async (req) => {
         await safeDelete('china_logistics', 'order_id', order.id);
       }
     }
+    
+    // Supprimer les dropship_orders (contrainte FK sur vendors)
+    await safeDelete('dropship_orders', 'vendor_id', vendor.id);
     await safeDelete('orders', 'vendor_id', vendor.id);
 
-    // 2. Supprimer les produits et données liées
-    console.log('📦 Suppression des produits...');
+    // Supprimer les produits et données liées
     const { data: products } = await supabaseAdmin.from('products').select('id').eq('vendor_id', vendor.id);
     if (products && products.length > 0) {
       for (const product of products) {
         await safeDelete('product_variants', 'product_id', product.id);
-        await safeDelete('product_images', 'product_id', product.id);
         await safeDelete('product_reviews', 'product_id', product.id);
         await safeDelete('advanced_carts', 'product_id', product.id);
         await safeDelete('carts', 'product_id', product.id);
-        await safeDelete('wishlist_items', 'product_id', product.id);
         await safeDelete('inventory', 'product_id', product.id);
       }
     }
     await safeDelete('products', 'vendor_id', vendor.id);
 
-    // 3. Supprimer les paniers liés au vendeur
-    console.log('🛒 Suppression des paniers...');
+    // Supprimer les paniers liés au vendeur
     await safeDelete('advanced_carts', 'vendor_id', vendor.id);
 
-    // 4. Supprimer les produits digitaux
-    console.log('💾 Suppression des produits digitaux...');
+    // Supprimer les produits digitaux
     await safeDelete('digital_products', 'vendor_id', vendor.id);
 
-    // 5. Supprimer les services professionnels
-    console.log('💼 Suppression des services professionnels...');
+    // Supprimer les services professionnels
     const { data: services } = await supabaseAdmin.from('professional_services').select('id').eq('vendor_id', vendor.id);
     if (services && services.length > 0) {
       for (const service of services) {
@@ -137,49 +162,34 @@ serve(async (req) => {
     }
     await safeDelete('professional_services', 'vendor_id', vendor.id);
 
-    // 6. Supprimer les produits de service du PDG
-    console.log('🎯 Suppression des produits de service PDG...');
+    // Supprimer les produits de service du PDG
     await safeDelete('service_products', 'vendor_id', vendor.id);
 
-    // 7. Supprimer les avis
-    console.log('⭐ Suppression des avis...');
-    await safeDelete('vendor_reviews', 'vendor_id', vendor.id);
-
-    // 8. Supprimer les favoris
-    console.log('❤️ Suppression des favoris...');
-    await safeDelete('favorites', 'vendor_id', vendor.id);
-    await safeDelete('wishlists', 'vendor_id', vendor.id);
-
-    // 9. Supprimer les paramètres vendeur
-    console.log('⚙️ Suppression des paramètres...');
+    // Supprimer les paramètres et analytics
     await safeDelete('vendor_settings', 'vendor_id', vendor.id);
     await safeDelete('vendor_analytics', 'vendor_id', vendor.id);
     await safeDelete('china_dropship_settings', 'vendor_id', vendor.id);
     await safeDelete('china_dropship_reports', 'vendor_id', vendor.id);
+    await safeDelete('dropship_settings', 'vendor_id', vendor.id);
 
-    // 10. Supprimer le wallet vendeur
-    console.log('💰 Suppression du wallet...');
-    await safeDelete('vendor_wallets', 'vendor_id', vendor.id);
-
-    // 11. Supprimer le vendeur lui-même
+    // ÉTAPE 3: Tenter la suppression du vendeur
     console.log('🏪 Suppression du vendeur...');
     const { error: deleteVendorError } = await supabaseAdmin
       .from('vendors')
       .delete()
       .eq('id', vendor.id);
 
+    let vendorDeleted = false;
     if (deleteVendorError) {
-      // Si la suppression échoue, au moins désactiver
-      console.log('⚠️ Suppression impossible, désactivation...');
-      await supabaseAdmin
-        .from('vendors')
-        .update({ is_active: false, updated_at: new Date().toISOString() })
-        .eq('id', vendor.id);
+      console.log('⚠️ Suppression physique impossible:', deleteVendorError.message);
+      console.log('✅ Boutique désactivée (non visible)');
     } else {
-      console.log('✅ Vendeur supprimé');
+      vendorDeleted = true;
+      console.log('✅ Vendeur supprimé physiquement');
     }
 
-    // 12. Optionnel: supprimer l'utilisateur associé
+    // ÉTAPE 4: Optionnel - supprimer l'utilisateur associé
+    let userDeleted = false;
     if (delete_user_too && vendor.user_id) {
       console.log('👤 Suppression de l\'utilisateur...');
       
@@ -191,6 +201,7 @@ serve(async (req) => {
       if (authError) {
         console.log('⚠️ Erreur suppression auth:', authError.message);
       } else {
+        userDeleted = true;
         console.log('✅ Utilisateur auth supprimé');
       }
     }
@@ -198,11 +209,14 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Boutique "${vendor.business_name}" supprimée définitivement`,
+        message: vendorDeleted 
+          ? `Boutique "${vendor.business_name}" supprimée définitivement`
+          : `Boutique "${vendor.business_name}" désactivée (non visible)`,
         deleted: {
           vendor_id: vendor.id,
           business_name: vendor.business_name,
-          user_deleted: delete_user_too && vendor.user_id ? true : false
+          vendor_fully_deleted: vendorDeleted,
+          user_deleted: userDeleted
         }
       }),
       {
