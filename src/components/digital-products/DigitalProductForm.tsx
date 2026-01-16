@@ -595,7 +595,7 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-[calc(10rem+env(safe-area-inset-bottom))]">
       {/* Header */}
       <header className="bg-card/95 backdrop-blur-md border-b border-border sticky top-0 z-40">
         <div className="px-4 py-3">
@@ -656,8 +656,8 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
         {renderStepContent()}
       </div>
 
-      {/* Footer Actions */}
-      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 z-50">
+      {/* Footer Actions (placé au-dessus du QuickFooter global) */}
+      <div className="fixed left-0 right-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] bg-card border-t border-border p-4 z-[90]">
         {currentStep === 'review' ? (
           <Button
             onClick={handleSubmit}
