@@ -10,6 +10,7 @@ import OAuthPasswordGate from "@/components/auth/OAuthPasswordGate";
 import { ThemeProvider } from "next-themes";
 
 const MerchantOnboarding = lazyWithRetry(() => import("@/components/onboarding/MerchantOnboarding"));
+const WebRTCCallProvider = lazyWithRetry(() => import("@/components/communication/WebRTCCallProvider"));
 import { CartProvider } from "@/contexts/CartContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -194,6 +195,11 @@ function App() {
                 <DeepLinkInitializer />
                 <Suspense fallback={null}>
                   <MerchantOnboarding />
+                </Suspense>
+                <Suspense fallback={null}>
+                  <WebRTCCallProvider>
+                    <></>
+                  </WebRTCCallProvider>
                 </Suspense>
 
                 <ErrorBoundary>
