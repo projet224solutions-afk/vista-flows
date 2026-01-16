@@ -293,17 +293,89 @@ export default function Auth() {
         const isOAuthUser = provider === 'google' || provider === 'facebook';
         
         // Petit délai pour laisser le profil se créer/charger
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 800));
         
         try {
-          const { data: profile, error } = await supabase
+          // 🔍 Vérifier si le profil existe
+          let { data: profile, error } = await supabase
             .from('profiles')
-            .select('role')
+            .select('id, role, public_id')
             .eq('id', session.user.id)
             .maybeSingle();
           
           if (error) {
             console.error('❌ [Auth] Erreur récupération profil:', error);
+          }
+          
+          // 🆕 Si pas de profil et connexion OAuth → créer le profil automatiquement
+          if (!profile && isOAuthUser) {
+            console.log('🆕 [Auth] Utilisateur OAuth sans profil - création automatique...');
+            
+            // Récupérer le rôle intentionnel depuis localStorage (défini avant OAuth)
+            const intendedRole = localStorage.getItem('oauth_intent_role') || 'client';
+            
+            // Extraire les infos de l'utilisateur OAuth
+            const userMeta = session.user.user_metadata || {};
+            const fullName = userMeta.full_name || userMeta.name || session.user.email?.split('@')[0] || 'Utilisateur';
+            const firstName = userMeta.given_name || userMeta.first_name || fullName.split(' ')[0] || '';
+            const lastName = userMeta.family_name || userMeta.last_name || fullName.split(' ').slice(1).join(' ') || '';
+            
+            // Générer un public_id unique via RPC
+            let publicId = `CLI${Math.floor(1000 + Math.random() * 9000)}`;
+            try {
+              const { data: generatedId } = await supabase.rpc('generate_unique_public_id', { 
+                user_role_param: intendedRole 
+              });
+              if (generatedId) publicId = generatedId;
+            } catch (e) {
+              console.warn('⚠️ [Auth] RPC generate_unique_public_id non disponible, utilisation ID fallback');
+            }
+            
+            // Créer le profil via upsert (gère les conflits potentiels)
+            const { data: newProfile, error: createError } = await supabase
+              .from('profiles')
+              .upsert({
+                id: session.user.id,
+                email: session.user.email || '',
+                full_name: fullName,
+                first_name: firstName,
+                last_name: lastName,
+                role: intendedRole as any,
+                public_id: publicId,
+                custom_id: publicId,
+                avatar_url: userMeta.avatar_url || userMeta.picture || null,
+              }, { onConflict: 'id' })
+              .select('id, role, public_id')
+              .single();
+            
+            if (createError) {
+              console.error('❌ [Auth] Erreur création profil OAuth:', createError);
+              // Réessayer avec select après un délai
+              await new Promise(resolve => setTimeout(resolve, 500));
+              const { data: retryProfile } = await supabase
+                .from('profiles')
+                .select('id, role, public_id')
+                .eq('id', session.user.id)
+                .maybeSingle();
+              if (retryProfile) profile = retryProfile;
+            } else {
+              console.log('✅ [Auth] Profil OAuth créé avec succès:', newProfile);
+              profile = newProfile;
+              
+              // 🆕 Créer le wallet automatiquement
+              await supabase
+                .from('wallets')
+                .insert({
+                  user_id: session.user.id,
+                  balance: 0,
+                  currency: 'GNF',
+                  wallet_status: 'active'
+                })
+                .select()
+                .single();
+              
+              console.log('✅ [Auth] Wallet créé pour utilisateur OAuth');
+            }
           }
           
           // Vérifier si l'utilisateur OAuth a déjà défini un mot de passe ou passé l'étape
