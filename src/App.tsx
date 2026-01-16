@@ -1,19 +1,20 @@
 import { Suspense, memo, useEffect, useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
+
 import ErrorBoundary from "@/components/ErrorBoundary";
+import OAuthPasswordGate from "@/components/auth/OAuthPasswordGate";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
-import OAuthPasswordGate from "@/components/auth/OAuthPasswordGate";
-import { ThemeProvider } from "next-themes";
-
-const MerchantOnboarding = lazyWithRetry(() => import("@/components/onboarding/MerchantOnboarding"));
 import { CartProvider } from "@/contexts/CartContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
+
+const MerchantOnboarding = lazyWithRetry(() => import("@/components/onboarding/MerchantOnboarding"));
 
 // Lazy load TOUT - même la page d'accueil pour réduire TBT
 const Index = lazyWithRetry(() => import("./pages/Index"));

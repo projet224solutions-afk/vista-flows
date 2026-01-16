@@ -292,16 +292,47 @@
           });
       }
 
+      function shouldRecoverFromError(message) {
+        var m = String(message || '').toLowerCase();
+        return (
+          m.includes('loading chunk') ||
+          m.includes('chunkloaderror') ||
+          m.includes('loading css chunk') ||
+          m.includes('failed to fetch dynamically imported module') ||
+          m.includes('importing a module script failed') ||
+          (m.includes('failed to fetch') && m.includes('/assets/'))
+        );
+      }
+
       // Détecter tôt les erreurs globales (utile si main.tsx ne se charge pas)
       window.addEventListener('error', function (event) {
         if (isMounted()) return;
-        // Souvent causé par un cache/SW incohérent après déploiement (chunks mélangés)
-        attemptRecovery(false);
+
+        var msg = (event && (event.message || (event.error && event.error.message))) || 'Erreur inconnue';
+        var stack = event && event.error && event.error.stack;
+        var detail = msg + (stack ? ('\n' + stack) : '');
+
+        // Si c'est probablement un problème de chunks/assets → recovery, sinon on affiche l'erreur pour diagnostic.
+        if (shouldRecoverFromError(msg)) {
+          attemptRecovery(false);
+        } else {
+          showFailureUI(detail);
+        }
       }, true);
 
       window.addEventListener('unhandledrejection', function (event) {
         if (isMounted()) return;
-        attemptRecovery(false);
+
+        var reason = event && event.reason;
+        var msg = (reason && (reason.message || String(reason))) || 'Promise rejetée';
+        var stack = reason && reason.stack;
+        var detail = msg + (stack ? ('\n' + stack) : '');
+
+        if (shouldRecoverFromError(msg)) {
+          attemptRecovery(false);
+        } else {
+          showFailureUI(detail);
+        }
       });
 
       // Poll: si React a monté, on cache le loader
