@@ -219,59 +219,96 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
   /**
    * Charge les produits numériques depuis la table digital_products
    */
-  const loadDigitalProducts = async (categoryName?: string): Promise<MarketplaceItem[]> => {
-    if (itemType === 'professional_service' || itemType === 'product') return [];
+  const loadDigitalProducts = async (): Promise<MarketplaceItem[]> => {
+    if (itemType === "professional_service" || itemType === "product") return [];
+
+    const DIGITAL_CATEGORIES = new Set([
+      "dropshipping",
+      "voyage",
+      "logiciel",
+      "formation",
+      "livre",
+      "custom",
+    ]);
 
     try {
       let query = supabase
-        .from('digital_products')
-        .select('*')
-        .eq('status', 'published');
+        .from("digital_products")
+        .select(
+          `
+          id,
+          merchant_id,
+          vendor_id,
+          title,
+          description,
+          short_description,
+          images,
+          category,
+          product_mode,
+          price,
+          original_price,
+          rating,
+          reviews_count,
+          created_at,
+          affiliate_url,
+          file_type,
+          vendors:vendors!digital_products_vendor_id_fkey (business_name, user_id, shop_slug)
+        `
+        )
+        .eq("status", "published");
 
-      // Filtres
+      // Filtre vendeur (⚠️ vendorId = vendors.id dans l'UI marketplace)
       if (vendorId) {
-        query = query.eq('merchant_id', vendorId);
+        query = query.eq("vendor_id", vendorId);
       }
+
+      // Filtre recherche
       if (searchQuery?.trim()) {
-        query = query.or(`title.ilike.%${searchQuery.trim()}%,description.ilike.%${searchQuery.trim()}%`);
+        query = query.or(
+          `title.ilike.%${searchQuery.trim()}%,description.ilike.%${searchQuery.trim()}%`
+        );
       }
-      if (minPrice && minPrice > 0) query = query.gte('price', minPrice);
-      if (maxPrice && maxPrice > 0) query = query.lte('price', maxPrice);
-      
-      // Filtre par catégorie
-      if (categoryName) {
-        query = query.ilike('category', `%${categoryName}%`);
+
+      // Filtre prix
+      if (minPrice && minPrice > 0) query = query.gte("price", minPrice);
+      if (maxPrice && maxPrice > 0) query = query.lte("price", maxPrice);
+
+      // Filtre catégorie: uniquement si la catégorie sélectionnée correspond à l'enum digital_products.category
+      if (category && category !== "all" && DIGITAL_CATEGORIES.has(category)) {
+        query = query.eq("category", category);
       }
 
       const { data, error } = await query;
       if (error) throw error;
 
-      return (data || []).map(product => {
+      return (data || []).map((product: any) => {
         const images = Array.isArray(product.images) ? (product.images as string[]) : [];
-        
+        const v = product.vendors as any;
+
         return {
           id: product.id,
           name: product.title,
           price: product.price || 0,
           originalPrice: product.original_price || undefined,
-          description: product.description || '',
+          description: product.short_description || product.description || "",
           images,
-          vendor_id: product.merchant_id,
-          vendor_name: 'Vendeur Numérique',
+          promotional_videos: [],
+          vendor_id: product.vendor_id || product.merchant_id,
+          vendor_name: v?.business_name || "Vendeur",
           vendor_user_id: product.merchant_id,
-          category_name: product.category || 'Numérique',
+          category_name: product.category || "Numérique",
           service_type: product.product_mode,
           rating: product.rating || 0,
           reviews_count: product.reviews_count || 0,
-          item_type: 'digital_product' as const,
+          item_type: "digital_product" as const,
           download_url: product.affiliate_url || undefined,
           file_size: product.file_type || undefined,
-          license_type: product.product_mode === 'affiliate' ? 'Affiliation' : 'Vente directe',
-          created_at: product.created_at
+          license_type: product.product_mode === "affiliate" ? "Affiliation" : "Vente directe",
+          created_at: product.created_at,
         };
       });
     } catch (error) {
-      console.error('Erreur chargement produits numériques:', error);
+      console.error("Erreur chargement produits numériques:", error);
       return [];
     }
   };
@@ -314,14 +351,14 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       if (itemType === 'product') {
         allItems = await loadProducts();
       } else if (itemType === 'digital_product') {
-        allItems = await loadDigitalProducts(categoryName || undefined);
+        allItems = await loadDigitalProducts();
       } else if (itemType === 'professional_service') {
         allItems = await loadProfessionalServices();
       } else {
         // 'all' = produits + numériques + services professionnels
         const [products, digitalProducts, professionalServices] = await Promise.all([
           loadProducts(),
-          loadDigitalProducts(categoryName || undefined),
+          loadDigitalProducts(),
           loadProfessionalServices()
         ]);
         allItems = [...products, ...digitalProducts, ...professionalServices];
