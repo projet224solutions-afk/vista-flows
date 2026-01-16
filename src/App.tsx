@@ -191,7 +191,6 @@ function App() {
                 <Toaster />
                 <Sonner />
                 <InstallPromptBanner />
-                <PWAInstallPrompt />
                 <DeepLinkInitializer />
                 <Suspense fallback={null}>
                   <MerchantOnboarding />
