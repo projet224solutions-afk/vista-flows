@@ -87,8 +87,6 @@ const salesModes = {
 };
 
 export function SalesModeSelector({ value, onChange, disabled }: SalesModeSelectorProps) {
-  const [hoveredMode, setHoveredMode] = useState<SalesMode | null>(null);
-
   return (
     <div className="space-y-4">
       {/* Header informatif */}
@@ -101,154 +99,138 @@ export function SalesModeSelector({ value, onChange, disabled }: SalesModeSelect
         </p>
       </div>
 
-      {/* Cartes de sélection */}
+      {/* Cartes de sélection - CLIQUABLES */}
       <div className="grid gap-4">
         {(Object.keys(salesModes) as SalesMode[]).map((modeKey) => {
           const mode = salesModes[modeKey];
           const isSelected = value === modeKey;
-          const isHovered = hoveredMode === modeKey;
           const Icon = mode.icon;
 
           return (
-            <Card
+            <button
               key={modeKey}
+              type="button"
+              disabled={disabled}
+              onClick={() => onChange(modeKey)}
               className={cn(
-                'cursor-pointer transition-all duration-300 overflow-hidden',
-                'border-2',
+                'w-full text-left rounded-xl border-2 p-4 transition-all duration-200',
+                'focus:outline-none focus:ring-2 focus:ring-primary/50',
                 isSelected 
-                  ? 'border-primary shadow-lg ring-2 ring-primary/20' 
-                  : 'border-border hover:border-primary/50',
-                isHovered && !isSelected && 'shadow-md',
+                  ? 'border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20' 
+                  : 'border-border bg-card hover:border-primary/50 hover:shadow-md',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
-              onClick={() => !disabled && onChange(modeKey)}
-              onMouseEnter={() => setHoveredMode(modeKey)}
-              onMouseLeave={() => setHoveredMode(null)}
             >
-              {/* Header avec gradient */}
-              <div className={cn(
-                'p-4 transition-all duration-300',
-                isSelected 
-                  ? `bg-gradient-to-r ${mode.gradient} text-white` 
-                  : 'bg-muted/50'
-              )}>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      'w-12 h-12 rounded-xl flex items-center justify-center',
-                      isSelected 
-                        ? 'bg-white/20' 
-                        : `bg-gradient-to-br ${mode.gradient} text-white`
-                    )}>
-                      <Icon className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className={cn(
-                        'font-bold text-base',
-                        isSelected ? 'text-white' : 'text-foreground'
+              <div className="flex items-start gap-4">
+                {/* Icône */}
+                <div className={cn(
+                  'w-14 h-14 rounded-xl flex items-center justify-center shrink-0',
+                  `bg-gradient-to-br ${mode.gradient} text-white`
+                )}>
+                  <Icon className="w-7 h-7" />
+                </div>
+
+                {/* Contenu */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-bold text-foreground text-base">
+                      {mode.title}
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant={isSelected ? "default" : "outline"}
+                        className="text-[10px]"
+                      >
+                        {mode.badgeText}
+                      </Badge>
+                      {/* Indicateur de sélection */}
+                      <div className={cn(
+                        'w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors',
+                        isSelected 
+                          ? 'border-primary bg-primary' 
+                          : 'border-muted-foreground/30'
                       )}>
-                        {mode.title}
-                      </h3>
-                      <p className={cn(
-                        'text-xs',
-                        isSelected ? 'text-white/80' : 'text-muted-foreground'
-                      )}>
-                        {mode.subtitle}
-                      </p>
+                        {isSelected && (
+                          <div className="w-2 h-2 rounded-full bg-white" />
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge 
-                      variant={isSelected ? "secondary" : "outline"}
-                      className={cn(
-                        'text-[10px]',
-                        isSelected && 'bg-white/20 text-white border-white/30'
-                      )}
-                    >
-                      {mode.badgeText}
-                    </Badge>
-                    {isSelected && (
-                      <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center">
-                        <div className="w-3 h-3 rounded-full bg-emerald-500" />
+
+                  <p className="text-xs text-muted-foreground mb-3">
+                    {mode.subtitle}
+                  </p>
+
+                  {/* Description */}
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {mode.description}
+                  </p>
+
+                  {/* Features en grille */}
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    {mode.features.map((feature, idx) => {
+                      const FeatureIcon = feature.icon;
+                      return (
+                        <div 
+                          key={idx} 
+                          className="flex items-center gap-2 text-xs text-foreground"
+                        >
+                          <FeatureIcon className="w-3.5 h-3.5 text-primary shrink-0" />
+                          <span>{feature.text}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Commission info pour affiliation */}
+                  {mode.commissionInfo && (
+                    <div className="bg-muted/50 rounded-lg p-2.5 mb-2">
+                      <p className="text-[10px] font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
+                        <BarChart3 className="w-3 h-3" />
+                        {mode.commissionInfo.label}
+                      </p>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                        {mode.commissionInfo.ranges.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-[11px]">
+                            <span className="text-muted-foreground">{item.platform}</span>
+                            <span className="font-semibold text-primary">{item.rate}</span>
+                          </div>
+                        ))}
                       </div>
-                    )}
+                    </div>
+                  )}
+
+                  {/* Requirements */}
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                      Prérequis
+                    </p>
+                    {mode.requirements.map((req, idx) => (
+                      <div key={idx} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                        <ChevronRight className="w-2.5 h-2.5 text-primary" />
+                        <span>{req}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
-
-              {/* Contenu étendu si sélectionné ou survolé */}
-              <CardContent className={cn(
-                'transition-all duration-300 overflow-hidden',
-                (isSelected || isHovered) ? 'p-4' : 'p-0 h-0'
-              )}>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {mode.description}
-                </p>
-
-                {/* Features */}
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                  {mode.features.map((feature, idx) => {
-                    const FeatureIcon = feature.icon;
-                    return (
-                      <div 
-                        key={idx} 
-                        className="flex items-center gap-2 text-xs text-foreground"
-                      >
-                        <FeatureIcon className="w-3.5 h-3.5 text-primary shrink-0" />
-                        <span>{feature.text}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Commission info pour affiliation */}
-                {mode.commissionInfo && (
-                  <div className="bg-muted/50 rounded-lg p-3 mb-3">
-                    <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
-                      <BarChart3 className="w-3.5 h-3.5" />
-                      {mode.commissionInfo.label}
-                    </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {mode.commissionInfo.ranges.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between text-xs">
-                          <span className="text-muted-foreground">{item.platform}</span>
-                          <span className="font-semibold text-primary">{item.rate}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Requirements */}
-                <div className="space-y-1">
-                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
-                    Prérequis
-                  </p>
-                  {mode.requirements.map((req, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <ChevronRight className="w-3 h-3 text-primary" />
-                      <span>{req}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            </button>
           );
         })}
       </div>
 
       {/* Info complémentaire */}
-      <div className="bg-muted/30 rounded-lg p-3 border border-border">
-        <p className="text-xs text-muted-foreground text-center">
+      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+        <p className="text-xs text-foreground text-center font-medium">
           {value === 'direct' ? (
             <>
-              <Store className="w-3.5 h-3.5 inline mr-1" />
-              Vous gérez tout : produit, livraison et support client
+              <Store className="w-3.5 h-3.5 inline mr-1 text-primary" />
+              Vente Directe : Vous gérez tout (produit, livraison, support)
             </>
           ) : (
             <>
-              <ExternalLink className="w-3.5 h-3.5 inline mr-1" />
-              Les clients seront redirigés vers la plateforme partenaire
+              <ExternalLink className="w-3.5 h-3.5 inline mr-1 text-primary" />
+              Affiliation : Les clients seront redirigés vers le partenaire
             </>
           )}
         </p>
