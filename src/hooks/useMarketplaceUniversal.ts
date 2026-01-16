@@ -236,13 +236,15 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           category,
           metadata,
           created_at,
-          professional_services(
+          professional_services!inner(
             business_name,
             user_id,
+            status,
             service_types(name, code)
           )
         `)
-        .eq('is_available', true);
+        .eq('is_available', true)
+        .eq('professional_services.status', 'active');
 
       // Filtres
       if (vendorId) {

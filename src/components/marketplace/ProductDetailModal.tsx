@@ -108,7 +108,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
       }
 
       // Si pas trouvé, essayer service_products (produits numériques)
-      const { data: digitalProduct, error: digitalError } = await supabase
+      const { data: digitalProduct } = await supabase
         .from('service_products')
         .select(`
           id,
@@ -119,7 +119,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           professional_service_id,
           professional_services (
             business_name,
-            user_id
+            user_id,
+            status
           )
         `)
         .eq('id', productId)
@@ -127,6 +128,12 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
       if (digitalProduct) {
         const proService = digitalProduct.professional_services as any;
+
+        // Ne pas afficher un produit numérique si sa boutique/service n'est plus actif
+        if (!proService || proService.status !== 'active') {
+          throw new Error('Produit introuvable');
+        }
+
         setProduct({
           id: digitalProduct.id,
           name: digitalProduct.name,
@@ -136,11 +143,11 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           vendor_id: digitalProduct.professional_service_id,
           category_id: undefined,
           is_active: true,
-          vendors: proService ? {
+          vendors: {
             business_name: proService.business_name || 'Vendeur',
             user_id: proService.user_id,
             shop_slug: undefined
-          } : undefined
+          }
         });
         return;
       }
