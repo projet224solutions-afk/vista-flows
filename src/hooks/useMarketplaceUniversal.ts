@@ -14,6 +14,7 @@ export interface MarketplaceItem {
   originalPrice?: number;
   description?: string;
   images: string[];
+  promotional_videos?: string[];
   vendor_id: string;
   vendor_name: string;
   vendor_user_id?: string;
@@ -85,6 +86,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           price,
           description,
           images,
+          promotional_videos,
           vendor_id,
           category_id,
           rating,
@@ -126,6 +128,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         price: product.price,
         description: product.description || '',
         images: Array.isArray(product.images) ? (product.images as string[]) : [],
+        promotional_videos: Array.isArray(product.promotional_videos) ? (product.promotional_videos as string[]) : [],
         vendor_id: product.vendor_id,
         vendor_name: (product.vendors as any)?.business_name || 'Vendeur',
         vendor_user_id: (product.vendors as any)?.user_id,
