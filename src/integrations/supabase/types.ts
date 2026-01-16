@@ -4452,7 +4452,7 @@ export type Database = {
           images: string[] | null
           is_featured: boolean | null
           is_premium: boolean | null
-          merchant_id: string
+          merchant_id: string | null
           metadata: Json | null
           original_price: number | null
           price: number
@@ -4486,7 +4486,7 @@ export type Database = {
           images?: string[] | null
           is_featured?: boolean | null
           is_premium?: boolean | null
-          merchant_id: string
+          merchant_id?: string | null
           metadata?: Json | null
           original_price?: number | null
           price?: number
@@ -4520,7 +4520,7 @@ export type Database = {
           images?: string[] | null
           is_featured?: boolean | null
           is_premium?: boolean | null
-          merchant_id?: string
+          merchant_id?: string | null
           metadata?: Json | null
           original_price?: number | null
           price?: number
