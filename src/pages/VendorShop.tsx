@@ -1,14 +1,16 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { ArrowLeft, MapPin, Star, Phone, Mail, MessageCircle, Package, Clock, Store, Truck } from "lucide-react";
+import { ArrowLeft, MapPin, Star, Phone, Mail, MessageCircle, Package, Clock, Store, Truck, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ShareButton } from "@/components/shared/ShareButton";
 import { MarketplaceProductCard } from "@/components/marketplace/MarketplaceProductCard";
 import QuickFooter from "@/components/QuickFooter";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Vendor {
   id: string;
@@ -48,9 +50,11 @@ interface Product {
 export default function VendorShop() {
   const params = useParams<{ vendorId?: string; slug?: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isOwner, setIsOwner] = useState(false);
 
   // Le paramètre peut être 'slug' ou 'vendorId' selon la route utilisée
   const identifier = params.slug || params.vendorId;
@@ -59,7 +63,7 @@ export default function VendorShop() {
     if (identifier) {
       loadVendorData();
     }
-  }, [identifier]);
+  }, [identifier, user?.id]);
 
   const loadVendorData = async () => {
     try {
@@ -85,7 +89,7 @@ export default function VendorShop() {
           .from('vendors')
           .select('*')
           .eq('id', id)
-          .single();
+          .maybeSingle();
         
         if (error) throw error;
         vendorData = data;
@@ -95,15 +99,27 @@ export default function VendorShop() {
           .from('vendors')
           .select('*')
           .eq('shop_slug', id)
-          .single();
+          .maybeSingle();
         
         if (error) throw error;
         vendorData = data;
       }
       
-      if (!vendorData || !vendorData.is_active) {
-        toast.error('Cette boutique n\'existe pas ou n\'est plus active');
-        navigate('/marketplace');
+      // Vérifier si l'utilisateur connecté est le propriétaire
+      const vendorIsOwned = vendorData && user?.id && vendorData.user_id === user.id;
+      setIsOwner(!!vendorIsOwned);
+      
+      // Si la boutique n'existe pas, afficher le message d'erreur
+      if (!vendorData) {
+        setVendor(null);
+        setLoading(false);
+        return;
+      }
+      
+      // Si la boutique est inactive et l'utilisateur n'est PAS le propriétaire
+      if (!vendorData.is_active && !vendorIsOwned) {
+        setVendor(null);
+        setLoading(false);
         return;
       }
 
@@ -218,6 +234,24 @@ export default function VendorShop() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
+      {/* Alerte boutique inactive pour le propriétaire */}
+      {isOwner && !vendor.is_active && (
+        <Alert className="m-4 border-orange-500/50 bg-orange-500/10">
+          <AlertTriangle className="h-4 w-4 text-orange-500" />
+          <AlertTitle className="text-orange-500">Boutique inactive</AlertTitle>
+          <AlertDescription className="text-muted-foreground">
+            Votre boutique n'est pas visible par les clients. 
+            <Button 
+              variant="link" 
+              className="p-0 h-auto text-primary ml-1"
+              onClick={() => navigate('/vendeur')}
+            >
+              Activez-la dans vos paramètres vendeur
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-40">
         <div className="px-4 py-4 flex items-center justify-between">
@@ -226,6 +260,11 @@ export default function VendorShop() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <h1 className="text-xl font-bold text-foreground">Boutique</h1>
+            {!vendor.is_active && (
+              <Badge variant="outline" className="border-orange-500/50 text-orange-500">
+                Inactive
+              </Badge>
+            )}
           </div>
           <ShareButton
             title={vendor.business_name}
