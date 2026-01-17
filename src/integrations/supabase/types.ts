@@ -8851,6 +8851,51 @@ export type Database = {
         }
         Relationships: []
       }
+      id_normalization_logs: {
+        Row: {
+          auth_provider: string | null
+          corrected_id: string
+          created_at: string
+          id: string
+          ip_address: unknown
+          metadata: Json | null
+          original_id: string
+          reason: Database["public"]["Enums"]["id_normalization_reason"]
+          reason_details: Json | null
+          role_type: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          auth_provider?: string | null
+          corrected_id: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          original_id: string
+          reason: Database["public"]["Enums"]["id_normalization_reason"]
+          reason_details?: Json | null
+          role_type: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          auth_provider?: string | null
+          corrected_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          original_id?: string
+          reason?: Database["public"]["Enums"]["id_normalization_reason"]
+          reason_details?: Json | null
+          role_type?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       id_sequences: {
         Row: {
           created_at: string | null
@@ -21740,6 +21785,16 @@ export type Database = {
         }
         Relationships: []
       }
+      id_normalization_stats: {
+        Row: {
+          correction_date: string | null
+          reason: string | null
+          role_type: string | null
+          total_corrections: number | null
+          unique_users: number | null
+        }
+        Relationships: []
+      }
       interface_status: {
         Row: {
           code: string | null
@@ -24458,6 +24513,14 @@ export type Database = {
         | "SUSPICIOUS_PATTERN"
         | "CARD_TESTING"
         | "DEVICE_MISMATCH"
+      id_normalization_reason:
+        | "duplicate_detected"
+        | "format_invalid"
+        | "prefix_mismatch"
+        | "sequence_gap"
+        | "collision_resolved"
+        | "manual_override"
+        | "migration_fix"
       message_type:
         | "text"
         | "image"
@@ -24732,6 +24795,15 @@ export const Constants = {
         "SUSPICIOUS_PATTERN",
         "CARD_TESTING",
         "DEVICE_MISMATCH",
+      ],
+      id_normalization_reason: [
+        "duplicate_detected",
+        "format_invalid",
+        "prefix_mismatch",
+        "sequence_gap",
+        "collision_resolved",
+        "manual_override",
+        "migration_fix",
       ],
       message_type: [
         "text",
