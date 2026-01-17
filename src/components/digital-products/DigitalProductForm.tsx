@@ -129,7 +129,10 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
   const { user } = useAuth();
   const config = categoryConfig[category];
   
-  const [currentStep, setCurrentStep] = useState<FormStep>('mode');
+  // Pour physique_affilie, on saute l'étape mode car seule l'affiliation est disponible
+  const initialStep: FormStep = category === 'physique_affilie' ? 'details' : 'mode';
+  
+  const [currentStep, setCurrentStep] = useState<FormStep>(initialStep);
   const [loading, setLoading] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [generatingDescription, setGeneratingDescription] = useState(false);
@@ -346,13 +349,21 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
     setVideoFile(null);
   }, [isEdit, initialProduct]);
 
-  const steps: { id: FormStep; label: string }[] = [
-    { id: 'mode', label: 'Mode' },
-    { id: 'details', label: 'Détails' },
-    { id: 'pricing', label: salesMode === 'affiliate' ? 'Affiliation' : 'Prix' },
-    { id: 'media', label: 'Médias' },
-    { id: 'review', label: 'Validation' }
-  ];
+  // Pour physique_affilie, on n'inclut pas l'étape "mode" car seule l'affiliation est disponible
+  const steps: { id: FormStep; label: string }[] = category === 'physique_affilie'
+    ? [
+        { id: 'details', label: 'Détails' },
+        { id: 'pricing', label: 'Affiliation' },
+        { id: 'media', label: 'Médias' },
+        { id: 'review', label: 'Validation' }
+      ]
+    : [
+        { id: 'mode', label: 'Mode' },
+        { id: 'details', label: 'Détails' },
+        { id: 'pricing', label: salesMode === 'affiliate' ? 'Affiliation' : 'Prix' },
+        { id: 'media', label: 'Médias' },
+        { id: 'review', label: 'Validation' }
+      ];
 
   const currentStepIndex = steps.findIndex(s => s.id === currentStep);
 
