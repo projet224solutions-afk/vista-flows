@@ -7,12 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePromoCodes } from "@/hooks/useVendorData";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Megaphone, Tag, Mail, MessageSquare, TrendingUp, 
-  Users, Eye, MousePointer, Plus, Copy, Edit, Trash2 
+  Users, Eye, MousePointer, Plus, Copy, Edit, Trash2,
+  BarChart3
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TrafficAnalyticsSection } from "./TrafficAnalyticsSection";
@@ -208,17 +210,29 @@ export default function MarketingManagement() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Section Analytics Trafic - Vues produits et visites boutique */}
-      <TrafficAnalyticsSection />
+    <div className="space-y-6">
+      <Tabs defaultValue="traffic" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="traffic" className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4" />
+            Trafic & Visites
+          </TabsTrigger>
+          <TabsTrigger value="marketing" className="flex items-center gap-2">
+            <Megaphone className="w-4 h-4" />
+            Marketing & Promotions
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Séparateur */}
-      <div className="border-t pt-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-bold">Marketing & Promotions</h2>
-            <p className="text-muted-foreground">Gérez vos campagnes marketing et codes promotionnels</p>
-          </div>
+        <TabsContent value="traffic" className="space-y-6">
+          <TrafficAnalyticsSection />
+        </TabsContent>
+
+        <TabsContent value="marketing" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold">Marketing & Promotions</h2>
+              <p className="text-muted-foreground">Gérez vos campagnes marketing et codes promotionnels</p>
+            </div>
         <div className="flex gap-2">
           <Dialog open={isPromoDialogOpen} onOpenChange={setIsPromoDialogOpen}>
             <DialogTrigger asChild>
@@ -589,7 +603,8 @@ export default function MarketingManagement() {
           )}
         </CardContent>
       </Card>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
