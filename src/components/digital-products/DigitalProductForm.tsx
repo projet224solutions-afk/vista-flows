@@ -448,29 +448,21 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
                   />
                 </div>
 
-                {/* Type de produit */}
+                {/* Type de produit - Champ libre */}
                 <div>
                   <Label htmlFor="productType" className="flex items-center gap-2">
                     <Tag className="w-3.5 h-3.5" />
                     Type de produit
                   </Label>
-                  <Select 
-                    value={baseData.productType} 
-                    onValueChange={(value) => setBaseData(prev => ({ ...prev, productType: value }))}
-                  >
-                    <SelectTrigger className="mt-1.5">
-                      <SelectValue placeholder="Sélectionnez le type de produit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {productTypes[category]?.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    id="productType"
+                    value={baseData.productType}
+                    onChange={(e) => setBaseData(prev => ({ ...prev, productType: e.target.value }))}
+                    placeholder="Ex: Logiciel de montage, Antivirus, Réservation hôtel..."
+                    className="mt-1.5"
+                  />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Ex: Logiciel de montage, Antivirus, Réservation hôtel, etc.
+                    Saisissez le type de produit que vous proposez
                   </p>
                 </div>
 
