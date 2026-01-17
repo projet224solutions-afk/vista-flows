@@ -547,6 +547,7 @@ export default function Marketplace() {
                     title={item.name}
                     price={item.price}
                     originalPrice={item.originalPrice}
+                    currency={item.currency || 'GNF'}
                     vendor={item.vendor_name}
                     vendorId={item.vendor_id}
                     vendorLocation={item.address}

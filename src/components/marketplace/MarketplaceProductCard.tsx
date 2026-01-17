@@ -34,6 +34,7 @@ interface MarketplaceProductCardProps {
   title: string;
   price: number;
   originalPrice?: number;
+  currency?: string; // Devise du produit (USD, EUR, GNF, etc.)
   vendor: string;
   vendorId?: string;
   vendorLocation?: string;
@@ -56,6 +57,7 @@ export function MarketplaceProductCard({
   title,
   price,
   originalPrice,
+  currency = 'GNF', // Devise par défaut
   vendor,
   vendorId,
   vendorLocation,
@@ -88,21 +90,18 @@ export function MarketplaceProductCard({
     e.stopPropagation();
   };
 
-  // Formater le prix avec conversion automatique
+  // Formater le prix avec conversion automatique depuis la devise du produit
   const formatPrice = (value: number) => {
     if (priceLoading) {
-      return `${value.toLocaleString('fr-GN')} GNF`;
+      return `${value.toLocaleString('fr-GN')} ${currency}`;
     }
     
-    if (displayCurrency !== 'GNF') {
-      return convert(value, 'GNF').formatted;
-    }
-    
-    return `${value.toLocaleString('fr-GN')} GNF`;
+    // Convertir depuis la devise du produit vers la devise de l'utilisateur
+    return convert(value, currency).formatted;
   };
   
   // Prix original formaté (pour tooltip)
-  const getOriginalGNF = (value: number) => `${value.toLocaleString('fr-GN')} GNF`;
+  const getOriginalPrice = (value: number) => `${value.toLocaleString('fr-GN')} ${currency}`;
 
   // Render stars pour les avis
   const renderStars = (rating: number, size: 'sm' | 'md' = 'sm') => {
@@ -231,13 +230,13 @@ export function MarketplaceProductCard({
                   )}
                 </div>
               </TooltipTrigger>
-              {displayCurrency !== 'GNF' && !priceLoading && (
+              {!priceLoading && (
                 <TooltipContent>
                   <div className="text-xs">
                     <p className="font-semibold">{t('marketplace.card.originalPrice') || 'Prix original'}:</p>
-                    <p>{getOriginalGNF(price)}</p>
+                    <p>{getOriginalPrice(price)}</p>
                     {originalPrice && originalPrice > price && (
-                      <p className="text-muted-foreground line-through">{getOriginalGNF(originalPrice)}</p>
+                      <p className="text-muted-foreground line-through">{getOriginalPrice(originalPrice)}</p>
                     )}
                   </div>
                 </TooltipContent>
