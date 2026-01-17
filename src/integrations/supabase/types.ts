@@ -11622,6 +11622,36 @@ export type Database = {
           },
         ]
       }
+      product_views: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          product_id: string
+          session_id: string | null
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          product_id: string
+          session_id?: string | null
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          product_id?: string
+          session_id?: string | null
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           barcode: string | null
