@@ -143,7 +143,11 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
       if (error) throw error;
       
       if (data?.description) {
-        setBaseData(prev => ({ ...prev, description: data.description }));
+        setBaseData(prev => ({ 
+          ...prev, 
+          description: data.description,
+          shortDescription: data.shortDescription || prev.shortDescription
+        }));
         toast.success('Description générée avec succès!');
       } else {
         throw new Error('Aucune description générée');
