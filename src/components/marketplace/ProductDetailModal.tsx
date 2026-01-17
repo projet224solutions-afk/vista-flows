@@ -14,10 +14,12 @@ import ProductReviewsSection from "./ProductReviewsSection";
 import { ShareButton } from "@/components/shared/ShareButton";
 import { useAutoCarousel } from "@/hooks/useAutoCarousel";
 import { trackProductView } from "@/services/analyticsTrackingService";
+import { LocalPrice } from "@/components/ui/LocalPrice";
 interface Product {
   id: string;
   name: string;
   price: number;
+  currency?: string; // Devise du produit
   description?: string;
   images?: string[];
   promotional_videos?: string[];
@@ -187,6 +189,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           id,
           title,
           price,
+          currency,
           description,
           images,
           status,
@@ -217,6 +220,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           id: digitalProduct.id,
           name: digitalProduct.title,
           price: digitalProduct.price || 0,
+          currency: digitalProduct.currency || 'GNF', // Devise du produit
           description: digitalProduct.description || undefined,
           images: Array.isArray(digitalProduct.images) ? (digitalProduct.images as string[]) : [],
           promotional_videos: [],
@@ -537,9 +541,13 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-3xl font-bold text-primary">
-                  {product.price.toLocaleString()} GNF
-                </span>
+                <LocalPrice 
+                  amount={product.price} 
+                  currency={product.currency || 'GNF'} 
+                  size="xl"
+                  showOriginal={true}
+                  className="text-primary"
+                />
                 {product.is_affiliate ? (
                   <Badge className="bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white border-0">
                     <ExternalLink className="w-3 h-3 mr-1" />
@@ -623,7 +631,12 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
               <div className="bg-accent p-4 rounded-lg">
                 <div className="flex items-center justify-between text-lg font-semibold">
                   <span className="text-accent-foreground">Total</span>
-                  <span className="text-accent-foreground">{(product.price * quantity).toLocaleString()} GNF</span>
+                  <LocalPrice 
+                    amount={product.price * quantity} 
+                    currency={product.currency || 'GNF'} 
+                    size="lg"
+                    className="text-accent-foreground"
+                  />
                 </div>
               </div>
             )}

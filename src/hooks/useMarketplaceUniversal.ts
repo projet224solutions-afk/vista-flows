@@ -12,6 +12,7 @@ export interface MarketplaceItem {
   name: string;
   price: number;
   originalPrice?: number;
+  currency?: string; // Devise du produit (USD, EUR, GNF, etc.)
   description?: string;
   images: string[];
   promotional_videos?: string[];
@@ -246,6 +247,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           category,
           product_mode,
           price,
+          currency,
           original_price,
           rating,
           reviews_count,
@@ -290,6 +292,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           name: product.title,
           price: product.price || 0,
           originalPrice: product.original_price || undefined,
+          currency: product.currency || 'GNF', // Devise du produit
           description: product.short_description || product.description || "",
           images,
           promotional_videos: [],

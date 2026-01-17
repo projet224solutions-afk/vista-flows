@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ShareButton } from "@/components/shared/ShareButton";
+import { LocalPrice } from "@/components/ui/LocalPrice";
 
 interface DigitalProductWithVendor {
   id: string;
@@ -105,7 +106,8 @@ export default function DigitalProductDetail() {
     }
   };
 
-  const formatPrice = (price: number, currency: string = 'GNF') => {
+  // formatPrice conservé pour les cas simples sans conversion
+  const formatPriceSimple = (price: number, currency: string = 'GNF') => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: currency,
@@ -292,13 +294,20 @@ export default function DigitalProductDetail() {
               <div className="flex items-center gap-3 mb-4">
                 {product.price > 0 ? (
                   <>
-                    <span className="text-3xl font-bold text-primary">
-                      {formatPrice(product.price, product.currency)}
-                    </span>
+                    <LocalPrice 
+                      amount={product.price} 
+                      currency={product.currency || 'GNF'} 
+                      size="xl"
+                      showOriginal={true}
+                      className="text-primary"
+                    />
                     {product.original_price && product.original_price > product.price && (
-                      <span className="text-lg text-muted-foreground line-through">
-                        {formatPrice(product.original_price, product.currency)}
-                      </span>
+                      <LocalPrice 
+                        amount={product.original_price} 
+                        currency={product.currency || 'GNF'} 
+                        size="md"
+                        className="text-muted-foreground line-through"
+                      />
                     )}
                   </>
                 ) : (

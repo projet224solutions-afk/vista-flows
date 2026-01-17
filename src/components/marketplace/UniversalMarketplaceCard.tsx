@@ -174,7 +174,7 @@ export function UniversalMarketplaceCard({
           </div>
         )}
 
-        {/* Prix */}
+        {/* Prix - Converti automatiquement dans la devise de l'utilisateur */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2 flex-wrap">
             <TooltipProvider>
@@ -183,38 +183,34 @@ export function UniversalMarketplaceCard({
                   <div className="flex flex-col">
                     <span className="text-lg font-bold text-primary">
                       {priceLoading ? (
-                        `${item.price.toLocaleString('fr-GN')} GNF`
-                      ) : displayCurrency !== 'GNF' ? (
-                        convert(item.price, 'GNF').formatted
+                        `${item.price.toLocaleString('fr-GN')} ${item.currency || 'GNF'}`
                       ) : (
-                        `${item.price.toLocaleString('fr-GN')} GNF`
+                        convert(item.price, item.currency || 'GNF').formatted
                       )}
                     </span>
                     {item.originalPrice && item.originalPrice > item.price && (
                       <span className="text-xs text-muted-foreground line-through">
-                        {priceLoading || displayCurrency === 'GNF' ? (
-                          `${item.originalPrice.toLocaleString('fr-GN')} GNF`
+                        {priceLoading ? (
+                          `${item.originalPrice.toLocaleString('fr-GN')} ${item.currency || 'GNF'}`
                         ) : (
-                          convert(item.originalPrice, 'GNF').formatted
+                          convert(item.originalPrice, item.currency || 'GNF').formatted
                         )}
                       </span>
                     )}
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {displayCurrency !== 'GNF' && !priceLoading && (
-                    <div className="text-xs">
-                      <p className="font-semibold">
-                        {t('marketplace.card.originalPrice') || 'Prix original'}:
+                  <div className="text-xs">
+                    <p className="font-semibold">
+                      {t('marketplace.card.originalPrice') || 'Prix original'}:
+                    </p>
+                    <p>{item.price.toLocaleString('fr-GN')} {item.currency || 'GNF'}</p>
+                    {item.originalPrice && item.originalPrice > item.price && (
+                      <p className="text-muted-foreground line-through">
+                        {item.originalPrice.toLocaleString('fr-GN')} {item.currency || 'GNF'}
                       </p>
-                      <p>{item.price.toLocaleString('fr-GN')} GNF</p>
-                      {item.originalPrice && item.originalPrice > item.price && (
-                        <p className="text-muted-foreground line-through">
-                          {item.originalPrice.toLocaleString('fr-GN')} GNF
-                        </p>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

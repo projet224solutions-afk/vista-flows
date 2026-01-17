@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { DigitalProductForm } from './DigitalProductForm';
 import { MerchantActivationDialog } from './MerchantActivationDialog';
 import { toast } from 'sonner';
+import { LocalPrice } from '@/components/ui/LocalPrice';
 
 interface CategoryProductsListProps {
   category: 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom' | 'ai';
@@ -75,7 +76,8 @@ export function CategoryProductsList({
     }
   };
 
-  const formatPrice = (price: number, currency: string = 'GNF') => {
+  // formatPrice conservé pour fallback
+  const formatPriceSimple = (price: number, currency: string = 'GNF') => {
     return new Intl.NumberFormat('fr-GN', {
       style: 'decimal',
       minimumFractionDigits: 0,
@@ -208,9 +210,12 @@ export function CategoryProductsList({
                   )}
 
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-primary text-sm">
-                      {formatPrice(product.price, product.currency)}
-                    </span>
+                    <LocalPrice 
+                      amount={product.price} 
+                      currency={product.currency || 'GNF'} 
+                      size="sm"
+                      className="font-bold text-primary"
+                    />
                     <div className="flex items-center gap-1 text-muted-foreground">
                       <Eye className="w-3 h-3" />
                       <span className="text-xs">{product.views_count || 0}</span>
