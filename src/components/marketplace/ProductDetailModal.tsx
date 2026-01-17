@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus, ExternalLink, Play, Pause } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate, Link } from "react-router-dom";
@@ -13,6 +13,7 @@ import { useCart } from "@/contexts/CartContext";
 import ProductReviewsSection from "./ProductReviewsSection";
 import { ShareButton } from "@/components/shared/ShareButton";
 import { useAutoCarousel } from "@/hooks/useAutoCarousel";
+import { trackProductView } from "@/services/analyticsTrackingService";
 interface Product {
   id: string;
   name: string;
@@ -46,6 +47,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
   const [quantity, setQuantity] = useState(1);
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const hasTrackedView = useRef(false);
+  const lastTrackedProductId = useRef<string | null>(null);
 
   // Mémoriser les vidéos et images pour le carrousel
   const videos = useMemo(() => product?.promotional_videos || [], [product?.promotional_videos]);
@@ -77,7 +80,19 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
     if (productId && open) {
       loadProduct();
     }
+    // Reset tracking when modal closes or product changes
+    if (!open) {
+      hasTrackedView.current = false;
+    }
   }, [productId, open]);
+
+  // Tracker la vue du produit une seule fois par produit
+  useEffect(() => {
+    if (product && product.vendor_id && open && lastTrackedProductId.current !== product.id) {
+      lastTrackedProductId.current = product.id;
+      trackProductView(product.id, product.vendor_id);
+    }
+  }, [product, open]);
 
   const loadProduct = async () => {
     if (!productId) return;

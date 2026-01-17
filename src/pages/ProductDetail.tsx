@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { ArrowLeft, ShoppingCart, MessageCircle, Star, Shield, Truck, ExternalLink, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import ProductPaymentModal from "@/components/ecommerce/ProductPaymentModal";
 import { ShareButton } from "@/components/shared/ShareButton";
 import { useAutoCarousel } from "@/hooks/useAutoCarousel";
+import { trackProductView } from "@/services/analyticsTrackingService";
 
 interface Product {
   id: string;
@@ -43,6 +44,7 @@ export default function ProductDetail() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const hasTrackedView = useRef(false);
 
   // Mémoriser les vidéos et images pour le carrousel
   const videos = useMemo(() => product?.promotional_videos || [], [product?.promotional_videos]);
@@ -75,6 +77,14 @@ export default function ProductDetail() {
       loadProduct();
     }
   }, [id]);
+
+  // Tracker la vue du produit une seule fois
+  useEffect(() => {
+    if (product && product.vendor_id && !hasTrackedView.current) {
+      hasTrackedView.current = true;
+      trackProductView(product.id, product.vendor_id);
+    }
+  }, [product]);
 
   useEffect(() => {
     loadCustomerId();

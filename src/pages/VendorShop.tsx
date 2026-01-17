@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ArrowLeft, MapPin, Star, Phone, Mail, MessageCircle, Package, Clock, Store, Truck, AlertTriangle, Laptop, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import { MarketplaceProductCard } from "@/components/marketplace/MarketplaceProd
 import QuickFooter from "@/components/QuickFooter";
 import { useAuth } from "@/hooks/useAuth";
 import { useVendorDigitalProducts } from "@/hooks/useHasDigitalProducts";
+import { trackShopVisit } from "@/services/analyticsTrackingService";
 interface Vendor {
   id: string;
   business_name: string;
@@ -57,6 +58,7 @@ export default function VendorShop() {
   const [loading, setLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
   const [activeTab, setActiveTab] = useState("physical");
+  const hasTrackedVisit = useRef(false);
 
   // Récupérer les produits numériques du vendeur
   const { products: digitalProducts, loading: digitalProductsLoading } = useVendorDigitalProducts(vendor?.id);
@@ -68,6 +70,14 @@ export default function VendorShop() {
       loadVendorData();
     }
   }, [identifier, user?.id]);
+
+  // Tracker la visite de la boutique une seule fois
+  useEffect(() => {
+    if (vendor && vendor.id && !hasTrackedVisit.current && !isOwner) {
+      hasTrackedVisit.current = true;
+      trackShopVisit(vendor.id);
+    }
+  }, [vendor, isOwner]);
 
   const loadVendorData = async () => {
     try {
