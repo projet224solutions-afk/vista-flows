@@ -188,6 +188,34 @@ export function POSSystem() {
     }
   };
 
+  // Trier les catégories: celles avec des produits en premier
+  const sortedCategories = useMemo(() => {
+    if (!categories.length || !products.length) return categories;
+    
+    // Compter les produits par catégorie
+    const productCountByCategory = new Map<string, number>();
+    products.forEach(product => {
+      if (product.categoryId) {
+        const count = productCountByCategory.get(product.categoryId) || 0;
+        productCountByCategory.set(product.categoryId, count + 1);
+      }
+    });
+    
+    // Trier: catégories avec produits d'abord (par nombre décroissant), puis les autres
+    return [...categories].sort((a, b) => {
+      const countA = productCountByCategory.get(a.id) || 0;
+      const countB = productCountByCategory.get(b.id) || 0;
+      
+      // Si les deux ont des produits ou les deux n'en ont pas, trier par nom
+      if ((countA > 0 && countB > 0) || (countA === 0 && countB === 0)) {
+        return a.name.localeCompare(b.name);
+      }
+      
+      // Sinon, celle avec des produits vient en premier
+      return countB - countA;
+    });
+  }, [categories, products]);
+
   useEffect(() => {
     loadCategories();
   }, []);
@@ -1550,17 +1578,27 @@ export function POSSystem() {
                     >
                       Tous
                     </Button>
-                    {categories.map(category => (
-                      <Button
-                        key={category.id}
-                        variant={selectedCategory === category.id ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setSelectedCategory(category.id)}
-                        className="shadow-sm transition-all duration-200 hover:shadow-md flex-shrink-0 text-xs whitespace-nowrap"
-                      >
-                        {category.name}
-                      </Button>
-                    ))}
+                    {sortedCategories.map(category => {
+                      const productCount = products.filter(p => p.categoryId === category.id).length;
+                      return (
+                        <Button
+                          key={category.id}
+                          variant={selectedCategory === category.id ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setSelectedCategory(category.id)}
+                          className={`shadow-sm transition-all duration-200 hover:shadow-md flex-shrink-0 text-xs whitespace-nowrap ${
+                            productCount > 0 ? 'border-primary/30' : 'opacity-60'
+                          }`}
+                        >
+                          {category.name}
+                          {productCount > 0 && (
+                            <span className="ml-1 text-[10px] bg-primary/20 text-primary px-1 rounded">
+                              {productCount}
+                            </span>
+                          )}
+                        </Button>
+                      );
+                    })}
                   </>
                 )}
               </div>
