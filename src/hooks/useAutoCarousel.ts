@@ -23,7 +23,7 @@ interface UseAutoCarouselReturn {
 export function useAutoCarousel({
   videos,
   images,
-  imageDisplayDuration = 3000,
+  imageDisplayDuration = 15000,
   enabled = true
 }: UseAutoCarouselProps): UseAutoCarouselReturn {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
