@@ -1650,11 +1650,21 @@ export function POSSystem() {
                           </div>
                           
                           {/* Info produit - Très compact sur mobile */}
-                          <div className="p-2 md:p-3 space-y-1">
+                            <div className="p-2 md:p-3 space-y-1">
                             {/* Nom produit */}
                             <h3 className="font-semibold text-xs md:text-sm leading-tight line-clamp-2 min-h-[2rem]">
                               {product.name}
                             </h3>
+                            
+                            {/* Code-barres affiché */}
+                            {product.barcode && (
+                              <div className="flex items-center gap-1 text-[9px] text-muted-foreground font-mono bg-muted/30 px-1 py-0.5 rounded">
+                                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M2 6h2v12H2zM6 6h1v12H6zM9 6h2v12H9zM13 6h1v12h-1zM16 6h2v12h-2zM20 6h2v12h-2z"/>
+                                </svg>
+                                <span className="truncate max-w-[80px]">{product.barcode}</span>
+                              </div>
+                            )}
                             
                             {/* Prix unité */}
                             <div className="flex items-baseline gap-1">
