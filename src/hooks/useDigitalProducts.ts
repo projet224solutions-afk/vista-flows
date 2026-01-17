@@ -13,7 +13,9 @@ export interface DigitalProduct {
   description: string | null;
   short_description: string | null;
   images: string[];
-  category: 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom';
+  video_url?: string | null;
+  product_type?: string | null;
+  category: 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom' | 'ai';
   product_mode: 'direct' | 'affiliate';
   price: number;
   original_price: number | null;
