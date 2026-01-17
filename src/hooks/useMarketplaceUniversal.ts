@@ -45,6 +45,8 @@ interface UseMarketplaceUniversalOptions {
   maxPrice?: number;
   minRating?: number;
   vendorId?: string;
+  country?: string;
+  city?: string;
   itemType?: 'all' | 'product' | 'digital_product' | 'professional_service';
   sortBy?: 'popular' | 'price_asc' | 'price_desc' | 'rating' | 'newest';
   autoLoad?: boolean;
@@ -59,6 +61,8 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
     maxPrice,
     minRating,
     vendorId,
+    country,
+    city,
     itemType = 'all',
     sortBy = 'newest',
     autoLoad = true
@@ -94,7 +98,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           reviews_count,
           free_shipping,
           created_at,
-          vendors(business_name, user_id, business_type),
+          vendors(business_name, user_id, business_type, country, city),
           categories(name)
         `)
         .eq('is_active', true);
@@ -118,9 +122,27 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       if (error) throw error;
 
       // Règle marketplace: exclure les vendeurs "physical" (boutique physique uniquement)
+      // + Filtrage par pays et ville
       const filtered = (data || []).filter(product => {
         const vendor = (product.vendors as any);
-        return !vendor || (vendor.business_type !== 'physical');
+        if (!vendor) return true;
+        
+        // Exclure les vendeurs physical
+        if (vendor.business_type === 'physical') return false;
+        
+        // Filtrage par pays
+        if (country && country !== 'all') {
+          const vendorCountry = (vendor.country || '').trim().toLowerCase();
+          if (vendorCountry !== country.trim().toLowerCase()) return false;
+        }
+        
+        // Filtrage par ville
+        if (city && city !== 'all') {
+          const vendorCity = (vendor.city || '').trim().toLowerCase();
+          if (vendorCity !== city.trim().toLowerCase()) return false;
+        }
+        
+        return true;
       });
 
       return filtered.map(product => ({
@@ -437,6 +459,8 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
     maxPrice,
     minRating,
     vendorId,
+    country,
+    city,
     itemType,
     sortBy,
   ]);
@@ -466,6 +490,8 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
     maxPrice,
     minRating,
     vendorId,
+    country,
+    city,
     itemType,
     sortBy,
     autoLoad,

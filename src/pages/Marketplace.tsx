@@ -89,6 +89,8 @@ export default function Marketplace() {
     maxPrice: filters.maxPrice,
     minRating: filters.minRating,
     vendorId,
+    country: selectedCountry,
+    city: selectedCity,
     itemType: selectedItemType,
     sortBy,
     autoLoad: true
@@ -138,7 +140,7 @@ export default function Marketplace() {
     }
   };
 
-  const loadLocations = async () => {
+  const loadLocations = async (countryFilter?: string) => {
     try {
       // Charger les pays distincts
       const { data: countryData } = await supabase
@@ -155,11 +157,18 @@ export default function Marketplace() {
       ];
       setCountries(uniqueCountries.sort());
 
-      // Charger les villes distinctes
-      const { data: cityData } = await supabase
+      // Charger les villes distinctes (filtrées par pays si sélectionné)
+      let cityQuery = supabase
         .from('vendors')
-        .select('city')
+        .select('city, country')
         .not('city', 'is', null);
+      
+      // Si un pays est sélectionné, filtrer les villes par ce pays
+      if (countryFilter && countryFilter !== 'all') {
+        cityQuery = cityQuery.ilike('country', countryFilter);
+      }
+      
+      const { data: cityData } = await cityQuery;
       
       const uniqueCities = [
         ...new Set(
@@ -173,6 +182,15 @@ export default function Marketplace() {
       console.error('Erreur chargement localisations:', error);
     }
   };
+
+  // Recharger les villes quand le pays change
+  useEffect(() => {
+    loadLocations(selectedCountry);
+    // Réinitialiser la ville si on change de pays
+    if (selectedCountry !== 'all') {
+      setSelectedCity('all');
+    }
+  }, [selectedCountry]);
 
   const handleProductClick = (itemId: string) => {
     setSelectedProductId(itemId);
