@@ -79,11 +79,47 @@ Deno.serve(async (req) => {
     // Helper pour supprimer sans erreur si table n'existe pas
     const safeDelete = async (table: string, column: string, value: string) => {
       try {
-        await supabaseAdmin.from(table).delete().eq(column, value);
+        const { error } = await supabaseAdmin.from(table).delete().eq(column, value);
+
+        if (error) {
+          const code = (error as any)?.code as string | undefined;
+          // Tables/colonnes optionnelles selon les déploiements
+          if (code === '42P01' || code === '42703') {
+            console.log(`  ⚠ ${table}: ignoré (${code})`);
+            return;
+          }
+
+          console.log(`  ❌ ${table}: ${error.message}`);
+          throw error;
+        }
+
         console.log(`  ✓ ${table}`);
       } catch (e: unknown) {
         const errorMsg = e instanceof Error ? e.message : String(e);
         console.log(`  ⚠ ${table}: ${errorMsg}`);
+      }
+    };
+
+    // Helper pour mettre à jour sans planter si table n'existe pas
+    const safeUpdate = async (table: string, updates: Record<string, unknown>, column: string, value: string) => {
+      try {
+        const { error } = await supabaseAdmin.from(table).update(updates as any).eq(column, value);
+
+        if (error) {
+          const code = (error as any)?.code as string | undefined;
+          if (code === '42P01' || code === '42703') {
+            console.log(`  ⚠ ${table}: update ignoré (${code})`);
+            return;
+          }
+
+          console.log(`  ❌ ${table} (update): ${error.message}`);
+          throw error;
+        }
+
+        console.log(`  ✓ ${table} (update)`);
+      } catch (e: unknown) {
+        const errorMsg = e instanceof Error ? e.message : String(e);
+        console.log(`  ⚠ ${table} (update): ${errorMsg}`);
       }
     };
 
@@ -133,6 +169,12 @@ Deno.serve(async (req) => {
     console.log('🏪 Suppression des données vendeur...');
     const { data: vendor } = await supabaseAdmin.from('vendors').select('id').eq('user_id', userId).maybeSingle();
     if (vendor) {
+      // ✅ IMPORTANT: désactiver immédiatement la boutique pour qu'elle ne s'affiche plus nulle part
+      // même si une contrainte FK empêche une suppression physique complète.
+      await safeUpdate('vendors', { is_active: false, updated_at: new Date().toISOString() }, 'id', vendor.id);
+      await safeUpdate('products', { is_active: false }, 'vendor_id', vendor.id);
+      await safeDelete('advanced_carts', 'vendor_id', vendor.id); // paniers d'autres clients pouvant bloquer des contraintes
+
       // Supprimer les escrow_transactions liées aux orders
       const { data: vendorOrders } = await supabaseAdmin.from('orders').select('id').eq('vendor_id', vendor.id);
       if (vendorOrders && vendorOrders.length > 0) {

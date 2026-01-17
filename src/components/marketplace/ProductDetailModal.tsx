@@ -4,20 +4,22 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus, ExternalLink } from "lucide-react";
-import { useState, useEffect } from "react";
+import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus, ExternalLink, Play, Pause } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import ProductReviewsSection from "./ProductReviewsSection";
 import { ShareButton } from "@/components/shared/ShareButton";
+import { useAutoCarousel } from "@/hooks/useAutoCarousel";
 interface Product {
   id: string;
   name: string;
   price: number;
   description?: string;
   images?: string[];
+  promotional_videos?: string[];
   vendor_id: string;
   category_id?: string;
   is_active: boolean;
@@ -26,6 +28,10 @@ interface Product {
     user_id: string;
     shop_slug?: string;
   };
+  // ✅ Champs pour les produits d'affiliation
+  is_affiliate?: boolean;
+  affiliate_url?: string;
+  product_mode?: string;
 }
 
 interface ProductDetailModalProps {
@@ -37,10 +43,35 @@ interface ProductDetailModalProps {
 export default function ProductDetailModal({ productId, open, onClose }: ProductDetailModalProps) {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const navigate = useNavigate();
   const { addToCart } = useCart();
+
+  // Mémoriser les vidéos et images pour le carrousel
+  const videos = useMemo(() => product?.promotional_videos || [], [product?.promotional_videos]);
+  const images = useMemo(() => 
+    product?.images && product.images.length > 0 
+      ? product.images 
+      : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop'],
+    [product?.images]
+  );
+
+  // Hook de carrousel automatique
+  const {
+    currentVideoIndex,
+    currentImageIndex,
+    isPlayingVideo,
+    isAutoPlaying,
+    videoRef,
+    goToVideo,
+    goToImage,
+    toggleAutoPlay
+  } = useAutoCarousel({
+    videos,
+    images,
+    imageDisplayDuration: 3000,
+    enabled: open
+  });
 
   useEffect(() => {
     if (productId && open) {
@@ -50,18 +81,20 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
   const loadProduct = async () => {
     if (!productId) return;
-    
+
     setLoading(true);
     try {
-      // D'abord essayer de charger depuis products (produits physiques)
+      // 1) Produits physiques (products)
       const { data: physicalProduct, error: physicalError } = await supabase
-        .from('products')
-        .select(`
+        .from("products")
+        .select(
+          `
           id,
           name,
           price,
           description,
           images,
+          promotional_videos,
           vendor_id,
           category_id,
           is_active,
@@ -70,20 +103,22 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             user_id,
             shop_slug
           )
-        `)
-        .eq('id', productId)
+        `
+        )
+        .eq("id", productId)
         .maybeSingle();
 
+      if (physicalError) throw physicalError;
       if (physicalProduct) {
         setProduct(physicalProduct);
-        setSelectedImage(0);
         return;
       }
 
-      // Si pas trouvé, essayer service_products (produits numériques)
-      const { data: digitalProduct, error: digitalError } = await supabase
-        .from('service_products')
-        .select(`
+      // 2) Ancien flux "service_products" (legacy)
+      const { data: serviceProduct, error: serviceError } = await supabase
+        .from("service_products")
+        .select(
+          `
           id,
           name,
           price,
@@ -92,38 +127,104 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           professional_service_id,
           professional_services (
             business_name,
-            user_id
+            user_id,
+            status
           )
-        `)
-        .eq('id', productId)
+        `
+        )
+        .eq("id", productId)
         .maybeSingle();
 
-      if (digitalProduct) {
-        const proService = digitalProduct.professional_services as any;
+      if (serviceError) throw serviceError;
+
+      if (serviceProduct) {
+        const proService = serviceProduct.professional_services as any;
+
+        // Ne pas afficher si le service n'est plus actif
+        if (!proService || proService.status !== "active") {
+          throw new Error("Produit introuvable");
+        }
+
         setProduct({
-          id: digitalProduct.id,
-          name: digitalProduct.name,
-          price: digitalProduct.price,
-          description: digitalProduct.description,
-          images: Array.isArray(digitalProduct.images) ? digitalProduct.images as string[] : [],
-          vendor_id: digitalProduct.professional_service_id,
+          id: serviceProduct.id,
+          name: serviceProduct.name,
+          price: serviceProduct.price,
+          description: serviceProduct.description,
+          images: Array.isArray(serviceProduct.images) ? (serviceProduct.images as string[]) : [],
+          promotional_videos: [],
+          vendor_id: serviceProduct.professional_service_id,
           category_id: undefined,
           is_active: true,
-          vendors: proService ? {
-            business_name: proService.business_name || 'Vendeur',
+          vendors: {
+            business_name: proService.business_name || "Vendeur",
             user_id: proService.user_id,
-            shop_slug: undefined
-          } : undefined
+            shop_slug: undefined,
+          },
         });
-        setSelectedImage(0);
         return;
       }
 
-      // Aucun produit trouvé
-      throw new Error('Produit introuvable');
+      // 3) Produits numériques (digital_products) ✅
+      const { data: digitalProduct, error: digitalError } = await supabase
+        .from("digital_products")
+        .select(
+          `
+          id,
+          title,
+          price,
+          description,
+          images,
+          status,
+          vendor_id,
+          merchant_id,
+          product_mode,
+          affiliate_url,
+          vendors:vendors!digital_products_vendor_id_fkey (
+            business_name,
+            user_id,
+            shop_slug
+          )
+        `
+        )
+        .eq("id", productId)
+        .maybeSingle();
+
+      if (digitalError) throw digitalError;
+
+      if (digitalProduct) {
+        if (digitalProduct.status !== "published") {
+          throw new Error("Produit introuvable");
+        }
+
+        const v = (digitalProduct.vendors as any) || null;
+
+        setProduct({
+          id: digitalProduct.id,
+          name: digitalProduct.title,
+          price: digitalProduct.price || 0,
+          description: digitalProduct.description || undefined,
+          images: Array.isArray(digitalProduct.images) ? (digitalProduct.images as string[]) : [],
+          promotional_videos: [],
+          vendor_id: digitalProduct.vendor_id || digitalProduct.merchant_id,
+          category_id: undefined,
+          is_active: true,
+          vendors: {
+            business_name: v?.business_name || "Vendeur",
+            user_id: v?.user_id || digitalProduct.merchant_id,
+            shop_slug: v?.shop_slug || undefined,
+          },
+          // ✅ Champs affiliation
+          is_affiliate: digitalProduct.product_mode === "affiliate",
+          affiliate_url: digitalProduct.affiliate_url || undefined,
+          product_mode: digitalProduct.product_mode || undefined,
+        });
+        return;
+      }
+
+      throw new Error("Produit introuvable");
     } catch (error) {
-      console.error('Erreur chargement produit:', error);
-      toast.error('Impossible de charger le produit');
+      console.error("Erreur chargement produit:", error);
+      toast.error("Impossible de charger le produit");
       onClose();
     } finally {
       setLoading(false);
@@ -132,6 +233,20 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
   const handleBuy = async () => {
     if (!product) return;
+
+    // ✅ Si c'est un produit d'affiliation, rediriger vers le fournisseur
+    if (product.is_affiliate && product.affiliate_url) {
+      toast.success("Redirection vers le fournisseur...", {
+        description: "Vous allez être redirigé vers la page de paiement du partenaire",
+        duration: 2000,
+      });
+      
+      // Ouvrir dans un nouvel onglet après un court délai
+      setTimeout(() => {
+        window.open(product.affiliate_url, "_blank", "noopener,noreferrer");
+      }, 500);
+      return;
+    }
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -142,7 +257,6 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
         return;
       }
 
-      // Créer un lien de paiement
       const totalAmount = product.price * quantity;
       
       toast.success('Redirection vers le paiement...');
@@ -297,8 +411,11 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
     return (
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="sr-only">Chargement du produit</DialogTitle>
+          </DialogHeader>
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
           </div>
         </DialogContent>
       </Dialog>
@@ -306,10 +423,6 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
   }
 
   if (!product) return null;
-
-  const images = product.images && product.images.length > 0 
-    ? product.images 
-    : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop'];
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -327,31 +440,82 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
           <TabsContent value="details">
             <div className="grid md:grid-cols-2 gap-6">
-          {/* Images */}
+          {/* Images & Video Carousel */}
           <div className="space-y-4">
             <div className="relative h-[600px] rounded-lg overflow-hidden bg-white flex items-center justify-center p-3 border border-border/20">
-              <img
-                src={images[selectedImage]}
-                alt={product.name}
-                className="max-w-full max-h-full w-auto h-auto object-contain"
-                style={{ maxWidth: '100%', maxHeight: '100%' }}
-              />
+              {/* Bouton Play/Pause */}
+              <button
+                onClick={toggleAutoPlay}
+                className="absolute top-3 right-3 z-10 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-colors"
+              >
+                {isAutoPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              </button>
+
+              {isPlayingVideo && videos.length > 0 ? (
+                <video
+                  ref={videoRef}
+                  src={videos[currentVideoIndex]}
+                  controls
+                  autoPlay
+                  muted
+                  className="max-w-full max-h-full w-auto h-auto object-contain"
+                  style={{ maxWidth: '100%', maxHeight: '100%' }}
+                />
+              ) : (
+                <img
+                  src={images[currentImageIndex]}
+                  alt={product.name}
+                  className="max-w-full max-h-full w-auto h-auto object-contain"
+                  style={{ maxWidth: '100%', maxHeight: '100%' }}
+                />
+              )}
+
+              {/* Indicateur de progression */}
+              {!isPlayingVideo && images.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-1">
+                  {images.map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`w-2 h-2 rounded-full transition-colors ${
+                        currentImageIndex === idx ? 'bg-primary' : 'bg-white/50'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-            {images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
-                {images.map((img, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImage(index)}
-                    className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all ${
-                      selectedImage === index ? 'border-primary' : 'border-transparent'
-                    }`}
-                  >
-                    <img loading="lazy" src={img} alt={`${product.name} ${index + 1}`} className="w-full h-full object-contain" />
-                  </button>
-                ))}
-              </div>
-            )}
+            
+            {/* Thumbnails - Videos + Images */}
+            <div className="grid grid-cols-6 gap-2">
+              {/* Video thumbnails */}
+              {videos.map((_, index) => (
+                <button
+                  key={`video-${index}`}
+                  onClick={() => goToVideo(index)}
+                  className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all bg-black flex items-center justify-center ${
+                    isPlayingVideo && currentVideoIndex === index ? 'border-primary' : 'border-transparent hover:border-primary/50'
+                  }`}
+                >
+                  <Play className="w-6 h-6 text-white" />
+                  <span className="absolute bottom-0.5 left-0.5 text-[8px] text-white bg-black/60 px-1 rounded">
+                    {index + 1}
+                  </span>
+                </button>
+              ))}
+              
+              {/* Image thumbnails */}
+              {images.map((img, index) => (
+                <button
+                  key={`img-${index}`}
+                  onClick={() => goToImage(index)}
+                  className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all ${
+                    !isPlayingVideo && currentImageIndex === index ? 'border-primary' : 'border-transparent'
+                  }`}
+                >
+                  <img loading="lazy" src={img} alt={`${product.name} ${index + 1}`} className="w-full h-full object-contain" />
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Détails */}
@@ -361,7 +525,14 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                 <span className="text-3xl font-bold text-primary">
                   {product.price.toLocaleString()} GNF
                 </span>
-                <Badge variant="secondary">En stock</Badge>
+                {product.is_affiliate ? (
+                  <Badge className="bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white border-0">
+                    <ExternalLink className="w-3 h-3 mr-1" />
+                    Affiliation
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary">En stock</Badge>
+                )}
               </div>
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm text-muted-foreground min-w-0">
@@ -401,55 +572,87 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
             <Separator />
 
-            {/* Quantité */}
-            <div>
-              <label className="text-sm font-medium mb-2 block">Quantité</label>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                >
-                  -
-                </Button>
-                <span className="text-lg font-semibold w-12 text-center">{quantity}</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setQuantity(quantity + 1)}
-                >
-                  +
-                </Button>
+            {/* Quantité - masquer pour les affiliations */}
+            {!product.is_affiliate && (
+              <div>
+                <label className="text-sm font-medium mb-2 block">Quantité</label>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  >
+                    -
+                  </Button>
+                  <span className="text-lg font-semibold w-12 text-center">{quantity}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setQuantity(quantity + 1)}
+                  >
+                    +
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
 
-            <Separator />
+            {!product.is_affiliate && <Separator />}
 
-            {/* Total */}
-            <div className="bg-accent p-4 rounded-lg">
-              <div className="flex items-center justify-between text-lg font-semibold">
-                <span className="text-accent-foreground">Total</span>
-                <span className="text-accent-foreground">{(product.price * quantity).toLocaleString()} GNF</span>
+            {/* Total - masquer pour les affiliations */}
+            {!product.is_affiliate && (
+              <div className="bg-accent p-4 rounded-lg">
+                <div className="flex items-center justify-between text-lg font-semibold">
+                  <span className="text-accent-foreground">Total</span>
+                  <span className="text-accent-foreground">{(product.price * quantity).toLocaleString()} GNF</span>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Notice affiliation */}
+            {product.is_affiliate && (
+              <div className="bg-gradient-to-r from-purple-50 to-fuchsia-50 dark:from-purple-950/30 dark:to-fuchsia-950/30 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-full">
+                    <ExternalLink className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-purple-900 dark:text-purple-100">Produit partenaire</h4>
+                    <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
+                      En cliquant sur "Acheter", vous serez redirigé vers le site du fournisseur pour finaliser votre achat en toute sécurité.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Actions */}
             <div className="space-y-2">
               <Button 
-                className="w-full" 
+                className={`w-full ${product.is_affiliate ? 'bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700' : ''}`}
                 onClick={handleBuy}
               >
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                Acheter maintenant
+                {product.is_affiliate ? (
+                  <>
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Acheter chez le partenaire
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    Acheter maintenant
+                  </>
+                )}
               </Button>
-              <Button 
-                variant="outline" 
-                className="w-full" 
-                onClick={handleAddToCart}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Ajouter au panier ({quantity})
-              </Button>
+              {!product.is_affiliate && (
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={handleAddToCart}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Ajouter au panier ({quantity})
+                </Button>
+              )}
               <div className="flex gap-2">
                 <Button 
                   variant="outline" 
@@ -476,12 +679,14 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             <div className="space-y-2 pt-4 pb-6">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Shield className="w-4 h-4" />
-                <span>Paiement sécurisé</span>
+                <span>{product.is_affiliate ? 'Achat sécurisé chez le partenaire' : 'Paiement sécurisé'}</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Truck className="w-4 h-4" />
-                <span>Livraison rapide disponible</span>
-              </div>
+              {!product.is_affiliate && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Truck className="w-4 h-4" />
+                  <span>Livraison rapide disponible</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

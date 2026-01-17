@@ -13,6 +13,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 import { useProductActions } from "@/hooks/useProductActions";
@@ -45,7 +49,7 @@ interface Product {
   category_id?: string;
   category?: { id: string; name: string } | null;
   images?: string[];
-  promotional_video?: string; // URL de la vidéo publicitaire
+  promotional_videos?: string[]; // URLs des vidéos publicitaires (max 2)
   tags?: string[];
   weight?: number;
   created_at?: string;
@@ -103,14 +107,16 @@ export default function ProductManagement() {
   const [showDialog, setShowDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
-  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [selectedVideos, setSelectedVideos] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const [generatingDescription, setGeneratingDescription] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [categoryMode, setCategoryMode] = useState<'existing' | 'new'>('existing');
+  const [categoryOpen, setCategoryOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
   const [productLimit, setProductLimit] = useState<{
     current_count: number;
     max_products: number | null;
@@ -147,6 +153,7 @@ export default function ProductManagement() {
     if (!vendorId || vendorLoading) return;
     fetchData();
     loadProductLimit();
+    loadPremiumStatus();
   }, [vendorId, vendorLoading]);
 
   const loadProductLimit = async () => {
@@ -155,30 +162,51 @@ export default function ProductManagement() {
     setProductLimit(limit);
   };
 
-  // Check if user has premium subscription
-  const checkPremiumStatus = async (): Promise<boolean> => {
-    if (!user?.id) return false;
+  // Check and cache premium status
+  const loadPremiumStatus = async () => {
+    if (!user?.id) {
+      setIsPremium(false);
+      return;
+    }
     try {
+      // Get ALL active subscriptions (user might have multiple)
       const { data: subData, error: subError } = await supabase
         .from('subscriptions')
-        .select('status, plan_id')
+        .select('plan_id')
         .eq('user_id', user.id)
-        .eq('status', 'active')
-        .single();
+        .eq('status', 'active');
       
-      if (subError || !subData?.plan_id) return false;
+      if (subError || !subData || subData.length === 0) {
+        setIsPremium(false);
+        return;
+      }
       
+      // Check if ANY subscription is premium/pro/business/enterprise
+      const planIds = subData.map(s => s.plan_id);
       const { data: planData } = await supabase
         .from('plans')
         .select('name')
-        .eq('id', subData.plan_id)
-        .single();
+        .in('id', planIds);
       
-      const planName = (planData?.name as string | undefined)?.toLowerCase() || '';
-      return planName.includes('premium') || planName.includes('enterprise') || planName.includes('pro');
-    } catch {
-      return false;
+      const hasPremium = (planData || []).some(p => {
+        const name = (p.name as string || '').toLowerCase();
+        return name.includes('premium') || name.includes('enterprise') || name.includes('pro') || name.includes('business');
+      });
+      
+      console.log('[Premium Check] Has premium:', hasPremium, planData);
+      setIsPremium(hasPremium);
+    } catch (e) {
+      console.error('[Premium Check] Error:', e);
+      setIsPremium(false);
     }
+  };
+
+  // Check if user has premium subscription (for immediate validation)
+  const checkPremiumStatus = async (): Promise<boolean> => {
+    if (isPremium) return true;
+    // Refresh and return
+    await loadPremiumStatus();
+    return isPremium;
   };
 
   // Handle video upload with 10 second validation
@@ -212,7 +240,14 @@ export default function ProductManagement() {
       return;
     }
 
-    // Validate video duration (max 10 seconds)
+    // Check max 2 videos (including existing ones)
+    const totalVideos = selectedVideos.length + (editingProduct?.promotional_videos?.length || 0);
+    if (totalVideos >= 2) {
+      toast.error('Maximum 2 vidéos par produit');
+      return;
+    }
+
+    // Validate video duration (max 45 seconds)
     try {
       setUploadingVideo(true);
       const video = document.createElement('video');
@@ -221,7 +256,7 @@ export default function ProductManagement() {
       await new Promise<void>((resolve, reject) => {
         video.onloadedmetadata = () => {
           window.URL.revokeObjectURL(video.src);
-          if (video.duration > 10) {
+          if (video.duration > 45) {
             reject(new Error('Durée maximale dépassée'));
           } else {
             resolve();
@@ -231,15 +266,14 @@ export default function ProductManagement() {
         video.src = URL.createObjectURL(file);
       });
 
-      setSelectedVideo(file);
-      toast.success('✅ Vidéo publicitaire ajoutée');
+      setSelectedVideos(prev => [...prev, file]);
+      toast.success(`✅ Vidéo ${selectedVideos.length + 1}/2 ajoutée`);
     } catch (error: any) {
       if (error.message === 'Durée maximale dépassée') {
-        toast.error('Vidéo trop longue. Durée maximale : 10 secondes');
+        toast.error('Vidéo trop longue. Durée maximale : 45 secondes');
       } else {
         toast.error('Erreur lors de la validation de la vidéo');
       }
-      setSelectedVideo(null);
     } finally {
       setUploadingVideo(false);
     }
@@ -361,12 +395,12 @@ export default function ProductManagement() {
           payload,
           selectedImages,
           editingProduct.images || [],
-          selectedVideo,
-          editingProduct.promotional_video
+          selectedVideos,
+          editingProduct.promotional_videos || []
         );
         console.log('[ProductSave] Update result:', result);
       } else {
-        const result = await createProduct(payload, selectedImages, selectedVideo);
+        const result = await createProduct(payload, selectedImages, selectedVideos);
         console.log('[ProductSave] Create result:', result);
         if (!result.success) {
           console.error('[ProductSave] Creation failed');
@@ -473,7 +507,7 @@ export default function ProductManagement() {
     });
     setEditingProduct(null);
     setSelectedImages([]);
-    setSelectedVideo(null);
+    setSelectedVideos([]);
     setCategoryMode('existing');
   };
 
@@ -1126,21 +1160,49 @@ export default function ProductManagement() {
                 </div>
 
                 {categoryMode === 'existing' ? (
-                  <Select
-                    value={formData.category_id}
-                    onValueChange={(v) => setFormData({ ...formData, category_id: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner une catégorie..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={categoryOpen}
+                        className="w-full justify-between font-normal"
+                      >
+                        {formData.category_id
+                          ? categories.find((cat) => cat.id === formData.category_id)?.name
+                          : "Rechercher une catégorie..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Rechercher catégorie..." />
+                        <CommandList>
+                          <CommandEmpty>Aucune catégorie trouvée.</CommandEmpty>
+                          <CommandGroup>
+                            {categories.map((cat) => (
+                              <CommandItem
+                                key={cat.id}
+                                value={cat.name}
+                                onSelect={() => {
+                                  setFormData({ ...formData, category_id: cat.id });
+                                  setCategoryOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    formData.category_id === cat.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {cat.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 ) : (
                   <Input
                     value={formData.category_name}
@@ -1451,22 +1513,37 @@ export default function ProductManagement() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => videoInputRef.current?.click()}
-                    disabled={uploadingVideo}
-                    className="h-20 flex-col gap-2 relative"
+                    onClick={() => {
+                      if (!isPremium) {
+                        toast.error('⭐ Fonctionnalité Premium uniquement', {
+                          description: 'Passez à un abonnement Premium/Pro/Business pour ajouter des vidéos',
+                          action: {
+                            label: 'Voir les offres',
+                            onClick: () => navigate('/subscriptions')
+                          }
+                        });
+                        return;
+                      }
+                      videoInputRef.current?.click();
+                    }}
+                    disabled={uploadingVideo || selectedVideos.length >= 2}
+                    className={`h-20 flex-col gap-2 relative ${!isPremium ? 'opacity-60' : ''}`}
                   >
                     {uploadingVideo ? (
                       <Loader2 className="h-6 w-6 animate-spin" />
                     ) : (
                       <>
                         <Video className="h-6 w-6" />
-                        <Badge variant="secondary" className="absolute top-1 right-1 text-[10px] px-1">
-                          Premium
+                        <Badge 
+                          variant={isPremium ? "default" : "secondary"} 
+                          className={`absolute top-1 right-1 text-[10px] px-1 ${isPremium ? 'bg-green-500' : ''}`}
+                        >
+                          {isPremium ? '✓ Premium' : '🔒 Premium'}
                         </Badge>
                       </>
                     )}
                     <span className="text-xs">
-                      {uploadingVideo ? 'Validation...' : 'Vidéo pub (10s)'}
+                      {uploadingVideo ? 'Validation...' : `Vidéos (${selectedVideos.length}/2)`}
                     </span>
                   </Button>
                 </div>
@@ -1488,41 +1565,63 @@ export default function ProductManagement() {
               </div>
 
               {/* Video Preview */}
-              {(selectedVideo || editingProduct?.promotional_video) && (
+              {(selectedVideos.length > 0 || (editingProduct?.promotional_videos?.length || 0) > 0) && (
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
                     <Video className="h-4 w-4" />
-                    Vidéo publicitaire Premium
-                    <Badge variant="secondary" className="text-[10px]">Max 10s</Badge>
+                    Vidéos publicitaires Premium ({(editingProduct?.promotional_videos?.length || 0) + selectedVideos.length}/2)
+                    <Badge variant="secondary" className="text-[10px]">Max 45s</Badge>
                   </Label>
-                  <div className="relative aspect-video rounded-lg overflow-hidden border-2 border-primary/20 bg-black">
-                    <video
-                      src={selectedVideo ? URL.createObjectURL(selectedVideo) : editingProduct?.promotional_video}
-                      controls
-                      className="w-full h-full"
-                    />
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      className="absolute top-2 right-2 h-8 w-8 p-0"
-                      onClick={() => {
-                        setSelectedVideo(null);
-                        if (editingProduct) {
-                          setEditingProduct({ ...editingProduct, promotional_video: undefined });
-                        }
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                    {selectedVideo ? (
-                      <Badge className="absolute bottom-2 left-2 text-xs" variant="default">
-                        {(selectedVideo.size / (1024 * 1024)).toFixed(1)} MB
-                      </Badge>
-                    ) : (
-                      <Badge className="absolute bottom-2 left-2 text-xs" variant="secondary">
-                        Vidéo actuelle
-                      </Badge>
-                    )}
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Existing Videos */}
+                    {editingProduct?.promotional_videos?.map((videoUrl, index) => (
+                      <div key={`existing-video-${index}`} className="relative aspect-video rounded-lg overflow-hidden border-2 border-primary/20 bg-black">
+                        <video
+                          src={videoUrl}
+                          controls
+                          className="w-full h-full"
+                        />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute top-2 right-2 h-6 w-6 p-0"
+                          onClick={() => {
+                            if (editingProduct) {
+                              const updatedVideos = editingProduct.promotional_videos?.filter((_, i) => i !== index) || [];
+                              setEditingProduct({ ...editingProduct, promotional_videos: updatedVideos.length > 0 ? updatedVideos : undefined });
+                            }
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                        <Badge className="absolute bottom-2 left-2 text-xs" variant="secondary">
+                          Vidéo {index + 1}
+                        </Badge>
+                      </div>
+                    ))}
+                    {/* New Videos */}
+                    {selectedVideos.map((video, index) => (
+                      <div key={`new-video-${index}`} className="relative aspect-video rounded-lg overflow-hidden border-2 border-green-500/50 bg-black">
+                        <video
+                          src={URL.createObjectURL(video)}
+                          controls
+                          className="w-full h-full"
+                        />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute top-2 right-2 h-6 w-6 p-0"
+                          onClick={() => {
+                            setSelectedVideos(prev => prev.filter((_, i) => i !== index));
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                        <Badge className="absolute bottom-2 left-2 text-xs" variant="default">
+                          Nouvelle • {(video.size / (1024 * 1024)).toFixed(1)} MB
+                        </Badge>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

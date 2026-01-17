@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Package, Search, Eye, Ban, Trash2, Edit, AlertTriangle, DollarSign, TrendingUp, TrendingDown, Box } from 'lucide-react';
+import { Package, Search, Eye, Ban, Trash2, Edit, AlertTriangle, DollarSign, TrendingUp, TrendingDown, Box, Store, AlertCircle } from 'lucide-react';
 import { usePDGProductsData } from '@/hooks/usePDGProductsData';
 
 export default function PDGProductsManagement() {
@@ -16,11 +16,27 @@ export default function PDGProductsManagement() {
   const [viewProduct, setViewProduct] = useState<any>(null);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<'all' | 'orphan' | 'active' | 'inactive'>('all');
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filtrer les produits
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.vendor_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (!matchesSearch) return false;
+    
+    switch (filterType) {
+      case 'orphan':
+        return !product.vendor_is_active;
+      case 'active':
+        return product.is_active && product.vendor_is_active;
+      case 'inactive':
+        return !product.is_active;
+      default:
+        return true;
+    }
+  });
 
   const handleDelete = async (productId: string) => {
     await deleteProduct(productId);
@@ -43,9 +59,21 @@ export default function PDGProductsManagement() {
     }
   };
 
-  const getVendorInfo = (vendorId: string) => {
-    const vendor = vendors.find(v => v.id === vendorId);
-    return vendor ? `ID: ${vendor.user_id.slice(0, 8)}...` : 'Vendeur inconnu';
+  const getVendorDisplay = (product: any) => {
+    if (!product.vendor_is_active) {
+      return (
+        <span className="flex items-center gap-1 text-red-500">
+          <AlertCircle className="w-3 h-3" />
+          {product.vendor_name} (Supprimée)
+        </span>
+      );
+    }
+    return (
+      <span className="flex items-center gap-1 text-muted-foreground">
+        <Store className="w-3 h-3" />
+        {product.vendor_name}
+      </span>
+    );
   };
 
   if (loading) {
@@ -143,22 +171,73 @@ export default function PDGProductsManagement() {
             <p className="text-xs text-muted-foreground mt-1">valeur catalogue</p>
           </CardContent>
         </Card>
+
+        {stats.orphanProducts > 0 && (
+          <Card className="border-2 border-red-500/20 bg-gradient-to-br from-red-500/5 to-red-500/10">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Orphelins</CardTitle>
+              <AlertCircle className="w-4 h-4 text-red-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-500">
+                {stats.orphanProducts}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">boutiques supprimées</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {/* Recherche */}
+      {/* Recherche et Filtres */}
       <Card>
         <CardHeader>
-          <CardTitle>Rechercher un produit</CardTitle>
+          <CardTitle>Rechercher et filtrer</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="relative">
-            <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher par nom..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher par nom, SKU ou boutique..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                variant={filterType === 'all' ? 'default' : 'outline'} 
+                size="sm"
+                onClick={() => setFilterType('all')}
+              >
+                Tous ({stats.total})
+              </Button>
+              <Button 
+                variant={filterType === 'active' ? 'default' : 'outline'} 
+                size="sm"
+                onClick={() => setFilterType('active')}
+              >
+                Actifs ({stats.active})
+              </Button>
+              <Button 
+                variant={filterType === 'inactive' ? 'default' : 'outline'} 
+                size="sm"
+                onClick={() => setFilterType('inactive')}
+              >
+                Inactifs ({stats.inactive})
+              </Button>
+              {stats.orphanProducts > 0 && (
+                <Button 
+                  variant={filterType === 'orphan' ? 'destructive' : 'outline'} 
+                  size="sm"
+                  onClick={() => setFilterType('orphan')}
+                  className={filterType !== 'orphan' ? 'border-red-500 text-red-500 hover:bg-red-50' : ''}
+                >
+                  <AlertCircle className="w-4 h-4 mr-1" />
+                  Orphelins ({stats.orphanProducts})
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -173,11 +252,26 @@ export default function PDGProductsManagement() {
             {filteredProducts.map((product) => (
               <div
                 key={product.id}
-                className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                className={`flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors ${
+                  !product.vendor_is_active ? 'border-red-500/50 bg-red-50/30 dark:bg-red-900/10' : ''
+                }`}
               >
                 <div className="flex items-center gap-4 flex-1">
                   <div className="relative">
-                    <Package className="w-10 h-10 text-primary" />
+                    {product.images?.[0] ? (
+                      <img 
+                        src={product.images[0]} 
+                        alt={product.name} 
+                        className="w-12 h-12 object-cover rounded-lg"
+                      />
+                    ) : (
+                      <Package className="w-10 h-10 text-primary" />
+                    )}
+                    {!product.vendor_is_active && (
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                        <AlertCircle className="w-3 h-3 text-white" />
+                      </div>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -197,11 +291,16 @@ export default function PDGProductsManagement() {
                           <Box className="w-3 h-3" />
                           Stock: <span className="font-medium text-foreground">{product.total_stock || 0}</span> unités
                         </span>
-                        <span className="text-xs">Vendeur: {getVendorInfo(product.vendor_id)}</span>
+                        {getVendorDisplay(product)}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    {!product.vendor_is_active && (
+                      <Badge variant="destructive" className="text-xs">
+                        Boutique supprimée
+                      </Badge>
+                    )}
                     {product.is_active ? (
                       <Badge className="bg-green-500">Actif</Badge>
                     ) : (
@@ -274,7 +373,13 @@ export default function PDGProductsManagement() {
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Vendeur</Label>
-                  <p className="font-medium">{getVendorInfo(viewProduct.vendor_id)}</p>
+                  <div className="font-medium">{getVendorDisplay(viewProduct)}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Statut Boutique</Label>
+                  <Badge className={viewProduct.vendor_is_active ? "bg-green-500" : "bg-red-500"}>
+                    {viewProduct.vendor_is_active ? "Active" : "Supprimée"}
+                  </Badge>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Statut</Label>

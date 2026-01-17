@@ -208,13 +208,25 @@ export class DropshipMarketplaceService {
     } = options;
     
     try {
+      // 0. Récupérer la liste des vendors actifs pour filtrer les produits
+      const vendorsTable = supabase.from('vendors') as any;
+      const { data: activeVendors } = await vendorsTable
+        .select('id, user_id, business_name, city, country, rating, total_reviews, is_verified, is_active')
+        .eq('is_active', true);
+      
+      // Créer des maps pour accès rapide
+      const activeVendorIds = new Set((activeVendors || []).map((v: any) => v.id));
+      const activeVendorUserIds = new Set((activeVendors || []).map((v: any) => v.user_id));
+      const vendorByIdMap = new Map((activeVendors || []).map((v: any) => [v.id, v]));
+      const vendorByUserIdMap = new Map((activeVendors || []).map((v: any) => [v.user_id, v]));
+      
       // 1. Récupérer les produits classiques - sans jointure complexe
       // Use 'as any' to avoid deep type instantiation issues with Supabase client
       const productsTable = supabase.from('products') as any;
       let classicQuery = productsTable
         .select('*', { count: 'exact' })
-        .eq('status', 'active')
-        .limit(limit);
+        .eq('is_active', true)
+        .limit(limit * 3); // Récupérer plus pour compenser le filtrage
       
       // Appliquer les filtres
       if (vendorId) classicQuery = classicQuery.eq('vendor_id', vendorId);
@@ -224,15 +236,19 @@ export class DropshipMarketplaceService {
         classicQuery = classicQuery.or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
       }
       
-      const { data: classicProducts, count: classicCount, error: classicError } = await classicQuery;
+      const { data: classicProducts, error: classicError } = await classicQuery;
       
       if (classicError) {
         console.error('[DropshipMarketplace] Classic products error:', classicError);
       }
       
+      // Filtrer les produits classiques dont le vendor est actif
+      const filteredClassicProducts = (classicProducts || []).filter((p: any) => 
+        activeVendorIds.has(p.vendor_id) || activeVendorUserIds.has(p.vendor_id)
+      );
+      
       // 2. Récupérer les produits dropship si activé
       let dropshipProducts: any[] = [];
-      let dropshipCount = 0;
       
       if (includeDropship) {
         let dropshipQuery = supabase
@@ -251,58 +267,53 @@ export class DropshipMarketplaceService {
           dropshipQuery = dropshipQuery.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
         }
         
-        const { data: dropship, count: dCount, error: dropshipError } = await dropshipQuery;
+        const { data: dropship, error: dropshipError } = await dropshipQuery;
         
         if (dropshipError) {
           console.error('[DropshipMarketplace] Dropship products error:', dropshipError);
         } else {
-          dropshipProducts = dropship || [];
-          dropshipCount = dCount || 0;
+          // Filtrer les produits dropship dont le vendor est actif
+          dropshipProducts = (dropship || []).filter(p => 
+            activeVendorUserIds.has(p.vendor_id) || activeVendorIds.has(p.vendor_id)
+          );
           
-          // Récupérer les infos vendeur depuis la table vendors
-          if (dropshipProducts.length > 0) {
-            const vendorIds = [...new Set(dropshipProducts.map(p => p.vendor_id))];
-            const { data: vendorProfiles } = await supabase
-              .from('vendors')
-              .select('id, user_id, business_name, city, country, rating, total_reviews, is_verified')
-              .in('user_id', vendorIds);
-            
-            // Mapper les infos vendeur par user_id
-            const vendorMap = new Map(vendorProfiles?.map(v => [v.user_id, v]) || []);
-            dropshipProducts = dropshipProducts.map(p => ({
-              ...p,
-              vendor: vendorMap.get(p.vendor_id) || null
-            }));
-          }
+          // Mapper les infos vendeur
+          dropshipProducts = dropshipProducts.map(p => ({
+            ...p,
+            vendor: vendorByUserIdMap.get(p.vendor_id) || vendorByIdMap.get(p.vendor_id) || null
+          }));
         }
       }
       
       // 3. Mapper les produits au format marketplace
-      const mappedClassic: MarketplaceProduct[] = (classicProducts || []).map((p: any) => ({
-        id: p.id,
-        title: p.name || p.title || 'Produit',
-        description: p.description || '',
-        price: p.price,
-        originalPrice: p.compare_price,
-        images: p.images || [],
-        category: 'Divers',
-        subcategory: undefined,
-        vendor: {
-          id: p.vendor_id,
-          name: 'Boutique',
-          location: 'Guinée',
-          rating: 4.5,
-          ratingCount: 0,
-          isCertified: false,
-        },
-        rating: p.rating || 0,
-        reviewCount: 0,
-        stock: p.stock_quantity || 0,
-        deliveryTime: '2-5 jours',
-        isPremium: false,
-        isNew: isProductNew(p.created_at),
-        tags: p.tags || [],
-      }));
+      const mappedClassic: MarketplaceProduct[] = filteredClassicProducts.map((p: any) => {
+        const vendorInfo = vendorByIdMap.get(p.vendor_id) || vendorByUserIdMap.get(p.vendor_id) as any;
+        return {
+          id: p.id,
+          title: p.name || p.title || 'Produit',
+          description: p.description || '',
+          price: p.price,
+          originalPrice: p.compare_price,
+          images: p.images || [],
+          category: 'Divers',
+          subcategory: undefined,
+          vendor: {
+            id: (vendorInfo as any)?.id || p.vendor_id,
+            name: (vendorInfo as any)?.business_name || 'Boutique',
+            location: (vendorInfo as any)?.city || (vendorInfo as any)?.country || 'Guinée',
+            rating: (vendorInfo as any)?.rating || 4.5,
+            ratingCount: (vendorInfo as any)?.total_reviews || 0,
+            isCertified: (vendorInfo as any)?.is_verified || false,
+          },
+          rating: p.rating || 0,
+          reviewCount: 0,
+          stock: p.stock_quantity || 0,
+          deliveryTime: '2-5 jours',
+          isPremium: false,
+          isNew: isProductNew(p.created_at),
+          tags: p.tags || [],
+        };
+      });
       
       const mappedDropship: MarketplaceProduct[] = dropshipProducts.map(p => 
         sanitizeForClient(mapDropshipToMarketplace(p, p.vendor))
@@ -331,7 +342,7 @@ export class DropshipMarketplaceService {
       }
       
       // 5. Pagination
-      const total = (classicCount || 0) + dropshipCount;
+      const total = allProducts.length;
       const totalPages = Math.ceil(total / limit);
       const startIndex = (page - 1) * limit;
       const paginatedProducts = allProducts.slice(startIndex, startIndex + limit);
@@ -364,6 +375,20 @@ export class DropshipMarketplaceService {
         .single();
       
       if (classicProduct && !classicError) {
+        // Vérifier si le vendor est actif
+        const vendorsTable = supabase.from('vendors') as any;
+        const { data: vendorInfo } = await vendorsTable
+          .select('id, user_id, business_name, city, country, rating, total_reviews, is_verified, is_active')
+          .or(`id.eq.${classicProduct.vendor_id},user_id.eq.${classicProduct.vendor_id}`)
+          .eq('is_active', true)
+          .single();
+        
+        // Si le vendor n'est pas actif, ne pas retourner le produit
+        if (!vendorInfo) {
+          console.log('[DropshipMarketplace] Product vendor is not active:', productId);
+          return null;
+        }
+        
         return {
           id: classicProduct.id,
           title: classicProduct.name || 'Produit',
@@ -374,12 +399,12 @@ export class DropshipMarketplaceService {
           category: 'Divers',
           subcategory: undefined,
           vendor: {
-            id: classicProduct.vendor_id,
-            name: 'Boutique',
-            location: 'Guinée',
-            rating: 4.5,
-            ratingCount: 0,
-            isCertified: false,
+            id: vendorInfo.id,
+            name: vendorInfo.business_name || 'Boutique',
+            location: vendorInfo.city || vendorInfo.country || 'Guinée',
+            rating: vendorInfo.rating || 4.5,
+            ratingCount: vendorInfo.total_reviews || 0,
+            isCertified: vendorInfo.is_verified || false,
           },
           rating: classicProduct.rating || 0,
           reviewCount: 0,
@@ -400,12 +425,19 @@ export class DropshipMarketplaceService {
         .single();
       
       if (dropshipProduct && !dropshipError) {
-        // Récupérer les infos vendeur depuis vendors
-        const { data: vendorInfo } = await supabase
-          .from('vendors')
-          .select('id, user_id, business_name, city, country, rating, total_reviews, is_verified')
+        // Récupérer les infos vendeur depuis vendors et vérifier qu'il est actif
+        const vendorsTable = supabase.from('vendors') as any;
+        const { data: vendorInfo } = await vendorsTable
+          .select('id, user_id, business_name, city, country, rating, total_reviews, is_verified, is_active')
           .eq('user_id', dropshipProduct.vendor_id)
+          .eq('is_active', true)
           .single();
+        
+        // Si le vendor n'est pas actif, ne pas retourner le produit
+        if (!vendorInfo) {
+          console.log('[DropshipMarketplace] Dropship product vendor is not active:', productId);
+          return null;
+        }
         
         return sanitizeForClient(mapDropshipToMarketplace(dropshipProduct, vendorInfo));
       }

@@ -56,8 +56,8 @@ export class InterfaceMetricsService {
       // Transformer les données de la vue en RealInterfaceMetrics
       // Normaliser les erreurs pour éviter les faux positifs (plafond à 0% pour les systèmes fonctionnels)
       const metrics = data.map(row => ({
-        interface: row.interface,
-        activeUsers: Number(row.users || 0),
+        interface: row.pdg_name || 'Interface',
+        activeUsers: Number(row.total_agents || 0),
         transactions: 0, // Non disponible dans la vue actuelle
         errors: 0, // Normaliser à 0 - les vraies erreurs sont dans system_errors
         performance: 100, // Performance stable par défaut

@@ -14,6 +14,7 @@ export interface MarketplaceItem {
   originalPrice?: number;
   description?: string;
   images: string[];
+  promotional_videos?: string[];
   vendor_id: string;
   vendor_name: string;
   vendor_user_id?: string;
@@ -85,6 +86,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           price,
           description,
           images,
+          promotional_videos,
           vendor_id,
           category_id,
           rating,
@@ -126,6 +128,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         price: product.price,
         description: product.description || '',
         images: Array.isArray(product.images) ? (product.images as string[]) : [],
+        promotional_videos: Array.isArray(product.promotional_videos) ? (product.promotional_videos as string[]) : [],
         vendor_id: product.vendor_id,
         vendor_name: (product.vendors as any)?.business_name || 'Vendeur',
         vendor_user_id: (product.vendors as any)?.user_id,
@@ -214,87 +217,98 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
   };
 
   /**
-   * Charge les produits numériques (service_products)
+   * Charge les produits numériques depuis la table digital_products
    */
-  const loadDigitalProducts = async (categoryName?: string): Promise<MarketplaceItem[]> => {
-    if (itemType === 'professional_service' || itemType === 'product') return [];
+  const loadDigitalProducts = async (): Promise<MarketplaceItem[]> => {
+    if (itemType === "professional_service" || itemType === "product") return [];
+
+    const DIGITAL_CATEGORIES = new Set([
+      "dropshipping",
+      "voyage",
+      "logiciel",
+      "formation",
+      "livre",
+      "custom",
+    ]);
 
     try {
       let query = supabase
-        .from('service_products')
-        .select(`
+        .from("digital_products")
+        .select(
+          `
           id,
-          professional_service_id,
-          name,
+          merchant_id,
+          vendor_id,
+          title,
           description,
-          price,
-          compare_at_price,
+          short_description,
           images,
           category,
-          metadata,
+          product_mode,
+          price,
+          original_price,
+          rating,
+          reviews_count,
           created_at,
-          professional_services(
-            business_name,
-            user_id,
-            service_types(name, code)
-          )
-        `)
-        .eq('is_available', true);
+          affiliate_url,
+          file_type,
+          vendors:vendors!digital_products_vendor_id_fkey (business_name, user_id, shop_slug)
+        `
+        )
+        .eq("status", "published");
 
-      // Filtres
+      // Filtre vendeur (⚠️ vendorId = vendors.id dans l'UI marketplace)
       if (vendorId) {
-        const { data: services } = await supabase
-          .from('professional_services')
-          .select('id')
-          .eq('user_id', vendorId);
-        const serviceIds = services?.map(s => s.id) || [];
-        if (serviceIds.length > 0) {
-          query = query.in('professional_service_id', serviceIds);
-        } else {
-          return [];
-        }
+        query = query.eq("vendor_id", vendorId);
       }
+
+      // Filtre recherche
       if (searchQuery?.trim()) {
-        query = query.ilike('name', `%${searchQuery.trim()}%`);
+        query = query.or(
+          `title.ilike.%${searchQuery.trim()}%,description.ilike.%${searchQuery.trim()}%`
+        );
       }
-      if (minPrice && minPrice > 0) query = query.gte('price', minPrice);
-      if (maxPrice && maxPrice > 0) query = query.lte('price', maxPrice);
-      
-      // Filtre par catégorie (champ texte dans service_products)
-      if (categoryName) {
-        query = query.ilike('category', `%${categoryName}%`);
+
+      // Filtre prix
+      if (minPrice && minPrice > 0) query = query.gte("price", minPrice);
+      if (maxPrice && maxPrice > 0) query = query.lte("price", maxPrice);
+
+      // Filtre catégorie: uniquement si la catégorie sélectionnée correspond à l'enum digital_products.category
+      if (category && category !== "all" && DIGITAL_CATEGORIES.has(category)) {
+        query = query.eq("category", category);
       }
 
       const { data, error } = await query;
       if (error) throw error;
 
-      return (data || []).map(product => {
-        const service = product.professional_services as any;
-        const metadata = product.metadata as any || {};
+      return (data || []).map((product: any) => {
+        const images = Array.isArray(product.images) ? (product.images as string[]) : [];
+        const v = product.vendors as any;
 
         return {
           id: product.id,
-          name: product.name,
-          price: product.price,
-          originalPrice: product.compare_at_price || undefined,
-          description: product.description || '',
-          images: Array.isArray(product.images) ? (product.images as string[]) : [],
-          vendor_id: product.professional_service_id,
-          vendor_name: service?.business_name || 'Vendeur',
-          vendor_user_id: service?.user_id,
-          category_name: product.category || service?.service_types?.name || 'Numérique',
-          service_type: service?.service_types?.code,
-          rating: 0, // Les service_products n'ont pas de rating pour l'instant
-          reviews_count: 0,
-          item_type: 'digital_product' as const,
-          download_url: metadata.download_url,
-          file_size: metadata.file_size,
-          license_type: metadata.license_type,
-          created_at: product.created_at
+          name: product.title,
+          price: product.price || 0,
+          originalPrice: product.original_price || undefined,
+          description: product.short_description || product.description || "",
+          images,
+          promotional_videos: [],
+          vendor_id: product.vendor_id || product.merchant_id,
+          vendor_name: v?.business_name || "Vendeur",
+          vendor_user_id: product.merchant_id,
+          category_name: product.category || "Numérique",
+          service_type: product.product_mode,
+          rating: product.rating || 0,
+          reviews_count: product.reviews_count || 0,
+          item_type: "digital_product" as const,
+          download_url: product.affiliate_url || undefined,
+          file_size: product.file_type || undefined,
+          license_type: product.product_mode === "affiliate" ? "Affiliation" : "Vente directe",
+          created_at: product.created_at,
         };
       });
     } catch (error) {
-      console.error('Erreur chargement produits numériques:', error);
+      console.error("Erreur chargement produits numériques:", error);
       return [];
     }
   };
@@ -337,14 +351,14 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       if (itemType === 'product') {
         allItems = await loadProducts();
       } else if (itemType === 'digital_product') {
-        allItems = await loadDigitalProducts(categoryName || undefined);
+        allItems = await loadDigitalProducts();
       } else if (itemType === 'professional_service') {
         allItems = await loadProfessionalServices();
       } else {
         // 'all' = produits + numériques + services professionnels
         const [products, digitalProducts, professionalServices] = await Promise.all([
           loadProducts(),
-          loadDigitalProducts(categoryName || undefined),
+          loadDigitalProducts(),
           loadProfessionalServices()
         ]);
         allItems = [...products, ...digitalProducts, ...professionalServices];

@@ -1,11 +1,8 @@
 /**
  * Configuration Upstash Redis pour rate limiting distribué
  * Alternative à rate limiting local pour production
+ * Phase 4: Cache Redis Distribué
  */
-
-// Configuration Upstash Redis (à mettre dans .env)
-// UPSTASH_REDIS_REST_URL=https://xxx.upstash.io
-// UPSTASH_REDIS_REST_TOKEN=xxx
 
 interface RateLimitConfig {
   maxRequests: number;

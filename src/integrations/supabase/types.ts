@@ -301,8 +301,22 @@ export type Database = {
             foreignKeyName: "agent_invitations_pdg_id_fkey"
             columns: ["pdg_id"]
             isOneToOne: false
+            referencedRelation: "pdg_interface_stats"
+            referencedColumns: ["pdg_id"]
+          },
+          {
+            foreignKeyName: "agent_invitations_pdg_id_fkey"
+            columns: ["pdg_id"]
+            isOneToOne: false
             referencedRelation: "pdg_management"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_invitations_pdg_id_fkey"
+            columns: ["pdg_id"]
+            isOneToOne: false
+            referencedRelation: "pdg_vehicle_security_overview"
+            referencedColumns: ["pdg_id"]
           },
         ]
       }
@@ -538,8 +552,22 @@ export type Database = {
             foreignKeyName: "agents_management_pdg_id_fkey"
             columns: ["pdg_id"]
             isOneToOne: false
+            referencedRelation: "pdg_interface_stats"
+            referencedColumns: ["pdg_id"]
+          },
+          {
+            foreignKeyName: "agents_management_pdg_id_fkey"
+            columns: ["pdg_id"]
+            isOneToOne: false
             referencedRelation: "pdg_management"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agents_management_pdg_id_fkey"
+            columns: ["pdg_id"]
+            isOneToOne: false
+            referencedRelation: "pdg_vehicle_security_overview"
+            referencedColumns: ["pdg_id"]
           },
         ]
       }
@@ -4424,11 +4452,12 @@ export type Database = {
           images: string[] | null
           is_featured: boolean | null
           is_premium: boolean | null
-          merchant_id: string
+          merchant_id: string | null
           metadata: Json | null
           original_price: number | null
           price: number
           product_mode: string
+          product_type: string | null
           published_at: string | null
           rating: number | null
           reviews_count: number | null
@@ -4458,11 +4487,12 @@ export type Database = {
           images?: string[] | null
           is_featured?: boolean | null
           is_premium?: boolean | null
-          merchant_id: string
+          merchant_id?: string | null
           metadata?: Json | null
           original_price?: number | null
           price?: number
           product_mode?: string
+          product_type?: string | null
           published_at?: string | null
           rating?: number | null
           reviews_count?: number | null
@@ -4492,11 +4522,12 @@ export type Database = {
           images?: string[] | null
           is_featured?: boolean | null
           is_premium?: boolean | null
-          merchant_id?: string
+          merchant_id?: string | null
           metadata?: Json | null
           original_price?: number | null
           price?: number
           product_mode?: string
+          product_type?: string | null
           published_at?: string | null
           rating?: number | null
           reviews_count?: number | null
@@ -11638,6 +11669,7 @@ export type Database = {
           name: string
           price: number
           price_carton: number | null
+          promotional_videos: string[] | null
           public_id: string | null
           rating: number | null
           reviews_count: number | null
@@ -11671,6 +11703,7 @@ export type Database = {
           name: string
           price: number
           price_carton?: number | null
+          promotional_videos?: string[] | null
           public_id?: string | null
           rating?: number | null
           reviews_count?: number | null
@@ -11704,6 +11737,7 @@ export type Database = {
           name?: string
           price?: number
           price_carton?: number | null
+          promotional_videos?: string[] | null
           public_id?: string | null
           rating?: number | null
           reviews_count?: number | null
@@ -14049,6 +14083,36 @@ export type Database = {
           severity?: string
           threshold?: Json | null
           true_positive_count?: number | null
+        }
+        Relationships: []
+      }
+      security_events: {
+        Row: {
+          created_at: string | null
+          details: Json | null
+          event_type: string
+          id: string
+          ip_address: unknown
+          severity_level: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: unknown
+          severity_level?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown
+          severity_level?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -17157,6 +17221,36 @@ export type Database = {
         }
         Relationships: []
       }
+      totp_verification_attempts: {
+        Row: {
+          created_at: string | null
+          failure_reason: string | null
+          id: string
+          ip_address: unknown
+          success: boolean
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          ip_address?: unknown
+          success: boolean
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          ip_address?: unknown
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       trackings: {
         Row: {
           created_at: string
@@ -17889,6 +17983,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_2fa_settings: {
+        Row: {
+          backup_codes_encrypted: string | null
+          backup_codes_iv: string | null
+          created_at: string | null
+          id: string
+          is_enabled: boolean | null
+          last_used_at: string | null
+          preferred_method: string | null
+          recovery_email: string | null
+          totp_secret_encrypted: string | null
+          totp_secret_iv: string | null
+          updated_at: string | null
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          backup_codes_encrypted?: string | null
+          backup_codes_iv?: string | null
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_used_at?: string | null
+          preferred_method?: string | null
+          recovery_email?: string | null
+          totp_secret_encrypted?: string | null
+          totp_secret_iv?: string | null
+          updated_at?: string | null
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          backup_codes_encrypted?: string | null
+          backup_codes_iv?: string | null
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_used_at?: string | null
+          preferred_method?: string | null
+          recovery_email?: string | null
+          totp_secret_encrypted?: string | null
+          totp_secret_iv?: string | null
+          updated_at?: string | null
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
       }
       user_addresses: {
         Row: {
@@ -21202,8 +21344,22 @@ export type Database = {
             foreignKeyName: "agents_management_pdg_id_fkey"
             columns: ["pdg_id"]
             isOneToOne: false
+            referencedRelation: "pdg_interface_stats"
+            referencedColumns: ["pdg_id"]
+          },
+          {
+            foreignKeyName: "agents_management_pdg_id_fkey"
+            columns: ["pdg_id"]
+            isOneToOne: false
             referencedRelation: "pdg_management"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agents_management_pdg_id_fkey"
+            columns: ["pdg_id"]
+            isOneToOne: false
+            referencedRelation: "pdg_vehicle_security_overview"
+            referencedColumns: ["pdg_id"]
           },
         ]
       }
@@ -21364,11 +21520,13 @@ export type Database = {
       }
       interface_status: {
         Row: {
-          active_users: number | null
-          errors: number | null
-          interface: string | null
-          performance: number | null
-          transactions: number | null
+          code: string | null
+          created_at: string | null
+          entity_type: string | null
+          id: string | null
+          interface_url: string | null
+          last_activity: string | null
+          status: string | null
         }
         Relationships: []
       }
@@ -21397,42 +21555,52 @@ export type Database = {
       }
       pdg_interface_stats: {
         Row: {
-          interface: string | null
-          pending_alerts: number | null
-          users: number | null
+          active_agents: number | null
+          last_agent_activity: string | null
+          pdg_id: string | null
+          pdg_name: string | null
+          total_agents: number | null
+          total_wallet_balance: number | null
         }
         Relationships: []
       }
       pdg_vehicle_security_overview: {
         Row: {
-          active_alerts: number | null
-          total_recovered: number | null
-          total_stolen: number | null
+          active_vehicles: number | null
+          pdg_id: string | null
+          pdg_name: string | null
+          stolen_vehicles: number | null
+          total_vehicles: number | null
         }
         Relationships: []
       }
       security_policy_summary: {
         Row: {
-          anon_policies: number | null
-          auth_policies: number | null
-          policy_count: number | null
+          cmd: string | null
+          permissive: string | null
+          policyname: unknown
+          qual: string | null
+          roles: unknown[] | null
           schemaname: unknown
           tablename: unknown
+          with_check: string | null
         }
         Relationships: []
       }
       security_stats: {
         Row: {
-          blocked_ips: number | null
-          total_incidents: number | null
-          unacknowledged_alerts: number | null
+          active_blocks: number | null
+          critical_24h: number | null
+          events_24h: number | null
+          open_incidents: number | null
         }
         Relationships: []
       }
       system_alerts_summary: {
         Row: {
           count: number | null
-          severity: string | null
+          priority: string | null
+          unread_count: number | null
         }
         Relationships: []
       }
@@ -21882,6 +22050,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_2fa_status: {
+        Args: { p_user_id: string }
+        Returns: {
+          is_enabled: boolean
+          last_used_at: string
+          preferred_method: string
+        }[]
+      }
       check_agent_permission: {
         Args: { p_agent_id: string; p_permission_key: string }
         Returns: boolean
@@ -22317,7 +22493,7 @@ export type Database = {
       generate_unique_id: { Args: { prefix: string }; Returns: string }
       generate_unique_invitation_token: { Args: never; Returns: string }
       generate_unique_public_id: {
-        Args: { user_role_param?: string }
+        Args: { user_role_param: string }
         Returns: string
       }
       generate_user_custom_id: { Args: never; Returns: string }

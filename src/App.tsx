@@ -10,6 +10,7 @@ import OAuthPasswordGate from "@/components/auth/OAuthPasswordGate";
 import { ThemeProvider } from "next-themes";
 
 const MerchantOnboarding = lazyWithRetry(() => import("@/components/onboarding/MerchantOnboarding"));
+const WebRTCCallProvider = lazyWithRetry(() => import("@/components/communication/WebRTCCallProvider"));
 import { CartProvider } from "@/contexts/CartContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -108,6 +109,7 @@ const StolenMotoDeclaration = lazyWithRetry(() => import("./pages/StolenMotoDecl
 const VisualSearch = lazyWithRetry(() => import("./pages/VisualSearch"));
 const Categories = lazyWithRetry(() => import("./pages/Categories"));
 const DigitalProducts = lazyWithRetry(() => import("./pages/DigitalProducts"));
+const DigitalProductDetail = lazyWithRetry(() => import("./pages/DigitalProductDetail"));
 const ShortLinkRedirect = lazyWithRetry(() => import("./pages/ShortLinkRedirect"));
 const UserPublicProfile = lazyWithRetry(() => import("./pages/UserPublicProfile"));
 const RestaurantPublicMenu = lazyWithRetry(() => import("./pages/RestaurantPublicMenu"));
@@ -167,6 +169,14 @@ function App() {
       window.location.replace(httpsUrl);
     }
 
+    // Nettoyage automatique des données de persistence expirées
+    import('@/hooks/useAppPersistence').then(({ cleanupExpiredPersistence }) => {
+      const cleaned = cleanupExpiredPersistence();
+      if (cleaned > 0) {
+        console.log(`🧹 Nettoyage: ${cleaned} entrée(s) de persistence expirée(s) supprimée(s)`);
+      }
+    });
+
     // Enregistrement du Service Worker pour PWA (centralisé dans src/main.tsx)
 
   }, []);
@@ -183,10 +193,14 @@ function App() {
                 <Toaster />
                 <Sonner />
                 <InstallPromptBanner />
-                <PWAInstallPrompt />
                 <DeepLinkInitializer />
                 <Suspense fallback={null}>
                   <MerchantOnboarding />
+                </Suspense>
+                <Suspense fallback={null}>
+                  <WebRTCCallProvider>
+                    <></>
+                  </WebRTCCallProvider>
                 </Suspense>
 
                 <ErrorBoundary>
@@ -231,6 +245,7 @@ function App() {
               <Route path="/proximite/boutiques" element={<NearbyBoutiques />} />
               <Route path="/categories" element={<Categories />} />
               <Route path="/digital-products" element={<DigitalProducts />} />
+              <Route path="/digital-product/:id" element={<DigitalProductDetail />} />
               <Route path="/boutiques" element={<NearbyBoutiques />} />
               
               <Route path="/services-proximite" element={<ServicesProximite />} />

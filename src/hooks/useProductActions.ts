@@ -257,7 +257,7 @@ export function useProductActions({
   const createProduct = useCallback(async (
     formData: ProductFormData,
     images: File[],
-    promotionalVideo?: File | null
+    promotionalVideos: File[] = []
   ): Promise<{ success: boolean; product?: any }> => {
     if (!vendorId) {
       toast.error('Vendeur introuvable');
@@ -309,10 +309,11 @@ export function useProductActions({
       // Upload images
       const imageUrls = await uploadImages(images);
 
-      // Upload vidéo publicitaire si fournie
-      let videoUrl: string | null = null;
-      if (promotionalVideo) {
-        videoUrl = await uploadPromotionalVideo(promotionalVideo);
+      // Upload vidéos publicitaires si fournies (max 2)
+      const videoUrls: string[] = [];
+      for (const video of promotionalVideos.slice(0, 2)) {
+        const url = await uploadPromotionalVideo(video);
+        if (url) videoUrls.push(url);
       }
 
       // Gérer catégorie - log pour debug
@@ -351,7 +352,7 @@ export function useProductActions({
         is_active: formData.is_active,
         vendor_id: vendorId,
         images: imageUrls.length > 0 ? imageUrls : null,
-        promotional_video: videoUrl,
+        promotional_videos: videoUrls.length > 0 ? videoUrls : null,
         // Champs carton
         sell_by_carton: formData.sell_by_carton || false,
         units_per_carton: formData.units_per_carton ? parseInt(formData.units_per_carton) : 1,
@@ -400,8 +401,8 @@ export function useProductActions({
     formData: ProductFormData,
     newImages: File[],
     existingImages: string[] = [],
-    promotionalVideo?: File | null,
-    existingVideoUrl?: string | null
+    newVideos: File[] = [],
+    existingVideoUrls: string[] = []
   ): Promise<{ success: boolean; product?: any }> => {
     if (!vendorId) {
       toast.error('Vendeur introuvable');
@@ -415,16 +416,18 @@ export function useProductActions({
       // Combiner anciennes et nouvelles images
       const allImages = newImageUrls.length > 0 ? [...existingImages, ...newImageUrls] : existingImages;
 
-      // Upload nouvelle vidéo si fournie
-      let videoUrl: string | null | undefined = existingVideoUrl;
-      if (promotionalVideo) {
-        // Supprimer l'ancienne vidéo si elle existe
-        if (existingVideoUrl) {
-          await deleteVideoFromStorage(existingVideoUrl);
+      // Upload nouvelles vidéos et combiner avec les existantes
+      let allVideoUrls: string[] = [...existingVideoUrls];
+      
+      for (const videoFile of newVideos) {
+        const uploadedUrl = await uploadPromotionalVideo(videoFile);
+        if (uploadedUrl) {
+          allVideoUrls.push(uploadedUrl);
         }
-        // Uploader la nouvelle
-        videoUrl = await uploadPromotionalVideo(promotionalVideo);
       }
+      
+      // Limiter à 2 vidéos maximum
+      allVideoUrls = allVideoUrls.slice(0, 2);
 
       // Gérer catégorie
       const categoryId = await handleCategory(formData.category_name, formData.category_id);
@@ -445,7 +448,7 @@ export function useProductActions({
         tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()) : null,
         is_active: formData.is_active,
         images: allImages.length > 0 ? allImages : null,
-        promotional_video: videoUrl,
+        promotional_videos: allVideoUrls.length > 0 ? allVideoUrls : null,
         // Champs carton
         sell_by_carton: formData.sell_by_carton || false,
         units_per_carton: formData.units_per_carton ? parseInt(formData.units_per_carton) : 1,

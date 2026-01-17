@@ -150,16 +150,21 @@ export function useDigitalProduct(productId: string | undefined) {
       return;
     }
 
-      const loadProduct = async () => {
+    const loadProduct = async () => {
       setLoading(true);
       try {
         const { data, error: queryError } = await supabase
           .from('digital_products')
           .select('*')
           .eq('id', productId)
-          .single();
+          .maybeSingle();
 
         if (queryError) throw queryError;
+        if (!data) {
+          setProduct(null);
+          setError('Produit introuvable');
+          return;
+        }
 
         setProduct({
           ...data,
@@ -197,13 +202,27 @@ export function useMerchantDigitalProducts() {
         return;
       }
 
-      const { data, error } = await supabase
+      // Récupérer l'ID vendor (vendors.id) si l'utilisateur a une boutique
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      let query = supabase
         .from('digital_products')
         .select('*')
-        .eq('merchant_id', user.id)
         .order('created_at', { ascending: false });
 
+      if (vendor?.id) {
+        query = query.or(`merchant_id.eq.${user.id},vendor_id.eq.${vendor.id}`);
+      } else {
+        query = query.eq('merchant_id', user.id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
+
       setProducts((data || []) as DigitalProduct[]);
     } catch (err) {
       console.error('Erreur chargement produits marchand:', err);

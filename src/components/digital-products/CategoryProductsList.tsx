@@ -39,6 +39,8 @@ export function CategoryProductsList({
   const isMerchant = profile?.role === 'vendeur';
 
   const handleAddProduct = () => {
+    console.log('[CategoryProductsList] handleAddProduct called', { user: !!user, isMerchant });
+    
     if (!user) {
       toast.info('Connexion requise pour ajouter un produit');
       navigate('/auth', { state: { redirectTo: '/digital-products' } });
@@ -46,10 +48,12 @@ export function CategoryProductsList({
     }
 
     if (!isMerchant) {
+      console.log('[CategoryProductsList] User is not merchant, showing activation dialog');
       setShowActivationDialog(true);
       return;
     }
 
+    console.log('[CategoryProductsList] Showing product form');
     setShowProductForm(true);
   };
 
@@ -67,7 +71,7 @@ export function CategoryProductsList({
     if (product.product_mode === 'affiliate' && product.affiliate_url) {
       window.open(product.affiliate_url, '_blank');
     } else {
-      navigate(`/product/${product.id}?type=digital`);
+      navigate(`/digital-product/${product.id}`);
     }
   };
 

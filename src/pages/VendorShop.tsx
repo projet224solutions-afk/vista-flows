@@ -1,15 +1,18 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { ArrowLeft, MapPin, Star, Phone, Mail, MessageCircle, Package, Clock, Store, Truck } from "lucide-react";
+import { ArrowLeft, MapPin, Star, Phone, Mail, MessageCircle, Package, Clock, Store, Truck, AlertTriangle, Laptop, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ShareButton } from "@/components/shared/ShareButton";
 import { MarketplaceProductCard } from "@/components/marketplace/MarketplaceProductCard";
 import QuickFooter from "@/components/QuickFooter";
-
+import { useAuth } from "@/hooks/useAuth";
+import { useVendorDigitalProducts } from "@/hooks/useHasDigitalProducts";
 interface Vendor {
   id: string;
   business_name: string;
@@ -48,10 +51,15 @@ interface Product {
 export default function VendorShop() {
   const params = useParams<{ vendorId?: string; slug?: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isOwner, setIsOwner] = useState(false);
+  const [activeTab, setActiveTab] = useState("physical");
 
+  // Récupérer les produits numériques du vendeur
+  const { products: digitalProducts, loading: digitalProductsLoading } = useVendorDigitalProducts(vendor?.id);
   // Le paramètre peut être 'slug' ou 'vendorId' selon la route utilisée
   const identifier = params.slug || params.vendorId;
 
@@ -59,7 +67,7 @@ export default function VendorShop() {
     if (identifier) {
       loadVendorData();
     }
-  }, [identifier]);
+  }, [identifier, user?.id]);
 
   const loadVendorData = async () => {
     try {
@@ -85,7 +93,7 @@ export default function VendorShop() {
           .from('vendors')
           .select('*')
           .eq('id', id)
-          .single();
+          .maybeSingle();
         
         if (error) throw error;
         vendorData = data;
@@ -95,15 +103,20 @@ export default function VendorShop() {
           .from('vendors')
           .select('*')
           .eq('shop_slug', id)
-          .single();
+          .maybeSingle();
         
         if (error) throw error;
         vendorData = data;
       }
       
-      if (!vendorData || !vendorData.is_active) {
-        toast.error('Cette boutique n\'existe pas ou n\'est plus active');
-        navigate('/marketplace');
+      // Vérifier si l'utilisateur connecté est le propriétaire
+      const vendorIsOwned = vendorData && user?.id && vendorData.user_id === user.id;
+      setIsOwner(!!vendorIsOwned);
+      
+      // Si la boutique n'existe pas, afficher le message d'erreur
+      if (!vendorData) {
+        setVendor(null);
+        setProducts([]);
         return;
       }
 
@@ -114,6 +127,12 @@ export default function VendorShop() {
       }
 
       setVendor(vendorData);
+
+      // Boutique inactive: on affiche la page mais on ne charge pas les produits pour les clients
+      if (!vendorData.is_active && !vendorIsOwned) {
+        setProducts([]);
+        return;
+      }
 
       // Charger les produits du vendeur
       const { data: productsData, error: productsError } = await supabase
@@ -218,6 +237,39 @@ export default function VendorShop() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
+      {/* Alertes boutique inactive */}
+      {!vendor.is_active && (
+        <Alert className="m-4 border-destructive/50 bg-destructive/10">
+          <AlertTriangle className="h-4 w-4 text-destructive" />
+          <AlertTitle className="text-destructive">Boutique inactive</AlertTitle>
+          <AlertDescription className="text-muted-foreground">
+            {isOwner ? (
+              <>
+                Votre boutique n'est pas visible par les clients.
+                <Button
+                  variant="link"
+                  className="p-0 h-auto text-primary ml-1"
+                  onClick={() => navigate('/vendeur')}
+                >
+                  Activez-la dans vos paramètres vendeur
+                </Button>
+              </>
+            ) : (
+              <>
+                Cette boutique est temporairement indisponible.
+                <Button
+                  variant="link"
+                  className="p-0 h-auto text-primary ml-1"
+                  onClick={() => navigate('/marketplace')}
+                >
+                  Retour au marketplace
+                </Button>
+              </>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-40">
         <div className="px-4 py-4 flex items-center justify-between">
@@ -226,6 +278,11 @@ export default function VendorShop() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <h1 className="text-xl font-bold text-foreground">Boutique</h1>
+            {!vendor.is_active && (
+              <Badge variant="outline" className="border-orange-500/50 text-orange-500">
+                Inactive
+              </Badge>
+            )}
           </div>
           <ShareButton
             title={vendor.business_name}
@@ -379,41 +436,151 @@ export default function VendorShop() {
 
       {/* Products */}
       <div className="px-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">
-            <Package className="w-5 h-5 inline mr-2" />
-            Produits ({products.length})
-          </h3>
-        </div>
+        {/* Tabs pour produits physiques et numériques */}
+        {digitalProducts.length > 0 ? (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="physical" className="gap-2">
+                <Package className="w-4 h-4" />
+                Produits ({products.length})
+              </TabsTrigger>
+              <TabsTrigger value="digital" className="gap-2">
+                <Laptop className="w-4 h-4" />
+                Numériques ({digitalProducts.length})
+              </TabsTrigger>
+            </TabsList>
 
-        {products.length === 0 ? (
-          <Card className="p-8 text-center">
-            <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Ce vendeur n'a pas encore de produits disponibles.</p>
-          </Card>
+            {/* Produits physiques */}
+            <TabsContent value="physical">
+              {products.length === 0 ? (
+                <Card className="p-8 text-center">
+                  <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">Ce vendeur n'a pas encore de produits physiques disponibles.</p>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {products.map((product) => (
+                    <MarketplaceProductCard
+                      key={product.id}
+                      id={product.id}
+                      image={product.images || []}
+                      title={product.name}
+                      price={product.price}
+                      vendor={vendor.business_name}
+                      vendorId={vendor.id}
+                      rating={vendor.rating || 0}
+                      reviewCount={vendor.total_orders || 0}
+                      stock={product.stock_quantity}
+                      category={product.categories?.name}
+                      onBuy={() => handleProductClick(product.id)}
+                      onAddToCart={() => {
+                        toast.success('Produit ajouté au panier');
+                      }}
+                      onContact={handleContactVendor}
+                    />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Produits numériques */}
+            <TabsContent value="digital">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {digitalProducts.map((product: any) => (
+                  <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/digital-product/${product.id}`)}>
+                    <div className="relative h-40 bg-muted">
+                      <img
+                        src={product.images?.[0] || '/placeholder.svg'}
+                        alt={product.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/placeholder.svg';
+                        }}
+                      />
+                      <div className="absolute top-2 left-2">
+                        <Badge className="bg-accent text-accent-foreground">
+                          <Laptop className="w-3 h-3 mr-1" />
+                          {product.category}
+                        </Badge>
+                      </div>
+                      {product.product_mode === 'affiliate' && (
+                        <div className="absolute top-2 right-2">
+                          <Badge variant="outline" className="bg-white/90">
+                            <ExternalLink className="w-3 h-3 mr-1" />
+                            Affiliation
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold text-foreground line-clamp-1 mb-1">
+                        {product.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                        {product.short_description || product.description || 'Aucune description'}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        {product.price > 0 ? (
+                          <span className="font-bold text-lg text-primary">
+                            {new Intl.NumberFormat('fr-FR', {
+                              style: 'currency',
+                              currency: product.currency || 'GNF',
+                              maximumFractionDigits: 0
+                            }).format(product.price)}
+                          </span>
+                        ) : (
+                          <span className="font-bold text-lg text-green-600">Gratuit</span>
+                        )}
+                        <Button size="sm" variant="outline">
+                          Voir détails
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </TabsContent>
+          </Tabs>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {products.map((product) => (
-              <MarketplaceProductCard
-                key={product.id}
-                id={product.id}
-                image={product.images || []}
-                title={product.name}
-                price={product.price}
-                vendor={vendor.business_name}
-                vendorId={vendor.id}
-                rating={vendor.rating || 0}
-                reviewCount={vendor.total_orders || 0}
-                stock={product.stock_quantity}
-                category={product.categories?.name}
-                onBuy={() => handleProductClick(product.id)}
-                onAddToCart={() => {
-                  toast.success('Produit ajouté au panier');
-                }}
-                onContact={handleContactVendor}
-              />
-            ))}
-          </div>
+          // Affichage simple si pas de produits numériques
+          <>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">
+                <Package className="w-5 h-5 inline mr-2" />
+                Produits ({products.length})
+              </h3>
+            </div>
+
+            {products.length === 0 ? (
+              <Card className="p-8 text-center">
+                <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">Ce vendeur n'a pas encore de produits disponibles.</p>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {products.map((product) => (
+                  <MarketplaceProductCard
+                    key={product.id}
+                    id={product.id}
+                    image={product.images || []}
+                    title={product.name}
+                    price={product.price}
+                    vendor={vendor.business_name}
+                    vendorId={vendor.id}
+                    rating={vendor.rating || 0}
+                    reviewCount={vendor.total_orders || 0}
+                    stock={product.stock_quantity}
+                    category={product.categories?.name}
+                    onBuy={() => handleProductClick(product.id)}
+                    onAddToCart={() => {
+                      toast.success('Produit ajouté au panier');
+                    }}
+                    onContact={handleContactVendor}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 

@@ -14,11 +14,12 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MarketplaceItem } from '@/hooks/useMarketplaceUniversal';
-import { useState } from 'react';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
+import { ExternalLink } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useDisplayCurrency } from './CurrencyIndicator';
+import { MediaAutoCarousel } from './MediaAutoCarousel';
 
 interface UniversalMarketplaceCardProps {
   item: MarketplaceItem;
@@ -33,24 +34,35 @@ export function UniversalMarketplaceCard({
   onViewDetails,
   className
 }: UniversalMarketplaceCardProps) {
-  const [imageError, setImageError] = useState(false);
   const { convert, loading: priceLoading } = usePriceConverter();
   const { t } = useTranslation();
   const { displayCurrency } = useDisplayCurrency();
 
-  // Image par défaut selon le type
+  // Images par défaut selon le type
   const defaultImage = 
     item.item_type === 'digital_product'
-      ? 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=400' // Numérique
-      : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400'; // Produit
+      ? 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=400'
+      : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400';
 
-  const mainImage = item.images && item.images.length > 0 && !imageError && item.images[0]?.trim()
-    ? item.images[0]
-    : defaultImage;
+  // Préparer les images (filtrer les vides)
+  const validImages = (item.images || []).filter(img => img && img.trim());
+  const displayImages = validImages.length > 0 ? validImages : [defaultImage];
+  
+  // Récupérer les vidéos promotionnelles
+  const videos = (item.promotional_videos || []).filter((v: string) => v && v.trim());
 
   // Badge selon le type
   const getTypeBadge = () => {
     if (item.item_type === 'digital_product') {
+      // Distinction affiliation vs vente directe
+      if (item.license_type === 'Affiliation') {
+        return (
+          <Badge className="absolute top-2 left-2 bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white border-0">
+            <ExternalLink className="w-3 h-3 mr-1" />
+            Affiliation
+          </Badge>
+        );
+      }
       return (
         <Badge className="absolute top-2 left-2 bg-purple-500 text-white">
           <Download className="w-3 h-3 mr-1" />
@@ -77,6 +89,9 @@ export function UniversalMarketplaceCard({
 
   const getMainActionLabel = () => {
     if (item.item_type === 'digital_product') {
+      if (item.license_type === 'Affiliation') {
+        return 'Voir l\'offre';
+      }
       return t('marketplace.card.action.buy') || 'Acheter';
     }
     return t('marketplace.card.action.addToCart') || 'Ajouter au panier';
@@ -84,6 +99,9 @@ export function UniversalMarketplaceCard({
 
   const getMainActionIcon = () => {
     if (item.item_type === 'digital_product') {
+      if (item.license_type === 'Affiliation') {
+        return <ExternalLink className="w-4 h-4" />;
+      }
       return <Download className="w-4 h-4" />;
     }
     return <ShoppingCart className="w-4 h-4" />;
@@ -98,13 +116,16 @@ export function UniversalMarketplaceCard({
       )}
       onClick={() => onViewDetails?.(item.id)}
     >
-      {/* Image */}
-      <div className="relative aspect-square overflow-hidden bg-muted">
-        <img
-          src={mainImage}
+      {/* Media Carousel - Vidéos + Images */}
+      <div className="relative">
+        <MediaAutoCarousel
+          videos={videos}
+          images={displayImages}
           alt={item.name}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-          onError={() => setImageError(true)}
+          imageDisplayDuration={3000}
+          autoPlay={true}
+          showControls={true}
+          muted={true}
         />
         
         {/* Badge type */}
@@ -112,7 +133,7 @@ export function UniversalMarketplaceCard({
 
         {/* Rating badge (si présent) */}
         {item.rating > 0 && (
-          <Badge className="absolute top-2 right-2 bg-white/90 text-gray-900">
+          <Badge className="absolute top-2 right-2 bg-white/90 text-gray-900 z-20">
             <Star className="w-3 h-3 mr-1 fill-yellow-400 text-yellow-400" />
             {item.rating.toFixed(1)}
           </Badge>
@@ -120,7 +141,7 @@ export function UniversalMarketplaceCard({
 
         {/* Prix barré (si promotion) */}
         {item.originalPrice && item.originalPrice > item.price && (
-          <Badge className="absolute bottom-2 right-2 bg-red-500 text-white">
+          <Badge className="absolute bottom-10 right-2 bg-red-500 text-white z-20">
             -{Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100)}%
           </Badge>
         )}
