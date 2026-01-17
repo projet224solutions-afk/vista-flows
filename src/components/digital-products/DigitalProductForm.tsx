@@ -545,6 +545,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
               setSalesMode(mode);
             }}
             disabled={!config.allowDirectSale && !config.allowAffiliate}
+            hideDirectSale={category === 'physique_affilie'}
           />
         );
       
