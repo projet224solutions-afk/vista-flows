@@ -31,6 +31,7 @@ import {
   ShoppingCart, TrendingUp, Camera, Save, X, Copy,
   Sparkles, Loader2, ImagePlus, Tags, FolderOpen, Barcode, AlertCircle, Video
 } from "lucide-react";
+import { ProductBarcodeDisplay } from "./ProductBarcodeDisplay";
 
 interface Product {
   id: string;
@@ -1004,12 +1005,15 @@ export default function ProductManagement() {
                 )}
               </div>
               
-              {/* Barcode */}
+              {/* Barcode - Clickable visual barcode */}
               {product.barcode && (
-                <div className="flex items-center gap-1 text-[10px] md:text-sm bg-muted/50 rounded px-1.5 py-0.5 md:px-2 md:py-1">
-                  <Barcode className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
-                  <span className="font-mono text-[9px] md:text-xs truncate">{product.barcode}</span>
-                </div>
+                <ProductBarcodeDisplay
+                  barcode={product.barcode}
+                  productName={product.name}
+                  sku={product.sku}
+                  price={product.price}
+                  size="small"
+                />
               )}
 
               {/* Stock */}

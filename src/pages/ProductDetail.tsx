@@ -21,6 +21,8 @@ interface Product {
   promotional_videos?: string[];
   stock_quantity?: number;
   vendor_id: string;
+  barcode?: string;
+  sku?: string;
   vendors?: {
     business_name: string;
     id: string;
@@ -68,7 +70,7 @@ export default function ProductDetail() {
   } = useAutoCarousel({
     videos,
     images,
-    imageDisplayDuration: 3000,
+    imageDisplayDuration: 15000,
     enabled: true
   });
 
