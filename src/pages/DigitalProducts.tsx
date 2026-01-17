@@ -4,7 +4,7 @@
  * Note: Dropshipping retiré de l'UI mais authentification conservée
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Package, 
@@ -12,15 +12,20 @@ import {
   Monitor, 
   GraduationCap, 
   BookOpen, 
-  Sparkles,
   ArrowLeft,
   Store,
-  Lock,
   ShoppingBag,
-  Bot
+  Bot,
+  Search,
+  Eye,
+  ExternalLink,
+  Star,
+  ShoppingCart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -29,6 +34,8 @@ import { MerchantActivationDialog } from '@/components/digital-products/Merchant
 import { CategoryProductsList } from '@/components/digital-products/CategoryProductsList';
 import { TravelModule } from '@/components/travel/TravelModule';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useDigitalProducts } from '@/hooks/useDigitalProducts';
+import { LocalPrice } from '@/components/ui/LocalPrice';
 
 interface ProductModule {
   id: string;
@@ -99,8 +106,24 @@ export default function DigitalProducts() {
   const [selectedModule, setSelectedModule] = useState<ProductModule | null>(null);
   const [showCategoryProducts, setShowCategoryProducts] = useState(false);
   const [showTravelModule, setShowTravelModule] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const { products: allProducts, loading: productsLoading } = useDigitalProducts({ limit: 100 });
 
   const isMerchant = profile?.role === 'vendeur';
+
+  // Filtrer les produits par recherche
+  const filteredProducts = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const query = searchQuery.toLowerCase().trim();
+    return allProducts.filter(product => 
+      product.title?.toLowerCase().includes(query) ||
+      product.short_description?.toLowerCase().includes(query) ||
+      product.description?.toLowerCase().includes(query)
+    );
+  }, [allProducts, searchQuery]);
+
+  const isSearching = searchQuery.trim().length > 0;
 
   const handleModuleClick = (module: ProductModule) => {
     // Pour le module voyage, afficher le module dédié
@@ -138,6 +161,19 @@ export default function DigitalProducts() {
     if (selectedModule) {
       setShowCategoryProducts(true);
     }
+  };
+
+  const handleProductClick = (product: any) => {
+    if (product.product_mode === 'affiliate' && product.affiliate_url) {
+      window.open(product.affiliate_url, '_blank');
+    } else {
+      navigate(`/digital-product/${product.id}`);
+    }
+  };
+
+  const getCategoryGradient = (category: string) => {
+    const module = productModules.find(m => m.category === category);
+    return module?.gradient || 'from-primary to-primary/80';
   };
 
   if (loading) {
@@ -204,87 +240,202 @@ export default function DigitalProducts() {
         </div>
       </header>
 
-      {/* Status Banner */}
-      {user && !isMerchant && (
-        <div className="px-4 py-3 bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10 border-b border-primary/20">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 flex-1">
-              <Store className="w-4 h-4 text-primary shrink-0" />
-              <div className="text-xs">
-                <p className="font-medium text-foreground">{t('digital.wantToSell')}</p>
-                <p className="text-muted-foreground">{t('digital.activateMerchant')}</p>
+      {/* Barre de recherche */}
+      <section className="px-4 py-3 border-b border-border">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Rechercher un produit numérique..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 h-10 bg-muted/50 border-border"
+          />
+        </div>
+        {isSearching && (
+          <p className="text-xs text-muted-foreground mt-2">
+            {filteredProducts.length} résultat{filteredProducts.length !== 1 ? 's' : ''} pour "{searchQuery}"
+          </p>
+        )}
+      </section>
+
+      {/* Résultats de recherche */}
+      {isSearching ? (
+        <section className="px-4 py-4">
+          {productsLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center bg-muted">
+                <Search className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">
+                Aucun résultat pour "{searchQuery}"
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Essayez avec d'autres mots-clés
+              </p>
+              <Button variant="outline" onClick={() => setSearchQuery('')}>
+                Effacer la recherche
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {filteredProducts.map((product) => (
+                <Card 
+                  key={product.id}
+                  className="cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-200"
+                  onClick={() => handleProductClick(product)}
+                >
+                  <div className="relative aspect-square bg-muted">
+                    {product.images && product.images[0] ? (
+                      <img 
+                        src={product.images[0]} 
+                        alt={product.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className={cn(
+                        'w-full h-full flex items-center justify-center',
+                        'bg-gradient-to-br text-white/50',
+                        getCategoryGradient(product.category)
+                      )}>
+                        <ShoppingCart className="w-10 h-10" />
+                      </div>
+                    )}
+                    
+                    {/* Badges */}
+                    <div className="absolute top-2 left-2 flex flex-col gap-1">
+                      {product.product_mode === 'affiliate' && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
+                          <ExternalLink className="w-3 h-3 mr-1" />
+                          Affilié
+                        </Badge>
+                      )}
+                      {product.is_featured && (
+                        <Badge className="text-[10px] px-1.5 py-0.5 bg-yellow-500">
+                          <Star className="w-3 h-3 mr-1" />
+                          Featured
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <CardContent className="p-3">
+                    <h3 className="font-medium text-sm text-foreground line-clamp-2 mb-1">
+                      {product.title}
+                    </h3>
+                    
+                    {product.short_description && (
+                      <p className="text-xs text-muted-foreground line-clamp-1 mb-2">
+                        {product.short_description}
+                      </p>
+                    )}
+
+                    <div className="flex items-center justify-between">
+                      <LocalPrice 
+                        amount={product.price} 
+                        currency={product.currency || 'GNF'} 
+                        size="sm"
+                        className="font-bold text-primary"
+                      />
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Eye className="w-3 h-3" />
+                        <span className="text-xs">{product.views_count || 0}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
+      ) : (
+        <>
+          {/* Status Banner */}
+          {user && !isMerchant && (
+            <div className="px-4 py-3 bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10 border-b border-primary/20">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 flex-1">
+                  <Store className="w-4 h-4 text-primary shrink-0" />
+                  <div className="text-xs">
+                    <p className="font-medium text-foreground">{t('digital.wantToSell')}</p>
+                    <p className="text-muted-foreground">{t('digital.activateMerchant')}</p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={handleBecomeMerchant}
+                  className="shrink-0 h-8 text-xs"
+                >
+                  {t('digital.becomeMerchant')}
+                </Button>
               </div>
             </div>
-            <Button
-              size="sm"
-              onClick={handleBecomeMerchant}
-              className="shrink-0 h-8 text-xs"
-            >
-              {t('digital.becomeMerchant')}
-            </Button>
-          </div>
-        </div>
+          )}
+
+          {user && isMerchant && (
+            <div className="px-4 py-2.5 bg-green-500/10 text-green-600 border-b border-green-500/20 text-center text-sm">
+              <span className="flex items-center justify-center gap-2">
+                <Store className="w-4 h-4" />
+                {t('digital.merchantActive')}
+              </span>
+            </div>
+          )}
+
+          {/* Hero Section */}
+          <section className="px-4 py-6">
+            <div className="text-center">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 rounded-full mb-3">
+                <Package className="w-4 h-4 text-primary" />
+                <span className="text-xs font-medium text-primary">{t('digital.marketplaceDigital')}</span>
+              </div>
+              <h2 className="text-xl font-bold text-foreground mb-2">
+                {t('digital.discover')}
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                {t('digital.discoverDesc')}
+                {!isMerchant && ` ${t('digital.becomeSellerPrompt')}`}
+              </p>
+            </div>
+          </section>
+
+          {/* Modules Grid */}
+          <section className="px-4 pb-6">
+            <div className="grid grid-cols-2 gap-3">
+              {productModules.map((module) => (
+                <Card 
+                  key={module.id}
+                  className={cn(
+                    'cursor-pointer overflow-hidden transition-all duration-200',
+                    'hover:shadow-lg hover:scale-[1.02]',
+                    'border-border/50 bg-card'
+                  )}
+                  onClick={() => handleModuleClick(module)}
+                >
+                  <CardContent className="p-4">
+                    <div className={cn(
+                      'w-12 h-12 rounded-xl flex items-center justify-center mb-3',
+                      'bg-gradient-to-br text-white shadow-md',
+                      module.gradient
+                    )}>
+                      {module.icon}
+                    </div>
+                    <h3 className="font-semibold text-foreground text-sm mb-1">
+                      {t(module.titleKey)}
+                    </h3>
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {t(module.descriptionKey)}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        </>
       )}
-
-      {user && isMerchant && (
-        <div className="px-4 py-2.5 bg-green-500/10 text-green-600 border-b border-green-500/20 text-center text-sm">
-          <span className="flex items-center justify-center gap-2">
-            <Store className="w-4 h-4" />
-            {t('digital.merchantActive')}
-          </span>
-        </div>
-      )}
-
-      {/* Hero Section */}
-      <section className="px-4 py-6">
-        <div className="text-center">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 rounded-full mb-3">
-            <Package className="w-4 h-4 text-primary" />
-            <span className="text-xs font-medium text-primary">{t('digital.marketplaceDigital')}</span>
-          </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">
-            {t('digital.discover')}
-          </h2>
-          <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-            {t('digital.discoverDesc')}
-            {!isMerchant && ` ${t('digital.becomeSellerPrompt')}`}
-          </p>
-        </div>
-      </section>
-
-      {/* Modules Grid */}
-      <section className="px-4 pb-6">
-        <div className="grid grid-cols-2 gap-3">
-          {productModules.map((module) => (
-            <Card 
-              key={module.id}
-              className={cn(
-                'cursor-pointer overflow-hidden transition-all duration-200',
-                'hover:shadow-lg hover:scale-[1.02]',
-                'border-border/50 bg-card'
-              )}
-              onClick={() => handleModuleClick(module)}
-            >
-              <CardContent className="p-4">
-                <div className={cn(
-                  'w-12 h-12 rounded-xl flex items-center justify-center mb-3',
-                  'bg-gradient-to-br text-white shadow-md',
-                  module.gradient
-                )}>
-                  {module.icon}
-                </div>
-                <h3 className="font-semibold text-foreground text-sm mb-1">
-                  {t(module.titleKey)}
-                </h3>
-                <p className="text-xs text-muted-foreground line-clamp-2">
-                  {t(module.descriptionKey)}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
 
       {/* Dialog d'activation marchand */}
       <MerchantActivationDialog
