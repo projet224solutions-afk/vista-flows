@@ -2,9 +2,10 @@
  * Page Produits Numériques & Marketplace
  * Modules: Voyage, Logiciel, Formation, Livres, Produit custom
  * Note: Dropshipping retiré de l'UI mais authentification conservée
+ * Affiche uniquement les catégories qui ont des produits
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Package, 
@@ -36,6 +37,7 @@ import { TravelModule } from '@/components/travel/TravelModule';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useDigitalProducts } from '@/hooks/useDigitalProducts';
 import { LocalPrice } from '@/components/ui/LocalPrice';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProductModule {
   id: string;
@@ -46,8 +48,8 @@ interface ProductModule {
   category: 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom' | 'ai' | 'physique_affilie';
 }
 
-// Dropshipping retiré de l'affichage mais catégorie conservée pour l'auth
-const productModules: ProductModule[] = [
+// Tous les modules disponibles
+const allProductModules: ProductModule[] = [
   {
     id: 'voyage',
     icon: <Plane className="w-7 h-7" />,
@@ -107,10 +109,61 @@ export default function DigitalProducts() {
   const [showCategoryProducts, setShowCategoryProducts] = useState(false);
   const [showTravelModule, setShowTravelModule] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [categoriesWithProducts, setCategoriesWithProducts] = useState<Map<string, number>>(new Map());
+  const [loadingCategories, setLoadingCategories] = useState(true);
 
   const { products: allProducts, loading: productsLoading } = useDigitalProducts({ limit: 100 });
 
   const isMerchant = profile?.role === 'vendeur';
+
+  // Charger les catégories qui ont des produits
+  useEffect(() => {
+    const loadCategoriesWithProducts = async () => {
+      try {
+        setLoadingCategories(true);
+        const { data, error } = await supabase
+          .from('digital_products')
+          .select('category')
+          .eq('status', 'active');
+
+        if (error) throw error;
+
+        // Compter les produits par catégorie
+        const categoryCount = new Map<string, number>();
+        (data || []).forEach(product => {
+          if (product.category) {
+            const count = categoryCount.get(product.category) || 0;
+            categoryCount.set(product.category, count + 1);
+          }
+        });
+
+        setCategoriesWithProducts(categoryCount);
+      } catch (error) {
+        console.error('Erreur chargement catégories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    loadCategoriesWithProducts();
+  }, []);
+
+  // Filtrer les modules pour n'afficher que ceux avec des produits
+  const visibleModules = useMemo(() => {
+    return allProductModules.filter(module => {
+      // Toujours afficher le module voyage (service spécial)
+      if (module.category === 'voyage') return true;
+      // Afficher les modules qui ont des produits
+      return categoriesWithProducts.has(module.category) && (categoriesWithProducts.get(module.category) || 0) > 0;
+    }).sort((a, b) => {
+      // Voyage en premier, puis par nombre de produits décroissant
+      if (a.category === 'voyage') return -1;
+      if (b.category === 'voyage') return 1;
+      const countA = categoriesWithProducts.get(a.category) || 0;
+      const countB = categoriesWithProducts.get(b.category) || 0;
+      return countB - countA;
+    });
+  }, [categoriesWithProducts]);
 
   // Filtrer les produits par recherche
   const filteredProducts = useMemo(() => {
@@ -133,26 +186,22 @@ export default function DigitalProducts() {
     }
     
     // Afficher directement les produits de la catégorie
-    // Que l'utilisateur soit connecté ou non, il peut consulter
     setSelectedModule(module);
     setShowCategoryProducts(true);
   };
 
   const handleBecomeMerchant = () => {
-    // Si pas connecté, rediriger vers auth
     if (!user) {
       toast.info(t('digital.loginRequired'));
       navigate('/auth', { state: { redirectTo: '/digital-products' } });
       return;
     }
 
-    // Si connecté mais pas marchand, afficher dialog d'activation
     if (!isMerchant) {
       setShowActivationDialog(true);
       return;
     }
 
-    // Si déjà marchand, rediriger vers la création de produit
     toast.info(t('digital.alreadyMerchant'));
   };
 
@@ -172,11 +221,11 @@ export default function DigitalProducts() {
   };
 
   const getCategoryGradient = (category: string) => {
-    const module = productModules.find(m => m.category === category);
+    const module = allProductModules.find(m => m.category === category);
     return module?.gradient || 'from-primary to-primary/80';
   };
 
-  if (loading) {
+  if (loading || loadingCategories) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -402,37 +451,61 @@ export default function DigitalProducts() {
             </div>
           </section>
 
-          {/* Modules Grid */}
+          {/* Modules Grid - Seulement ceux avec produits */}
           <section className="px-4 pb-6">
-            <div className="grid grid-cols-2 gap-3">
-              {productModules.map((module) => (
-                <Card 
-                  key={module.id}
-                  className={cn(
-                    'cursor-pointer overflow-hidden transition-all duration-200',
-                    'hover:shadow-lg hover:scale-[1.02]',
-                    'border-border/50 bg-card'
-                  )}
-                  onClick={() => handleModuleClick(module)}
-                >
-                  <CardContent className="p-4">
-                    <div className={cn(
-                      'w-12 h-12 rounded-xl flex items-center justify-center mb-3',
-                      'bg-gradient-to-br text-white shadow-md',
-                      module.gradient
-                    )}>
-                      {module.icon}
-                    </div>
-                    <h3 className="font-semibold text-foreground text-sm mb-1">
-                      {t(module.titleKey)}
-                    </h3>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      {t(module.descriptionKey)}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {visibleModules.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center bg-muted">
+                  <Package className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">
+                  Aucune catégorie disponible
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Soyez le premier à ajouter un produit numérique!
+                </p>
+                <Button onClick={handleBecomeMerchant}>
+                  {user ? (isMerchant ? 'Ajouter un produit' : 'Devenir marchand') : 'Se connecter'}
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {visibleModules.map((module) => (
+                  <Card 
+                    key={module.id}
+                    className={cn(
+                      'cursor-pointer overflow-hidden transition-all duration-200',
+                      'hover:shadow-lg hover:scale-[1.02]',
+                      'border-border/50 bg-card'
+                    )}
+                    onClick={() => handleModuleClick(module)}
+                  >
+                    <CardContent className="p-4">
+                      <div className={cn(
+                        'w-12 h-12 rounded-xl flex items-center justify-center mb-3',
+                        'bg-gradient-to-br text-white shadow-md',
+                        module.gradient
+                      )}>
+                        {module.icon}
+                      </div>
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className="font-semibold text-foreground text-sm">
+                          {t(module.titleKey)}
+                        </h3>
+                        {module.category !== 'voyage' && categoriesWithProducts.get(module.category) && (
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
+                            {categoriesWithProducts.get(module.category)}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {t(module.descriptionKey)}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </section>
         </>
       )}
