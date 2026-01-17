@@ -262,7 +262,7 @@ export default function VendorDigitalProducts() {
                       variant="outline"
                       size="sm"
                       className="flex-1"
-                      onClick={() => navigate(`/digital-products?view=${product.id}`)}
+                      onClick={() => navigate(`/digital-product/${product.id}`)}
                     >
                       <Eye className="w-4 h-4 mr-1" />
                       Voir

@@ -487,7 +487,7 @@ export default function VendorShop() {
             <TabsContent value="digital">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {digitalProducts.map((product: any) => (
-                  <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/digital-products?view=${product.id}`)}>
+                  <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/digital-product/${product.id}`)}>
                     <div className="relative h-40 bg-muted">
                       <img
                         src={product.images?.[0] || '/placeholder.svg'}

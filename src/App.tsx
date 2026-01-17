@@ -109,6 +109,7 @@ const StolenMotoDeclaration = lazyWithRetry(() => import("./pages/StolenMotoDecl
 const VisualSearch = lazyWithRetry(() => import("./pages/VisualSearch"));
 const Categories = lazyWithRetry(() => import("./pages/Categories"));
 const DigitalProducts = lazyWithRetry(() => import("./pages/DigitalProducts"));
+const DigitalProductDetail = lazyWithRetry(() => import("./pages/DigitalProductDetail"));
 const ShortLinkRedirect = lazyWithRetry(() => import("./pages/ShortLinkRedirect"));
 const UserPublicProfile = lazyWithRetry(() => import("./pages/UserPublicProfile"));
 const RestaurantPublicMenu = lazyWithRetry(() => import("./pages/RestaurantPublicMenu"));
@@ -244,6 +245,7 @@ function App() {
               <Route path="/proximite/boutiques" element={<NearbyBoutiques />} />
               <Route path="/categories" element={<Categories />} />
               <Route path="/digital-products" element={<DigitalProducts />} />
+              <Route path="/digital-product/:id" element={<DigitalProductDetail />} />
               <Route path="/boutiques" element={<NearbyBoutiques />} />
               
               <Route path="/services-proximite" element={<ServicesProximite />} />

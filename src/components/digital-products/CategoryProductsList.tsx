@@ -71,7 +71,7 @@ export function CategoryProductsList({
     if (product.product_mode === 'affiliate' && product.affiliate_url) {
       window.open(product.affiliate_url, '_blank');
     } else {
-      navigate(`/product/${product.id}?type=digital`);
+      navigate(`/digital-product/${product.id}`);
     }
   };
 
