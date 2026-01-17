@@ -1679,6 +1679,7 @@ export default function Auth() {
                     { id: 'livraison', name: 'Livraison', icon: '🚚', desc: 'Coursier & colis' },
                     { id: 'voyage', name: 'Voyage', icon: '✈️', desc: 'Tourisme & voyages' },
                     { id: 'ecommerce', name: 'Boutique', icon: '🏪', desc: 'E-commerce' },
+                    { id: 'digital', name: 'Produits Numériques', icon: '📱', desc: 'E-books, logiciels, formations' },
                   ].map((service) => (
                     <button
                       key={service.id}
