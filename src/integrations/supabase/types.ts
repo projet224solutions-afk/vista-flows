@@ -21861,6 +21861,22 @@ export type Database = {
           },
         ]
       }
+      vendor_product_analytics: {
+        Row: {
+          category_name: string | null
+          country_breakdown: Json | null
+          images: string[] | null
+          peak_hour: number | null
+          previous_views: number | null
+          product_id: string | null
+          product_name: string | null
+          total_views: number | null
+          trend_percent: number | null
+          unique_views: number | null
+          vendor_id: string | null
+        }
+        Relationships: []
+      }
       wallet_summary: {
         Row: {
           balance: number | null
@@ -23025,6 +23041,15 @@ export type Database = {
         Args: { p_vehicle_id: string }
         Returns: Json
       }
+      get_vendor_analytics_overview: {
+        Args: {
+          p_end_date?: string
+          p_period?: string
+          p_start_date?: string
+          p_vendor_id: string
+        }
+        Returns: Json
+      }
       get_vendor_analytics_summary: {
         Args: { p_days?: number; p_vendor_id: string }
         Returns: {
@@ -23037,6 +23062,15 @@ export type Database = {
       }
       get_vendor_average_rating: {
         Args: { p_vendor_id: string }
+        Returns: Json
+      }
+      get_vendor_product_analytics: {
+        Args: {
+          p_limit?: number
+          p_page?: number
+          p_sort?: string
+          p_vendor_id: string
+        }
         Returns: Json
       }
       gettransactionid: { Args: never; Returns: unknown }
