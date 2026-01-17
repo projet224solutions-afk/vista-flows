@@ -670,6 +670,54 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_daily_stats: {
+        Row: {
+          computed_at: string | null
+          country_breakdown: Json | null
+          created_at: string
+          device_breakdown: Json | null
+          id: string
+          stat_date: string
+          top_products: Json | null
+          total_product_views: number | null
+          total_shop_visits: number | null
+          unique_product_viewers: number | null
+          unique_shop_visitors: number | null
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          computed_at?: string | null
+          country_breakdown?: Json | null
+          created_at?: string
+          device_breakdown?: Json | null
+          id?: string
+          stat_date: string
+          top_products?: Json | null
+          total_product_views?: number | null
+          total_shop_visits?: number | null
+          unique_product_viewers?: number | null
+          unique_shop_visitors?: number | null
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          computed_at?: string | null
+          country_breakdown?: Json | null
+          created_at?: string
+          device_breakdown?: Json | null
+          id?: string
+          stat_date?: string
+          top_products?: Json | null
+          total_product_views?: number | null
+          total_shop_visits?: number | null
+          unique_product_viewers?: number | null
+          unique_shop_visitors?: number | null
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: []
+      }
       api_alerts: {
         Row: {
           alert_type: string
@@ -11625,6 +11673,7 @@ export type Database = {
       product_views: {
         Row: {
           created_at: string
+          fingerprint_hash: string | null
           id: string
           metadata: Json | null
           product_id: string
@@ -11634,6 +11683,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          fingerprint_hash?: string | null
           id?: string
           metadata?: Json | null
           product_id: string
@@ -11643,12 +11693,64 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          fingerprint_hash?: string | null
           id?: string
           metadata?: Json | null
           product_id?: string
           session_id?: string | null
           user_id?: string
           viewed_at?: string
+        }
+        Relationships: []
+      }
+      product_views_raw: {
+        Row: {
+          country_code: string | null
+          created_at: string
+          device_type: string | null
+          fingerprint_hash: string
+          id: string
+          ip_address: unknown
+          product_id: string
+          referer_url: string | null
+          session_id: string | null
+          tracked_at: string
+          user_agent: string | null
+          user_id: string | null
+          vendor_id: string
+          view_date: string
+        }
+        Insert: {
+          country_code?: string | null
+          created_at?: string
+          device_type?: string | null
+          fingerprint_hash: string
+          id?: string
+          ip_address: unknown
+          product_id: string
+          referer_url?: string | null
+          session_id?: string | null
+          tracked_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+          vendor_id: string
+          view_date?: string
+        }
+        Update: {
+          country_code?: string | null
+          created_at?: string
+          device_type?: string | null
+          fingerprint_hash?: string
+          id?: string
+          ip_address?: unknown
+          product_id?: string
+          referer_url?: string | null
+          session_id?: string | null
+          tracked_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+          vendor_id?: string
+          view_date?: string
         }
         Relationships: []
       }
@@ -14991,6 +15093,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      shop_visits_raw: {
+        Row: {
+          country_code: string | null
+          created_at: string
+          device_type: string | null
+          entry_page: string | null
+          fingerprint_hash: string
+          id: string
+          ip_address: unknown
+          referer_url: string | null
+          session_id: string | null
+          tracked_at: string
+          user_agent: string | null
+          user_id: string | null
+          vendor_id: string
+          visit_date: string
+        }
+        Insert: {
+          country_code?: string | null
+          created_at?: string
+          device_type?: string | null
+          entry_page?: string | null
+          fingerprint_hash: string
+          id?: string
+          ip_address: unknown
+          referer_url?: string | null
+          session_id?: string | null
+          tracked_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+          vendor_id: string
+          visit_date?: string
+        }
+        Update: {
+          country_code?: string | null
+          created_at?: string
+          device_type?: string | null
+          entry_page?: string | null
+          fingerprint_hash?: string
+          id?: string
+          ip_address?: unknown
+          referer_url?: string | null
+          session_id?: string | null
+          tracked_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+          vendor_id?: string
+          visit_date?: string
+        }
+        Relationships: []
       }
       soc_analysts: {
         Row: {
@@ -19322,6 +19475,36 @@ export type Database = {
           },
         ]
       }
+      vendor_blocked_ips: {
+        Row: {
+          blocked_by: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          ip_address: unknown
+          reason: string | null
+          vendor_id: string
+        }
+        Insert: {
+          blocked_by?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          ip_address: unknown
+          reason?: string | null
+          vendor_id: string
+        }
+        Update: {
+          blocked_by?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          ip_address?: unknown
+          reason?: string | null
+          vendor_id?: string
+        }
+        Relationships: []
+      }
       vendor_certifications: {
         Row: {
           created_at: string
@@ -22096,6 +22279,7 @@ export type Database = {
       cleanup_old_product_views: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_system_errors: { Args: never; Returns: Json }
+      compute_daily_analytics: { Args: { p_date?: string }; Returns: number }
       confirm_delivery_and_release_escrow: {
         Args: { p_customer_id: string; p_escrow_id: string; p_notes?: string }
         Returns: Json
