@@ -553,13 +553,18 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                 <p className="text-sm text-muted-foreground min-w-0">
                   Vendu par{" "}
                   {product.vendors?.business_name ? (
-                    <Link
-                      to={`/boutique/${product.vendors.shop_slug || product.vendor_id}`}
-                      className="font-medium text-foreground hover:text-primary inline-flex items-center gap-1"
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onClose();
+                        navigate(`/boutique/${product.vendors?.shop_slug || product.vendor_id}`);
+                      }}
+                      className="font-medium text-foreground hover:text-primary inline-flex items-center gap-1 cursor-pointer bg-transparent border-none p-0"
                     >
                       <span className="truncate">{product.vendors.business_name}</span>
                       <ExternalLink className="w-3.5 h-3.5 shrink-0" />
-                    </Link>
+                    </button>
                   ) : (
                     <span className="font-medium text-foreground">Vendeur</span>
                   )}
