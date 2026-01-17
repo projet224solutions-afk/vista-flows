@@ -1,6 +1,6 @@
 /**
  * Sélecteur de mode de vente ultra professionnel
- * Design moderne inspiré des meilleures plateformes
+ * Design moderne aligné horizontalement
  */
 
 import { 
@@ -17,7 +17,7 @@ import {
   BarChart3,
   Percent,
   Sparkles,
-  ArrowRight
+  ChevronRight
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -40,40 +40,33 @@ const salesModes = {
     color: 'emerald',
     badgeText: 'Recommandé',
     badgeVariant: 'secondary' as const,
-    description: 'Créez et vendez vos propres produits numériques : formations, eBooks, templates, logiciels...',
+    description: 'Créez et vendez vos propres produits numériques',
     features: [
-      { icon: Wallet, text: 'Recevez 100% des revenus', highlight: true },
-      { icon: ShieldCheck, text: 'Contrôle total sur vos produits', highlight: false },
-      { icon: Users, text: 'Créez votre propre clientèle', highlight: false },
-      { icon: FileText, text: 'Gérez vos fichiers et accès', highlight: false }
+      { icon: Wallet, text: '100% des revenus' },
+      { icon: ShieldCheck, text: 'Contrôle total' },
+      { icon: Users, text: 'Votre clientèle' },
+      { icon: FileText, text: 'Gestion fichiers' }
     ],
-    requirements: [
-      'Contenu original ou droits de revente',
-      'Fichiers à livrer au client',
-      'Support client assuré par vous'
-    ],
+    highlight: 'Gardez 100% de vos ventes',
     commissionInfo: null
   },
   affiliate: {
     id: 'affiliate',
-    title: 'Marketing d\'Affiliation',
-    subtitle: 'Promouvez des produits partenaires',
+    title: 'Affiliation',
+    subtitle: 'Promouvez des partenaires',
     icon: Link2,
     color: 'violet',
     badgeText: 'Commission élevée',
     badgeVariant: 'default' as const,
-    description: 'Gagnez des commissions en promouvant des produits de partenaires comme Amazon, Booking, Systeme.io...',
+    description: 'Gagnez des commissions sur les ventes',
     features: [
-      { icon: Percent, text: 'Commissions jusqu\'à 75%', highlight: true },
-      { icon: Zap, text: 'Pas de création de produit', highlight: false },
-      { icon: Globe, text: 'Accès à des milliers de produits', highlight: false },
-      { icon: TrendingUp, text: 'Tracking automatique', highlight: false }
+      { icon: Percent, text: 'Jusqu\'à 75%' },
+      { icon: Zap, text: 'Sans création' },
+      { icon: Globe, text: 'Milliers de produits' },
+      { icon: TrendingUp, text: 'Tracking auto' }
     ],
-    requirements: [
-      'Lien d\'affiliation valide'
-    ],
+    highlight: 'Amazon, Booking, Systeme.io...',
     commissionInfo: {
-      label: 'Commission typique',
       ranges: [
         { platform: 'Amazon', rate: '1-10%' },
         { platform: 'Systeme.io', rate: '40-60%' },
@@ -87,22 +80,22 @@ const salesModes = {
 export function SalesModeSelector({ value, onChange, disabled }: SalesModeSelectorProps) {
   return (
     <div className="space-y-6">
-      {/* Header avec effet visuel */}
+      {/* Header */}
       <div className="text-center space-y-2">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary/10 to-accent/10 rounded-full border border-primary/20">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-primary/10 to-accent/10 rounded-full border border-primary/20">
           <Sparkles className="w-4 h-4 text-primary" />
-          <span className="text-sm font-semibold text-primary">Étape 1</span>
+          <span className="text-sm font-semibold text-primary">Modèle de vente</span>
         </div>
         <h2 className="text-xl font-bold text-foreground">
-          Choisissez votre modèle de vente
+          Choisissez votre stratégie
         </h2>
-        <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          Sélectionnez le mode qui correspond à votre stratégie commerciale
+        <p className="text-sm text-muted-foreground">
+          Sélectionnez le mode qui correspond à vos objectifs
         </p>
       </div>
 
-      {/* Grille de sélection */}
-      <div className="grid gap-4">
+      {/* Grille horizontale */}
+      <div className="grid grid-cols-2 gap-4">
         {(Object.keys(salesModes) as SalesMode[]).map((modeKey, index) => {
           const mode = salesModes[modeKey];
           const isSelected = value === modeKey;
@@ -114,112 +107,81 @@ export function SalesModeSelector({ value, onChange, disabled }: SalesModeSelect
               type="button"
               disabled={disabled}
               onClick={() => onChange(modeKey)}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, x: index === 0 ? -20 : 20 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
               className={cn(
-                'w-full text-left rounded-2xl border-2 overflow-hidden transition-all duration-300',
+                'relative text-left rounded-2xl border-2 p-4 transition-all duration-300 h-full',
                 'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
                 isSelected 
-                  ? 'border-primary shadow-xl shadow-primary/10 bg-gradient-to-br from-background via-background to-primary/5' 
+                  ? 'border-primary shadow-xl shadow-primary/10 bg-gradient-to-b from-primary/5 to-background' 
                   : 'border-border bg-card hover:border-muted-foreground/30 hover:shadow-lg',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
             >
-              {/* Header de la carte */}
-              <div className={cn(
-                'px-5 py-4 border-b transition-colors',
-                isSelected ? 'border-primary/20 bg-primary/5' : 'border-border'
-              )}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    {/* Icône avec gradient */}
-                    <div className={cn(
-                      'w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-transform',
-                      isSelected && 'scale-105',
-                      mode.color === 'emerald' 
-                        ? 'bg-gradient-to-br from-emerald-500 to-teal-600' 
-                        : 'bg-gradient-to-br from-violet-500 to-purple-600',
-                      'text-white shadow-lg'
-                    )}>
-                      <Icon className="w-6 h-6" />
-                    </div>
-
-                    {/* Titre et sous-titre */}
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-foreground text-lg">
-                          {mode.title}
-                        </h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {mode.subtitle}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Badge et indicateur de sélection */}
-                  <div className="flex items-center gap-3">
-                    <Badge 
-                      variant={mode.badgeVariant}
-                      className={cn(
-                        'text-xs font-medium',
-                        mode.color === 'violet' && 'bg-gradient-to-r from-violet-500 to-purple-600 text-white border-0'
-                      )}
-                    >
-                      {mode.badgeText}
-                    </Badge>
-                    
-                    {/* Indicateur radio stylisé */}
-                    <div className={cn(
-                      'w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300',
-                      isSelected 
-                        ? 'border-primary bg-primary scale-110' 
-                        : 'border-muted-foreground/30 bg-background'
-                    )}>
-                      {isSelected && (
-                        <Check className="w-4 h-4 text-primary-foreground" />
-                      )}
-                    </div>
-                  </div>
-                </div>
+              {/* Badge en haut à droite */}
+              <div className="absolute top-3 right-3">
+                <Badge 
+                  variant={mode.badgeVariant}
+                  className={cn(
+                    'text-[10px] font-medium',
+                    mode.color === 'violet' && 'bg-gradient-to-r from-violet-500 to-purple-600 text-white border-0'
+                  )}
+                >
+                  {mode.badgeText}
+                </Badge>
               </div>
 
-              {/* Corps de la carte */}
-              <div className="p-5 space-y-4">
-                {/* Description */}
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {mode.description}
-                </p>
+              {/* Indicateur de sélection */}
+              <div className={cn(
+                'absolute top-3 left-3 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all',
+                isSelected 
+                  ? 'border-primary bg-primary' 
+                  : 'border-muted-foreground/30'
+              )}>
+                {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+              </div>
 
-                {/* Features en grille 2x2 */}
-                <div className="grid grid-cols-2 gap-3">
+              {/* Contenu principal */}
+              <div className="pt-6 space-y-3">
+                {/* Icône */}
+                <div className={cn(
+                  'w-12 h-12 rounded-xl flex items-center justify-center mx-auto',
+                  mode.color === 'emerald' 
+                    ? 'bg-gradient-to-br from-emerald-500 to-teal-600' 
+                    : 'bg-gradient-to-br from-violet-500 to-purple-600',
+                  'text-white shadow-lg'
+                )}>
+                  <Icon className="w-6 h-6" />
+                </div>
+
+                {/* Titre */}
+                <div className="text-center">
+                  <h3 className="font-bold text-foreground text-base">{mode.title}</h3>
+                  <p className="text-xs text-muted-foreground">{mode.subtitle}</p>
+                </div>
+
+                {/* Highlight */}
+                <div className={cn(
+                  'text-center py-2 px-3 rounded-lg text-xs font-medium',
+                  mode.color === 'emerald' 
+                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
+                    : 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
+                )}>
+                  {mode.highlight}
+                </div>
+
+                {/* Features en liste */}
+                <div className="space-y-1.5">
                   {mode.features.map((feature, idx) => {
                     const FeatureIcon = feature.icon;
                     return (
                       <div 
                         key={idx} 
-                        className={cn(
-                          'flex items-center gap-2.5 p-2.5 rounded-lg transition-colors',
-                          feature.highlight 
-                            ? 'bg-primary/10 border border-primary/20' 
-                            : 'bg-muted/50'
-                        )}
+                        className="flex items-center gap-2 text-xs text-muted-foreground"
                       >
-                        <div className={cn(
-                          'w-7 h-7 rounded-lg flex items-center justify-center shrink-0',
-                          feature.highlight 
-                            ? 'bg-primary text-primary-foreground' 
-                            : 'bg-background text-primary'
-                        )}>
-                          <FeatureIcon className="w-4 h-4" />
-                        </div>
-                        <span className={cn(
-                          'text-xs font-medium',
-                          feature.highlight ? 'text-foreground' : 'text-muted-foreground'
-                        )}>
-                          {feature.text}
-                        </span>
+                        <FeatureIcon className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <span>{feature.text}</span>
                       </div>
                     );
                   })}
@@ -227,43 +189,29 @@ export function SalesModeSelector({ value, onChange, disabled }: SalesModeSelect
 
                 {/* Commission info pour affiliation */}
                 {mode.commissionInfo && (
-                  <div className="bg-gradient-to-r from-violet-500/10 to-purple-500/10 rounded-xl p-4 border border-violet-500/20">
-                    <div className="flex items-center gap-2 mb-3">
-                      <BarChart3 className="w-4 h-4 text-violet-500" />
-                      <span className="text-xs font-bold text-foreground uppercase tracking-wide">
-                        {mode.commissionInfo.label}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-muted/50 rounded-lg p-2 space-y-1">
+                    <p className="text-[10px] font-medium text-muted-foreground flex items-center gap-1">
+                      <BarChart3 className="w-3 h-3" />
+                      Commissions typiques
+                    </p>
+                    <div className="grid grid-cols-2 gap-1">
                       {mode.commissionInfo.ranges.map((item, idx) => (
-                        <div 
-                          key={idx} 
-                          className="flex items-center justify-between bg-background/80 rounded-lg px-3 py-2"
-                        >
-                          <span className="text-xs text-muted-foreground font-medium">
-                            {item.platform}
-                          </span>
-                          <span className={cn(
-                            'text-sm font-bold',
-                            item.rate.includes('75') || item.rate.includes('60') 
-                              ? 'text-emerald-500' 
-                              : 'text-primary'
-                          )}>
-                            {item.rate}
-                          </span>
+                        <div key={idx} className="flex justify-between text-[10px]">
+                          <span className="text-muted-foreground">{item.platform}</span>
+                          <span className="font-semibold text-primary">{item.rate}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Prérequis minimaliste */}
-                <div className="pt-2 border-t border-border/50">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <ArrowRight className="w-3 h-3" />
-                    <span className="font-medium">Prérequis :</span>
-                    <span>{mode.requirements[0]}</span>
-                  </div>
+                {/* Call to action */}
+                <div className={cn(
+                  'flex items-center justify-center gap-1 pt-2 text-xs font-medium transition-colors',
+                  isSelected ? 'text-primary' : 'text-muted-foreground'
+                )}>
+                  <span>{isSelected ? 'Sélectionné' : 'Sélectionner'}</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
                 </div>
               </div>
             </motion.button>
