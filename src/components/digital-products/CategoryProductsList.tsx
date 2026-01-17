@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 import { LocalPrice } from '@/components/ui/LocalPrice';
 
 interface CategoryProductsListProps {
-  category: 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom' | 'ai';
+  category: 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom' | 'ai' | 'physique_affilie';
   title: string;
   description: string;
   gradient: string;
