@@ -3,6 +3,7 @@
  * Design moderne aligné horizontalement
  */
 
+import React from 'react';
 import { 
   Store, 
   Link2, 
@@ -29,6 +30,7 @@ interface SalesModeSelectorProps {
   value: SalesMode;
   onChange: (mode: SalesMode) => void;
   disabled?: boolean;
+  hideDirectSale?: boolean;
 }
 
 const salesModes = {
@@ -77,7 +79,24 @@ const salesModes = {
   }
 };
 
-export function SalesModeSelector({ value, onChange, disabled }: SalesModeSelectorProps) {
+export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }: SalesModeSelectorProps) {
+  // Filtrer les modes selon hideDirectSale
+  const availableModes = hideDirectSale 
+    ? (['affiliate'] as SalesMode[])
+    : (Object.keys(salesModes) as SalesMode[]);
+
+  // Si on cache la vente directe et que la valeur actuelle est 'direct', forcer 'affiliate'
+  React.useEffect(() => {
+    if (hideDirectSale && value === 'direct') {
+      onChange('affiliate');
+    }
+  }, [hideDirectSale, value, onChange]);
+
+  // Si seulement l'affiliation est disponible, ne pas afficher le sélecteur
+  if (hideDirectSale) {
+    return null;
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -96,7 +115,7 @@ export function SalesModeSelector({ value, onChange, disabled }: SalesModeSelect
 
       {/* Grille horizontale */}
       <div className="grid grid-cols-2 gap-4">
-        {(Object.keys(salesModes) as SalesMode[]).map((modeKey, index) => {
+        {availableModes.map((modeKey, index) => {
           const mode = salesModes[modeKey];
           const isSelected = value === modeKey;
           const Icon = mode.icon;
