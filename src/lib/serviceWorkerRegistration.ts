@@ -21,33 +21,46 @@ export function registerServiceWorker(options?: { force?: boolean }) {
 function registerSW() {
   // Petit délai pour s'assurer que l'app React est montée
   // (réduit pour fiabiliser l'offline mobile: SW installé avant que l'utilisateur ferme l'app)
-  setTimeout(() => {
-    navigator.serviceWorker
-      .register("/service-worker.js", { updateViaCache: 'none' as any })
-      .then((registration) => {
-        console.log("[PWA] Service Worker enregistré");
+  setTimeout(async () => {
+    try {
+      // Vérifier la connexion avant d'enregistrer le SW
+      if (!navigator.onLine) {
+        console.log("[PWA] Mode hors ligne - SW sera enregistré au retour en ligne");
+        window.addEventListener('online', () => registerSW(), { once: true });
+        return;
+      }
 
-        // Détection nouvelle version
-        registration.onupdatefound = () => {
-          const newWorker = registration.installing;
-          if (newWorker) {
-            newWorker.onstatechange = () => {
-              if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-                showUpdateMessage();
-              }
-            };
-          }
-        };
-
-        // Vérifier les mises à jour périodiquement (toutes les heures)
-        setInterval(() => {
-          registration.update();
-        }, 60 * 60 * 1000);
-      })
-      .catch((error) => {
-        console.warn("[PWA] Erreur SW:", error);
+      const registration = await navigator.serviceWorker.register("/service-worker.js", { 
+        updateViaCache: 'none' as any 
       });
-  }, 200); // 200ms de délai
+      
+      console.log("[PWA] Service Worker enregistré");
+
+      // Détection nouvelle version
+      registration.onupdatefound = () => {
+        const newWorker = registration.installing;
+        if (newWorker) {
+          newWorker.onstatechange = () => {
+            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+              showUpdateMessage();
+            }
+          };
+        }
+      };
+
+      // Vérifier les mises à jour périodiquement (toutes les heures)
+      setInterval(() => {
+        if (navigator.onLine) {
+          registration.update().catch(() => {
+            // Ignorer les erreurs de mise à jour silencieusement
+          });
+        }
+      }, 60 * 60 * 1000);
+    } catch (error) {
+      // Ignorer les erreurs SW silencieusement - ne pas bloquer l'app
+      console.warn("[PWA] SW non critique:", error);
+    }
+  }, 500); // 500ms de délai pour plus de stabilité
 }
 
 function showUpdateMessage() {

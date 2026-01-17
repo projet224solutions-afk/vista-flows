@@ -82,7 +82,17 @@ const getStripe = async (): Promise<Stripe | null> => {
   if (!stripePromise) {
     try {
       const key = await getStripePublishableKey();
-      stripePromise = loadStripe(key);
+      
+      // Ajouter un timeout pour éviter un blocage infini
+      const timeoutPromise = new Promise<null>((_, reject) => {
+        setTimeout(() => reject(new Error('Stripe loading timeout')), 15000);
+      });
+      
+      stripePromise = Promise.race([
+        loadStripe(key),
+        timeoutPromise
+      ]) as Promise<Stripe | null>;
+      
     } catch (error) {
       console.error('❌ Error loading Stripe:', error);
       // Reset pour permettre un nouveau retry
@@ -90,7 +100,14 @@ const getStripe = async (): Promise<Stripe | null> => {
       throw error;
     }
   }
-  return stripePromise;
+  
+  try {
+    return await stripePromise;
+  } catch (error) {
+    // Reset si le chargement échoue
+    stripePromise = null;
+    throw error;
+  }
 };
 
 export function StripePaymentWrapper({
