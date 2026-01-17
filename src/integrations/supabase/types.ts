@@ -4457,6 +4457,7 @@ export type Database = {
           original_price: number | null
           price: number
           product_mode: string
+          product_type: string | null
           published_at: string | null
           rating: number | null
           reviews_count: number | null
@@ -4491,6 +4492,7 @@ export type Database = {
           original_price?: number | null
           price?: number
           product_mode?: string
+          product_type?: string | null
           published_at?: string | null
           rating?: number | null
           reviews_count?: number | null
@@ -4525,6 +4527,7 @@ export type Database = {
           original_price?: number | null
           price?: number
           product_mode?: string
+          product_type?: string | null
           published_at?: string | null
           rating?: number | null
           reviews_count?: number | null
