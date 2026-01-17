@@ -12678,6 +12678,33 @@ export type Database = {
           },
         ]
       }
+      realtime_analytics_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          expires_at: string
+          id: string
+          payload: Json
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          expires_at?: string
+          id?: string
+          payload?: Json
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          expires_at?: string
+          id?: string
+          payload?: Json
+          vendor_id?: string
+        }
+        Relationships: []
+      }
       registered_motos: {
         Row: {
           brand: string | null
@@ -22309,6 +22336,7 @@ export type Database = {
       cleanup_old_product_views: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_system_errors: { Args: never; Returns: Json }
+      cleanup_realtime_events: { Args: never; Returns: number }
       compute_daily_analytics: { Args: { p_date?: string }; Returns: number }
       confirm_delivery_and_release_escrow: {
         Args: { p_customer_id: string; p_escrow_id: string; p_notes?: string }
