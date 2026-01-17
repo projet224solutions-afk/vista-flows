@@ -462,13 +462,6 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           {/* Images & Video Carousel */}
           <div className="space-y-4">
             <div className="relative h-[600px] rounded-lg overflow-hidden bg-white flex items-center justify-center p-3 border border-border/20">
-              {/* Bouton Play/Pause */}
-              <button
-                onClick={toggleAutoPlay}
-                className="absolute top-3 right-3 z-10 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-colors"
-              >
-                {isAutoPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-              </button>
 
               {isPlayingVideo && videos.length > 0 ? (
                 <video
