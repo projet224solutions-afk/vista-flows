@@ -18,7 +18,7 @@ export function ProductImageCarousel({
   images = [],
   alt = 'Product image',
   className,
-  autoPlayInterval = 1800,
+  autoPlayInterval = 15000,
   showDots = true,
 }: ProductImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
