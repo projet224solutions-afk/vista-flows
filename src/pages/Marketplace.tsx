@@ -519,16 +519,6 @@ export default function Marketplace() {
           />
         ) : (
           <>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs text-muted-foreground">
-                {marketplaceItems.length} / {marketplaceTotal} résultats
-                {selectedItemType !== 'all' && (
-                  <span className="ml-2">
-                    ({selectedItemType === 'product' ? 'Produits' : 'Produits numériques'})
-                  </span>
-                )}
-              </p>
-            </div>
 
             {marketplaceLoading ? (
               <div className="marketplace-grid">
