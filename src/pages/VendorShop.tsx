@@ -112,14 +112,7 @@ export default function VendorShop() {
       // Si la boutique n'existe pas, afficher le message d'erreur
       if (!vendorData) {
         setVendor(null);
-        setLoading(false);
-        return;
-      }
-      
-      // Si la boutique est inactive et l'utilisateur n'est PAS le propriétaire
-      if (!vendorData.is_active && !vendorIsOwned) {
-        setVendor(null);
-        setLoading(false);
+        setProducts([]);
         return;
       }
 
@@ -130,6 +123,12 @@ export default function VendorShop() {
       }
 
       setVendor(vendorData);
+
+      // Boutique inactive: on affiche la page mais on ne charge pas les produits pour les clients
+      if (!vendorData.is_active && !vendorIsOwned) {
+        setProducts([]);
+        return;
+      }
 
       // Charger les produits du vendeur
       const { data: productsData, error: productsError } = await supabase
@@ -234,20 +233,35 @@ export default function VendorShop() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Alerte boutique inactive pour le propriétaire */}
-      {isOwner && !vendor.is_active && (
-        <Alert className="m-4 border-orange-500/50 bg-orange-500/10">
-          <AlertTriangle className="h-4 w-4 text-orange-500" />
-          <AlertTitle className="text-orange-500">Boutique inactive</AlertTitle>
+      {/* Alertes boutique inactive */}
+      {!vendor.is_active && (
+        <Alert className="m-4 border-destructive/50 bg-destructive/10">
+          <AlertTriangle className="h-4 w-4 text-destructive" />
+          <AlertTitle className="text-destructive">Boutique inactive</AlertTitle>
           <AlertDescription className="text-muted-foreground">
-            Votre boutique n'est pas visible par les clients. 
-            <Button 
-              variant="link" 
-              className="p-0 h-auto text-primary ml-1"
-              onClick={() => navigate('/vendeur')}
-            >
-              Activez-la dans vos paramètres vendeur
-            </Button>
+            {isOwner ? (
+              <>
+                Votre boutique n'est pas visible par les clients.
+                <Button
+                  variant="link"
+                  className="p-0 h-auto text-primary ml-1"
+                  onClick={() => navigate('/vendeur')}
+                >
+                  Activez-la dans vos paramètres vendeur
+                </Button>
+              </>
+            ) : (
+              <>
+                Cette boutique est temporairement indisponible.
+                <Button
+                  variant="link"
+                  className="p-0 h-auto text-primary ml-1"
+                  onClick={() => navigate('/marketplace')}
+                >
+                  Retour au marketplace
+                </Button>
+              </>
+            )}
           </AlertDescription>
         </Alert>
       )}
