@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTrafficAnalytics } from "@/hooks/useTrafficAnalytics";
-import { Eye, Users, MousePointer, Store, TrendingUp, Smartphone, Globe } from "lucide-react";
+import { Eye, Users, MousePointer, Store, TrendingUp, Smartphone, Globe, MapPin } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell } from 'recharts';
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -64,6 +64,14 @@ export function TrafficAnalyticsSection() {
     .slice(0, 5)
     .map(([name, value]) => ({
       name: name === 'unknown' ? 'Inconnu' : name.toUpperCase(),
+      value
+    }));
+
+  const cityData = Object.entries(stats.cityBreakdown)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 10)
+    .map(([name, value]) => ({
+      name: name === 'unknown' ? 'Inconnu' : name,
       value
     }));
 
@@ -192,7 +200,7 @@ export function TrafficAnalyticsSection() {
       )}
 
       {/* Répartition par appareil et pays */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Appareils */}
         {deviceData.length > 0 && (
           <Card>
@@ -209,8 +217,8 @@ export function TrafficAnalyticsSection() {
                     data={deviceData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
+                    innerRadius={40}
+                    outerRadius={70}
                     paddingAngle={5}
                     dataKey="value"
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
@@ -245,6 +253,33 @@ export function TrafficAnalyticsSection() {
                   <Bar dataKey="value" name="Visites" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Villes */}
+        {cityData.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="w-5 h-5" />
+                Top 10 villes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                {cityData.map((city, index) => (
+                  <div key={city.name} className="flex items-center justify-between p-2 bg-muted rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 flex items-center justify-center bg-primary text-primary-foreground rounded-full text-xs font-bold">
+                        {index + 1}
+                      </span>
+                      <span className="text-sm font-medium">{city.name}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">{city.value} visites</span>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}

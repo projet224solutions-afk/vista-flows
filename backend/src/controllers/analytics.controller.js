@@ -102,7 +102,7 @@ function errorResponse(res, status, message, code = null) {
  */
 export async function handleProductView(req, res) {
   try {
-    const { productId, refererUrl, countryCode, screenResolution } = req.body;
+    const { productId, refererUrl, countryCode, city, screenResolution } = req.body;
     
     // Validate required field
     if (!productId) {
@@ -127,7 +127,8 @@ export async function handleProductView(req, res) {
       refererUrl: refererUrl || req.headers['referer'],
       acceptLanguage: req.headers['accept-language'],
       screenResolution,
-      countryCode
+      countryCode,
+      city
     };
     
     const result = await trackProductView(trackingData);
@@ -156,7 +157,7 @@ export async function handleProductView(req, res) {
  */
 export async function handleShopVisit(req, res) {
   try {
-    const { vendorId, refererUrl, countryCode, screenResolution, entryPage } = req.body;
+    const { vendorId, refererUrl, countryCode, city, screenResolution, entryPage } = req.body;
     
     // Validate required field
     if (!vendorId) {
@@ -182,6 +183,7 @@ export async function handleShopVisit(req, res) {
       acceptLanguage: req.headers['accept-language'],
       screenResolution,
       countryCode,
+      city,
       entryPage
     };
     
