@@ -2,12 +2,13 @@
  * Liste des produits par catégorie
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, ExternalLink, ShoppingCart, Star, Eye } from 'lucide-react';
+import { ArrowLeft, Plus, ExternalLink, ShoppingCart, Star, Eye, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { useDigitalProducts } from '@/hooks/useDigitalProducts';
 import { cn } from '@/lib/utils';
@@ -15,6 +16,7 @@ import { DigitalProductForm } from './DigitalProductForm';
 import { MerchantActivationDialog } from './MerchantActivationDialog';
 import { toast } from 'sonner';
 import { LocalPrice } from '@/components/ui/LocalPrice';
+import QuickFooter from '@/components/QuickFooter';
 
 interface CategoryProductsListProps {
   category: 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom' | 'ai' | 'physique_affilie';
@@ -36,8 +38,20 @@ export function CategoryProductsList({
   const { products, loading } = useDigitalProducts({ category });
   const [showProductForm, setShowProductForm] = useState(false);
   const [showActivationDialog, setShowActivationDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const isMerchant = profile?.role === 'vendeur';
+
+  // Filtrer les produits par recherche
+  const filteredProducts = useMemo(() => {
+    if (!searchQuery.trim()) return products;
+    const query = searchQuery.toLowerCase().trim();
+    return products.filter(product => 
+      product.title?.toLowerCase().includes(query) ||
+      product.short_description?.toLowerCase().includes(query) ||
+      product.description?.toLowerCase().includes(query)
+    );
+  }, [products, searchQuery]);
 
   const handleAddProduct = () => {
     console.log('[CategoryProductsList] handleAddProduct called', { user: !!user, isMerchant });
@@ -126,13 +140,32 @@ export function CategoryProductsList({
         </div>
       </header>
 
+      {/* Barre de recherche */}
+      <section className="px-4 py-3 border-b border-border">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder={`Rechercher dans ${title}...`}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 h-10 bg-muted/50 border-border"
+          />
+        </div>
+        {searchQuery && (
+          <p className="text-xs text-muted-foreground mt-2">
+            {filteredProducts.length} résultat{filteredProducts.length !== 1 ? 's' : ''} pour "{searchQuery}"
+          </p>
+        )}
+      </section>
+
       {/* Products Grid */}
       <section className="px-4 py-4">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
           </div>
-        ) : products.length === 0 ? (
+        ) : filteredProducts.length === 0 ? (
           <div className="text-center py-12">
             <div className={cn(
               'w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center',
@@ -141,24 +174,30 @@ export function CategoryProductsList({
             )}>
               <ShoppingCart className="w-8 h-8" />
             </div>
-            <h3 className="font-semibold text-foreground mb-2">Aucun produit disponible</h3>
+            <h3 className="font-semibold text-foreground mb-2">
+              {searchQuery ? `Aucun résultat pour "${searchQuery}"` : `Aucun ${title.toLowerCase()}`}
+            </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              {isMerchant 
-                ? 'Soyez le premier à ajouter un produit dans cette catégorie!'
-                : 'Devenez marchand pour être le premier à vendre dans cette catégorie!'
+              {searchQuery 
+                ? 'Essayez avec d\'autres mots-clés'
+                : isMerchant 
+                  ? `Soyez le premier à ajouter dans ${title}!`
+                  : `Devenez marchand pour être le premier à vendre!`
               }
             </p>
-            <Button onClick={handleAddProduct} className={cn('bg-gradient-to-r text-white', gradient)}>
-              <Plus className="w-4 h-4 mr-2" />
-              {user 
-                ? (isMerchant ? 'Ajouter un produit' : 'Devenir marchand')
-                : 'Se connecter pour vendre'
-              }
-            </Button>
+            {!searchQuery && (
+              <Button onClick={handleAddProduct} className={cn('bg-gradient-to-r text-white', gradient)}>
+                <Plus className="w-4 h-4 mr-2" />
+                {user 
+                  ? (isMerchant ? 'Ajouter un produit' : 'Devenir marchand')
+                  : 'Se connecter pour vendre'
+                }
+              </Button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <Card 
                 key={product.id}
                 className="cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-200"
@@ -229,7 +268,7 @@ export function CategoryProductsList({
       </section>
 
       {/* Add Product FAB - Intelligent pour tous les utilisateurs */}
-      {products.length > 0 && (
+      {filteredProducts.length > 0 && (
         <div className="fixed bottom-24 right-4 z-50">
           <Button
             onClick={handleAddProduct}
@@ -247,6 +286,8 @@ export function CategoryProductsList({
         onOpenChange={setShowActivationDialog}
         onSuccess={handleActivationSuccess}
       />
+
+      <QuickFooter />
     </div>
   );
 }
