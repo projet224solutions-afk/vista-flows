@@ -1,13 +1,17 @@
 /**
  * Formulaire de création d'affiliation aérienne
- * Permet de créer un lien d'affiliation pour une compagnie aérienne
+ * Interface similaire à DigitalProductForm - l'utilisateur entre manuellement:
+ * - Nom de la compagnie
+ * - Images
+ * - Lien d'affiliation
+ * - Prix, devise, commission
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
-  ArrowLeft, Plane, Link2, Globe, Percent, Tag, 
-  ImagePlus, X, Check, AlertCircle, ExternalLink,
-  DollarSign, MapPin, Calendar
+  ArrowLeft, Plane, Link2, Percent, Tag, 
+  Upload, X, DollarSign, MapPin, Loader2,
+  Sparkles, Image as ImageIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -23,68 +27,67 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-interface Airline {
-  id: string;
-  name: string;
-  code: string;
-  logo_url: string | null;
-  commission_rate: number;
-  description: string | null;
-  website_url: string | null;
-}
-
 interface AirlineAffiliateFormProps {
   onBack: () => void;
   onSuccess: () => void;
-  preselectedAirline?: Airline;
-  airlines: Airline[];
 }
 
-export function AirlineAffiliateForm({ 
-  onBack, 
-  onSuccess, 
-  preselectedAirline,
-  airlines 
-}: AirlineAffiliateFormProps) {
+export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateFormProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
   
   const [formData, setFormData] = useState({
-    airlineId: preselectedAirline?.id || '',
+    airlineName: '',
     title: '',
     description: '',
     shortDescription: '',
-    affiliateUrl: preselectedAirline?.website_url || '',
+    affiliateUrl: '',
     originCity: '',
     destinationCity: '',
     flightType: 'all' as 'all' | 'one-way' | 'round-trip',
     price: '',
     currency: 'USD',
-    commissionRate: preselectedAirline?.commission_rate?.toString() || '',
+    commissionRate: '',
     images: [] as string[]
   });
 
-  const [imageInput, setImageInput] = useState('');
+  // Upload d'image
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || !user) return;
 
-  const selectedAirline = airlines.find(a => a.id === formData.airlineId) || preselectedAirline;
+    setUploadingImage(true);
+    const uploadedUrls: string[] = [];
+    
+    try {
+      for (const file of Array.from(files)) {
+        const fileName = `${user.id}/airlines/${Date.now()}_${file.name}`;
+        
+        const { error } = await supabase.storage
+          .from('product-images')
+          .upload(fileName, file);
 
-  useEffect(() => {
-    if (selectedAirline) {
+        if (!error) {
+          const { data: urlData } = supabase.storage
+            .from('product-images')
+            .getPublicUrl(fileName);
+          
+          uploadedUrls.push(urlData.publicUrl);
+        }
+      }
+
       setFormData(prev => ({
         ...prev,
-        affiliateUrl: selectedAirline.website_url || prev.affiliateUrl,
-        commissionRate: selectedAirline.commission_rate?.toString() || prev.commissionRate
+        images: [...prev.images, ...uploadedUrls]
       }));
-    }
-  }, [formData.airlineId]);
-
-  const handleAddImage = () => {
-    if (imageInput && !formData.images.includes(imageInput)) {
-      setFormData(prev => ({
-        ...prev,
-        images: [...prev.images, imageInput]
-      }));
-      setImageInput('');
+      toast.success(`${uploadedUrls.length} image(s) uploadée(s)`);
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Erreur lors de l\'upload');
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -95,15 +98,56 @@ export function AirlineAffiliateForm({
     }));
   };
 
+  // Générer le titre automatiquement
   const generateTitle = () => {
-    if (selectedAirline) {
-      let title = `Vols ${selectedAirline.name}`;
+    if (formData.airlineName) {
+      let title = `Vols ${formData.airlineName}`;
       if (formData.originCity && formData.destinationCity) {
-        title = `${formData.originCity} → ${formData.destinationCity} avec ${selectedAirline.name}`;
+        title = `${formData.originCity} → ${formData.destinationCity} avec ${formData.airlineName}`;
       } else if (formData.destinationCity) {
-        title = `Vols vers ${formData.destinationCity} - ${selectedAirline.name}`;
+        title = `Vols vers ${formData.destinationCity} - ${formData.airlineName}`;
       }
       setFormData(prev => ({ ...prev, title }));
+    } else {
+      toast.info('Veuillez d\'abord saisir le nom de la compagnie');
+    }
+  };
+
+  // Générer la description par IA
+  const handleGenerateDescription = async () => {
+    if (!formData.title.trim() && !formData.airlineName.trim()) {
+      toast.error('Veuillez d\'abord saisir un titre ou le nom de la compagnie');
+      return;
+    }
+
+    setGeneratingDescription(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-product-description', {
+        body: {
+          name: formData.title || formData.airlineName,
+          category: 'voyage',
+          productType: 'billet_avion'
+        }
+      });
+
+      if (error) throw error;
+
+      const nextDescription = (data?.description ?? '').toString();
+      const nextShort = (data?.shortDescription ?? data?.short_description ?? '').toString().trim();
+
+      if (nextDescription.trim()) {
+        setFormData(prev => ({
+          ...prev,
+          description: nextDescription,
+          shortDescription: nextShort || prev.shortDescription,
+        }));
+        toast.success('Description générée avec succès!');
+      }
+    } catch (error) {
+      console.error('Erreur génération description:', error);
+      toast.error('Erreur lors de la génération de la description');
+    } finally {
+      setGeneratingDescription(false);
     }
   };
 
@@ -113,37 +157,54 @@ export function AirlineAffiliateForm({
       return;
     }
 
-    if (!formData.airlineId || !formData.title || !formData.affiliateUrl) {
-      toast.error('Veuillez remplir tous les champs obligatoires');
+    if (!formData.airlineName.trim()) {
+      toast.error('Le nom de la compagnie est obligatoire');
+      return;
+    }
+
+    if (!formData.affiliateUrl.trim()) {
+      toast.error('Le lien d\'affiliation est obligatoire');
       return;
     }
 
     setLoading(true);
     try {
-      // Créer le produit digital en mode affiliation
+      // Récupérer le vendor_id
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      // Générer le titre si vide
+      const title = formData.title.trim() || `Vols ${formData.airlineName}`;
+
       const productData = {
         merchant_id: user.id,
-        title: formData.title,
-        description: formData.description || formData.shortDescription,
-        short_description: formData.shortDescription || formData.title,
+        vendor_id: vendor?.id || null,
+        title: title,
+        description: formData.description || formData.shortDescription || title,
+        short_description: formData.shortDescription || title,
         category: 'voyage',
+        product_type: 'billet_avion',
         product_mode: 'affiliate',
         affiliate_url: formData.affiliateUrl,
-        affiliate_platform: selectedAirline?.name || 'Compagnie aérienne',
+        affiliate_platform: formData.airlineName,
         commission_rate: formData.commissionRate ? parseFloat(formData.commissionRate) : 0,
         price: formData.price ? parseFloat(formData.price) : 0,
         currency: formData.currency,
-        images: formData.images.length > 0 ? formData.images : (selectedAirline?.logo_url ? [selectedAirline.logo_url] : []),
+        images: formData.images,
         status: 'published',
+        published_at: new Date().toISOString(),
         is_featured: false,
         tags: [
-          selectedAirline?.code,
-          selectedAirline?.name,
+          formData.airlineName,
           formData.originCity,
           formData.destinationCity,
           'vol',
           'avion',
-          'airline'
+          'airline',
+          'voyage'
         ].filter(Boolean)
       };
 
@@ -156,7 +217,7 @@ export function AirlineAffiliateForm({
       onSuccess();
     } catch (error: any) {
       console.error('Error creating affiliate:', error);
-      toast.error('Erreur lors de la création');
+      toast.error('Erreur lors de la création: ' + (error.message || 'Erreur inconnue'));
     } finally {
       setLoading(false);
     }
@@ -176,9 +237,9 @@ export function AirlineAffiliateForm({
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1">
-              <h1 className="text-lg font-bold text-foreground">Créer une affiliation</h1>
+              <h1 className="text-lg font-bold text-foreground">Nouvelle Affiliation Aérienne</h1>
               <p className="text-xs text-muted-foreground">
-                Lien d'affiliation compagnie aérienne
+                Créez votre lien d'affiliation compagnie aérienne
               </p>
             </div>
           </div>
@@ -186,7 +247,7 @@ export function AirlineAffiliateForm({
       </header>
 
       <div className="px-4 py-4 space-y-4">
-        {/* Sélection compagnie */}
+        {/* Nom de la compagnie */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
@@ -194,56 +255,107 @@ export function AirlineAffiliateForm({
               Compagnie Aérienne
             </CardTitle>
             <CardDescription className="text-xs">
-              Sélectionnez la compagnie pour votre affiliation
+              Entrez le nom de la compagnie aérienne
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Select
-              value={formData.airlineId}
-              onValueChange={(v) => setFormData(prev => ({ ...prev, airlineId: v }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Choisir une compagnie" />
-              </SelectTrigger>
-              <SelectContent>
-                {airlines.map((airline) => (
-                  <SelectItem key={airline.id} value={airline.id}>
-                    <div className="flex items-center gap-2">
-                      {airline.logo_url && (
-                        <img src={airline.logo_url} alt="" className="w-5 h-5 object-contain" />
-                      )}
-                      <span>{airline.name}</span>
-                      <Badge variant="outline" className="text-[10px] ml-1">{airline.code}</Badge>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {selectedAirline && (
-              <div className="mt-3 p-3 bg-primary/5 rounded-lg flex items-center gap-3">
-                {selectedAirline.logo_url && (
-                  <img 
-                    src={selectedAirline.logo_url} 
-                    alt={selectedAirline.name}
-                    className="w-12 h-12 object-contain bg-white rounded-lg p-1"
-                  />
-                )}
-                <div className="flex-1">
-                  <p className="font-medium text-sm">{selectedAirline.name}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="secondary" className="text-[10px] bg-green-500/10 text-green-600">
-                      <DollarSign className="w-3 h-3 mr-0.5" />
-                      {selectedAirline.commission_rate}% commission
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-            )}
+            <div>
+              <Label className="text-xs">
+                Nom de la compagnie <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                value={formData.airlineName}
+                onChange={(e) => setFormData(prev => ({ ...prev, airlineName: e.target.value }))}
+                placeholder="Ex: Air France, Ethiopian Airlines, Turkish Airlines..."
+                className="mt-1"
+              />
+            </div>
           </CardContent>
         </Card>
 
-        {/* Itinéraire */}
+        {/* Images */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <ImageIcon className="w-4 h-4 text-primary" />
+              Images
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Ajoutez des images de la compagnie ou des offres
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-4 gap-2">
+              {formData.images.map((url, idx) => (
+                <div key={idx} className="relative group aspect-square">
+                  <img 
+                    src={url} 
+                    alt=""
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(url)}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              
+              {/* Upload button */}
+              <label className={cn(
+                "aspect-square border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors",
+                uploadingImage && "opacity-50 cursor-not-allowed"
+              )}>
+                {uploadingImage ? (
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                ) : (
+                  <>
+                    <Upload className="w-5 h-5 text-muted-foreground mb-1" />
+                    <span className="text-[10px] text-muted-foreground">Ajouter</span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  disabled={uploadingImage}
+                />
+              </label>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Lien d'affiliation */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Link2 className="w-4 h-4 text-primary" />
+              Lien d'Affiliation
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div>
+              <Label className="text-xs">
+                URL d'affiliation <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                value={formData.affiliateUrl}
+                onChange={(e) => setFormData(prev => ({ ...prev, affiliateUrl: e.target.value }))}
+                placeholder="https://www.compagnie.com/?ref=votre-id"
+                className="mt-1"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Collez votre lien d'affiliation avec votre ID de tracking
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Itinéraire optionnel */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
@@ -306,7 +418,7 @@ export function AirlineAffiliateForm({
           </CardContent>
         </Card>
 
-        {/* Informations produit */}
+        {/* Informations de l'offre */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
@@ -316,15 +428,16 @@ export function AirlineAffiliateForm({
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
-              <Label className="text-xs">
-                Titre <span className="text-destructive">*</span>
-              </Label>
+              <Label className="text-xs">Titre</Label>
               <Input
                 value={formData.title}
                 onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                 placeholder="Ex: Vols Paris-Conakry avec Air France"
                 className="mt-1"
               />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Laissez vide pour générer automatiquement
+              </p>
             </div>
 
             <div>
@@ -338,39 +451,30 @@ export function AirlineAffiliateForm({
             </div>
 
             <div>
-              <Label className="text-xs">Description détaillée</Label>
+              <div className="flex items-center justify-between mb-1">
+                <Label className="text-xs">Description détaillée</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleGenerateDescription}
+                  disabled={generatingDescription}
+                  className="h-6 text-xs gap-1"
+                >
+                  {generatingDescription ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3 h-3" />
+                  )}
+                  Générer par IA
+                </Button>
+              </div>
               <Textarea
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Décrivez l'offre en détail..."
-                className="mt-1 min-h-[80px]"
+                className="min-h-[80px]"
               />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Lien d'affiliation */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Link2 className="w-4 h-4 text-primary" />
-              Lien d'Affiliation
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <Label className="text-xs">
-                URL d'affiliation <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                value={formData.affiliateUrl}
-                onChange={(e) => setFormData(prev => ({ ...prev, affiliateUrl: e.target.value }))}
-                placeholder="https://www.airline.com/?ref=votre-id"
-                className="mt-1"
-              />
-              <p className="text-[10px] text-muted-foreground mt-1">
-                Collez votre lien d'affiliation avec votre ID de tracking
-              </p>
             </div>
           </CardContent>
         </Card>
@@ -427,7 +531,7 @@ export function AirlineAffiliateForm({
                   type="number"
                   value={formData.commissionRate}
                   onChange={(e) => setFormData(prev => ({ ...prev, commissionRate: e.target.value }))}
-                  placeholder="5"
+                  placeholder="Ex: 5"
                   className="pr-8"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
@@ -438,83 +542,34 @@ export function AirlineAffiliateForm({
           </CardContent>
         </Card>
 
-        {/* Images */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <ImagePlus className="w-4 h-4 text-primary" />
-              Images (optionnel)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex gap-2">
-              <Input
-                value={imageInput}
-                onChange={(e) => setImageInput(e.target.value)}
-                placeholder="URL de l'image"
-                className="flex-1"
-              />
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={handleAddImage}
-                disabled={!imageInput}
-              >
-                Ajouter
-              </Button>
-            </div>
-
-            {formData.images.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {formData.images.map((url, idx) => (
-                  <div key={idx} className="relative group">
-                    <img 
-                      src={url} 
-                      alt=""
-                      className="w-16 h-16 object-cover rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveImage(url)}
-                      className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Alerte info */}
+        {/* Info */}
         <Alert className="bg-blue-500/5 border-blue-500/20">
-          <ExternalLink className="w-4 h-4 text-blue-500" />
-          <AlertDescription className="text-xs">
-            Les visiteurs seront redirigés vers le site de la compagnie aérienne via votre lien d'affiliation.
+          <Plane className="w-4 h-4 text-blue-500" />
+          <AlertDescription className="text-xs text-blue-600">
+            Votre lien d'affiliation sera affiché sur le marketplace. 
+            Les visiteurs seront redirigés vers le site de la compagnie via votre lien de tracking.
           </AlertDescription>
         </Alert>
 
-        {/* Actions */}
-        <div className="flex gap-3 pt-4">
-          <Button variant="outline" onClick={onBack} className="flex-1">
-            Annuler
-          </Button>
-          <Button 
-            onClick={handleSubmit}
-            disabled={loading || !formData.airlineId || !formData.title || !formData.affiliateUrl}
-            className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0"
-          >
-            {loading ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-            ) : (
-              <>
-                <Check className="w-4 h-4 mr-2" />
-                Créer l'affiliation
-              </>
-            )}
-          </Button>
-        </div>
+        {/* Bouton de soumission */}
+        <Button
+          onClick={handleSubmit}
+          disabled={loading || !formData.airlineName || !formData.affiliateUrl}
+          className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white"
+          size="lg"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Création en cours...
+            </>
+          ) : (
+            <>
+              <Plane className="w-4 h-4 mr-2" />
+              Créer l'affiliation aérienne
+            </>
+          )}
+        </Button>
       </div>
     </div>
   );
