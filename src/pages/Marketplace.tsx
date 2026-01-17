@@ -124,16 +124,50 @@ export default function Marketplace() {
 
   const loadCategories = async () => {
     try {
+      // Charger les catégories qui ont au moins un produit actif
+      const { data: categoriesWithProducts, error: countError } = await supabase
+        .from('products')
+        .select('category_id')
+        .eq('is_active', true)
+        .not('category_id', 'is', null);
+
+      if (countError) throw countError;
+
+      // Compter les produits par catégorie
+      const categoryProductCount = new Map<string, number>();
+      (categoriesWithProducts || []).forEach(product => {
+        if (product.category_id) {
+          const count = categoryProductCount.get(product.category_id) || 0;
+          categoryProductCount.set(product.category_id, count + 1);
+        }
+      });
+
+      // Charger uniquement les catégories qui ont des produits
+      const categoryIdsWithProducts = Array.from(categoryProductCount.keys());
+      
+      if (categoryIdsWithProducts.length === 0) {
+        setCategories([{ id: 'all', name: t('common.all'), is_active: true }]);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('categories')
         .select('id, name, image_url, is_active')
         .eq('is_active', true)
+        .in('id', categoryIdsWithProducts)
         .order('name');
 
       if (error) throw error;
       
+      // Trier par nombre de produits (décroissant)
+      const sortedCategories = (data || []).sort((a, b) => {
+        const countA = categoryProductCount.get(a.id) || 0;
+        const countB = categoryProductCount.get(b.id) || 0;
+        return countB - countA;
+      });
+
       const allCategory = { id: 'all', name: t('common.all'), is_active: true };
-      setCategories([allCategory, ...(data || [])]);
+      setCategories([allCategory, ...sortedCategories]);
     } catch (error) {
       console.error('Erreur chargement catégories:', error);
       setCategories([{ id: 'all', name: t('common.all'), is_active: true }]);
