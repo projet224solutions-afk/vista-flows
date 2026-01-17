@@ -1,7 +1,6 @@
 /**
  * Hook Universel Marketplace - 224SOLUTIONS
- * Charge TOUS les types de contenus: Produits E-commerce, Services Professionnels, Produits Numériques
- * Sans affecter l'affichage de la page Proximité (qui reste géolocalisée)
+ * Charge les produits E-commerce, les produits numériques et les services professionnels
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -22,7 +21,7 @@ export interface MarketplaceItem {
   service_type?: string;
   rating: number;
   reviews_count: number;
-  item_type: 'product' | 'professional_service' | 'digital_product'; // Type d'item
+  item_type: 'product' | 'digital_product' | 'professional_service';
   free_shipping?: boolean;
   created_at: string;
   // Champs spécifiques aux services professionnels
@@ -44,7 +43,7 @@ interface UseMarketplaceUniversalOptions {
   maxPrice?: number;
   minRating?: number;
   vendorId?: string;
-  itemType?: 'all' | 'product' | 'professional_service' | 'digital_product';
+  itemType?: 'all' | 'product' | 'digital_product' | 'professional_service';
   sortBy?: 'popular' | 'price_asc' | 'price_desc' | 'rating' | 'newest';
   autoLoad?: boolean;
 }
@@ -75,7 +74,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
    * Charge les produits e-commerce classiques
    */
   const loadProducts = async (): Promise<MarketplaceItem[]> => {
-    if (itemType !== 'all' && itemType !== 'product') return [];
+    if (itemType === 'professional_service' || itemType === 'digital_product') return [];
 
     try {
       let query = supabase
@@ -144,9 +143,9 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
   };
 
   /**
-   * Charge les services professionnels
+   * Charge les services professionnels (restaurants, salons, etc.)
    */
-  const loadProfessionalServices = async (categoryName?: string): Promise<MarketplaceItem[]> => {
+  const loadProfessionalServices = async (): Promise<MarketplaceItem[]> => {
     if (itemType !== 'all' && itemType !== 'professional_service') return [];
 
     try {
@@ -154,26 +153,25 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         .from('professional_services')
         .select(`
           id,
-          user_id,
-          service_type_id,
           business_name,
           description,
+          address,
+          city,
+          phone,
           logo_url,
           cover_image_url,
-          address,
-          phone,
-          opening_hours,
           rating,
           total_reviews,
+          opening_hours,
+          user_id,
           created_at,
-          service_types(code, name, category, commission_rate)
+          status,
+          verification_status,
+          service_types(name, code)
         `)
-        .in('status', ['active', 'pending']); // Afficher les services actifs ET en attente
+        .eq('status', 'active');
 
       // Filtres
-      if (vendorId) {
-        query = query.eq('user_id', vendorId);
-      }
       if (searchQuery?.trim()) {
         query = query.or(`business_name.ilike.%${searchQuery.trim()}%,description.ilike.%${searchQuery.trim()}%`);
       }
@@ -182,22 +180,24 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       const { data, error } = await query;
       if (error) throw error;
 
-      let results = (data || []).map(service => {
-        const serviceType = service.service_types as any;
-        const servicePrice = 0;
-
+      return (data || []).map(service => {
+        // Construire le tableau d'images à partir de logo_url et cover_image_url
+        const images: string[] = [];
+        if (service.cover_image_url) images.push(service.cover_image_url);
+        if (service.logo_url) images.push(service.logo_url);
+        
         return {
           id: service.id,
           name: service.business_name,
-          price: servicePrice,
+          price: 0, // Les services pro n'ont pas de prix direct
           description: service.description || '',
-          images: [service.cover_image_url, service.logo_url].filter(Boolean) as string[],
-          vendor_id: service.user_id,
+          images,
+          vendor_id: service.id,
           vendor_name: service.business_name,
           vendor_user_id: service.user_id,
-          category_name: serviceType?.name || 'Service',
-          service_type: serviceType?.code,
-          rating: service.rating || 0,
+          category_name: (service.service_types as any)?.name || 'Service',
+          service_type: (service.service_types as any)?.code,
+          rating: Number(service.rating) || 0,
           reviews_count: service.total_reviews || 0,
           item_type: 'professional_service' as const,
           business_name: service.business_name,
@@ -207,16 +207,6 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           created_at: service.created_at
         };
       });
-
-      // Filtre par nom de catégorie (post-query car service_types.name est une jointure)
-      if (categoryName) {
-        results = results.filter(item => 
-          item.category_name?.toLowerCase().includes(categoryName.toLowerCase()) ||
-          item.service_type?.toLowerCase().includes(categoryName.toLowerCase())
-        );
-      }
-
-      return results;
     } catch (error) {
       console.error('Erreur chargement services professionnels:', error);
       return [];
@@ -227,7 +217,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
    * Charge les produits numériques (service_products)
    */
   const loadDigitalProducts = async (categoryName?: string): Promise<MarketplaceItem[]> => {
-    if (itemType !== 'all' && itemType !== 'digital_product') return [];
+    if (itemType === 'professional_service' || itemType === 'product') return [];
 
     try {
       let query = supabase
@@ -331,7 +321,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
   };
 
   /**
-   * Charge tous les items (produits + services + numériques)
+   * Charge tous les items (produits e-commerce + produits numériques + services professionnels)
    */
   const loadAllItems = useCallback(async (reset = false) => {
     const requestId = ++requestIdRef.current;
@@ -342,21 +332,22 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       // Récupérer le nom de la catégorie si c'est un UUID
       const categoryName = category && category !== 'all' ? await getCategoryName(category) : null;
 
-      // Optimisation: charger seulement le type filtré
+      // Charger selon le type sélectionné
       let allItems: MarketplaceItem[] = [];
       if (itemType === 'product') {
         allItems = await loadProducts();
-      } else if (itemType === 'professional_service') {
-        allItems = await loadProfessionalServices(categoryName || undefined);
       } else if (itemType === 'digital_product') {
         allItems = await loadDigitalProducts(categoryName || undefined);
+      } else if (itemType === 'professional_service') {
+        allItems = await loadProfessionalServices();
       } else {
-        const [products, professionalServices, digitalProducts] = await Promise.all([
+        // 'all' = produits + numériques + services professionnels
+        const [products, digitalProducts, professionalServices] = await Promise.all([
           loadProducts(),
-          loadProfessionalServices(categoryName || undefined),
-          loadDigitalProducts(categoryName || undefined)
+          loadDigitalProducts(categoryName || undefined),
+          loadProfessionalServices()
         ]);
-        allItems = [...products, ...professionalServices, ...digitalProducts];
+        allItems = [...products, ...digitalProducts, ...professionalServices];
       }
 
       // Filtrage global par prix

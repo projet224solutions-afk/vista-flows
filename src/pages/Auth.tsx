@@ -256,13 +256,35 @@ export default function Auth() {
     }
   };
 
-  // ⚡ IMPORTANT: Écouter les événements OAuth pour rediriger après connexion Google/Facebook
+  // ⚡ IMPORTANT: Écouter les événements OAuth et PASSWORD_RECOVERY pour rediriger correctement
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔔 [Auth] Auth state change:', event, session?.user?.email || 'no user');
       
+      // ✅ Gérer l'événement PASSWORD_RECOVERY (quand l'utilisateur clique sur le lien de réinitialisation)
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log('🔐 [Auth] PASSWORD_RECOVERY détecté - affichage du formulaire de nouveau mot de passe');
+        setShowNewPasswordForm(true);
+        setShowResetPassword(false);
+        setIsLogin(false);
+        return;
+      }
+      
       // Rediriger après connexion OAuth réussie
       if (event === 'SIGNED_IN' && session?.user) {
+        // ✅ Ne pas rediriger si on est en mode réinitialisation de mot de passe
+        const params = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const isReset = params.get('reset') === 'true' || hashParams.get('type') === 'recovery';
+        
+        if (isReset) {
+          console.log('🔐 [Auth] Mode réinitialisation détecté, affichage du formulaire');
+          setShowNewPasswordForm(true);
+          setShowResetPassword(false);
+          setIsLogin(false);
+          return;
+        }
+        
         console.log('🔐 [Auth] SIGNED_IN détecté - vérification du profil...');
         setIsAuthenticating(true);
         
@@ -1166,9 +1188,19 @@ export default function Auth() {
       const emailSchema = z.string().email("Adresse email invalide");
       emailSchema.parse(resetEmail);
 
+      // ✅ Utiliser le domaine de production si disponible, sinon l'origine actuelle
+      const productionDomain = 'https://224solution.net';
+      const redirectUrl = window.location.hostname.includes('224solution.net') 
+        ? `${productionDomain}/auth?reset=true`
+        : window.location.hostname.includes('lovable.app')
+          ? `${productionDomain}/auth?reset=true` // Toujours rediriger vers le domaine de prod
+          : `${window.location.origin}/auth?reset=true`;
+
+      console.log('🔐 Envoi email réinitialisation avec redirectTo:', redirectUrl);
+
       // Envoyer l'email de réinitialisation avec le bon redirect URL
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/auth?reset=true`,
+        redirectTo: redirectUrl,
       });
 
       if (error) {

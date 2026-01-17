@@ -245,6 +245,29 @@ export default function MerchantOnboarding() {
           .maybeSingle();
 
         if (!existingService) {
+          // 🔥 Capturer automatiquement la position GPS
+          let latitude: number | null = null;
+          let longitude: number | null = null;
+
+          try {
+            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+              if (!navigator.geolocation) {
+                reject(new Error('GPS non disponible'));
+                return;
+              }
+              navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 60000
+              });
+            });
+            latitude = position.coords.latitude;
+            longitude = position.coords.longitude;
+            console.log('📍 Position GPS capturée pour le marchand:', { latitude, longitude });
+          } catch (gpsError) {
+            console.warn('⚠️ GPS non disponible, service créé sans coordonnées:', gpsError);
+          }
+
           // Créer le professional_service pour activer le module métier
           await supabase.from("professional_services").insert({
             user_id: user.id,
@@ -255,6 +278,8 @@ export default function MerchantOnboarding() {
             phone: values.phone || null,
             email: values.email || null,
             city: values.city || null,
+            latitude,
+            longitude,
             status: "active",
           });
           

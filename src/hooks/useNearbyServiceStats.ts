@@ -70,11 +70,14 @@ export function useNearbyServiceStats() {
           .select('id, current_location, last_location, is_online, status')
           .or('is_online.eq.true,status.eq.active,status.eq.online,status.eq.on_trip'),
         // Compter les restaurants actifs (professional_services avec service_type = restaurant)
+        // Ne récupérer QUE ceux qui ont des coordonnées GPS valides
         supabase
           .from('professional_services')
           .select('id, latitude, longitude, service_types!inner(code)')
           .eq('status', 'active')
-          .eq('service_types.code', 'restaurant'),
+          .eq('service_types.code', 'restaurant')
+          .not('latitude', 'is', null)
+          .not('longitude', 'is', null),
       ]);
 
       const parsePoint = (value: unknown): { lat: number; lng: number } | null => {

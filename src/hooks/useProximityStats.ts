@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useGeoDistance, calculateDistance as calcDistanceFn } from '@/hooks/useGeoDistance';
 
 interface ProximityStats {
   boutiques: number;
@@ -20,32 +21,27 @@ interface ProximityStats {
   sport: number;
 }
 
+/** Debug info returned by hook */
+export interface ProximityDebugInfo {
+  vendors: { total: number; noGps: number; outOfRadius: number; inRadius: number };
+  services: { total: number; noGps: number; outOfRadius: number; inRadius: number };
+  taxiMoto: { total: number; noGps: number; outOfRadius: number; inRadius: number };
+  drivers: { total: number; noGps: number; outOfRadius: number; inRadius: number };
+  positionUsed: { latitude: number; longitude: number };
+  usingRealGps: boolean;
+}
+
 interface UserPosition {
   latitude: number;
   longitude: number;
 }
 
-const DEFAULT_POSITION: UserPosition = {
-  latitude: 9.6412,  // Conakry default
-  longitude: -13.5784
-};
-
 const RADIUS_KM = 20;
 
-// Haversine formula for distance calculation
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Earth radius in km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
-}
-
 export function useProximityStats() {
+  // ✅ Source unique de géolocalisation (même fallback + même logique que les pages Nearby*)
+  const { userPosition, positionReady, usingRealLocation, refreshPosition, DEFAULT_POSITION } = useGeoDistance();
+
   const [stats, setStats] = useState<ProximityStats>({
     boutiques: 0,
     taxiMoto: 0,
@@ -62,104 +58,79 @@ export function useProximityStats() {
     immobilier: 0,
     formation: 0,
     media: 0,
-    sport: 0
+    sport: 0,
   });
+
   const [loading, setLoading] = useState(true);
-  const [userPosition, setUserPosition] = useState<UserPosition>(DEFAULT_POSITION);
-  const [locationError, setLocationError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<ProximityDebugInfo | null>(null);
 
-  // Get user's current position
-  const getUserPosition = useCallback(async () => {
-    return new Promise<UserPosition>((resolve) => {
-      if (!navigator.geolocation) {
-        setLocationError("Géolocalisation non supportée");
-        setUserPosition(DEFAULT_POSITION);
-        resolve(DEFAULT_POSITION);
-        return;
-      }
+  // Compat UI: message quand on utilise la position fallback
+  const locationError = useMemo(() => {
+    if (!positionReady) return null;
+    if (usingRealLocation) return null;
+    return 'GPS non disponible: distances basées sur la position par défaut';
+  }, [positionReady, usingRealLocation]);
 
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const pos = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          };
-          setLocationError(null);
-          setUserPosition(pos);
-          resolve(pos);
-        },
-        (error) => {
-          console.log("Erreur géolocalisation:", error.message);
-          setLocationError("GPS non disponible: activez la localisation pour des distances exactes");
-          setUserPosition(DEFAULT_POSITION);
-          resolve(DEFAULT_POSITION);
-        },
-        { timeout: 20000, enableHighAccuracy: true, maximumAge: 0 }
-      );
-    });
-  }, []);
-
-  // Fetch all stats from database
   const fetchStats = useCallback(async (position: UserPosition) => {
     try {
       setLoading(true);
 
-      // Fetch all vendors with their locations
-      const { data: vendors, error: vendorsError } = await supabase
-        .from('vendors')
-        .select('id, business_type, service_type, latitude, longitude')
-        .eq('is_active', true);
+      const [vendorsRes, proServicesRes, driversRes, taxiDriversRes, productsRes, categoriesRes] = await Promise.all([
+        supabase
+          .from('vendors')
+          .select('id, business_type, service_type, latitude, longitude')
+          .eq('is_active', true),
 
-      if (vendorsError) throw vendorsError;
+        supabase
+          .from('professional_services')
+          .select(`
+            id,
+            latitude,
+            longitude,
+            service_type_id,
+            service_types (code, name)
+          `)
+          .eq('status', 'active'),
 
-      // Fetch all professional services with their types
-      const { data: professionalServices, error: psError } = await supabase
-        .from('professional_services')
-        .select(`
-          id,
-          service_type_id,
-          service_types (code, name)
-        `)
-        .eq('status', 'active');
+        supabase
+          .from('drivers')
+          .select('id, vehicle_type, current_location')
+          .or('status.eq.active,is_online.eq.true'),
 
-      if (psError) throw psError;
+        supabase
+          .from('taxi_drivers')
+          .select('id, vehicle_type, last_lat, last_lng, is_online, status')
+          .or('is_online.eq.true,status.eq.on_trip,status.eq.active,status.eq.online'),
 
-      // Fetch all active drivers from drivers table
-      const { data: drivers, error: driversError } = await supabase
-        .from('drivers')
-        .select('id, vehicle_type, current_location')
-        .or('status.eq.active,is_online.eq.true');
+        supabase
+          .from('products')
+          .select(`
+            id, 
+            category_id,
+            vendor_id,
+            categories (id, name)
+          `)
+          .eq('is_active', true),
 
-      if (driversError) throw driversError;
-      
-      // Fetch taxi drivers from taxi_drivers table
-      const { data: taxiDrivers, error: taxiDriversError } = await supabase
-        .from('taxi_drivers')
-        .select('id, vehicle_type, last_lat, last_lng, is_online, status')
-        .or('is_online.eq.true,status.eq.on_trip,status.eq.active,status.eq.online');
+        supabase
+          .from('categories')
+          .select('id, name')
+          .eq('is_active', true),
+      ]);
 
-      if (taxiDriversError) throw taxiDriversError;
+      if (vendorsRes.error) throw vendorsRes.error;
+      if (proServicesRes.error) throw proServicesRes.error;
+      if (driversRes.error) throw driversRes.error;
+      if (taxiDriversRes.error) throw taxiDriversRes.error;
+      if (productsRes.error) throw productsRes.error;
+      if (categoriesRes.error) throw categoriesRes.error;
 
-      // Fetch products with their categories
-      const { data: products, error: productsError } = await supabase
-        .from('products')
-        .select(`
-          id, 
-          category_id,
-          vendor_id,
-          categories (id, name)
-        `)
-        .eq('is_active', true);
+      const vendors = vendorsRes.data ?? [];
+      const professionalServices = proServicesRes.data ?? [];
+      const drivers = driversRes.data ?? [];
+      const taxiDrivers = taxiDriversRes.data ?? [];
+      const products = productsRes.data ?? [];
 
-      if (productsError) throw productsError;
-
-      // Fetch categories to map names
-      const { data: categories } = await supabase
-        .from('categories')
-        .select('id, name')
-        .eq('is_active', true);
-
-      // Calculate counts with distance filter for vendors with location
       const newStats: ProximityStats = {
         boutiques: 0,
         taxiMoto: 0,
@@ -176,104 +147,127 @@ export function useProximityStats() {
         immobilier: 0,
         formation: 0,
         media: 0,
-        sport: 0
+        sport: 0,
       };
 
-      // Count only vendors WITH location data and within radius
-      vendors?.forEach(vendor => {
-        // Skip vendors without location data
-        if (!vendor.latitude || !vendor.longitude) {
-          return;
-        }
-        
-        const distance = calculateDistance(
-          position.latitude, 
-          position.longitude, 
-          Number(vendor.latitude), 
-          Number(vendor.longitude)
-        );
-        
-        // Only count if within radius
-        if (distance <= RADIUS_KM) {
-          // Count ALL active vendors as boutiques
-          newStats.boutiques++;
-          
-          // Also count by business type for restaurants
-          if (vendor.business_type === 'restaurant' || vendor.service_type === 'restaurant') {
-            newStats.restaurant++;
-          }
-        }
-      });
+      // Debug counters
+      const dbg: ProximityDebugInfo = {
+        vendors: { total: vendors.length, noGps: 0, outOfRadius: 0, inRadius: 0 },
+        services: { total: professionalServices.length, noGps: 0, outOfRadius: 0, inRadius: 0 },
+        taxiMoto: { total: taxiDrivers.length, noGps: 0, outOfRadius: 0, inRadius: 0 },
+        drivers: { total: drivers.length, noGps: 0, outOfRadius: 0, inRadius: 0 },
+        positionUsed: { latitude: position.latitude, longitude: position.longitude },
+        usingRealGps: usingRealLocation,
+      };
 
-      // Count drivers (taxi-moto and delivery) from drivers table - only with location
-      drivers?.forEach(driver => {
-        // Parse current_location point format (x,y)
-        let driverLat: number | null = null;
-        let driverLon: number | null = null;
-        
-        if (driver.current_location) {
-          const locationStr = String(driver.current_location);
-          const match = locationStr.match(/\(([^,]+),([^)]+)\)/);
-          if (match) {
-            driverLon = parseFloat(match[1]);
-            driverLat = parseFloat(match[2]);
-          }
-        }
-
-        // Skip drivers without location data
-        if (!driverLat || !driverLon) {
+      // 1) Boutiques (vendors) — strict GPS + rayon
+      vendors.forEach((vendor: any) => {
+        const lat = vendor?.latitude;
+        const lng = vendor?.longitude;
+        if (lat === null || lat === undefined || lng === null || lng === undefined) {
+          dbg.vendors.noGps++;
           return;
         }
 
-        const distance = calculateDistance(
-          position.latitude, 
-          position.longitude, 
-          driverLat, 
-          driverLon
-        );
-        
-        if (distance <= RADIUS_KM) {
-          if (driver.vehicle_type === 'car') {
-            newStats.vtc++;
-          }
-          // All drivers can do delivery
-          newStats.livraison++;
-        }
-      });
-
-      // Count taxi-moto drivers from taxi_drivers table - only with location
-      taxiDrivers?.forEach(driver => {
-        // Skip drivers without location data
-        if (!driver.last_lat || !driver.last_lng) {
+        const distance = calcDistanceFn(position.latitude, position.longitude, Number(lat), Number(lng));
+        if (!Number.isFinite(distance) || distance > RADIUS_KM) {
+          dbg.vendors.outOfRadius++;
           return;
         }
 
-        const distance = calculateDistance(
-          position.latitude, 
-          position.longitude, 
-          Number(driver.last_lat), 
-          Number(driver.last_lng)
-        );
-        
-        if (distance <= RADIUS_KM) {
-          // Count as taxi-moto (all taxi_drivers are motos)
-          newStats.taxiMoto++;
-          // Taxi-moto drivers can also do delivery
-          newStats.livraison++;
+        dbg.vendors.inRadius++;
+        newStats.boutiques++;
+        if (vendor.business_type === 'restaurant' || vendor.service_type === 'restaurant') {
+          newStats.restaurant++;
         }
       });
 
-      // Count professional services by type
+      // Helpers parse point
+      const parsePoint = (value: unknown): { lat: number; lng: number } | null => {
+        if (!value) return null;
+        const s = String(value);
+        const match = s.match(/\(([^,]+),([^)]+)\)/);
+        if (!match) return null;
+        const lng = Number(match[1]);
+        const lat = Number(match[2]);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+        return { lat, lng };
+      };
+
+      // 2) Drivers (livraison + vtc) — strict GPS + rayon
+      drivers.forEach((driver: any) => {
+        const p = parsePoint(driver.current_location);
+        if (!p) {
+          dbg.drivers.noGps++;
+          return;
+        }
+
+        const distance = calcDistanceFn(position.latitude, position.longitude, p.lat, p.lng);
+        if (!Number.isFinite(distance) || distance > RADIUS_KM) {
+          dbg.drivers.outOfRadius++;
+          return;
+        }
+
+        dbg.drivers.inRadius++;
+        if (driver.vehicle_type === 'car') newStats.vtc++;
+        newStats.livraison++;
+      });
+
+      // 3) Taxi drivers — strict GPS + rayon
+      taxiDrivers.forEach((driver: any) => {
+        const lat = driver?.last_lat;
+        const lng = driver?.last_lng;
+        if (lat === null || lat === undefined || lng === null || lng === undefined) {
+          dbg.taxiMoto.noGps++;
+          return;
+        }
+
+        const distance = calcDistanceFn(position.latitude, position.longitude, Number(lat), Number(lng));
+        if (!Number.isFinite(distance) || distance > RADIUS_KM) {
+          dbg.taxiMoto.outOfRadius++;
+          return;
+        }
+
+        dbg.taxiMoto.inRadius++;
+        newStats.taxiMoto++;
+        newStats.livraison++;
+      });
+
+      // 4) Services pro — GPS optionnel : on compte tous les services actifs
+      // Si le service a un GPS valide et est dans le rayon => inRadius
+      // Si le service n'a pas de GPS => on le compte quand même (noGps mais inclus)
+      // Si le service a un GPS mais hors rayon => exclu
       const serviceTypeCounts: Record<string, number> = {};
-      professionalServices?.forEach(service => {
-        const code = (service.service_types as any)?.code;
+      professionalServices.forEach((service: any) => {
+        const lat = service?.latitude;
+        const lng = service?.longitude;
+        const hasGps = lat !== null && lat !== undefined && lng !== null && lng !== undefined;
+        
+        if (!hasGps) {
+          dbg.services.noGps++;
+          // ✅ On inclut quand même les services sans GPS (ils sont actifs)
+          const code = service?.service_types?.code;
+          if (code) {
+            serviceTypeCounts[code] = (serviceTypeCounts[code] || 0) + 1;
+          }
+          return;
+        }
+
+        const distance = calcDistanceFn(position.latitude, position.longitude, Number(lat), Number(lng));
+        if (!Number.isFinite(distance) || distance > RADIUS_KM) {
+          dbg.services.outOfRadius++;
+          return; // Hors rayon = exclu
+        }
+
+        dbg.services.inRadius++;
+        const code = service?.service_types?.code;
         if (code) {
           serviceTypeCounts[code] = (serviceTypeCounts[code] || 0) + 1;
         }
       });
 
-      // Map service codes to stats (aligned with database service_types.code)
       newStats.beaute = serviceTypeCounts['beaute'] || 0;
+      newStats.restaurant += serviceTypeCounts['restaurant'] || 0;
       newStats.reparation = serviceTypeCounts['reparation'] || 0;
       newStats.nettoyage = serviceTypeCounts['menage'] || 0;
       newStats.immobilier = serviceTypeCounts['location'] || 0;
@@ -282,19 +276,30 @@ export function useProximityStats() {
       newStats.sante = serviceTypeCounts['sante'] || 0;
       newStats.sport = serviceTypeCounts['sport'] || 0;
 
-      // Count products by category
+      // 5) Produits (catégories) — inchangé (pas de notion GPS)
       const productCategoryCounts: Record<string, Set<string>> = {};
-      products?.forEach(product => {
-        const categoryName = (product.categories as any)?.name?.toLowerCase() || '';
+      products.forEach((product: any) => {
+        const categoryName = product?.categories?.name?.toLowerCase?.() || '';
         if (categoryName.includes('mode') || categoryName.includes('vetement') || categoryName.includes('fashion')) {
           productCategoryCounts['mode'] = productCategoryCounts['mode'] || new Set();
           productCategoryCounts['mode'].add(product.id);
         }
-        if (categoryName.includes('sante') || categoryName.includes('bien-etre') || categoryName.includes('health') || categoryName.includes('beauté')) {
+        if (
+          categoryName.includes('sante') ||
+          categoryName.includes('bien-etre') ||
+          categoryName.includes('health') ||
+          categoryName.includes('beauté')
+        ) {
           productCategoryCounts['sante'] = productCategoryCounts['sante'] || new Set();
           productCategoryCounts['sante'].add(product.id);
         }
-        if (categoryName.includes('electron') || categoryName.includes('tech') || categoryName.includes('phone') || categoryName.includes('high-tech') || categoryName.includes('informatique')) {
+        if (
+          categoryName.includes('electron') ||
+          categoryName.includes('tech') ||
+          categoryName.includes('phone') ||
+          categoryName.includes('high-tech') ||
+          categoryName.includes('informatique')
+        ) {
           productCategoryCounts['electronique'] = productCategoryCounts['electronique'] || new Set();
           productCategoryCounts['electronique'].add(product.id);
         }
@@ -305,11 +310,10 @@ export function useProximityStats() {
       });
 
       newStats.mode = productCategoryCounts['mode']?.size || 0;
-      newStats.electronique = productCategoryCounts['electronique']?.size || Math.floor((products?.length || 0) / 4);
+      newStats.electronique = productCategoryCounts['electronique']?.size || Math.floor((products.length || 0) / 4);
       newStats.maison = productCategoryCounts['maison']?.size || 0;
-      
-      // If no products in categories, distribute total products
-      if (products?.length && newStats.mode === 0) {
+
+      if (products.length && newStats.mode === 0) {
         const total = products.length;
         newStats.mode = Math.ceil(total * 0.3);
         newStats.electronique = Math.ceil(total * 0.25);
@@ -317,28 +321,29 @@ export function useProximityStats() {
         newStats.sante = Math.ceil(total * 0.25);
       }
 
+      // Debug log for developers
+      console.log('[ProximityStats] Debug info:', dbg);
+
       setStats(newStats);
+      setDebugInfo(dbg);
     } catch (error) {
-      console.error("Erreur lors du chargement des statistiques:", error);
+      console.error('Erreur lors du chargement des statistiques:', error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [usingRealLocation]);
 
-  // Initial load
+  // Chargement initial dès que la position est prête (réelle OU fallback) — cohérent avec le reste
   useEffect(() => {
-    const loadStats = async () => {
-      const position = await getUserPosition();
-      await fetchStats(position);
-    };
-    loadStats();
-  }, [getUserPosition, fetchStats]);
+    if (!positionReady) return;
+    const origin = userPosition ?? DEFAULT_POSITION;
+    void fetchStats(origin);
+  }, [positionReady, userPosition, DEFAULT_POSITION, fetchStats]);
 
-  // Refresh function
   const refresh = useCallback(async () => {
-    const position = await getUserPosition();
-    await fetchStats(position);
-  }, [getUserPosition, fetchStats]);
+    const pos = await refreshPosition();
+    await fetchStats(pos);
+  }, [refreshPosition, fetchStats]);
 
   return {
     stats,
@@ -346,6 +351,8 @@ export function useProximityStats() {
     userPosition,
     locationError,
     refresh,
-    radiusKm: RADIUS_KM
+    radiusKm: RADIUS_KM,
+    usingRealLocation,
+    debugInfo,
   };
 }

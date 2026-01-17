@@ -17,13 +17,13 @@ async function searchProducts(supabaseClient: any, query: string, category?: str
       name,
       description,
       price,
-      compare_at_price,
+      compare_price,
       images,
       category_id,
       stock_quantity,
       is_active,
       is_hot,
-      is_new,
+      is_featured,
       rating,
       reviews_count,
       vendor_id,
@@ -39,16 +39,24 @@ async function searchProducts(supabaseClient: any, query: string, category?: str
         country,
         rating,
         is_verified,
-        delivery_options
+        is_active,
+        delivery_enabled,
+        delivery_base_price,
+        delivery_price_per_km,
+        delivery_rush_bonus
       ),
       category:categories(name)
     `)
     .eq('is_active', true)
     .gt('stock_quantity', 0);
 
-  // Recherche textuelle
+  // Recherche textuelle avec ILIKE - format correct pour Supabase
   if (query) {
-    queryBuilder = queryBuilder.or(`name.ilike.%${query}%,description.ilike.%${query}%`);
+    // Nettoyer le terme de recherche et échapper les caractères spéciaux
+    const searchTerm = query.trim();
+    // Format correct: utiliser % comme wildcard dans la syntaxe Supabase .or()
+    // Note: Le % doit être encodé ou utilisé directement dans le pattern
+    queryBuilder = queryBuilder.ilike('name', `%${searchTerm}%`);
   }
 
   // Filtres optionnels
@@ -87,28 +95,30 @@ async function searchProducts(supabaseClient: any, query: string, category?: str
     name: p.name,
     description: p.description?.substring(0, 150) + (p.description?.length > 150 ? '...' : ''),
     price: p.price,
-    oldPrice: p.compare_at_price,
+    oldPrice: p.compare_price,
     image: p.images?.[0] || null,
     stock: p.stock_quantity,
     rating: p.rating,
     reviewsCount: p.reviews_count,
     isHot: p.is_hot,
-    isNew: p.is_new,
+    isFeatured: p.is_featured,
     category: p.category?.name || 'Non catégorisé',
     // Informations enrichies de la boutique
     vendorId: p.vendor_id,
     boutique: {
+      id: p.vendor?.id,
       name: p.vendor?.business_name || 'Vendeur 224',
       logo: p.vendor?.logo_url,
       description: p.vendor?.description,
-      phone: p.vendor?.phone,
+      phone: p.vendor?.phone || 'Non renseigné',
       email: p.vendor?.email,
-      address: p.vendor?.address,
-      city: p.vendor?.city,
+      address: p.vendor?.address || 'Adresse non renseignée',
+      city: p.vendor?.city || 'Guinée',
       country: p.vendor?.country || 'Guinée',
       rating: p.vendor?.rating,
       isVerified: p.vendor?.is_verified,
-      deliveryOptions: p.vendor?.delivery_options
+      deliveryEnabled: p.vendor?.delivery_enabled,
+      deliveryBasePrice: p.vendor?.delivery_base_price
     }
   })) || [];
 }
@@ -128,12 +138,19 @@ async function getVendorDetails(supabaseClient: any, vendorId?: string, vendorNa
       email,
       address,
       city,
+      neighborhood,
       country,
+      latitude,
+      longitude,
       rating,
       is_verified,
-      delivery_options,
-      opening_hours,
-      social_links,
+      is_active,
+      delivery_enabled,
+      delivery_base_price,
+      delivery_price_per_km,
+      delivery_rush_bonus,
+      business_type,
+      service_type,
       created_at
     `);
 
@@ -222,8 +239,8 @@ async function getVendorProducts(supabaseClient: any, vendorId?: string, vendorN
   const { data: products } = await supabaseClient
     .from('products')
     .select(`
-      id, name, description, price, compare_at_price, images, 
-      rating, reviews_count, stock_quantity, is_hot, is_new,
+      id, name, description, price, compare_price, images, 
+      rating, reviews_count, stock_quantity, is_hot, is_featured,
       category:categories(name)
     `)
     .eq('vendor_id', vendorIdToUse)
@@ -237,14 +254,14 @@ async function getVendorProducts(supabaseClient: any, vendorId?: string, vendorN
     name: p.name,
     description: p.description?.substring(0, 100),
     price: p.price,
-    oldPrice: p.compare_at_price,
+    oldPrice: p.compare_price,
     image: p.images?.[0],
     rating: p.rating,
     reviewsCount: p.reviews_count,
     stock: p.stock_quantity,
     category: p.category?.name,
     isHot: p.is_hot,
-    isNew: p.is_new
+    isFeatured: p.is_featured
   })) || [];
 }
 
@@ -285,9 +302,9 @@ async function searchProximityServices(supabaseClient: any, query?: string, serv
     }
   }
 
-  // Recherche textuelle
+  // Recherche textuelle - utiliser ilike séparé
   if (query) {
-    queryBuilder = queryBuilder.or(`business_name.ilike.%${query}%,description.ilike.%${query}%`);
+    queryBuilder = queryBuilder.ilike('business_name', `%${query}%`);
   }
 
   const { data: services, error } = await queryBuilder
@@ -540,10 +557,14 @@ async function getTopVendors(supabaseClient: any, limit = 10) {
       email,
       rating,
       is_verified,
-      delivery_options,
+      is_active,
+      delivery_enabled,
+      delivery_base_price,
+      delivery_price_per_km,
+      delivery_rush_bonus,
       created_at
     `)
-    .eq('status', 'active')
+    .eq('is_active', true)
     .order('rating', { ascending: false })
     .limit(limit);
 
@@ -571,7 +592,12 @@ async function getTopVendors(supabaseClient: any, limit = 10) {
       email: v.email,
       rating: v.rating,
       isVerified: v.is_verified,
-      deliveryOptions: v.delivery_options,
+      delivery: {
+        enabled: v.delivery_enabled,
+        basePrice: v.delivery_base_price,
+        pricePerKm: v.delivery_price_per_km,
+        rushBonus: v.delivery_rush_bonus,
+      },
       productCount: productCount || 0,
       memberSince: v.created_at
     };
@@ -591,7 +617,7 @@ async function globalMarketplaceSearch(supabaseClient: any, query: string, limit
     categories: []
   };
 
-  // Recherche de produits
+  // Recherche de produits - utiliser ilike séparé
   const { data: products } = await supabaseClient
     .from('products')
     .select(`
@@ -600,7 +626,7 @@ async function globalMarketplaceSearch(supabaseClient: any, query: string, limit
       category:categories(name)
     `)
     .eq('is_active', true)
-    .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
+    .ilike('name', `%${query}%`)
     .order('rating', { ascending: false })
     .limit(limit);
 
@@ -616,12 +642,12 @@ async function globalMarketplaceSearch(supabaseClient: any, query: string, limit
     category: p.category?.name
   }));
 
-  // Recherche de vendeurs
+  // Recherche de vendeurs - utiliser ilike séparé
   const { data: vendors } = await supabaseClient
     .from('vendors')
     .select('id, business_name, logo_url, description, rating, city, is_verified')
-    .eq('status', 'active')
-    .or(`business_name.ilike.%${query}%,description.ilike.%${query}%`)
+    .eq('is_active', true)
+    .ilike('business_name', `%${query}%`)
     .order('rating', { ascending: false })
     .limit(limit);
 
@@ -636,7 +662,7 @@ async function globalMarketplaceSearch(supabaseClient: any, query: string, limit
     isVerified: v.is_verified
   }));
 
-  // Recherche de services de proximité
+  // Recherche de services de proximité - utiliser ilike séparé
   const { data: services } = await supabaseClient
     .from('professional_services')
     .select(`
@@ -644,7 +670,7 @@ async function globalMarketplaceSearch(supabaseClient: any, query: string, limit
       service_type:service_types(name)
     `)
     .eq('status', 'active')
-    .or(`business_name.ilike.%${query}%,description.ilike.%${query}%`)
+    .ilike('business_name', `%${query}%`)
     .order('rating', { ascending: false })
     .limit(limit);
 
@@ -687,7 +713,7 @@ async function getMarketplaceStats(supabaseClient: any) {
 
   const [productsCount, vendorsCount, categoriesCount, reviewsCount] = await Promise.all([
     supabaseClient.from('products').select('id', { count: 'exact', head: true }).eq('is_active', true),
-    supabaseClient.from('vendors').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+    supabaseClient.from('vendors').select('id', { count: 'exact', head: true }).eq('is_active', true),
     supabaseClient.from('categories').select('id', { count: 'exact', head: true }).eq('is_active', true),
     supabaseClient.from('product_reviews').select('id', { count: 'exact', head: true }).eq('is_approved', true)
   ]);
@@ -1088,8 +1114,9 @@ Tu as accès à des fonctions de RECHERCHE COMPLÈTES sur tout le système.
 - Pour les meilleurs vendeurs: utilise get_top_vendors
 - Pour les avis: utilise search_product_reviews
 - Présente les résultats de façon claire et structurée
-- Inclus toujours: nom, prix, note, vendeur pour les produits
-- Inclus toujours: nom, note, nb produits, ville pour les vendeurs
+- Pour les produits: affiche **Nom**, **Prix**, **Stock**, **Note**, et **Boutique** (Nom + ID vendeur + Téléphone + Adresse)
+- Pour les vendeurs: affiche **Nom**, **Note**, **Ville**, **Téléphone**, **Adresse**, **ID vendeur**
+- Si plusieurs produits: propose 3 à 5 choix max, puis demande lequel le client veut acheter
 
 ❌ RESTRICTIONS:
 - NE PAS aider avec les fonctionnalités vendeur/admin

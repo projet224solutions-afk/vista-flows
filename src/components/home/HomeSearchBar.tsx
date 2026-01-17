@@ -5,7 +5,7 @@
  */
 
 import { useState, useRef } from 'react';
-import { Search, Filter, X, Mic } from 'lucide-react';
+import { Search, Filter, X, Camera } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,8 @@ interface HomeSearchBarProps {
   placeholder?: string;
   onFilter?: () => void;
   showFilter?: boolean;
+  showCamera?: boolean;
+  onCameraCapture?: (file: File) => void;
   className?: string;
 }
 
@@ -25,10 +27,25 @@ export function HomeSearchBar({
   placeholder = 'Rechercher des produits, services...',
   onFilter,
   showFilter = true,
+  showCamera = false,
+  onCameraCapture,
   className,
 }: HomeSearchBarProps) {
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCameraClick = () => {
+    cameraInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && onCameraCapture) {
+      onCameraCapture(file);
+    }
+    e.target.value = '';
+  };
 
   return (
     <div className={cn('px-4 pb-4 md:px-6', className)}>
@@ -79,6 +96,33 @@ export function HomeSearchBar({
             </Button>
           )}
         </div>
+
+        {/* Camera Button */}
+        {showCamera && (
+          <>
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleCameraClick}
+              className={cn(
+                'h-12 w-12 md:h-14 md:w-14 rounded-2xl shrink-0',
+                'border-primary/30 bg-card hover:bg-primary hover:text-primary-foreground',
+                'transition-all duration-300 hover:scale-105 hover:shadow-lg'
+              )}
+              title="Recherche par photo"
+            >
+              <Camera className="w-5 h-5 text-primary" />
+            </Button>
+          </>
+        )}
 
         {/* Filter Button */}
         {showFilter && (

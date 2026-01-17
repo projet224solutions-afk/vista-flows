@@ -1,6 +1,7 @@
 /**
  * Page publique Menu Restaurant
- * Permet aux clients de voir le menu et passer une commande
+ * Permet aux clients de voir le menu et passer une commande directement
+ * v2 - Achat direct sans panier intermédiaire
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -20,6 +21,10 @@ import {
   Utensils,
   Leaf,
   AlertTriangle,
+  CreditCard,
+  Wallet,
+  Check,
+  Receipt,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -29,6 +34,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -90,6 +96,13 @@ export default function RestaurantPublicMenu() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showCheckout, setShowCheckout] = useState(false);
   
+  // Quick order modal (achat direct)
+  const [quickOrderItem, setQuickOrderItem] = useState<MenuItem | null>(null);
+  const [quickOrderQuantity, setQuickOrderQuantity] = useState(1);
+  const [showQuickOrder, setShowQuickOrder] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(false);
+  const [lastOrderNumber, setLastOrderNumber] = useState('');
+  
   // Checkout form
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -97,6 +110,7 @@ export default function RestaurantPublicMenu() {
   const [tableNumber, setTableNumber] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [orderNotes, setOrderNotes] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'mobile' | 'card'>('cash');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Load restaurant and menu data
@@ -128,12 +142,11 @@ export default function RestaurantPublicMenu() {
         if (catError) throw catError;
         setCategories(categoriesData || []);
 
-        // Load menu items
+        // Load menu items - afficher TOUS les plats (is_available pour filtrer l'affichage)
         const { data: itemsData, error: itemsError } = await supabase
           .from('restaurant_menu_items')
           .select('*')
           .eq('professional_service_id', serviceId)
-          .eq('is_available', true)
           .order('display_order', { ascending: true });
 
         if (itemsError) throw itemsError;
@@ -179,7 +192,14 @@ export default function RestaurantPublicMenu() {
       }
       return [...prev, { ...item, quantity: 1 }];
     });
-    toast.success(`${item.name} ajouté au panier`);
+  }, []);
+
+  // Quick order - Achat direct
+  const openQuickOrder = useCallback((item: MenuItem) => {
+    setQuickOrderItem(item);
+    setQuickOrderQuantity(1);
+    setOrderSuccess(false);
+    setShowQuickOrder(true);
   }, []);
 
   const removeFromCart = useCallback((itemId: string) => {
@@ -210,8 +230,96 @@ export default function RestaurantPublicMenu() {
     [cart]
   );
 
-  // Submit order
-  const handleSubmitOrder = async () => {
+  // Submit order (from cart or quick order)
+  // Fonction pour créditer le wallet du restaurant
+  const creditRestaurantWallet = async (restaurantServiceId: string, amount: number, orderNumber: string) => {
+    try {
+      // Récupérer le user_id du restaurant (propriétaire du service professionnel)
+      const { data: serviceData, error: serviceError } = await supabase
+        .from('professional_services')
+        .select('user_id, business_name')
+        .eq('id', restaurantServiceId)
+        .single();
+
+      if (serviceError || !serviceData?.user_id) {
+        console.error('Erreur récupération user_id restaurant:', serviceError);
+        return false;
+      }
+
+      // Vérifier/créer le wallet du restaurant
+      let { data: wallet, error: walletError } = await supabase
+        .from('wallets')
+        .select('id, balance')
+        .eq('user_id', serviceData.user_id)
+        .single();
+
+      if (walletError && walletError.code === 'PGRST116') {
+        // Créer le wallet s'il n'existe pas
+        const { data: newWallet, error: createError } = await supabase
+          .from('wallets')
+          .insert({
+            user_id: serviceData.user_id,
+            balance: 0,
+            currency: 'GNF'
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Erreur création wallet restaurant:', createError);
+          return false;
+        }
+        wallet = newWallet;
+      }
+
+      if (!wallet) {
+        console.error('Wallet restaurant introuvable');
+        return false;
+      }
+
+      // Créditer le wallet
+      const newBalance = (wallet.balance || 0) + amount;
+      const { error: updateError } = await supabase
+        .from('wallets')
+        .update({ balance: newBalance })
+        .eq('id', wallet.id);
+
+      if (updateError) {
+        console.error('Erreur crédit wallet restaurant:', updateError);
+        return false;
+      }
+
+      // Créer le log de transaction (bypass type check car les types générés sont incorrects)
+      try {
+        await (supabase.from('wallet_logs') as any).insert({
+          wallet_id: wallet.id,
+          user_id: serviceData.user_id,
+          action: 'credit',
+          amount: amount,
+          currency: 'GNF',
+          balance_before: wallet.balance || 0,
+          balance_after: newBalance,
+          status: 'completed',
+          payment_method: 'online',
+          metadata: {
+            source: 'restaurant_order',
+            order_number: orderNumber,
+            restaurant_name: serviceData.business_name
+          }
+        });
+      } catch (logError) {
+        console.warn('Erreur log transaction:', logError);
+      }
+
+      console.log(`✅ Wallet restaurant crédité: +${amount} GNF`);
+      return true;
+    } catch (err) {
+      console.error('Erreur creditRestaurantWallet:', err);
+      return false;
+    }
+  };
+
+  const handleSubmitOrder = async (isQuickOrder: boolean = false) => {
     if (!customerName.trim()) {
       toast.error('Veuillez entrer votre nom');
       return;
@@ -228,24 +336,34 @@ export default function RestaurantPublicMenu() {
       toast.error('Veuillez entrer l\'adresse de livraison');
       return;
     }
-    if (cart.length === 0) {
-      toast.error('Votre panier est vide');
+
+    // Determine items to order
+    const itemsToOrder = isQuickOrder && quickOrderItem
+      ? [{ ...quickOrderItem, quantity: quickOrderQuantity }]
+      : cart;
+
+    if (itemsToOrder.length === 0) {
+      toast.error('Aucun article à commander');
       return;
     }
 
+    const total = itemsToOrder.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
     setIsSubmitting(true);
     try {
-      // Create order
-      const orderItems = cart.map(item => ({
+      const orderItems = itemsToOrder.map(item => ({
         menu_item_id: item.id,
         name: item.name,
         quantity: item.quantity,
         unit_price: item.price,
         total_price: item.price * item.quantity,
-        special_instructions: item.special_instructions || null,
+        special_instructions: orderNotes || null,
       }));
 
       const orderNumber = `CMD-${Date.now().toString(36).toUpperCase()}`;
+      
+      // Déterminer le statut de paiement
+      const isPaid = paymentMethod === 'card' || paymentMethod === 'mobile';
 
       const { data: order, error } = await supabase
         .from('restaurant_orders')
@@ -258,13 +376,13 @@ export default function RestaurantPublicMenu() {
           table_number: orderType === 'dine_in' ? tableNumber : null,
           delivery_address: orderType === 'delivery' ? deliveryAddress : null,
           items: orderItems,
-          subtotal: cartTotal,
+          subtotal: total,
           tax: 0,
-          total: cartTotal,
+          total: total,
           notes: orderNotes || null,
           status: 'pending',
-          payment_status: 'pending',
-          payment_method: 'cash',
+          payment_status: isPaid ? 'paid' : 'pending',
+          payment_method: paymentMethod,
           source: 'online',
         })
         .select()
@@ -272,9 +390,24 @@ export default function RestaurantPublicMenu() {
 
       if (error) throw error;
 
-      toast.success(`Commande ${orderNumber} envoyée avec succès !`);
-      clearCart();
-      setShowCheckout(false);
+      // Créditer le wallet du restaurant si paiement en ligne (card ou mobile)
+      if (isPaid && serviceId) {
+        const credited = await creditRestaurantWallet(serviceId, total, orderNumber);
+        if (credited) {
+          toast.success('💰 Paiement reçu par le restaurant');
+        }
+      }
+
+      setLastOrderNumber(orderNumber);
+      
+      if (isQuickOrder) {
+        setOrderSuccess(true);
+        toast.success(`Commande ${orderNumber} envoyée !`);
+      } else {
+        toast.success(`Commande ${orderNumber} envoyée avec succès !`);
+        clearCart();
+        setShowCheckout(false);
+      }
       
       // Reset form
       setOrderNotes('');
@@ -288,6 +421,11 @@ export default function RestaurantPublicMenu() {
       setIsSubmitting(false);
     }
   };
+
+  const quickOrderTotal = useMemo(() => 
+    quickOrderItem ? quickOrderItem.price * quickOrderQuantity : 0,
+    [quickOrderItem, quickOrderQuantity]
+  );
 
   // Get category name
   const getCategoryName = (categoryId: string | null) => {
@@ -459,7 +597,10 @@ export default function RestaurantPublicMenu() {
             {filteredItems.map(item => {
               const qty = getItemQuantity(item.id);
               return (
-                <Card key={item.id} className="overflow-hidden">
+                <Card key={item.id} className={cn(
+                  "overflow-hidden",
+                  !item.is_available && "opacity-60"
+                )}>
                   <CardContent className="p-0">
                     <div className="flex gap-3 p-3">
                       {/* Image */}
@@ -471,8 +612,15 @@ export default function RestaurantPublicMenu() {
                             <ChefHat className="w-8 h-8 text-muted-foreground" />
                           </div>
                         )}
-                        {item.is_new && (
+                        {item.is_new && item.is_available && (
                           <Badge className="absolute top-1 left-1 text-[10px] px-1.5 py-0">Nouveau</Badge>
+                        )}
+                        {!item.is_available && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5">
+                              Indisponible
+                            </Badge>
+                          </div>
                         )}
                       </div>
 
@@ -480,7 +628,10 @@ export default function RestaurantPublicMenu() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <h3 className="font-semibold text-sm line-clamp-1">{item.name}</h3>
+                            <h3 className={cn(
+                              "font-semibold text-sm line-clamp-1",
+                              !item.is_available && "line-through text-muted-foreground"
+                            )}>{item.name}</h3>
                             {item.description && (
                               <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
                                 {item.description}
@@ -491,6 +642,11 @@ export default function RestaurantPublicMenu() {
 
                         {/* Tags */}
                         <div className="flex flex-wrap gap-1 mt-1.5">
+                          {!item.is_available && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-orange-500 border-orange-200">
+                              <Clock className="w-2.5 h-2.5 mr-0.5" /> Bientôt disponible
+                            </Badge>
+                          )}
                           {item.spicy_level > 0 && (
                             <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-red-500 border-red-200">
                               🌶️ {item.spicy_level > 2 ? 'Très épicé' : 'Épicé'}
@@ -510,37 +666,46 @@ export default function RestaurantPublicMenu() {
 
                         {/* Price & Add button */}
                         <div className="flex items-center justify-between mt-2">
-                          <span className="font-bold text-primary">{item.price.toLocaleString()} GNF</span>
+                          <span className={cn(
+                            "font-bold",
+                            item.is_available ? "text-primary" : "text-muted-foreground"
+                          )}>{item.price.toLocaleString()} GNF</span>
                           
-                          {qty > 0 ? (
-                            <div className="flex items-center gap-2 bg-primary/10 rounded-full px-2 py-1">
+                          {item.is_available ? (
+                            qty > 0 ? (
+                              <div className="flex items-center gap-2 bg-primary/10 rounded-full px-2 py-1">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="w-6 h-6 rounded-full"
+                                  onClick={(e) => { e.stopPropagation(); removeFromCart(item.id); }}
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </Button>
+                                <span className="font-semibold text-sm w-5 text-center">{qty}</span>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="w-6 h-6 rounded-full"
+                                  onClick={(e) => { e.stopPropagation(); addToCart(item); }}
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            ) : (
                               <Button
-                                size="icon"
-                                variant="ghost"
-                                className="w-6 h-6 rounded-full"
-                                onClick={(e) => { e.stopPropagation(); removeFromCart(item.id); }}
+                                size="sm"
+                                className="h-8 gap-1 bg-green-600 hover:bg-green-700"
+                                onClick={() => openQuickOrder(item)}
                               >
-                                <Minus className="w-3 h-3" />
+                                <ShoppingCart className="w-3.5 h-3.5" />
+                                Commander
                               </Button>
-                              <span className="font-semibold text-sm w-5 text-center">{qty}</span>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="w-6 h-6 rounded-full"
-                                onClick={(e) => { e.stopPropagation(); addToCart(item); }}
-                              >
-                                <Plus className="w-3 h-3" />
-                              </Button>
-                            </div>
+                            )
                           ) : (
-                            <Button
-                              size="sm"
-                              className="h-8 gap-1"
-                              onClick={() => addToCart(item)}
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                              Ajouter
-                            </Button>
+                            <Badge variant="secondary" className="text-xs">
+                              Non disponible
+                            </Badge>
                           )}
                         </div>
                       </div>
@@ -735,7 +900,7 @@ export default function RestaurantPublicMenu() {
               <div className="pt-4 border-t">
                 <Button
                   className="w-full h-12 text-base"
-                  onClick={handleSubmitOrder}
+                  onClick={() => handleSubmitOrder(false)}
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
@@ -751,6 +916,259 @@ export default function RestaurantPublicMenu() {
           </Sheet>
         </div>
       )}
+
+      {/* Quick Order Modal - Achat direct */}
+      <Dialog open={showQuickOrder} onOpenChange={setShowQuickOrder}>
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5 text-primary" />
+              Commander directement
+            </DialogTitle>
+          </DialogHeader>
+
+          {orderSuccess ? (
+            // Success state
+            <div className="text-center py-6 space-y-4">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
+                <Check className="w-8 h-8 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-green-600">Commande envoyée !</h3>
+                <p className="text-muted-foreground mt-1">Référence: {lastOrderNumber}</p>
+              </div>
+              <Card className="bg-muted/50">
+                <CardContent className="p-4 text-left space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Article</span>
+                    <span className="font-medium">{quickOrderItem?.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Quantité</span>
+                    <span className="font-medium">{quickOrderQuantity}</span>
+                  </div>
+                  <div className="flex justify-between font-bold">
+                    <span>Total</span>
+                    <span className="text-primary">{quickOrderTotal.toLocaleString()} GNF</span>
+                  </div>
+                </CardContent>
+              </Card>
+              <p className="text-sm text-muted-foreground">
+                Le restaurant va préparer votre commande. Vous serez notifié quand elle sera prête.
+              </p>
+              <Button className="w-full" onClick={() => setShowQuickOrder(false)}>
+                Fermer
+              </Button>
+            </div>
+          ) : (
+            // Order form
+            <div className="space-y-4">
+              {/* Item preview */}
+              {quickOrderItem && (
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex gap-3">
+                      <div className="w-20 h-20 rounded-lg bg-muted overflow-hidden flex-shrink-0">
+                        {quickOrderItem.image_url ? (
+                          <img src={quickOrderItem.image_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <ChefHat className="w-8 h-8 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold">{quickOrderItem.name}</h3>
+                        {quickOrderItem.description && (
+                          <p className="text-xs text-muted-foreground line-clamp-2">{quickOrderItem.description}</p>
+                        )}
+                        <p className="text-primary font-bold mt-1">{quickOrderItem.price.toLocaleString()} GNF</p>
+                      </div>
+                    </div>
+                    
+                    {/* Quantity selector */}
+                    <div className="flex items-center justify-between mt-4 pt-3 border-t">
+                      <span className="font-medium">Quantité</span>
+                      <div className="flex items-center gap-3">
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="w-8 h-8 rounded-full"
+                          onClick={() => setQuickOrderQuantity(q => Math.max(1, q - 1))}
+                        >
+                          <Minus className="w-4 h-4" />
+                        </Button>
+                        <span className="font-bold text-lg w-8 text-center">{quickOrderQuantity}</span>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="w-8 h-8 rounded-full"
+                          onClick={() => setQuickOrderQuantity(q => q + 1)}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Order type */}
+              <div className="space-y-2">
+                <Label>Type de commande</Label>
+                <RadioGroup value={orderType} onValueChange={(v) => setOrderType(v as typeof orderType)}>
+                  <div className="grid grid-cols-3 gap-2">
+                    <label className={cn(
+                      'flex flex-col items-center gap-1 p-2 border rounded-lg cursor-pointer transition-colors',
+                      orderType === 'takeaway' && 'border-primary bg-primary/5'
+                    )}>
+                      <RadioGroupItem value="takeaway" className="sr-only" />
+                      <span className="text-lg">🥡</span>
+                      <span className="text-xs">À emporter</span>
+                    </label>
+                    <label className={cn(
+                      'flex flex-col items-center gap-1 p-2 border rounded-lg cursor-pointer transition-colors',
+                      orderType === 'dine_in' && 'border-primary bg-primary/5'
+                    )}>
+                      <RadioGroupItem value="dine_in" className="sr-only" />
+                      <span className="text-lg">🍽️</span>
+                      <span className="text-xs">Sur place</span>
+                    </label>
+                    <label className={cn(
+                      'flex flex-col items-center gap-1 p-2 border rounded-lg cursor-pointer transition-colors',
+                      orderType === 'delivery' && 'border-primary bg-primary/5'
+                    )}>
+                      <RadioGroupItem value="delivery" className="sr-only" />
+                      <span className="text-lg">🛵</span>
+                      <span className="text-xs">Livraison</span>
+                    </label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {/* Customer info */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="quick-name">Nom *</Label>
+                  <Input
+                    id="quick-name"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Votre nom"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="quick-phone">Téléphone *</Label>
+                  <Input
+                    id="quick-phone"
+                    type="tel"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    placeholder="620 00 00 00"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              {orderType === 'dine_in' && (
+                <div>
+                  <Label htmlFor="quick-table">Numéro de table *</Label>
+                  <Input
+                    id="quick-table"
+                    value={tableNumber}
+                    onChange={(e) => setTableNumber(e.target.value)}
+                    placeholder="Ex: 5"
+                    className="mt-1"
+                  />
+                </div>
+              )}
+
+              {orderType === 'delivery' && (
+                <div>
+                  <Label htmlFor="quick-address">Adresse de livraison *</Label>
+                  <Input
+                    id="quick-address"
+                    value={deliveryAddress}
+                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                    placeholder="Votre adresse"
+                    className="mt-1"
+                  />
+                </div>
+              )}
+
+              {/* Payment method */}
+              <div className="space-y-2">
+                <Label>Mode de paiement</Label>
+                <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as typeof paymentMethod)}>
+                  <div className="grid grid-cols-3 gap-2">
+                    <label className={cn(
+                      'flex flex-col items-center gap-1 p-2 border rounded-lg cursor-pointer transition-colors',
+                      paymentMethod === 'cash' && 'border-primary bg-primary/5'
+                    )}>
+                      <RadioGroupItem value="cash" className="sr-only" />
+                      <Wallet className="w-5 h-5 text-green-600" />
+                      <span className="text-xs">Espèces</span>
+                    </label>
+                    <label className={cn(
+                      'flex flex-col items-center gap-1 p-2 border rounded-lg cursor-pointer transition-colors',
+                      paymentMethod === 'mobile' && 'border-primary bg-primary/5'
+                    )}>
+                      <RadioGroupItem value="mobile" className="sr-only" />
+                      <Phone className="w-5 h-5 text-orange-500" />
+                      <span className="text-xs">Mobile</span>
+                    </label>
+                    <label className={cn(
+                      'flex flex-col items-center gap-1 p-2 border rounded-lg cursor-pointer transition-colors',
+                      paymentMethod === 'card' && 'border-primary bg-primary/5'
+                    )}>
+                      <RadioGroupItem value="card" className="sr-only" />
+                      <CreditCard className="w-5 h-5 text-blue-600" />
+                      <span className="text-xs">Carte</span>
+                    </label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <Label htmlFor="quick-notes">Instructions (optionnel)</Label>
+                <Textarea
+                  id="quick-notes"
+                  value={orderNotes}
+                  onChange={(e) => setOrderNotes(e.target.value)}
+                  placeholder="Sans oignon, bien cuit..."
+                  className="mt-1"
+                  rows={2}
+                />
+              </div>
+
+              {/* Total & Submit */}
+              <div className="pt-3 border-t space-y-3">
+                <div className="flex justify-between items-center text-lg font-bold">
+                  <span>Total</span>
+                  <span className="text-primary">{quickOrderTotal.toLocaleString()} GNF</span>
+                </div>
+                
+                <Button
+                  className="w-full h-12 text-base bg-green-600 hover:bg-green-700"
+                  onClick={() => handleSubmitOrder(true)}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Check className="w-5 h-5 mr-2" />
+                      Confirmer la commande
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -101,20 +101,41 @@ export default function ServicesProximite() {
         service_type: item.service_types,
       }));
 
-      // Calculer les distances
+      // Calculer les distances - uniquement pour les services avec coordonnées GPS valides
       list = list
         .map((s) => {
-          const distance = getDistanceTo(s.latitude, s.longitude);
+          // Si pas de coordonnées GPS, distance = null
+          const hasValidCoords = 
+            s.latitude !== null && s.latitude !== undefined && 
+            s.longitude !== null && s.longitude !== undefined &&
+            Number.isFinite(Number(s.latitude)) && Number.isFinite(Number(s.longitude));
+          
+          const distance = hasValidCoords ? getDistanceTo(s.latitude, s.longitude) : null;
           return { ...s, distance };
         })
-        .filter((s) => (s.distance === null ? true : s.distance <= RADIUS_KM));
+        // ✅ NOUVEAU: On garde tous les services actifs
+        // - Services avec GPS dans le rayon: inclus avec distance
+        // - Services avec GPS hors rayon: exclus
+        // - Services sans GPS: inclus (distance = null)
+        .filter((s) => {
+          // Pas de GPS = on inclut quand même
+          if (s.distance === null) return true;
+          // Avec GPS = on filtre par rayon
+          return s.distance <= RADIUS_KM;
+        });
 
-      // Tri: plus proches d'abord, sinon par note
+      // Tri: services avec distance d'abord (plus proches en premier), puis sans GPS à la fin
       list.sort((a, b) => {
-        if (a.distance === null && b.distance === null) return (b.rating || 0) - (a.rating || 0);
-        if (a.distance === null) return 1;
-        if (b.distance === null) return -1;
-        return a.distance - b.distance;
+        // Si les deux ont une distance, trier par distance puis rating
+        if (a.distance !== null && b.distance !== null) {
+          if (a.distance === b.distance) return (b.rating || 0) - (a.rating || 0);
+          return a.distance - b.distance;
+        }
+        // Services avec GPS avant ceux sans GPS
+        if (a.distance !== null && b.distance === null) return -1;
+        if (a.distance === null && b.distance !== null) return 1;
+        // Les deux sans GPS: trier par rating
+        return (b.rating || 0) - (a.rating || 0);
       });
 
       setServices(list);
@@ -255,16 +276,16 @@ export default function ServicesProximite() {
                 )}
                 style={{ animationDelay: `${index * 30}ms` }}
               >
-                {service.distance !== null ? (
-                  <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-md flex items-center gap-1">
-                    <MapPin className="w-3 h-3" />
-                    {formatDistance(service.distance)}
-                  </div>
-                ) : (
-                  <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full bg-muted text-muted-foreground text-[10px] font-medium shadow-sm">
-                    Pas de GPS
-                  </div>
-                )}
+                {/* Badge de distance - affiche "Pas de GPS" si pas de coordonnées */}
+                <div className={cn(
+                  "absolute -top-2 -right-2 px-2.5 py-1 rounded-full text-xs font-semibold shadow-md flex items-center gap-1",
+                  service.distance !== null 
+                    ? "bg-primary text-primary-foreground" 
+                    : "bg-muted text-muted-foreground"
+                )}>
+                  <MapPin className="w-3 h-3" />
+                  {service.distance !== null ? formatDistance(service.distance) : "Pas de GPS"}
+                </div>
 
                 <div className="w-14 h-14 rounded-xl bg-muted/40 flex items-center justify-center overflow-hidden mb-3 group-hover:scale-105 transition-transform">
                   {service.logo_url ? (

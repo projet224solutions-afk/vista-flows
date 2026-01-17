@@ -25,6 +25,7 @@ import mediaRoutes from './routes/media.routes.js';
 import internalRoutes from './routes/internal.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import walletRoutes from './routes/wallet.routes.js';
+import analyticsRoutes from './routes/analytics.routes.js';
 
 // Configuration
 dotenv.config();
@@ -99,6 +100,9 @@ app.use('/health', healthRoutes);
 
 // Auth routes (public)
 app.use('/auth', authRoutes);
+
+// Analytics tracking routes (public tracking + authenticated retrieval)
+app.use('/api/analytics', analyticsRoutes);
 
 // Wallet routes (protégé par JWT)
 app.use('/api/wallet', walletRoutes);

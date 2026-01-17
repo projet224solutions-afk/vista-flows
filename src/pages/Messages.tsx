@@ -279,8 +279,12 @@ export default function Messages() {
     try {
       setSearchingUsers(true);
       const searchTerm = query.trim();
-      const searchTermLower = searchTerm.toLowerCase();
-      const searchTermUpper = searchTerm.toUpperCase();
+      
+      // Échapper les caractères spéciaux pour éviter les erreurs de requête
+      const escapedTerm = searchTerm.replace(/[%_]/g, '\\$&');
+      const searchPattern = `%${escapedTerm}%`;
+
+      console.log('[Messages] 🔍 Recherche utilisateurs:', { searchTerm, searchPattern });
 
       // Recherche dans profiles avec plusieurs stratégies
       // 1. Recherche par public_id exact (format VND0001, USR0001, etc.)
@@ -288,9 +292,11 @@ export default function Messages() {
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, email, avatar_url, public_id, phone')
-        .neq('id', currentUser?.id)
-        .or(`public_id.ilike.%${searchTermUpper}%,first_name.ilike.%${searchTermLower}%,last_name.ilike.%${searchTermLower}%,email.ilike.%${searchTermLower}%,phone.ilike.%${searchTerm}%`)
+        .neq('id', currentUser?.id || '')
+        .or(`public_id.ilike.${searchPattern},first_name.ilike.${searchPattern},last_name.ilike.${searchPattern},email.ilike.${searchPattern},phone.ilike.${searchPattern}`)
         .limit(20);
+      
+      console.log('[Messages] 📊 Résultats recherche:', { profiles: profiles?.length, error });
 
       if (error) {
         console.error('Erreur recherche utilisateurs:', error);
@@ -808,14 +814,14 @@ export default function Messages() {
             </header>
 
             {/* Messages */}
-            <ScrollArea className="flex-1 px-4 py-4">
-              <div className="space-y-3 pb-4">
+            <ScrollArea className="flex-1 px-4 py-2">
+              <div className="space-y-2 pb-2">
                 {messages.length === 0 ? (
-                  <div className="text-center py-16 animate-in fade-in duration-500">
-                    <div className="bg-primary/5 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
-                      <MessageCircle className="w-12 h-12 text-primary" />
+                  <div className="text-center py-8 animate-in fade-in duration-500">
+                    <div className="bg-primary/5 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                      <MessageCircle className="w-8 h-8 text-primary" />
                     </div>
-                    <p className="text-lg font-medium text-foreground mb-2">
+                    <p className="text-base font-medium text-foreground mb-1">
                       Démarrez la conversation
                     </p>
                     <p className="text-sm text-muted-foreground max-w-xs mx-auto">

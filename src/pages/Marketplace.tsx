@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon, Camera, MapPin, Globe, Share2, Filter, Package, Briefcase, Laptop } from "lucide-react";
+import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon, MapPin, Globe, Share2, Filter, Package, Briefcase, Laptop } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,8 @@ import SearchBar from "@/components/SearchBar";
 import { MarketplaceGrid } from "@/components/marketplace/MarketplaceGrid";
 import { MarketplaceProductCard } from "@/components/marketplace/MarketplaceProductCard";
 import { UniversalMarketplaceCard } from "@/components/marketplace/UniversalMarketplaceCard";
+import { ProfessionalServiceCard } from "@/components/marketplace/ProfessionalServiceCard";
+import { ServiceTypesGrid } from "@/components/marketplace/ServiceTypesGrid";
 import { CurrencyIndicator } from "@/components/marketplace/CurrencyIndicator";
 import QuickFooter from "@/components/QuickFooter";
 import ProductDetailModal from "@/components/marketplace/ProductDetailModal";
@@ -282,26 +284,20 @@ export default function Marketplace() {
             </div>
           </div>
           
-          {/* Barre de recherche */}
-          <div className="mt-3 flex gap-2">
-            <div className="flex-1 min-w-0">
-              <SearchBar
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder={t('marketplace.searchProducts')}
-                showFilter
-                onFilter={() => setShowFilters(!showFilters)}
-              />
-            </div>
-            <Button 
-              variant="outline" 
-              size="icon"
-              onClick={() => navigate('/marketplace/visual-search')}
-              className="shrink-0 h-11 w-11 border-primary/30 hover:bg-primary/10"
-              title="Recherche par image"
-            >
-              <Camera className="w-5 h-5 text-primary" />
-            </Button>
+          {/* Barre de recherche avec bouton caméra intégré */}
+          <div className="mt-3">
+            <SearchBar
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder={t('marketplace.searchProducts')}
+              showFilter
+              onFilter={() => setShowFilters(!showFilters)}
+              showCamera
+              onCameraCapture={(file) => {
+                // Naviguer vers la recherche visuelle avec l'image capturée
+                navigate('/marketplace/visual-search', { state: { capturedImage: file } });
+              }}
+            />
           </div>
         </div>
       </header>
@@ -326,9 +322,10 @@ export default function Marketplace() {
         </div>
       </section>
 
-      {/* Filtres de type - Boutons icônes stylés */}
+      {/* Filtres de type - Boutons icônes stylés - Services Pro en premier */}
       <section className="px-4 py-3 border-b border-border bg-gradient-to-r from-muted/50 via-background to-muted/50">
         <div className="flex justify-center gap-3 sm:gap-6">
+          {/* Services Pro - EN PREMIER */}
           <button
             onClick={() => setSelectedItemType('professional_service')}
             className={`group relative w-28 h-16 sm:w-36 sm:h-20 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center gap-1 sm:gap-1.5 transition-all duration-300 ${
@@ -356,6 +353,7 @@ export default function Marketplace() {
             )}
           </button>
 
+          {/* Produits Numériques */}
           <button
             onClick={() => setSelectedItemType('digital_product')}
             className={`group relative w-28 h-16 sm:w-36 sm:h-20 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center gap-1 sm:gap-1.5 transition-all duration-300 ${
@@ -495,108 +493,100 @@ export default function Marketplace() {
 
       {/* Results */}
       <section className="px-4 py-3">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-xs text-muted-foreground">
-            {marketplaceItems.length} / {marketplaceTotal} résultats
-            {selectedItemType !== 'all' && (
-              <span className="ml-2">
-                ({selectedItemType === 'product' ? 'Produits' : 
-                  selectedItemType === 'professional_service' ? 'Services professionnels' : 
-                  'Produits numériques'})
-              </span>
-            )}
-          </p>
-        </div>
-
-        {marketplaceLoading ? (
-          <div className="marketplace-grid">
-            {/* Skeleton Loading */}
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="marketplace-card animate-pulse">
-                <div className="marketplace-card-image-container bg-muted" />
-                <div className="marketplace-card-content space-y-2">
-                  <div className="h-4 bg-muted rounded w-3/4" />
-                  <div className="h-3 bg-muted rounded w-1/2" />
-                  <div className="h-5 bg-muted rounded w-1/3" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : marketplaceItems.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground mb-2">
-              {selectedItemType === 'all' ? 'Aucun article trouvé' :
-               selectedItemType === 'product' ? 'Aucun produit trouvé' :
-               selectedItemType === 'professional_service' ? 'Aucun service professionnel trouvé' :
-               'Aucun produit numérique trouvé'}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Essayez de modifier vos filtres de recherche
-            </p>
-          </div>
+        {/* Si "Services Pro" est sélectionné, afficher la grille des types de services */}
+        {selectedItemType === 'professional_service' ? (
+          <ServiceTypesGrid 
+            onBack={() => setSelectedItemType('all')} 
+            searchQuery={searchQuery}
+          />
         ) : (
-          <MarketplaceGrid>
-            {marketplaceItems.map((item) => {
-              // Pour les services professionnels, utiliser UniversalMarketplaceCard
-              if (item.item_type === 'professional_service') {
-                return (
-                  <UniversalMarketplaceCard
-                    key={item.id}
-                    item={item}
-                    onAddToCart={() => navigate(`/services-proximite/${item.id}`)}
-                    onViewDetails={() => navigate(`/services-proximite/${item.id}`)}
-                  />
-                );
-              }
-              
-              // Pour les produits physiques et numériques, utiliser MarketplaceProductCard
-              return (
-                <MarketplaceProductCard
-                  key={item.id}
-                  id={item.id}
-                  image={item.images || []}
-                  title={item.name}
-                  price={item.price}
-                  originalPrice={item.originalPrice}
-                  vendor={item.vendor_name}
-                  vendorId={item.vendor_id}
-                  vendorLocation={item.address}
-                  vendorRating={item.rating}
-                  vendorRatingCount={item.reviews_count}
-                  rating={item.rating}
-                  reviewCount={item.reviews_count}
-                  isPremium={item.is_premium || item.is_featured}
-                  stock={item.stock}
-                  category={item.category_name}
-                  onBuy={() => handleProductClick(item.id)}
-                  onAddToCart={() => {
-                    addToCart({
-                      id: item.id,
-                      name: item.name,
-                      price: item.price,
-                      image: item.images?.[0],
-                      vendor_id: item.vendor_id,
-                      vendor_name: item.vendor_name
-                    });
-                    toast.success('Ajouté au panier');
-                  }}
-                  onContact={() => handleContactVendor(item.id)}
-                />
-              );
-            })}
-          </MarketplaceGrid>
-        )}
+          <>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-muted-foreground">
+                {marketplaceItems.length} / {marketplaceTotal} résultats
+                {selectedItemType !== 'all' && (
+                  <span className="ml-2">
+                    ({selectedItemType === 'product' ? 'Produits' : 'Produits numériques'})
+                  </span>
+                )}
+              </p>
+            </div>
 
-        {marketplaceHasMore && !marketplaceLoading && (
-          <div className="text-center mt-4 md:mt-6">
-            <Button 
-              onClick={marketplaceLoadMore} 
-              disabled={marketplaceLoading}
-              size={isMobile ? "sm" : "default"}
-            >
-              {marketplaceLoading ? 'Chargement...' : 'Voir plus'}
-            </Button>
-          </div>
+            {marketplaceLoading ? (
+              <div className="marketplace-grid">
+                {/* Skeleton Loading */}
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <div key={i} className="marketplace-card animate-pulse">
+                    <div className="marketplace-card-image-container bg-muted" />
+                    <div className="marketplace-card-content space-y-2">
+                      <div className="h-4 bg-muted rounded w-3/4" />
+                      <div className="h-3 bg-muted rounded w-1/2" />
+                      <div className="h-5 bg-muted rounded w-1/3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : marketplaceItems.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground mb-2">
+                  {selectedItemType === 'all' ? 'Aucun article trouvé' :
+                   selectedItemType === 'product' ? 'Aucun produit trouvé' :
+                   'Aucun produit numérique trouvé'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Essayez de modifier vos filtres de recherche
+                </p>
+              </div>
+            ) : (
+              <MarketplaceGrid>
+                {marketplaceItems.filter(item => item.item_type !== 'professional_service').map((item) => (
+                  <MarketplaceProductCard
+                    key={item.id}
+                    id={item.id}
+                    image={item.images || []}
+                    title={item.name}
+                    price={item.price}
+                    originalPrice={item.originalPrice}
+                    vendor={item.vendor_name}
+                    vendorId={item.vendor_id}
+                    vendorLocation={item.address}
+                    vendorRating={item.rating}
+                    vendorRatingCount={item.reviews_count}
+                    rating={item.rating}
+                    reviewCount={item.reviews_count}
+                    isPremium={item.is_premium || item.is_featured}
+                    stock={item.stock}
+                    category={item.category_name}
+                    onBuy={() => handleProductClick(item.id)}
+                    onAddToCart={() => {
+                      addToCart({
+                        id: item.id,
+                        name: item.name,
+                        price: item.price,
+                        image: item.images?.[0],
+                        vendor_id: item.vendor_id,
+                        vendor_name: item.vendor_name
+                      });
+                      toast.success('Ajouté au panier');
+                    }}
+                    onContact={() => handleContactVendor(item.id)}
+                  />
+                ))}
+              </MarketplaceGrid>
+            )}
+
+            {marketplaceHasMore && !marketplaceLoading && (
+              <div className="text-center mt-4 md:mt-6">
+                <Button 
+                  onClick={marketplaceLoadMore} 
+                  disabled={marketplaceLoading}
+                  size={isMobile ? "sm" : "default"}
+                >
+                  {marketplaceLoading ? 'Chargement...' : 'Voir plus'}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </section>
 

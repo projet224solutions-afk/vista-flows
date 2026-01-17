@@ -218,17 +218,48 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
         }
       }
 
-      // Vérifier que le vendeur a un profil
-      const { data: recipientProfile, error: recipientError } = await supabase
+      // Vérifier que le vendeur a un profil, sinon le créer automatiquement
+      let { data: recipientProfile, error: recipientError } = await supabase
         .from('profiles')
         .select('id, full_name')
         .eq('id', product.vendors.user_id)
         .maybeSingle();
 
       if (!recipientProfile) {
-        console.error('Profil vendeur non trouvé pour user_id:', product.vendors.user_id);
-        toast.error('Ce vendeur n\'a pas encore configuré son profil de messagerie');
-        return;
+        console.log('Profil vendeur non trouvé, création automatique pour:', product.vendors.user_id);
+        
+        // ✅ Utiliser les infos du vendeur disponibles (pas besoin d'appel admin)
+        const vendorName = product.vendors.business_name || 'Vendeur';
+        // Générer un email placeholder basé sur l'ID vendeur (sera mis à jour plus tard)
+        const vendorEmail = `vendeur_${product.vendors.user_id.slice(0, 8)}@224solution.net`;
+        
+        const { data: createdProfile, error: createVendorError } = await supabase
+          .from('profiles')
+          .insert({
+            id: product.vendors.user_id,
+            email: vendorEmail,
+            full_name: vendorName
+          })
+          .select('id, full_name')
+          .single();
+
+        if (createVendorError) {
+          console.error('Erreur création profil vendeur:', createVendorError);
+          // Si erreur de conflit (profil existe déjà), réessayer de récupérer
+          if (createVendorError.code === '23505') {
+            const { data: existingProfile } = await supabase
+              .from('profiles')
+              .select('id, full_name')
+              .eq('id', product.vendors.user_id)
+              .maybeSingle();
+            recipientProfile = existingProfile;
+          } else {
+            // ✅ Continuer quand même - le message peut fonctionner sans profil vendeur complet
+            console.warn('Profil vendeur non créé, mais on continue avec le message');
+          }
+        } else {
+          recipientProfile = createdProfile;
+        }
       }
 
       // Créer un message initial

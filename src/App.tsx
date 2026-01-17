@@ -55,6 +55,7 @@ const DriverSettings = lazyWithRetry(() => import("./pages/driver/DriverSettings
 const DriverHelp = lazyWithRetry(() => import("./pages/driver/DriverHelp"));
 const TaxiMotoDriver = lazyWithRetry(() => import("./pages/TaxiMotoDriver"));
 const DriverSubscriptionPage = lazyWithRetry(() => import("./pages/DriverSubscriptionPage"));
+const VendorSubscriptionPage = lazyWithRetry(() => import("./pages/VendorSubscriptionPage"));
 const TaxiMotoClient = lazyWithRetry(() => import("./pages/TaxiMotoClient"));
 const TaxiMotoRouter = lazyWithRetry(() => import("./components/taxi-moto/TaxiMotoRouter"));
 const SyndicatDashboardUltraPro = lazyWithRetry(() => import("./pages/SyndicatDashboardUltraPro"));
@@ -66,7 +67,6 @@ const PdgSecurity = lazyWithRetry(() => import("./pages/PdgSecurity"));
 const CompetitiveAnalysis = lazyWithRetry(() => import("./pages/pdg/CompetitiveAnalysis"));
 const ApiSupervision = lazyWithRetry(() => import("./pages/pdg/ApiSupervision"));
 const SystemDebugPage = lazyWithRetry(() => import("./pages/pdg/SystemDebugPage"));
-const SimpleDiagnostic = lazyWithRetry(() => import("./pages/SimpleDiagnostic"));
 const PDGCopilotDashboard = lazyWithRetry(() => import("./components/pdg/PDGCopilotDashboard"));
 const BureauDashboard = lazyWithRetry(() => import("./pages/BureauDashboard"));
 const BureauMonitoringPage = lazyWithRetry(() => import("./pages/BureauMonitoringPage"));
@@ -107,14 +107,10 @@ const BadgeVerification = lazyWithRetry(() => import("./pages/BadgeVerification"
 const StolenMotoDeclaration = lazyWithRetry(() => import("./pages/StolenMotoDeclaration"));
 const VisualSearch = lazyWithRetry(() => import("./pages/VisualSearch"));
 const Categories = lazyWithRetry(() => import("./pages/Categories"));
-const StripePaymentTest = lazyWithRetry(() => import("./pages/StripePaymentTest"));
-const StripeDiagnostic = lazyWithRetry(() => import("./pages/StripeDiagnostic"));
 const DigitalProducts = lazyWithRetry(() => import("./pages/DigitalProducts"));
 const ShortLinkRedirect = lazyWithRetry(() => import("./pages/ShortLinkRedirect"));
 const UserPublicProfile = lazyWithRetry(() => import("./pages/UserPublicProfile"));
 const RestaurantPublicMenu = lazyWithRetry(() => import("./pages/RestaurantPublicMenu"));
-const Custom224PaymentDemo = lazyWithRetry(() => import("./pages/demos/Custom224PaymentDemo"));
-const VendorSubscriptionPage = lazyWithRetry(() => import("./pages/VendorSubscriptionPage"));
 // Ultra-simple loading component - Pure CSS inline (no Tailwind dependency)
 const PageLoader = memo(() => (
   <div style={{ 
@@ -201,7 +197,6 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               {/* Accueil application (avec footer + services) */}
               <Route path="/home" element={<Home />} />
-              <Route path="/diagnostic" element={<SimpleDiagnostic />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/login" element={<Navigate to="/auth" replace />} />
@@ -238,9 +233,6 @@ function App() {
               <Route path="/digital-products" element={<DigitalProducts />} />
               <Route path="/boutiques" element={<NearbyBoutiques />} />
               
-              {/* Demo Pages */}
-              <Route path="/demos/custom-payment" element={<Custom224PaymentDemo />} />
-              
               <Route path="/services-proximite" element={<ServicesProximite />} />
               <Route path="/services-proximite/:id" element={<ServiceDetail />} />
               {/* Page publique menu restaurant pour commande client */}
@@ -257,9 +249,9 @@ function App() {
               <Route path="/taxi-moto/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
               {/* Redirection 301 depuis l'alias vers la route normalisée */}
               <Route path="/taxi-moto-driver" element={<Navigate to="/taxi-moto/driver" replace />} />
-              {/* Abonnement conducteur: disponible pour taxi/driver */}
+              {/* Abonnement conducteur: disponible pour taxi/driver et vendeur */}
+              {/* Abonnement conducteur: disponible pour taxi/driver et vendeur */}
               <Route path="/driver-subscription" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'livreur', 'admin']}><DriverSubscriptionPage /></ProtectedRoute>} />
-              {/* Abonnement vendeur: page dédiée */}
               <Route path="/vendeur/subscription" element={<ProtectedRoute allowedRoles={['vendeur', 'admin']}><VendorSubscriptionPage /></ProtectedRoute>} />
               <Route path="/tracking" element={<ClientTrackingPage />} />
               <Route path="/client-tracking" element={<ClientTrackingPage />} />
@@ -345,12 +337,6 @@ function App() {
                 path="/payment-core"
                 element={<PaymentCorePage />}
               />
-              
-              {/* Test Stripe Payment */}
-              <Route path="/test-stripe-payment" element={<StripePaymentTest />} />
-              
-              {/* Diagnostic Stripe */}
-              <Route path="/stripe-diagnostic" element={<StripeDiagnostic />} />
               
               <Route path="/orders" element={<Orders />} />
               <Route
