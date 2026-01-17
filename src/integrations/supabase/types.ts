@@ -22275,6 +22275,7 @@ export type Database = {
       check_service_owner: { Args: { service_id: string }; Returns: boolean }
       clean_old_errors: { Args: never; Returns: undefined }
       cleanup_expired_tokens: { Args: never; Returns: undefined }
+      cleanup_old_analytics_data: { Args: never; Returns: number }
       cleanup_old_errors: { Args: never; Returns: undefined }
       cleanup_old_product_views: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
@@ -22902,6 +22903,23 @@ export type Database = {
         }[]
       }
       get_prefix_for_role: { Args: { p_role: string }; Returns: string }
+      get_product_analytics: {
+        Args: {
+          p_days?: number
+          p_limit?: number
+          p_offset?: number
+          p_product_id?: string
+          p_vendor_id: string
+        }
+        Returns: {
+          product_id: string
+          product_name: string
+          today_views: number
+          total_views: number
+          unique_viewers: number
+          week_views: number
+        }[]
+      }
       get_product_rating: {
         Args: { p_product_id: string }
         Returns: {
@@ -22993,6 +23011,16 @@ export type Database = {
       get_vehicle_security_summary: {
         Args: { p_vehicle_id: string }
         Returns: Json
+      }
+      get_vendor_analytics_summary: {
+        Args: { p_days?: number; p_vendor_id: string }
+        Returns: {
+          stat_date: string
+          total_product_views: number
+          total_shop_visits: number
+          unique_product_viewers: number
+          unique_shop_visitors: number
+        }[]
       }
       get_vendor_average_rating: {
         Args: { p_vendor_id: string }
@@ -24108,6 +24136,44 @@ export type Database = {
       toggle_syndicate_worker_status_secure: {
         Args: { p_bureau_id: string; p_is_active: boolean; p_worker_id: string }
         Returns: undefined
+      }
+      track_product_view: {
+        Args: {
+          p_country_code?: string
+          p_device_type?: string
+          p_fingerprint_hash?: string
+          p_ip_address?: string
+          p_product_id: string
+          p_referer_url?: string
+          p_session_id?: string
+          p_user_agent?: string
+          p_user_id?: string
+          p_vendor_id: string
+        }
+        Returns: {
+          message: string
+          success: boolean
+          view_id: string
+        }[]
+      }
+      track_shop_visit: {
+        Args: {
+          p_country_code?: string
+          p_device_type?: string
+          p_entry_page?: string
+          p_fingerprint_hash?: string
+          p_ip_address?: string
+          p_referer_url?: string
+          p_session_id?: string
+          p_user_agent?: string
+          p_user_id?: string
+          p_vendor_id: string
+        }
+        Returns: {
+          message: string
+          success: boolean
+          visit_id: string
+        }[]
       }
       transfer_between_wallets: {
         Args: {
