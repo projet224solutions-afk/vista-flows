@@ -370,23 +370,34 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
 
       // Récupérer le nom de la catégorie si c'est un UUID
       const categoryName = category && category !== 'all' ? await getCategoryName(category) : null;
+      
+      // Si une catégorie e-commerce est sélectionnée (UUID), ne charger que les produits
+      const isEcommerceCategorySelected = category && category !== 'all' && 
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category);
 
       // Charger selon le type sélectionné
       let allItems: MarketplaceItem[] = [];
       if (itemType === 'product') {
         allItems = await loadProducts();
       } else if (itemType === 'digital_product') {
-        allItems = await loadDigitalProducts();
+        // Si une catégorie e-commerce est sélectionnée, ne pas charger les produits numériques
+        allItems = isEcommerceCategorySelected ? [] : await loadDigitalProducts();
       } else if (itemType === 'professional_service') {
-        allItems = await loadProfessionalServices();
+        // Si une catégorie e-commerce est sélectionnée, ne pas charger les services pro
+        allItems = isEcommerceCategorySelected ? [] : await loadProfessionalServices();
       } else {
         // 'all' = produits + numériques + services professionnels
-        const [products, digitalProducts, professionalServices] = await Promise.all([
-          loadProducts(),
-          loadDigitalProducts(),
-          loadProfessionalServices()
-        ]);
-        allItems = [...products, ...digitalProducts, ...professionalServices];
+        // Si une catégorie e-commerce est sélectionnée, ne charger que les produits
+        if (isEcommerceCategorySelected) {
+          allItems = await loadProducts();
+        } else {
+          const [products, digitalProducts, professionalServices] = await Promise.all([
+            loadProducts(),
+            loadDigitalProducts(),
+            loadProfessionalServices()
+          ]);
+          allItems = [...products, ...digitalProducts, ...professionalServices];
+        }
       }
 
       // Filtrage global par prix
