@@ -36,20 +36,27 @@ serve(async (req) => {
       throw new Error("OPENAI_API_KEY n'est pas configurée");
     }
 
+    const productType = body.productType || '';
+    
     const prompt = `Tu es un expert en rédaction e-commerce. Génère une description professionnelle et vendeuse pour ce produit:
 
 NOM: ${name}
 ${category ? `CATÉGORIE: ${category}` : ''}
+${productType ? `TYPE: ${productType}` : ''}
 ${price ? `PRIX: ${price} GNF` : ''}
 
 CONSIGNES:
-- Rédige une description commerciale engageante et professionnelle (2-3 paragraphes)
-- Le texte doit donner envie d'acheter
-- Mentionne les avantages et bénéfices du produit
-- Utilise un ton professionnel mais accessible
-- Maximum 200 mots
+Tu dois générer EXACTEMENT ce format JSON (sans markdown, sans backticks):
+{
+  "shortDescription": "Une phrase accrocheuse de 10-15 mots maximum qui résume le produit",
+  "description": "Description commerciale complète de 2-3 paragraphes (150-200 mots)"
+}
 
-Réponds uniquement avec le texte de la description, sans introduction ni conclusion.`;
+IMPORTANT:
+- La description courte doit être percutante et donner envie d'en savoir plus
+- La description complète doit détailler les avantages et bénéfices
+- Utilise un ton professionnel mais accessible
+- Réponds UNIQUEMENT avec le JSON, sans aucun texte avant ou après`;
 
     console.log('🔄 Génération description OpenAI pour:', name);
 
@@ -64,7 +71,7 @@ Réponds uniquement avec le texte de la description, sans introduction ni conclu
         messages: [
           {
             role: "system",
-            content: "Tu es un expert en rédaction de descriptions produits e-commerce professionnelles en français. Tu réponds uniquement avec le texte de la description, sans aucune introduction ou explication."
+            content: "Tu es un expert en rédaction de descriptions produits e-commerce professionnelles en français. Tu réponds UNIQUEMENT en JSON valide, sans markdown ni backticks."
           },
           {
             role: "user",
@@ -105,10 +112,30 @@ Réponds uniquement avec le texte de la description, sans introduction ni conclu
     }
 
     console.log('✅ Description OpenAI générée avec succès');
+    console.log('📝 Contenu brut:', generatedText);
+
+    // Parser le JSON retourné par l'IA
+    let parsedContent;
+    try {
+      // Nettoyer le texte des éventuels backticks markdown
+      const cleanedText = generatedText
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
+      parsedContent = JSON.parse(cleanedText);
+    } catch (parseError) {
+      console.error('❌ Erreur parsing JSON:', parseError);
+      // Fallback: utiliser le texte brut comme description complète
+      parsedContent = {
+        shortDescription: generatedText.split('.')[0] + '.',
+        description: generatedText.trim()
+      };
+    }
 
     return new Response(
       JSON.stringify({ 
-        description: generatedText.trim(),
+        shortDescription: parsedContent.shortDescription || '',
+        description: parsedContent.description || generatedText.trim(),
         provider: 'openai',
         model: 'gpt-4o-mini'
       }),
