@@ -121,6 +121,40 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
   const [currentStep, setCurrentStep] = useState<FormStep>('mode');
   const [loading, setLoading] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
+
+  // Fonction pour générer la description par IA
+  const handleGenerateDescription = async () => {
+    if (!baseData.title.trim()) {
+      toast.error('Veuillez d\'abord saisir un titre');
+      return;
+    }
+
+    setGeneratingDescription(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-product-description', {
+        body: {
+          name: baseData.title,
+          category: category,
+          productType: baseData.productType
+        }
+      });
+
+      if (error) throw error;
+      
+      if (data?.description) {
+        setBaseData(prev => ({ ...prev, description: data.description }));
+        toast.success('Description générée avec succès!');
+      } else {
+        throw new Error('Aucune description générée');
+      }
+    } catch (error) {
+      console.error('Erreur génération description:', error);
+      toast.error('Erreur lors de la génération de la description');
+    } finally {
+      setGeneratingDescription(false);
+    }
+  };
   
   // Mode de vente
   const [salesMode, setSalesMode] = useState<SalesMode>(config.defaultMode);
@@ -478,7 +512,24 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
                 </div>
 
                 <div>
-                  <Label htmlFor="description">Description complète</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="description">Description complète</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleGenerateDescription}
+                      disabled={generatingDescription || !baseData.title.trim()}
+                      className="h-7 text-xs gap-1.5"
+                    >
+                      {generatingDescription ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Sparkles className="w-3 h-3" />
+                      )}
+                      Générer par IA
+                    </Button>
+                  </div>
                   <Textarea
                     id="description"
                     value={baseData.description}
