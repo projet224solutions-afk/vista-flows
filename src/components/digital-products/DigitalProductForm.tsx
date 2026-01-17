@@ -15,8 +15,10 @@ import {
   CheckCircle,
   Video,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  Tag
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -123,12 +125,75 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
   // Mode de vente
   const [salesMode, setSalesMode] = useState<SalesMode>(config.defaultMode);
   
+  // Types de produits par catégorie
+  const productTypes: Record<ProductCategory, { value: string; label: string }[]> = {
+    logiciel: [
+      { value: 'logiciel_montage', label: 'Logiciel de montage vidéo' },
+      { value: 'antivirus', label: 'Antivirus / Sécurité' },
+      { value: 'vpn', label: 'VPN' },
+      { value: 'saas', label: 'SaaS / Application en ligne' },
+      { value: 'plugin', label: 'Plugin / Extension' },
+      { value: 'theme', label: 'Thème / Template' },
+      { value: 'autre_logiciel', label: 'Autre logiciel' }
+    ],
+    voyage: [
+      { value: 'reservation_hotel', label: 'Réservation hôtel' },
+      { value: 'billet_avion', label: 'Billet d\'avion' },
+      { value: 'location_voiture', label: 'Location de voiture' },
+      { value: 'croisiere', label: 'Croisière' },
+      { value: 'excursion', label: 'Excursion / Visite guidée' },
+      { value: 'assurance_voyage', label: 'Assurance voyage' },
+      { value: 'autre_voyage', label: 'Autre service voyage' }
+    ],
+    formation: [
+      { value: 'formation_video', label: 'Formation vidéo' },
+      { value: 'cours_en_ligne', label: 'Cours en ligne' },
+      { value: 'coaching', label: 'Coaching / Mentorat' },
+      { value: 'masterclass', label: 'Masterclass' },
+      { value: 'certification', label: 'Certification' },
+      { value: 'webinaire', label: 'Webinaire' },
+      { value: 'autre_formation', label: 'Autre formation' }
+    ],
+    livre: [
+      { value: 'ebook', label: 'eBook' },
+      { value: 'audiobook', label: 'Livre audio' },
+      { value: 'guide_pdf', label: 'Guide PDF' },
+      { value: 'rapport', label: 'Rapport / Étude' },
+      { value: 'magazine', label: 'Magazine numérique' },
+      { value: 'autre_livre', label: 'Autre publication' }
+    ],
+    dropshipping: [
+      { value: 'produit_aliexpress', label: 'Produit AliExpress' },
+      { value: 'produit_amazon', label: 'Produit Amazon' },
+      { value: 'produit_alibaba', label: 'Produit Alibaba' },
+      { value: 'autre_dropship', label: 'Autre produit dropshipping' }
+    ],
+    custom: [
+      { value: 'template', label: 'Template / Modèle' },
+      { value: 'graphisme', label: 'Graphisme / Design' },
+      { value: 'musique', label: 'Musique / Audio' },
+      { value: 'video', label: 'Vidéo / Animation' },
+      { value: 'script', label: 'Script / Code' },
+      { value: 'service_digital', label: 'Service numérique' },
+      { value: 'autre_custom', label: 'Autre produit numérique' }
+    ],
+    ai: [
+      { value: 'outil_ia', label: 'Outil IA' },
+      { value: 'chatbot', label: 'Chatbot IA' },
+      { value: 'api_ia', label: 'API IA' },
+      { value: 'modele_ia', label: 'Modèle IA' },
+      { value: 'prompt', label: 'Pack de prompts' },
+      { value: 'autre_ia', label: 'Autre solution IA' }
+    ]
+  };
+
   // Données de base
   const [baseData, setBaseData] = useState({
     title: '',
     description: '',
     shortDescription: '',
     tags: '',
+    productType: '',
     publishImmediately: true
   });
   
@@ -293,6 +358,7 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
         images: images,
         video_url: videoUrl,
         category: category,
+        product_type: baseData.productType || null,
         product_mode: salesMode,
         tags: baseData.tags.split(',').map(t => t.trim()).filter(Boolean),
         status: baseData.publishImmediately ? 'published' : 'draft',
@@ -380,6 +446,32 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
                     }
                     className="mt-1.5"
                   />
+                </div>
+
+                {/* Type de produit */}
+                <div>
+                  <Label htmlFor="productType" className="flex items-center gap-2">
+                    <Tag className="w-3.5 h-3.5" />
+                    Type de produit
+                  </Label>
+                  <Select 
+                    value={baseData.productType} 
+                    onValueChange={(value) => setBaseData(prev => ({ ...prev, productType: value }))}
+                  >
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue placeholder="Sélectionnez le type de produit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {productTypes[category]?.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Ex: Logiciel de montage, Antivirus, Réservation hôtel, etc.
+                  </p>
                 </div>
 
                 <div>
