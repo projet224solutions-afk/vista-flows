@@ -87,6 +87,17 @@ export default function DigitalProductDetail() {
   };
 
   const incrementViews = async () => {
+    if (!productId) return;
+    
+    // Vérifier si cette vue a déjà été comptée dans cette session
+    const viewKey = `digital_product_view_${productId}`;
+    const hasViewed = sessionStorage.getItem(viewKey);
+    
+    if (hasViewed) {
+      console.log('Vue déjà comptée pour ce produit dans cette session');
+      return;
+    }
+    
     try {
       // Récupérer le count actuel et incrémenter
       const { data } = await supabase
@@ -96,10 +107,16 @@ export default function DigitalProductDetail() {
         .single();
       
       if (data) {
-        await supabase
+        const { error } = await supabase
           .from('digital_products')
           .update({ views_count: (data.views_count || 0) + 1 })
           .eq('id', productId);
+        
+        if (!error) {
+          // Marquer comme vu dans cette session
+          sessionStorage.setItem(viewKey, 'true');
+          console.log('Vue comptée avec succès pour:', productId);
+        }
       }
     } catch (error) {
       console.error('Erreur incrémentation vues:', error);
