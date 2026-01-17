@@ -16,6 +16,7 @@ import {
   ArrowLeft,
   Store,
   Lock,
+  ShoppingBag,
   Bot
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -35,7 +36,7 @@ interface ProductModule {
   titleKey: string;
   descriptionKey: string;
   gradient: string;
-  category: 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom' | 'ai';
+  category: 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom' | 'ai' | 'physique_affilie';
 }
 
 // Dropshipping retiré de l'affichage mais catégorie conservée pour l'auth
@@ -79,6 +80,14 @@ const productModules: ProductModule[] = [
     descriptionKey: 'digital.modules.aiDesc',
     gradient: 'from-violet-500 to-fuchsia-500',
     category: 'ai'
+  },
+  {
+    id: 'physique_affilie',
+    icon: <ShoppingBag className="w-7 h-7" />,
+    titleKey: 'digital.modules.physicalAffiliate',
+    descriptionKey: 'digital.modules.physicalAffiliateDesc',
+    gradient: 'from-orange-500 to-red-500',
+    category: 'physique_affilie'
   }
 ];
 

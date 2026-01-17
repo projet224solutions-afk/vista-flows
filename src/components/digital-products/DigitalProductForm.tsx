@@ -38,7 +38,7 @@ import { SalesModeSelector, type SalesMode } from './SalesModeSelector';
 import { AffiliateForm, type AffiliateFormData } from './AffiliateForm';
 import { DirectSaleForm, type DirectSaleFormData } from './DirectSaleForm';
 
-type ProductCategory = 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom' | 'ai';
+type ProductCategory = 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom' | 'ai' | 'physique_affilie';
 
 interface DigitalProductFormProps {
   category: ProductCategory;
@@ -110,6 +110,14 @@ const categoryConfig: Record<ProductCategory, {
     icon: '🤖',
     defaultMode: 'affiliate',
     allowDirectSale: true,
+    allowAffiliate: true
+  },
+  physique_affilie: {
+    title: 'Produit Physique Affilié',
+    description: 'Vendez des produits physiques en affiliation (Amazon, AliExpress...)',
+    icon: '🛍️',
+    defaultMode: 'affiliate',
+    allowDirectSale: false,
     allowAffiliate: true
   }
 };
@@ -242,6 +250,17 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
       { value: 'modele_ia', label: 'Modèle IA' },
       { value: 'prompt', label: 'Pack de prompts' },
       { value: 'autre_ia', label: 'Autre solution IA' }
+    ],
+    physique_affilie: [
+      { value: 'produit_amazon', label: 'Produit Amazon' },
+      { value: 'produit_aliexpress', label: 'Produit AliExpress' },
+      { value: 'produit_alibaba', label: 'Produit Alibaba' },
+      { value: 'electronique', label: 'Électronique' },
+      { value: 'mode_vetements', label: 'Mode & Vêtements' },
+      { value: 'maison_jardin', label: 'Maison & Jardin' },
+      { value: 'beaute_sante', label: 'Beauté & Santé' },
+      { value: 'sport_loisirs', label: 'Sport & Loisirs' },
+      { value: 'autre_physique', label: 'Autre produit physique' }
     ]
   };
 
