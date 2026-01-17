@@ -15,6 +15,7 @@ import {
   Users, Eye, MousePointer, Plus, Copy, Edit, Trash2 
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { TrafficAnalyticsSection } from "./TrafficAnalyticsSection";
 
 interface Campaign {
   id: string;
@@ -207,12 +208,17 @@ export default function MarketingManagement() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Marketing & Promotions</h2>
-          <p className="text-muted-foreground">Gérez vos campagnes marketing et codes promotionnels</p>
-        </div>
+    <div className="space-y-8">
+      {/* Section Analytics Trafic - Vues produits et visites boutique */}
+      <TrafficAnalyticsSection />
+
+      {/* Séparateur */}
+      <div className="border-t pt-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold">Marketing & Promotions</h2>
+            <p className="text-muted-foreground">Gérez vos campagnes marketing et codes promotionnels</p>
+          </div>
         <div className="flex gap-2">
           <Dialog open={isPromoDialogOpen} onOpenChange={setIsPromoDialogOpen}>
             <DialogTrigger asChild>
@@ -583,6 +589,7 @@ export default function MarketingManagement() {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
