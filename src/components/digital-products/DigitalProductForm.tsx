@@ -264,7 +264,9 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
     commissionType: 'percentage',
     cookieDuration: '30d',
     payoutThreshold: '',
-    trackingId: ''
+    trackingId: '',
+    displayPrice: initialProduct?.price ? String(initialProduct.price) : '',
+    displayCurrency: initialProduct?.currency || 'USD'
   }));
   
   // Données de vente directe
@@ -309,6 +311,8 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
       affiliateUrl: initialProduct.affiliate_url || '',
       affiliatePlatform: initialProduct.affiliate_platform || '',
       commissionRate: initialProduct.commission_rate ? String(initialProduct.commission_rate) : '',
+      displayPrice: initialProduct.price ? String(initialProduct.price) : '',
+      displayCurrency: initialProduct.currency || 'USD',
     }));
 
     setDirectData((prev) => ({
@@ -462,7 +466,8 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
         productData.affiliate_url = affiliateData.affiliateUrl;
         productData.affiliate_platform = affiliateData.affiliatePlatform || affiliateData.affiliateNetwork;
         productData.commission_rate = affiliateData.commissionRate ? parseFloat(affiliateData.commissionRate) : 0;
-        productData.price = 0; // Prix affiché = 0 car redirection
+        productData.price = affiliateData.displayPrice ? parseFloat(affiliateData.displayPrice) : 0;
+        productData.currency = affiliateData.displayCurrency || 'USD';
         productData.original_price = null;
       } else {
         productData.price = parseFloat(directData.price);

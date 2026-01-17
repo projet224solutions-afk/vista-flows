@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CurrencySelect } from '@/components/ui/currency-select';
 import { cn } from '@/lib/utils';
 
 export interface AffiliateFormData {
@@ -35,6 +36,8 @@ export interface AffiliateFormData {
   cookieDuration: string;
   payoutThreshold: string;
   trackingId: string;
+  displayPrice: string;
+  displayCurrency: string;
 }
 
 interface AffiliateFormProps {
@@ -214,6 +217,50 @@ export function AffiliateForm({
               Ajoutez un ID pour suivre vos performances sur cette promotion
             </p>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Prix affiché au client */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Tag className="w-4 h-4 text-primary" />
+            Prix affiché
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Prix indicatif affiché aux visiteurs (optionnel)
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="displayPrice" className="text-xs">
+                Montant
+              </Label>
+              <Input
+                id="displayPrice"
+                type="number"
+                value={data.displayPrice}
+                onChange={(e) => onChange({ displayPrice: e.target.value })}
+                placeholder="Ex: 50000"
+                className="mt-1.5"
+              />
+            </div>
+            <div>
+              <Label htmlFor="displayCurrency" className="text-xs">
+                Devise
+              </Label>
+              <CurrencySelect
+                value={data.displayCurrency || 'USD'}
+                onValueChange={(v) => onChange({ displayCurrency: v })}
+                className="mt-1.5"
+                showFlag={true}
+              />
+            </div>
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            Ce prix est affiché pour information. Le prix réel est défini sur la plateforme partenaire.
+          </p>
         </CardContent>
       </Card>
 
