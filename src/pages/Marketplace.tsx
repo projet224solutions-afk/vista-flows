@@ -553,6 +553,17 @@ export default function Marketplace() {
           />
         ) : (
           <>
+            {/* Barre de recherche pour produits numériques */}
+            {selectedItemType === 'digital_product' && (
+              <div className="mb-4">
+                <SearchBar
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder="Rechercher un produit numérique..."
+                />
+              </div>
+            )}
+
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs text-muted-foreground">
                 {marketplaceTotal} résultats
