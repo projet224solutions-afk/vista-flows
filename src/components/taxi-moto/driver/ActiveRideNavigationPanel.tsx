@@ -196,7 +196,7 @@ export function ActiveRideNavigationPanel({
   const statusConfig = getStatusConfig();
 
   return (
-    <div className="bg-gray-900 min-h-screen pb-20">
+    <div className="bg-gray-900 min-h-screen pb-24">
       {/* Header avec statut */}
       <div className={cn(
         "px-4 py-3 flex items-center justify-between",

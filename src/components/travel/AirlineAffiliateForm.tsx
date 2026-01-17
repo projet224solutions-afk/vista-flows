@@ -224,7 +224,7 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <header className="bg-card/95 backdrop-blur-md border-b border-border sticky top-0 z-40">
         <div className="px-4 py-3">

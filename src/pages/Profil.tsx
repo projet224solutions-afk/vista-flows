@@ -307,7 +307,7 @@ export default function Profil() {
   // Authentication check
   if (!user) {
     return (
-      <div className="min-h-screen bg-background pb-20">
+      <div className="min-h-screen bg-background pb-24">
         <header className="bg-card border-b border-border">
           <div className="px-4 py-6">
             <h1 className="text-2xl font-bold text-foreground">Profil</h1>
@@ -336,7 +336,7 @@ export default function Profil() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <header className="bg-card border-b border-border">
         <div className="px-4 py-6">

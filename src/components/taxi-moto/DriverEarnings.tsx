@@ -276,7 +276,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
   }
 
   return (
-    <div className="space-y-4 pb-20">
+    <div className="space-y-4 pb-24">
       {/* Wallet 224Solutions */}
       <Card className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
         <CardHeader>

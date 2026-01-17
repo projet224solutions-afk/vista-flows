@@ -85,7 +85,7 @@ export function DriverMainDashboard({
   onStatClick
 }: DriverMainDashboardProps) {
   return (
-    <div className="min-h-screen bg-gray-950 pb-20 overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen bg-gray-950 pb-24 overflow-x-hidden w-full max-w-full">
       {/* Background gradient */}
       <div className="fixed inset-0 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 pointer-events-none overflow-hidden">
         {/* Subtle pattern overlay */}

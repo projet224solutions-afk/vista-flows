@@ -441,7 +441,7 @@ export default function TaxiMotoDriver() {
             )}
 
             {activeTab === 'navigation' && (
-                <div className="min-h-screen bg-gray-950 pb-20">
+                <div className="min-h-screen bg-gray-950 pb-24">
                     {activeRide ? (
                         <ActiveRideNavigationPanel
                             activeRide={{
@@ -472,7 +472,7 @@ export default function TaxiMotoDriver() {
             )}
 
             {activeTab === 'gps-navigation' && (
-                <div className="min-h-screen bg-gray-950 pb-20">
+                <div className="min-h-screen bg-gray-950 pb-24">
                     {!location ? (
                         <GPSPermissionHelper
                             onLocationGranted={async () => {
@@ -500,13 +500,13 @@ export default function TaxiMotoDriver() {
             )}
 
             {activeTab === 'earnings' && (
-                <div className="min-h-screen bg-gray-950 pb-20">
+                <div className="min-h-screen bg-gray-950 pb-24">
                     <DriverEarnings driverId={driverId || ''} />
                 </div>
             )}
 
             {activeTab === 'history' && (
-                <div className="min-h-screen bg-gray-950 pb-20 pt-4 px-4">
+                <div className="min-h-screen bg-gray-950 pb-24 pt-4 px-4">
                     <div className="space-y-4">
                         <h2 className="text-white font-bold text-lg">Historique des courses</h2>
                         {rideHistory.length === 0 ? (
@@ -545,7 +545,7 @@ export default function TaxiMotoDriver() {
             )}
 
             {activeTab === 'rating' && (
-                <div className="min-h-screen bg-gray-950 pb-20 pt-4 px-4">
+                <div className="min-h-screen bg-gray-950 pb-24 pt-4 px-4">
                     <div className="space-y-6">
                         <h2 className="text-white font-bold text-lg">Votre note</h2>
                         
@@ -594,7 +594,7 @@ export default function TaxiMotoDriver() {
             )}
 
             {activeTab === 'settings' && (
-                <div className="min-h-screen bg-gray-950 pb-20">
+                <div className="min-h-screen bg-gray-950 pb-24">
                     <DriverSettings driverId={driverId || ''} />
                 </div>
             )}

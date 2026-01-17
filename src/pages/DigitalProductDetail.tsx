@@ -214,7 +214,7 @@ export default function DigitalProductDetail() {
   const vendor = product.vendors;
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-40">
         <div className="px-4 py-4 flex items-center gap-4">

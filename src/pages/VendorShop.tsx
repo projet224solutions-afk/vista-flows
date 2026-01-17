@@ -246,7 +246,7 @@ export default function VendorShop() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-24">
       {/* Alertes boutique inactive */}
       {!vendor.is_active && (
         <Alert className="m-4 border-destructive/50 bg-destructive/10">

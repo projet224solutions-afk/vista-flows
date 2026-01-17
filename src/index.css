@@ -296,16 +296,15 @@ All colors MUST be HSL.
   /* Mobile-first optimizations for PWA */
   @media (max-width: 767px) {
     /* Améliorer les zones tactiles - WCAG AA minimum 44x44px */
-    button:not(.btn-icon-sm), 
-    a:not(.link-inline), 
-    [role="button"]:not(.btn-icon-sm) {
+    button:not(.btn-icon-sm):not(.btn-compact), 
+    a:not(.link-inline):not(.link-compact), 
+    [role="button"]:not(.btn-icon-sm):not(.btn-compact) {
       min-height: 44px;
-      min-width: 44px;
     }
 
     /* Désactiver le zoom sur les inputs (iOS) */
     input, select, textarea {
-      font-size: 16px;
+      font-size: 16px !important;
     }
 
     /* Optimiser les cartes sur mobile */
@@ -337,6 +336,21 @@ All colors MUST be HSL.
       max-height: 90vh;
       border-radius: 1rem 1rem 0 0;
     }
+
+    /* Page avec footer - padding bottom suffisant */
+    .page-with-footer {
+      padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+    }
+  }
+
+  /* Utilitaire pour page avec QuickFooter - assure espace suffisant en bas */
+  .pb-footer {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Pour les formulaires avec boutons fixes en bas */
+  .pb-footer-with-actions {
+    padding-bottom: calc(10rem + env(safe-area-inset-bottom, 0px));
   }
 
   /* Tablet optimizations */

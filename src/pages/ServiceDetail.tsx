@@ -422,7 +422,7 @@ export default function ServiceDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-24">
       {/* Image d'en-tête */}
       <div className="relative h-64 md:h-96 bg-gradient-to-br from-purple-500 to-blue-600">
         {service.image_url ? (
