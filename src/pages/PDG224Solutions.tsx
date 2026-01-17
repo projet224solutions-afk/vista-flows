@@ -51,7 +51,7 @@ const PDGServiceSubscriptions = lazy(() => import('@/components/pdg/PDGServiceSu
 const PDGBureauMonitoring = lazy(() => import('@/components/pdg/PDGBureauMonitoring'));
 const VendorCertificationManager = lazy(() => import('@/components/ceo/VendorCertificationManager').then(m => ({ default: m.VendorCertificationManager })));
 const VendorKYCReview = lazy(() => import('@/components/ceo/VendorKYCReview').then(m => ({ default: m.VendorKYCReview })));
-
+const IdNormalizationAudit = lazy(() => import('@/components/pdg/IdNormalizationAudit'));
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -643,6 +643,12 @@ export default function PDG224Solutions() {
               {activeTab === 'vendor-kyc-review' && (
                 <ErrorBoundary>
                   <VendorKYCReview />
+                </ErrorBoundary>
+              )}
+
+              {activeTab === 'id-normalization' && (
+                <ErrorBoundary>
+                  <IdNormalizationAudit />
                 </ErrorBoundary>
               )}
             </Suspense>
