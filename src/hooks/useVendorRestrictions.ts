@@ -42,7 +42,9 @@ export function useVendorRestrictions() {
     }
 
     loadRestrictions();
-    setupRealtimeSubscription();
+    const cleanup = setupRealtimeSubscription();
+    
+    return cleanup;
   }, [user]);
 
   const loadRestrictions = async () => {

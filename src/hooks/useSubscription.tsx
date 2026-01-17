@@ -10,7 +10,8 @@ export function useSubscription() {
 
   useEffect(() => {
     fetchSubscriptionData();
-    setupRealtimeSubscription();
+    const cleanup = setupRealtimeSubscription();
+    return cleanup;
   }, []);
 
   const fetchSubscriptionData = async () => {
