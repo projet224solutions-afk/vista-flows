@@ -227,7 +227,8 @@ export async function trackProductView({
   refererUrl,
   acceptLanguage,
   screenResolution,
-  countryCode
+  countryCode,
+  city
 }) {
   try {
     // Validate required fields
@@ -281,7 +282,8 @@ export async function trackProductView({
       p_fingerprint_hash: fingerprint,
       p_referer_url: refererUrl || null,
       p_device_type: deviceType,
-      p_country_code: countryCode || null
+      p_country_code: countryCode || null,
+      p_city: city || null
     });
     
     if (error) {
@@ -331,6 +333,7 @@ export async function trackShopVisit({
   acceptLanguage,
   screenResolution,
   countryCode,
+  city,
   entryPage
 }) {
   try {
@@ -382,6 +385,7 @@ export async function trackShopVisit({
       p_referer_url: refererUrl || null,
       p_device_type: deviceType,
       p_country_code: countryCode || null,
+      p_city: city || null,
       p_entry_page: entryPage || null
     });
     

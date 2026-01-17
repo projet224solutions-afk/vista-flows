@@ -20,6 +20,7 @@ export interface TrafficStats {
   }>;
   deviceBreakdown: Record<string, number>;
   countryBreakdown: Record<string, number>;
+  cityBreakdown: Record<string, number>;
 }
 
 /**
@@ -84,9 +85,10 @@ export function useTrafficAnalytics() {
       const totalShopVisits = statsData.reduce((sum, s) => sum + (s.total_shop_visits || 0), 0);
       const uniqueShopVisitors = statsData.reduce((sum, s) => sum + (s.unique_shop_visitors || 0), 0);
 
-      // Agrégation device et country
+      // Agrégation device, country et city
       const deviceBreakdown: Record<string, number> = {};
       const countryBreakdown: Record<string, number> = {};
+      const cityBreakdown: Record<string, number> = {};
       const topProductsMap: Record<string, number> = {};
 
       statsData.forEach(s => {
@@ -101,6 +103,13 @@ export function useTrafficAnalytics() {
         if (s.country_breakdown && typeof s.country_breakdown === 'object') {
           Object.entries(s.country_breakdown as Record<string, number>).forEach(([country, count]) => {
             countryBreakdown[country] = (countryBreakdown[country] || 0) + count;
+          });
+        }
+
+        // City breakdown
+        if (s.city_breakdown && typeof s.city_breakdown === 'object') {
+          Object.entries(s.city_breakdown as Record<string, number>).forEach(([city, count]) => {
+            cityBreakdown[city] = (cityBreakdown[city] || 0) + count;
           });
         }
         
@@ -127,7 +136,8 @@ export function useTrafficAnalytics() {
         weeklyTrend: weeklyData,
         topProducts,
         deviceBreakdown,
-        countryBreakdown
+        countryBreakdown,
+        cityBreakdown
       });
 
     } catch (err) {

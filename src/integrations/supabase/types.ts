@@ -672,6 +672,7 @@ export type Database = {
       }
       analytics_daily_stats: {
         Row: {
+          city_breakdown: Json | null
           computed_at: string | null
           country_breakdown: Json | null
           created_at: string
@@ -687,6 +688,7 @@ export type Database = {
           vendor_id: string
         }
         Insert: {
+          city_breakdown?: Json | null
           computed_at?: string | null
           country_breakdown?: Json | null
           created_at?: string
@@ -702,6 +704,7 @@ export type Database = {
           vendor_id: string
         }
         Update: {
+          city_breakdown?: Json | null
           computed_at?: string | null
           country_breakdown?: Json | null
           created_at?: string
@@ -11705,6 +11708,7 @@ export type Database = {
       }
       product_views_raw: {
         Row: {
+          city: string | null
           country_code: string | null
           created_at: string
           device_type: string | null
@@ -11721,6 +11725,7 @@ export type Database = {
           view_date: string
         }
         Insert: {
+          city?: string | null
           country_code?: string | null
           created_at?: string
           device_type?: string | null
@@ -11737,6 +11742,7 @@ export type Database = {
           view_date?: string
         }
         Update: {
+          city?: string | null
           country_code?: string | null
           created_at?: string
           device_type?: string | null
@@ -15096,6 +15102,7 @@ export type Database = {
       }
       shop_visits_raw: {
         Row: {
+          city: string | null
           country_code: string | null
           created_at: string
           device_type: string | null
@@ -15112,6 +15119,7 @@ export type Database = {
           visit_date: string
         }
         Insert: {
+          city?: string | null
           country_code?: string | null
           created_at?: string
           device_type?: string | null
@@ -15128,6 +15136,7 @@ export type Database = {
           visit_date?: string
         }
         Update: {
+          city?: string | null
           country_code?: string | null
           created_at?: string
           device_type?: string | null
@@ -22076,6 +22085,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      aggregate_daily_analytics: {
+        Args: { p_date?: string }
+        Returns: undefined
+      }
       auto_escalate_disputes: {
         Args: never
         Returns: {
@@ -24137,44 +24150,86 @@ export type Database = {
         Args: { p_bureau_id: string; p_is_active: boolean; p_worker_id: string }
         Returns: undefined
       }
-      track_product_view: {
-        Args: {
-          p_country_code?: string
-          p_device_type?: string
-          p_fingerprint_hash?: string
-          p_ip_address?: string
-          p_product_id: string
-          p_referer_url?: string
-          p_session_id?: string
-          p_user_agent?: string
-          p_user_id?: string
-          p_vendor_id: string
-        }
-        Returns: {
-          message: string
-          success: boolean
-          view_id: string
-        }[]
-      }
-      track_shop_visit: {
-        Args: {
-          p_country_code?: string
-          p_device_type?: string
-          p_entry_page?: string
-          p_fingerprint_hash?: string
-          p_ip_address?: string
-          p_referer_url?: string
-          p_session_id?: string
-          p_user_agent?: string
-          p_user_id?: string
-          p_vendor_id: string
-        }
-        Returns: {
-          message: string
-          success: boolean
-          visit_id: string
-        }[]
-      }
+      track_product_view:
+        | {
+            Args: {
+              p_city?: string
+              p_country_code?: string
+              p_device_type?: string
+              p_fingerprint_hash?: string
+              p_ip_address?: unknown
+              p_product_id: string
+              p_referer_url?: string
+              p_session_id?: string
+              p_user_agent?: string
+              p_user_id?: string
+              p_vendor_id: string
+            }
+            Returns: {
+              message: string
+              success: boolean
+              view_id: string
+            }[]
+          }
+        | {
+            Args: {
+              p_country_code?: string
+              p_device_type?: string
+              p_fingerprint_hash?: string
+              p_ip_address?: string
+              p_product_id: string
+              p_referer_url?: string
+              p_session_id?: string
+              p_user_agent?: string
+              p_user_id?: string
+              p_vendor_id: string
+            }
+            Returns: {
+              message: string
+              success: boolean
+              view_id: string
+            }[]
+          }
+      track_shop_visit:
+        | {
+            Args: {
+              p_city?: string
+              p_country_code?: string
+              p_device_type?: string
+              p_entry_page?: string
+              p_fingerprint_hash?: string
+              p_ip_address?: unknown
+              p_referer_url?: string
+              p_session_id?: string
+              p_user_agent?: string
+              p_user_id?: string
+              p_vendor_id: string
+            }
+            Returns: {
+              message: string
+              success: boolean
+              visit_id: string
+            }[]
+          }
+        | {
+            Args: {
+              p_country_code?: string
+              p_device_type?: string
+              p_entry_page?: string
+              p_fingerprint_hash?: string
+              p_ip_address?: string
+              p_referer_url?: string
+              p_session_id?: string
+              p_user_agent?: string
+              p_user_id?: string
+              p_vendor_id: string
+            }
+            Returns: {
+              message: string
+              success: boolean
+              visit_id: string
+            }[]
+          }
       transfer_between_wallets: {
         Args: {
           p_amount: number
