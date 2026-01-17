@@ -23,7 +23,7 @@ export function MediaAutoCarousel({
   images = [],
   alt = 'Product',
   className,
-  imageDisplayDuration = 3000,
+  imageDisplayDuration = 15000,
   autoPlay = true,
   showControls = true,
   muted: initialMuted = true,
