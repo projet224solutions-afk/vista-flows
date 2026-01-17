@@ -3,9 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Upload, Save, Building2 } from 'lucide-react';
+import { Upload, Save, Building2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 interface VendorBusinessSettingsProps {
   vendorId: string;
@@ -16,8 +18,10 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
   const [logoUrl, setLogoUrl] = useState('');
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [isActive, setIsActive] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [activating, setActivating] = useState(false);
 
   useEffect(() => {
     loadVendorData();
@@ -27,7 +31,7 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
     try {
       const { data, error } = await supabase
         .from('vendors')
-        .select('business_name, logo_url')
+        .select('business_name, logo_url, is_active')
         .eq('id', vendorId)
         .single();
 
@@ -37,6 +41,7 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
         setBusinessName(data.business_name || '');
         setLogoUrl(data.logo_url || '');
         setLogoPreview(data.logo_url || null);
+        setIsActive(data.is_active ?? false);
       }
     } catch (error) {
       console.error('Erreur chargement données:', error);
@@ -47,7 +52,6 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Vérifier le type et la taille
       if (!file.type.startsWith('image/')) {
         toast.error('Veuillez sélectionner une image');
         return;
@@ -58,7 +62,6 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
       }
 
       setLogoFile(file);
-      // Créer un aperçu
       const reader = new FileReader();
       reader.onloadend = () => {
         setLogoPreview(reader.result as string);
@@ -99,18 +102,36 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
     }
   };
 
+  const handleToggleActive = async (checked: boolean) => {
+    setActivating(true);
+    try {
+      const { error } = await supabase
+        .from('vendors')
+        .update({ is_active: checked })
+        .eq('id', vendorId);
+
+      if (error) throw error;
+
+      setIsActive(checked);
+      toast.success(checked ? 'Boutique activée avec succès !' : 'Boutique désactivée');
+    } catch (error) {
+      console.error('Erreur activation:', error);
+      toast.error('Erreur lors de la modification du statut');
+    } finally {
+      setActivating(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Upload du logo si un nouveau fichier a été sélectionné
       let newLogoUrl = logoUrl;
       if (logoFile) {
         newLogoUrl = await uploadLogo() || logoUrl;
       }
 
-      // Mise à jour des données vendeur
       const { error } = await supabase
         .from('vendors')
         .update({
@@ -133,86 +154,129 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Building2 className="w-5 h-5" />
-          Informations de l'entreprise
-        </CardTitle>
-        <CardDescription>
-          Personnalisez le nom et le logo de votre entreprise qui apparaîtront sur vos devis et factures
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Nom de l'entreprise */}
-          <div className="space-y-2">
-            <Label htmlFor="businessName">Nom de l'entreprise</Label>
-            <Input
-              id="businessName"
-              value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)}
-              placeholder="Ex: 224Solutions SARL"
-              required
+    <div className="space-y-6">
+      {/* Statut de la boutique */}
+      {!isActive && (
+        <Alert variant="destructive" className="border-destructive/50 bg-destructive/10">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Boutique inactive</AlertTitle>
+          <AlertDescription>
+            Votre boutique n'est pas visible par les clients. Activez-la pour commencer à vendre.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            {isActive ? (
+              <CheckCircle2 className="w-5 h-5 text-green-500" />
+            ) : (
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+            )}
+            Statut de la boutique
+          </CardTitle>
+          <CardDescription>
+            Activez ou désactivez votre boutique selon votre disponibilité
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="font-medium">
+                {isActive ? 'Boutique active' : 'Boutique inactive'}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {isActive 
+                  ? 'Vos produits sont visibles par les clients' 
+                  : 'Vos produits ne sont pas visibles'}
+              </p>
+            </div>
+            <Switch
+              checked={isActive}
+              onCheckedChange={handleToggleActive}
+              disabled={activating}
             />
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Logo */}
-          <div className="space-y-2">
-            <Label htmlFor="logo">Logo de l'entreprise</Label>
-            <div className="flex items-start gap-4">
-              {/* Aperçu du logo */}
-              {logoPreview && (
-                <div className="w-24 h-24 border-2 border-border rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-                  <img
-                    src={logoPreview}
-                    alt="Logo"
-                    className="max-w-full max-h-full object-contain"
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="w-5 h-5" />
+            Informations de l'entreprise
+          </CardTitle>
+          <CardDescription>
+            Personnalisez le nom et le logo de votre entreprise qui apparaîtront sur vos devis et factures
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="businessName">Nom de l'entreprise</Label>
+              <Input
+                id="businessName"
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
+                placeholder="Ex: 224Solutions SARL"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="logo">Logo de l'entreprise</Label>
+              <div className="flex items-start gap-4">
+                {logoPreview && (
+                  <div className="w-24 h-24 border-2 border-border rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                    <img
+                      src={logoPreview}
+                      alt="Logo"
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                )}
+
+                <div className="flex-1">
+                  <Input
+                    id="logo"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoChange}
+                    className="cursor-pointer"
                   />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Format: PNG, JPG, SVG • Taille max: 2 MB • Recommandé: 500x500px
+                  </p>
                 </div>
-              )}
-
-              {/* Upload */}
-              <div className="flex-1">
-                <Input
-                  id="logo"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleLogoChange}
-                  className="cursor-pointer"
-                />
-                <p className="text-xs text-muted-foreground mt-2">
-                  Format: PNG, JPG, SVG • Taille max: 2 MB • Recommandé: 500x500px
-                </p>
               </div>
             </div>
-          </div>
 
-          {/* Bouton de sauvegarde */}
-          <Button
-            type="submit"
-            disabled={loading || uploading}
-            className="w-full"
-          >
-            {uploading ? (
-              <>
-                <Upload className="w-4 h-4 mr-2 animate-spin" />
-                Téléchargement du logo...
-              </>
-            ) : loading ? (
-              <>
-                <Save className="w-4 h-4 mr-2 animate-spin" />
-                Enregistrement...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Enregistrer les modifications
-              </>
-            )}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+            <Button
+              type="submit"
+              disabled={loading || uploading}
+              className="w-full"
+            >
+              {uploading ? (
+                <>
+                  <Upload className="w-4 h-4 mr-2 animate-spin" />
+                  Téléchargement du logo...
+                </>
+              ) : loading ? (
+                <>
+                  <Save className="w-4 h-4 mr-2 animate-spin" />
+                  Enregistrement...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Enregistrer les modifications
+                </>
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
