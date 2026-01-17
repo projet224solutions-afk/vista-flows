@@ -11622,33 +11622,6 @@ export type Database = {
           },
         ]
       }
-      product_views: {
-        Row: {
-          id: string
-          metadata: Json | null
-          product_id: string
-          session_id: string | null
-          user_id: string
-          viewed_at: string | null
-        }
-        Insert: {
-          id?: string
-          metadata?: Json | null
-          product_id: string
-          session_id?: string | null
-          user_id: string
-          viewed_at?: string | null
-        }
-        Update: {
-          id?: string
-          metadata?: Json | null
-          product_id?: string
-          session_id?: string | null
-          user_id?: string
-          viewed_at?: string | null
-        }
-        Relationships: []
-      }
       products: {
         Row: {
           barcode: string | null
