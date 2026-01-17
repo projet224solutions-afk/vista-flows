@@ -422,74 +422,100 @@ export async function trackShopVisit({
 }
 
 // ============================================================================
-// ANALYTICS RETRIEVAL FUNCTIONS
+// ANALYTICS RETRIEVAL FUNCTIONS (Using Optimized SQL Functions)
 // ============================================================================
 
 /**
- * Get vendor shop analytics
+ * Verify vendor ownership
  * @param {string} vendorId 
- * @param {string} userId - The authenticated user requesting analytics
+ * @param {string} userId 
  * @returns {Promise<Object>}
  */
-export async function getVendorAnalytics(vendorId, userId) {
+async function verifyVendorOwnership(vendorId, userId) {
+  const { data: vendor, error } = await supabaseAdmin
+    .from('vendors')
+    .select('id, user_id, name')
+    .eq('id', vendorId)
+    .single();
+  
+  if (error || !vendor) {
+    return { success: false, error: 'Vendor not found' };
+  }
+  
+  if (vendor.user_id !== userId) {
+    logger.warn(`Unauthorized analytics access: user ${userId} for vendor ${vendorId}`);
+    return { success: false, error: 'Unauthorized access' };
+  }
+  
+  return { success: true, vendor };
+}
+
+/**
+ * Get vendor analytics overview using optimized SQL function
+ * 
+ * @param {string} vendorId 
+ * @param {string} userId - The authenticated user requesting analytics
+ * @param {Object} options - { period, startDate, endDate }
+ * @returns {Promise<Object>}
+ * 
+ * Response format:
+ * {
+ *   success: true,
+ *   data: {
+ *     shopVisits: { total, unique, trend, byDevice },
+ *     productViews: { total, unique, trend, byDevice },
+ *     conversionRate: { current, previous, trend },
+ *     topProducts: [{ productId, name, imageUrl, views, uniqueViews }],
+ *     dailyBreakdown: [{ date, shopVisits, productViews, uniqueVisitors }],
+ *     period: { type, startDate, endDate },
+ *     generatedAt: ISO date
+ *   }
+ * }
+ */
+export async function getVendorAnalytics(vendorId, userId, options = {}) {
   try {
     // Validate vendor ID
     if (!vendorId || !isValidUUID(vendorId)) {
       return { success: false, error: 'Invalid vendor ID' };
     }
     
-    // Verify user owns this vendor
-    const { data: vendor, error: vendorError } = await supabaseAdmin
-      .from('vendors')
-      .select('id, user_id, name')
-      .eq('id', vendorId)
-      .single();
-    
-    if (vendorError || !vendor) {
-      return { success: false, error: 'Vendor not found' };
+    // Verify ownership
+    const ownershipCheck = await verifyVendorOwnership(vendorId, userId);
+    if (!ownershipCheck.success) {
+      return ownershipCheck;
     }
     
-    if (vendor.user_id !== userId) {
-      logger.warn(`Unauthorized analytics access attempt: user ${userId} for vendor ${vendorId}`);
-      return { success: false, error: 'Unauthorized access' };
+    const { period = 'week', startDate = null, endDate = null } = options;
+    
+    // Call the optimized SQL function
+    const { data, error } = await supabaseAdmin.rpc('get_vendor_analytics_overview', {
+      p_vendor_id: vendorId,
+      p_period: period,
+      p_start_date: startDate,
+      p_end_date: endDate
+    });
+    
+    if (error) {
+      logger.error(`get_vendor_analytics_overview error: ${error.message}`);
+      return { success: false, error: 'Failed to retrieve analytics' };
     }
     
-    // Get date ranges
-    const todayRange = getDateRange(TIME_PERIODS.TODAY);
-    const weekRange = getDateRange(TIME_PERIODS.THIS_WEEK);
-    const monthRange = getDateRange(TIME_PERIODS.THIS_MONTH);
-    
-    // Fetch analytics for all periods in parallel
-    const [todayStats, weekStats, monthStats] = await Promise.all([
-      getShopVisitsForPeriod(vendorId, todayRange.start, todayRange.end),
-      getShopVisitsForPeriod(vendorId, weekRange.start, weekRange.end),
-      getShopVisitsForPeriod(vendorId, monthRange.start, monthRange.end)
-    ]);
-    
-    // Also get product views summary
-    const [todayProductViews, weekProductViews, monthProductViews] = await Promise.all([
-      getProductViewsSummaryForPeriod(vendorId, todayRange.start, todayRange.end),
-      getProductViewsSummaryForPeriod(vendorId, weekRange.start, weekRange.end),
-      getProductViewsSummaryForPeriod(vendorId, monthRange.start, monthRange.end)
-    ]);
+    // The SQL function returns JSONB, parse it properly
+    const analytics = typeof data === 'string' ? JSON.parse(data) : data;
     
     return {
       success: true,
       data: {
         vendor: {
-          id: vendor.id,
-          name: vendor.name
+          id: ownershipCheck.vendor.id,
+          name: ownershipCheck.vendor.name
         },
-        shopVisits: {
-          today: todayStats,
-          thisWeek: weekStats,
-          thisMonth: monthStats
-        },
-        productViews: {
-          today: todayProductViews,
-          thisWeek: weekProductViews,
-          thisMonth: monthProductViews
-        },
+        shopVisits: analytics.shop_visits,
+        productViews: analytics.product_views,
+        conversionRate: analytics.conversion_rate,
+        topProducts: analytics.top_products,
+        dailyBreakdown: analytics.daily_breakdown,
+        period: analytics.period,
         generatedAt: new Date().toISOString()
       }
     };
@@ -501,99 +527,99 @@ export async function getVendorAnalytics(vendorId, userId) {
 }
 
 /**
- * Get product-level analytics for a vendor
+ * Get product-level analytics using optimized SQL function
+ * 
  * @param {string} vendorId 
  * @param {string} userId 
- * @param {Object} options 
+ * @param {Object} options - { productId, limit, offset, sortBy, sortDir }
  * @returns {Promise<Object>}
+ * 
+ * Response format:
+ * {
+ *   success: true,
+ *   data: {
+ *     products: [{
+ *       productId, name, imageUrl, category,
+ *       views: { total, unique, trend },
+ *       countryBreakdown: { US: 10, FR: 5, ... },
+ *       peakHour: 14
+ *     }],
+ *     pagination: { limit, offset, total, hasMore },
+ *     generatedAt: ISO date
+ *   }
+ * }
  */
 export async function getProductsAnalytics(vendorId, userId, options = {}) {
   try {
-    const { productId, limit = 50, offset = 0 } = options;
+    const { 
+      productId = null, 
+      limit = 50, 
+      offset = 0,
+      sortBy = 'views_total',
+      sortDir = 'desc'
+    } = options;
     
     // Validate vendor ID
     if (!vendorId || !isValidUUID(vendorId)) {
       return { success: false, error: 'Invalid vendor ID' };
     }
     
-    // Verify user owns this vendor
-    const { data: vendor, error: vendorError } = await supabaseAdmin
-      .from('vendors')
-      .select('id, user_id')
-      .eq('id', vendorId)
-      .single();
-    
-    if (vendorError || !vendor) {
-      return { success: false, error: 'Vendor not found' };
+    // Validate product ID if provided
+    if (productId && !isValidUUID(productId)) {
+      return { success: false, error: 'Invalid product ID' };
     }
     
-    if (vendor.user_id !== userId) {
-      logger.warn(`Unauthorized product analytics access: user ${userId} for vendor ${vendorId}`);
-      return { success: false, error: 'Unauthorized access' };
+    // Verify ownership
+    const ownershipCheck = await verifyVendorOwnership(vendorId, userId);
+    if (!ownershipCheck.success) {
+      return ownershipCheck;
     }
     
-    // Get date ranges
-    const todayRange = getDateRange(TIME_PERIODS.TODAY);
-    const weekRange = getDateRange(TIME_PERIODS.THIS_WEEK);
-    const monthRange = getDateRange(TIME_PERIODS.THIS_MONTH);
-    
-    // If specific product requested
-    if (productId) {
-      if (!isValidUUID(productId)) {
-        return { success: false, error: 'Invalid product ID' };
-      }
-      
-      // Verify product belongs to vendor
-      const { data: product, error: productError } = await supabaseAdmin
-        .from('products')
-        .select('id, name, vendor_id')
-        .eq('id', productId)
-        .eq('vendor_id', vendorId)
-        .single();
-      
-      if (productError || !product) {
-        return { success: false, error: 'Product not found or does not belong to vendor' };
-      }
-      
-      const [todayStats, weekStats, monthStats] = await Promise.all([
-        getProductViewsForPeriod(productId, todayRange.start, todayRange.end),
-        getProductViewsForPeriod(productId, weekRange.start, weekRange.end),
-        getProductViewsForPeriod(productId, monthRange.start, monthRange.end)
-      ]);
-      
-      return {
-        success: true,
-        data: {
-          product: {
-            id: product.id,
-            name: product.name
-          },
-          views: {
-            today: todayStats,
-            thisWeek: weekStats,
-            thisMonth: monthStats
-          },
-          generatedAt: new Date().toISOString()
-        }
-      };
-    }
-    
-    // Get all products with their analytics
-    const products = await getProductsWithAnalytics(vendorId, {
-      todayRange,
-      weekRange,
-      monthRange,
-      limit,
-      offset
+    // Call the optimized SQL function
+    const { data, error } = await supabaseAdmin.rpc('get_vendor_product_analytics', {
+      p_vendor_id: vendorId,
+      p_product_id: productId,
+      p_limit: Math.min(limit, 100),
+      p_offset: offset,
+      p_sort_by: sortBy,
+      p_sort_dir: sortDir
     });
+    
+    if (error) {
+      logger.error(`get_vendor_product_analytics error: ${error.message}`);
+      return { success: false, error: 'Failed to retrieve product analytics' };
+    }
+    
+    // Parse result (SQL function returns JSON array)
+    const products = Array.isArray(data) ? data : (data ? [data] : []);
+    
+    // Get total count for pagination
+    const { count: totalCount } = await supabaseAdmin
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+      .eq('vendor_id', vendorId)
+      .eq('is_active', true);
     
     return {
       success: true,
       data: {
-        products,
+        products: products.map(p => ({
+          productId: p.product_id,
+          name: p.product_name,
+          imageUrl: p.image_url,
+          category: p.category,
+          views: {
+            total: p.views_total || 0,
+            unique: p.views_unique || 0,
+            trend: p.views_trend || 0
+          },
+          countryBreakdown: p.country_breakdown || {},
+          peakHour: p.peak_hour
+        })),
         pagination: {
           limit,
           offset,
+          total: totalCount || 0,
           hasMore: products.length === limit
         },
         generatedAt: new Date().toISOString()

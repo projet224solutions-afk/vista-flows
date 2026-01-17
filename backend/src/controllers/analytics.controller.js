@@ -212,12 +212,33 @@ export async function handleShopVisit(req, res) {
 // ============================================================================
 
 /**
- * GET /vendor/:vendorId/analytics
- * Get shop analytics for a vendor
+ * GET /vendor/:vendorId/analytics/overview
+ * Get aggregated shop analytics with trends
+ * 
+ * Query params:
+ *   - period: 'today' | 'week' | 'month' | 'custom' (default: 'week')
+ *   - startDate: ISO date (required if period='custom')
+ *   - endDate: ISO date (required if period='custom')
+ * 
+ * Response:
+ * {
+ *   success: true,
+ *   data: {
+ *     vendor: { id, name },
+ *     shopVisits: { total, unique, trend, byDevice },
+ *     productViews: { total, unique, trend, byDevice },
+ *     conversionRate: { current, previous, trend },
+ *     topProducts: [...],
+ *     dailyBreakdown: [...],
+ *     period: { type, startDate, endDate },
+ *     generatedAt: ISO
+ *   }
+ * }
  */
 export async function handleGetVendorAnalytics(req, res) {
   try {
     const { vendorId } = req.params;
+    const { period, startDate, endDate } = req.query;
     const userId = getUserId(req);
     
     if (!userId) {
@@ -228,7 +249,39 @@ export async function handleGetVendorAnalytics(req, res) {
       return errorResponse(res, 400, 'Vendor ID is required');
     }
     
-    const result = await getVendorAnalytics(vendorId, userId);
+    // Validate period
+    const validPeriods = ['today', 'week', 'month', 'custom'];
+    const selectedPeriod = validPeriods.includes(period) ? period : 'week';
+    
+    // Validate custom date range
+    if (selectedPeriod === 'custom') {
+      if (!startDate || !endDate) {
+        return errorResponse(res, 400, 'startDate and endDate required for custom period');
+      }
+      
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return errorResponse(res, 400, 'Invalid date format');
+      }
+      
+      if (start > end) {
+        return errorResponse(res, 400, 'startDate must be before endDate');
+      }
+      
+      // Limit to 90 days max
+      const diffDays = (end - start) / (1000 * 60 * 60 * 24);
+      if (diffDays > 90) {
+        return errorResponse(res, 400, 'Date range cannot exceed 90 days');
+      }
+    }
+    
+    const result = await getVendorAnalytics(vendorId, userId, {
+      period: selectedPeriod,
+      startDate: selectedPeriod === 'custom' ? startDate : null,
+      endDate: selectedPeriod === 'custom' ? endDate : null
+    });
     
     if (!result.success) {
       const status = result.error === 'Unauthorized access' ? 403 : 400;
@@ -244,13 +297,35 @@ export async function handleGetVendorAnalytics(req, res) {
 }
 
 /**
- * GET /vendor/:vendorId/products/analytics
- * Get product-level analytics for a vendor
+ * GET /vendor/:vendorId/analytics/products
+ * Get product-level analytics with sorting and pagination
+ * 
+ * Query params:
+ *   - productId: UUID (optional, for single product)
+ *   - limit: number (default: 50, max: 100)
+ *   - offset: number (default: 0)
+ *   - sortBy: 'views_total' | 'views_unique' | 'views_trend' | 'name' (default: 'views_total')
+ *   - sortDir: 'asc' | 'desc' (default: 'desc')
+ * 
+ * Response:
+ * {
+ *   success: true,
+ *   data: {
+ *     products: [{
+ *       productId, name, imageUrl, category,
+ *       views: { total, unique, trend },
+ *       countryBreakdown: { US: 10, FR: 5 },
+ *       peakHour: 14
+ *     }],
+ *     pagination: { limit, offset, total, hasMore },
+ *     generatedAt: ISO
+ *   }
+ * }
  */
 export async function handleGetProductsAnalytics(req, res) {
   try {
     const { vendorId } = req.params;
-    const { productId, limit, offset } = req.query;
+    const { productId, limit, offset, sortBy, sortDir } = req.query;
     const userId = getUserId(req);
     
     if (!userId) {
@@ -261,10 +336,19 @@ export async function handleGetProductsAnalytics(req, res) {
       return errorResponse(res, 400, 'Vendor ID is required');
     }
     
+    // Validate sortBy
+    const validSortFields = ['views_total', 'views_unique', 'views_trend', 'name'];
+    const selectedSortBy = validSortFields.includes(sortBy) ? sortBy : 'views_total';
+    
+    // Validate sortDir
+    const selectedSortDir = sortDir === 'asc' ? 'asc' : 'desc';
+    
     const options = {
       productId: productId || null,
-      limit: Math.min(parseInt(limit) || 50, 100), // Cap at 100
-      offset: parseInt(offset) || 0
+      limit: Math.min(parseInt(limit) || 50, 100),
+      offset: parseInt(offset) || 0,
+      sortBy: selectedSortBy,
+      sortDir: selectedSortDir
     };
     
     const result = await getProductsAnalytics(vendorId, userId, options);
