@@ -522,7 +522,7 @@ export default function Messages() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-24">
       {/* Liste des conversations - visible quand showChat est false sur mobile */}
       <div className={cn(
         "h-screen flex flex-col",

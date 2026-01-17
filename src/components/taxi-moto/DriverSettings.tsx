@@ -221,7 +221,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
   }
 
   return (
-    <div className="space-y-4 pb-20">
+    <div className="space-y-4 pb-24">
       {/* Profil du chauffeur */}
       <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
         <CardHeader>

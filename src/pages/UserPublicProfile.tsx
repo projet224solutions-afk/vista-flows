@@ -114,7 +114,7 @@ export default function UserPublicProfile() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background pb-20">
+    <div className="min-h-screen flex flex-col bg-background pb-24">
       {/* Header */}
       <header className="bg-card border-b border-border p-4 flex items-center gap-3 sticky top-0 z-40">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>

@@ -46,7 +46,15 @@ export default function QuickFooter() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border z-[100] shadow-elegant pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]" role="navigation" aria-label="Navigation principale">
+    <nav 
+      className="fixed bottom-0 left-0 right-0 bg-card/98 backdrop-blur-md border-t border-border z-[100] shadow-lg" 
+      role="navigation" 
+      aria-label="Navigation principale"
+      style={{ 
+        paddingTop: '0.5rem',
+        paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))'
+      }}
+    >
       <div className="flex items-center justify-around px-2 max-w-screen-xl mx-auto">
         {navigationItems.map((item) => {
           // Le bouton Home n'est actif QUE sur /home, pas sur les dashboards

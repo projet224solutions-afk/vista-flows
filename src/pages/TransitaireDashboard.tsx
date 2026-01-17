@@ -94,7 +94,7 @@ export default function TransitaireDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <header className="bg-card border-b border-border">
         <div className="px-4 py-6">

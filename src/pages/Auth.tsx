@@ -1418,7 +1418,7 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-white pb-24 overflow-x-hidden">
       {/* Header avec 224SOLUTIONS et boutons */}
       <div className="text-center py-8 px-4">
         <div className="flex justify-end mb-4 px-4">
