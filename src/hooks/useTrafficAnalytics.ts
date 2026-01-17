@@ -25,6 +25,7 @@ export interface TrafficStats {
 
 /**
  * Hook pour récupérer les analytics de trafic (vues produits, visites boutique)
+ * Combine les données agrégées (analytics_daily_stats) avec les données brutes en temps réel
  */
 export function useTrafficAnalytics() {
   const { vendorId, loading: vendorLoading } = useCurrentVendor();
@@ -51,77 +52,138 @@ export function useTrafficAnalytics() {
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
 
-      // Charger les statistiques agrégées depuis analytics_daily_stats
-      const { data: dailyStats, error: dailyError } = await supabase
-        .from('analytics_daily_stats')
-        .select('*')
-        .eq('vendor_id', vendorId)
-        .gte('stat_date', thirtyDaysAgoStr)
-        .order('stat_date', { ascending: false });
+      // Charger les statistiques agrégées ET les données brutes en parallèle
+      const [dailyStatsResult, productViewsRawResult, shopVisitsRawResult] = await Promise.all([
+        // Stats agrégées
+        supabase
+          .from('analytics_daily_stats')
+          .select('*')
+          .eq('vendor_id', vendorId)
+          .gte('stat_date', thirtyDaysAgoStr)
+          .order('stat_date', { ascending: false }),
+        
+        // Vues produits brutes (30 derniers jours)
+        supabase
+          .from('product_views_raw')
+          .select('id, product_id, session_id, device_type, country_code, city, view_date')
+          .eq('vendor_id', vendorId)
+          .gte('view_date', thirtyDaysAgoStr),
+        
+        // Visites boutique brutes (30 derniers jours)
+        supabase
+          .from('shop_visits_raw')
+          .select('id, session_id, device_type, country_code, city, visit_date')
+          .eq('vendor_id', vendorId)
+          .gte('visit_date', thirtyDaysAgoStr)
+      ]);
 
-      if (dailyError) {
-        console.error('Erreur chargement analytics_daily_stats:', dailyError);
+      if (dailyStatsResult.error) {
+        console.error('Erreur chargement analytics_daily_stats:', dailyStatsResult.error);
       }
 
-      // Calculer les totaux
-      const statsData = dailyStats || [];
+      const statsData = dailyStatsResult.data || [];
+      const productViewsRaw = productViewsRawResult.data || [];
+      const shopVisitsRaw = shopVisitsRawResult.data || [];
       
-      // Stats aujourd'hui
-      const todayStats = statsData.find(s => s.stat_date === today);
+      // Calculer les stats en temps réel à partir des données brutes
+      const rawDeviceBreakdown: Record<string, number> = {};
+      const rawCountryBreakdown: Record<string, number> = {};
+      const rawCityBreakdown: Record<string, number> = {};
+      const rawTopProductsMap: Record<string, number> = {};
+      const rawDailyProductViews: Record<string, number> = {};
+      const rawDailyShopVisits: Record<string, number> = {};
+      const rawUniqueSessions = new Set<string>();
+      const rawUniqueShopSessions = new Set<string>();
       
-      // Stats 7 derniers jours pour le trend
-      const weeklyData = statsData
-        .filter(s => s.stat_date >= sevenDaysAgoStr)
-        .sort((a, b) => a.stat_date.localeCompare(b.stat_date))
-        .map(s => ({
-          date: s.stat_date,
-          productViews: s.total_product_views || 0,
-          shopVisits: s.total_shop_visits || 0
-        }));
-
-      // Totaux sur 30 jours
-      const totalProductViews = statsData.reduce((sum, s) => sum + (s.total_product_views || 0), 0);
-      const uniqueProductViewers = statsData.reduce((sum, s) => sum + (s.unique_product_viewers || 0), 0);
-      const totalShopVisits = statsData.reduce((sum, s) => sum + (s.total_shop_visits || 0), 0);
-      const uniqueShopVisitors = statsData.reduce((sum, s) => sum + (s.unique_shop_visitors || 0), 0);
-
-      // Agrégation device, country et city
-      const deviceBreakdown: Record<string, number> = {};
-      const countryBreakdown: Record<string, number> = {};
-      const cityBreakdown: Record<string, number> = {};
-      const topProductsMap: Record<string, number> = {};
-
-      statsData.forEach(s => {
-        // Device breakdown
-        if (s.device_breakdown && typeof s.device_breakdown === 'object') {
-          Object.entries(s.device_breakdown as Record<string, number>).forEach(([device, count]) => {
-            deviceBreakdown[device] = (deviceBreakdown[device] || 0) + count;
-          });
+      // Analyser les vues produits brutes
+      productViewsRaw.forEach(view => {
+        // Comptage par appareil
+        if (view.device_type) {
+          rawDeviceBreakdown[view.device_type] = (rawDeviceBreakdown[view.device_type] || 0) + 1;
         }
         
-        // Country breakdown
-        if (s.country_breakdown && typeof s.country_breakdown === 'object') {
-          Object.entries(s.country_breakdown as Record<string, number>).forEach(([country, count]) => {
-            countryBreakdown[country] = (countryBreakdown[country] || 0) + count;
-          });
-        }
-
-        // City breakdown
-        if (s.city_breakdown && typeof s.city_breakdown === 'object') {
-          Object.entries(s.city_breakdown as Record<string, number>).forEach(([city, count]) => {
-            cityBreakdown[city] = (cityBreakdown[city] || 0) + count;
-          });
+        // Comptage par pays
+        if (view.country_code) {
+          rawCountryBreakdown[view.country_code] = (rawCountryBreakdown[view.country_code] || 0) + 1;
         }
         
-        // Top products
-        if (s.top_products && Array.isArray(s.top_products)) {
-          (s.top_products as Array<{ product_id: string; views: number }>).forEach(p => {
-            topProductsMap[p.product_id] = (topProductsMap[p.product_id] || 0) + p.views;
-          });
+        // Comptage par ville
+        if (view.city) {
+          rawCityBreakdown[view.city] = (rawCityBreakdown[view.city] || 0) + 1;
+        }
+        
+        // Comptage par produit
+        if (view.product_id) {
+          rawTopProductsMap[view.product_id] = (rawTopProductsMap[view.product_id] || 0) + 1;
+        }
+        
+        // Comptage par jour
+        if (view.view_date) {
+          rawDailyProductViews[view.view_date] = (rawDailyProductViews[view.view_date] || 0) + 1;
+        }
+        
+        // Sessions uniques
+        if (view.session_id) {
+          rawUniqueSessions.add(view.session_id);
         }
       });
-
-      const topProducts = Object.entries(topProductsMap)
+      
+      // Analyser les visites boutique brutes
+      shopVisitsRaw.forEach(visit => {
+        // Comptage par appareil (combiner avec produits)
+        if (visit.device_type) {
+          rawDeviceBreakdown[visit.device_type] = (rawDeviceBreakdown[visit.device_type] || 0) + 1;
+        }
+        
+        // Comptage par pays (combiner)
+        if (visit.country_code) {
+          rawCountryBreakdown[visit.country_code] = (rawCountryBreakdown[visit.country_code] || 0) + 1;
+        }
+        
+        // Comptage par ville (combiner)
+        if (visit.city) {
+          rawCityBreakdown[visit.city] = (rawCityBreakdown[visit.city] || 0) + 1;
+        }
+        
+        // Comptage par jour
+        if (visit.visit_date) {
+          rawDailyShopVisits[visit.visit_date] = (rawDailyShopVisits[visit.visit_date] || 0) + 1;
+        }
+        
+        // Sessions uniques boutique
+        if (visit.session_id) {
+          rawUniqueShopSessions.add(visit.session_id);
+        }
+      });
+      
+      // Combiner stats agrégées avec stats brutes
+      // (Les données brutes sont prioritaires car plus à jour)
+      
+      // Totaux à partir des données brutes
+      const totalProductViews = productViewsRaw.length;
+      const uniqueProductViewers = rawUniqueSessions.size;
+      const totalShopVisits = shopVisitsRaw.length;
+      const uniqueShopVisitors = rawUniqueShopSessions.size;
+      
+      // Stats aujourd'hui
+      const todayProductViews = rawDailyProductViews[today] || 0;
+      const todayShopVisits = rawDailyShopVisits[today] || 0;
+      
+      // Générer le trend hebdomadaire
+      const weeklyTrend: Array<{ date: string; productViews: number; shopVisits: number }> = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        weeklyTrend.push({
+          date: dateStr,
+          productViews: rawDailyProductViews[dateStr] || 0,
+          shopVisits: rawDailyShopVisits[dateStr] || 0
+        });
+      }
+      
+      // Top produits
+      const topProducts = Object.entries(rawTopProductsMap)
         .map(([product_id, views]) => ({ product_id, views }))
         .sort((a, b) => b.views - a.views)
         .slice(0, 10);
@@ -131,13 +193,13 @@ export function useTrafficAnalytics() {
         uniqueProductViewers,
         totalShopVisits,
         uniqueShopVisitors,
-        todayProductViews: todayStats?.total_product_views || 0,
-        todayShopVisits: todayStats?.total_shop_visits || 0,
-        weeklyTrend: weeklyData,
+        todayProductViews,
+        todayShopVisits,
+        weeklyTrend,
         topProducts,
-        deviceBreakdown,
-        countryBreakdown,
-        cityBreakdown
+        deviceBreakdown: rawDeviceBreakdown,
+        countryBreakdown: rawCountryBreakdown,
+        cityBreakdown: rawCityBreakdown
       });
 
     } catch (err) {
