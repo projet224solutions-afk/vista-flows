@@ -1,10 +1,10 @@
 /**
  * SIDEBAR VENDEUR PROFESSIONNELLE - 224SOLUTIONS
  * Navigation complète avec contrôle d'accès par abonnement
- * @version 4.0.0 - Contrôle d'accès par plan
+ * @version 4.1.0 - Affichage conditionnel produits numériques
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Package, ShoppingCart, Users, BarChart3, CreditCard, 
@@ -32,6 +32,7 @@ import { useSubscriptionFeatures, MODULE_FEATURE_MAP, SubscriptionFeature } from
 import { UpgradeDialog } from "@/components/subscription/UpgradeDialog";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useVendorOptimized } from "@/hooks/useVendorOptimized";
+import { useHasDigitalProducts } from "@/hooks/useHasDigitalProducts";
 import {
   Tooltip,
   TooltipContent,
@@ -63,6 +64,7 @@ export function VendorSidebar() {
   const { badges, loading: badgesLoading } = useVendorBadges();
   const { canAccessModule, getMinPlanForFeature, loading: subscriptionLoading } = useSubscriptionFeatures();
   const { profile } = useVendorOptimized();
+  const { hasProducts: hasDigitalProducts, loading: digitalProductsLoading } = useHasDigitalProducts();
   
   // State pour le dialog d'upgrade
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
@@ -119,6 +121,27 @@ export function VendorSidebar() {
     return getMinPlanForFeature(feature);
   };
 
+  // Construire les items de commerce conditionnellement
+  const commerceItems = useMemo(() => {
+    const items = [
+      { title: t('sidebar.products'), icon: Package, path: "products" },
+    ];
+    
+    // Afficher "Produits Numériques" seulement si le vendeur en a créé
+    if (hasDigitalProducts) {
+      items.push({ title: "Produits Numériques", icon: Laptop, path: "digital-products" });
+    }
+    
+    items.push(
+      { title: t('sidebar.orders'), icon: ShoppingCart, path: "orders" },
+      { title: t('sidebar.inventory'), icon: Box, path: "inventory" },
+      { title: t('sidebar.warehouses'), icon: Boxes, path: "warehouse" },
+      { title: t('sidebar.suppliers'), icon: Building2, path: "suppliers" },
+    );
+    
+    return items;
+  }, [t, hasDigitalProducts]);
+
   const menuSections = [
     {
       label: t('sidebar.principal'),
@@ -133,14 +156,7 @@ export function VendorSidebar() {
     {
       label: t('sidebar.commerce'),
       icon: Package,
-      items: [
-        { title: t('sidebar.products'), icon: Package, path: "products" },
-        { title: "Produits Numériques", icon: Laptop, path: "digital-products" },
-        { title: t('sidebar.orders'), icon: ShoppingCart, path: "orders" },
-        { title: t('sidebar.inventory'), icon: Box, path: "inventory" },
-        { title: t('sidebar.warehouses'), icon: Boxes, path: "warehouse" },
-        { title: t('sidebar.suppliers'), icon: Building2, path: "suppliers" },
-      ]
+      items: commerceItems
     },
     {
       label: t('sidebar.crm'),
