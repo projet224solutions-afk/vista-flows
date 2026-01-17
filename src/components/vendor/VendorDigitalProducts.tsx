@@ -26,6 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { DigitalProductForm } from "@/components/digital-products/DigitalProductForm";
 
 const categoryIcons: Record<string, React.ComponentType<any>> = {
   voyage: Plane,
@@ -66,6 +67,7 @@ export default function VendorDigitalProducts() {
   const { products, loading, refresh } = useMerchantDigitalProducts();
   const [deleteProduct, setDeleteProduct] = useState<DigitalProduct | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<DigitalProduct | null>(null);
 
   const handleDelete = async () => {
     if (!deleteProduct) return;
@@ -97,6 +99,21 @@ export default function VendorDigitalProducts() {
       maximumFractionDigits: 0
     }).format(price);
   };
+
+  if (editingProduct) {
+    return (
+      <DigitalProductForm
+        category={editingProduct.category as any}
+        mode="edit"
+        initialProduct={editingProduct}
+        onBack={() => setEditingProduct(null)}
+        onSuccess={() => {
+          setEditingProduct(null);
+          refresh();
+        }}
+      />
+    );
+  }
 
   if (loading) {
     return (
@@ -270,7 +287,16 @@ export default function VendorDigitalProducts() {
                     <Button
                       variant="ghost"
                       size="sm"
+                      onClick={() => setEditingProduct(product)}
+                      aria-label="Modifier le produit"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => setDeleteProduct(product)}
+                      aria-label="Supprimer le produit"
                     >
                       <Trash2 className="w-4 h-4 text-destructive" />
                     </Button>

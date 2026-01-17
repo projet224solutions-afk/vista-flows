@@ -4,7 +4,7 @@
  * Inspiré de ClickBank, Gumroad, Teachable
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -29,6 +29,7 @@ import { Badge } from '@/components/ui/badge';
 import { VideoUploadPreview } from '@/components/ui/video-upload-preview';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import type { DigitalProduct } from '@/hooks/useDigitalProducts';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -43,6 +44,8 @@ interface DigitalProductFormProps {
   category: ProductCategory;
   onBack: () => void;
   onSuccess: () => void;
+  mode?: 'create' | 'edit';
+  initialProduct?: DigitalProduct;
 }
 
 const categoryConfig: Record<ProductCategory, {
@@ -113,7 +116,7 @@ const categoryConfig: Record<ProductCategory, {
 
 type FormStep = 'mode' | 'details' | 'pricing' | 'media' | 'review';
 
-export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProductFormProps) {
+export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create', initialProduct }: DigitalProductFormProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const config = categoryConfig[category];
@@ -123,12 +126,23 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [generatingDescription, setGeneratingDescription] = useState(false);
 
+  const isEdit = mode === 'edit' && !!initialProduct?.id;
+
   // Fonction pour générer la description par IA
   const handleGenerateDescription = async () => {
     if (!baseData.title.trim()) {
       toast.error('Veuillez d\'abord saisir un titre');
       return;
     }
+
+    const deriveShortDescription = (text: string) => {
+      const cleaned = (text || '').replace(/\s+/g, ' ').trim();
+      if (!cleaned) return '';
+      const firstSentence = cleaned.split(/(?<=[.!?])\s+/)[0] || cleaned;
+      const words = firstSentence.split(' ').filter(Boolean).slice(0, 15).join(' ');
+      if (!words) return '';
+      return /[.!?]$/.test(words) ? words : `${words}.`;
+    };
 
     setGeneratingDescription(true);
     try {
@@ -141,17 +155,23 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
       });
 
       if (error) throw error;
-      
-      if (data?.description) {
-        setBaseData(prev => ({ 
-          ...prev, 
-          description: data.description,
-          shortDescription: data.shortDescription || prev.shortDescription
-        }));
-        toast.success('Description générée avec succès!');
-      } else {
+
+      console.log('[DigitalProductForm] AI description response:', data);
+
+      const nextDescription = (data?.description ?? '').toString();
+      const nextShort = (data?.shortDescription ?? data?.short_description ?? '').toString().trim();
+
+      if (!nextDescription.trim()) {
         throw new Error('Aucune description générée');
       }
+
+      setBaseData(prev => ({
+        ...prev,
+        description: nextDescription,
+        shortDescription: nextShort || deriveShortDescription(nextDescription) || prev.shortDescription,
+      }));
+
+      toast.success('Description générée avec succès!');
     } catch (error) {
       console.error('Erreur génération description:', error);
       toast.error('Erreur lors de la génération de la description');
@@ -159,11 +179,11 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
       setGeneratingDescription(false);
     }
   };
-  
   // Mode de vente
-  const [salesMode, setSalesMode] = useState<SalesMode>(config.defaultMode);
-  
-  // Types de produits par catégorie
+  const [salesMode, setSalesMode] = useState<SalesMode>(() => {
+    if (isEdit && initialProduct?.product_mode) return initialProduct.product_mode;
+    return config.defaultMode;
+  });
   const productTypes: Record<ProductCategory, { value: string; label: string }[]> = {
     logiciel: [
       { value: 'logiciel_montage', label: 'Logiciel de montage vidéo' },
@@ -226,32 +246,32 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
   };
 
   // Données de base
-  const [baseData, setBaseData] = useState({
-    title: '',
-    description: '',
-    shortDescription: '',
-    tags: '',
-    productType: '',
-    publishImmediately: true
-  });
+  const [baseData, setBaseData] = useState(() => ({
+    title: initialProduct?.title || '',
+    description: initialProduct?.description || '',
+    shortDescription: initialProduct?.short_description || '',
+    tags: (initialProduct?.tags || []).join(', '),
+    productType: initialProduct?.product_type || '',
+    publishImmediately: initialProduct ? initialProduct.status === 'published' : true
+  }));
   
   // Données d'affiliation
-  const [affiliateData, setAffiliateData] = useState<AffiliateFormData>({
-    affiliateUrl: '',
-    affiliatePlatform: '',
+  const [affiliateData, setAffiliateData] = useState<AffiliateFormData>(() => ({
+    affiliateUrl: initialProduct?.affiliate_url || '',
+    affiliatePlatform: initialProduct?.affiliate_platform || '',
     affiliateNetwork: 'direct',
-    commissionRate: '',
+    commissionRate: initialProduct?.commission_rate ? String(initialProduct.commission_rate) : '',
     commissionType: 'percentage',
     cookieDuration: '30d',
     payoutThreshold: '',
     trackingId: ''
-  });
+  }));
   
   // Données de vente directe
-  const [directData, setDirectData] = useState<DirectSaleFormData>({
-    price: '',
-    originalPrice: '',
-    currency: 'GNF',
+  const [directData, setDirectData] = useState<DirectSaleFormData>(() => ({
+    price: initialProduct?.price ? String(initialProduct.price) : '',
+    originalPrice: initialProduct?.original_price ? String(initialProduct.original_price) : '',
+    currency: initialProduct?.currency || 'GNF',
     pricingType: 'one_time',
     subscriptionInterval: 'monthly',
     minimumPrice: '',
@@ -263,12 +283,45 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
     requireEmail: true,
     instantDelivery: true,
     accessDuration: 'lifetime'
-  });
+  }));
   
   // Médias
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<string[]>(() => initialProduct?.images || []);
   const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(() => initialProduct?.video_url || null);
+
+  // Synchroniser les valeurs quand on ouvre l'édition depuis la liste
+  useEffect(() => {
+    if (!isEdit || !initialProduct) return;
+
+    setSalesMode(initialProduct.product_mode);
+    setBaseData({
+      title: initialProduct.title || '',
+      description: initialProduct.description || '',
+      shortDescription: initialProduct.short_description || '',
+      tags: (initialProduct.tags || []).join(', '),
+      productType: initialProduct.product_type || '',
+      publishImmediately: initialProduct.status === 'published',
+    });
+
+    setAffiliateData((prev) => ({
+      ...prev,
+      affiliateUrl: initialProduct.affiliate_url || '',
+      affiliatePlatform: initialProduct.affiliate_platform || '',
+      commissionRate: initialProduct.commission_rate ? String(initialProduct.commission_rate) : '',
+    }));
+
+    setDirectData((prev) => ({
+      ...prev,
+      price: initialProduct.price ? String(initialProduct.price) : '',
+      originalPrice: initialProduct.original_price ? String(initialProduct.original_price) : '',
+      currency: initialProduct.currency || 'GNF',
+    }));
+
+    setImages(initialProduct.images || []);
+    setVideoPreviewUrl(initialProduct.video_url || null);
+    setVideoFile(null);
+  }, [isEdit, initialProduct]);
 
   const steps: { id: FormStep; label: string }[] = [
     { id: 'mode', label: 'Mode' },
@@ -368,7 +421,7 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
         .single();
 
       // Upload de la vidéo si présente
-      let videoUrl: string | null = null;
+      let videoUrl: string | null = isEdit ? (initialProduct?.video_url || null) : null;
       if (videoFile) {
         setUploadingVideo(true);
         const videoFileName = `${user.id}/videos/${Date.now()}_${videoFile.name}`;
@@ -400,7 +453,9 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
         product_mode: salesMode,
         tags: baseData.tags.split(',').map(t => t.trim()).filter(Boolean),
         status: baseData.publishImmediately ? 'published' : 'draft',
-        published_at: baseData.publishImmediately ? new Date().toISOString() : null
+        published_at: baseData.publishImmediately
+          ? (isEdit ? (initialProduct?.published_at || new Date().toISOString()) : new Date().toISOString())
+          : null
       };
 
       if (salesMode === 'affiliate') {
@@ -412,25 +467,41 @@ export function DigitalProductForm({ category, onBack, onSuccess }: DigitalProdu
       } else {
         productData.price = parseFloat(directData.price);
         productData.original_price = directData.originalPrice ? parseFloat(directData.originalPrice) : null;
+        productData.currency = directData.currency;
         productData.commission_rate = 0;
         productData.affiliate_url = null;
         productData.affiliate_platform = null;
       }
 
-      const { error } = await supabase
-        .from('digital_products')
-        .insert(productData);
+      if (isEdit) {
+        const updateData = { ...productData };
+        delete updateData.merchant_id;
+        delete updateData.vendor_id;
 
-      if (error) throw error;
+        const { error } = await supabase
+          .from('digital_products')
+          .update(updateData)
+          .eq('id', initialProduct!.id);
 
-      toast.success(salesMode === 'affiliate' 
-        ? 'Produit affilié créé avec succès!' 
-        : 'Produit en vente directe créé!'
-      );
+        if (error) throw error;
+        toast.success('Produit mis à jour avec succès!');
+      } else {
+        const { error } = await supabase
+          .from('digital_products')
+          .insert(productData);
+
+        if (error) throw error;
+
+        toast.success(salesMode === 'affiliate' 
+          ? 'Produit affilié créé avec succès!' 
+          : 'Produit en vente directe créé!'
+        );
+      }
+
       onSuccess();
     } catch (error) {
-      console.error('Erreur création produit:', error);
-      toast.error('Erreur lors de la création du produit');
+      console.error('Erreur création/édition produit:', error);
+      toast.error(isEdit ? 'Erreur lors de la modification du produit' : 'Erreur lors de la création du produit');
     } finally {
       setLoading(false);
     }

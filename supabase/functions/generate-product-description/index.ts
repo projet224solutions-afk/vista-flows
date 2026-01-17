@@ -125,17 +125,29 @@ IMPORTANT:
       parsedContent = JSON.parse(cleanedText);
     } catch (parseError) {
       console.error('❌ Erreur parsing JSON:', parseError);
-      // Fallback: utiliser le texte brut comme description complète
-      parsedContent = {
-        shortDescription: generatedText.split('.')[0] + '.',
-        description: generatedText.trim()
-      };
+      parsedContent = null;
+    }
+
+    const normalized = (parsedContent && typeof parsedContent === 'object') ? parsedContent as Record<string, unknown> : {};
+
+    const description = String(
+      (normalized.description ?? normalized.longDescription ?? normalized.fullDescription ?? '')
+    ).trim() || generatedText.trim();
+
+    let shortDescription = String(
+      (normalized.shortDescription ?? normalized.short_description ?? normalized.short ?? normalized.summary ?? normalized.resume ?? '')
+    ).trim();
+
+    if (!shortDescription) {
+      const firstSentence = (description.split(/(?<=[.!?])\s+/)[0] || description).replace(/\s+/g, ' ').trim();
+      const words = firstSentence.split(' ').filter(Boolean).slice(0, 15).join(' ');
+      shortDescription = words ? (/[.!?]$/.test(words) ? words : `${words}.`) : '';
     }
 
     return new Response(
       JSON.stringify({ 
-        shortDescription: parsedContent.shortDescription || '',
-        description: parsedContent.description || generatedText.trim(),
+        shortDescription,
+        description,
         provider: 'openai',
         model: 'gpt-4o-mini'
       }),
