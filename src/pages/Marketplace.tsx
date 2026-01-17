@@ -521,7 +521,7 @@ export default function Marketplace() {
           <>
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs text-muted-foreground">
-                {marketplaceItems.length} / {marketplaceTotal} résultats
+                {marketplaceTotal} résultats
                 {selectedItemType !== 'all' && (
                   <span className="ml-2">
                     ({selectedItemType === 'product' ? 'Produits' : 'Produits numériques'})
