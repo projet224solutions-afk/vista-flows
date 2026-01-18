@@ -479,7 +479,7 @@ export default function Auth() {
         isRecoveryType, 
         hasAccessToken, 
         hasErrorInHash,
-        hash: hash.substring(0, 50) + '...'
+        hash: hash.substring(0, 100) + '...'
       });
       
       // Si erreur dans le hash (lien expiré)
@@ -501,8 +501,46 @@ export default function Auth() {
         setCheckingResetLink(true);
         setLoading(true);
         
-        // Attendre que Supabase traite le hash (plus long pour les connexions lentes)
-        await new Promise(resolve => setTimeout(resolve, 2500));
+        // ✅ Méthode améliorée: utiliser setSession pour traiter le hash directement
+        if (hasAccessToken) {
+          console.log('🔐 Traitement du hash avec access_token...');
+          
+          // Extraire les tokens du hash
+          const accessToken = hashParams.get('access_token');
+          const refreshToken = hashParams.get('refresh_token');
+          
+          if (accessToken && refreshToken) {
+            try {
+              const { data, error: sessionError } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken
+              });
+              
+              if (sessionError) {
+                console.error('❌ Erreur setSession:', sessionError);
+                throw sessionError;
+              }
+              
+              if (data.session) {
+                console.log('✅ Session créée avec succès via setSession');
+                setShowNewPasswordForm(true);
+                setShowResetPassword(false);
+                setIsLogin(false);
+                setError(null);
+                // Nettoyer l'URL pour éviter les re-traitements
+                window.history.replaceState({}, document.title, window.location.pathname + '?reset=true');
+                setLoading(false);
+                setCheckingResetLink(false);
+                return;
+              }
+            } catch (e) {
+              console.error('❌ Exception lors de setSession:', e);
+            }
+          }
+        }
+        
+        // Fallback: attendre que Supabase traite le hash automatiquement
+        await new Promise(resolve => setTimeout(resolve, 3000));
         
         // Vérifier qu'on a bien une session active
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -1306,13 +1344,9 @@ export default function Auth() {
       const emailSchema = z.string().email("Adresse email invalide");
       emailSchema.parse(resetEmail);
 
-      // ✅ Utiliser le domaine de production si disponible, sinon l'origine actuelle
-      const productionDomain = 'https://224solution.net';
-      const redirectUrl = window.location.hostname.includes('224solution.net') 
-        ? `${productionDomain}/auth?reset=true`
-        : window.location.hostname.includes('lovable.app')
-          ? `${productionDomain}/auth?reset=true` // Toujours rediriger vers le domaine de prod
-          : `${window.location.origin}/auth?reset=true`;
+      // ✅ Utiliser l'origine actuelle pour la redirection (plus fiable)
+      // Le domaine de production doit être configuré dans Supabase Auth > URL Configuration
+      const redirectUrl = `${window.location.origin}/auth?reset=true`;
 
       console.log('🔐 Envoi email réinitialisation avec redirectTo:', redirectUrl);
 
