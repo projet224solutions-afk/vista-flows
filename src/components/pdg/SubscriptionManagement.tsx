@@ -25,7 +25,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SubscriptionService, Plan, PriceHistory } from '@/services/subscriptionService';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
-import { DollarSign, History, TrendingUp, Users, Edit, RefreshCw, Gift } from 'lucide-react';
+import { DollarSign, History, TrendingUp, Users, Edit, RefreshCw, Gift, AlertTriangle, Image, Package } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -37,9 +38,11 @@ export default function SubscriptionManagement() {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [newPrice, setNewPrice] = useState('');
   const [newMaxProducts, setNewMaxProducts] = useState('');
+  const [newMaxImages, setNewMaxImages] = useState('');
   const [reason, setReason] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isProductLimitDialogOpen, setIsProductLimitDialogOpen] = useState(false);
+  const [isImageLimitDialogOpen, setIsImageLimitDialogOpen] = useState(false);
   const [isFreeSubscriptionDialogOpen, setIsFreeSubscriptionDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [freeSubscriptionData, setFreeSubscriptionData] = useState({
@@ -193,6 +196,13 @@ export default function SubscriptionManagement() {
     setNewMaxProducts(plan.max_products?.toString() || '');
     setReason('');
     setIsProductLimitDialogOpen(true);
+  };
+
+  const handleOpenImageLimitDialog = (plan: Plan) => {
+    setSelectedPlan(plan);
+    setNewMaxImages(plan.max_images_per_product?.toString() || '');
+    setReason('');
+    setIsImageLimitDialogOpen(true);
   };
 
   const handleChangePlanPrice = async () => {
@@ -393,6 +403,88 @@ export default function SubscriptionManagement() {
     }
   };
 
+  const handleChangeImageLimit = async () => {
+    if (!selectedPlan) return;
+
+    const imageLimit = newMaxImages === '' ? null : parseInt(newMaxImages);
+    if (imageLimit !== null && (isNaN(imageLimit) || imageLimit < 1)) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez entrer un nombre valide (minimum 1)',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (imageLimit === selectedPlan.max_images_per_product) {
+      toast({
+        title: 'Attention',
+        description: 'La nouvelle limite doit être différente de l\'ancienne',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { error } = await supabase
+        .from('plans')
+        .update({ 
+          max_images_per_product: imageLimit,
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', selectedPlan.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Succès',
+        description: `Limite d'images du plan ${selectedPlan.display_name} modifiée avec succès`,
+      });
+      setIsImageLimitDialogOpen(false);
+      fetchData();
+    } catch (error: any) {
+      console.error('Error changing image limit:', error);
+      toast({
+        title: 'Erreur',
+        description: error.message || 'Impossible de modifier la limite',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Vérifier les incohérences de limites
+  const getLimitWarnings = () => {
+    const warnings: string[] = [];
+    const sortedPlans = [...plans].sort((a, b) => a.monthly_price_gnf - b.monthly_price_gnf);
+    
+    for (let i = 1; i < sortedPlans.length; i++) {
+      const currentPlan = sortedPlans[i];
+      const previousPlan = sortedPlans[i - 1];
+      
+      // Vérifier max_products
+      if (currentPlan.max_products !== null && previousPlan.max_products !== null) {
+        if (currentPlan.max_products < previousPlan.max_products) {
+          warnings.push(`${currentPlan.display_name} (${currentPlan.max_products} produits) < ${previousPlan.display_name} (${previousPlan.max_products} produits)`);
+        }
+      }
+      
+      // Vérifier max_images
+      if (currentPlan.max_images_per_product !== null && previousPlan.max_images_per_product !== null) {
+        if (currentPlan.max_images_per_product < previousPlan.max_images_per_product) {
+          warnings.push(`${currentPlan.display_name} (${currentPlan.max_images_per_product} images) < ${previousPlan.display_name} (${previousPlan.max_images_per_product} images)`);
+        }
+      }
+    }
+    
+    return warnings;
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -469,6 +561,23 @@ export default function SubscriptionManagement() {
         </div>
       )}
 
+      {/* Alerte pour les incohérences de limites */}
+      {getLimitWarnings().length > 0 && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>⚠️ Incohérences détectées dans les limites</AlertTitle>
+          <AlertDescription>
+            <p className="mb-2">Les plans moins chers ont plus d'avantages que les plans plus chers :</p>
+            <ul className="list-disc list-inside space-y-1">
+              {getLimitWarnings().map((warning, idx) => (
+                <li key={idx} className="text-sm">{warning}</li>
+              ))}
+            </ul>
+            <p className="mt-2 font-medium">Cliquez sur les boutons d'édition pour corriger.</p>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Tabs defaultValue="plans" className="space-y-4">
         <TabsList>
           <TabsTrigger value="plans">Plans et Prix</TabsTrigger>
@@ -480,7 +589,7 @@ export default function SubscriptionManagement() {
             <CardHeader>
               <CardTitle>Plans d'Abonnement</CardTitle>
               <CardDescription>
-                Gérez les prix et caractéristiques de chaque plan
+                Gérez les prix, limites de produits et images de chaque plan
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -488,56 +597,99 @@ export default function SubscriptionManagement() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Plan</TableHead>
-                    <TableHead>Prix</TableHead>
-                    <TableHead>Produits Max</TableHead>
+                    <TableHead>Prix Mensuel</TableHead>
+                    <TableHead>
+                      <div className="flex items-center gap-1">
+                        <Package className="w-4 h-4" />
+                        Produits Max
+                      </div>
+                    </TableHead>
+                    <TableHead>
+                      <div className="flex items-center gap-1">
+                        <Image className="w-4 h-4" />
+                        Images/Produit
+                      </div>
+                    </TableHead>
                     <TableHead>Fonctionnalités</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {plans.map((plan) => (
-                    <TableRow key={plan.id}>
-                      <TableCell className="font-medium">{plan.display_name}</TableCell>
-                      <TableCell>
-                        {SubscriptionService.formatAmount(plan.monthly_price_gnf)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {plan.max_products === null ? (
-                            <Badge variant="secondary">Illimité</Badge>
-                          ) : (
-                            <span className="font-medium">{plan.max_products}</span>
-                          )}
+                  {plans.map((plan, index) => {
+                    const prevPlan = index > 0 ? plans[index - 1] : null;
+                    const hasProductWarning = prevPlan && 
+                      plan.max_products !== null && 
+                      prevPlan.max_products !== null && 
+                      plan.max_products < prevPlan.max_products;
+                    const hasImageWarning = prevPlan && 
+                      plan.max_images_per_product !== null && 
+                      prevPlan.max_images_per_product !== null && 
+                      plan.max_images_per_product < prevPlan.max_images_per_product;
+                    
+                    return (
+                      <TableRow key={plan.id} className={hasProductWarning || hasImageWarning ? 'bg-destructive/10' : ''}>
+                        <TableCell className="font-medium">{plan.display_name}</TableCell>
+                        <TableCell>
+                          {SubscriptionService.formatAmount(plan.monthly_price_gnf)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {plan.max_products === null ? (
+                              <Badge variant="secondary">Illimité</Badge>
+                            ) : (
+                              <span className={`font-medium ${hasProductWarning ? 'text-destructive' : ''}`}>
+                                {plan.max_products}
+                              </span>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleOpenProductLimitDialog(plan)}
+                            >
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {plan.max_images_per_product === null ? (
+                              <Badge variant="secondary">Illimité</Badge>
+                            ) : (
+                              <span className={`font-medium ${hasImageWarning ? 'text-destructive' : ''}`}>
+                                {plan.max_images_per_product}
+                              </span>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleOpenImageLimitDialog(plan)}
+                            >
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1 flex-wrap">
+                            {plan.analytics_access && <Badge variant="outline">Analytics</Badge>}
+                            {plan.priority_support && <Badge variant="outline">Support Pro</Badge>}
+                            {plan.featured_products && <Badge variant="outline">Vedette</Badge>}
+                            {plan.api_access && <Badge variant="outline">API</Badge>}
+                          </div>
+                        </TableCell>
+                        <TableCell>
                           <Button
                             size="sm"
-                            variant="ghost"
-                            onClick={() => handleOpenProductLimitDialog(plan)}
+                            variant="outline"
+                            onClick={() => handleOpenDialog(plan)}
+                            disabled={plan.name === 'free'}
                           >
-                            <Edit className="w-3 h-3" />
+                            <Edit className="w-4 h-4 mr-2" />
+                            Modifier Prix
                           </Button>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1 flex-wrap">
-                          {plan.analytics_access && <Badge variant="outline">Analytics</Badge>}
-                          {plan.priority_support && <Badge variant="outline">Support Pro</Badge>}
-                          {plan.featured_products && <Badge variant="outline">Vedette</Badge>}
-                          {plan.api_access && <Badge variant="outline">API</Badge>}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleOpenDialog(plan)}
-                          disabled={plan.name === 'free'}
-                        >
-                          <Edit className="w-4 h-4 mr-2" />
-                          Modifier Prix
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </CardContent>
@@ -688,6 +840,55 @@ export default function SubscriptionManagement() {
               Annuler
             </Button>
             <Button onClick={handleChangeProductLimit} disabled={submitting}>
+              {submitting ? 'Modification...' : 'Confirmer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog pour modifier la limite d'images */}
+      <Dialog open={isImageLimitDialogOpen} onOpenChange={setIsImageLimitDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifier la Limite d'Images par Produit</DialogTitle>
+            <DialogDescription>
+              {selectedPlan && `Plan: ${selectedPlan.display_name}`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="maxImages">Nombre Maximum d'Images par Produit</Label>
+              <Input
+                id="maxImages"
+                type="number"
+                min="1"
+                value={newMaxImages}
+                onChange={(e) => setNewMaxImages(e.target.value)}
+                placeholder="Ex: 3, 5, 10"
+              />
+              <p className="text-xs text-muted-foreground">
+                Nombre d'images qu'un vendeur peut ajouter par produit (minimum 1)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="reasonImages">Raison du changement (optionnel)</Label>
+              <Textarea
+                id="reasonImages"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Expliquez la raison de ce changement..."
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsImageLimitDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleChangeImageLimit} disabled={submitting}>
               {submitting ? 'Modification...' : 'Confirmer'}
             </Button>
           </DialogFooter>
