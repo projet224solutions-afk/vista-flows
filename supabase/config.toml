@@ -308,3 +308,6 @@ verify_jwt = true
 
 [functions.djomy-test-sandbox]
 verify_jwt = false
+
+[functions.get-user-activity]
+verify_jwt = false
