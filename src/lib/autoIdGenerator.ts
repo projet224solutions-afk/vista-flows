@@ -77,61 +77,69 @@ const ID_CONFIGS: Record<RoleType, IdConfig> = {
 /**
  * Génère un ID unique pour un rôle donné
  * Format: PREFIX + NUMERO (ex: AGT0001, VND0042)
- * Cherche le MAX dans user_ids pour garantir l'unicité
+ * NOUVEAU: Comble les gaps en priorité (si VND0003 manque, il est réutilisé)
  */
 export async function generateAutoId(roleType: RoleType): Promise<string> {
   const config = ID_CONFIGS[roleType];
   
   try {
-    // Récupérer le plus grand ID existant dans user_ids pour ce préfixe
+    // Récupérer tous les IDs existants pour ce préfixe
     const { data: userIdsData, error: userIdsError } = await supabase
       .from('user_ids')
       .select('custom_id')
       .like('custom_id', `${config.prefix}%`)
-      .order('custom_id', { ascending: false })
-      .limit(10);
+      .order('custom_id', { ascending: true });
 
-    let maxNumber = 0;
+    if (userIdsError) {
+      console.error('Erreur récupération IDs:', userIdsError);
+    }
 
-    if (!userIdsError && userIdsData && userIdsData.length > 0) {
-      // Trouver le plus grand numéro
-      for (const row of userIdsData) {
-        if (row.custom_id) {
-          const numericPart = row.custom_id.replace(config.prefix, '');
-          const num = parseInt(numericPart, 10);
-          if (!isNaN(num) && num > maxNumber) {
-            maxNumber = num;
-          }
+    // Si aucun ID n'existe, commencer à 1
+    if (!userIdsData || userIdsData.length === 0) {
+      const newId = `${config.prefix}${'1'.padStart(config.length, '0')}`;
+      console.log(`✅ Premier ID généré pour ${roleType}: ${newId}`);
+      return newId;
+    }
+
+    // Extraire tous les numéros utilisés
+    const usedNumbers = new Set<number>();
+    for (const row of userIdsData) {
+      if (row.custom_id) {
+        const numericPart = row.custom_id.replace(config.prefix, '');
+        const num = parseInt(numericPart, 10);
+        if (!isNaN(num)) {
+          usedNumbers.add(num);
         }
       }
     }
 
-    // Vérifier aussi dans la table de rôle
-    const { data, error } = await supabase
-      .from(config.table as any)
-      .select(config.column)
-      .not(config.column, 'is', null)
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    if (!error && data && data.length > 0) {
-      for (const row of data) {
-        const code = row[config.column];
-        if (code) {
-          const numericPart = code.replace(config.prefix, '');
-          const num = parseInt(numericPart, 10);
-          if (!isNaN(num) && num > maxNumber) {
-            maxNumber = num;
-          }
-        }
-      }
+    // Trouver le premier numéro disponible (comble les gaps)
+    let nextNumber = 1;
+    while (usedNumbers.has(nextNumber)) {
+      nextNumber++;
     }
 
-    // Générer le nouvel ID (max + 1)
-    const nextNumber = maxNumber + 1;
     const newId = `${config.prefix}${nextNumber.toString().padStart(config.length, '0')}`;
     
-    console.log(`✅ ID généré pour ${roleType}: ${newId} (max trouvé: ${maxNumber})`);
+    // Vérifier aussi dans la table de rôle (double sécurité)
+    const { data: roleData } = await supabase
+      .from(config.table as any)
+      .select(config.column)
+      .eq(config.column, newId)
+      .maybeSingle();
+
+    if (roleData) {
+      // L'ID existe dans la table de rôle mais pas dans user_ids
+      // Chercher le prochain disponible
+      while (usedNumbers.has(nextNumber)) {
+        nextNumber++;
+      }
+      const altId = `${config.prefix}${nextNumber.toString().padStart(config.length, '0')}`;
+      console.log(`⚠️ ID ${newId} existe dans ${config.table}, utilise ${altId}`);
+      return altId;
+    }
+    
+    console.log(`✅ ID généré pour ${roleType}: ${newId} (premier gap ou suivant)`);
     return newId;
     
   } catch (error) {

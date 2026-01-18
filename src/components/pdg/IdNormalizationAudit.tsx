@@ -18,7 +18,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
   RefreshCw, Search, AlertTriangle, CheckCircle, 
   TrendingUp, Calendar, Shield, Hash, ChevronLeft, ChevronRight,
-  Eye, XCircle, Info, Copy, Check, Wand2, Loader2
+  Eye, XCircle, Info, Copy, Check, Wand2, Loader2, Layers
 } from 'lucide-react';
 import { generateUniqueId, type RoleType } from '@/lib/autoIdGenerator';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +28,7 @@ import { fr } from 'date-fns/locale';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
+import { IdReorganizationPanel } from './IdReorganizationPanel';
 
 interface NormalizationLog {
   id: string;
@@ -835,10 +836,14 @@ export default function IdNormalizationAudit() {
 
       {/* Tabs */}
       <Tabs defaultValue="non-standard" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="non-standard" className="gap-2">
             <AlertTriangle className="w-4 h-4" />
             Non-Standard ({nonStandardUsers.length})
+          </TabsTrigger>
+          <TabsTrigger value="reorganize" className="gap-2">
+            <Layers className="w-4 h-4" />
+            Réorganiser
           </TabsTrigger>
           <TabsTrigger value="search" className="gap-2">
             <Eye className="w-4 h-4" />
@@ -1027,6 +1032,11 @@ export default function IdNormalizationAudit() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Reorganization Tab */}
+        <TabsContent value="reorganize" className="space-y-4">
+          <IdReorganizationPanel />
         </TabsContent>
 
         {/* Search Tab */}
