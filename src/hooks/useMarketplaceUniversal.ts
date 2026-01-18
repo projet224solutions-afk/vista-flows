@@ -7,6 +7,18 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+// Mapping des catégories techniques vers des noms lisibles
+const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
+  'dropshipping': 'Dropshipping',
+  'voyage': 'Voyage & Billetterie',
+  'logiciel': 'Logiciel & SaaS',
+  'formation': 'Formation & Coaching',
+  'livre': 'Livre & eBook',
+  'custom': 'Produit Numérique',
+  'ai': 'Intelligence Artificielle',
+  'physique_affilie': 'Produit Physique',
+};
+
 export interface MarketplaceItem {
   id: string;
   name: string;
@@ -321,7 +333,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           vendor_id: product.vendor_id || product.merchant_id,
           vendor_name: v?.business_name || "Vendeur",
           vendor_user_id: product.merchant_id,
-          category_name: product.category || "Numérique",
+          category_name: CATEGORY_DISPLAY_NAMES[product.category] || product.category || "Numérique",
           service_type: product.product_mode,
           rating: product.rating || 0,
           reviews_count: product.reviews_count || 0,
