@@ -441,7 +441,7 @@ export default function IdNormalizationAudit() {
     }
   };
 
-  // Correct all non-standard IDs
+  // Correct all non-standard IDs - one by one to avoid conflicts
   const handleCorrectAllIds = async () => {
     if (nonStandardUsers.length === 0) {
       toast.info('Aucun ID à corriger');
@@ -461,12 +461,40 @@ export default function IdNormalizationAudit() {
     setCorrectingAll(true);
     let successCount = 0;
     let errorCount = 0;
+    const errors: string[] = [];
 
+    // Process one by one with delay to avoid race conditions
     for (const item of toCorrect) {
       try {
         const roleType = mapRoleToRoleType(item.profile?.role)!;
-        const newId = await generateUniqueId(roleType);
         const originalId = item.custom_id;
+        
+        // Try up to 3 times in case of duplicate conflicts
+        let newId: string | null = null;
+        let attempts = 0;
+        const maxAttempts = 3;
+        
+        while (attempts < maxAttempts) {
+          attempts++;
+          newId = await generateUniqueId(roleType);
+          
+          // Double-check this ID doesn't exist
+          const { data: existingId } = await supabase
+            .from('user_ids')
+            .select('id')
+            .eq('custom_id', newId)
+            .maybeSingle();
+          
+          if (!existingId) break;
+          
+          console.warn(`ID ${newId} déjà pris, nouvelle tentative ${attempts}/${maxAttempts}`);
+          // Add small delay before retry
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
+        if (!newId) {
+          throw new Error('Impossible de générer un ID unique');
+        }
 
         // Update user_ids table
         const { error: updateError } = await supabase
@@ -499,8 +527,13 @@ export default function IdNormalizationAudit() {
           });
 
         successCount++;
-      } catch (error) {
+        
+        // Small delay between corrections to prevent race conditions
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+      } catch (error: any) {
         console.error(`Erreur correction ${item.custom_id}:`, error);
+        errors.push(`${item.custom_id}: ${error.message}`);
         errorCount++;
       }
     }
@@ -511,7 +544,7 @@ export default function IdNormalizationAudit() {
       toast.success(`${successCount} ID(s) corrigé(s) avec succès`);
     }
     if (errorCount > 0) {
-      toast.error(`${errorCount} erreur(s) lors de la correction`);
+      toast.error(`${errorCount} erreur(s): ${errors.slice(0, 2).join(', ')}`);
     }
 
     // Refresh all data
