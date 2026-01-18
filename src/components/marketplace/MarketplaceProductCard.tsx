@@ -171,10 +171,10 @@ export function MarketplaceProductCard({
       
       {/* Content */}
       <CardContent className="marketplace-card-content">
-        {/* Category si existante */}
+        {/* Type de produit si existant */}
         {category && (
           <span className="text-[10px] text-primary font-medium uppercase tracking-wide mb-1 block">
-            {category}
+            Type de produit: {category}
           </span>
         )}
 
