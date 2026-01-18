@@ -126,6 +126,8 @@ export default function IdNormalizationAudit() {
   const [searching, setSearching] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [allUserIds, setAllUserIds] = useState<any[]>([]);
+  const [nonStandardUsers, setNonStandardUsers] = useState<any[]>([]);
+  const [loadingNonStandard, setLoadingNonStandard] = useState(false);
 
   // Validate ID format for search (more permissive)
   const validateSearchId = (id: string): { valid: boolean; error?: string; isStandard?: boolean } => {
@@ -170,6 +172,53 @@ export default function IdNormalizationAudit() {
       setAllUserIds(data || []);
     } catch (error: any) {
       console.error('Erreur chargement user_ids:', error);
+    }
+  };
+
+  // Load all users with non-standard IDs
+  const loadNonStandardUsers = async () => {
+    setLoadingNonStandard(true);
+    try {
+      // Get all user_ids
+      const { data: userIdsData, error: userIdsError } = await supabase
+        .from('user_ids')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (userIdsError) throw userIdsError;
+
+      // Filter non-standard IDs
+      const nonStandardIds = (userIdsData || []).filter(item => !isStandardFormat(item.custom_id));
+      
+      // Get profiles for these users
+      const userIds = nonStandardIds.map(item => item.user_id);
+      
+      if (userIds.length > 0) {
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, role')
+          .in('id', userIds);
+
+        if (profilesError) throw profilesError;
+
+        // Combine data
+        const combined = nonStandardIds.map(item => {
+          const profile = (profilesData || []).find(p => p.id === item.user_id);
+          return {
+            ...item,
+            profile
+          };
+        });
+
+        setNonStandardUsers(combined);
+      } else {
+        setNonStandardUsers([]);
+      }
+    } catch (error: any) {
+      console.error('Erreur chargement utilisateurs non-standard:', error);
+      toast.error('Erreur lors du chargement des utilisateurs non-standard');
+    } finally {
+      setLoadingNonStandard(false);
     }
   };
 
@@ -398,12 +447,14 @@ export default function IdNormalizationAudit() {
     loadStats();
     loadLogs();
     loadAllUserIds();
+    loadNonStandardUsers();
   }, [loadStats, loadLogs]);
 
   const handleRefresh = () => {
     loadStats();
     loadLogs();
     loadAllUserIds();
+    loadNonStandardUsers();
     toast.success('Données actualisées');
   };
 
@@ -545,8 +596,12 @@ export default function IdNormalizationAudit() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="search" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="non-standard" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="non-standard" className="gap-2">
+            <AlertTriangle className="w-4 h-4" />
+            Non-Standard ({nonStandardUsers.length})
+          </TabsTrigger>
           <TabsTrigger value="search" className="gap-2">
             <Eye className="w-4 h-4" />
             Rechercher ID
@@ -560,6 +615,148 @@ export default function IdNormalizationAudit() {
             Analytiques
           </TabsTrigger>
         </TabsList>
+
+        {/* Non-Standard Users Tab */}
+        <TabsContent value="non-standard" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                Utilisateurs avec ID Non-Standard
+              </CardTitle>
+              <CardDescription>
+                Ces utilisateurs ont des IDs qui ne suivent pas le format standard (3 lettres + 4 chiffres)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingNonStandard ? (
+                <div className="flex items-center justify-center py-8">
+                  <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
+                  <span className="ml-2 text-muted-foreground">Chargement...</span>
+                </div>
+              ) : nonStandardUsers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <CheckCircle className="w-12 h-12 text-green-500 mb-4" />
+                  <h4 className="font-semibold text-green-700 dark:text-green-400">Parfait !</h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Tous les utilisateurs ont des IDs au format standard
+                  </p>
+                </div>
+              ) : (
+                <ScrollArea className="h-[500px]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-32">ID Actuel</TableHead>
+                        <TableHead>Problème</TableHead>
+                        <TableHead>Utilisateur</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Rôle</TableHead>
+                        <TableHead>Date création</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {nonStandardUsers.map((item) => {
+                        const prefix = item.custom_id?.substring(0, 3) || '';
+                        const isValidPrefix = VALID_PREFIXES.includes(prefix);
+                        const hasCorrectLength = item.custom_id?.length >= 7;
+                        
+                        let problem = '';
+                        if (!isValidPrefix && !hasCorrectLength) {
+                          problem = 'Préfixe invalide + longueur incorrecte';
+                        } else if (!isValidPrefix) {
+                          problem = `Préfixe "${prefix}" non reconnu`;
+                        } else if (!hasCorrectLength) {
+                          problem = 'Longueur incorrecte (< 7 caractères)';
+                        } else if (!ID_FORMAT_REGEX.test(item.custom_id)) {
+                          problem = 'Format incorrect';
+                        }
+                        
+                        return (
+                          <TableRow key={item.id} className="bg-yellow-500/5">
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <code className="font-mono font-bold text-yellow-700 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30 px-2 py-1 rounded">
+                                  {item.custom_id}
+                                </code>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => handleCopyId(item.custom_id)}
+                                >
+                                  {copiedId === item.custom_id ? (
+                                    <Check className="w-3 h-3 text-green-500" />
+                                  ) : (
+                                    <Copy className="w-3 h-3" />
+                                  )}
+                                </Button>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-yellow-600 border-yellow-600 text-xs">
+                                {problem}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {item.profile?.full_name || '-'}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground truncate max-w-32">
+                              {item.profile?.email || '-'}
+                            </TableCell>
+                            <TableCell>
+                              {item.profile?.role ? getRoleBadge(item.profile.role) : (
+                                <Badge variant="outline" className="text-gray-500">Non défini</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {format(new Date(item.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSearchId(item.custom_id);
+                                  }}
+                                >
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  Détails
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              )}
+              
+              {/* Summary */}
+              {nonStandardUsers.length > 0 && (
+                <div className="mt-4 pt-4 border-t">
+                  <div className="flex flex-wrap gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                      <span className="text-sm text-muted-foreground">
+                        {nonStandardUsers.length} utilisateur(s) avec ID non-standard
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Info className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        Format standard: VND0001, CLT0123, AGT0045, DRV0001, BUR0001, ADM0001, PDG0001
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Search Tab */}
         <TabsContent value="search" className="space-y-4">
