@@ -311,3 +311,6 @@ verify_jwt = false
 
 [functions.get-user-activity]
 verify_jwt = false
+
+[functions.wallet-audit]
+verify_jwt = false
