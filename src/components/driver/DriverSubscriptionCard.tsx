@@ -27,7 +27,7 @@ export function DriverSubscriptionCard() {
 
   const monthlyPrice = config?.price || 0;
   const yearlyPrice = config?.yearly_price || monthlyPrice * 12 * 0.95;
-  const discount = config?.yearly_discount_percentage || 5;
+  const discount = config?.yearly_discount_percentage || 15;
 
   const handleSubscribe = async () => {
     setProcessing(true);

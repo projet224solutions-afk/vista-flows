@@ -45,7 +45,7 @@ export function UnifiedSubscriptionCard({ userRole, compact = false }: UnifiedSu
 
   const selectedPlan = plans.find(p => p.id === selectedPlanId);
   const price = selectedPlan ? calculatePrice(selectedPlan, billingCycle) : 0;
-  const discount = selectedPlan?.yearly_discount_percentage || 5;
+  const discount = selectedPlan?.yearly_discount_percentage || 15;
 
   if (loading) {
     return (
