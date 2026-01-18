@@ -66,29 +66,35 @@ export default function PDGVendors() {
           .eq('user_id', vendor.user_id)
           .single();
 
-        // Récupérer l'abonnement actif
-        const { data: subscription } = await supabase
+        // Récupérer le MEILLEUR abonnement actif (par display_order DESC)
+        // Note: On ne peut pas order par plans.display_order directement, donc on récupère tous les actifs
+        const { data: subscriptions } = await supabase
           .from('subscriptions')
           .select(`
             status,
             current_period_end,
             billing_cycle,
-            plans!inner(display_name)
+            plans!inner(display_name, display_order)
           `)
           .eq('user_id', vendor.user_id)
           .eq('status', 'active')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
+          .gt('current_period_end', new Date().toISOString());
+
+        // Trier côté client pour prendre le meilleur plan (display_order le plus élevé)
+        const bestSubscription = subscriptions && subscriptions.length > 0
+          ? subscriptions.sort((a, b) => 
+              ((b.plans as any)?.display_order || 0) - ((a.plans as any)?.display_order || 0)
+            )[0]
+          : null;
 
         return {
           ...vendor,
           agent_info: agentLink?.agents_management?.name || null,
-          subscription: subscription ? {
-            plan_name: subscription.plans?.display_name || 'N/A',
-            status: subscription.status,
-            current_period_end: subscription.current_period_end,
-            billing_cycle: subscription.billing_cycle
+          subscription: bestSubscription ? {
+            plan_name: (bestSubscription.plans as any)?.display_name || 'N/A',
+            status: bestSubscription.status,
+            current_period_end: bestSubscription.current_period_end,
+            billing_cycle: bestSubscription.billing_cycle
           } : null
         };
       }));
