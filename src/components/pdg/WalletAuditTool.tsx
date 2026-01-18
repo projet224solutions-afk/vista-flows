@@ -812,14 +812,14 @@ export function WalletAuditTool() {
                                 <p className="text-xs text-muted-foreground">Actifs</p>
                               </div>
                               <div className="text-center p-2 bg-background rounded">
-                                <p className="text-xl font-bold text-gray-500">
+                                <p className="text-xl font-bold text-destructive">
                                   {userSubscriptions.stats?.expired || 0}
                                 </p>
                                 <p className="text-xs text-muted-foreground">Expirés</p>
                               </div>
                               <div className="text-center p-2 bg-background rounded">
-                                <p className="text-xl font-bold">
-                                  {userSubscriptions.payments?.length || 0}
+                                <p className="text-xl font-bold text-blue-600">
+                                  {userSubscriptions.stats?.paymentsCount || userSubscriptions.payments?.length || 0}
                                 </p>
                                 <p className="text-xs text-muted-foreground">Paiements</p>
                               </div>
@@ -867,10 +867,13 @@ export function WalletAuditTool() {
                                         <div className="flex items-center gap-1 text-muted-foreground">
                                           <Clock className="h-3 w-3" />
                                           <span>Expire:</span>
-                                          <span className={sub._end_date && new Date(sub._end_date) < new Date() ? 'text-destructive font-medium' : 'font-medium'}>
-                                            {sub._end_date || sub.current_period_end || sub.end_date || sub.expires_at 
-                                              ? format(new Date(sub._end_date || sub.current_period_end || sub.end_date || sub.expires_at), 'dd/MM/yyyy HH:mm')
-                                              : 'Non définie'
+                                          <span className={sub._is_expired ? 'text-destructive font-medium' : (sub._is_unlimited ? 'text-green-600 font-medium' : 'font-medium')}>
+                                            {sub._is_unlimited 
+                                              ? '∞ Illimité' 
+                                              : (sub._end_date 
+                                                  ? format(new Date(sub._end_date), 'dd/MM/yyyy HH:mm')
+                                                  : 'Non définie'
+                                                )
                                             }
                                           </span>
                                         </div>
