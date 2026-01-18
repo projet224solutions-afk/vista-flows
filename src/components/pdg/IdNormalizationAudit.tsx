@@ -426,10 +426,12 @@ export default function IdNormalizationAudit() {
 
       toast.success(`ID corrigé: ${originalId} → ${newId}`);
       
-      // Refresh the list
-      await loadNonStandardUsers();
-      await loadStats();
-      await loadAllUserIds();
+      // Force refresh the lists with a small delay to ensure DB is updated
+      setTimeout(async () => {
+        await loadNonStandardUsers();
+        await loadStats();
+        await loadAllUserIds();
+      }, 500);
 
     } catch (error: any) {
       console.error('Erreur correction ID:', error);
