@@ -29,6 +29,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
 import { IdReorganizationPanel } from './IdReorganizationPanel';
+import { UserActivitySearch } from './UserActivitySearch';
 
 interface NormalizationLog {
   id: string;
@@ -836,7 +837,7 @@ export default function IdNormalizationAudit() {
 
       {/* Tabs */}
       <Tabs defaultValue="non-standard" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="non-standard" className="gap-2">
             <AlertTriangle className="w-4 h-4" />
             Non-Standard ({nonStandardUsers.length})
@@ -845,12 +846,16 @@ export default function IdNormalizationAudit() {
             <Layers className="w-4 h-4" />
             Réorganiser
           </TabsTrigger>
-          <TabsTrigger value="search" className="gap-2">
+          <TabsTrigger value="activity" className="gap-2">
             <Eye className="w-4 h-4" />
+            Activité
+          </TabsTrigger>
+          <TabsTrigger value="search" className="gap-2">
+            <Search className="w-4 h-4" />
             Rechercher ID
           </TabsTrigger>
           <TabsTrigger value="logs" className="gap-2">
-            <Search className="w-4 h-4" />
+            <Hash className="w-4 h-4" />
             Logs
           </TabsTrigger>
           <TabsTrigger value="analytics" className="gap-2">
@@ -1037,6 +1042,11 @@ export default function IdNormalizationAudit() {
         {/* Reorganization Tab */}
         <TabsContent value="reorganize" className="space-y-4">
           <IdReorganizationPanel />
+        </TabsContent>
+
+        {/* User Activity Tab */}
+        <TabsContent value="activity" className="space-y-4">
+          <UserActivitySearch />
         </TabsContent>
 
         {/* Search Tab */}
