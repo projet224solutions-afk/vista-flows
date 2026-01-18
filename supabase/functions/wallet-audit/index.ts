@@ -1726,59 +1726,107 @@ async function getUserSubscriptions(client: any, customId?: string, userId?: str
     return { success: false, error: 'Utilisateur non trouvé' }
   }
 
-  // Récupérer les abonnements service
-  const { data: serviceSubscriptions } = await client
-    .from('service_subscriptions')
-    .select(`
-      *,
-      service_plans (*)
-    `)
+  console.log('Fetching subscriptions for user:', targetUserId)
+
+  // 1. Table principale: subscriptions
+  const { data: mainSubscriptions, error: mainError } = await client
+    .from('subscriptions')
+    .select('*')
     .eq('user_id', targetUserId)
     .order('created_at', { ascending: false })
+  
+  if (mainError) console.log('Error fetching subscriptions:', mainError.message)
 
-  // Récupérer les abonnements vendeur
-  const { data: vendorSubscriptions } = await client
-    .from('vendor_subscriptions')
+  // 2. service_subscriptions (abonnements aux services professionnels)
+  const { data: serviceSubscriptions, error: serviceError } = await client
+    .from('service_subscriptions')
+    .select('*')
+    .eq('user_id', targetUserId)
+    .order('created_at', { ascending: false })
+  
+  if (serviceError) console.log('Error fetching service_subscriptions:', serviceError.message)
+
+  // 3. driver_subscriptions (abonnements chauffeurs)
+  const { data: driverSubscriptions, error: driverError } = await client
+    .from('driver_subscriptions')
+    .select('*')
+    .eq('user_id', targetUserId)
+    .order('created_at', { ascending: false })
+  
+  if (driverError) console.log('Error fetching driver_subscriptions:', driverError.message)
+
+  // 4. payment_subscriptions (abonnements vendeurs)
+  const { data: paymentSubscriptions, error: paymentError } = await client
+    .from('payment_subscriptions')
     .select('*')
     .eq('vendor_id', targetUserId)
     .order('created_at', { ascending: false })
+  
+  if (paymentError) console.log('Error fetching payment_subscriptions:', paymentError.message)
 
-  // Récupérer les abonnements unifiés
-  const { data: unifiedSubscriptions } = await client
-    .from('unified_subscriptions')
-    .select(`
-      *,
-      subscription_plans (*)
-    `)
-    .eq('user_id', targetUserId)
-    .order('created_at', { ascending: false })
-
-  // Récupérer les paiements d'abonnement
-  const { data: subscriptionPayments } = await client
-    .from('subscription_payments')
+  // 5. service_subscription_payments (historique des paiements)
+  const { data: subscriptionPayments, error: paymentsError } = await client
+    .from('service_subscription_payments')
     .select('*')
     .eq('user_id', targetUserId)
     .order('created_at', { ascending: false })
     .limit(20)
+  
+  if (paymentsError) console.log('Error fetching service_subscription_payments:', paymentsError.message)
 
+  // Normaliser tous les abonnements avec un format cohérent
   const allSubscriptions = [
-    ...(serviceSubscriptions || []).map((s: any) => ({ ...s, _type: 'service' })),
-    ...(vendorSubscriptions || []).map((s: any) => ({ ...s, _type: 'vendor' })),
-    ...(unifiedSubscriptions || []).map((s: any) => ({ ...s, _type: 'unified' }))
+    ...(mainSubscriptions || []).map((s: any) => ({ 
+      ...s, 
+      _type: 'subscription',
+      _status: s.status,
+      _end_date: s.current_period_end
+    })),
+    ...(serviceSubscriptions || []).map((s: any) => ({ 
+      ...s, 
+      _type: 'service',
+      _status: s.status,
+      _end_date: s.current_period_end
+    })),
+    ...(driverSubscriptions || []).map((s: any) => ({ 
+      ...s, 
+      _type: 'driver',
+      _status: s.status,
+      _end_date: s.end_date
+    })),
+    ...(paymentSubscriptions || []).map((s: any) => ({ 
+      ...s, 
+      _type: 'vendor',
+      _status: s.is_active ? 'active' : 'inactive',
+      _end_date: s.expires_at
+    }))
   ]
 
+  console.log('Found subscriptions:', {
+    main: mainSubscriptions?.length || 0,
+    service: serviceSubscriptions?.length || 0,
+    driver: driverSubscriptions?.length || 0,
+    payment: paymentSubscriptions?.length || 0,
+    total: allSubscriptions.length
+  })
+
   // Compter les abonnements actifs
-  const activeCount = allSubscriptions.filter((s: any) => 
-    s.status === 'active' && new Date(s.end_date || s.expires_at) > new Date()
-  ).length
+  const now = new Date()
+  const activeCount = allSubscriptions.filter((s: any) => {
+    const isActiveStatus = s._status === 'active' || s.is_active === true
+    const endDate = s._end_date ? new Date(s._end_date) : null
+    const notExpired = !endDate || endDate > now
+    return isActiveStatus && notExpired
+  }).length
 
   return {
     success: true,
     userId: targetUserId,
     subscriptions: {
+      main: mainSubscriptions || [],
       service: serviceSubscriptions || [],
-      vendor: vendorSubscriptions || [],
-      unified: unifiedSubscriptions || [],
+      driver: driverSubscriptions || [],
+      vendor: paymentSubscriptions || [],
       all: allSubscriptions
     },
     payments: subscriptionPayments || [],
@@ -1819,51 +1867,88 @@ async function cancelUserSubscription(
     return { success: false, error: 'ID d\'abonnement requis' }
   }
 
+  console.log('Cancelling subscription:', subscriptionId, 'for user:', targetUserId)
+
   // Essayer de trouver l'abonnement dans les différentes tables
   let subscription = null
   let subscriptionType = ''
   let tableName = ''
+  let statusField = 'status'
+  let updateData: any = {}
 
-  // Vérifier service_subscriptions
-  const { data: serviceSub } = await client
-    .from('service_subscriptions')
+  // 1. Vérifier subscriptions (table principale)
+  const { data: mainSub } = await client
+    .from('subscriptions')
     .select('*')
     .eq('id', subscriptionId)
     .maybeSingle()
   
-  if (serviceSub) {
-    subscription = serviceSub
-    subscriptionType = 'service'
-    tableName = 'service_subscriptions'
-  }
-
-  // Vérifier vendor_subscriptions
-  if (!subscription) {
-    const { data: vendorSub } = await client
-      .from('vendor_subscriptions')
-      .select('*')
-      .eq('id', subscriptionId)
-      .maybeSingle()
-    
-    if (vendorSub) {
-      subscription = vendorSub
-      subscriptionType = 'vendor'
-      tableName = 'vendor_subscriptions'
+  if (mainSub) {
+    subscription = mainSub
+    subscriptionType = 'subscription'
+    tableName = 'subscriptions'
+    updateData = {
+      status: 'cancelled',
+      updated_at: new Date().toISOString()
     }
   }
 
-  // Vérifier unified_subscriptions
+  // 2. Vérifier service_subscriptions
   if (!subscription) {
-    const { data: unifiedSub } = await client
-      .from('unified_subscriptions')
+    const { data: serviceSub } = await client
+      .from('service_subscriptions')
       .select('*')
       .eq('id', subscriptionId)
       .maybeSingle()
     
-    if (unifiedSub) {
-      subscription = unifiedSub
-      subscriptionType = 'unified'
-      tableName = 'unified_subscriptions'
+    if (serviceSub) {
+      subscription = serviceSub
+      subscriptionType = 'service'
+      tableName = 'service_subscriptions'
+      updateData = {
+        status: 'cancelled',
+        cancelled_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+    }
+  }
+
+  // 3. Vérifier driver_subscriptions
+  if (!subscription) {
+    const { data: driverSub } = await client
+      .from('driver_subscriptions')
+      .select('*')
+      .eq('id', subscriptionId)
+      .maybeSingle()
+    
+    if (driverSub) {
+      subscription = driverSub
+      subscriptionType = 'driver'
+      tableName = 'driver_subscriptions'
+      updateData = {
+        status: 'cancelled',
+        updated_at: new Date().toISOString()
+      }
+    }
+  }
+
+  // 4. Vérifier payment_subscriptions (abonnements vendeurs)
+  if (!subscription) {
+    const { data: paymentSub } = await client
+      .from('payment_subscriptions')
+      .select('*')
+      .eq('id', subscriptionId)
+      .maybeSingle()
+    
+    if (paymentSub) {
+      subscription = paymentSub
+      subscriptionType = 'vendor'
+      tableName = 'payment_subscriptions'
+      statusField = 'is_active'
+      updateData = {
+        is_active: false,
+        auto_renew: false
+      }
     }
   }
 
@@ -1877,61 +1962,69 @@ async function cancelUserSubscription(
     return { success: false, error: 'L\'abonnement n\'appartient pas à cet utilisateur' }
   }
 
-  const previousStatus = subscription.status
-  const previousEndDate = subscription.end_date || subscription.expires_at
+  const previousStatus = subscription.status || (subscription.is_active ? 'active' : 'inactive')
+  const previousEndDate = subscription.current_period_end || subscription.end_date || subscription.expires_at
 
   // Annuler l'abonnement
   const { error: updateError } = await client
     .from(tableName)
-    .update({
-      status: 'cancelled',
-      cancelled_at: new Date().toISOString(),
-      cancellation_reason: reason || 'Annulé par administrateur',
-      updated_at: new Date().toISOString()
-    })
+    .update(updateData)
     .eq('id', subscriptionId)
 
   if (updateError) {
+    console.error('Error cancelling subscription:', updateError)
     return { success: false, error: 'Erreur lors de l\'annulation', details: updateError.message }
   }
 
   // Créer une alerte de sécurité
-  await client.from('security_alerts').insert({
-    alert_type: 'subscription_cancelled',
-    severity: 'medium',
-    title: `Abonnement annulé: ${customIdResolved || targetUserId}`,
-    description: reason || 'Annulation par administrateur',
-    user_id: targetUserId,
-    status: 'resolved',
-    metadata: {
-      subscription_id: subscriptionId,
-      subscription_type: subscriptionType,
-      previous_status: previousStatus,
-      previous_end_date: previousEndDate,
-      cancelled_by: adminId,
-      reason
-    }
-  })
+  try {
+    await client.from('security_alerts').insert({
+      alert_type: 'subscription_cancelled',
+      severity: 'medium',
+      title: `Abonnement annulé: ${customIdResolved || targetUserId}`,
+      description: reason || 'Annulation par administrateur',
+      user_id: targetUserId,
+      status: 'resolved',
+      metadata: {
+        subscription_id: subscriptionId,
+        subscription_type: subscriptionType,
+        previous_status: previousStatus,
+        previous_end_date: previousEndDate,
+        cancelled_by: adminId,
+        reason
+      }
+    })
+  } catch (e) {
+    console.log('Could not create security alert:', e)
+  }
 
   // Log l'action
-  await client.from('admin_action_logs').insert({
-    admin_id: adminId,
-    action_type: 'subscription_cancel',
-    target_type: 'subscription',
-    target_id: subscriptionId,
-    old_value: { status: previousStatus, end_date: previousEndDate },
-    new_value: { status: 'cancelled', reason },
-    reason
-  })
+  try {
+    await client.from('admin_action_logs').insert({
+      admin_id: adminId,
+      action_type: 'subscription_cancel',
+      target_type: 'subscription',
+      target_id: subscriptionId,
+      old_value: { status: previousStatus, end_date: previousEndDate },
+      new_value: { status: 'cancelled', reason },
+      reason
+    })
+  } catch (e) {
+    console.log('Could not log admin action:', e)
+  }
 
   // Notifier l'utilisateur
-  await client.from('notifications').insert({
-    user_id: targetUserId,
-    type: 'warning',
-    title: 'Abonnement Annulé',
-    message: `Votre abonnement ${subscriptionType} a été annulé. ${reason ? `Raison: ${reason}` : 'Contactez le support pour plus d\'informations.'}`,
-    is_read: false
-  })
+  try {
+    await client.from('notifications').insert({
+      user_id: targetUserId,
+      type: 'warning',
+      title: 'Abonnement Annulé',
+      message: `Votre abonnement ${subscriptionType} a été annulé. ${reason ? `Raison: ${reason}` : 'Contactez le support pour plus d\'informations.'}`,
+      is_read: false
+    })
+  } catch (e) {
+    console.log('Could not send notification:', e)
+  }
 
   return { 
     success: true, 
