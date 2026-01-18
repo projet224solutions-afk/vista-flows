@@ -33,7 +33,6 @@ export const useEnhancedTransactions = () => {
         .from('enhanced_transactions' as any)
         .select('*')
         .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-        .neq('is_archived', true)
         .order('created_at', { ascending: false })
         .limit(50) as any);
 
@@ -176,8 +175,7 @@ export const useEnhancedTransactions = () => {
       let query = supabase
         .from('enhanced_transactions' as any)
         .select('*')
-        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-        .neq('is_archived', true);
+        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`);
 
       // Recherche par custom_id
       if (searchQuery.trim()) {
