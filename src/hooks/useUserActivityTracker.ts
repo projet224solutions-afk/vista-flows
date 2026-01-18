@@ -291,39 +291,49 @@ export function useUserActivityTracker() {
         .order('created_at', { ascending: false })
         .limit(50);
 
-      // 9. Récupérer les livraisons
-      const { data: deliveriesAsCustomer } = await supabase
+      // 9. Récupérer les livraisons (client_id dans deliveries)
+      const { data: deliveriesAsClient } = await supabase
         .from('deliveries')
-        .select('id, status, pickup_address, delivery_address, price, created_at, customer_id, driver_id')
-        .eq('customer_id', userId)
+        .select('id, status, pickup_address, delivery_address, price, created_at')
+        .eq('client_id', userId)
         .order('created_at', { ascending: false })
         .limit(25);
 
       const { data: deliveriesAsDriver } = await supabase
         .from('deliveries')
-        .select('*')
+        .select('id, status, pickup_address, delivery_address, price, created_at')
         .eq('driver_id', userId)
         .order('created_at', { ascending: false })
         .limit(25);
 
-      const deliveries = [...(deliveriesAsCustomer || []), ...(deliveriesAsDriver || [])];
+      // Combiner et typer les résultats
+      type DeliveryRow = { id: string; status: string; pickup_address: any; delivery_address: any; price: number; created_at: string };
+      const deliveries: DeliveryRow[] = [
+        ...((deliveriesAsClient || []) as DeliveryRow[]), 
+        ...((deliveriesAsDriver || []) as DeliveryRow[])
+      ];
 
       // 10. Récupérer les courses (rides)
       const { data: ridesAsCustomer } = await supabase
         .from('rides')
-        .select('*')
+        .select('id, status, pickup_address, destination_address, actual_fare, estimated_fare, created_at')
         .eq('customer_id', userId)
         .order('created_at', { ascending: false })
         .limit(25);
 
       const { data: ridesAsDriver } = await supabase
         .from('rides')
-        .select('*')
+        .select('id, status, pickup_address, destination_address, actual_fare, estimated_fare, created_at')
         .eq('driver_id', userId)
         .order('created_at', { ascending: false })
         .limit(25);
 
-      const rides = [...(ridesAsCustomer || []), ...(ridesAsDriver || [])];
+      // Combiner et typer les résultats
+      type RideRow = { id: string; status: string; pickup_address: any; destination_address: any; actual_fare: number; estimated_fare: number; created_at: string };
+      const rides: RideRow[] = [
+        ...((ridesAsCustomer || []) as RideRow[]), 
+        ...((ridesAsDriver || []) as RideRow[])
+      ];
 
       // 11. Récupérer les avis
       const { data: reviews } = await supabase
