@@ -148,9 +148,9 @@ export function UniversalMarketplaceCard({
       </div>
 
       <CardContent className="p-4">
-        {/* Catégorie */}
+        {/* Type de produit */}
         <p className="text-xs text-muted-foreground mb-1">
-          {item.category_name}
+          Type de produit: {item.category_name}
         </p>
 
         {/* Nom */}
