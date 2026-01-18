@@ -18,8 +18,9 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
   RefreshCw, Search, AlertTriangle, CheckCircle, 
   TrendingUp, Calendar, Shield, Hash, ChevronLeft, ChevronRight,
-  Eye, XCircle, Info, Copy, Check
+  Eye, XCircle, Info, Copy, Check, Wand2, Loader2
 } from 'lucide-react';
+import { generateUniqueId, type RoleType } from '@/lib/autoIdGenerator';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -128,6 +129,8 @@ export default function IdNormalizationAudit() {
   const [allUserIds, setAllUserIds] = useState<any[]>([]);
   const [nonStandardUsers, setNonStandardUsers] = useState<any[]>([]);
   const [loadingNonStandard, setLoadingNonStandard] = useState(false);
+  const [correctingId, setCorrectingId] = useState<string | null>(null);
+  const [correctingAll, setCorrectingAll] = useState(false);
 
   // Validate ID format for search (more permissive)
   const validateSearchId = (id: string): { valid: boolean; error?: string; isStandard?: boolean } => {
@@ -337,6 +340,171 @@ export default function IdNormalizationAudit() {
     setCopiedId(id);
     toast.success(`ID copié: ${id}`);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  // Map profile role to RoleType for ID generation
+  const mapRoleToRoleType = (role: string | undefined): RoleType | null => {
+    if (!role) return null;
+    const mapping: Record<string, RoleType> = {
+      'vendor': 'vendor',
+      'client': 'client',
+      'agent': 'agent',
+      'driver': 'driver',
+      'bureau': 'bureau',
+      'pdg': 'pdg',
+      'transitaire': 'transitaire',
+      'worker': 'worker',
+      'admin': 'pdg', // Fallback admin to pdg
+    };
+    return mapping[role.toLowerCase()] || null;
+  };
+
+  // Correct a single non-standard ID
+  const handleCorrectId = async (item: any) => {
+    const role = item.profile?.role;
+    const roleType = mapRoleToRoleType(role);
+
+    if (!roleType) {
+      toast.error(`Impossible de corriger: rôle "${role}" non reconnu`);
+      return;
+    }
+
+    setCorrectingId(item.id);
+
+    try {
+      // Generate new unique ID
+      const newId = await generateUniqueId(roleType);
+      const originalId = item.custom_id;
+
+      console.log(`🔄 Correction ID: ${originalId} → ${newId} (${roleType})`);
+
+      // Update user_ids table
+      const { error: updateError } = await supabase
+        .from('user_ids')
+        .update({ custom_id: newId })
+        .eq('id', item.id);
+
+      if (updateError) throw updateError;
+
+      // Log the normalization
+      const { error: logError } = await supabase
+        .from('id_normalization_logs')
+        .insert({
+          user_id: item.user_id,
+          role_type: roleType,
+          original_id: originalId,
+          corrected_id: newId,
+          reason: 'format_invalid',
+          reason_details: {
+            original_format: originalId,
+            corrected_format: newId,
+            correction_type: 'manual_pdg_correction',
+            timestamp: new Date().toISOString()
+          },
+          metadata: {
+            corrected_by: 'pdg_audit_interface',
+            profile_email: item.profile?.email,
+            profile_name: item.profile?.full_name
+          }
+        });
+
+      if (logError) {
+        console.error('Erreur log normalisation:', logError);
+        // Don't throw - the main correction succeeded
+      }
+
+      toast.success(`ID corrigé: ${originalId} → ${newId}`);
+      
+      // Refresh the list
+      await loadNonStandardUsers();
+      await loadStats();
+      await loadAllUserIds();
+
+    } catch (error: any) {
+      console.error('Erreur correction ID:', error);
+      toast.error(`Erreur lors de la correction: ${error.message}`);
+    } finally {
+      setCorrectingId(null);
+    }
+  };
+
+  // Correct all non-standard IDs
+  const handleCorrectAllIds = async () => {
+    if (nonStandardUsers.length === 0) {
+      toast.info('Aucun ID à corriger');
+      return;
+    }
+
+    const toCorrect = nonStandardUsers.filter(item => {
+      const roleType = mapRoleToRoleType(item.profile?.role);
+      return roleType !== null;
+    });
+
+    if (toCorrect.length === 0) {
+      toast.error('Aucun ID ne peut être corrigé (rôles non reconnus)');
+      return;
+    }
+
+    setCorrectingAll(true);
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const item of toCorrect) {
+      try {
+        const roleType = mapRoleToRoleType(item.profile?.role)!;
+        const newId = await generateUniqueId(roleType);
+        const originalId = item.custom_id;
+
+        // Update user_ids table
+        const { error: updateError } = await supabase
+          .from('user_ids')
+          .update({ custom_id: newId })
+          .eq('id', item.id);
+
+        if (updateError) throw updateError;
+
+        // Log the normalization
+        await supabase
+          .from('id_normalization_logs')
+          .insert({
+            user_id: item.user_id,
+            role_type: roleType,
+            original_id: originalId,
+            corrected_id: newId,
+            reason: 'format_invalid',
+            reason_details: {
+              original_format: originalId,
+              corrected_format: newId,
+              correction_type: 'bulk_pdg_correction',
+              timestamp: new Date().toISOString()
+            },
+            metadata: {
+              corrected_by: 'pdg_audit_interface',
+              profile_email: item.profile?.email,
+              profile_name: item.profile?.full_name
+            }
+          });
+
+        successCount++;
+      } catch (error) {
+        console.error(`Erreur correction ${item.custom_id}:`, error);
+        errorCount++;
+      }
+    }
+
+    setCorrectingAll(false);
+
+    if (successCount > 0) {
+      toast.success(`${successCount} ID(s) corrigé(s) avec succès`);
+    }
+    if (errorCount > 0) {
+      toast.error(`${errorCount} erreur(s) lors de la correction`);
+    }
+
+    // Refresh all data
+    await loadNonStandardUsers();
+    await loadStats();
+    await loadAllUserIds();
   };
 
   const loadStats = useCallback(async () => {
@@ -620,13 +788,31 @@ export default function IdNormalizationAudit() {
         <TabsContent value="non-standard" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-yellow-500" />
-                Utilisateurs avec ID Non-Standard
-              </CardTitle>
-              <CardDescription>
-                Ces utilisateurs ont des IDs qui ne suivent pas le format standard (3 lettres + 4 chiffres)
-              </CardDescription>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                    Utilisateurs avec ID Non-Standard
+                  </CardTitle>
+                  <CardDescription>
+                    Ces utilisateurs ont des IDs qui ne suivent pas le format standard (3 lettres + 4 chiffres)
+                  </CardDescription>
+                </div>
+                {nonStandardUsers.length > 0 && (
+                  <Button
+                    onClick={handleCorrectAllIds}
+                    disabled={correctingAll}
+                    className="gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
+                  >
+                    {correctingAll ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Wand2 className="w-4 h-4" />
+                    )}
+                    {correctingAll ? 'Correction en cours...' : `Corriger tout (${nonStandardUsers.length})`}
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {loadingNonStandard ? (
@@ -715,6 +901,21 @@ export default function IdNormalizationAudit() {
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleCorrectId(item)}
+                                  disabled={correctingId === item.id || !item.profile?.role}
+                                  className="gap-1 text-xs border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700"
+                                  title={!item.profile?.role ? 'Rôle non défini - impossible de corriger' : 'Corriger cet ID'}
+                                >
+                                  {correctingId === item.id ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <Wand2 className="w-3 h-3" />
+                                  )}
+                                  Corriger
+                                </Button>
                                 <Button
                                   variant="ghost"
                                   size="sm"
