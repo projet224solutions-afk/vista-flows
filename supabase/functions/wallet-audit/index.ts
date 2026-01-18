@@ -1832,50 +1832,110 @@ async function getUserSubscriptions(client: any, customId?: string, userId?: str
   
   if (paymentError) console.log('Error fetching payment_subscriptions:', paymentError.message)
 
-  // 5. service_subscription_payments (historique des paiements)
-  const { data: subscriptionPayments, error: paymentsError } = await client
+  // 5. Historique des paiements (chercher dans plusieurs tables)
+  const { data: subscriptionPayments } = await client
     .from('service_subscription_payments')
     .select('*')
     .eq('user_id', targetUserId)
     .order('created_at', { ascending: false })
     .limit(20)
-  
-  if (paymentsError) console.log('Error fetching service_subscription_payments:', paymentsError.message)
+
+  // Chercher aussi dans wallet_transactions pour les paiements d'abonnements
+  const { data: walletPayments } = await client
+    .from('wallet_transactions')
+    .select('*')
+    .eq('user_id', targetUserId)
+    .ilike('description', '%abonnement%')
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  // Chercher dans transactions avec type subscription
+  const { data: generalPayments } = await client
+    .from('transactions')
+    .select('*')
+    .eq('user_id', targetUserId)
+    .eq('transaction_type', 'subscription')
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  // Combiner tous les paiements
+  const allPayments = [
+    ...(subscriptionPayments || []).map((p: any) => ({ ...p, _source: 'service_subscription_payments' })),
+    ...(walletPayments || []).map((p: any) => ({ ...p, _source: 'wallet_transactions' })),
+    ...(generalPayments || []).map((p: any) => ({ ...p, _source: 'transactions' }))
+  ]
+
+  console.log('Found payments:', allPayments.length)
 
   // Normaliser tous les abonnements avec un format cohérent
+  const now = new Date()
+  
   const allSubscriptions = [
-    ...(mainSubscriptions || []).map((s: any) => ({ 
-      ...s, 
-      _type: 'subscription',
-      _status: s.status,
-      _end_date: s.current_period_end,
-      _plan_name: s.plans?.display_name || s.plans?.name || 'Plan Standard',
-      _payment_method: s.payment_method || 'Non défini'
-    })),
-    ...(serviceSubscriptions || []).map((s: any) => ({ 
-      ...s, 
-      _type: 'service',
-      _status: s.status,
-      _end_date: s.current_period_end,
-      _plan_name: s.service_plans?.name || 'Service Pro',
-      _payment_method: s.payment_method || 'Non défini'
-    })),
-    ...(driverSubscriptions || []).map((s: any) => ({ 
-      ...s, 
-      _type: 'driver',
-      _status: s.status,
-      _end_date: s.end_date,
-      _plan_name: 'Abonnement Chauffeur',
-      _payment_method: s.payment_method || 'wallet'
-    })),
-    ...(paymentSubscriptions || []).map((s: any) => ({ 
-      ...s, 
-      _type: 'vendor',
-      _status: s.is_active ? 'active' : 'inactive',
-      _end_date: s.expires_at,
-      _plan_name: s.subscription_plans?.name || 'Plan Vendeur',
-      _payment_method: s.payment_method || 'Non défini'
-    }))
+    ...(mainSubscriptions || []).map((s: any) => {
+      const endDate = s.current_period_end ? new Date(s.current_period_end) : null
+      const isReallyExpired = endDate && endDate < now
+      const isFreeUnlimited = s.payment_method === 'free' && endDate && endDate.getFullYear() > 2100
+      
+      return { 
+        ...s, 
+        _type: 'subscription',
+        _status: isReallyExpired && s.status === 'active' ? 'expired' : s.status,
+        _end_date: s.current_period_end,
+        _end_date_formatted: endDate ? (isFreeUnlimited ? 'Illimité' : endDate.toISOString()) : null,
+        _is_unlimited: isFreeUnlimited,
+        _plan_name: s.plans?.display_name || s.plans?.name || 'Plan Standard',
+        _payment_method: s.payment_method || 'Non défini',
+        _is_expired: isReallyExpired && !isFreeUnlimited
+      }
+    }),
+    ...(serviceSubscriptions || []).map((s: any) => {
+      const endDate = s.current_period_end ? new Date(s.current_period_end) : null
+      const isReallyExpired = endDate && endDate < now
+      
+      return { 
+        ...s, 
+        _type: 'service',
+        _status: isReallyExpired && s.status === 'active' ? 'expired' : s.status,
+        _end_date: s.current_period_end,
+        _end_date_formatted: endDate ? endDate.toISOString() : null,
+        _is_unlimited: false,
+        _plan_name: s.service_plans?.name || 'Service Pro',
+        _payment_method: s.payment_method || 'Non défini',
+        _is_expired: isReallyExpired
+      }
+    }),
+    ...(driverSubscriptions || []).map((s: any) => {
+      const endDate = s.end_date ? new Date(s.end_date) : null
+      const isReallyExpired = endDate && endDate < now
+      
+      return { 
+        ...s, 
+        _type: 'driver',
+        _status: isReallyExpired && s.status === 'active' ? 'expired' : s.status,
+        _end_date: s.end_date,
+        _end_date_formatted: endDate ? endDate.toISOString() : null,
+        _is_unlimited: false,
+        _plan_name: 'Abonnement Chauffeur',
+        _payment_method: s.payment_method || 'wallet',
+        _is_expired: isReallyExpired
+      }
+    }),
+    ...(paymentSubscriptions || []).map((s: any) => {
+      const endDate = s.expires_at ? new Date(s.expires_at) : null
+      const isReallyExpired = endDate && endDate < now
+      
+      return { 
+        ...s, 
+        _type: 'vendor',
+        _status: isReallyExpired ? 'expired' : (s.is_active ? 'active' : 'inactive'),
+        _end_date: s.expires_at,
+        _end_date_formatted: endDate ? endDate.toISOString() : null,
+        _is_unlimited: false,
+        _plan_name: s.subscription_plans?.name || 'Plan Vendeur',
+        _payment_method: s.payment_method || 'Non défini',
+        _is_expired: isReallyExpired
+      }
+    })
   ]
 
   console.log('Found subscriptions:', {
@@ -1886,14 +1946,17 @@ async function getUserSubscriptions(client: any, customId?: string, userId?: str
     total: allSubscriptions.length
   })
 
-  // Compter les abonnements actifs
-  const now = new Date()
+  // Compter les vrais abonnements actifs (non expirés)
   const activeCount = allSubscriptions.filter((s: any) => {
-    const isActiveStatus = s._status === 'active' || s.is_active === true
-    const endDate = s._end_date ? new Date(s._end_date) : null
-    const notExpired = !endDate || endDate > now
-    return isActiveStatus && notExpired
+    return (s._status === 'active' || s.is_active === true) && !s._is_expired
   }).length
+
+  const expiredCount = allSubscriptions.filter((s: any) => {
+    return s._is_expired || s._status === 'expired' || s._status === 'cancelled'
+  }).length
+
+  // Compter les paiements
+  const paymentsCount = allPayments.length
 
   return {
     success: true,
@@ -1905,11 +1968,12 @@ async function getUserSubscriptions(client: any, customId?: string, userId?: str
       vendor: paymentSubscriptions || [],
       all: allSubscriptions
     },
-    payments: subscriptionPayments || [],
+    payments: allPayments,
     stats: {
       total: allSubscriptions.length,
       active: activeCount,
-      expired: allSubscriptions.length - activeCount
+      expired: expiredCount,
+      paymentsCount: paymentsCount
     }
   }
 }
