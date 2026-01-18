@@ -356,14 +356,14 @@ export default function Profil() {
       </header>
 
       {/* Profile Info */}
-      <section className="px-4 py-6">
+      <section className="px-3 sm:px-4 py-4 sm:py-6">
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="relative" onClick={onAvatarClick}>
-                <Avatar className="w-20 h-20">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="relative shrink-0" onClick={onAvatarClick}>
+                <Avatar className="w-16 h-16 sm:w-20 sm:h-20">
                   <AvatarImage src={profile?.avatar_url || ""} />
-                  <AvatarFallback className="text-xl">
+                  <AvatarFallback className="text-lg sm:text-xl">
                     {profile?.first_name?.[0] || user.email?.[0]?.toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -371,33 +371,33 @@ export default function Profil() {
                   <Button
                     size="icon"
                     variant="secondary"
-                    className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full"
+                    className="absolute -bottom-2 -right-2 h-7 w-7 sm:h-8 sm:w-8 rounded-full"
                   >
-                    <Camera className="w-4 h-4" />
+                    <Camera className="w-3 h-3 sm:w-4 sm:h-4" />
                   </Button>
                 )}
               </div>
               
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <h2 className="text-xl font-bold">
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-2">
+                  <h2 className="text-lg sm:text-xl font-bold truncate">
                     {profile?.first_name && profile?.last_name 
                       ? `${profile.first_name} ${profile.last_name}`
                       : user.email
                     }
                   </h2>
-                  <Badge className={`${userTypeInfo.color} text-white text-xs`}>
+                  <Badge className={`${userTypeInfo.color} text-white text-xs w-fit shrink-0`}>
                     {userTypeInfo.label}
                   </Badge>
                 </div>
                 
-                <p className="text-muted-foreground mb-2">{user.email}</p>
+                <p className="text-sm sm:text-base text-muted-foreground mb-1 sm:mb-2 break-all">{user.email}</p>
                 
                 {profile?.phone && (
-                  <p className="text-sm text-muted-foreground mb-2">{profile.phone}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">{profile.phone}</p>
                 )}
                 
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {userTypeInfo.description}
                 </p>
               </div>
@@ -406,14 +406,15 @@ export default function Profil() {
         </Card>
         
         {/* User ID Card */}
-        <Card className="mt-4">
-          <CardContent className="p-4">
+        <Card className="mt-3 sm:mt-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-muted-foreground">Votre ID utilisateur</label>
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-xs sm:text-sm font-medium text-muted-foreground">Votre ID utilisateur</label>
                 <Button
                   size="sm"
                   variant="outline"
+                  className="shrink-0 h-8 text-xs sm:text-sm"
                   onClick={() => {
                     navigator.clipboard.writeText(user.id);
                     toast.success("ID copié dans le presse-papiers");
@@ -422,10 +423,10 @@ export default function Profil() {
                   Copier
                 </Button>
               </div>
-              <div className="p-3 bg-muted rounded-md font-mono text-xs break-all">
+              <div className="p-2 sm:p-3 bg-muted rounded-md font-mono text-[10px] sm:text-xs break-all leading-relaxed">
                 {user.id}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
                 💡 Partagez cet ID pour permettre à d'autres utilisateurs de vous contacter directement
               </p>
             </div>
