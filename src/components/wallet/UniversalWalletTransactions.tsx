@@ -1137,60 +1137,61 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
   return (
     <>
-    <Card className="shadow-elegant">
-      <CardHeader>
+    <Card className="shadow-elegant border-0 sm:border">
+      <CardHeader className="px-3 py-3 sm:px-6 sm:py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-client-gradient flex items-center justify-center">
-              <Wallet className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-client-gradient flex items-center justify-center shrink-0">
+              <Wallet className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
             </div>
-            <div>
-              <CardTitle>Mon Wallet</CardTitle>
-              <CardDescription>Gérez vos transactions</CardDescription>
+            <div className="min-w-0">
+              <CardTitle className="text-base sm:text-lg truncate">Historique Wallet</CardTitle>
+              <CardDescription className="text-xs sm:text-sm truncate">Gérez vos transactions</CardDescription>
             </div>
           </div>
           <Button
             size="sm"
             variant="ghost"
             onClick={() => Promise.all([loadWalletData(), loadTransactions()])}
+            className="shrink-0 h-8 w-8 sm:h-9 sm:w-9 p-0"
           >
             <RefreshCw className="w-4 h-4" />
           </Button>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-6">
-        {/* Solde */}
-        <div className="bg-client-gradient rounded-lg p-6 text-white">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm opacity-90">Solde disponible</p>
+      <CardContent className="space-y-4 sm:space-y-6 px-3 sm:px-6">
+        {/* Solde - optimisé mobile */}
+        <div className="bg-client-gradient rounded-lg p-4 sm:p-6 text-white">
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <p className="text-xs sm:text-sm opacity-90">Solde actuel</p>
             {isAgent && agentInfo ? (
-              <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+              <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-[10px] sm:text-xs px-1.5 sm:px-2">
                 {agentInfo.agent_code}
               </Badge>
             ) : userCustomId ? (
-              <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+              <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-[10px] sm:text-xs px-1.5 sm:px-2">
                 {userCustomId}
               </Badge>
             ) : profile?.role ? (
-              <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+              <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-[10px] sm:text-xs px-1.5 sm:px-2">
                 {profile.role}
               </Badge>
             ) : null}
           </div>
-          <p className="text-3xl font-bold">
+          <p className="text-2xl sm:text-3xl font-bold">
             {wallet ? formatPrice(wallet.balance) : 'Chargement...'}
           </p>
         </div>
 
-        {/* Boutons d'actions */}
-        <div className="grid grid-cols-3 gap-3">
+        {/* Boutons d'actions - optimisés mobile */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
           {/* Dépôt */}
           <Dialog open={depositOpen} onOpenChange={setDepositOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="flex flex-col h-20 gap-2">
-                <ArrowDownToLine className="w-5 h-5 text-green-600" />
-                <span className="text-xs">Dépôt</span>
+              <Button variant="outline" className="flex flex-col h-16 sm:h-20 gap-1 sm:gap-2 px-1 sm:px-4">
+                <ArrowDownToLine className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                <span className="text-[10px] sm:text-xs">Dépôt</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
@@ -1350,12 +1351,12 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
             </DialogContent>
           </Dialog>
 
-          {/* Retrait */}
+          {/* Retrait - optimisé mobile */}
           <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="flex flex-col h-20 gap-2">
-                <ArrowUpFromLine className="w-5 h-5 text-orange-600" />
-                <span className="text-xs">Retrait</span>
+              <Button variant="outline" className="flex flex-col h-16 sm:h-20 gap-1 sm:gap-2 px-1 sm:px-4">
+                <ArrowUpFromLine className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
+                <span className="text-[10px] sm:text-xs">Retrait</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
@@ -1555,12 +1556,12 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
             </DialogContent>
           </Dialog>
 
-          {/* Transfert */}
+          {/* Transfert - optimisé mobile */}
           <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="flex flex-col h-20 gap-2">
-                <Send className="w-5 h-5 text-blue-600" />
-                <span className="text-xs">Transfert</span>
+              <Button variant="outline" className="flex flex-col h-16 sm:h-20 gap-1 sm:gap-2 px-1 sm:px-4">
+                <Send className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                <span className="text-[10px] sm:text-xs">Transfert</span>
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -1675,27 +1676,27 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Historique des transactions */}
+        {/* Historique des transactions - optimisé mobile */}
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <History className="w-5 h-5 text-muted-foreground" />
-            <h3 className="font-semibold">Historique récent</h3>
+          <div className="flex items-center gap-2 mb-2 sm:mb-3">
+            <History className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+            <h3 className="font-semibold text-sm sm:text-base">Historique récent</h3>
           </div>
           
           {transactions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <History className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Aucune transaction</p>
+            <div className="text-center py-6 sm:py-8 text-muted-foreground">
+              <History className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 opacity-50" />
+              <p className="text-xs sm:text-sm">Aucune transaction</p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               {(showAllTransactions ? transactions : transactions.slice(0, 4)).map((tx) => (
                 <div
                   key={tx.id}
-                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                  className="flex items-start sm:items-center justify-between p-2 sm:p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors gap-2"
                 >
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-xs sm:text-sm truncate">
                       {getTransactionType(tx)}{' '}
                       {(tx.sender_id !== effectiveUserId || tx.receiver_id !== effectiveUserId) && (
                         <>
@@ -1704,40 +1705,40 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                               ? (tx.receiver_name || 'Utilisateur')
                               : (tx.sender_name || 'Utilisateur')}
                           </span>
-                          {' '}
-                          <span className="font-mono text-primary text-xs">
-                            ({tx.sender_id === effectiveUserId ? tx.receiver_custom_id : tx.sender_custom_id})
-                          </span>
                         </>
                       )}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    {(tx.sender_id !== effectiveUserId || tx.receiver_id !== effectiveUserId) && (
+                      <span className="font-mono text-primary text-[10px] sm:text-xs block">
+                        {tx.sender_id === effectiveUserId ? tx.receiver_custom_id : tx.sender_custom_id}
+                      </span>
+                    )}
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
                       {new Date(tx.created_at).toLocaleDateString('fr-FR', {
                         day: '2-digit',
                         month: 'short',
-                        year: 'numeric',
                         hour: '2-digit',
                         minute: '2-digit'
                       })}
-                      {tx.metadata?.description && (
-                        <span className="block mt-1 italic">
-                          {tx.metadata.description}
-                        </span>
-                      )}
                     </p>
+                    {tx.metadata?.description && (
+                      <p className="text-[10px] sm:text-xs text-muted-foreground italic truncate mt-0.5 max-w-[150px] sm:max-w-full">
+                        {tx.metadata.description}
+                      </p>
+                    )}
                   </div>
-                  <div className="text-right">
-                    <p className={`font-bold ${getTransactionColor(tx)}`}>
+                  <div className="text-right shrink-0">
+                    <p className={`font-bold text-xs sm:text-sm ${getTransactionColor(tx)}`}>
                       {tx.sender_id === effectiveUserId && tx.receiver_id !== effectiveUserId ? '-' : '+'}
                       {formatPrice(tx.amount)}
                     </p>
                     {tx.sender_id === effectiveUserId && tx.metadata?.fee_amount && (
-                      <p className="text-xs text-orange-600">
+                      <p className="text-[10px] sm:text-xs text-orange-600">
                         +{formatPrice(tx.metadata.fee_amount)} frais
                       </p>
                     )}
-                    <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
-                      {tx.status}
+                    <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'} className="text-[10px] sm:text-xs px-1 sm:px-2 py-0 mt-0.5">
+                      {tx.status === 'completed' ? 'OK' : tx.status}
                     </Badge>
                   </div>
                 </div>
@@ -1746,7 +1747,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
               {transactions.length > 4 && (
                 <Button
                   variant="ghost"
-                  className="w-full mt-2 text-sm"
+                  className="w-full mt-1 sm:mt-2 text-xs sm:text-sm h-8 sm:h-10"
                   onClick={() => setShowAllTransactions(!showAllTransactions)}
                 >
                   {showAllTransactions 
