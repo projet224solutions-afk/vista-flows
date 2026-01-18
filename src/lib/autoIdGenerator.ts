@@ -22,54 +22,55 @@ interface IdConfig {
   length: number;
 }
 
+// IDs are limited to 7 characters total (prefix 3 + 4 digits = 7 chars max)
 const ID_CONFIGS: Record<RoleType, IdConfig> = {
   agent: {
     prefix: 'AGT',
     table: 'agents_management',
     column: 'agent_code',
-    length: 5
+    length: 4 // AGT0001 = 7 chars max
   },
   vendor: {
     prefix: 'VND',
     table: 'vendors',
     column: 'vendor_code',
-    length: 5
+    length: 4 // VND0001 = 7 chars max
   },
   bureau: {
     prefix: 'BST',
     table: 'bureau_syndicat',
     column: 'bureau_code',
-    length: 6
+    length: 4 // BST0001 = 7 chars max
   },
   driver: {
     prefix: 'DRV',
     table: 'taxi_moto_drivers',
     column: 'driver_code',
-    length: 5
+    length: 4 // DRV0001 = 7 chars max
   },
   client: {
     prefix: 'CLT',
     table: 'users',
     column: 'client_code',
-    length: 6
+    length: 4 // CLT0001 = 7 chars max
   },
   pdg: {
     prefix: 'PDG',
     table: 'pdg_accounts',
     column: 'pdg_code',
-    length: 4
+    length: 4 // PDG0001 = 7 chars max
   },
   transitaire: {
     prefix: 'TRS',
     table: 'transitaires',
     column: 'transitaire_code',
-    length: 5
+    length: 4 // TRS0001 = 7 chars max
   },
   worker: {
     prefix: 'WRK',
     table: 'workers',
     column: 'worker_code',
-    length: 5
+    length: 4 // WRK0001 = 7 chars max
   }
 };
 
