@@ -347,14 +347,17 @@ export default function IdNormalizationAudit() {
     if (!role) return null;
     const mapping: Record<string, RoleType> = {
       'vendor': 'vendor',
+      'vendeur': 'vendor',
       'client': 'client',
       'agent': 'agent',
       'driver': 'driver',
+      'livreur': 'driver',
+      'taxi': 'driver',
       'bureau': 'bureau',
       'pdg': 'pdg',
       'transitaire': 'transitaire',
       'worker': 'worker',
-      'admin': 'pdg', // Fallback admin to pdg
+      'admin': 'pdg',
     };
     return mapping[role.toLowerCase()] || null;
   };
