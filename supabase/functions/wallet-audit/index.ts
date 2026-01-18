@@ -750,14 +750,14 @@ async function reconcileBalance(client: any, customId: string | undefined, userI
     .eq('status', 'completed')
 
   const totalIncoming = 
-    (receivedTx || []).reduce((sum, tx) => sum + Number(tx.amount || 0), 0) +
-    (p2pReceived || []).reduce((sum, tx) => sum + Number(tx.amount || 0), 0) +
-    (stripeDeposits || []).reduce((sum, tx) => sum + Number(tx.amount || 0), 0)
+    (receivedTx || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0) +
+    (p2pReceived || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0) +
+    (stripeDeposits || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0)
 
   const totalOutgoing = 
-    (sentTx || []).reduce((sum, tx) => sum + Number(tx.amount || 0), 0) +
-    (p2pSent || []).reduce((sum, tx) => sum + Number(tx.amount || 0), 0) +
-    (stripeWithdrawals || []).reduce((sum, tx) => sum + Number(tx.amount || 0), 0)
+    (sentTx || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0) +
+    (p2pSent || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0) +
+    (stripeWithdrawals || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0)
 
   const calculatedBalance = totalIncoming - totalOutgoing
   const storedBalance = Number(wallet.balance) || 0
