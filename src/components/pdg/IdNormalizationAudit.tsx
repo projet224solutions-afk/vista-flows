@@ -383,55 +383,78 @@ export default function IdNormalizationAudit() {
     setCorrectingId(item.id);
 
     try {
-      // Generate new unique ID
-      const newId = await generateUniqueId(roleType);
       const originalId = item.custom_id;
 
-      console.log(`🔄 Correction ID: ${originalId} → ${newId} (${roleType})`);
+      // Retry loop to handle DB-level unique constraint races
+      let newId: string | null = null;
+      const maxAttempts = 5;
+      let attempt = 0;
 
-      // Update user_ids table
-      const { error: updateError } = await supabase
-        .from('user_ids')
-        .update({ custom_id: newId })
-        .eq('id', item.id);
+      while (attempt < maxAttempts) {
+        attempt++;
+        newId = await generateUniqueId(roleType);
 
-      if (updateError) throw updateError;
+        console.log(`🔄 Correction ID (tentative ${attempt}/${maxAttempts}): ${originalId} → ${newId} (${roleType})`);
 
-      // Log the normalization
-      const { error: logError } = await supabase
-        .from('id_normalization_logs')
-        .insert({
-          user_id: item.user_id,
-          role_type: roleType,
-          original_id: originalId,
-          corrected_id: newId,
-          reason: 'format_invalid',
-          reason_details: {
-            original_format: originalId,
-            corrected_format: newId,
-            correction_type: 'manual_pdg_correction',
-            timestamp: new Date().toISOString()
-          },
-          metadata: {
-            corrected_by: 'pdg_audit_interface',
-            profile_email: item.profile?.email,
-            profile_name: item.profile?.full_name
+        const { error: updateError } = await supabase
+          .from('user_ids')
+          .update({ custom_id: newId })
+          .eq('id', item.id);
+
+        if (!updateError) {
+          // Log the normalization (best effort)
+          const { error: logError } = await supabase
+            .from('id_normalization_logs')
+            .insert({
+              user_id: item.user_id,
+              role_type: roleType,
+              original_id: originalId,
+              corrected_id: newId,
+              reason: 'format_invalid',
+              reason_details: {
+                original_format: originalId,
+                corrected_format: newId,
+                correction_type: 'manual_pdg_correction',
+                timestamp: new Date().toISOString()
+              },
+              metadata: {
+                corrected_by: 'pdg_audit_interface',
+                profile_email: item.profile?.email,
+                profile_name: item.profile?.full_name
+              }
+            });
+
+          if (logError) {
+            console.error('Erreur log normalisation:', logError);
           }
-        });
 
-      if (logError) {
-        console.error('Erreur log normalisation:', logError);
-        // Don't throw - the main correction succeeded
+          toast.success(`ID corrigé: ${originalId} → ${newId}`);
+
+          // Force refresh the lists with a small delay to ensure DB is updated
+          setTimeout(async () => {
+            await loadNonStandardUsers();
+            await loadStats();
+            await loadAllUserIds();
+          }, 500);
+
+          return;
+        }
+
+        // If duplicate key, retry with a new ID
+        const isDuplicate =
+          (updateError as any)?.code === '23505' ||
+          String(updateError.message || '').includes('user_ids_custom_id_key') ||
+          String(updateError.message || '').includes('duplicate key value');
+
+        if (!isDuplicate) {
+          throw updateError;
+        }
+
+        console.warn(`⚠️ Conflit d'unicité sur ${newId}, nouvelle tentative...`, updateError);
+        await new Promise((resolve) => setTimeout(resolve, 150));
       }
 
-      toast.success(`ID corrigé: ${originalId} → ${newId}`);
-      
-      // Force refresh the lists with a small delay to ensure DB is updated
-      setTimeout(async () => {
-        await loadNonStandardUsers();
-        await loadStats();
-        await loadAllUserIds();
-      }, 500);
+      throw new Error(`Impossible de corriger: conflit d'unicité après ${maxAttempts} tentatives`);
 
     } catch (error: any) {
       console.error('Erreur correction ID:', error);
@@ -463,74 +486,75 @@ export default function IdNormalizationAudit() {
     let errorCount = 0;
     const errors: string[] = [];
 
-    // Process one by one with delay to avoid race conditions
+    // Process one by one with retries to avoid unique constraint races
     for (const item of toCorrect) {
       try {
         const roleType = mapRoleToRoleType(item.profile?.role)!;
         const originalId = item.custom_id;
-        
-        // Try up to 3 times in case of duplicate conflicts
-        let newId: string | null = null;
-        let attempts = 0;
-        const maxAttempts = 3;
-        
-        while (attempts < maxAttempts) {
-          attempts++;
-          newId = await generateUniqueId(roleType);
-          
-          // Double-check this ID doesn't exist
-          const { data: existingId } = await supabase
+
+        const maxAttempts = 5;
+        let attempt = 0;
+        let updated = false;
+        let lastError: any = null;
+
+        while (attempt < maxAttempts && !updated) {
+          attempt++;
+          const newId = await generateUniqueId(roleType);
+
+          const { error: updateError } = await supabase
             .from('user_ids')
-            .select('id')
-            .eq('custom_id', newId)
-            .maybeSingle();
-          
-          if (!existingId) break;
-          
-          console.warn(`ID ${newId} déjà pris, nouvelle tentative ${attempts}/${maxAttempts}`);
-          // Add small delay before retry
-          await new Promise(resolve => setTimeout(resolve, 100));
+            .update({ custom_id: newId })
+            .eq('id', item.id);
+
+          if (!updateError) {
+            // Log the normalization (best effort)
+            await supabase
+              .from('id_normalization_logs')
+              .insert({
+                user_id: item.user_id,
+                role_type: roleType,
+                original_id: originalId,
+                corrected_id: newId,
+                reason: 'format_invalid',
+                reason_details: {
+                  original_format: originalId,
+                  corrected_format: newId,
+                  correction_type: 'bulk_pdg_correction',
+                  timestamp: new Date().toISOString()
+                },
+                metadata: {
+                  corrected_by: 'pdg_audit_interface',
+                  profile_email: item.profile?.email,
+                  profile_name: item.profile?.full_name
+                }
+              });
+
+            successCount++;
+            updated = true;
+            break;
+          }
+
+          const isDuplicate =
+            (updateError as any)?.code === '23505' ||
+            String(updateError.message || '').includes('user_ids_custom_id_key') ||
+            String(updateError.message || '').includes('duplicate key value');
+
+          if (!isDuplicate) {
+            throw updateError;
+          }
+
+          lastError = updateError;
+          console.warn(`⚠️ Conflit d'unicité (bulk) sur tentative ${attempt}/${maxAttempts}`, updateError);
+          await new Promise((resolve) => setTimeout(resolve, 150));
         }
 
-        if (!newId) {
-          throw new Error('Impossible de générer un ID unique');
+        if (!updated) {
+          throw lastError || new Error(`Conflit d'unicité après ${maxAttempts} tentatives`);
         }
 
-        // Update user_ids table
-        const { error: updateError } = await supabase
-          .from('user_ids')
-          .update({ custom_id: newId })
-          .eq('id', item.id);
+        // Small delay between corrections to reduce contention
+        await new Promise((resolve) => setTimeout(resolve, 120));
 
-        if (updateError) throw updateError;
-
-        // Log the normalization
-        await supabase
-          .from('id_normalization_logs')
-          .insert({
-            user_id: item.user_id,
-            role_type: roleType,
-            original_id: originalId,
-            corrected_id: newId,
-            reason: 'format_invalid',
-            reason_details: {
-              original_format: originalId,
-              corrected_format: newId,
-              correction_type: 'bulk_pdg_correction',
-              timestamp: new Date().toISOString()
-            },
-            metadata: {
-              corrected_by: 'pdg_audit_interface',
-              profile_email: item.profile?.email,
-              profile_name: item.profile?.full_name
-            }
-          });
-
-        successCount++;
-        
-        // Small delay between corrections to prevent race conditions
-        await new Promise(resolve => setTimeout(resolve, 200));
-        
       } catch (error: any) {
         console.error(`Erreur correction ${item.custom_id}:`, error);
         errors.push(`${item.custom_id}: ${error.message}`);
