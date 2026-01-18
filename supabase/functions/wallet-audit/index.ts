@@ -1,11 +1,13 @@
 /**
  * 🔐 EDGE FUNCTION: AUDIT COMPLET ET CORRECTION DES WALLETS
+ * Version 2.0 - Réconciliation Perfectionnée
+ * 
  * Permet au PDG de:
- * - Diagnostiquer les problèmes de wallet
+ * - Diagnostiquer les problèmes de wallet avec TOUTES les sources de transactions
  * - Vérifier l'intégrité des soldes
- * - Corriger les divergences
+ * - Corriger les divergences avec mode simulation
  * - Vérifier les signatures API de paiement
- * - Voir l'historique complet des opérations wallet
+ * - Générer des rapports détaillés
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
@@ -14,6 +16,35 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+// =========== TYPES ===========
+
+interface TransactionSource {
+  name: string
+  incoming: number
+  outgoing: number
+  fees: number
+  count: number
+  transactions: any[]
+}
+
+interface ReconciliationReport {
+  userId: string
+  customId?: string
+  walletId: string
+  storedBalance: number
+  calculatedBalance: number
+  difference: number
+  isCorrect: boolean
+  sources: TransactionSource[]
+  totalIncoming: number
+  totalOutgoing: number
+  totalFees: number
+  transactionCount: number
+  oldestTransaction?: string
+  newestTransaction?: string
+  recommendations: string[]
 }
 
 interface WalletAuditResult {
@@ -33,6 +64,7 @@ interface WalletAuditResult {
   reconciliationHistory: any[]
   paymentMethods: any[]
   summary: AuditSummary
+  reconciliationReport?: ReconciliationReport
 }
 
 interface WalletIssue {
@@ -132,7 +164,7 @@ serve(async (req) => {
     }
 
     const body = await req.json()
-    const { action, customId, userId: targetUserId, fixAction } = body
+    const { action, customId, userId: targetUserId, fixAction, simulate } = body
 
     // Client admin pour bypasser RLS
     const adminClient = createClient(supabaseUrl, supabaseServiceKey)
@@ -140,7 +172,6 @@ serve(async (req) => {
     // =========== ACTIONS ===========
     switch (action) {
       case 'audit': {
-        // Audit complet d'un wallet
         const result = await performWalletAudit(adminClient, customId, targetUserId)
         return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -148,7 +179,6 @@ serve(async (req) => {
       }
 
       case 'fix': {
-        // Corriger un problème spécifique
         const result = await fixWalletIssue(adminClient, customId, targetUserId, fixAction, user.id)
         return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -156,7 +186,6 @@ serve(async (req) => {
       }
 
       case 'verify-signatures': {
-        // Vérifier les signatures API de paiement
         const result = await verifyPaymentSignatures(adminClient)
         return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -164,15 +193,13 @@ serve(async (req) => {
       }
 
       case 'reconcile': {
-        // Réconcilier le solde
-        const result = await reconcileBalance(adminClient, customId, targetUserId, user.id)
+        const result = await reconcileBalance(adminClient, customId, targetUserId, user.id, simulate)
         return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
 
       case 'create-wallet': {
-        // Créer un wallet manquant
         const result = await createMissingWallet(adminClient, customId, targetUserId, user.id)
         return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -180,7 +207,6 @@ serve(async (req) => {
       }
 
       case 'get-all-wallets': {
-        // Liste tous les wallets avec problèmes
         const result = await getAllWalletsWithIssues(adminClient)
         return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -188,16 +214,21 @@ serve(async (req) => {
       }
 
       case 'reconcile-all': {
-        // Réconcilier tous les wallets problématiques
-        const result = await reconcileAllWallets(adminClient, user.id)
+        const result = await reconcileAllWallets(adminClient, user.id, simulate)
         return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
 
       case 'create-all-missing-wallets': {
-        // Créer tous les wallets manquants
         const result = await createAllMissingWallets(adminClient, user.id)
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      case 'generate-reconciliation-report': {
+        const result = await generateReconciliationReport(adminClient, customId, targetUserId)
         return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
@@ -218,6 +249,324 @@ serve(async (req) => {
     })
   }
 })
+
+// =========== CALCUL COMPLET DES TRANSACTIONS ===========
+
+interface BalanceCalculation {
+  totalIncoming: number
+  totalOutgoing: number
+  totalFees: number
+  calculatedBalance: number
+  sources: TransactionSource[]
+  allTransactions: any[]
+  successfulTx: number
+  failedTx: number
+  pendingTx: number
+}
+
+async function calculateCompleteBalance(client: any, userId: string): Promise<BalanceCalculation> {
+  const sources: TransactionSource[] = []
+  const allTransactions: any[] = []
+  let successfulTx = 0
+  let failedTx = 0
+  let pendingTx = 0
+
+  // 1. WALLET_TRANSACTIONS (source principale)
+  const { data: walletSent } = await client
+    .from('wallet_transactions')
+    .select('*')
+    .eq('sender_user_id', userId)
+
+  const { data: walletReceived } = await client
+    .from('wallet_transactions')
+    .select('*')
+    .eq('receiver_user_id', userId)
+
+  let walletIncoming = 0, walletOutgoing = 0, walletFees = 0
+  for (const tx of (walletReceived || [])) {
+    if (tx.status === 'completed') {
+      walletIncoming += Number(tx.net_amount || tx.amount) || 0
+      successfulTx++
+    } else if (tx.status === 'failed') failedTx++
+    else if (tx.status === 'pending') pendingTx++
+    allTransactions.push({ ...tx, _source: 'wallet_transactions', _direction: 'received' })
+  }
+  for (const tx of (walletSent || [])) {
+    if (tx.status === 'completed') {
+      walletOutgoing += Number(tx.amount) || 0
+      walletFees += Number(tx.fee) || 0
+      successfulTx++
+    } else if (tx.status === 'failed') failedTx++
+    else if (tx.status === 'pending') pendingTx++
+    allTransactions.push({ ...tx, _source: 'wallet_transactions', _direction: 'sent' })
+  }
+
+  sources.push({
+    name: 'Transactions Wallet',
+    incoming: walletIncoming,
+    outgoing: walletOutgoing,
+    fees: walletFees,
+    count: (walletSent?.length || 0) + (walletReceived?.length || 0),
+    transactions: [...(walletSent || []), ...(walletReceived || [])]
+  })
+
+  // 2. P2P_TRANSACTIONS
+  const { data: p2pSent } = await client
+    .from('p2p_transactions')
+    .select('*')
+    .eq('sender_id', userId)
+
+  const { data: p2pReceived } = await client
+    .from('p2p_transactions')
+    .select('*')
+    .eq('receiver_id', userId)
+
+  let p2pIncoming = 0, p2pOutgoing = 0, p2pFees = 0
+  for (const tx of (p2pReceived || [])) {
+    if (tx.status === 'completed') {
+      p2pIncoming += Number(tx.amount) || 0
+    }
+    allTransactions.push({ ...tx, _source: 'p2p_transactions', _direction: 'received' })
+  }
+  for (const tx of (p2pSent || [])) {
+    if (tx.status === 'completed') {
+      p2pOutgoing += Number(tx.amount) || 0
+      p2pFees += Number(tx.fee || tx.fees) || 0
+    }
+    allTransactions.push({ ...tx, _source: 'p2p_transactions', _direction: 'sent' })
+  }
+
+  sources.push({
+    name: 'Transferts P2P',
+    incoming: p2pIncoming,
+    outgoing: p2pOutgoing,
+    fees: p2pFees,
+    count: (p2pSent?.length || 0) + (p2pReceived?.length || 0),
+    transactions: [...(p2pSent || []), ...(p2pReceived || [])]
+  })
+
+  // 3. DJOMY_PAYMENTS
+  const { data: djomySent } = await client
+    .from('djomy_payments')
+    .select('*')
+    .eq('payer_user_id', userId)
+    .eq('status', 'completed')
+
+  const { data: djomyReceived } = await client
+    .from('djomy_payments')
+    .select('*')
+    .eq('receiver_user_id', userId)
+    .eq('status', 'completed')
+
+  let djomyIncoming = 0, djomyOutgoing = 0, djomyFees = 0
+  for (const tx of (djomyReceived || [])) {
+    djomyIncoming += Number(tx.net_amount || tx.amount) || 0
+    allTransactions.push({ ...tx, _source: 'djomy_payments', _direction: 'received' })
+  }
+  for (const tx of (djomySent || [])) {
+    djomyOutgoing += Number(tx.amount) || 0
+    djomyFees += Number(tx.fee) || 0
+    allTransactions.push({ ...tx, _source: 'djomy_payments', _direction: 'sent' })
+  }
+
+  sources.push({
+    name: 'Paiements Djomy',
+    incoming: djomyIncoming,
+    outgoing: djomyOutgoing,
+    fees: djomyFees,
+    count: (djomySent?.length || 0) + (djomyReceived?.length || 0),
+    transactions: [...(djomySent || []), ...(djomyReceived || [])]
+  })
+
+  // 4. STRIPE_WALLET_TRANSACTIONS (dépôts/retraits)
+  const { data: stripeTx } = await client
+    .from('stripe_wallet_transactions')
+    .select('*')
+    .eq('user_id', userId)
+
+  let stripeIncoming = 0, stripeOutgoing = 0, stripeFees = 0
+  for (const tx of (stripeTx || [])) {
+    if (tx.status === 'completed') {
+      if (tx.transaction_type === 'deposit' || tx.transaction_type === 'credit') {
+        stripeIncoming += Number(tx.amount) || 0
+      } else if (tx.transaction_type === 'withdrawal' || tx.transaction_type === 'debit') {
+        stripeOutgoing += Number(tx.amount) || 0
+        stripeFees += Number(tx.fee) || 0
+      }
+    }
+    allTransactions.push({ ...tx, _source: 'stripe_wallet_transactions' })
+  }
+
+  sources.push({
+    name: 'Transactions Stripe',
+    incoming: stripeIncoming,
+    outgoing: stripeOutgoing,
+    fees: stripeFees,
+    count: stripeTx?.length || 0,
+    transactions: stripeTx || []
+  })
+
+  // 5. FINANCIAL_TRANSACTIONS (transactions génériques)
+  const { data: financialTx } = await client
+    .from('financial_transactions')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('status', 'completed')
+
+  let financialIncoming = 0, financialOutgoing = 0, financialFees = 0
+  for (const tx of (financialTx || [])) {
+    const txType = tx.transaction_type?.toLowerCase()
+    if (['deposit', 'credit', 'refund', 'received'].includes(txType)) {
+      financialIncoming += Number(tx.amount) || 0
+    } else if (['withdrawal', 'debit', 'payment', 'sent'].includes(txType)) {
+      financialOutgoing += Number(tx.amount) || 0
+      financialFees += Number(tx.fee || tx.fees) || 0
+    }
+    allTransactions.push({ ...tx, _source: 'financial_transactions' })
+  }
+
+  sources.push({
+    name: 'Transactions Financières',
+    incoming: financialIncoming,
+    outgoing: financialOutgoing,
+    fees: financialFees,
+    count: financialTx?.length || 0,
+    transactions: financialTx || []
+  })
+
+  // 6. ESCROW_TRANSACTIONS
+  const { data: escrowTx } = await client
+    .from('escrow_transactions')
+    .select('*')
+    .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
+
+  let escrowIncoming = 0, escrowOutgoing = 0, escrowFees = 0
+  for (const tx of (escrowTx || [])) {
+    if (tx.status === 'completed' || tx.status === 'released') {
+      if (tx.seller_id === userId) {
+        escrowIncoming += Number(tx.seller_amount || tx.amount) || 0
+      }
+      if (tx.buyer_id === userId) {
+        escrowOutgoing += Number(tx.amount) || 0
+      }
+      escrowFees += Number(tx.platform_fee) || 0
+    }
+    allTransactions.push({ ...tx, _source: 'escrow_transactions' })
+  }
+
+  sources.push({
+    name: 'Transactions Escrow',
+    incoming: escrowIncoming,
+    outgoing: escrowOutgoing,
+    fees: escrowFees,
+    count: escrowTx?.length || 0,
+    transactions: escrowTx || []
+  })
+
+  // 7. TAXI_TRANSACTIONS
+  const { data: taxiTxDriver } = await client
+    .from('taxi_transactions')
+    .select('*')
+    .eq('driver_id', userId)
+    .eq('status', 'completed')
+
+  const { data: taxiTxRider } = await client
+    .from('taxi_transactions')
+    .select('*')
+    .eq('rider_id', userId)
+    .eq('status', 'completed')
+
+  let taxiIncoming = 0, taxiOutgoing = 0, taxiFees = 0
+  for (const tx of (taxiTxDriver || [])) {
+    taxiIncoming += Number(tx.driver_earnings || tx.amount) || 0
+    allTransactions.push({ ...tx, _source: 'taxi_transactions', _direction: 'received' })
+  }
+  for (const tx of (taxiTxRider || [])) {
+    taxiOutgoing += Number(tx.amount) || 0
+    taxiFees += Number(tx.platform_fee) || 0
+    allTransactions.push({ ...tx, _source: 'taxi_transactions', _direction: 'sent' })
+  }
+
+  sources.push({
+    name: 'Courses Taxi',
+    incoming: taxiIncoming,
+    outgoing: taxiOutgoing,
+    fees: taxiFees,
+    count: (taxiTxDriver?.length || 0) + (taxiTxRider?.length || 0),
+    transactions: [...(taxiTxDriver || []), ...(taxiTxRider || [])]
+  })
+
+  // 8. VENDOR_TRANSACTIONS
+  const { data: vendorTx } = await client
+    .from('vendor_transactions')
+    .select('*')
+    .eq('vendor_id', userId)
+    .eq('status', 'completed')
+
+  let vendorIncoming = 0, vendorFees = 0
+  for (const tx of (vendorTx || [])) {
+    vendorIncoming += Number(tx.net_amount || tx.amount) || 0
+    vendorFees += Number(tx.commission || tx.fee) || 0
+    allTransactions.push({ ...tx, _source: 'vendor_transactions', _direction: 'received' })
+  }
+
+  sources.push({
+    name: 'Revenus Vendeur',
+    incoming: vendorIncoming,
+    outgoing: 0,
+    fees: vendorFees,
+    count: vendorTx?.length || 0,
+    transactions: vendorTx || []
+  })
+
+  // 9. CARD_TRANSACTIONS (cartes virtuelles)
+  const { data: cardTx } = await client
+    .from('card_transactions')
+    .select('*')
+    .eq('user_id', userId)
+
+  let cardIncoming = 0, cardOutgoing = 0
+  for (const tx of (cardTx || [])) {
+    if (tx.status === 'completed') {
+      if (tx.transaction_type === 'credit' || tx.transaction_type === 'refund') {
+        cardIncoming += Number(tx.amount) || 0
+      } else {
+        cardOutgoing += Number(tx.amount) || 0
+      }
+    }
+    allTransactions.push({ ...tx, _source: 'card_transactions' })
+  }
+
+  sources.push({
+    name: 'Cartes Virtuelles',
+    incoming: cardIncoming,
+    outgoing: cardOutgoing,
+    fees: 0,
+    count: cardTx?.length || 0,
+    transactions: cardTx || []
+  })
+
+  // Calcul des totaux
+  const totalIncoming = sources.reduce((sum, s) => sum + s.incoming, 0)
+  const totalOutgoing = sources.reduce((sum, s) => sum + s.outgoing, 0)
+  const totalFees = sources.reduce((sum, s) => sum + s.fees, 0)
+  const calculatedBalance = totalIncoming - totalOutgoing
+
+  // Trier toutes les transactions par date
+  allTransactions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+  return {
+    totalIncoming,
+    totalOutgoing,
+    totalFees,
+    calculatedBalance,
+    sources: sources.filter(s => s.count > 0), // Ne garder que les sources avec des transactions
+    allTransactions,
+    successfulTx,
+    failedTx,
+    pendingTx
+  }
+}
 
 // =========== FONCTIONS D'AUDIT ===========
 
@@ -304,56 +653,8 @@ async function performWalletAudit(client: any, customId?: string, userId?: strin
     recommendations.push('Créer un wallet pour cet utilisateur via l\'action "create-wallet"')
   }
 
-  // Récupérer toutes les transactions
-  const { data: sentTx } = await client
-    .from('wallet_transactions')
-    .select('*')
-    .eq('sender_user_id', targetUserId)
-    .order('created_at', { ascending: false })
-
-  const { data: receivedTx } = await client
-    .from('wallet_transactions')
-    .select('*')
-    .eq('receiver_user_id', targetUserId)
-    .order('created_at', { ascending: false })
-
-  // Aussi vérifier d'autres tables de transactions
-  const { data: p2pSent } = await client
-    .from('p2p_transactions')
-    .select('*')
-    .eq('sender_id', targetUserId)
-
-  const { data: p2pReceived } = await client
-    .from('p2p_transactions')
-    .select('*')
-    .eq('receiver_id', targetUserId)
-
-  const { data: djomySent } = await client
-    .from('djomy_payments')
-    .select('*')
-    .eq('payer_user_id', targetUserId)
-    .eq('status', 'completed')
-
-  const { data: djomyReceived } = await client
-    .from('djomy_payments')
-    .select('*')
-    .eq('receiver_user_id', targetUserId)
-    .eq('status', 'completed')
-
-  const { data: financialTx } = await client
-    .from('financial_transactions')
-    .select('*')
-    .eq('user_id', targetUserId)
-
-  const { data: stripeTx } = await client
-    .from('stripe_transactions')
-    .select('*')
-    .eq('user_id', targetUserId)
-
-  const { data: stripeWalletTx } = await client
-    .from('stripe_wallet_transactions')
-    .select('*')
-    .eq('user_id', targetUserId)
+  // Calcul complet du solde avec TOUTES les sources
+  const balanceCalc = await calculateCompleteBalance(client, targetUserId)
 
   // Récupérer les logs wallet
   const { data: walletLogs } = await client
@@ -385,74 +686,24 @@ async function performWalletAudit(client: any, customId?: string, userId?: strin
     .select('*')
     .eq('wallet_id', wallet?.id)
 
-  // Calculer le solde attendu
-  let totalIncoming = 0
-  let totalOutgoing = 0
-  let successfulTx = 0
-  let failedTx = 0
-  let pendingTx = 0
-
-  // Wallet transactions
-  for (const tx of (receivedTx || [])) {
-    if (tx.status === 'completed') {
-      totalIncoming += Number(tx.amount) || 0
-      successfulTx++
-    } else if (tx.status === 'failed') {
-      failedTx++
-    } else if (tx.status === 'pending') {
-      pendingTx++
-    }
-  }
-
-  for (const tx of (sentTx || [])) {
-    if (tx.status === 'completed') {
-      totalOutgoing += Number(tx.amount) || 0
-      successfulTx++
-    } else if (tx.status === 'failed') {
-      failedTx++
-    } else if (tx.status === 'pending') {
-      pendingTx++
-    }
-  }
-
-  // P2P
-  for (const tx of (p2pReceived || [])) {
-    if (tx.status === 'completed') totalIncoming += Number(tx.amount) || 0
-  }
-  for (const tx of (p2pSent || [])) {
-    if (tx.status === 'completed') totalOutgoing += Number(tx.amount) || 0
-  }
-
-  // Djomy
-  for (const tx of (djomyReceived || [])) {
-    totalIncoming += Number(tx.amount) || 0
-  }
-  for (const tx of (djomySent || [])) {
-    totalOutgoing += Number(tx.amount) || 0
-  }
-
-  // Stripe wallet transactions
-  for (const tx of (stripeWalletTx || [])) {
-    if (tx.transaction_type === 'deposit' && tx.status === 'completed') {
-      totalIncoming += Number(tx.amount) || 0
-    } else if (tx.transaction_type === 'withdrawal' && tx.status === 'completed') {
-      totalOutgoing += Number(tx.amount) || 0
-    }
-  }
-
-  const expectedBalance = totalIncoming - totalOutgoing
   const storedBalance = Number(wallet?.balance) || 0
-  const balanceDifference = Math.abs(storedBalance - expectedBalance)
-  const isBalanceCorrect = balanceDifference < 0.01 // Tolérance pour arrondis
+  const balanceDifference = Math.abs(storedBalance - balanceCalc.calculatedBalance)
+  const isBalanceCorrect = balanceDifference < 1 // Tolérance de 1 GNF
 
   // Vérifier les problèmes
   if (wallet) {
     if (!isBalanceCorrect) {
+      const severity = balanceDifference > 10000 ? 'critical' : balanceDifference > 1000 ? 'warning' : 'info'
       issues.push({
-        type: balanceDifference > 1000 ? 'critical' : 'warning',
+        type: severity,
         code: 'BALANCE_MISMATCH',
-        message: `Divergence de solde détectée: ${balanceDifference.toFixed(2)} ${wallet.currency}`,
-        details: { stored: storedBalance, expected: expectedBalance, difference: balanceDifference },
+        message: `Divergence de solde détectée: ${balanceDifference.toFixed(0)} ${wallet.currency}`,
+        details: { 
+          stored: storedBalance, 
+          expected: balanceCalc.calculatedBalance, 
+          difference: storedBalance - balanceCalc.calculatedBalance,
+          sources: balanceCalc.sources.map(s => ({ name: s.name, net: s.incoming - s.outgoing }))
+        },
         canAutoFix: true
       })
       recommendations.push('Effectuer une réconciliation du solde via l\'action "reconcile"')
@@ -477,6 +728,17 @@ async function performWalletAudit(client: any, customId?: string, userId?: strin
       })
     }
 
+    // Solde négatif
+    if (storedBalance < 0) {
+      issues.push({
+        type: 'critical',
+        code: 'NEGATIVE_BALANCE',
+        message: `Solde négatif détecté: ${storedBalance}`,
+        canAutoFix: true
+      })
+      recommendations.push('Vérifier les transactions pour identifier la cause du solde négatif')
+    }
+
     // Vérifier les activités suspectes non résolues
     const unresolvedSuspicious = (suspiciousActivities || []).filter((a: any) => !a.is_resolved)
     if (unresolvedSuspicious.length > 0) {
@@ -490,37 +752,19 @@ async function performWalletAudit(client: any, customId?: string, userId?: strin
       recommendations.push('Examiner et résoudre les activités suspectes manuellement')
     }
 
-    // Vérifier les transactions en attente depuis longtemps
-    const oldPendingTx = (sentTx || []).concat(receivedTx || []).filter((tx: any) => {
-      if (tx.status !== 'pending') return false
-      const age = Date.now() - new Date(tx.created_at).getTime()
-      return age > 24 * 60 * 60 * 1000 // Plus de 24h
-    })
-    if (oldPendingTx.length > 0) {
+    // Vérifier les frais élevés
+    if (balanceCalc.totalFees > balanceCalc.totalIncoming * 0.1) {
       issues.push({
         type: 'warning',
-        code: 'OLD_PENDING_TX',
-        message: `${oldPendingTx.length} transaction(s) en attente depuis plus de 24h`,
-        details: oldPendingTx.map((tx: any) => ({ id: tx.id, amount: tx.amount, created_at: tx.created_at })),
+        code: 'HIGH_FEES',
+        message: `Frais élevés: ${balanceCalc.totalFees.toFixed(0)} (${((balanceCalc.totalFees / balanceCalc.totalIncoming) * 100).toFixed(1)}% du total)`,
+        details: { totalFees: balanceCalc.totalFees, percentOfIncoming: (balanceCalc.totalFees / balanceCalc.totalIncoming) * 100 },
         canAutoFix: false
       })
     }
   }
 
-  // Combiner toutes les transactions
-  const allTransactions = [
-    ...(sentTx || []).map((tx: any) => ({ ...tx, _source: 'wallet_transactions', _direction: 'sent' })),
-    ...(receivedTx || []).map((tx: any) => ({ ...tx, _source: 'wallet_transactions', _direction: 'received' })),
-    ...(p2pSent || []).map((tx: any) => ({ ...tx, _source: 'p2p_transactions', _direction: 'sent' })),
-    ...(p2pReceived || []).map((tx: any) => ({ ...tx, _source: 'p2p_transactions', _direction: 'received' })),
-    ...(djomySent || []).map((tx: any) => ({ ...tx, _source: 'djomy_payments', _direction: 'sent' })),
-    ...(djomyReceived || []).map((tx: any) => ({ ...tx, _source: 'djomy_payments', _direction: 'received' })),
-    ...(financialTx || []).map((tx: any) => ({ ...tx, _source: 'financial_transactions' })),
-    ...(stripeTx || []).map((tx: any) => ({ ...tx, _source: 'stripe_transactions' })),
-    ...(stripeWalletTx || []).map((tx: any) => ({ ...tx, _source: 'stripe_wallet_transactions' })),
-  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-
-  const lastActivity = allTransactions[0]?.created_at || null
+  const lastActivity = balanceCalc.allTransactions[0]?.created_at || null
   const walletAge = wallet?.created_at 
     ? Math.floor((Date.now() - new Date(wallet.created_at).getTime()) / (1000 * 60 * 60 * 24))
     : 0
@@ -530,19 +774,39 @@ async function performWalletAudit(client: any, customId?: string, userId?: strin
   for (const issue of issues) {
     if (issue.type === 'critical') healthScore -= 30
     else if (issue.type === 'warning') healthScore -= 10
+    else if (issue.type === 'info') healthScore -= 2
   }
   healthScore = Math.max(0, healthScore)
 
   // Vérifier les signatures API
   const apiSignatures = await checkApiSignatures(client)
 
+  // Générer le rapport de réconciliation
+  const reconciliationReport: ReconciliationReport = {
+    userId: targetUserId,
+    customId: customIdFound,
+    walletId: wallet?.id,
+    storedBalance,
+    calculatedBalance: balanceCalc.calculatedBalance,
+    difference: storedBalance - balanceCalc.calculatedBalance,
+    isCorrect: isBalanceCorrect,
+    sources: balanceCalc.sources,
+    totalIncoming: balanceCalc.totalIncoming,
+    totalOutgoing: balanceCalc.totalOutgoing,
+    totalFees: balanceCalc.totalFees,
+    transactionCount: balanceCalc.allTransactions.length,
+    oldestTransaction: balanceCalc.allTransactions[balanceCalc.allTransactions.length - 1]?.created_at,
+    newestTransaction: balanceCalc.allTransactions[0]?.created_at,
+    recommendations
+  }
+
   return {
     success: true,
     walletFound: !!wallet,
     wallet,
-    transactions: allTransactions.slice(0, 200),
+    transactions: balanceCalc.allTransactions.slice(0, 200),
     issues,
-    calculatedBalance: expectedBalance,
+    calculatedBalance: balanceCalc.calculatedBalance,
     storedBalance,
     balanceDifference,
     isBalanceCorrect,
@@ -560,15 +824,16 @@ async function performWalletAudit(client: any, customId?: string, userId?: strin
     suspiciousActivities: suspiciousActivities || [],
     reconciliationHistory: reconciliationHistory || [],
     paymentMethods: paymentMethods || [],
+    reconciliationReport,
     summary: {
-      totalIncoming,
-      totalOutgoing,
-      expectedBalance,
+      totalIncoming: balanceCalc.totalIncoming,
+      totalOutgoing: balanceCalc.totalOutgoing,
+      expectedBalance: balanceCalc.calculatedBalance,
       actualBalance: storedBalance,
-      transactionCount: allTransactions.length,
-      successfulTransactions: successfulTx,
-      failedTransactions: failedTx,
-      pendingTransactions: pendingTx,
+      transactionCount: balanceCalc.allTransactions.length,
+      successfulTransactions: balanceCalc.successfulTx,
+      failedTransactions: balanceCalc.failedTx,
+      pendingTransactions: balanceCalc.pendingTx,
       lastActivity,
       walletAge,
       healthScore
@@ -700,7 +965,7 @@ async function fixWalletIssue(client: any, customId: string | undefined, userId:
   }
 }
 
-async function reconcileBalance(client: any, customId: string | undefined, userId: string | undefined, adminId: string) {
+async function reconcileBalance(client: any, customId: string | undefined, userId: string | undefined, adminId: string, simulate = false) {
   // Trouver l'utilisateur
   let targetUserId = userId
   if (customId && !userId) {
@@ -726,77 +991,52 @@ async function reconcileBalance(client: any, customId: string | undefined, userI
     return { success: false, error: 'Wallet non trouvé' }
   }
 
-  // Recalculer le solde attendu
-  const { data: receivedTx } = await client
-    .from('wallet_transactions')
-    .select('amount')
-    .eq('receiver_user_id', targetUserId)
-    .eq('status', 'completed')
-
-  const { data: sentTx } = await client
-    .from('wallet_transactions')
-    .select('amount')
-    .eq('sender_user_id', targetUserId)
-    .eq('status', 'completed')
-
-  const { data: p2pReceived } = await client
-    .from('p2p_transactions')
-    .select('amount')
-    .eq('receiver_id', targetUserId)
-    .eq('status', 'completed')
-
-  const { data: p2pSent } = await client
-    .from('p2p_transactions')
-    .select('amount')
-    .eq('sender_id', targetUserId)
-    .eq('status', 'completed')
-
-  const { data: stripeDeposits } = await client
-    .from('stripe_wallet_transactions')
-    .select('amount')
-    .eq('user_id', targetUserId)
-    .eq('transaction_type', 'deposit')
-    .eq('status', 'completed')
-
-  const { data: stripeWithdrawals } = await client
-    .from('stripe_wallet_transactions')
-    .select('amount')
-    .eq('user_id', targetUserId)
-    .eq('transaction_type', 'withdrawal')
-    .eq('status', 'completed')
-
-  const totalIncoming = 
-    (receivedTx || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0) +
-    (p2pReceived || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0) +
-    (stripeDeposits || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0)
-
-  const totalOutgoing = 
-    (sentTx || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0) +
-    (p2pSent || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0) +
-    (stripeWithdrawals || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0)
-
-  const calculatedBalance = totalIncoming - totalOutgoing
+  // Calcul complet avec toutes les sources
+  const balanceCalc = await calculateCompleteBalance(client, targetUserId)
+  
   const storedBalance = Number(wallet.balance) || 0
-  const difference = storedBalance - calculatedBalance
+  const difference = storedBalance - balanceCalc.calculatedBalance
+
+  // Mode simulation - ne pas modifier la base
+  if (simulate) {
+    return {
+      success: true,
+      simulated: true,
+      message: 'Simulation de réconciliation',
+      oldBalance: storedBalance,
+      newBalance: balanceCalc.calculatedBalance,
+      difference,
+      sources: balanceCalc.sources.map(s => ({
+        name: s.name,
+        incoming: s.incoming,
+        outgoing: s.outgoing,
+        net: s.incoming - s.outgoing,
+        count: s.count
+      })),
+      totalIncoming: balanceCalc.totalIncoming,
+      totalOutgoing: balanceCalc.totalOutgoing,
+      totalFees: balanceCalc.totalFees
+    }
+  }
 
   // Enregistrer la réconciliation
   await client.from('balance_reconciliation').insert({
     wallet_id: wallet.id,
     wallet_type: 'user',
     stored_balance: storedBalance,
-    calculated_balance: calculatedBalance,
+    calculated_balance: balanceCalc.calculatedBalance,
     difference,
     is_reconciled: true,
     reconciled_by: adminId,
     reconciled_at: new Date().toISOString(),
-    reconciliation_action: 'balance_adjustment'
+    reconciliation_action: 'full_reconciliation'
   })
 
   // Mettre à jour le solde
   const { error } = await client
     .from('wallets')
     .update({ 
-      balance: calculatedBalance,
+      balance: balanceCalc.calculatedBalance,
       updated_at: new Date().toISOString()
     })
     .eq('id', wallet.id)
@@ -812,15 +1052,29 @@ async function reconcileBalance(client: any, customId: string | undefined, userI
     target_type: 'wallet',
     target_id: wallet.id,
     old_value: { balance: storedBalance },
-    new_value: { balance: calculatedBalance, difference }
+    new_value: { 
+      balance: balanceCalc.calculatedBalance, 
+      difference,
+      sources: balanceCalc.sources.map(s => s.name)
+    }
   })
 
   return { 
     success: true, 
-    message: 'Solde réconcilié avec succès',
+    message: 'Solde réconcilié avec succès (toutes sources)',
     oldBalance: storedBalance,
-    newBalance: calculatedBalance,
-    difference
+    newBalance: balanceCalc.calculatedBalance,
+    difference,
+    sources: balanceCalc.sources.map(s => ({
+      name: s.name,
+      incoming: s.incoming,
+      outgoing: s.outgoing,
+      net: s.incoming - s.outgoing,
+      count: s.count
+    })),
+    totalIncoming: balanceCalc.totalIncoming,
+    totalOutgoing: balanceCalc.totalOutgoing,
+    totalFees: balanceCalc.totalFees
   }
 }
 
@@ -851,12 +1105,15 @@ async function createMissingWallet(client: any, customId: string | undefined, us
     return { success: false, error: 'Un wallet existe déjà pour cet utilisateur' }
   }
 
-  // Créer le wallet
+  // Calculer le solde initial basé sur les transactions existantes
+  const balanceCalc = await calculateCompleteBalance(client, targetUserId)
+
+  // Créer le wallet avec le solde calculé
   const { data: newWallet, error } = await client
     .from('wallets')
     .insert({
       user_id: targetUserId,
-      balance: 0,
+      balance: balanceCalc.calculatedBalance,
       currency: 'GNF',
       wallet_status: 'active',
       is_blocked: false,
@@ -876,13 +1133,20 @@ async function createMissingWallet(client: any, customId: string | undefined, us
     action_type: 'wallet_create',
     target_type: 'wallet',
     target_id: newWallet.id,
-    new_value: { user_id: targetUserId, created_by: 'admin_audit' }
+    new_value: { 
+      user_id: targetUserId, 
+      created_by: 'admin_audit',
+      initial_balance: balanceCalc.calculatedBalance,
+      based_on_transactions: balanceCalc.allTransactions.length
+    }
   })
 
   return { 
     success: true, 
     message: 'Wallet créé avec succès',
-    wallet: newWallet
+    wallet: newWallet,
+    initialBalance: balanceCalc.calculatedBalance,
+    basedOnTransactions: balanceCalc.allTransactions.length
   }
 }
 
@@ -963,114 +1227,81 @@ async function verifyPaymentSignatures(client: any) {
 
 // =========== FONCTIONS BATCH ===========
 
-async function reconcileAllWallets(client: any, adminId: string) {
-  console.log('Starting reconcile all wallets...')
+async function reconcileAllWallets(client: any, adminId: string, simulate = false) {
+  console.log('Starting reconcile all wallets... Simulate:', simulate)
   
   // Récupérer tous les wallets
   const { data: allWallets, error: walletsError } = await client
     .from('wallets')
     .select('id, user_id, balance, currency')
-    .limit(200)
+    .limit(500)
 
   if (walletsError) {
     console.error('Error fetching wallets:', walletsError)
     return { success: false, error: 'Erreur lors de la récupération des wallets' }
   }
 
-  const results: { userId: string; oldBalance: number; newBalance: number; difference: number; status: string }[] = []
+  const results: { 
+    userId: string
+    oldBalance: number
+    newBalance: number
+    difference: number
+    status: string
+    sources?: string[]
+  }[] = []
   let successCount = 0
   let errorCount = 0
   let skippedCount = 0
+  let totalDifference = 0
 
   for (const wallet of (allWallets || [])) {
     try {
-      // Recalculer le solde attendu
-      const { data: receivedTx } = await client
-        .from('wallet_transactions')
-        .select('amount')
-        .eq('receiver_user_id', wallet.user_id)
-        .eq('status', 'completed')
-
-      const { data: sentTx } = await client
-        .from('wallet_transactions')
-        .select('amount')
-        .eq('sender_user_id', wallet.user_id)
-        .eq('status', 'completed')
-
-      const { data: p2pReceived } = await client
-        .from('p2p_transactions')
-        .select('amount')
-        .eq('receiver_id', wallet.user_id)
-        .eq('status', 'completed')
-
-      const { data: p2pSent } = await client
-        .from('p2p_transactions')
-        .select('amount')
-        .eq('sender_id', wallet.user_id)
-        .eq('status', 'completed')
-
-      const { data: stripeDeposits } = await client
-        .from('stripe_wallet_transactions')
-        .select('amount')
-        .eq('user_id', wallet.user_id)
-        .eq('transaction_type', 'deposit')
-        .eq('status', 'completed')
-
-      const { data: stripeWithdrawals } = await client
-        .from('stripe_wallet_transactions')
-        .select('amount')
-        .eq('user_id', wallet.user_id)
-        .eq('transaction_type', 'withdrawal')
-        .eq('status', 'completed')
-
-      const totalIncoming = 
-        (receivedTx || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0) +
-        (p2pReceived || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0) +
-        (stripeDeposits || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0)
-
-      const totalOutgoing = 
-        (sentTx || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0) +
-        (p2pSent || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0) +
-        (stripeWithdrawals || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0)
-
-      const calculatedBalance = totalIncoming - totalOutgoing
+      // Calcul complet avec toutes les sources
+      const balanceCalc = await calculateCompleteBalance(client, wallet.user_id)
+      
       const storedBalance = Number(wallet.balance) || 0
-      const difference = Math.abs(storedBalance - calculatedBalance)
+      const difference = storedBalance - balanceCalc.calculatedBalance
+      const absDifference = Math.abs(difference)
 
       // Si pas de différence significative, skip
-      if (difference < 1) {
+      if (absDifference < 1) {
         skippedCount++
         continue
       }
 
-      // Enregistrer la réconciliation
-      await client.from('balance_reconciliation').insert({
-        wallet_id: wallet.id,
-        wallet_type: 'user',
-        stored_balance: storedBalance,
-        calculated_balance: calculatedBalance,
-        difference: storedBalance - calculatedBalance,
-        is_reconciled: true,
-        reconciled_by: adminId,
-        reconciled_at: new Date().toISOString(),
-        reconciliation_action: 'batch_reconciliation'
-      })
+      totalDifference += absDifference
 
-      // Mettre à jour le solde
-      await client
-        .from('wallets')
-        .update({ 
-          balance: calculatedBalance,
-          updated_at: new Date().toISOString()
+      if (!simulate) {
+        // Enregistrer la réconciliation
+        await client.from('balance_reconciliation').insert({
+          wallet_id: wallet.id,
+          wallet_type: 'user',
+          stored_balance: storedBalance,
+          calculated_balance: balanceCalc.calculatedBalance,
+          difference,
+          is_reconciled: true,
+          reconciled_by: adminId,
+          reconciled_at: new Date().toISOString(),
+          reconciliation_action: 'batch_full_reconciliation'
         })
-        .eq('id', wallet.id)
+
+        // Mettre à jour le solde
+        await client
+          .from('wallets')
+          .update({ 
+            balance: balanceCalc.calculatedBalance,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', wallet.id)
+      }
 
       results.push({
         userId: wallet.user_id,
         oldBalance: storedBalance,
-        newBalance: calculatedBalance,
-        difference: storedBalance - calculatedBalance,
-        status: 'reconciled'
+        newBalance: balanceCalc.calculatedBalance,
+        difference,
+        status: simulate ? 'would_reconcile' : 'reconciled',
+        sources: balanceCalc.sources.map(s => s.name)
       })
       successCount++
     } catch (err) {
@@ -1079,25 +1310,38 @@ async function reconcileAllWallets(client: any, adminId: string) {
     }
   }
 
-  // Log l'action
-  await client.from('admin_action_logs').insert({
-    admin_id: adminId,
-    action_type: 'batch_wallet_reconcile',
-    target_type: 'wallets',
-    target_id: 'batch',
-    new_value: { successCount, errorCount, skippedCount, totalWallets: (allWallets || []).length }
-  })
+  if (!simulate) {
+    // Log l'action
+    await client.from('admin_action_logs').insert({
+      admin_id: adminId,
+      action_type: 'batch_wallet_reconcile',
+      target_type: 'wallets',
+      target_id: 'batch',
+      new_value: { 
+        successCount, 
+        errorCount, 
+        skippedCount, 
+        totalWallets: (allWallets || []).length,
+        totalDifference,
+        method: 'full_reconciliation'
+      }
+    })
+  }
 
   return { 
     success: true, 
-    message: `Réconciliation terminée`,
+    simulated: simulate,
+    message: simulate 
+      ? `Simulation terminée: ${successCount} wallets à corriger` 
+      : `Réconciliation terminée: ${successCount} wallets corrigés`,
     stats: {
       total: (allWallets || []).length,
       reconciled: successCount,
       skipped: skippedCount,
-      errors: errorCount
+      errors: errorCount,
+      totalDifference
     },
-    results: results.slice(0, 50) // Limiter le nombre de résultats renvoyés
+    results: results.slice(0, 100)
   }
 }
 
@@ -1117,17 +1361,21 @@ async function createAllMissingWallets(client: any, adminId: string) {
   const walletUserIds = new Set((allWallets || []).map((w: any) => w.user_id))
   const usersWithoutWallet = (allUserIds || []).filter((u: any) => !walletUserIds.has(u.user_id))
 
-  const results: { customId: string; userId: string; status: string; walletId?: string }[] = []
+  const results: { customId: string; userId: string; status: string; walletId?: string; initialBalance?: number }[] = []
   let successCount = 0
   let errorCount = 0
+  let totalInitialBalance = 0
 
   for (const user of usersWithoutWallet) {
     try {
+      // Calculer le solde initial basé sur les transactions existantes
+      const balanceCalc = await calculateCompleteBalance(client, user.user_id)
+      
       const { data: newWallet, error } = await client
         .from('wallets')
         .insert({
           user_id: user.user_id,
-          balance: 0,
+          balance: balanceCalc.calculatedBalance,
           currency: 'GNF',
           wallet_status: 'active',
           is_blocked: false,
@@ -1139,11 +1387,14 @@ async function createAllMissingWallets(client: any, adminId: string) {
 
       if (error) throw error
 
+      totalInitialBalance += balanceCalc.calculatedBalance
+
       results.push({
         customId: user.custom_id,
         userId: user.user_id,
         status: 'created',
-        walletId: newWallet.id
+        walletId: newWallet.id,
+        initialBalance: balanceCalc.calculatedBalance
       })
       successCount++
     } catch (err) {
@@ -1163,7 +1414,13 @@ async function createAllMissingWallets(client: any, adminId: string) {
     action_type: 'batch_wallet_create',
     target_type: 'wallets',
     target_id: 'batch',
-    new_value: { successCount, errorCount, totalMissing: usersWithoutWallet.length }
+    new_value: { 
+      successCount, 
+      errorCount, 
+      totalMissing: usersWithoutWallet.length,
+      totalInitialBalance,
+      method: 'with_balance_calculation'
+    }
   })
 
   return { 
@@ -1172,8 +1429,70 @@ async function createAllMissingWallets(client: any, adminId: string) {
     stats: {
       totalMissing: usersWithoutWallet.length,
       created: successCount,
-      errors: errorCount
+      errors: errorCount,
+      totalInitialBalance
     },
     results: results.slice(0, 50)
+  }
+}
+
+async function generateReconciliationReport(client: any, customId?: string, userId?: string) {
+  let targetUserId = userId
+  if (customId && !userId) {
+    const { data: userIdData } = await client
+      .from('user_ids')
+      .select('user_id, custom_id')
+      .eq('custom_id', customId.toUpperCase())
+      .maybeSingle()
+    targetUserId = userIdData?.user_id
+  }
+
+  if (!targetUserId) {
+    return { success: false, error: 'Utilisateur non trouvé' }
+  }
+
+  const { data: wallet } = await client
+    .from('wallets')
+    .select('*')
+    .eq('user_id', targetUserId)
+    .maybeSingle()
+
+  const balanceCalc = await calculateCompleteBalance(client, targetUserId)
+  const storedBalance = Number(wallet?.balance) || 0
+
+  const report: ReconciliationReport = {
+    userId: targetUserId,
+    customId: customId?.toUpperCase(),
+    walletId: wallet?.id,
+    storedBalance,
+    calculatedBalance: balanceCalc.calculatedBalance,
+    difference: storedBalance - balanceCalc.calculatedBalance,
+    isCorrect: Math.abs(storedBalance - balanceCalc.calculatedBalance) < 1,
+    sources: balanceCalc.sources,
+    totalIncoming: balanceCalc.totalIncoming,
+    totalOutgoing: balanceCalc.totalOutgoing,
+    totalFees: balanceCalc.totalFees,
+    transactionCount: balanceCalc.allTransactions.length,
+    oldestTransaction: balanceCalc.allTransactions[balanceCalc.allTransactions.length - 1]?.created_at,
+    newestTransaction: balanceCalc.allTransactions[0]?.created_at,
+    recommendations: []
+  }
+
+  // Générer des recommandations
+  if (!report.isCorrect) {
+    report.recommendations.push(`Différence de ${Math.abs(report.difference).toFixed(0)} GNF détectée`)
+    report.recommendations.push('Effectuer une réconciliation pour corriger le solde')
+  }
+  if (!wallet) {
+    report.recommendations.push('Créer un wallet pour cet utilisateur')
+  }
+  if (balanceCalc.totalFees > balanceCalc.totalIncoming * 0.1) {
+    report.recommendations.push('Frais élevés - vérifier les tarifs appliqués')
+  }
+
+  return {
+    success: true,
+    report,
+    transactionsSample: balanceCalc.allTransactions.slice(0, 20)
   }
 }
