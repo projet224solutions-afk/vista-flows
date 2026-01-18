@@ -1607,14 +1607,43 @@ async function blockWallet(client: any, customId?: string, userId?: string, admi
     reason
   })
 
-  // Envoyer notification à l'utilisateur (optionnel)
-  await client.from('notifications').insert({
+  // Envoyer notification à l'utilisateur
+  const { error: notifError } = await client.from('notifications').insert({
     user_id: targetUserId,
     type: 'security',
     title: 'Wallet Suspendu',
-    message: 'Votre wallet a été temporairement suspendu pour des raisons de sécurité. Contactez le support pour plus d\'informations.',
-    is_read: false
+    message: `Votre wallet a été temporairement suspendu pour des raisons de sécurité. ${reason ? `Motif: ${reason}. ` : ''}Contactez le support pour plus d'informations.`,
+    read: false
   })
+  
+  if (notifError) {
+    console.error('Erreur création notification:', notifError.message)
+  } else {
+    console.log('Notification de blocage créée pour:', targetUserId)
+  }
+
+  // Récupérer l'email de l'utilisateur pour notification email
+  const { data: userProfile } = await client
+    .from('profiles')
+    .select('email, full_name, phone')
+    .eq('id', targetUserId)
+    .maybeSingle()
+
+  // Créer une notification push si disponible
+  if (userProfile?.email) {
+    await client.from('push_notifications').insert({
+      user_id: targetUserId,
+      title: '⚠️ Wallet Suspendu',
+      body: 'Votre wallet a été suspendu. Vérifiez vos notifications.',
+      notification_type: 'security_alert',
+      status: 'pending',
+      metadata: { reason, blocked_by: adminId }
+    }).then(() => {
+      console.log('Push notification créée pour blocage wallet')
+    }).catch((e: any) => {
+      console.log('Push notification non créée:', e.message)
+    })
+  }
 
   return { 
     success: true, 
@@ -1691,13 +1720,28 @@ async function unblockWallet(client: any, customId?: string, userId?: string, ad
   })
 
   // Notifier l'utilisateur
-  await client.from('notifications').insert({
+  const { error: notifError } = await client.from('notifications').insert({
     user_id: targetUserId,
     type: 'success',
     title: 'Wallet Réactivé',
     message: 'Votre wallet a été réactivé. Vous pouvez à nouveau effectuer des transactions.',
-    is_read: false
+    read: false
   })
+
+  if (notifError) {
+    console.error('Erreur création notification déblocage:', notifError.message)
+  } else {
+    console.log('Notification de déblocage créée pour:', targetUserId)
+  }
+
+  // Notification push
+  await client.from('push_notifications').insert({
+    user_id: targetUserId,
+    title: '✅ Wallet Réactivé',
+    body: 'Votre wallet est à nouveau actif.',
+    notification_type: 'wallet_status',
+    status: 'pending'
+  }).catch((e: any) => console.log('Push déblocage non créée:', e.message))
 
   return { 
     success: true, 
