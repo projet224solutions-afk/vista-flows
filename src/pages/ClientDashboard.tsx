@@ -410,67 +410,55 @@ export default function ClientDashboard() {
                   <CardTitle className={responsive.isMobile ? 'text-base' : 'text-lg'}>Statistiques</CardTitle>
                   <CardDescription className="text-xs md:text-sm">Votre activité</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3 md:space-y-4">
+                <CardContent>
                   {statsLoading ? (
                     <div className="text-center py-4 text-muted-foreground">Chargement...</div>
                   ) : (
-                    <>
-                      <div className="flex items-center justify-between p-3 bg-client-accent rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-client-primary/10 flex items-center justify-center`}>
-                            <Package className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-client-primary`} />
-                          </div>
-                          <div>
-                            <p className="text-xs md:text-sm text-muted-foreground">Commandes</p>
-                            <p className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>
-                              {clientStats?.total_orders || 0}
-                            </p>
-                          </div>
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                      {/* Commandes */}
+                      <div className="flex flex-col items-center justify-center p-2 sm:p-3 bg-client-accent rounded-lg text-center">
+                        <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-client-primary/10 flex items-center justify-center mb-1`}>
+                          <Package className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-client-primary`} />
                         </div>
+                        <p className={`${responsive.isMobile ? 'text-lg' : 'text-xl'} font-bold text-foreground`}>
+                          {clientStats?.total_orders || 0}
+                        </p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">Commandes</p>
                       </div>
 
-                      <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center`}>
-                            <TrendingUp className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-orange-600`} />
-                          </div>
-                          <div>
-                            <p className="text-xs md:text-sm text-muted-foreground">En cours</p>
-                            <p className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>
-                              {clientStats?.active_orders || 0}
-                            </p>
-                          </div>
+                      {/* En cours */}
+                      <div className="flex flex-col items-center justify-center p-2 sm:p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg text-center">
+                        <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mb-1`}>
+                          <TrendingUp className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-orange-600`} />
                         </div>
+                        <p className={`${responsive.isMobile ? 'text-lg' : 'text-xl'} font-bold text-foreground`}>
+                          {clientStats?.active_orders || 0}
+                        </p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">En cours</p>
                       </div>
 
-                      <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center`}>
-                            <Heart className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-purple-600`} />
-                          </div>
-                          <div>
-                            <p className="text-xs md:text-sm text-muted-foreground">Favoris</p>
-                            <p className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>
-                              {clientStats?.favorites_count || 0}
-                            </p>
-                          </div>
+                      {/* Favoris */}
+                      <div className="flex flex-col items-center justify-center p-2 sm:p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg text-center">
+                        <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-1`}>
+                          <Heart className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-purple-600`} />
                         </div>
+                        <p className={`${responsive.isMobile ? 'text-lg' : 'text-xl'} font-bold text-foreground`}>
+                          {clientStats?.favorites_count || 0}
+                        </p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">Favoris</p>
                       </div>
 
-                      <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center`}>
-                            <CreditCard className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-green-600`} />
-                          </div>
-                          <div>
-                            <p className="text-xs md:text-sm text-muted-foreground">Total dépensé</p>
-                            <p className={`${responsive.isMobile ? 'text-base' : 'text-lg'} font-bold text-foreground`}>
-                              {formatPrice(clientStats?.total_spent || 0)}
-                            </p>
-                          </div>
+                      {/* Total dépensé */}
+                      <div className="flex flex-col items-center justify-center p-2 sm:p-3 bg-green-50 dark:bg-green-950/20 rounded-lg text-center">
+                        <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-1`}>
+                          <CreditCard className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-green-600`} />
                         </div>
+                        <p className={`${responsive.isMobile ? 'text-sm' : 'text-base'} font-bold text-foreground truncate max-w-full`}>
+                          {formatPrice(clientStats?.total_spent || 0)}
+                        </p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">Total dépensé</p>
                       </div>
-                    </>
+                    </div>
                   )}
                 </CardContent>
               </Card>
