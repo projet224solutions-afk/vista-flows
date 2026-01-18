@@ -343,8 +343,13 @@ export default function IdNormalizationAudit() {
   };
 
   // Map profile role to RoleType for ID generation
-  const mapRoleToRoleType = (role: string | undefined): RoleType | null => {
+  const mapRoleToRoleType = (role: string | undefined | null): RoleType | null => {
     if (!role) return null;
+    
+    // Convert to string and normalize
+    const roleStr = String(role).toLowerCase().trim();
+    console.log('🔍 Mapping role:', role, '→', roleStr);
+    
     const mapping: Record<string, RoleType> = {
       'vendor': 'vendor',
       'vendeur': 'vendor',
@@ -359,7 +364,10 @@ export default function IdNormalizationAudit() {
       'worker': 'worker',
       'admin': 'pdg',
     };
-    return mapping[role.toLowerCase()] || null;
+    
+    const result = mapping[roleStr] || null;
+    console.log('🔍 Mapped result:', result);
+    return result;
   };
 
   // Correct a single non-standard ID
