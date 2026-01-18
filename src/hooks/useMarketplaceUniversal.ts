@@ -279,6 +279,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           short_description,
           images,
           category,
+          product_type,
           product_mode,
           price,
           currency,
@@ -333,7 +334,8 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           vendor_id: product.vendor_id || product.merchant_id,
           vendor_name: v?.business_name || "Vendeur",
           vendor_user_id: product.merchant_id,
-          category_name: CATEGORY_DISPLAY_NAMES[product.category] || product.category || "Numérique",
+          // Afficher product_type (saisi par l'utilisateur) s'il existe, sinon fallback sur category
+          category_name: product.product_type?.trim() || CATEGORY_DISPLAY_NAMES[product.category] || product.category || "Numérique",
           service_type: product.product_mode,
           rating: product.rating || 0,
           reviews_count: product.reviews_count || 0,
