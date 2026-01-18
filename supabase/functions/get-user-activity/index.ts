@@ -50,19 +50,22 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } }
     })
 
-    // Vérifier que l'utilisateur est PDG
+    // Vérifier que l'utilisateur est authentifié
     const { data: { user }, error: authError } = await userClient.auth.getUser()
     if (authError || !user) {
+      console.log('Auth error or no user:', authError)
       return new Response(JSON.stringify({ error: 'Non autorisé' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    // Vérifier le rôle PDG dans profiles
+    // Vérifier le rôle admin/PDG dans profiles (les rôles autorisés: admin, pdg, agent)
     const { data: profile } = await userClient.from('profiles').select('role').eq('id', user.id).single()
-    if (!profile || profile.role !== 'pdg') {
-      return new Response(JSON.stringify({ error: 'Accès réservé aux PDG' }), {
+    console.log('User role:', profile?.role)
+    const allowedRoles = ['admin', 'pdg', 'agent']
+    if (!profile || !allowedRoles.includes(profile.role as string)) {
+      return new Response(JSON.stringify({ error: 'Accès réservé aux administrateurs' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
