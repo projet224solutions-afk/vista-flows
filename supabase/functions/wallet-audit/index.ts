@@ -1728,10 +1728,19 @@ async function getUserSubscriptions(client: any, customId?: string, userId?: str
 
   console.log('Fetching subscriptions for user:', targetUserId)
 
-  // 1. Table principale: subscriptions
+  // 1. Table principale: subscriptions (avec jointure sur plans)
   const { data: mainSubscriptions, error: mainError } = await client
     .from('subscriptions')
-    .select('*')
+    .select(`
+      *,
+      plans:plan_id (
+        id,
+        name,
+        display_name,
+        monthly_price_gnf,
+        yearly_price_gnf
+      )
+    `)
     .eq('user_id', targetUserId)
     .order('created_at', { ascending: false })
   
@@ -1740,7 +1749,15 @@ async function getUserSubscriptions(client: any, customId?: string, userId?: str
   // 2. service_subscriptions (abonnements aux services professionnels)
   const { data: serviceSubscriptions, error: serviceError } = await client
     .from('service_subscriptions')
-    .select('*')
+    .select(`
+      *,
+      service_plans:plan_id (
+        id,
+        name,
+        monthly_price_gnf,
+        yearly_price_gnf
+      )
+    `)
     .eq('user_id', targetUserId)
     .order('created_at', { ascending: false })
   
@@ -1758,7 +1775,14 @@ async function getUserSubscriptions(client: any, customId?: string, userId?: str
   // 4. payment_subscriptions (abonnements vendeurs)
   const { data: paymentSubscriptions, error: paymentError } = await client
     .from('payment_subscriptions')
-    .select('*')
+    .select(`
+      *,
+      subscription_plans:subscription_plan_id (
+        id,
+        name,
+        price
+      )
+    `)
     .eq('vendor_id', targetUserId)
     .order('created_at', { ascending: false })
   
@@ -1780,25 +1804,33 @@ async function getUserSubscriptions(client: any, customId?: string, userId?: str
       ...s, 
       _type: 'subscription',
       _status: s.status,
-      _end_date: s.current_period_end
+      _end_date: s.current_period_end,
+      _plan_name: s.plans?.display_name || s.plans?.name || 'Plan Standard',
+      _payment_method: s.payment_method || 'Non défini'
     })),
     ...(serviceSubscriptions || []).map((s: any) => ({ 
       ...s, 
       _type: 'service',
       _status: s.status,
-      _end_date: s.current_period_end
+      _end_date: s.current_period_end,
+      _plan_name: s.service_plans?.name || 'Service Pro',
+      _payment_method: s.payment_method || 'Non défini'
     })),
     ...(driverSubscriptions || []).map((s: any) => ({ 
       ...s, 
       _type: 'driver',
       _status: s.status,
-      _end_date: s.end_date
+      _end_date: s.end_date,
+      _plan_name: 'Abonnement Chauffeur',
+      _payment_method: s.payment_method || 'wallet'
     })),
     ...(paymentSubscriptions || []).map((s: any) => ({ 
       ...s, 
       _type: 'vendor',
       _status: s.is_active ? 'active' : 'inactive',
-      _end_date: s.expires_at
+      _end_date: s.expires_at,
+      _plan_name: s.subscription_plans?.name || 'Plan Vendeur',
+      _payment_method: s.payment_method || 'Non défini'
     }))
   ]
 

@@ -826,46 +826,67 @@ export function WalletAuditTool() {
                             </div>
 
                             {userSubscriptions.subscriptions?.all?.length > 0 ? (
-                              <ScrollArea className="h-[200px]">
-                                <div className="space-y-2">
+                              <ScrollArea className="h-[280px]">
+                                <div className="space-y-3">
                                   {userSubscriptions.subscriptions.all.map((sub: any, idx: number) => (
                                     <div 
                                       key={idx} 
-                                      className="flex items-center justify-between p-3 bg-background rounded-lg"
+                                      className="p-3 bg-background rounded-lg border"
                                     >
-                                      <div className="flex-1">
+                                      <div className="flex items-center justify-between mb-2">
                                         <div className="flex items-center gap-2">
-                                          <Badge variant={sub.status === 'active' ? 'default' : 'secondary'}>
+                                          <Badge variant={sub._status === 'active' ? 'default' : 'secondary'}>
                                             {sub._type}
                                           </Badge>
-                                          <Badge variant={sub.status === 'active' ? 'outline' : 'destructive'}>
-                                            {sub.status}
+                                          <Badge variant={sub._status === 'active' ? 'outline' : 'destructive'}>
+                                            {sub._status || sub.status}
                                           </Badge>
                                         </div>
-                                        <p className="text-sm text-muted-foreground mt-1">
-                                          {sub.service_plans?.name || sub.subscription_plans?.name || 'Abonnement'}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">
-                                          Expire: {sub.end_date || sub.expires_at 
-                                            ? format(new Date(sub.end_date || sub.expires_at), 'dd/MM/yyyy')
-                                            : 'N/A'
-                                          }
-                                        </p>
+                                        {(sub._status === 'active' || sub.status === 'active') && (
+                                          <Button 
+                                            variant="destructive" 
+                                            size="sm"
+                                            onClick={() => cancelSubscription(sub.id)}
+                                            disabled={actionLoading === `cancel-${sub.id}`}
+                                          >
+                                            {actionLoading === `cancel-${sub.id}` ? (
+                                              <RefreshCw className="h-3 w-3 animate-spin" />
+                                            ) : (
+                                              <XCircle className="h-3 w-3 mr-1" />
+                                            )}
+                                            Annuler
+                                          </Button>
+                                        )}
                                       </div>
-                                      {sub.status === 'active' && (
-                                        <Button 
-                                          variant="destructive" 
-                                          size="sm"
-                                          onClick={() => cancelSubscription(sub.id)}
-                                          disabled={actionLoading === `cancel-${sub.id}`}
-                                        >
-                                          {actionLoading === `cancel-${sub.id}` ? (
-                                            <RefreshCw className="h-3 w-3 animate-spin" />
-                                          ) : (
-                                            <XCircle className="h-3 w-3 mr-1" />
-                                          )}
-                                          Annuler
-                                        </Button>
+                                      
+                                      <p className="text-sm font-medium">
+                                        {sub._plan_name || sub.plans?.display_name || sub.plans?.name || sub.service_plans?.name || 'Abonnement'}
+                                      </p>
+                                      
+                                      <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
+                                        <div className="flex items-center gap-1 text-muted-foreground">
+                                          <Clock className="h-3 w-3" />
+                                          <span>Expire:</span>
+                                          <span className={sub._end_date && new Date(sub._end_date) < new Date() ? 'text-destructive font-medium' : 'font-medium'}>
+                                            {sub._end_date || sub.current_period_end || sub.end_date || sub.expires_at 
+                                              ? format(new Date(sub._end_date || sub.current_period_end || sub.end_date || sub.expires_at), 'dd/MM/yyyy HH:mm')
+                                              : 'Non définie'
+                                            }
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center gap-1 text-muted-foreground">
+                                          <CreditCard className="h-3 w-3" />
+                                          <span>Paiement:</span>
+                                          <Badge variant="outline" className="text-xs">
+                                            {sub._payment_method || sub.payment_method || 'Non défini'}
+                                          </Badge>
+                                        </div>
+                                      </div>
+                                      
+                                      {sub.price_paid && (
+                                        <div className="mt-2 text-xs text-muted-foreground">
+                                          Montant payé: <span className="font-medium">{formatAmount(sub.price_paid)}</span>
+                                        </div>
                                       )}
                                     </div>
                                   ))}
