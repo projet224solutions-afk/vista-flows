@@ -76,62 +76,95 @@ const ID_CONFIGS: Record<RoleType, IdConfig> = {
 
 /**
  * Génère un ID unique pour un rôle donné
- * Format: PREFIX + NUMERO (ex: AGT00001, VND00042)
+ * Format: PREFIX + NUMERO (ex: AGT0001, VND0042)
+ * Cherche le MAX dans user_ids pour garantir l'unicité
  */
 export async function generateAutoId(roleType: RoleType): Promise<string> {
   const config = ID_CONFIGS[roleType];
   
   try {
-    // Récupérer le dernier ID généré
+    // Récupérer le plus grand ID existant dans user_ids pour ce préfixe
+    const { data: userIdsData, error: userIdsError } = await supabase
+      .from('user_ids')
+      .select('custom_id')
+      .like('custom_id', `${config.prefix}%`)
+      .order('custom_id', { ascending: false })
+      .limit(10);
+
+    let maxNumber = 0;
+
+    if (!userIdsError && userIdsData && userIdsData.length > 0) {
+      // Trouver le plus grand numéro
+      for (const row of userIdsData) {
+        if (row.custom_id) {
+          const numericPart = row.custom_id.replace(config.prefix, '');
+          const num = parseInt(numericPart, 10);
+          if (!isNaN(num) && num > maxNumber) {
+            maxNumber = num;
+          }
+        }
+      }
+    }
+
+    // Vérifier aussi dans la table de rôle
     const { data, error } = await supabase
       .from(config.table as any)
       .select(config.column)
       .not(config.column, 'is', null)
       .order('created_at', { ascending: false })
-      .limit(1);
+      .limit(10);
 
-    if (error) {
-      console.error(`Erreur récupération dernier ${roleType} ID:`, error);
-      // En cas d'erreur, commencer à 1
-      return `${config.prefix}${'1'.padStart(config.length, '0')}`;
-    }
-
-    let nextNumber = 1;
-
-    if (data && data.length > 0) {
-      const lastCode = data[0][config.column];
-      if (lastCode) {
-        // Extraire le numéro du code (enlever le préfixe)
-        const numericPart = lastCode.replace(config.prefix, '');
-        const lastNumber = parseInt(numericPart, 10);
-        
-        if (!isNaN(lastNumber)) {
-          nextNumber = lastNumber + 1;
+    if (!error && data && data.length > 0) {
+      for (const row of data) {
+        const code = row[config.column];
+        if (code) {
+          const numericPart = code.replace(config.prefix, '');
+          const num = parseInt(numericPart, 10);
+          if (!isNaN(num) && num > maxNumber) {
+            maxNumber = num;
+          }
         }
       }
     }
 
-    // Générer le nouvel ID
+    // Générer le nouvel ID (max + 1)
+    const nextNumber = maxNumber + 1;
     const newId = `${config.prefix}${nextNumber.toString().padStart(config.length, '0')}`;
     
-    console.log(`✅ ID généré pour ${roleType}:`, newId);
+    console.log(`✅ ID généré pour ${roleType}: ${newId} (max trouvé: ${maxNumber})`);
     return newId;
     
   } catch (error) {
     console.error(`Erreur génération ID ${roleType}:`, error);
-    // Fallback: ID aléatoire
-    const randomNum = Math.floor(Math.random() * 99999);
-    return `${config.prefix}${randomNum.toString().padStart(config.length, '0')}`;
+    // Fallback: timestamp pour garantir l'unicité
+    const timestamp = Date.now().toString().slice(-4);
+    return `${config.prefix}${timestamp}`;
   }
 }
 
 /**
- * Vérifie si un ID existe déjà
+ * Vérifie si un ID existe déjà dans user_ids (contrainte d'unicité principale)
  */
 export async function checkIdExists(roleType: RoleType, id: string): Promise<boolean> {
-  const config = ID_CONFIGS[roleType];
-  
   try {
+    // Vérifier dans user_ids qui a la contrainte d'unicité sur custom_id
+    const { data: userIdData, error: userIdError } = await supabase
+      .from('user_ids')
+      .select('custom_id')
+      .eq('custom_id', id)
+      .maybeSingle();
+
+    if (userIdError) {
+      console.error(`Erreur vérification ID dans user_ids:`, userIdError);
+    }
+
+    if (userIdData) {
+      console.log(`⚠️ ID ${id} déjà existant dans user_ids`);
+      return true;
+    }
+
+    // Vérification supplémentaire dans la table de rôle
+    const config = ID_CONFIGS[roleType];
     const { data, error } = await supabase
       .from(config.table as any)
       .select(config.column)
