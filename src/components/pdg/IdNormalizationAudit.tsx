@@ -45,6 +45,9 @@ interface NormalizationLog {
 
 interface Stats {
   total: number;
+  totalUserIds: number;
+  standardFormatCount: number;
+  nonStandardFormatCount: number;
   byRole: Record<string, number>;
   byReason: Record<string, number>;
   dailyTrends: { date: string; count: number }[];
@@ -58,10 +61,17 @@ interface IdSearchResult {
   role?: string;
   created_at?: string;
   normalization_history?: NormalizationLog[];
+  profile?: {
+    full_name?: string;
+    email?: string;
+    role?: string;
+  };
 }
 
-// Format d'ID standard: 3 lettres majuscules + 4+ chiffres (ex: VND0001, CLT0123, AGT0001)
+// Format d'ID standard: 3 lettres majuscules + 4 chiffres (ex: VND0001, CLT0123, AGT0001)
+// Mais on accepte aussi les formats existants pour la recherche
 const ID_FORMAT_REGEX = /^[A-Z]{3}\d{4,}$/;
+const SEARCH_ID_REGEX = /^[A-Z]{3}\d{3,}$/; // Plus permissif pour la recherche
 
 const VALID_PREFIXES = ['VND', 'CLT', 'AGT', 'DRV', 'BUR', 'ADM', 'PDG'];
 
@@ -115,42 +125,59 @@ export default function IdNormalizationAudit() {
   const [searchResult, setSearchResult] = useState<IdSearchResult | null>(null);
   const [searching, setSearching] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [allUserIds, setAllUserIds] = useState<any[]>([]);
 
-  // Validate ID format
-  const validateIdFormat = (id: string): { valid: boolean; error?: string } => {
-    if (!id) {
-      return { valid: false, error: 'Veuillez entrer un ID' };
+  // Validate ID format for search (more permissive)
+  const validateSearchId = (id: string): { valid: boolean; error?: string; isStandard?: boolean } => {
+    if (!id || id.trim().length < 3) {
+      return { valid: false, error: 'Veuillez entrer au moins 3 caractères' };
     }
 
     const upperCaseId = id.toUpperCase().trim();
 
-    if (upperCaseId.length < 7) {
-      return { valid: false, error: 'L\'ID doit contenir au moins 7 caractères (3 lettres + 4 chiffres)' };
+    // Vérifier si c'est un format standard
+    const isStandardFormat = ID_FORMAT_REGEX.test(upperCaseId);
+    
+    // Accepter n'importe quel format alphanumérique pour la recherche
+    if (!/^[A-Z0-9]{3,}$/i.test(upperCaseId)) {
+      return { 
+        valid: false, 
+        error: 'L\'ID doit contenir uniquement des lettres et chiffres' 
+      };
     }
 
+    return { valid: true, isStandard: isStandardFormat };
+  };
+
+  // Check if ID matches standard format
+  const isStandardFormat = (id: string): boolean => {
+    if (!id) return false;
+    const upperCaseId = id.toUpperCase().trim();
     const prefix = upperCaseId.substring(0, 3);
-    if (!VALID_PREFIXES.includes(prefix)) {
-      return { 
-        valid: false, 
-        error: `Préfixe invalide "${prefix}". Préfixes valides: ${VALID_PREFIXES.join(', ')}` 
-      };
-    }
+    return ID_FORMAT_REGEX.test(upperCaseId) && VALID_PREFIXES.includes(prefix);
+  };
 
-    if (!ID_FORMAT_REGEX.test(upperCaseId)) {
-      return { 
-        valid: false, 
-        error: 'Format invalide. Format attendu: 3 lettres majuscules + 4+ chiffres (ex: VND0001)' 
-      };
-    }
+  // Load all user IDs for listing
+  const loadAllUserIds = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_ids')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
 
-    return { valid: true };
+      if (error) throw error;
+      setAllUserIds(data || []);
+    } catch (error: any) {
+      console.error('Erreur chargement user_ids:', error);
+    }
   };
 
   // Search for a specific ID
   const handleSearchId = async () => {
     const normalizedId = searchId.toUpperCase().trim();
     
-    const validation = validateIdFormat(normalizedId);
+    const validation = validateSearchId(normalizedId);
     if (!validation.valid) {
       setSearchError(validation.error || 'Format invalide');
       setSearchResult(null);
@@ -162,8 +189,8 @@ export default function IdNormalizationAudit() {
     setSearchResult(null);
 
     try {
-      // Search in user_ids table
-      const { data: userIdData, error: userIdError } = await supabase
+      // Search in user_ids table - exact match first
+      let { data: userIdData, error: userIdError } = await supabase
         .from('user_ids')
         .select('*')
         .eq('custom_id', normalizedId)
@@ -171,23 +198,38 @@ export default function IdNormalizationAudit() {
 
       if (userIdError) throw userIdError;
 
+      // If not found with exact match, try partial search
+      if (!userIdData) {
+        const { data: partialData, error: partialError } = await supabase
+          .from('user_ids')
+          .select('*')
+          .ilike('custom_id', `%${normalizedId}%`)
+          .limit(1)
+          .maybeSingle();
+
+        if (partialError) throw partialError;
+        userIdData = partialData;
+      }
+
       // If found in user_ids, get profile to determine role
       let userRole: string | undefined;
+      let profileData: any = null;
       if (userIdData) {
-        const { data: profileData } = await supabase
+        const { data: pData } = await supabase
           .from('profiles')
-          .select('role')
+          .select('role, full_name, email')
           .eq('id', userIdData.user_id)
           .maybeSingle();
         
-        userRole = profileData?.role || undefined;
+        profileData = pData;
+        userRole = pData?.role || undefined;
       }
 
       // Search in normalization logs
       const { data: normLogs, error: normError } = await supabase
         .from('id_normalization_logs')
         .select('*')
-        .or(`original_id.eq.${normalizedId},corrected_id.eq.${normalizedId}`)
+        .or(`original_id.ilike.%${normalizedId}%,corrected_id.ilike.%${normalizedId}%`)
         .order('created_at', { ascending: false });
 
       if (normError) throw normError;
@@ -201,34 +243,37 @@ export default function IdNormalizationAudit() {
       if (userIdData) {
         setSearchResult({
           found: true,
-          id: normalizedId,
+          id: userIdData.custom_id,
           table: 'user_ids',
           user_id: userIdData.user_id,
           role: userRole,
           created_at: userIdData.created_at,
-          normalization_history: mappedLogs
+          normalization_history: mappedLogs,
+          profile: profileData
         });
+        toast.success(`ID trouvé: ${userIdData.custom_id}`);
       } else if (mappedLogs.length > 0) {
         // ID found only in normalization logs (might have been corrected)
         const latestLog = mappedLogs[0];
         setSearchResult({
           found: true,
-          id: normalizedId,
+          id: latestLog.corrected_id || latestLog.original_id,
           table: 'normalization_logs',
           user_id: latestLog.user_id,
           role: latestLog.role_type,
           created_at: latestLog.created_at,
           normalization_history: mappedLogs
         });
+        toast.success(`ID trouvé dans les logs de normalisation`);
       } else {
         setSearchResult({
           found: false,
           id: normalizedId,
           table: 'none'
         });
+        toast.info(`Aucun ID trouvé pour "${normalizedId}"`);
       }
 
-      toast.success(`Recherche terminée pour ${normalizedId}`);
     } catch (error: any) {
       console.error('Erreur recherche ID:', error);
       toast.error('Erreur lors de la recherche');
@@ -247,13 +292,34 @@ export default function IdNormalizationAudit() {
 
   const loadStats = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      // Load normalization logs
+      const { data: normData, error: normError } = await supabase
         .from('id_normalization_logs')
         .select('*');
 
-      if (error) throw error;
+      if (normError) throw normError;
 
-      const logsData = data || [];
+      // Load all user_ids for stats
+      const { data: userIdsData, error: userIdsError } = await supabase
+        .from('user_ids')
+        .select('custom_id, created_at');
+
+      if (userIdsError) throw userIdsError;
+
+      const logsData = normData || [];
+      const userIds = userIdsData || [];
+      
+      // Calculate standard vs non-standard format counts
+      let standardFormatCount = 0;
+      let nonStandardFormatCount = 0;
+      
+      userIds.forEach(item => {
+        if (isStandardFormat(item.custom_id)) {
+          standardFormatCount++;
+        } else {
+          nonStandardFormatCount++;
+        }
+      });
       
       const byRole: Record<string, number> = {};
       const byReason: Record<string, number> = {};
@@ -273,6 +339,9 @@ export default function IdNormalizationAudit() {
 
       setStats({
         total: logsData.length,
+        totalUserIds: userIds.length,
+        standardFormatCount,
+        nonStandardFormatCount,
         byRole,
         byReason,
         dailyTrends
@@ -328,11 +397,13 @@ export default function IdNormalizationAudit() {
   useEffect(() => {
     loadStats();
     loadLogs();
+    loadAllUserIds();
   }, [loadStats, loadLogs]);
 
   const handleRefresh = () => {
     loadStats();
     loadLogs();
+    loadAllUserIds();
     toast.success('Données actualisées');
   };
 
@@ -423,36 +494,8 @@ export default function IdNormalizationAudit() {
                 <Hash className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats?.total || 0}</p>
-                <p className="text-xs text-muted-foreground">Total corrections</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-500/10 rounded-lg">
-                <AlertTriangle className="w-5 h-5 text-red-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats?.byReason['duplicate_detected'] || 0}</p>
-                <p className="text-xs text-muted-foreground">Doublons</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-yellow-500/10 rounded-lg">
-                <Shield className="w-5 h-5 text-yellow-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats?.byReason['format_invalid'] || 0}</p>
-                <p className="text-xs text-muted-foreground">Formats invalides</p>
+                <p className="text-2xl font-bold">{stats?.totalUserIds || 0}</p>
+                <p className="text-xs text-muted-foreground">Total IDs</p>
               </div>
             </div>
           </CardContent>
@@ -465,8 +508,36 @@ export default function IdNormalizationAudit() {
                 <CheckCircle className="w-5 h-5 text-green-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{Object.keys(stats?.byRole || {}).length}</p>
-                <p className="text-xs text-muted-foreground">Rôles concernés</p>
+                <p className="text-2xl font-bold">{stats?.standardFormatCount || 0}</p>
+                <p className="text-xs text-muted-foreground">Format standard</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-yellow-500/10 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-yellow-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats?.nonStandardFormatCount || 0}</p>
+                <p className="text-xs text-muted-foreground">Format non-standard</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-500/10 rounded-lg">
+                <Shield className="w-5 h-5 text-red-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats?.total || 0}</p>
+                <p className="text-xs text-muted-foreground">Corrections</p>
               </div>
             </div>
           </CardContent>
@@ -654,6 +725,98 @@ export default function IdNormalizationAudit() {
                   )}
                 </div>
               )}
+
+              {/* Profile details if available */}
+              {searchResult?.found && searchResult.profile && (
+                <Card className="mt-4 border-primary/20">
+                  <CardContent className="p-4">
+                    <h5 className="font-semibold mb-2 text-sm">Détails du profil</h5>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      {searchResult.profile.full_name && (
+                        <div>
+                          <p className="text-xs text-muted-foreground">Nom complet</p>
+                          <p className="font-medium">{searchResult.profile.full_name}</p>
+                        </div>
+                      )}
+                      {searchResult.profile.email && (
+                        <div>
+                          <p className="text-xs text-muted-foreground">Email</p>
+                          <p className="font-medium truncate">{searchResult.profile.email}</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Recent User IDs List */}
+              <Card className="mt-6">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Hash className="w-4 h-4" />
+                    IDs récents ({allUserIds.length})
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Derniers IDs enregistrés dans le système
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {allUserIds.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Aucun ID enregistré
+                    </p>
+                  ) : (
+                    <ScrollArea className="h-64">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-32">ID</TableHead>
+                            <TableHead>Format</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead className="text-right">Action</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {allUserIds.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell className="font-mono font-medium">
+                                {item.custom_id}
+                              </TableCell>
+                              <TableCell>
+                                {isStandardFormat(item.custom_id) ? (
+                                  <Badge variant="outline" className="text-green-600 border-green-600">
+                                    Standard
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                                    Non-standard
+                                  </Badge>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {format(new Date(item.created_at), 'dd/MM/yyyy', { locale: fr })}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSearchId(item.custom_id);
+                                    handleSearchId();
+                                  }}
+                                >
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  Voir
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </ScrollArea>
+                  )}
+                </CardContent>
+              </Card>
             </CardContent>
           </Card>
         </TabsContent>
