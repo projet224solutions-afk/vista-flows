@@ -1,6 +1,7 @@
 /**
  * 📊 ID NORMALIZATION AUDIT - PDG ONLY
  * Suivi des corrections automatiques d'ID lors des inscriptions
+ * Avec recherche avancée et validation de format
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -8,13 +9,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
   RefreshCw, Search, AlertTriangle, CheckCircle, 
-  TrendingUp, Calendar, User, Shield, Hash, ChevronLeft, ChevronRight
+  TrendingUp, Calendar, Shield, Hash, ChevronLeft, ChevronRight,
+  Eye, XCircle, Info, Copy, Check
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -46,6 +50,21 @@ interface Stats {
   dailyTrends: { date: string; count: number }[];
 }
 
+interface IdSearchResult {
+  found: boolean;
+  id: string;
+  table: string;
+  user_id?: string;
+  role?: string;
+  created_at?: string;
+  normalization_history?: NormalizationLog[];
+}
+
+// Format d'ID standard: 3 lettres majuscules + 4+ chiffres (ex: VND0001, CLT0123, AGT0001)
+const ID_FORMAT_REGEX = /^[A-Z]{3}\d{4,}$/;
+
+const VALID_PREFIXES = ['VND', 'CLT', 'AGT', 'DRV', 'BUR', 'ADM', 'PDG'];
+
 const REASONS_MAP: Record<string, { label: string; color: string }> = {
   'duplicate_detected': { label: 'Doublon détecté', color: '#EF4444' },
   'format_invalid': { label: 'Format invalide', color: '#F59E0B' },
@@ -53,6 +72,8 @@ const REASONS_MAP: Record<string, { label: string; color: string }> = {
   'counter_mismatch': { label: 'Compteur désynchronisé', color: '#8B5CF6' },
   'manual_override': { label: 'Correction manuelle', color: '#10B981' },
   'collision_resolved': { label: 'Collision résolue', color: '#EC4899' },
+  'prefix_mismatch': { label: 'Préfixe incorrect', color: '#F97316' },
+  'migration_fix': { label: 'Correction migration', color: '#06B6D4' },
 };
 
 const ROLE_COLORS: Record<string, string> = {
@@ -61,6 +82,16 @@ const ROLE_COLORS: Record<string, string> = {
   'agent': '#F59E0B',
   'driver': '#8B5CF6',
   'bureau': '#EC4899',
+};
+
+const PREFIX_TO_ROLE: Record<string, string> = {
+  'VND': 'Vendeur',
+  'CLT': 'Client',
+  'AGT': 'Agent',
+  'DRV': 'Livreur',
+  'BUR': 'Bureau',
+  'ADM': 'Admin',
+  'PDG': 'PDG',
 };
 
 const PIE_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#EF4444'];
@@ -78,6 +109,142 @@ export default function IdNormalizationAudit() {
   });
   const limit = 20;
 
+  // ID Search/Track state
+  const [searchId, setSearchId] = useState('');
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchResult, setSearchResult] = useState<IdSearchResult | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Validate ID format
+  const validateIdFormat = (id: string): { valid: boolean; error?: string } => {
+    if (!id) {
+      return { valid: false, error: 'Veuillez entrer un ID' };
+    }
+
+    const upperCaseId = id.toUpperCase().trim();
+
+    if (upperCaseId.length < 7) {
+      return { valid: false, error: 'L\'ID doit contenir au moins 7 caractères (3 lettres + 4 chiffres)' };
+    }
+
+    const prefix = upperCaseId.substring(0, 3);
+    if (!VALID_PREFIXES.includes(prefix)) {
+      return { 
+        valid: false, 
+        error: `Préfixe invalide "${prefix}". Préfixes valides: ${VALID_PREFIXES.join(', ')}` 
+      };
+    }
+
+    if (!ID_FORMAT_REGEX.test(upperCaseId)) {
+      return { 
+        valid: false, 
+        error: 'Format invalide. Format attendu: 3 lettres majuscules + 4+ chiffres (ex: VND0001)' 
+      };
+    }
+
+    return { valid: true };
+  };
+
+  // Search for a specific ID
+  const handleSearchId = async () => {
+    const normalizedId = searchId.toUpperCase().trim();
+    
+    const validation = validateIdFormat(normalizedId);
+    if (!validation.valid) {
+      setSearchError(validation.error || 'Format invalide');
+      setSearchResult(null);
+      return;
+    }
+
+    setSearchError(null);
+    setSearching(true);
+    setSearchResult(null);
+
+    try {
+      // Search in user_ids table
+      const { data: userIdData, error: userIdError } = await supabase
+        .from('user_ids')
+        .select('*')
+        .eq('custom_id', normalizedId)
+        .maybeSingle();
+
+      if (userIdError) throw userIdError;
+
+      // If found in user_ids, get profile to determine role
+      let userRole: string | undefined;
+      if (userIdData) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', userIdData.user_id)
+          .maybeSingle();
+        
+        userRole = profileData?.role || undefined;
+      }
+
+      // Search in normalization logs
+      const { data: normLogs, error: normError } = await supabase
+        .from('id_normalization_logs')
+        .select('*')
+        .or(`original_id.eq.${normalizedId},corrected_id.eq.${normalizedId}`)
+        .order('created_at', { ascending: false });
+
+      if (normError) throw normError;
+
+      const mappedLogs: NormalizationLog[] = (normLogs || []).map(log => ({
+        ...log,
+        ip_address: log.ip_address ? String(log.ip_address) : null,
+        reason: String(log.reason)
+      }));
+
+      if (userIdData) {
+        setSearchResult({
+          found: true,
+          id: normalizedId,
+          table: 'user_ids',
+          user_id: userIdData.user_id,
+          role: userRole,
+          created_at: userIdData.created_at,
+          normalization_history: mappedLogs
+        });
+      } else if (mappedLogs.length > 0) {
+        // ID found only in normalization logs (might have been corrected)
+        const latestLog = mappedLogs[0];
+        setSearchResult({
+          found: true,
+          id: normalizedId,
+          table: 'normalization_logs',
+          user_id: latestLog.user_id,
+          role: latestLog.role_type,
+          created_at: latestLog.created_at,
+          normalization_history: mappedLogs
+        });
+      } else {
+        setSearchResult({
+          found: false,
+          id: normalizedId,
+          table: 'none'
+        });
+      }
+
+      toast.success(`Recherche terminée pour ${normalizedId}`);
+    } catch (error: any) {
+      console.error('Erreur recherche ID:', error);
+      toast.error('Erreur lors de la recherche');
+      setSearchError('Erreur lors de la recherche dans la base de données');
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleCopyId = (id: string) => {
+    navigator.clipboard.writeText(id);
+    setCopiedId(id);
+    toast.success(`ID copié: ${id}`);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   const loadStats = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -88,28 +255,21 @@ export default function IdNormalizationAudit() {
 
       const logsData = data || [];
       
-      // Calculer les stats
       const byRole: Record<string, number> = {};
       const byReason: Record<string, number> = {};
       const dailyCounts: Record<string, number> = {};
 
       logsData.forEach(log => {
-        // Par rôle
         byRole[log.role_type] = (byRole[log.role_type] || 0) + 1;
-        
-        // Par raison
         byReason[log.reason] = (byReason[log.reason] || 0) + 1;
-        
-        // Par jour
         const date = format(new Date(log.created_at), 'yyyy-MM-dd');
         dailyCounts[date] = (dailyCounts[date] || 0) + 1;
       });
 
-      // Convertir dailyCounts en tableau trié
       const dailyTrends = Object.entries(dailyCounts)
         .map(([date, count]) => ({ date, count }))
         .sort((a, b) => a.date.localeCompare(b.date))
-        .slice(-7); // Derniers 7 jours
+        .slice(-7);
 
       setStats({
         total: logsData.length,
@@ -141,14 +301,14 @@ export default function IdNormalizationAudit() {
       }
 
       if (filters.search) {
-        query = query.or(`original_id.ilike.%${filters.search}%,corrected_id.ilike.%${filters.search}%`);
+        const searchTerm = filters.search.toUpperCase().trim();
+        query = query.or(`original_id.ilike.%${searchTerm}%,corrected_id.ilike.%${searchTerm}%`);
       }
 
       const { data, error, count } = await query;
 
       if (error) throw error;
 
-      // Map data to our interface with proper type handling
       const mappedLogs: NormalizationLog[] = (data || []).map(log => ({
         ...log,
         ip_address: log.ip_address ? String(log.ip_address) : null,
@@ -203,7 +363,6 @@ export default function IdNormalizationAudit() {
     );
   };
 
-  // Données pour les graphiques
   const roleChartData = stats ? Object.entries(stats.byRole).map(([role, count]) => ({
     name: role.toUpperCase(),
     value: count,
@@ -225,7 +384,7 @@ export default function IdNormalizationAudit() {
             Audit Normalisation ID
           </h2>
           <p className="text-muted-foreground mt-1">
-            Suivi des corrections automatiques d'ID lors des inscriptions
+            Suivi des corrections automatiques d'ID - Format: <code className="bg-muted px-1 rounded">AAA0001</code>
           </p>
         </div>
         <Button onClick={handleRefresh} variant="outline" className="gap-2">
@@ -233,6 +392,27 @@ export default function IdNormalizationAudit() {
           Actualiser
         </Button>
       </div>
+
+      {/* Format Info */}
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertTitle>Format d'ID Standard</AlertTitle>
+        <AlertDescription>
+          <div className="mt-2 space-y-1">
+            <p><strong>Format:</strong> 3 lettres majuscules + 4+ chiffres</p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {VALID_PREFIXES.map(prefix => (
+                <Badge key={prefix} variant="secondary" className="font-mono">
+                  {prefix} → {PREFIX_TO_ROLE[prefix] || prefix}
+                </Badge>
+              ))}
+            </div>
+            <p className="text-xs mt-2 text-muted-foreground">
+              Exemples: VND0001, CLT0123, AGT0045, DRV0001
+            </p>
+          </div>
+        </AlertDescription>
+      </Alert>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -294,8 +474,12 @@ export default function IdNormalizationAudit() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="logs" className="space-y-4">
-        <TabsList>
+      <Tabs defaultValue="search" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="search" className="gap-2">
+            <Eye className="w-4 h-4" />
+            Rechercher ID
+          </TabsTrigger>
           <TabsTrigger value="logs" className="gap-2">
             <Search className="w-4 h-4" />
             Logs
@@ -306,6 +490,174 @@ export default function IdNormalizationAudit() {
           </TabsTrigger>
         </TabsList>
 
+        {/* Search Tab */}
+        <TabsContent value="search" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Eye className="w-5 h-5" />
+                Rechercher & Suivre un ID
+              </CardTitle>
+              <CardDescription>
+                Entrez un ID au format standard pour vérifier son existence et son historique
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1 space-y-2">
+                  <Label htmlFor="search-id">ID à rechercher</Label>
+                  <Input
+                    id="search-id"
+                    placeholder="Ex: VND0001, CLT0123, AGT0045..."
+                    value={searchId}
+                    onChange={(e) => {
+                      setSearchId(e.target.value.toUpperCase());
+                      setSearchError(null);
+                    }}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearchId()}
+                    className={`font-mono uppercase ${searchError ? 'border-red-500' : ''}`}
+                  />
+                  {searchError && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <XCircle className="w-4 h-4" />
+                      {searchError}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-end">
+                  <Button 
+                    onClick={handleSearchId} 
+                    disabled={searching || !searchId}
+                    className="gap-2"
+                  >
+                    {searching ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Search className="w-4 h-4" />
+                    )}
+                    Rechercher
+                  </Button>
+                </div>
+              </div>
+
+              {/* Search Result */}
+              {searchResult && (
+                <div className="mt-6">
+                  {searchResult.found ? (
+                    <Card className="border-green-500/50 bg-green-500/5">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-green-500/20 rounded-full">
+                              <CheckCircle className="w-6 h-6 text-green-500" />
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-green-700 dark:text-green-400">
+                                ID Trouvé
+                              </h4>
+                              <div className="flex items-center gap-2 mt-1">
+                                <code className="text-lg font-bold bg-green-100 dark:bg-green-900/50 px-2 py-1 rounded">
+                                  {searchResult.id}
+                                </code>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleCopyId(searchResult.id)}
+                                >
+                                  {copiedId === searchResult.id ? (
+                                    <Check className="w-4 h-4 text-green-500" />
+                                  ) : (
+                                    <Copy className="w-4 h-4" />
+                                  )}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                          {searchResult.role && getRoleBadge(searchResult.role)}
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4 pt-4 border-t">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Table source</p>
+                            <p className="font-medium">{searchResult.table}</p>
+                          </div>
+                          {searchResult.user_id && (
+                            <div>
+                              <p className="text-xs text-muted-foreground">User ID</p>
+                              <p className="font-mono text-xs truncate" title={searchResult.user_id}>
+                                {searchResult.user_id.substring(0, 8)}...
+                              </p>
+                            </div>
+                          )}
+                          {searchResult.created_at && (
+                            <div>
+                              <p className="text-xs text-muted-foreground">Date création</p>
+                              <p className="font-medium">
+                                {format(new Date(searchResult.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Normalization History */}
+                        {searchResult.normalization_history && searchResult.normalization_history.length > 0 && (
+                          <div className="mt-4 pt-4 border-t">
+                            <h5 className="font-semibold mb-3 flex items-center gap-2">
+                              <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                              Historique de normalisation ({searchResult.normalization_history.length})
+                            </h5>
+                            <div className="space-y-2">
+                              {searchResult.normalization_history.map((log) => (
+                                <div 
+                                  key={log.id} 
+                                  className="flex flex-col sm:flex-row sm:items-center gap-2 p-2 bg-muted/50 rounded-lg text-sm"
+                                >
+                                  <span className="text-muted-foreground whitespace-nowrap">
+                                    {format(new Date(log.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                                  </span>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <code className="bg-red-100 text-red-700 px-1.5 py-0.5 rounded text-xs line-through">
+                                      {log.original_id}
+                                    </code>
+                                    <span>→</span>
+                                    <code className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-xs font-bold">
+                                      {log.corrected_id}
+                                    </code>
+                                    {getReasonBadge(log.reason)}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <Card className="border-red-500/50 bg-red-500/5">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-red-500/20 rounded-full">
+                            <XCircle className="w-6 h-6 text-red-500" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-red-700 dark:text-red-400">
+                              ID Non Trouvé
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              L'ID <code className="font-bold">{searchResult.id}</code> n'existe pas dans le système
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Logs Tab */}
         <TabsContent value="logs" className="space-y-4">
           {/* Filters */}
@@ -314,10 +666,10 @@ export default function IdNormalizationAudit() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1">
                   <Input
-                    placeholder="Rechercher un ID..."
+                    placeholder="Rechercher un ID (ex: VND0001)..."
                     value={filters.search}
-                    onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
-                    className="w-full"
+                    onChange={(e) => setFilters(f => ({ ...f, search: e.target.value.toUpperCase() }))}
+                    className="w-full font-mono uppercase"
                   />
                 </div>
                 <Select
@@ -393,12 +745,12 @@ export default function IdNormalizationAudit() {
                           </TableCell>
                           <TableCell>{getRoleBadge(log.role_type)}</TableCell>
                           <TableCell>
-                            <code className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded line-through">
+                            <code className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded line-through dark:bg-red-900/50 dark:text-red-400">
                               {log.original_id}
                             </code>
                           </TableCell>
                           <TableCell>
-                            <code className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-bold">
+                            <code className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-bold dark:bg-green-900/50 dark:text-green-400">
                               {log.corrected_id}
                             </code>
                           </TableCell>
