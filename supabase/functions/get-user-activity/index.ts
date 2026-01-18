@@ -1,6 +1,6 @@
 /**
  * 🔍 EDGE FUNCTION: RÉCUPÉRATION COMPLÈTE DES ACTIVITÉS UTILISATEUR
- * Permet aux PDG de voir tout l'historique d'un utilisateur
+ * Permet aux PDG de voir TOUT l'historique d'un utilisateur
  * Bypass les RLS en utilisant le service_role
  */
 
@@ -83,6 +83,7 @@ serve(async (req) => {
     // Créer client admin pour bypasser les RLS
     const adminClient = createClient(supabaseUrl, supabaseServiceKey)
     const trimmedId = customId.trim().toUpperCase()
+    console.log('Searching for user:', trimmedId)
 
     // 1. Trouver l'utilisateur dans user_ids
     const { data: userIdData, error: userIdError } = await adminClient
@@ -100,6 +101,7 @@ serve(async (req) => {
     }
 
     if (!userIdData) {
+      console.log('User not found:', trimmedId)
       return new Response(JSON.stringify({ error: `Aucun utilisateur trouvé avec l'ID: ${trimmedId}` }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -108,6 +110,7 @@ serve(async (req) => {
 
     const userId = userIdData.user_id
     const roleType = getRoleTypeFromCustomId(trimmedId)
+    console.log('Found user:', userId, 'Role type:', roleType)
 
     // 2. Récupérer le profil complet
     const { data: userProfile } = await adminClient
@@ -115,6 +118,7 @@ serve(async (req) => {
       .select('*')
       .eq('id', userId)
       .maybeSingle()
+    console.log('Profile found:', !!userProfile)
 
     // 3. Récupérer le wallet
     const { data: wallet } = await adminClient
@@ -122,6 +126,7 @@ serve(async (req) => {
       .select('*')
       .eq('user_id', userId)
       .maybeSingle()
+    console.log('Wallet found:', !!wallet)
 
     // 4. Récupérer les transactions (envoyées et reçues)
     const { data: sentTransactions } = await adminClient
@@ -137,14 +142,39 @@ serve(async (req) => {
       .eq('receiver_user_id', userId)
       .order('created_at', { ascending: false })
       .limit(100)
+    console.log('Transactions - sent:', sentTransactions?.length || 0, 'received:', receivedTransactions?.length || 0)
 
-    // 5. Récupérer les commandes
-    const { data: orders } = await adminClient
+    // 5. Récupérer les commandes (comme client ET comme vendeur)
+    const { data: ordersAsCustomer } = await adminClient
       .from('orders')
       .select('*')
       .eq('customer_id', userId)
       .order('created_at', { ascending: false })
       .limit(100)
+
+    // Récupérer le vendor_id si l'utilisateur est un vendeur
+    let vendorId: string | null = null
+    if (roleType === 'vendor') {
+      const { data: vendor } = await adminClient
+        .from('vendors')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle()
+      vendorId = vendor?.id || null
+    }
+
+    const { data: ordersAsVendor } = vendorId ? await adminClient
+      .from('orders')
+      .select('*')
+      .eq('vendor_id', vendorId)
+      .order('created_at', { ascending: false })
+      .limit(100) : { data: [] }
+    
+    const orders = [
+      ...(ordersAsCustomer || []).map(o => ({ ...o, _role: 'customer' })),
+      ...(ordersAsVendor || []).map(o => ({ ...o, _role: 'vendor' }))
+    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    console.log('Orders found:', orders.length)
 
     // 6. Récupérer l'historique de connexion
     const { data: loginHistory } = await adminClient
@@ -153,6 +183,7 @@ serve(async (req) => {
       .eq('identifier', userProfile?.email || '')
       .order('attempted_at', { ascending: false })
       .limit(50)
+    console.log('Login history:', loginHistory?.length || 0)
 
     // 7. Récupérer les logs d'audit
     const { data: auditLogs } = await adminClient
@@ -161,58 +192,192 @@ serve(async (req) => {
       .eq('actor_id', userId)
       .order('created_at', { ascending: false })
       .limit(100)
+    console.log('Audit logs:', auditLogs?.length || 0)
 
-    // 8. Récupérer les messages envoyés
-    const { data: messages } = await adminClient
+    // 8. Récupérer TOUS les messages (envoyés ET reçus) - CONTENU COMPLET
+    const { data: sentMessages } = await adminClient
       .from('messages')
-      .select('id, recipient_id, content, type, status, created_at')
+      .select('*')
       .eq('sender_id', userId)
       .order('created_at', { ascending: false })
-      .limit(50)
+      .limit(100)
+
+    const { data: receivedMessages } = await adminClient
+      .from('messages')
+      .select('*')
+      .eq('recipient_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(100)
+
+    const allMessages = [
+      ...(sentMessages || []).map(m => ({ ...m, _direction: 'sent' })),
+      ...(receivedMessages || []).map(m => ({ ...m, _direction: 'received' }))
+    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    console.log('Messages - sent:', sentMessages?.length || 0, 'received:', receivedMessages?.length || 0)
 
     // 9. Récupérer les livraisons
     const { data: deliveriesAsClient } = await adminClient
       .from('deliveries')
-      .select('id, status, pickup_address, delivery_address, price, created_at')
+      .select('*')
       .eq('client_id', userId)
       .order('created_at', { ascending: false })
-      .limit(25)
+      .limit(50)
 
     const { data: deliveriesAsDriver } = await adminClient
       .from('deliveries')
-      .select('id, status, pickup_address, delivery_address, price, created_at')
+      .select('*')
       .eq('driver_id', userId)
       .order('created_at', { ascending: false })
-      .limit(25)
+      .limit(50)
 
-    const deliveries = [...(deliveriesAsClient || []), ...(deliveriesAsDriver || [])]
+    const deliveries = [
+      ...(deliveriesAsClient || []).map(d => ({ ...d, _role: 'client' })),
+      ...(deliveriesAsDriver || []).map(d => ({ ...d, _role: 'driver' }))
+    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    console.log('Deliveries found:', deliveries.length)
 
     // 10. Récupérer les courses (rides)
     const { data: ridesAsCustomer } = await adminClient
       .from('rides')
-      .select('id, status, pickup_address, destination_address, actual_fare, estimated_fare, created_at')
+      .select('*')
       .eq('customer_id', userId)
       .order('created_at', { ascending: false })
-      .limit(25)
+      .limit(50)
 
     const { data: ridesAsDriver } = await adminClient
       .from('rides')
-      .select('id, status, pickup_address, destination_address, actual_fare, estimated_fare, created_at')
+      .select('*')
       .eq('driver_id', userId)
       .order('created_at', { ascending: false })
-      .limit(25)
+      .limit(50)
 
-    const rides = [...(ridesAsCustomer || []), ...(ridesAsDriver || [])]
+    const rides = [
+      ...(ridesAsCustomer || []).map(r => ({ ...r, _role: 'customer' })),
+      ...(ridesAsDriver || []).map(r => ({ ...r, _role: 'driver' }))
+    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    console.log('Rides found:', rides.length)
 
-    // 11. Récupérer les avis
-    const { data: reviews } = await adminClient
+    // 11. Récupérer les avis (donnés et reçus)
+    const { data: reviewsGiven } = await adminClient
       .from('product_reviews')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(50)
 
-    // 12. Info vendeur (si applicable)
+    // Avis reçus si vendeur
+    let reviewsReceived: any[] = []
+    if (vendorId) {
+      const { data: vendorProducts } = await adminClient
+        .from('products')
+        .select('id')
+        .eq('vendor_id', vendorId)
+      
+      if (vendorProducts && vendorProducts.length > 0) {
+        const productIds = vendorProducts.map(p => p.id)
+        const { data: productReviews } = await adminClient
+          .from('product_reviews')
+          .select('*')
+          .in('product_id', productIds)
+          .order('created_at', { ascending: false })
+          .limit(50)
+        reviewsReceived = productReviews || []
+      }
+    }
+    console.log('Reviews - given:', reviewsGiven?.length || 0, 'received:', reviewsReceived.length)
+
+    // 12. Récupérer les favoris
+    const { data: favorites } = await adminClient
+      .from('favorites')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50)
+    console.log('Favorites:', favorites?.length || 0)
+
+    // 13. Récupérer les wishlists
+    const { data: wishlists } = await adminClient
+      .from('wishlists')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50)
+    console.log('Wishlists:', wishlists?.length || 0)
+
+    // 14. Récupérer les paniers (current carts)
+    const { data: carts } = await adminClient
+      .from('carts')
+      .select('*')
+      .eq('customer_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    const { data: advancedCarts } = await adminClient
+      .from('advanced_carts')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50)
+    console.log('Carts:', carts?.length || 0, 'Advanced carts:', advancedCarts?.length || 0)
+
+    // 15. Récupérer les notifications
+    const { data: notifications } = await adminClient
+      .from('notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    const { data: commNotifications } = await adminClient
+      .from('communication_notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50)
+    console.log('Notifications:', notifications?.length || 0, 'Comm notifications:', commNotifications?.length || 0)
+
+    // 16. Récupérer les transactions financières
+    const { data: financialTx } = await adminClient
+      .from('financial_transactions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(100)
+    console.log('Financial transactions:', financialTx?.length || 0)
+
+    // 17. Récupérer les paiements Djomy
+    const { data: djomyPayments } = await adminClient
+      .from('djomy_payments')
+      .select('*')
+      .eq('payer_user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50)
+    
+    const { data: djomyPaymentsReceived } = await adminClient
+      .from('djomy_payments')
+      .select('*')
+      .eq('receiver_user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50)
+    console.log('Djomy payments - sent:', djomyPayments?.length || 0, 'received:', djomyPaymentsReceived?.length || 0)
+
+    // 18. Récupérer P2P transactions
+    const { data: p2pSent } = await adminClient
+      .from('p2p_transactions')
+      .select('*')
+      .eq('sender_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    const { data: p2pReceived } = await adminClient
+      .from('p2p_transactions')
+      .select('*')
+      .eq('receiver_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50)
+    console.log('P2P transactions - sent:', p2pSent?.length || 0, 'received:', p2pReceived?.length || 0)
+
+    // 19. Info vendeur (si applicable)
     let vendorInfo = null
     if (roleType === 'vendor') {
       const { data: vendor } = await adminClient
@@ -227,18 +392,23 @@ serve(async (req) => {
           .select('*', { count: 'exact', head: true })
           .eq('vendor_id', vendor.id)
 
+        const { data: products } = await adminClient
+          .from('products')
+          .select('*')
+          .eq('vendor_id', vendor.id)
+          .order('created_at', { ascending: false })
+          .limit(50)
+
         vendorInfo = {
-          id: vendor.id,
-          business_name: vendor.business_name,
-          business_type: vendor.business_type,
-          is_active: vendor.is_active,
+          ...vendor,
           total_products: productCount || 0,
-          created_at: vendor.created_at
+          products: products || []
         }
       }
     }
+    console.log('Vendor info:', !!vendorInfo)
 
-    // 13. Info chauffeur (si applicable)
+    // 20. Info chauffeur (si applicable)
     let driverInfo = null
     if (roleType === 'driver') {
       const { data: driver } = await adminClient
@@ -248,29 +418,22 @@ serve(async (req) => {
         .maybeSingle()
       
       if (driver) {
-        driverInfo = {
-          id: driver.id,
-          vehicle_type: driver.vehicle_type,
-          license_number: driver.license_number,
-          status: driver.status,
-          total_deliveries: driver.total_deliveries,
-          rating: driver.rating,
-          created_at: driver.created_at
-        }
+        driverInfo = driver
       }
     }
+    console.log('Driver info:', !!driverInfo)
 
     // Calculer les statistiques
     const allTransactions = [
-      ...(sentTransactions || []).map(t => ({ ...t, direction: 'sent' })),
-      ...(receivedTransactions || []).map(t => ({ ...t, direction: 'received' }))
+      ...(sentTransactions || []).map(t => ({ ...t, _direction: 'sent' })),
+      ...(receivedTransactions || []).map(t => ({ ...t, _direction: 'received' }))
     ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
     const totalSpent = (sentTransactions || []).reduce((sum, t) => sum + Number(t.amount || 0), 0)
     const totalReceived = (receivedTransactions || []).reduce((sum, t) => sum + Number(t.amount || 0), 0)
-    const totalOrdersAmount = (orders || []).reduce((sum, o) => sum + Number(o.total_amount || 0), 0)
+    const totalOrdersAmount = orders.reduce((sum, o) => sum + Number(o.total_amount || 0), 0)
     
-    const reviewRatings = (reviews || []).map(r => r.rating).filter(Boolean)
+    const reviewRatings = (reviewsGiven || []).map(r => r.rating).filter(Boolean)
     const averageRating = reviewRatings.length > 0 
       ? reviewRatings.reduce((a, b) => a + b, 0) / reviewRatings.length 
       : 0
@@ -283,26 +446,33 @@ serve(async (req) => {
     // Trouver la dernière activité
     const allDates = [
       ...(allTransactions.map(t => t.created_at)),
-      ...(orders || []).map(o => o.created_at),
-      ...(messages || []).map(m => m.created_at),
+      ...(orders.map(o => o.created_at)),
+      ...(allMessages.map(m => m.created_at)),
       ...(auditLogs || []).map(a => a.created_at)
     ].filter(Boolean).sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
 
-    // Construire la réponse
+    console.log('Building response summary...')
+
+    // Construire la réponse COMPLÈTE
     const summary = {
+      // Profil et identité
       profile: userProfile,
       customId: trimmedId,
       roleType,
+      userId,
       
+      // Wallet & Solde
       wallet: wallet ? {
         id: String(wallet.id),
         balance: Number(wallet.balance) || 0,
         currency: wallet.currency || 'GNF',
         status: wallet.wallet_status || 'active',
-        created_at: wallet.created_at
+        created_at: wallet.created_at,
+        full_data: wallet
       } : null,
       
-      transactions: allTransactions.slice(0, 100).map(t => ({
+      // Transactions financières
+      transactions: allTransactions.slice(0, 200).map(t => ({
         id: String(t.id),
         type: t.transaction_type || 'transfer',
         amount: Number(t.amount) || 0,
@@ -312,23 +482,56 @@ serve(async (req) => {
         sender_user_id: t.sender_user_id,
         receiver_user_id: t.receiver_user_id,
         created_at: t.created_at,
+        direction: t._direction,
         metadata: t.metadata
       })),
       totalTransactions: allTransactions.length,
       totalSpent,
       totalReceived,
       
-      orders: (orders || []).map(o => ({
+      // Transactions financières additionnelles
+      financialTransactions: (financialTx || []).map(t => ({
+        id: t.id,
+        type: t.transaction_type,
+        amount: Number(t.amount) || 0,
+        currency: t.currency || 'GNF',
+        status: t.status,
+        description: t.description,
+        created_at: t.created_at
+      })),
+      
+      // Paiements Djomy
+      djomyPayments: [
+        ...(djomyPayments || []).map(p => ({ ...p, _direction: 'sent' })),
+        ...(djomyPaymentsReceived || []).map(p => ({ ...p, _direction: 'received' }))
+      ],
+      
+      // P2P Transactions
+      p2pTransactions: [
+        ...(p2pSent || []).map(p => ({ ...p, _direction: 'sent' })),
+        ...(p2pReceived || []).map(p => ({ ...p, _direction: 'received' }))
+      ],
+      
+      // Commandes
+      orders: orders.map(o => ({
         id: o.id,
         order_number: o.order_number,
         status: o.status,
+        payment_status: o.payment_status,
+        payment_method: o.payment_method,
         total_amount: Number(o.total_amount) || 0,
+        subtotal: Number(o.subtotal) || 0,
+        source: o.source,
+        role: o._role,
         created_at: o.created_at,
-        updated_at: o.updated_at
+        updated_at: o.updated_at,
+        shipping_address: o.shipping_address,
+        notes: o.notes
       })),
-      totalOrders: (orders || []).length,
+      totalOrders: orders.length,
       totalOrdersAmount,
       
+      // Sécurité & Connexions
       loginHistory: (loginHistory || []).map(l => ({
         id: l.id,
         ip_address: l.ip_address,
@@ -340,6 +543,7 @@ serve(async (req) => {
       totalLogins: (loginHistory || []).filter(l => l.success).length,
       lastLogin: (loginHistory || [])[0]?.attempted_at || null,
       
+      // Audit Trail
       auditLogs: (auditLogs || []).map(a => ({
         id: a.id,
         action: a.action,
@@ -352,51 +556,122 @@ serve(async (req) => {
       })),
       totalAuditEvents: (auditLogs || []).length,
       
-      messages: (messages || []).map(m => ({
+      // Messages - CONTENU COMPLET LISIBLE
+      messages: allMessages.slice(0, 200).map(m => ({
         id: m.id,
+        sender_id: m.sender_id,
         recipient_id: m.recipient_id,
-        content_preview: ((m.content as string) || '').substring(0, 50) + '...',
+        content: m.content, // CONTENU COMPLET
+        content_preview: ((m.content as string) || '').substring(0, 100),
         type: m.type,
         status: m.status,
-        created_at: m.created_at
+        direction: m._direction,
+        file_url: m.file_url,
+        file_name: m.file_name,
+        file_size: m.file_size,
+        read_at: m.read_at,
+        created_at: m.created_at,
+        metadata: m.metadata
       })),
-      totalMessages: (messages || []).length,
+      totalMessages: allMessages.length,
+      messagesSent: (sentMessages || []).length,
+      messagesReceived: (receivedMessages || []).length,
       
+      // Livraisons
       deliveries: deliveries.map(d => ({
         id: d.id,
         status: d.status,
-        pickup_address: typeof d.pickup_address === 'object' ? JSON.stringify(d.pickup_address) : String(d.pickup_address || ''),
-        delivery_address: typeof d.delivery_address === 'object' ? JSON.stringify(d.delivery_address) : String(d.delivery_address || ''),
+        pickup_address: d.pickup_address,
+        delivery_address: d.delivery_address,
         price: Number(d.price) || 0,
-        created_at: d.created_at
+        role: d._role,
+        created_at: d.created_at,
+        estimated_delivery: d.estimated_delivery_time,
+        actual_delivery: d.actual_delivery_time
       })),
+      totalDeliveries: deliveries.length,
       
+      // Courses
       rides: rides.map(r => ({
         id: r.id,
         status: r.status,
-        pickup_address: typeof r.pickup_address === 'object' ? JSON.stringify(r.pickup_address) : String(r.pickup_address || ''),
-        destination_address: typeof r.destination_address === 'object' ? JSON.stringify(r.destination_address) : String(r.destination_address || ''),
+        pickup_address: r.pickup_address,
+        destination_address: r.destination_address,
         fare: Number(r.actual_fare || r.estimated_fare) || 0,
-        created_at: r.created_at
+        role: r._role,
+        created_at: r.created_at,
+        started_at: r.started_at,
+        completed_at: r.completed_at,
+        distance_km: r.distance_km
       })),
+      totalRides: rides.length,
       
-      reviews: (reviews || []).map(r => ({
+      // Avis
+      reviewsGiven: (reviewsGiven || []).map(r => ({
         id: r.id,
         rating: r.rating,
         content: r.content,
         product_id: r.product_id,
         created_at: r.created_at
       })),
-      totalReviews: (reviews || []).length,
+      reviewsReceived: reviewsReceived.map(r => ({
+        id: r.id,
+        rating: r.rating,
+        content: r.content,
+        product_id: r.product_id,
+        user_id: r.user_id,
+        created_at: r.created_at
+      })),
+      totalReviews: (reviewsGiven || []).length,
       averageRating,
       
+      // Favoris et Wishlists
+      favorites: favorites || [],
+      wishlists: wishlists || [],
+      totalFavorites: (favorites || []).length,
+      totalWishlists: (wishlists || []).length,
+      
+      // Paniers
+      carts: [
+        ...(carts || []),
+        ...(advancedCarts || [])
+      ],
+      
+      // Notifications
+      notifications: [
+        ...(notifications || []),
+        ...(commNotifications || [])
+      ],
+      totalNotifications: (notifications || []).length + (commNotifications || []).length,
+      
+      // Info spécifique au rôle
       vendorInfo,
       driverInfo,
       
+      // Meta
       accountAge,
       registrationDate,
-      lastActivity: allDates[0] || null
+      lastActivity: allDates[0] || null,
+      
+      // Stats résumé
+      activitySummary: {
+        totalTransactions: allTransactions.length,
+        totalOrders: orders.length,
+        totalMessages: allMessages.length,
+        totalDeliveries: deliveries.length,
+        totalRides: rides.length,
+        totalReviewsGiven: (reviewsGiven || []).length,
+        totalReviewsReceived: reviewsReceived.length,
+        totalFavorites: (favorites || []).length,
+        totalLogins: (loginHistory || []).filter(l => l.success).length,
+        totalAuditEvents: (auditLogs || []).length,
+        moneySpent: totalSpent,
+        moneyReceived: totalReceived,
+        ordersAmount: totalOrdersAmount
+      }
     }
+
+    console.log('Response ready, activity summary:', summary.activitySummary)
 
     return new Response(JSON.stringify(summary), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -404,7 +679,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in get-user-activity:', error)
-    return new Response(JSON.stringify({ error: 'Erreur interne du serveur' }), {
+    return new Response(JSON.stringify({ error: 'Erreur interne du serveur', details: String(error) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

@@ -31,6 +31,7 @@ export interface WalletInfo {
   currency: string;
   status: string;
   created_at: string;
+  full_data?: any;
 }
 
 export interface TransactionActivity {
@@ -42,19 +43,35 @@ export interface TransactionActivity {
   description?: string;
   sender_user_id?: string;
   receiver_user_id?: string;
+  direction?: 'sent' | 'received';
   created_at: string;
   metadata?: any;
+}
+
+export interface FinancialTransaction {
+  id: string;
+  type: string;
+  amount: number;
+  currency: string;
+  status: string;
+  description?: string;
+  created_at: string;
 }
 
 export interface OrderActivity {
   id: string;
   order_number?: string;
   status: string;
+  payment_status?: string;
+  payment_method?: string;
   total_amount: number;
-  currency?: string;
-  items_count?: number;
+  subtotal?: number;
+  source?: string;
+  role?: 'customer' | 'vendor';
   created_at: string;
   updated_at?: string;
+  shipping_address?: any;
+  notes?: string;
 }
 
 export interface LoginActivity {
@@ -79,29 +96,44 @@ export interface AuditActivity {
 
 export interface MessageActivity {
   id: string;
+  sender_id: string;
   recipient_id: string;
+  content: string; // CONTENU COMPLET
   content_preview: string;
   type: string;
   status: string;
+  direction: 'sent' | 'received';
+  file_url?: string;
+  file_name?: string;
+  file_size?: number;
+  read_at?: string;
   created_at: string;
+  metadata?: any;
 }
 
 export interface DeliveryActivity {
   id: string;
   status: string;
-  pickup_address?: string;
-  delivery_address?: string;
+  pickup_address?: any;
+  delivery_address?: any;
   price?: number;
+  role?: 'client' | 'driver';
   created_at: string;
+  estimated_delivery?: string;
+  actual_delivery?: string;
 }
 
 export interface RideActivity {
   id: string;
   status: string;
-  pickup_address?: string;
-  destination_address?: string;
+  pickup_address?: any;
+  destination_address?: any;
   fare?: number;
+  role?: 'customer' | 'driver';
   created_at: string;
+  started_at?: string;
+  completed_at?: string;
+  distance_km?: number;
 }
 
 export interface ReviewActivity {
@@ -109,6 +141,7 @@ export interface ReviewActivity {
   rating: number;
   content?: string;
   product_id?: string;
+  user_id?: string;
   created_at: string;
 }
 
@@ -118,8 +151,9 @@ export interface VendorInfo {
   business_type?: string;
   is_active?: boolean;
   total_products?: number;
-  total_sales?: number;
+  products?: any[];
   created_at?: string;
+  [key: string]: any;
 }
 
 export interface DriverInfo {
@@ -130,12 +164,30 @@ export interface DriverInfo {
   total_deliveries?: number;
   rating?: number;
   created_at?: string;
+  [key: string]: any;
+}
+
+export interface ActivitySummary {
+  totalTransactions: number;
+  totalOrders: number;
+  totalMessages: number;
+  totalDeliveries: number;
+  totalRides: number;
+  totalReviewsGiven: number;
+  totalReviewsReceived: number;
+  totalFavorites: number;
+  totalLogins: number;
+  totalAuditEvents: number;
+  moneySpent: number;
+  moneyReceived: number;
+  ordersAmount: number;
 }
 
 export interface UserActivitySummary {
   profile: UserFullProfile | null;
   customId: string | null;
   roleType: string | null;
+  userId: string | null;
   
   // Wallet & Finance
   wallet: WalletInfo | null;
@@ -143,6 +195,11 @@ export interface UserActivitySummary {
   totalTransactions: number;
   totalSpent: number;
   totalReceived: number;
+  
+  // Transactions additionnelles
+  financialTransactions: FinancialTransaction[];
+  djomyPayments: any[];
+  p2pTransactions: any[];
   
   // Commerce
   orders: OrderActivity[];
@@ -158,18 +215,36 @@ export interface UserActivitySummary {
   auditLogs: AuditActivity[];
   totalAuditEvents: number;
   
-  // Communication
+  // Communication - CONTENU COMPLET
   messages: MessageActivity[];
   totalMessages: number;
+  messagesSent: number;
+  messagesReceived: number;
   
   // Delivery & Rides
   deliveries: DeliveryActivity[];
+  totalDeliveries: number;
   rides: RideActivity[];
+  totalRides: number;
   
   // Reviews
-  reviews: ReviewActivity[];
+  reviewsGiven: ReviewActivity[];
+  reviewsReceived: ReviewActivity[];
   totalReviews: number;
   averageRating: number;
+  
+  // Favoris et Wishlists
+  favorites: any[];
+  wishlists: any[];
+  totalFavorites: number;
+  totalWishlists: number;
+  
+  // Paniers
+  carts: any[];
+  
+  // Notifications
+  notifications: any[];
+  totalNotifications: number;
   
   // Role-specific
   vendorInfo: VendorInfo | null;
@@ -179,6 +254,9 @@ export interface UserActivitySummary {
   accountAge: number; // en jours
   registrationDate: string | null;
   lastActivity: string | null;
+  
+  // Stats résumé
+  activitySummary: ActivitySummary;
 }
 
 export function useUserActivityTracker() {
@@ -215,12 +293,17 @@ export function useUserActivityTracker() {
         profile: data.profile as UserFullProfile,
         customId: data.customId,
         roleType: data.roleType,
+        userId: data.userId,
         
         wallet: data.wallet,
         transactions: data.transactions || [],
         totalTransactions: data.totalTransactions || 0,
         totalSpent: data.totalSpent || 0,
         totalReceived: data.totalReceived || 0,
+        
+        financialTransactions: data.financialTransactions || [],
+        djomyPayments: data.djomyPayments || [],
+        p2pTransactions: data.p2pTransactions || [],
         
         orders: data.orders || [],
         totalOrders: data.totalOrders || 0,
@@ -235,24 +318,55 @@ export function useUserActivityTracker() {
         
         messages: data.messages || [],
         totalMessages: data.totalMessages || 0,
+        messagesSent: data.messagesSent || 0,
+        messagesReceived: data.messagesReceived || 0,
         
         deliveries: data.deliveries || [],
+        totalDeliveries: data.totalDeliveries || 0,
         rides: data.rides || [],
+        totalRides: data.totalRides || 0,
         
-        reviews: data.reviews || [],
+        reviewsGiven: data.reviewsGiven || [],
+        reviewsReceived: data.reviewsReceived || [],
         totalReviews: data.totalReviews || 0,
         averageRating: data.averageRating || 0,
+        
+        favorites: data.favorites || [],
+        wishlists: data.wishlists || [],
+        totalFavorites: data.totalFavorites || 0,
+        totalWishlists: data.totalWishlists || 0,
+        
+        carts: data.carts || [],
+        
+        notifications: data.notifications || [],
+        totalNotifications: data.totalNotifications || 0,
         
         vendorInfo: data.vendorInfo,
         driverInfo: data.driverInfo,
         
         accountAge: data.accountAge || 0,
         registrationDate: data.registrationDate,
-        lastActivity: data.lastActivity
+        lastActivity: data.lastActivity,
+        
+        activitySummary: data.activitySummary || {
+          totalTransactions: 0,
+          totalOrders: 0,
+          totalMessages: 0,
+          totalDeliveries: 0,
+          totalRides: 0,
+          totalReviewsGiven: 0,
+          totalReviewsReceived: 0,
+          totalFavorites: 0,
+          totalLogins: 0,
+          totalAuditEvents: 0,
+          moneySpent: 0,
+          moneyReceived: 0,
+          ordersAmount: 0
+        }
       };
 
       setActivityData(summary);
-      toast.success(`Données trouvées pour ${trimmedId}`);
+      toast.success(`Données complètes trouvées pour ${trimmedId}`);
       return summary;
 
     } catch (err: any) {
@@ -278,7 +392,7 @@ export function useUserActivityTracker() {
     
     const link = document.createElement('a');
     link.href = url;
-    link.download = `activite_${activityData.customId}_${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `activite_complete_${activityData.customId}_${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

@@ -1,6 +1,6 @@
 /**
  * 🔍 RECHERCHE ET AFFICHAGE COMPLET DES ACTIVITÉS UTILISATEUR
- * Permet au PDG de voir TOUT l'historique d'un utilisateur
+ * Permet au PDG de voir TOUT l'historique d'un utilisateur - CONTENU COMPLET
  */
 
 import { useState } from 'react';
@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   Search, 
   User, 
@@ -36,9 +37,20 @@ import {
   XCircle,
   Eye,
   FileText,
-  History
+  History,
+  Heart,
+  Bell,
+  Send,
+  Inbox,
+  Image,
+  FileVideo,
+  File,
+  Headphones,
+  CreditCard,
+  ArrowUpRight,
+  ArrowDownLeft
 } from 'lucide-react';
-import { useUserActivityTracker, UserActivitySummary } from '@/hooks/useUserActivityTracker';
+import { useUserActivityTracker, UserActivitySummary, MessageActivity } from '@/hooks/useUserActivityTracker';
 import { format, formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -73,6 +85,129 @@ function StatCard({
         </div>
       )}
     </div>
+  );
+}
+
+// Composant pour afficher le contenu complet d'un message
+function MessageDetailDialog({ message }: { message: MessageActivity }) {
+  const getMessageIcon = (type: string) => {
+    switch (type) {
+      case 'image': return Image;
+      case 'video': return FileVideo;
+      case 'audio': return Headphones;
+      case 'file': return File;
+      default: return MessageSquare;
+    }
+  };
+
+  const Icon = getMessageIcon(message.type);
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm">
+          <Eye className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Icon className="h-5 w-5" />
+            Message {message.direction === 'sent' ? 'envoyé' : 'reçu'}
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-4">
+          {/* Métadonnées */}
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">Direction:</span>
+              <Badge className={`ml-2 ${message.direction === 'sent' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                {message.direction === 'sent' ? 'Envoyé' : 'Reçu'}
+              </Badge>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Type:</span>
+              <Badge variant="outline" className="ml-2">{message.type}</Badge>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Statut:</span>
+              <Badge variant="secondary" className="ml-2">{message.status}</Badge>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Date:</span>
+              <span className="ml-2">{format(new Date(message.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}</span>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* IDs */}
+          <div className="grid grid-cols-2 gap-4 text-sm font-mono">
+            <div>
+              <span className="text-muted-foreground">Expéditeur:</span>
+              <p className="text-xs break-all">{message.sender_id}</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Destinataire:</span>
+              <p className="text-xs break-all">{message.recipient_id}</p>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Contenu COMPLET du message */}
+          <div>
+            <h4 className="font-semibold mb-2">Contenu du message:</h4>
+            <div className="bg-muted p-4 rounded-lg">
+              {message.type === 'text' ? (
+                <p className="whitespace-pre-wrap break-words">{message.content}</p>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-muted-foreground">[Fichier: {message.type}]</p>
+                  {message.file_name && <p>Nom: {message.file_name}</p>}
+                  {message.file_size && <p>Taille: {(message.file_size / 1024).toFixed(2)} KB</p>}
+                  {message.file_url && (
+                    <a 
+                      href={message.file_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary underline flex items-center gap-1"
+                    >
+                      <ArrowUpRight className="h-4 w-4" />
+                      Voir le fichier
+                    </a>
+                  )}
+                  {message.type === 'image' && message.file_url && (
+                    <img src={message.file_url} alt="Image message" className="max-w-full h-auto rounded-lg mt-2" />
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Lu */}
+          {message.read_at && (
+            <div className="text-sm text-muted-foreground">
+              Lu le: {format(new Date(message.read_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
+            </div>
+          )}
+
+          {/* Métadonnées supplémentaires */}
+          {message.metadata && Object.keys(message.metadata).length > 0 && (
+            <>
+              <Separator />
+              <details>
+                <summary className="cursor-pointer text-sm text-primary">Métadonnées</summary>
+                <pre className="text-xs bg-muted p-2 rounded mt-2 overflow-auto">
+                  {JSON.stringify(message.metadata, null, 2)}
+                </pre>
+              </details>
+            </>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -151,10 +286,10 @@ export function UserActivitySearch() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Search className="h-5 w-5" />
-            Recherche d'Activité Utilisateur
+            Recherche d'Activité Utilisateur Complète
           </CardTitle>
           <CardDescription>
-            Entrez l'ID utilisateur (ex: VND0001, CLT0002, DRV0003) pour voir tout son historique
+            Entrez l'ID utilisateur (ex: VND0001, CLT0002, DRV0003) pour voir TOUT son historique complet
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -178,7 +313,7 @@ export function UserActivitySearch() {
               <>
                 <Button variant="outline" onClick={exportToJson}>
                   <Download className="h-4 w-4 mr-1" />
-                  Exporter
+                  Exporter JSON
                 </Button>
                 <Button variant="ghost" onClick={reset}>
                   <XCircle className="h-4 w-4" />
@@ -249,6 +384,11 @@ export function UserActivitySearch() {
                       </span>
                     )}
                   </div>
+
+                  {/* UUID pour recherche avancée */}
+                  <p className="text-xs font-mono text-muted-foreground mt-1">
+                    UUID: {activityData.userId}
+                  </p>
                 </div>
 
                 {/* Stats rapides */}
@@ -261,7 +401,7 @@ export function UserActivitySearch() {
               <Separator className="my-4" />
 
               {/* Stats en grille */}
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
                 <StatCard 
                   icon={Wallet} 
                   label="Solde wallet" 
@@ -276,7 +416,6 @@ export function UserActivitySearch() {
                   icon={ShoppingCart} 
                   label="Commandes" 
                   value={activityData.totalOrders}
-                  subValue={formatAmount(activityData.totalOrdersAmount)}
                 />
                 <StatCard 
                   icon={Shield} 
@@ -287,20 +426,53 @@ export function UserActivitySearch() {
                   icon={MessageSquare} 
                   label="Messages" 
                   value={activityData.totalMessages}
+                  subValue={`${activityData.messagesSent} env. / ${activityData.messagesReceived} reçus`}
                 />
                 <StatCard 
                   icon={Star} 
-                  label="Avis donnés" 
+                  label="Avis" 
                   value={activityData.totalReviews}
-                  subValue={`Moyenne: ${activityData.averageRating.toFixed(1)}★`}
                 />
+                <StatCard 
+                  icon={Heart} 
+                  label="Favoris" 
+                  value={activityData.totalFavorites}
+                />
+                <StatCard 
+                  icon={Bell} 
+                  label="Notifications" 
+                  value={activityData.totalNotifications}
+                />
+              </div>
+
+              {/* Résumé financier */}
+              <div className="grid grid-cols-3 gap-4 mt-4">
+                <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg text-center">
+                  <ArrowDownLeft className="h-5 w-5 mx-auto text-green-600 mb-1" />
+                  <p className="text-lg font-bold text-green-600">{formatAmount(activityData.totalReceived)}</p>
+                  <p className="text-xs text-muted-foreground">Total reçu</p>
+                </div>
+                <div className="p-3 bg-red-50 dark:bg-red-950 rounded-lg text-center">
+                  <ArrowUpRight className="h-5 w-5 mx-auto text-red-600 mb-1" />
+                  <p className="text-lg font-bold text-red-600">{formatAmount(activityData.totalSpent)}</p>
+                  <p className="text-xs text-muted-foreground">Total dépensé</p>
+                </div>
+                <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg text-center">
+                  <CreditCard className="h-5 w-5 mx-auto text-blue-600 mb-1" />
+                  <p className="text-lg font-bold text-blue-600">{formatAmount(activityData.totalOrdersAmount)}</p>
+                  <p className="text-xs text-muted-foreground">Total commandes</p>
+                </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Onglets détaillés */}
-          <Tabs defaultValue="transactions" className="w-full">
-            <TabsList className="grid grid-cols-2 md:grid-cols-6 w-full">
+          <Tabs defaultValue="messages" className="w-full">
+            <TabsList className="grid grid-cols-2 md:grid-cols-7 w-full">
+              <TabsTrigger value="messages" className="gap-1">
+                <MessageSquare className="h-3 w-3" />
+                Messages ({activityData.totalMessages})
+              </TabsTrigger>
               <TabsTrigger value="transactions" className="gap-1">
                 <Wallet className="h-3 w-3" />
                 Transactions
@@ -317,15 +489,95 @@ export function UserActivitySearch() {
                 <History className="h-3 w-3" />
                 Audit
               </TabsTrigger>
-              <TabsTrigger value="communication" className="gap-1">
-                <MessageSquare className="h-3 w-3" />
-                Messages
+              <TabsTrigger value="delivery" className="gap-1">
+                <Package className="h-3 w-3" />
+                Livraisons
               </TabsTrigger>
               <TabsTrigger value="other" className="gap-1">
                 <Activity className="h-3 w-3" />
                 Autres
               </TabsTrigger>
             </TabsList>
+
+            {/* Messages - CONTENU COMPLET LISIBLE */}
+            <TabsContent value="messages">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5" />
+                    Tous les Messages - Contenu Complet
+                  </CardTitle>
+                  <CardDescription>
+                    {activityData.totalMessages} messages • 
+                    <Send className="h-3 w-3 inline mx-1" /> {activityData.messagesSent} envoyés • 
+                    <Inbox className="h-3 w-3 inline mx-1" /> {activityData.messagesReceived} reçus
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[500px]">
+                    <div className="space-y-2">
+                      {activityData.messages.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-8">Aucun message</p>
+                      ) : (
+                        activityData.messages.map((msg) => (
+                          <div key={msg.id} className={`flex items-start gap-3 p-3 rounded-lg ${
+                            msg.direction === 'sent' ? 'bg-blue-50 dark:bg-blue-950/30' : 'bg-green-50 dark:bg-green-950/30'
+                          }`}>
+                            <div className={`p-2 rounded-full ${
+                              msg.direction === 'sent' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'
+                            }`}>
+                              {msg.direction === 'sent' ? <Send className="h-4 w-4" /> : <Inbox className="h-4 w-4" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Badge variant="outline" className="text-xs">
+                                  {msg.direction === 'sent' ? 'Envoyé' : 'Reçu'}
+                                </Badge>
+                                <Badge variant="secondary" className="text-xs">
+                                  {msg.type}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {format(new Date(msg.created_at), 'dd/MM/yyyy HH:mm')}
+                                </span>
+                              </div>
+                              
+                              {/* Aperçu du contenu */}
+                              <div className="bg-white dark:bg-gray-900 p-2 rounded border">
+                                {msg.type === 'text' ? (
+                                  <p className="text-sm whitespace-pre-wrap break-words">
+                                    {msg.content.length > 200 ? msg.content.substring(0, 200) + '...' : msg.content}
+                                  </p>
+                                ) : (
+                                  <div className="flex items-center gap-2 text-sm">
+                                    {msg.type === 'image' && <Image className="h-4 w-4" />}
+                                    {msg.type === 'video' && <FileVideo className="h-4 w-4" />}
+                                    {msg.type === 'audio' && <Headphones className="h-4 w-4" />}
+                                    {msg.type === 'file' && <File className="h-4 w-4" />}
+                                    <span>{msg.file_name || `Fichier ${msg.type}`}</span>
+                                    {msg.file_size && <span className="text-muted-foreground">({(msg.file_size / 1024).toFixed(1)} KB)</span>}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Destinataire/Expéditeur */}
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {msg.direction === 'sent' 
+                                  ? `→ ${msg.recipient_id.slice(0, 8)}...` 
+                                  : `← ${msg.sender_id.slice(0, 8)}...`
+                                }
+                              </p>
+                            </div>
+                            
+                            {/* Bouton voir détails */}
+                            <MessageDetailDialog message={msg} />
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* Transactions */}
             <TabsContent value="transactions">
@@ -347,11 +599,11 @@ export function UserActivitySearch() {
                         activityData.transactions.map((tx) => (
                           <div key={tx.id} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
                             <div className={`p-2 rounded-full ${
-                              tx.sender_user_id === activityData.profile?.id 
+                              tx.direction === 'sent' 
                                 ? 'bg-red-100 text-red-600' 
                                 : 'bg-green-100 text-green-600'
                             }`}>
-                              {tx.sender_user_id === activityData.profile?.id ? (
+                              {tx.direction === 'sent' ? (
                                 <TrendingDown className="h-4 w-4" />
                               ) : (
                                 <TrendingUp className="h-4 w-4" />
@@ -365,11 +617,11 @@ export function UserActivitySearch() {
                             </div>
                             <div className="text-right">
                               <p className={`font-bold ${
-                                tx.sender_user_id === activityData.profile?.id 
+                                tx.direction === 'sent' 
                                   ? 'text-red-600' 
                                   : 'text-green-600'
                               }`}>
-                                {tx.sender_user_id === activityData.profile?.id ? '-' : '+'}
+                                {tx.direction === 'sent' ? '-' : '+'}
                                 {formatAmount(tx.amount, tx.currency)}
                               </p>
                               <p className="text-xs text-muted-foreground">
@@ -409,21 +661,39 @@ export function UserActivitySearch() {
                               <Package className="h-4 w-4 text-primary" />
                             </div>
                             <div className="flex-1">
-                              <p className="font-medium">Commande #{order.order_number || order.id.slice(0, 8)}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">Commande #{order.order_number || order.id.slice(0, 8)}</p>
+                                {order.role && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {order.role === 'customer' ? 'Client' : 'Vendeur'}
+                                  </Badge>
+                                )}
+                              </div>
                               <p className="text-xs text-muted-foreground">
                                 {format(new Date(order.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
+                                {order.source && ` • Source: ${order.source}`}
                               </p>
                             </div>
                             <div className="text-right">
                               <p className="font-bold">{formatAmount(order.total_amount)}</p>
+                              {order.payment_method && (
+                                <p className="text-xs text-muted-foreground">{order.payment_method}</p>
+                              )}
                             </div>
-                            <Badge variant={
-                              order.status === 'delivered' ? 'default' :
-                              order.status === 'pending' ? 'secondary' :
-                              order.status === 'cancelled' ? 'destructive' : 'outline'
-                            }>
-                              {order.status}
-                            </Badge>
+                            <div className="flex flex-col gap-1">
+                              <Badge variant={
+                                order.status === 'delivered' ? 'default' :
+                                order.status === 'pending' ? 'secondary' :
+                                order.status === 'cancelled' ? 'destructive' : 'outline'
+                              }>
+                                {order.status}
+                              </Badge>
+                              {order.payment_status && (
+                                <Badge variant={order.payment_status === 'paid' ? 'default' : 'secondary'} className="text-xs">
+                                  {order.payment_status}
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         ))
                       )}
@@ -539,74 +809,33 @@ export function UserActivitySearch() {
               </Card>
             </TabsContent>
 
-            {/* Messages */}
-            <TabsContent value="communication">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Messages Envoyés</CardTitle>
-                  <CardDescription>
-                    {activityData.totalMessages} messages envoyés
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-[400px]">
-                    <div className="space-y-2">
-                      {activityData.messages.length === 0 ? (
-                        <p className="text-center text-muted-foreground py-8">Aucun message</p>
-                      ) : (
-                        activityData.messages.map((msg) => (
-                          <div key={msg.id} className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
-                            <div className="p-2 rounded-full bg-purple-100 text-purple-600">
-                              <MessageSquare className="h-4 w-4" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm">{msg.content_preview}</p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Type: {msg.type} • Destinataire: {msg.recipient_id.slice(0, 8)}...
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <Badge variant="outline" className="text-xs">
-                                {msg.status}
-                              </Badge>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {format(new Date(msg.created_at), 'dd/MM HH:mm')}
-                              </p>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Autres */}
-            <TabsContent value="other">
+            {/* Livraisons & Courses */}
+            <TabsContent value="delivery">
               <div className="grid md:grid-cols-2 gap-4">
                 {/* Livraisons */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Package className="h-4 w-4" />
-                      Livraisons ({activityData.deliveries.length})
+                      Livraisons ({activityData.totalDeliveries})
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ScrollArea className="h-[250px]">
+                    <ScrollArea className="h-[300px]">
                       {activityData.deliveries.length === 0 ? (
                         <p className="text-center text-muted-foreground py-4">Aucune livraison</p>
                       ) : (
                         activityData.deliveries.map((d) => (
-                          <TimelineEvent
-                            key={d.id}
-                            icon={Package}
-                            title={`Livraison ${d.status}`}
-                            description={`${d.pickup_address?.slice(0, 20)}... → ${d.delivery_address?.slice(0, 20)}...`}
-                            time={d.created_at}
-                            status={d.status === 'delivered' ? 'success' : 'info'}
-                          />
+                          <div key={d.id} className="p-3 mb-2 bg-muted/30 rounded-lg">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge variant="outline">{d.role || 'N/A'}</Badge>
+                              <Badge>{d.status}</Badge>
+                            </div>
+                            <p className="text-sm font-medium">{formatAmount(d.price || 0)}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {format(new Date(d.created_at), 'dd/MM/yyyy HH:mm')}
+                            </p>
+                          </div>
                         ))
                       )}
                     </ScrollArea>
@@ -618,45 +847,53 @@ export function UserActivitySearch() {
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Car className="h-4 w-4" />
-                      Courses ({activityData.rides.length})
+                      Courses ({activityData.totalRides})
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ScrollArea className="h-[250px]">
+                    <ScrollArea className="h-[300px]">
                       {activityData.rides.length === 0 ? (
                         <p className="text-center text-muted-foreground py-4">Aucune course</p>
                       ) : (
                         activityData.rides.map((r) => (
-                          <TimelineEvent
-                            key={r.id}
-                            icon={Car}
-                            title={`Course ${r.status}`}
-                            description={r.fare ? formatAmount(r.fare) : undefined}
-                            time={r.created_at}
-                            status={r.status === 'completed' ? 'success' : 'info'}
-                          />
+                          <div key={r.id} className="p-3 mb-2 bg-muted/30 rounded-lg">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge variant="outline">{r.role || 'N/A'}</Badge>
+                              <Badge>{r.status}</Badge>
+                            </div>
+                            <p className="text-sm font-medium">{formatAmount(r.fare || 0)}</p>
+                            {r.distance_km && <p className="text-xs text-muted-foreground">{r.distance_km} km</p>}
+                            <p className="text-xs text-muted-foreground">
+                              {format(new Date(r.created_at), 'dd/MM/yyyy HH:mm')}
+                            </p>
+                          </div>
                         ))
                       )}
                     </ScrollArea>
                   </CardContent>
                 </Card>
+              </div>
+            </TabsContent>
 
-                {/* Avis */}
+            {/* Autres */}
+            <TabsContent value="other">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Avis donnés */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Star className="h-4 w-4" />
-                      Avis donnés ({activityData.totalReviews})
+                      Avis donnés ({activityData.reviewsGiven?.length || 0})
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ScrollArea className="h-[250px]">
-                      {activityData.reviews.length === 0 ? (
+                    <ScrollArea className="h-[200px]">
+                      {(activityData.reviewsGiven || []).length === 0 ? (
                         <p className="text-center text-muted-foreground py-4">Aucun avis</p>
                       ) : (
-                        activityData.reviews.map((r) => (
-                          <div key={r.id} className="flex items-start gap-2 py-2">
-                            <div className="flex gap-0.5">
+                        activityData.reviewsGiven.map((r) => (
+                          <div key={r.id} className="p-2 mb-2 bg-muted/30 rounded-lg">
+                            <div className="flex gap-0.5 mb-1">
                               {Array.from({ length: 5 }).map((_, i) => (
                                 <Star 
                                   key={i} 
@@ -664,12 +901,10 @@ export function UserActivitySearch() {
                                 />
                               ))}
                             </div>
-                            <div className="flex-1">
-                              <p className="text-xs">{r.content || 'Aucun commentaire'}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {format(new Date(r.created_at), 'dd/MM/yyyy')}
-                              </p>
-                            </div>
+                            <p className="text-xs">{r.content || 'Aucun commentaire'}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {format(new Date(r.created_at), 'dd/MM/yyyy')}
+                            </p>
                           </div>
                         ))
                       )}
@@ -677,7 +912,60 @@ export function UserActivitySearch() {
                   </CardContent>
                 </Card>
 
-                {/* Info spécifique au rôle */}
+                {/* Favoris */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Heart className="h-4 w-4" />
+                      Favoris ({activityData.totalFavorites})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="h-[200px]">
+                      {activityData.favorites.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-4">Aucun favori</p>
+                      ) : (
+                        activityData.favorites.map((f: any) => (
+                          <div key={f.id} className="p-2 mb-2 bg-muted/30 rounded-lg text-xs">
+                            <p className="font-mono">{f.product_id?.slice(0, 8) || f.id.slice(0, 8)}...</p>
+                            <p className="text-muted-foreground">
+                              {f.created_at && format(new Date(f.created_at), 'dd/MM/yyyy')}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+
+                {/* Notifications */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Bell className="h-4 w-4" />
+                      Notifications ({activityData.totalNotifications})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="h-[200px]">
+                      {activityData.notifications.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-4">Aucune notification</p>
+                      ) : (
+                        activityData.notifications.slice(0, 20).map((n: any) => (
+                          <div key={n.id} className="p-2 mb-2 bg-muted/30 rounded-lg text-xs">
+                            <p className="font-medium">{n.title || n.type}</p>
+                            <p className="text-muted-foreground truncate">{n.message || n.body}</p>
+                            <p className="text-muted-foreground">
+                              {n.created_at && format(new Date(n.created_at), 'dd/MM/yyyy')}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+
+                {/* Info vendeur (si applicable) */}
                 {activityData.vendorInfo && (
                   <Card>
                     <CardHeader>
@@ -686,15 +974,29 @@ export function UserActivitySearch() {
                         Info Vendeur
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2">
+                    <CardContent className="space-y-2 text-sm">
                       <p><strong>Business:</strong> {activityData.vendorInfo.business_name}</p>
                       <p><strong>Type:</strong> {activityData.vendorInfo.business_type}</p>
                       <p><strong>Actif:</strong> {activityData.vendorInfo.is_active ? 'Oui' : 'Non'}</p>
                       <p><strong>Produits:</strong> {activityData.vendorInfo.total_products}</p>
+                      {activityData.vendorInfo.products && activityData.vendorInfo.products.length > 0 && (
+                        <details>
+                          <summary className="cursor-pointer text-primary">Voir les produits</summary>
+                          <ScrollArea className="h-[150px] mt-2">
+                            {activityData.vendorInfo.products.map((p: any) => (
+                              <div key={p.id} className="p-2 bg-muted rounded mb-1 text-xs">
+                                <p className="font-medium">{p.name}</p>
+                                <p>{formatAmount(p.price || 0)}</p>
+                              </div>
+                            ))}
+                          </ScrollArea>
+                        </details>
+                      )}
                     </CardContent>
                   </Card>
                 )}
 
+                {/* Info chauffeur (si applicable) */}
                 {activityData.driverInfo && (
                   <Card>
                     <CardHeader>
@@ -703,11 +1005,12 @@ export function UserActivitySearch() {
                         Info Chauffeur
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2">
+                    <CardContent className="space-y-2 text-sm">
                       <p><strong>Véhicule:</strong> {activityData.driverInfo.vehicle_type}</p>
                       <p><strong>Licence:</strong> {activityData.driverInfo.license_number}</p>
                       <p><strong>Statut:</strong> {activityData.driverInfo.status}</p>
                       <p><strong>Note:</strong> {activityData.driverInfo.rating}★</p>
+                      <p><strong>Total livraisons:</strong> {activityData.driverInfo.total_deliveries}</p>
                     </CardContent>
                   </Card>
                 )}
