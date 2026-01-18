@@ -98,15 +98,31 @@ interface GlobalStats {
   unresolvedSuspiciousCount: number;
 }
 
+interface BatchActionResult {
+  success: boolean;
+  message: string;
+  stats: {
+    total?: number;
+    reconciled?: number;
+    created?: number;
+    skipped?: number;
+    errors?: number;
+    totalMissing?: number;
+  };
+  results: any[];
+}
+
 export function WalletAuditTool() {
   const [searchId, setSearchId] = useState('');
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
   const [usersWithoutWallet, setUsersWithoutWallet] = useState<any[]>([]);
   const [problematicWallets, setProblematicWallets] = useState<any[]>([]);
   const [apiSignatures, setApiSignatures] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('search');
+  const [batchResult, setBatchResult] = useState<BatchActionResult | null>(null);
 
   const formatAmount = (amount: number, currency = 'GNF') => {
     return new Intl.NumberFormat('fr-GN', {
@@ -266,6 +282,50 @@ export function WalletAuditTool() {
       toast.error(err.message || 'Erreur lors de la création');
     } finally {
       setLoading(false);
+    }
+  }, [loadGlobalStats]);
+
+  // Réconcilier tous les wallets
+  const reconcileAllWallets = useCallback(async () => {
+    setActionLoading('reconcile-all');
+    setBatchResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('wallet-audit', {
+        body: { action: 'reconcile-all' }
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data.error);
+
+      setBatchResult(data);
+      toast.success(`Réconciliation terminée: ${data.stats.reconciled} wallets corrigés`);
+      await loadGlobalStats();
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur lors de la réconciliation');
+    } finally {
+      setActionLoading(null);
+    }
+  }, [loadGlobalStats]);
+
+  // Créer tous les wallets manquants
+  const createAllMissingWallets = useCallback(async () => {
+    setActionLoading('create-all');
+    setBatchResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('wallet-audit', {
+        body: { action: 'create-all-missing-wallets' }
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data.error);
+
+      setBatchResult(data);
+      toast.success(`${data.stats.created} wallets créés`);
+      await loadGlobalStats();
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur lors de la création');
+    } finally {
+      setActionLoading(null);
     }
   }, [loadGlobalStats]);
 
@@ -856,16 +916,37 @@ export function WalletAuditTool() {
               <div className="grid md:grid-cols-2 gap-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Vérifications Automatiques</CardTitle>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Activity className="h-5 w-5 text-blue-500" />
+                      Vérifications Automatiques
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      <Button className="w-full justify-start" variant="outline" onClick={loadGlobalStats}>
-                        <Activity className="h-4 w-4 mr-2" />
+                      <Button 
+                        className="w-full justify-start" 
+                        variant="outline" 
+                        onClick={loadGlobalStats}
+                        disabled={loading || actionLoading !== null}
+                      >
+                        {loading ? (
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Users className="h-4 w-4 mr-2" />
+                        )}
                         Scanner tous les wallets
                       </Button>
-                      <Button className="w-full justify-start" variant="outline" onClick={verifySignatures}>
-                        <Key className="h-4 w-4 mr-2" />
+                      <Button 
+                        className="w-full justify-start" 
+                        variant="outline" 
+                        onClick={verifySignatures}
+                        disabled={loading || actionLoading !== null}
+                      >
+                        {loading ? (
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Key className="h-4 w-4 mr-2" />
+                        )}
                         Vérifier les clés API
                       </Button>
                     </div>
@@ -874,22 +955,209 @@ export function WalletAuditTool() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Actions Rapides</CardTitle>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Zap className="h-5 w-5 text-yellow-500" />
+                      Actions Rapides
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      <Button className="w-full justify-start" variant="outline">
-                        <RefreshCw className="h-4 w-4 mr-2" />
+                      <Button 
+                        className="w-full justify-start" 
+                        variant="outline" 
+                        onClick={reconcileAllWallets}
+                        disabled={loading || actionLoading !== null}
+                      >
+                        {actionLoading === 'reconcile-all' ? (
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                        )}
                         Réconcilier tous les soldes
                       </Button>
-                      <Button className="w-full justify-start" variant="outline">
-                        <Plus className="h-4 w-4 mr-2" />
+                      <Button 
+                        className="w-full justify-start" 
+                        variant="outline"
+                        onClick={createAllMissingWallets}
+                        disabled={loading || actionLoading !== null}
+                      >
+                        {actionLoading === 'create-all' ? (
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Plus className="h-4 w-4 mr-2" />
+                        )}
                         Créer wallets manquants
                       </Button>
                     </div>
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Statistiques du scan */}
+              {globalStats && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5 text-primary" />
+                      Résultats du Scan
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                      <div className="text-center p-3 bg-muted rounded-lg">
+                        <p className="text-xl font-bold">{globalStats.totalUsers}</p>
+                        <p className="text-xs text-muted-foreground">Utilisateurs</p>
+                      </div>
+                      <div className="text-center p-3 bg-muted rounded-lg">
+                        <p className="text-xl font-bold text-green-600">{globalStats.totalWallets}</p>
+                        <p className="text-xs text-muted-foreground">Wallets créés</p>
+                      </div>
+                      <div className="text-center p-3 bg-yellow-100 dark:bg-yellow-950/30 rounded-lg">
+                        <p className="text-xl font-bold text-yellow-600">{globalStats.usersWithoutWalletCount}</p>
+                        <p className="text-xs text-muted-foreground">Sans wallet</p>
+                      </div>
+                      <div className="text-center p-3 bg-red-100 dark:bg-red-950/30 rounded-lg">
+                        <p className="text-xl font-bold text-red-600">{globalStats.problematicWalletsCount}</p>
+                        <p className="text-xs text-muted-foreground">Problématiques</p>
+                      </div>
+                      <div className="text-center p-3 bg-red-100 dark:bg-red-950/30 rounded-lg">
+                        <p className="text-xl font-bold text-red-600">{globalStats.unresolvedSuspiciousCount}</p>
+                        <p className="text-xs text-muted-foreground">Suspects</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Résultats des actions batch */}
+              {batchResult && (
+                <Card className="border-green-500">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                      Résultat de l'Action
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Alert className="mb-4">
+                      <CheckCircle className="h-4 w-4" />
+                      <AlertTitle>{batchResult.message}</AlertTitle>
+                      <AlertDescription>
+                        <div className="flex flex-wrap gap-4 mt-2">
+                          {batchResult.stats.total !== undefined && (
+                            <span>Total: <strong>{batchResult.stats.total}</strong></span>
+                          )}
+                          {batchResult.stats.totalMissing !== undefined && (
+                            <span>Manquants: <strong>{batchResult.stats.totalMissing}</strong></span>
+                          )}
+                          {batchResult.stats.reconciled !== undefined && (
+                            <span className="text-green-600">Réconciliés: <strong>{batchResult.stats.reconciled}</strong></span>
+                          )}
+                          {batchResult.stats.created !== undefined && (
+                            <span className="text-green-600">Créés: <strong>{batchResult.stats.created}</strong></span>
+                          )}
+                          {batchResult.stats.skipped !== undefined && (
+                            <span className="text-muted-foreground">Ignorés: <strong>{batchResult.stats.skipped}</strong></span>
+                          )}
+                          {batchResult.stats.errors !== undefined && batchResult.stats.errors > 0 && (
+                            <span className="text-red-600">Erreurs: <strong>{batchResult.stats.errors}</strong></span>
+                          )}
+                        </div>
+                      </AlertDescription>
+                    </Alert>
+
+                    {batchResult.results.length > 0 && (
+                      <ScrollArea className="h-[200px]">
+                        <div className="space-y-2">
+                          {batchResult.results.map((result, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-2 bg-muted/50 rounded-lg text-sm">
+                              <div className="flex items-center gap-2">
+                                {result.status === 'reconciled' || result.status === 'created' ? (
+                                  <CheckCircle className="h-4 w-4 text-green-500" />
+                                ) : (
+                                  <XCircle className="h-4 w-4 text-red-500" />
+                                )}
+                                <Badge variant="outline" className="font-mono text-xs">
+                                  {result.customId || result.userId?.slice(0, 8)}
+                                </Badge>
+                              </div>
+                              {result.oldBalance !== undefined && (
+                                <div className="flex items-center gap-2 text-xs">
+                                  <span className="text-muted-foreground">
+                                    {formatAmount(result.oldBalance)}
+                                  </span>
+                                  <span>→</span>
+                                  <span className="text-green-600 font-medium">
+                                    {formatAmount(result.newBalance)}
+                                  </span>
+                                  {result.difference !== 0 && (
+                                    <Badge variant={result.difference > 0 ? 'destructive' : 'default'} className="text-xs">
+                                      {result.difference > 0 ? '+' : ''}{formatAmount(result.difference)}
+                                    </Badge>
+                                  )}
+                                </div>
+                              )}
+                              {result.walletId && (
+                                <Badge variant="outline" className="text-xs text-green-600">
+                                  Wallet créé
+                                </Badge>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* API Signatures Status */}
+              {apiSignatures && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Key className="h-5 w-5" />
+                      État des API de Paiement
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-4 gap-3 mb-4">
+                      <div className="text-center p-2 bg-muted rounded-lg">
+                        <p className="text-lg font-bold">{apiSignatures.stats.total}</p>
+                        <p className="text-xs text-muted-foreground">Total</p>
+                      </div>
+                      <div className="text-center p-2 bg-green-100 dark:bg-green-950/30 rounded-lg">
+                        <p className="text-lg font-bold text-green-600">{apiSignatures.stats.valid}</p>
+                        <p className="text-xs text-muted-foreground">Valides</p>
+                      </div>
+                      <div className="text-center p-2 bg-red-100 dark:bg-red-950/30 rounded-lg">
+                        <p className="text-lg font-bold text-red-600">{apiSignatures.stats.invalid}</p>
+                        <p className="text-xs text-muted-foreground">Invalides</p>
+                      </div>
+                      <div className="text-center p-2 bg-yellow-100 dark:bg-yellow-950/30 rounded-lg">
+                        <p className="text-lg font-bold text-yellow-600">{apiSignatures.stats.expired}</p>
+                        <p className="text-xs text-muted-foreground">Expirées</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {apiSignatures.signatures.map((sig: ApiSignatureCheck, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between p-2 bg-muted/30 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <CreditCard className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">{sig.api}</span>
+                          </div>
+                          <Badge className={getSignatureStatusColor(sig.status)}>
+                            {sig.status === 'valid' && <CheckCircle className="h-3 w-3 mr-1" />}
+                            {sig.status === 'invalid' && <XCircle className="h-3 w-3 mr-1" />}
+                            {sig.status === 'expired' && <Clock className="h-3 w-3 mr-1" />}
+                            {sig.status}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
           </Tabs>
         </CardContent>

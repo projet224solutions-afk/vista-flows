@@ -187,6 +187,22 @@ serve(async (req) => {
         })
       }
 
+      case 'reconcile-all': {
+        // Réconcilier tous les wallets problématiques
+        const result = await reconcileAllWallets(adminClient, user.id)
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      case 'create-all-missing-wallets': {
+        // Créer tous les wallets manquants
+        const result = await createAllMissingWallets(adminClient, user.id)
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
       default:
         return new Response(JSON.stringify({ error: 'Action non reconnue' }), {
           status: 400,
@@ -942,5 +958,222 @@ async function verifyPaymentSignatures(client: any) {
       expired: expiredSignatures,
       healthStatus: invalidSignatures === 0 && expiredSignatures === 0 ? 'healthy' : 'needs_attention'
     }
+  }
+}
+
+// =========== FONCTIONS BATCH ===========
+
+async function reconcileAllWallets(client: any, adminId: string) {
+  console.log('Starting reconcile all wallets...')
+  
+  // Récupérer tous les wallets
+  const { data: allWallets, error: walletsError } = await client
+    .from('wallets')
+    .select('id, user_id, balance, currency')
+    .limit(200)
+
+  if (walletsError) {
+    console.error('Error fetching wallets:', walletsError)
+    return { success: false, error: 'Erreur lors de la récupération des wallets' }
+  }
+
+  const results: { userId: string; oldBalance: number; newBalance: number; difference: number; status: string }[] = []
+  let successCount = 0
+  let errorCount = 0
+  let skippedCount = 0
+
+  for (const wallet of (allWallets || [])) {
+    try {
+      // Recalculer le solde attendu
+      const { data: receivedTx } = await client
+        .from('wallet_transactions')
+        .select('amount')
+        .eq('receiver_user_id', wallet.user_id)
+        .eq('status', 'completed')
+
+      const { data: sentTx } = await client
+        .from('wallet_transactions')
+        .select('amount')
+        .eq('sender_user_id', wallet.user_id)
+        .eq('status', 'completed')
+
+      const { data: p2pReceived } = await client
+        .from('p2p_transactions')
+        .select('amount')
+        .eq('receiver_id', wallet.user_id)
+        .eq('status', 'completed')
+
+      const { data: p2pSent } = await client
+        .from('p2p_transactions')
+        .select('amount')
+        .eq('sender_id', wallet.user_id)
+        .eq('status', 'completed')
+
+      const { data: stripeDeposits } = await client
+        .from('stripe_wallet_transactions')
+        .select('amount')
+        .eq('user_id', wallet.user_id)
+        .eq('transaction_type', 'deposit')
+        .eq('status', 'completed')
+
+      const { data: stripeWithdrawals } = await client
+        .from('stripe_wallet_transactions')
+        .select('amount')
+        .eq('user_id', wallet.user_id)
+        .eq('transaction_type', 'withdrawal')
+        .eq('status', 'completed')
+
+      const totalIncoming = 
+        (receivedTx || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0) +
+        (p2pReceived || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0) +
+        (stripeDeposits || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0)
+
+      const totalOutgoing = 
+        (sentTx || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0) +
+        (p2pSent || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0) +
+        (stripeWithdrawals || []).reduce((sum: number, tx: { amount?: number }) => sum + Number(tx.amount || 0), 0)
+
+      const calculatedBalance = totalIncoming - totalOutgoing
+      const storedBalance = Number(wallet.balance) || 0
+      const difference = Math.abs(storedBalance - calculatedBalance)
+
+      // Si pas de différence significative, skip
+      if (difference < 1) {
+        skippedCount++
+        continue
+      }
+
+      // Enregistrer la réconciliation
+      await client.from('balance_reconciliation').insert({
+        wallet_id: wallet.id,
+        wallet_type: 'user',
+        stored_balance: storedBalance,
+        calculated_balance: calculatedBalance,
+        difference: storedBalance - calculatedBalance,
+        is_reconciled: true,
+        reconciled_by: adminId,
+        reconciled_at: new Date().toISOString(),
+        reconciliation_action: 'batch_reconciliation'
+      })
+
+      // Mettre à jour le solde
+      await client
+        .from('wallets')
+        .update({ 
+          balance: calculatedBalance,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', wallet.id)
+
+      results.push({
+        userId: wallet.user_id,
+        oldBalance: storedBalance,
+        newBalance: calculatedBalance,
+        difference: storedBalance - calculatedBalance,
+        status: 'reconciled'
+      })
+      successCount++
+    } catch (err) {
+      console.error('Error reconciling wallet:', wallet.id, err)
+      errorCount++
+    }
+  }
+
+  // Log l'action
+  await client.from('admin_action_logs').insert({
+    admin_id: adminId,
+    action_type: 'batch_wallet_reconcile',
+    target_type: 'wallets',
+    target_id: 'batch',
+    new_value: { successCount, errorCount, skippedCount, totalWallets: (allWallets || []).length }
+  })
+
+  return { 
+    success: true, 
+    message: `Réconciliation terminée`,
+    stats: {
+      total: (allWallets || []).length,
+      reconciled: successCount,
+      skipped: skippedCount,
+      errors: errorCount
+    },
+    results: results.slice(0, 50) // Limiter le nombre de résultats renvoyés
+  }
+}
+
+async function createAllMissingWallets(client: any, adminId: string) {
+  console.log('Starting create all missing wallets...')
+  
+  // Récupérer tous les utilisateurs sans wallet
+  const { data: allUserIds } = await client
+    .from('user_ids')
+    .select('user_id, custom_id')
+    .limit(500)
+
+  const { data: allWallets } = await client
+    .from('wallets')
+    .select('user_id')
+
+  const walletUserIds = new Set((allWallets || []).map((w: any) => w.user_id))
+  const usersWithoutWallet = (allUserIds || []).filter((u: any) => !walletUserIds.has(u.user_id))
+
+  const results: { customId: string; userId: string; status: string; walletId?: string }[] = []
+  let successCount = 0
+  let errorCount = 0
+
+  for (const user of usersWithoutWallet) {
+    try {
+      const { data: newWallet, error } = await client
+        .from('wallets')
+        .insert({
+          user_id: user.user_id,
+          balance: 0,
+          currency: 'GNF',
+          wallet_status: 'active',
+          is_blocked: false,
+          daily_limit: 5000000,
+          monthly_limit: 50000000
+        })
+        .select('id')
+        .single()
+
+      if (error) throw error
+
+      results.push({
+        customId: user.custom_id,
+        userId: user.user_id,
+        status: 'created',
+        walletId: newWallet.id
+      })
+      successCount++
+    } catch (err) {
+      console.error('Error creating wallet for:', user.custom_id, err)
+      results.push({
+        customId: user.custom_id,
+        userId: user.user_id,
+        status: 'error'
+      })
+      errorCount++
+    }
+  }
+
+  // Log l'action
+  await client.from('admin_action_logs').insert({
+    admin_id: adminId,
+    action_type: 'batch_wallet_create',
+    target_type: 'wallets',
+    target_id: 'batch',
+    new_value: { successCount, errorCount, totalMissing: usersWithoutWallet.length }
+  })
+
+  return { 
+    success: true, 
+    message: `Création des wallets terminée`,
+    stats: {
+      totalMissing: usersWithoutWallet.length,
+      created: successCount,
+      errors: errorCount
+    },
+    results: results.slice(0, 50)
   }
 }
