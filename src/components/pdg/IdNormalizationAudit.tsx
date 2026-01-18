@@ -30,6 +30,8 @@ import {
 } from 'recharts';
 import { IdReorganizationPanel } from './IdReorganizationPanel';
 import { UserActivitySearch } from './UserActivitySearch';
+import { WalletAuditTool } from './WalletAuditTool';
+import { Wallet } from 'lucide-react';
 
 interface NormalizationLog {
   id: string;
@@ -837,7 +839,7 @@ export default function IdNormalizationAudit() {
 
       {/* Tabs */}
       <Tabs defaultValue="non-standard" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="non-standard" className="gap-2">
             <AlertTriangle className="w-4 h-4" />
             Non-Standard ({nonStandardUsers.length})
@@ -849,6 +851,10 @@ export default function IdNormalizationAudit() {
           <TabsTrigger value="activity" className="gap-2">
             <Eye className="w-4 h-4" />
             Activité
+          </TabsTrigger>
+          <TabsTrigger value="wallet-audit" className="gap-2">
+            <Wallet className="w-4 h-4" />
+            Audit Wallet
           </TabsTrigger>
           <TabsTrigger value="search" className="gap-2">
             <Search className="w-4 h-4" />
@@ -1047,6 +1053,11 @@ export default function IdNormalizationAudit() {
         {/* User Activity Tab */}
         <TabsContent value="activity" className="space-y-4">
           <UserActivitySearch />
+        </TabsContent>
+
+        {/* Wallet Audit Tab */}
+        <TabsContent value="wallet-audit" className="space-y-4">
+          <WalletAuditTool />
         </TabsContent>
 
         {/* Search Tab */}
