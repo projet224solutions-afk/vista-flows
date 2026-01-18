@@ -234,6 +234,37 @@ serve(async (req) => {
         })
       }
 
+      case 'block-wallet': {
+        const { reason } = body
+        const result = await blockWallet(adminClient, customId, targetUserId, user.id, reason)
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      case 'unblock-wallet': {
+        const { reason } = body
+        const result = await unblockWallet(adminClient, customId, targetUserId, user.id, reason)
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      case 'cancel-subscription': {
+        const { subscriptionId, reason } = body
+        const result = await cancelUserSubscription(adminClient, customId, targetUserId, subscriptionId, user.id, reason)
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      case 'get-user-subscriptions': {
+        const result = await getUserSubscriptions(adminClient, customId, targetUserId)
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
       default:
         return new Response(JSON.stringify({ error: 'Action non reconnue' }), {
           status: 400,
@@ -1494,5 +1525,420 @@ async function generateReconciliationReport(client: any, customId?: string, user
     success: true,
     report,
     transactionsSample: balanceCalc.allTransactions.slice(0, 20)
+  }
+}
+
+// =========== BLOCAGE/DEBLOCAGE WALLET ===========
+
+async function blockWallet(client: any, customId?: string, userId?: string, adminId?: string, reason?: string) {
+  let targetUserId = userId
+  let customIdResolved = customId
+  
+  if (customId && !userId) {
+    const { data: userIdData } = await client
+      .from('user_ids')
+      .select('user_id, custom_id')
+      .eq('custom_id', customId.toUpperCase())
+      .maybeSingle()
+    targetUserId = userIdData?.user_id
+    customIdResolved = userIdData?.custom_id
+  }
+
+  if (!targetUserId) {
+    return { success: false, error: 'Utilisateur non trouvé' }
+  }
+
+  // Récupérer le wallet
+  const { data: wallet, error: walletError } = await client
+    .from('wallets')
+    .select('*')
+    .eq('user_id', targetUserId)
+    .maybeSingle()
+
+  if (walletError || !wallet) {
+    return { success: false, error: 'Wallet non trouvé' }
+  }
+
+  // Vérifier si déjà bloqué
+  if (wallet.wallet_status === 'blocked' || wallet.wallet_status === 'suspended') {
+    return { success: false, error: 'Wallet déjà bloqué', wallet }
+  }
+
+  const previousStatus = wallet.wallet_status
+  
+  // Bloquer le wallet
+  const { error: updateError } = await client
+    .from('wallets')
+    .update({
+      wallet_status: 'blocked',
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', wallet.id)
+
+  if (updateError) {
+    return { success: false, error: 'Erreur lors du blocage', details: updateError.message }
+  }
+
+  // Créer une alerte de sécurité
+  await client.from('security_alerts').insert({
+    alert_type: 'wallet_blocked',
+    severity: 'high',
+    title: `Wallet bloqué: ${customIdResolved || targetUserId}`,
+    description: reason || 'Blocage manuel par administrateur',
+    user_id: targetUserId,
+    status: 'open',
+    metadata: {
+      wallet_id: wallet.id,
+      previous_status: previousStatus,
+      balance_at_block: wallet.balance,
+      blocked_by: adminId,
+      reason
+    }
+  })
+
+  // Log l'action
+  await client.from('admin_action_logs').insert({
+    admin_id: adminId,
+    action_type: 'wallet_block',
+    target_type: 'wallet',
+    target_id: wallet.id,
+    old_value: { status: previousStatus },
+    new_value: { status: 'blocked', reason },
+    reason
+  })
+
+  // Envoyer notification à l'utilisateur (optionnel)
+  await client.from('notifications').insert({
+    user_id: targetUserId,
+    type: 'security',
+    title: 'Wallet Suspendu',
+    message: 'Votre wallet a été temporairement suspendu pour des raisons de sécurité. Contactez le support pour plus d\'informations.',
+    is_read: false
+  })
+
+  return { 
+    success: true, 
+    message: 'Wallet bloqué avec succès',
+    wallet: { ...wallet, wallet_status: 'blocked' },
+    previousStatus,
+    reason
+  }
+}
+
+async function unblockWallet(client: any, customId?: string, userId?: string, adminId?: string, reason?: string) {
+  let targetUserId = userId
+  let customIdResolved = customId
+  
+  if (customId && !userId) {
+    const { data: userIdData } = await client
+      .from('user_ids')
+      .select('user_id, custom_id')
+      .eq('custom_id', customId.toUpperCase())
+      .maybeSingle()
+    targetUserId = userIdData?.user_id
+    customIdResolved = userIdData?.custom_id
+  }
+
+  if (!targetUserId) {
+    return { success: false, error: 'Utilisateur non trouvé' }
+  }
+
+  const { data: wallet, error: walletError } = await client
+    .from('wallets')
+    .select('*')
+    .eq('user_id', targetUserId)
+    .maybeSingle()
+
+  if (walletError || !wallet) {
+    return { success: false, error: 'Wallet non trouvé' }
+  }
+
+  if (wallet.wallet_status === 'active') {
+    return { success: false, error: 'Wallet déjà actif', wallet }
+  }
+
+  const previousStatus = wallet.wallet_status
+  
+  const { error: updateError } = await client
+    .from('wallets')
+    .update({
+      wallet_status: 'active',
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', wallet.id)
+
+  if (updateError) {
+    return { success: false, error: 'Erreur lors du déblocage', details: updateError.message }
+  }
+
+  // Fermer l'alerte de sécurité associée
+  await client
+    .from('security_alerts')
+    .update({ status: 'resolved', resolved_at: new Date().toISOString() })
+    .eq('user_id', targetUserId)
+    .eq('alert_type', 'wallet_blocked')
+    .eq('status', 'open')
+
+  // Log l'action
+  await client.from('admin_action_logs').insert({
+    admin_id: adminId,
+    action_type: 'wallet_unblock',
+    target_type: 'wallet',
+    target_id: wallet.id,
+    old_value: { status: previousStatus },
+    new_value: { status: 'active', reason },
+    reason
+  })
+
+  // Notifier l'utilisateur
+  await client.from('notifications').insert({
+    user_id: targetUserId,
+    type: 'success',
+    title: 'Wallet Réactivé',
+    message: 'Votre wallet a été réactivé. Vous pouvez à nouveau effectuer des transactions.',
+    is_read: false
+  })
+
+  return { 
+    success: true, 
+    message: 'Wallet débloqué avec succès',
+    wallet: { ...wallet, wallet_status: 'active' },
+    previousStatus,
+    reason
+  }
+}
+
+// =========== GESTION DES ABONNEMENTS ===========
+
+async function getUserSubscriptions(client: any, customId?: string, userId?: string) {
+  let targetUserId = userId
+  
+  if (customId && !userId) {
+    const { data: userIdData } = await client
+      .from('user_ids')
+      .select('user_id, custom_id')
+      .eq('custom_id', customId.toUpperCase())
+      .maybeSingle()
+    targetUserId = userIdData?.user_id
+  }
+
+  if (!targetUserId) {
+    return { success: false, error: 'Utilisateur non trouvé' }
+  }
+
+  // Récupérer les abonnements service
+  const { data: serviceSubscriptions } = await client
+    .from('service_subscriptions')
+    .select(`
+      *,
+      service_plans (*)
+    `)
+    .eq('user_id', targetUserId)
+    .order('created_at', { ascending: false })
+
+  // Récupérer les abonnements vendeur
+  const { data: vendorSubscriptions } = await client
+    .from('vendor_subscriptions')
+    .select('*')
+    .eq('vendor_id', targetUserId)
+    .order('created_at', { ascending: false })
+
+  // Récupérer les abonnements unifiés
+  const { data: unifiedSubscriptions } = await client
+    .from('unified_subscriptions')
+    .select(`
+      *,
+      subscription_plans (*)
+    `)
+    .eq('user_id', targetUserId)
+    .order('created_at', { ascending: false })
+
+  // Récupérer les paiements d'abonnement
+  const { data: subscriptionPayments } = await client
+    .from('subscription_payments')
+    .select('*')
+    .eq('user_id', targetUserId)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  const allSubscriptions = [
+    ...(serviceSubscriptions || []).map((s: any) => ({ ...s, _type: 'service' })),
+    ...(vendorSubscriptions || []).map((s: any) => ({ ...s, _type: 'vendor' })),
+    ...(unifiedSubscriptions || []).map((s: any) => ({ ...s, _type: 'unified' }))
+  ]
+
+  // Compter les abonnements actifs
+  const activeCount = allSubscriptions.filter((s: any) => 
+    s.status === 'active' && new Date(s.end_date || s.expires_at) > new Date()
+  ).length
+
+  return {
+    success: true,
+    userId: targetUserId,
+    subscriptions: {
+      service: serviceSubscriptions || [],
+      vendor: vendorSubscriptions || [],
+      unified: unifiedSubscriptions || [],
+      all: allSubscriptions
+    },
+    payments: subscriptionPayments || [],
+    stats: {
+      total: allSubscriptions.length,
+      active: activeCount,
+      expired: allSubscriptions.length - activeCount
+    }
+  }
+}
+
+async function cancelUserSubscription(
+  client: any, 
+  customId?: string, 
+  userId?: string, 
+  subscriptionId?: string,
+  adminId?: string, 
+  reason?: string
+) {
+  let targetUserId = userId
+  let customIdResolved = customId
+  
+  if (customId && !userId) {
+    const { data: userIdData } = await client
+      .from('user_ids')
+      .select('user_id, custom_id')
+      .eq('custom_id', customId.toUpperCase())
+      .maybeSingle()
+    targetUserId = userIdData?.user_id
+    customIdResolved = userIdData?.custom_id
+  }
+
+  if (!targetUserId) {
+    return { success: false, error: 'Utilisateur non trouvé' }
+  }
+
+  if (!subscriptionId) {
+    return { success: false, error: 'ID d\'abonnement requis' }
+  }
+
+  // Essayer de trouver l'abonnement dans les différentes tables
+  let subscription = null
+  let subscriptionType = ''
+  let tableName = ''
+
+  // Vérifier service_subscriptions
+  const { data: serviceSub } = await client
+    .from('service_subscriptions')
+    .select('*')
+    .eq('id', subscriptionId)
+    .maybeSingle()
+  
+  if (serviceSub) {
+    subscription = serviceSub
+    subscriptionType = 'service'
+    tableName = 'service_subscriptions'
+  }
+
+  // Vérifier vendor_subscriptions
+  if (!subscription) {
+    const { data: vendorSub } = await client
+      .from('vendor_subscriptions')
+      .select('*')
+      .eq('id', subscriptionId)
+      .maybeSingle()
+    
+    if (vendorSub) {
+      subscription = vendorSub
+      subscriptionType = 'vendor'
+      tableName = 'vendor_subscriptions'
+    }
+  }
+
+  // Vérifier unified_subscriptions
+  if (!subscription) {
+    const { data: unifiedSub } = await client
+      .from('unified_subscriptions')
+      .select('*')
+      .eq('id', subscriptionId)
+      .maybeSingle()
+    
+    if (unifiedSub) {
+      subscription = unifiedSub
+      subscriptionType = 'unified'
+      tableName = 'unified_subscriptions'
+    }
+  }
+
+  if (!subscription) {
+    return { success: false, error: 'Abonnement non trouvé' }
+  }
+
+  // Vérifier que l'abonnement appartient bien à l'utilisateur
+  const subUserId = subscription.user_id || subscription.vendor_id
+  if (subUserId !== targetUserId) {
+    return { success: false, error: 'L\'abonnement n\'appartient pas à cet utilisateur' }
+  }
+
+  const previousStatus = subscription.status
+  const previousEndDate = subscription.end_date || subscription.expires_at
+
+  // Annuler l'abonnement
+  const { error: updateError } = await client
+    .from(tableName)
+    .update({
+      status: 'cancelled',
+      cancelled_at: new Date().toISOString(),
+      cancellation_reason: reason || 'Annulé par administrateur',
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', subscriptionId)
+
+  if (updateError) {
+    return { success: false, error: 'Erreur lors de l\'annulation', details: updateError.message }
+  }
+
+  // Créer une alerte de sécurité
+  await client.from('security_alerts').insert({
+    alert_type: 'subscription_cancelled',
+    severity: 'medium',
+    title: `Abonnement annulé: ${customIdResolved || targetUserId}`,
+    description: reason || 'Annulation par administrateur',
+    user_id: targetUserId,
+    status: 'resolved',
+    metadata: {
+      subscription_id: subscriptionId,
+      subscription_type: subscriptionType,
+      previous_status: previousStatus,
+      previous_end_date: previousEndDate,
+      cancelled_by: adminId,
+      reason
+    }
+  })
+
+  // Log l'action
+  await client.from('admin_action_logs').insert({
+    admin_id: adminId,
+    action_type: 'subscription_cancel',
+    target_type: 'subscription',
+    target_id: subscriptionId,
+    old_value: { status: previousStatus, end_date: previousEndDate },
+    new_value: { status: 'cancelled', reason },
+    reason
+  })
+
+  // Notifier l'utilisateur
+  await client.from('notifications').insert({
+    user_id: targetUserId,
+    type: 'warning',
+    title: 'Abonnement Annulé',
+    message: `Votre abonnement ${subscriptionType} a été annulé. ${reason ? `Raison: ${reason}` : 'Contactez le support pour plus d\'informations.'}`,
+    is_read: false
+  })
+
+  return { 
+    success: true, 
+    message: 'Abonnement annulé avec succès',
+    subscription: { ...subscription, status: 'cancelled' },
+    subscriptionType,
+    previousStatus,
+    reason
   }
 }

@@ -37,7 +37,11 @@ import {
   Zap,
   BarChart3,
   Users,
-  ListChecks
+  ListChecks,
+  Ban,
+  ShieldX,
+  XOctagon,
+  CalendarX
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -123,6 +127,11 @@ export function WalletAuditTool() {
   const [apiSignatures, setApiSignatures] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('search');
   const [batchResult, setBatchResult] = useState<BatchActionResult | null>(null);
+  const [blockReason, setBlockReason] = useState('');
+  const [cancelReason, setCancelReason] = useState('');
+  const [userSubscriptions, setUserSubscriptions] = useState<any>(null);
+  const [showBlockDialog, setShowBlockDialog] = useState(false);
+  const [showSubscriptionsDialog, setShowSubscriptionsDialog] = useState(false);
 
   const formatAmount = (amount: number, currency = 'GNF') => {
     return new Intl.NumberFormat('fr-GN', {
@@ -328,6 +337,90 @@ export function WalletAuditTool() {
       setActionLoading(null);
     }
   }, [loadGlobalStats]);
+
+  // Bloquer un wallet
+  const blockWallet = useCallback(async (reason?: string) => {
+    if (!auditResult?.wallet) return;
+    
+    setActionLoading('block');
+    try {
+      const { data, error } = await supabase.functions.invoke('wallet-audit', {
+        body: { 
+          action: 'block-wallet', 
+          userId: auditResult.wallet.user_id,
+          reason: reason || blockReason || 'Blocage de sécurité'
+        }
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data.error);
+
+      toast.success('Wallet bloqué avec succès');
+      setShowBlockDialog(false);
+      setBlockReason('');
+      await auditWallet();
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur lors du blocage');
+    } finally {
+      setActionLoading(null);
+    }
+  }, [auditResult, auditWallet, blockReason]);
+
+  // Débloquer un wallet (déjà existant dans unblockWallet)
+
+  // Charger les abonnements d'un utilisateur
+  const loadUserSubscriptions = useCallback(async () => {
+    if (!auditResult?.wallet) return;
+    
+    setActionLoading('subscriptions');
+    try {
+      const { data, error } = await supabase.functions.invoke('wallet-audit', {
+        body: { 
+          action: 'get-user-subscriptions', 
+          userId: auditResult.wallet.user_id
+        }
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data.error);
+
+      setUserSubscriptions(data);
+      setShowSubscriptionsDialog(true);
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur lors du chargement des abonnements');
+    } finally {
+      setActionLoading(null);
+    }
+  }, [auditResult]);
+
+  // Annuler un abonnement
+  const cancelSubscription = useCallback(async (subscriptionId: string) => {
+    if (!auditResult?.wallet) return;
+    
+    setActionLoading(`cancel-${subscriptionId}`);
+    try {
+      const { data, error } = await supabase.functions.invoke('wallet-audit', {
+        body: { 
+          action: 'cancel-subscription', 
+          userId: auditResult.wallet.user_id,
+          subscriptionId,
+          reason: cancelReason || 'Annulation par administrateur'
+        }
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data.error);
+
+      toast.success('Abonnement annulé avec succès');
+      setCancelReason('');
+      // Recharger les abonnements
+      await loadUserSubscriptions();
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur lors de l\'annulation');
+    } finally {
+      setActionLoading(null);
+    }
+  }, [auditResult, cancelReason, loadUserSubscriptions]);
 
   const getIssueIcon = (type: string) => {
     switch (type) {
@@ -548,6 +641,247 @@ export function WalletAuditTool() {
                       </div>
                     </CardContent>
                   </Card>
+
+                  {/* Actions de sécurité */}
+                  {auditResult.walletFound && (
+                    <Card className="border-destructive/30">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <ShieldX className="h-5 w-5 text-destructive" />
+                          Mesures de Sécurité
+                        </CardTitle>
+                        <CardDescription>
+                          Actions restrictives pour protéger l'utilisateur ou la plateforme
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {/* Blocage/Déblocage Wallet */}
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <div className={`p-2 rounded-full ${
+                                auditResult.wallet?.wallet_status === 'blocked' 
+                                  ? 'bg-red-100' 
+                                  : 'bg-green-100'
+                              }`}>
+                                {auditResult.wallet?.wallet_status === 'blocked' ? (
+                                  <Lock className="h-5 w-5 text-red-600" />
+                                ) : (
+                                  <Unlock className="h-5 w-5 text-green-600" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-medium">
+                                  Statut: {auditResult.wallet?.wallet_status === 'blocked' ? 'Bloqué' : 'Actif'}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  {auditResult.wallet?.wallet_status === 'blocked' 
+                                    ? 'L\'utilisateur ne peut pas effectuer de transactions'
+                                    : 'Le wallet fonctionne normalement'
+                                  }
+                                </p>
+                              </div>
+                            </div>
+                            {auditResult.wallet?.wallet_status === 'blocked' ? (
+                              <Button 
+                                onClick={unblockWallet} 
+                                disabled={actionLoading === 'unblock'}
+                                variant="outline"
+                                className="border-green-500 text-green-600 hover:bg-green-50"
+                              >
+                                {actionLoading === 'unblock' ? (
+                                  <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                                ) : (
+                                  <Unlock className="h-4 w-4 mr-2" />
+                                )}
+                                Débloquer
+                              </Button>
+                            ) : (
+                              <Button 
+                                onClick={() => setShowBlockDialog(true)} 
+                                disabled={actionLoading === 'block'}
+                                variant="destructive"
+                              >
+                                {actionLoading === 'block' ? (
+                                  <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                                ) : (
+                                  <Ban className="h-4 w-4 mr-2" />
+                                )}
+                                Bloquer
+                              </Button>
+                            )}
+                          </div>
+
+                          {/* Dialog de blocage */}
+                          {showBlockDialog && (
+                            <div className="p-4 border border-destructive/50 rounded-lg bg-destructive/5 space-y-3">
+                              <div className="flex items-center gap-2 text-destructive">
+                                <XOctagon className="h-5 w-5" />
+                                <span className="font-medium">Bloquer ce wallet</span>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                Cette action empêchera l'utilisateur d'effectuer des transactions. 
+                                Une notification sera envoyée.
+                              </p>
+                              <Input
+                                placeholder="Raison du blocage (obligatoire)"
+                                value={blockReason}
+                                onChange={(e) => setBlockReason(e.target.value)}
+                                className="border-destructive/50"
+                              />
+                              <div className="flex gap-2">
+                                <Button 
+                                  variant="outline" 
+                                  onClick={() => {
+                                    setShowBlockDialog(false);
+                                    setBlockReason('');
+                                  }}
+                                >
+                                  Annuler
+                                </Button>
+                                <Button 
+                                  variant="destructive"
+                                  onClick={() => blockWallet()}
+                                  disabled={!blockReason.trim() || actionLoading === 'block'}
+                                >
+                                  {actionLoading === 'block' ? (
+                                    <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                                  ) : (
+                                    <Ban className="h-4 w-4 mr-2" />
+                                  )}
+                                  Confirmer le blocage
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <Separator />
+
+                        {/* Gestion des abonnements */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-full bg-purple-100">
+                              <CreditCard className="h-5 w-5 text-purple-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium">Abonnements</p>
+                              <p className="text-sm text-muted-foreground">
+                                Gérer ou annuler les abonnements de l'utilisateur
+                              </p>
+                            </div>
+                          </div>
+                          <Button 
+                            variant="outline"
+                            onClick={loadUserSubscriptions}
+                            disabled={actionLoading === 'subscriptions'}
+                          >
+                            {actionLoading === 'subscriptions' ? (
+                              <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                            ) : (
+                              <Eye className="h-4 w-4 mr-2" />
+                            )}
+                            Voir les abonnements
+                          </Button>
+                        </div>
+
+                        {/* Dialog des abonnements */}
+                        {showSubscriptionsDialog && userSubscriptions && (
+                          <div className="p-4 border rounded-lg bg-muted/30 space-y-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <CalendarX className="h-5 w-5 text-primary" />
+                                <span className="font-medium">
+                                  Abonnements ({userSubscriptions.stats?.total || 0})
+                                </span>
+                              </div>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => setShowSubscriptionsDialog(false)}
+                              >
+                                <XCircle className="h-4 w-4" />
+                              </Button>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-3">
+                              <div className="text-center p-2 bg-background rounded">
+                                <p className="text-xl font-bold text-green-600">
+                                  {userSubscriptions.stats?.active || 0}
+                                </p>
+                                <p className="text-xs text-muted-foreground">Actifs</p>
+                              </div>
+                              <div className="text-center p-2 bg-background rounded">
+                                <p className="text-xl font-bold text-gray-500">
+                                  {userSubscriptions.stats?.expired || 0}
+                                </p>
+                                <p className="text-xs text-muted-foreground">Expirés</p>
+                              </div>
+                              <div className="text-center p-2 bg-background rounded">
+                                <p className="text-xl font-bold">
+                                  {userSubscriptions.payments?.length || 0}
+                                </p>
+                                <p className="text-xs text-muted-foreground">Paiements</p>
+                              </div>
+                            </div>
+
+                            {userSubscriptions.subscriptions?.all?.length > 0 ? (
+                              <ScrollArea className="h-[200px]">
+                                <div className="space-y-2">
+                                  {userSubscriptions.subscriptions.all.map((sub: any, idx: number) => (
+                                    <div 
+                                      key={idx} 
+                                      className="flex items-center justify-between p-3 bg-background rounded-lg"
+                                    >
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-2">
+                                          <Badge variant={sub.status === 'active' ? 'default' : 'secondary'}>
+                                            {sub._type}
+                                          </Badge>
+                                          <Badge variant={sub.status === 'active' ? 'outline' : 'destructive'}>
+                                            {sub.status}
+                                          </Badge>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground mt-1">
+                                          {sub.service_plans?.name || sub.subscription_plans?.name || 'Abonnement'}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                          Expire: {sub.end_date || sub.expires_at 
+                                            ? format(new Date(sub.end_date || sub.expires_at), 'dd/MM/yyyy')
+                                            : 'N/A'
+                                          }
+                                        </p>
+                                      </div>
+                                      {sub.status === 'active' && (
+                                        <Button 
+                                          variant="destructive" 
+                                          size="sm"
+                                          onClick={() => cancelSubscription(sub.id)}
+                                          disabled={actionLoading === `cancel-${sub.id}`}
+                                        >
+                                          {actionLoading === `cancel-${sub.id}` ? (
+                                            <RefreshCw className="h-3 w-3 animate-spin" />
+                                          ) : (
+                                            <XCircle className="h-3 w-3 mr-1" />
+                                          )}
+                                          Annuler
+                                        </Button>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </ScrollArea>
+                            ) : (
+                              <div className="text-center py-4 text-muted-foreground">
+                                <CreditCard className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                <p>Aucun abonnement trouvé</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
 
                   {/* Transactions récentes */}
                   {auditResult.transactions.length > 0 && (
