@@ -36,14 +36,15 @@ interface WalletTransactionHistoryProps {
 
 export const WalletTransactionHistory = ({ 
   className = '', 
-  limit = 10 
+  limit = 50 
 }: WalletTransactionHistoryProps) => {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [walletBalance, setWalletBalance] = useState<number>(0);
   const [walletCurrency, setWalletCurrency] = useState<string>('GNF');
+  const [showAll, setShowAll] = useState(false);
+  const INITIAL_DISPLAY_COUNT = 3;
 
   useEffect(() => {
     if (user) {
@@ -71,7 +72,6 @@ export const WalletTransactionHistory = ({
       }
 
       if (walletData) {
-        setWalletBalance(walletData.balance);
         setWalletCurrency(walletData.currency);
 
         // Récupérer les transactions depuis enhanced_transactions (exclure archivées)
@@ -185,13 +185,17 @@ export const WalletTransactionHistory = ({
     );
   }
 
+  const displayedTransactions = showAll 
+    ? transactions 
+    : transactions.slice(0, INITIAL_DISPLAY_COUNT);
+
   return (
     <Card className={`${className} border-2 border-green-100 bg-gradient-to-br from-green-50 to-emerald-50`}>
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <History className="w-5 h-5 text-green-600" />
-            Historique Wallet
+            Historique des transactions
           </CardTitle>
           <Button
             size="sm"
@@ -201,12 +205,6 @@ export const WalletTransactionHistory = ({
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
-        </div>
-        <div className="bg-white/60 rounded-lg p-4 border border-green-200">
-          <p className="text-sm text-gray-600">Solde actuel</p>
-          <p className="text-2xl font-bold text-green-600">
-            {walletBalance.toLocaleString()} {walletCurrency}
-          </p>
         </div>
       </CardHeader>
 
@@ -238,7 +236,7 @@ export const WalletTransactionHistory = ({
           </div>
         ) : (
           <div className="space-y-3">
-            {transactions.map((transaction) => (
+            {displayedTransactions.map((transaction) => (
               <div
                 key={transaction.id}
                 className="flex items-center justify-between p-3 bg-white/60 rounded-lg border border-green-200 hover:bg-white/80 transition-colors"
@@ -279,10 +277,14 @@ export const WalletTransactionHistory = ({
               </div>
             ))}
             
-            {transactions.length >= limit && (
+            {transactions.length > INITIAL_DISPLAY_COUNT && (
               <div className="text-center pt-4">
-                <Button variant="outline" size="sm">
-                  Voir plus de transactions
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowAll(!showAll)}
+                >
+                  {showAll ? 'Voir moins' : `Voir tout (${transactions.length} transactions)`}
                 </Button>
               </div>
             )}
