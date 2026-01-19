@@ -19,6 +19,7 @@ import { ViewReportsSection } from '@/components/agent/ViewReportsSection';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 import { useAgentStats } from '@/hooks/useAgentStats';
 import { AgentCreatedUsersList } from '@/components/agent/AgentCreatedUsersList';
+import { AgentOrdersTracking } from '@/components/agent/AgentOrdersTracking';
 
 export default function AgentDashboard() {
   const { user, signOut } = useAuth();
@@ -316,6 +317,9 @@ export default function AgentDashboard() {
       
       case 'my-users':
         return <AgentCreatedUsersList agentId={agent.id} />;
+      
+      case 'orders':
+        return <AgentOrdersTracking agentId={agent.id} />;
       
       case 'sub-agents':
         return <AgentSubAgentsManagement agentId={agent.id} />;
