@@ -13,7 +13,10 @@ import {
   Building2,
   Mail,
   Phone,
-  MapPin
+  MapPin,
+  Lock,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAgentActions, CreateUserData } from '@/hooks/useAgentActions';
@@ -56,6 +59,7 @@ interface CreateUserFormProps {
 export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated }: CreateUserFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { createUser } = useAgentActions({ onUserCreated });
   
   const [formData, setFormData] = useState({
@@ -63,6 +67,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
     lastName: '',
     email: '',
     phone: '',
+    password: '',
     role: 'client' as CreateUserData['role'],
     country: 'Guinée',
     city: '',
@@ -89,6 +94,13 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
     e.preventDefault();
     setIsSubmitting(true);
 
+    // Validation du mot de passe
+    if (!formData.password || formData.password.length < 8) {
+      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       // Préparer les données selon le rôle
       const userData: CreateUserData = {
@@ -96,6 +108,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
         lastName: formData.lastName,
         email: formData.email,
         phone: formData.phone,
+        password: formData.password,
         role: formData.role,
         country: formData.country,
         city: formData.city
@@ -148,6 +161,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
           lastName: '',
           email: '',
           phone: '',
+          password: '',
           role: 'client',
           country: 'Guinée',
           city: '',
@@ -166,6 +180,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
           vehicle_year: '',
           vehicle_plate: '',
         });
+        setShowPassword(false);
         setIsOpen(false);
       } else {
         console.error('❌ [CreateUserForm] Erreur:', result.error);
@@ -295,6 +310,36 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                   className="h-9"
                 />
               </div>
+            </div>
+
+            {/* Champ Mot de passe */}
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="flex items-center gap-1 text-sm">
+                <Lock className="w-3 h-3" />
+                Mot de passe *
+              </Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  minLength={8}
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="Minimum 8 caractères"
+                  className="h-9 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Ce mot de passe sera utilisé par l'utilisateur pour se connecter
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

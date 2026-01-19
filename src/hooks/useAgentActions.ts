@@ -11,6 +11,7 @@ export interface CreateUserData {
   lastName: string;
   email: string;
   phone: string;
+  password?: string; // Mot de passe optionnel, généré automatiquement si non fourni
   role: 'client' | 'vendeur' | 'livreur' | 'taxi' | 'transitaire' | 'syndicat';
   country: string;
   city: string;
@@ -101,9 +102,14 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
       }
 
       // Préparer les données pour l'edge function
+      // Utiliser le mot de passe fourni ou en générer un automatiquement
+      const password = userData.password && userData.password.length >= 8 
+        ? userData.password 
+        : Math.random().toString(36).slice(-8) + 'Aa1!';
+      
       const requestBody: any = {
         email: userData.email,
-        password: Math.random().toString(36).slice(-8) + 'Aa1!',
+        password: password,
         firstName: userData.firstName,
         lastName: userData.lastName,
         phone: userData.phone,
