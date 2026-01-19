@@ -414,54 +414,33 @@ export default function UniversalWalletDashboard({
               {/* Sélection de la méthode */}
               <div className="space-y-2">
                 <Label>Méthode de paiement</Label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <Button
                     type="button"
                     variant={depositMethod === 'card' ? 'default' : 'outline'}
                     onClick={() => setDepositMethod('card')}
-                    className="flex items-center gap-2 h-auto py-3"
+                    className="flex flex-col items-center gap-1 h-auto py-3"
                   >
-                    <CreditCard className="w-4 h-4" />
-                    <div className="text-left">
-                      <div className="font-medium">Carte bancaire</div>
-                      <div className="text-xs opacity-70">Visa, Mastercard</div>
-                    </div>
+                    <CreditCard className="w-5 h-5" />
+                    <span className="text-xs">Carte</span>
                   </Button>
                   <Button
                     type="button"
                     variant={depositMethod === 'orange' ? 'default' : 'outline'}
                     onClick={() => setDepositMethod('orange')}
-                    className="flex items-center gap-2 h-auto py-3"
+                    className="flex flex-col items-center gap-1 h-auto py-3"
                   >
-                    <Smartphone className="w-4 h-4 text-orange-500" />
-                    <div className="text-left">
-                      <div className="font-medium">Orange Money</div>
-                      <div className="text-xs opacity-70">Paiement mobile</div>
-                    </div>
+                    <Smartphone className="w-5 h-5 text-orange-500" />
+                    <span className="text-xs">Orange Money</span>
                   </Button>
                   <Button
                     type="button"
                     variant={depositMethod === 'momo' ? 'default' : 'outline'}
                     onClick={() => setDepositMethod('momo')}
-                    className="flex items-center gap-2 h-auto py-3"
+                    className="flex flex-col items-center gap-1 h-auto py-3"
                   >
-                    <Smartphone className="w-4 h-4 text-yellow-500" />
-                    <div className="text-left">
-                      <div className="font-medium">MTN MoMo</div>
-                      <div className="text-xs opacity-70">Mobile Money</div>
-                    </div>
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={depositMethod === 'cash' ? 'default' : 'outline'}
-                    onClick={() => setDepositMethod('cash')}
-                    className="flex items-center gap-2 h-auto py-3"
-                  >
-                    <Banknote className="w-4 h-4 text-green-600" />
-                    <div className="text-left">
-                      <div className="font-medium">Espèces</div>
-                      <div className="text-xs opacity-70">Dépôt manuel</div>
-                    </div>
+                    <Smartphone className="w-5 h-5 text-yellow-500" />
+                    <span className="text-xs">MTN MoMo</span>
                   </Button>
                 </div>
               </div>
