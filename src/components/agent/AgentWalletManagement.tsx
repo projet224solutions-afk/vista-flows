@@ -194,16 +194,48 @@ export default function AgentWalletManagement({
       toast.error('Montant invalide');
       return;
     }
+    
+    if (amount < 1000) {
+      toast.error('Montant minimum: 1,000 GNF');
+      return;
+    }
 
     try {
       setBusy(true);
       
-      // Créer une transaction de dépôt dans wallet_transactions
       const referenceNumber = `AGT-DEP-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       
-        const { error: txError } = await supabase
-          .from('wallet_transactions' as any)
-          .insert({
+      // ⚡ Utiliser la fonction RPC atomique (comme le système vendeur)
+      const { error: balanceError } = await supabase
+        .rpc('update_wallet_balance_atomic', {
+          p_wallet_id: String(wallet.id),
+          p_amount: amount,
+          p_tx_id: referenceNumber,
+          p_description: 'Dépôt manuel sur wallet agent'
+        });
+
+      if (balanceError) {
+        console.error('❌ Erreur RPC dépôt:', balanceError);
+        throw balanceError;
+      }
+
+      // ✅ Synchroniser aussi agent_wallets pour cohérence
+      const { error: syncError } = await supabase
+        .from('agent_wallets')
+        .update({ 
+          balance: wallet.balance + amount,
+          updated_at: new Date().toISOString()
+        })
+        .eq('agent_id', agentId);
+
+      if (syncError) {
+        console.warn('⚠️ Sync agent_wallets échouée:', syncError);
+      }
+
+      // Enregistrer la transaction
+      const { error: txError } = await supabase
+        .from('wallet_transactions')
+        .insert({
           transaction_id: referenceNumber,
           transaction_type: 'deposit',
           amount: amount,
@@ -213,6 +245,7 @@ export default function AgentWalletManagement({
           status: 'completed',
           description: 'Dépôt manuel sur wallet agent',
           receiver_wallet_id: wallet.id,
+          receiver_user_id: agentUserId,
           metadata: { 
             method: 'manual',
             agent_id: agentId,
@@ -221,31 +254,22 @@ export default function AgentWalletManagement({
           }
         });
 
-      if (txError) throw txError;
+      if (txError) {
+        console.warn('⚠️ Transaction log failed (non-bloquant):', txError);
+      }
 
-      // Mettre à jour le solde dans la table wallets
-      const { error: updateError } = await supabase
-        .from('wallets')
-        .update({ 
-          balance: wallet.balance + amount,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', wallet.id);
-
-      if (updateError) throw updateError;
-
-      toast.success(`Dépôt de ${amount.toLocaleString()} GNF effectué`);
+      toast.success(`Dépôt de ${amount.toLocaleString()} GNF effectué avec succès`);
       setDepositAmount('');
       setShowDepositConfirm(false);
       await loadWallet();
       window.dispatchEvent(new CustomEvent('wallet-updated'));
     } catch (error: any) {
-      console.error('Erreur dépôt:', error);
-      toast.error('Erreur lors du dépôt');
+      console.error('❌ Erreur dépôt:', error);
+      toast.error(error?.message || 'Erreur lors du dépôt');
     } finally {
       setBusy(false);
     }
-  }, [wallet, depositAmount, agentId, loadWallet]);
+  }, [wallet, depositAmount, agentId, agentUserId, loadWallet]);
 
   const handleWithdraw = useCallback(async () => {
     if (!wallet) return;
@@ -253,6 +277,11 @@ export default function AgentWalletManagement({
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
       toast.error('Montant invalide');
+      return;
+    }
+    
+    if (amount < 5000) {
+      toast.error('Montant minimum: 5,000 GNF');
       return;
     }
     
@@ -264,66 +293,63 @@ export default function AgentWalletManagement({
     try {
       setBusy(true);
       
-      const newBalance = wallet.balance - amount;
-      
-      // ÉTAPE 1: Mettre à jour le solde dans la table wallets
-      console.log('📝 Mise à jour du solde wallets:', wallet.id, 'nouveau solde:', newBalance);
-      const { data: updateData, error: updateError } = await supabase
-        .from('wallets')
-        .update({ 
-          balance: newBalance,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', wallet.id)
-        .select();
-
-      if (updateError) {
-        console.error('❌ Erreur mise à jour solde:', updateError);
-        throw new Error(`Impossible de mettre à jour le solde: ${updateError.message}`);
-      }
-
-      if (!updateData || updateData.length === 0) {
-        console.error('❌ Aucune ligne mise à jour - vérifiez les permissions RLS');
-        throw new Error('Mise à jour du solde échouée - permissions insuffisantes');
-      }
-
-      console.log('✅ Solde mis à jour:', updateData);
-
-      // ÉTAPE 2: Créer la transaction de retrait
       const referenceNumber = `AGT-WDR-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       
-        const { error: txError } = await supabase
-          .from('wallet_transactions' as any)
-          .insert({
+      // ⚡ Utiliser la fonction RPC atomique (comme le système vendeur)
+      const { error: balanceError } = await supabase
+        .rpc('update_wallet_balance_atomic', {
+          p_wallet_id: String(wallet.id),
+          p_amount: -amount, // Négatif pour retrait
+          p_tx_id: referenceNumber,
+          p_description: 'Retrait des commissions agent'
+        });
+
+      if (balanceError) {
+        console.error('❌ Erreur RPC retrait:', balanceError);
+        throw balanceError;
+      }
+
+      // ✅ Synchroniser aussi agent_wallets pour cohérence
+      const { error: syncError } = await supabase
+        .from('agent_wallets')
+        .update({ 
+          balance: wallet.balance - amount,
+          updated_at: new Date().toISOString()
+        })
+        .eq('agent_id', agentId);
+
+      if (syncError) {
+        console.warn('⚠️ Sync agent_wallets échouée:', syncError);
+      }
+
+      // Enregistrer la transaction
+      const { error: txError } = await supabase
+        .from('wallet_transactions')
+        .insert({
           transaction_id: referenceNumber,
           transaction_type: 'withdrawal',
-          amount: -amount,
-          net_amount: -amount,
+          amount: amount,
+          net_amount: amount,
           fee: 0,
           currency: wallet.currency || 'GNF',
           status: 'completed',
-          description: 'Retrait des commissions',
+          description: 'Retrait des commissions agent',
           sender_wallet_id: wallet.id,
+          sender_user_id: agentUserId,
           metadata: { 
             method: 'manual',
             type: 'commission_withdrawal',
             agent_id: agentId,
             balance_before: wallet.balance,
-            balance_after: newBalance
+            balance_after: wallet.balance - amount
           }
         });
 
       if (txError) {
-        console.error('❌ Erreur création transaction:', txError);
-        // Rollback: restaurer le solde original
-        await supabase
-          .from('wallets')
-          .update({ balance: wallet.balance })
-          .eq('id', wallet.id);
-        throw new Error(`Impossible de créer la transaction: ${txError.message}`);
+        console.warn('⚠️ Transaction log failed (non-bloquant):', txError);
       }
 
-      console.log('✅ Transaction créée avec succès');
+      console.log('✅ Retrait effectué avec succès');
       toast.success(`Retrait de ${amount.toLocaleString()} GNF effectué avec succès`);
       setWithdrawAmount('');
       setShowWithdrawConfirm(false);
@@ -331,11 +357,11 @@ export default function AgentWalletManagement({
       window.dispatchEvent(new CustomEvent('wallet-updated'));
     } catch (error: any) {
       console.error('❌ Erreur retrait:', error);
-      toast.error(error.message || 'Erreur lors du retrait');
+      toast.error(error?.message || 'Erreur lors du retrait');
     } finally {
       setBusy(false);
     }
-  }, [wallet, withdrawAmount, agentId, loadWallet]);
+  }, [wallet, withdrawAmount, agentId, agentUserId, loadWallet]);
 
   if (loading) {
     return (
