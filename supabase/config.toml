@@ -314,3 +314,9 @@ verify_jwt = false
 
 [functions.wallet-audit]
 verify_jwt = false
+
+[functions.validate-purchase]
+verify_jwt = true
+
+[functions.generate-purchase-pdf]
+verify_jwt = true

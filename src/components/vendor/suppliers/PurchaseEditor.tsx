@@ -250,9 +250,88 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
     },
   });
 
-  // Generate document mutation
+  // Generate document mutation with PDF
   const generateDocMutation = useMutation({
     mutationFn: async () => {
+      // Appel à l'Edge Function pour générer le PDF
+      const { data, error: funcError } = await supabase.functions.invoke('generate-purchase-pdf', {
+        body: {
+          purchase_id: purchase.id,
+          vendor_id: vendorId,
+        },
+      });
+
+      if (funcError) throw funcError;
+
+      // Générer le PDF côté client avec jsPDF
+      const { default: jsPDF } = await import('jspdf');
+      const doc = new jsPDF();
+      
+      // Header
+      doc.setFontSize(20);
+      doc.setTextColor(30, 64, 175);
+      doc.text('BON D\'ACHAT DE STOCK', 105, 20, { align: 'center' });
+      
+      doc.setFontSize(12);
+      doc.setTextColor(100);
+      doc.text(purchase.purchase_number, 105, 28, { align: 'center' });
+      doc.text(`Date: ${new Date(purchase.created_at).toLocaleDateString('fr-FR')}`, 105, 35, { align: 'center' });
+      
+      // Summary boxes
+      doc.setFillColor(248, 250, 252);
+      doc.rect(14, 45, 55, 25, 'F');
+      doc.rect(77, 45, 55, 25, 'F');
+      doc.rect(140, 45, 55, 25, 'F');
+      
+      doc.setFontSize(9);
+      doc.setTextColor(100);
+      doc.text('TOTAL ACHAT', 41.5, 52, { align: 'center' });
+      doc.text('TOTAL VENTE ESTIMÉ', 104.5, 52, { align: 'center' });
+      doc.text('PROFIT ESTIMÉ', 167.5, 52, { align: 'center' });
+      
+      doc.setFontSize(12);
+      doc.setTextColor(220, 38, 38);
+      doc.text(formatCurrency(totalPurchase), 41.5, 62, { align: 'center' });
+      doc.setTextColor(51);
+      doc.text(formatCurrency(totalSelling), 104.5, 62, { align: 'center' });
+      doc.setTextColor(22, 163, 74);
+      doc.text(`+${formatCurrency(totalProfit)}`, 167.5, 62, { align: 'center' });
+      
+      // Table header
+      let yPos = 80;
+      doc.setFillColor(30, 64, 175);
+      doc.rect(14, yPos, 182, 8, 'F');
+      doc.setFontSize(9);
+      doc.setTextColor(255);
+      doc.text('Produit', 16, yPos + 5.5);
+      doc.text('Qté', 90, yPos + 5.5);
+      doc.text('Prix Achat', 110, yPos + 5.5);
+      doc.text('Prix Vente', 140, yPos + 5.5);
+      doc.text('Profit', 175, yPos + 5.5);
+      
+      // Table rows
+      yPos += 8;
+      doc.setTextColor(51);
+      items.forEach((item, idx) => {
+        if (idx % 2 === 0) {
+          doc.setFillColor(248, 250, 252);
+          doc.rect(14, yPos, 182, 8, 'F');
+        }
+        doc.setFontSize(9);
+        doc.text(item.product_name.substring(0, 25), 16, yPos + 5.5);
+        doc.text(item.quantity.toString(), 90, yPos + 5.5);
+        doc.text(formatCurrency(item.purchase_price), 110, yPos + 5.5);
+        doc.text(formatCurrency(item.selling_price), 140, yPos + 5.5);
+        doc.setTextColor(22, 163, 74);
+        doc.text(`+${formatCurrency(item.total_profit)}`, 175, yPos + 5.5);
+        doc.setTextColor(51);
+        yPos += 8;
+      });
+      
+      // Save PDF
+      doc.save(`${purchase.purchase_number}.pdf`);
+      
+      // Update status
       const { error } = await supabase
         .from('stock_purchases')
         .update({ status: 'document_generated' })
@@ -262,78 +341,37 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stock-purchases', vendorId] });
-      toast.success('Document généré');
-      onClose();
+      toast.success('Document PDF généré et téléchargé');
     },
     onError: (error: Error) => {
       toast.error(`Erreur: ${error.message}`);
     },
   });
 
-  // Validate purchase mutation
+  // Validate purchase mutation - Using Edge Function for atomic transaction
   const validateMutation = useMutation({
     mutationFn: async () => {
-      // 1. Valider l'achat
-      const { error: purchaseError } = await supabase
-        .from('stock_purchases')
-        .update({
-          status: 'validated',
-          validated_at: new Date().toISOString(),
-        })
-        .eq('id', purchase.id);
-
-      if (purchaseError) throw purchaseError;
-
-      // 2. Créer la dépense automatique
-      const { data: expenseData, error: expenseError } = await supabase
-        .from('vendor_expenses')
-        .insert({
+      // Appel à l'Edge Function pour transaction atomique
+      const { data, error } = await supabase.functions.invoke('validate-purchase', {
+        body: {
+          purchase_id: purchase.id,
           vendor_id: vendorId,
-          description: `Achat de stock - ${purchase.purchase_number}`,
-          amount: items.reduce((sum, item) => sum + item.total_purchase, 0),
-          expense_date: new Date().toISOString().split('T')[0],
-          payment_method: 'cash',
-          status: 'paid',
-        })
-        .select()
-        .single();
+          items: items,
+          purchase_number: purchase.purchase_number,
+          total_amount: items.reduce((sum, item) => sum + item.total_purchase, 0),
+        },
+      });
 
-      if (expenseError) {
-        console.error('Erreur création dépense:', expenseError);
-      } else if (expenseData) {
-        // Lier la dépense à l'achat
-        await supabase
-          .from('stock_purchases')
-          .update({ expense_id: expenseData.id })
-          .eq('id', purchase.id);
-      }
-
-      // 3. Mettre à jour le stock des produits
-      for (const item of items) {
-        if (item.product_id) {
-          // Mettre à jour le produit
-          const { data: product } = await supabase
-            .from('products')
-            .select('stock_quantity, price')
-            .eq('id', item.product_id)
-            .single();
-
-          if (product) {
-            await supabase
-              .from('products')
-              .update({
-                stock_quantity: (product.stock_quantity || 0) + item.quantity,
-                price: item.selling_price,
-              })
-              .eq('id', item.product_id);
-          }
-        }
-      }
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error);
+      
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stock-purchases', vendorId] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success('Achat validé! Stock et dépenses mis à jour.');
+      queryClient.invalidateQueries({ queryKey: ['vendor-expenses'] });
+      toast.success('Achat validé! Stock, prix d\'achat et dépenses mis à jour.');
       setShowValidateConfirm(false);
       onClose();
     },
