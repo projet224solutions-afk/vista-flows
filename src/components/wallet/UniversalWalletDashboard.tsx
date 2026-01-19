@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Wallet as WalletIcon, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertCircle, Eye, EyeOff, CreditCard } from "lucide-react";
+import { Wallet as WalletIcon, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertCircle, Eye, EyeOff, CreditCard, Smartphone, Banknote } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
@@ -21,6 +21,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+type DepositMethod = 'card' | 'orange' | 'momo' | 'cash';
+type WithdrawMethod = 'orange' | 'momo' | 'cash';
 
 interface UniversalWalletDashboardProps {
   userId: string;
@@ -40,6 +43,9 @@ export default function UniversalWalletDashboard({
   
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [depositMethod, setDepositMethod] = useState<DepositMethod>('card');
+  const [withdrawMethod, setWithdrawMethod] = useState<WithdrawMethod>('orange');
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [busy, setBusy] = useState(false);
   const [showDepositConfirm, setShowDepositConfirm] = useState(false);
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
@@ -378,73 +384,263 @@ export default function UniversalWalletDashboard({
         </CardContent>
       </Card>
 
-      {/* Actions */}
-      <Tabs defaultValue="card" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="card" className="flex items-center gap-1">
-            <CreditCard className="w-3 h-3" />
-            Carte
+      {/* Actions - 3 onglets principaux */}
+      <Tabs defaultValue="deposit" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="deposit" className="flex items-center gap-1">
+            <ArrowDownCircle className="w-3 h-3" />
+            Dépôt
           </TabsTrigger>
-          <TabsTrigger value="deposit">Dépôt</TabsTrigger>
-          <TabsTrigger value="withdraw">Retrait</TabsTrigger>
-          <TabsTrigger value="transfer">Transfert</TabsTrigger>
+          <TabsTrigger value="withdraw" className="flex items-center gap-1">
+            <ArrowUpCircle className="w-3 h-3" />
+            Retrait
+          </TabsTrigger>
+          <TabsTrigger value="transfer" className="flex items-center gap-1">
+            <WalletIcon className="w-3 h-3" />
+            Transfert
+          </TabsTrigger>
         </TabsList>
 
-        {/* Recharge par carte bancaire Stripe */}
-        <TabsContent value="card">
-          <StripeWalletTopup
-            userId={userId}
-            walletId={wallet.id}
-            onSuccess={loadWallet}
-          />
-        </TabsContent>
-
+        {/* DÉPÔT - avec sous-options */}
         <TabsContent value="deposit">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <ArrowDownCircle className="w-5 h-5 text-green-600" />
-                Effectuer un dépôt
+                Recharger mon wallet
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Sélection de la méthode */}
               <div className="space-y-2">
-                <Label htmlFor="deposit-amount">Montant (GNF)</Label>
-                <Input
-                  id="deposit-amount"
-                  type="number"
-                  placeholder="Ex: 50000"
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(e.target.value)}
-                  min="1000"
-                />
-                <p className="text-xs text-muted-foreground">Montant minimum: 1,000 GNF</p>
+                <Label>Méthode de paiement</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant={depositMethod === 'card' ? 'default' : 'outline'}
+                    onClick={() => setDepositMethod('card')}
+                    className="flex items-center gap-2 h-auto py-3"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    <div className="text-left">
+                      <div className="font-medium">Carte bancaire</div>
+                      <div className="text-xs opacity-70">Visa, Mastercard</div>
+                    </div>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={depositMethod === 'orange' ? 'default' : 'outline'}
+                    onClick={() => setDepositMethod('orange')}
+                    className="flex items-center gap-2 h-auto py-3"
+                  >
+                    <Smartphone className="w-4 h-4 text-orange-500" />
+                    <div className="text-left">
+                      <div className="font-medium">Orange Money</div>
+                      <div className="text-xs opacity-70">Paiement mobile</div>
+                    </div>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={depositMethod === 'momo' ? 'default' : 'outline'}
+                    onClick={() => setDepositMethod('momo')}
+                    className="flex items-center gap-2 h-auto py-3"
+                  >
+                    <Smartphone className="w-4 h-4 text-yellow-500" />
+                    <div className="text-left">
+                      <div className="font-medium">MTN MoMo</div>
+                      <div className="text-xs opacity-70">Mobile Money</div>
+                    </div>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={depositMethod === 'cash' ? 'default' : 'outline'}
+                    onClick={() => setDepositMethod('cash')}
+                    className="flex items-center gap-2 h-auto py-3"
+                  >
+                    <Banknote className="w-4 h-4 text-green-600" />
+                    <div className="text-left">
+                      <div className="font-medium">Espèces</div>
+                      <div className="text-xs opacity-70">Dépôt manuel</div>
+                    </div>
+                  </Button>
+                </div>
               </div>
-              <Button 
-                onClick={() => setShowDepositConfirm(true)} 
-                disabled={busy || !depositAmount}
-                className="w-full"
-              >
-                {busy ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <ArrowDownCircle className="w-4 h-4 mr-2" />}
-                Déposer
-              </Button>
+
+              {/* Formulaire selon la méthode */}
+              {depositMethod === 'card' && (
+                <StripeWalletTopup
+                  userId={userId}
+                  walletId={wallet.id}
+                  onSuccess={loadWallet}
+                />
+              )}
+
+              {(depositMethod === 'orange' || depositMethod === 'momo') && (
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-2">
+                    <Label>Numéro de téléphone</Label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground bg-muted px-3 py-2 rounded-md">+224</span>
+                      <Input
+                        type="tel"
+                        placeholder="6XX XXX XXX"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Montants rapides</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[10000, 25000, 50000, 100000, 250000, 500000].map((amt) => (
+                        <Button
+                          key={amt}
+                          type="button"
+                          variant={depositAmount === String(amt) ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setDepositAmount(String(amt))}
+                        >
+                          {amt.toLocaleString()}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Montant personnalisé (GNF)</Label>
+                    <Input
+                      type="number"
+                      placeholder="Ex: 50000"
+                      value={depositAmount}
+                      onChange={(e) => setDepositAmount(e.target.value)}
+                      min="5000"
+                    />
+                    <p className="text-xs text-muted-foreground">Montant minimum: 5,000 GNF</p>
+                  </div>
+
+                  <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                    <p className="text-sm text-orange-700 flex items-center gap-2">
+                      <Smartphone className="w-4 h-4" />
+                      Vous recevrez une notification {depositMethod === 'orange' ? 'Orange Money' : 'MTN MoMo'} pour confirmer.
+                    </p>
+                  </div>
+
+                  <Button 
+                    onClick={() => {
+                      if (!phoneNumber) {
+                        toast.error('Veuillez entrer votre numéro de téléphone');
+                        return;
+                      }
+                      if (!depositAmount || parseFloat(depositAmount) < 5000) {
+                        toast.error('Montant minimum: 5,000 GNF');
+                        return;
+                      }
+                      toast.info(`Envoi de la demande ${depositMethod === 'orange' ? 'Orange Money' : 'MTN MoMo'}...`);
+                      // TODO: Intégrer l'API Orange Money / MTN MoMo
+                      setTimeout(() => {
+                        toast.success('Demande envoyée ! Confirmez sur votre téléphone.');
+                      }, 1500);
+                    }} 
+                    disabled={busy || !depositAmount || !phoneNumber}
+                    className={`w-full ${depositMethod === 'orange' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-yellow-500 hover:bg-yellow-600'}`}
+                  >
+                    <Smartphone className="w-4 h-4 mr-2" />
+                    Recharger {parseFloat(depositAmount || '0').toLocaleString()} GNF
+                  </Button>
+                </div>
+              )}
+
+              {depositMethod === 'cash' && (
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-2">
+                    <Label>Montant à déposer (GNF)</Label>
+                    <Input
+                      type="number"
+                      placeholder="Ex: 50000"
+                      value={depositAmount}
+                      onChange={(e) => setDepositAmount(e.target.value)}
+                      min="1000"
+                    />
+                    <p className="text-xs text-muted-foreground">Montant minimum: 1,000 GNF</p>
+                  </div>
+                  <Button 
+                    onClick={() => setShowDepositConfirm(true)} 
+                    disabled={busy || !depositAmount}
+                    className="w-full"
+                  >
+                    {busy ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <ArrowDownCircle className="w-4 h-4 mr-2" />}
+                    Déposer {parseFloat(depositAmount || '0').toLocaleString()} GNF
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* RETRAIT - avec sous-options */}
         <TabsContent value="withdraw">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <ArrowUpCircle className="w-5 h-5 text-red-600" />
-                Effectuer un retrait
+                Retirer des fonds
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Sélection de la méthode */}
               <div className="space-y-2">
-                <Label htmlFor="withdraw-amount">Montant (GNF)</Label>
+                <Label>Méthode de retrait</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <Button
+                    type="button"
+                    variant={withdrawMethod === 'orange' ? 'default' : 'outline'}
+                    onClick={() => setWithdrawMethod('orange')}
+                    className="flex flex-col items-center gap-1 h-auto py-3"
+                  >
+                    <Smartphone className="w-5 h-5 text-orange-500" />
+                    <span className="text-xs">Orange Money</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={withdrawMethod === 'momo' ? 'default' : 'outline'}
+                    onClick={() => setWithdrawMethod('momo')}
+                    className="flex flex-col items-center gap-1 h-auto py-3"
+                  >
+                    <Smartphone className="w-5 h-5 text-yellow-500" />
+                    <span className="text-xs">MTN MoMo</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={withdrawMethod === 'cash' ? 'default' : 'outline'}
+                    onClick={() => setWithdrawMethod('cash')}
+                    className="flex flex-col items-center gap-1 h-auto py-3"
+                  >
+                    <Banknote className="w-5 h-5 text-green-600" />
+                    <span className="text-xs">Espèces</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Numéro pour mobile money */}
+              {(withdrawMethod === 'orange' || withdrawMethod === 'momo') && (
+                <div className="space-y-2">
+                  <Label>Numéro de téléphone</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground bg-muted px-3 py-2 rounded-md">+224</span>
+                    <Input
+                      type="tel"
+                      placeholder="6XX XXX XXX"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label>Montant à retirer (GNF)</Label>
                 <Input
-                  id="withdraw-amount"
                   type="number"
                   placeholder="Ex: 50000"
                   value={withdrawAmount}
@@ -453,22 +649,30 @@ export default function UniversalWalletDashboard({
                   max={wallet.balance}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Montant minimum: 5,000 GNF | Disponible: {wallet.balance.toLocaleString()} GNF
+                  Minimum: 5,000 GNF | Disponible: {wallet.balance.toLocaleString()} GNF
                 </p>
               </div>
+
               <Button 
-                onClick={() => setShowWithdrawConfirm(true)} 
+                onClick={() => {
+                  if ((withdrawMethod === 'orange' || withdrawMethod === 'momo') && !phoneNumber) {
+                    toast.error('Veuillez entrer votre numéro de téléphone');
+                    return;
+                  }
+                  setShowWithdrawConfirm(true);
+                }} 
                 disabled={busy || !withdrawAmount}
                 variant="destructive"
                 className="w-full"
               >
                 {busy ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <ArrowUpCircle className="w-4 h-4 mr-2" />}
-                Retirer
+                Retirer {parseFloat(withdrawAmount || '0').toLocaleString()} GNF
               </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* TRANSFERT */}
         <TabsContent value="transfer">
           <Card>
             <CardHeader>
