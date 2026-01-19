@@ -95,10 +95,45 @@ export default function Profil() {
   const [editEmail, setEditEmail] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [saving, setSaving] = useState(false);
+  const [agentTypeInfo, setAgentTypeInfo] = useState<{ label: string; description: string } | null>(null);
 
-  const userTypeInfo = (profile?.role && userTypes[profile.role as keyof typeof userTypes]) 
+  // Récupérer le type d'agent dynamiquement si l'utilisateur est un agent
+  useEffect(() => {
+    const fetchAgentType = async () => {
+      if (profile?.role === 'agent' && user?.id) {
+        try {
+          const { data, error } = await supabase
+            .from('agents_management')
+            .select('type_agent, role')
+            .eq('user_id', user.id)
+            .single();
+          
+          if (data && !error) {
+            const typeLabel = data.type_agent 
+              ? data.type_agent.charAt(0).toUpperCase() + data.type_agent.slice(1)
+              : 'Agent';
+            const roleLabel = data.role || '';
+            setAgentTypeInfo({
+              label: `Agent ${typeLabel}`,
+              description: roleLabel || `Agent ${typeLabel.toLowerCase()}`
+            });
+          }
+        } catch (err) {
+          console.error('Erreur récupération type agent:', err);
+        }
+      }
+    };
+    fetchAgentType();
+  }, [profile?.role, user?.id]);
+
+  const baseUserTypeInfo = (profile?.role && userTypes[profile.role as keyof typeof userTypes]) 
     ? userTypes[profile.role as keyof typeof userTypes] 
     : userTypes.client;
+  
+  // Utiliser les infos dynamiques de l'agent si disponibles
+  const userTypeInfo = profile?.role === 'agent' && agentTypeInfo 
+    ? { ...baseUserTypeInfo, label: agentTypeInfo.label, description: agentTypeInfo.description }
+    : baseUserTypeInfo;
 
   const loadOrders = async () => {
     if (!user) return;
