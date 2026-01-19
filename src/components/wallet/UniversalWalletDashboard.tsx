@@ -591,7 +591,7 @@ export default function UniversalWalletDashboard({
               {/* Sélection de la méthode */}
               <div className="space-y-2">
                 <Label>Méthode de retrait</Label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <Button
                     type="button"
                     variant={withdrawMethod === 'orange' ? 'default' : 'outline'}
@@ -609,15 +609,6 @@ export default function UniversalWalletDashboard({
                   >
                     <Smartphone className="w-5 h-5 text-yellow-500" />
                     <span className="text-xs">MTN MoMo</span>
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={withdrawMethod === 'cash' ? 'default' : 'outline'}
-                    onClick={() => setWithdrawMethod('cash')}
-                    className="flex flex-col items-center gap-1 h-auto py-3"
-                  >
-                    <Banknote className="w-5 h-5 text-green-600" />
-                    <span className="text-xs">Espèces</span>
                   </Button>
                 </div>
               </div>
