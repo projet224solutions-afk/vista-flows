@@ -70,6 +70,7 @@ const VendorServiceModule = lazy(() => import("@/components/vendor/VendorService
 const VendorDigitalProducts = lazy(() => import("@/components/vendor/VendorDigitalProducts"));
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useVendorErrorBoundary } from "@/hooks/useVendorErrorBoundary";
+const MyPurchasesOrdersList = lazy(() => import("@/components/shared/MyPurchasesOrdersList"));
 
 
 export default function VendeurDashboard() {
