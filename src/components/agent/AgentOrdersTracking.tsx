@@ -12,7 +12,7 @@ import {
   ShoppingCart, Search, Eye, Package, Clock, 
   CheckCircle, XCircle, Truck, User, MapPin, 
   RefreshCw, Calendar, TrendingUp, AlertCircle,
-  Filter, ArrowUpDown
+  Filter, Shield, Banknote, ArrowRight
 } from "lucide-react";
 import {
   Select,
@@ -26,11 +26,19 @@ interface AgentOrdersTrackingProps {
   agentId: string;
 }
 
+interface EscrowInfo {
+  id: string;
+  status: string;
+  amount: number;
+  created_at: string;
+}
+
 interface Order {
   id: string;
   order_number: string;
   status: string;
   payment_status: string;
+  payment_method?: string;
   total_amount: number;
   created_at: string;
   updated_at: string;
@@ -41,7 +49,16 @@ interface Order {
   customer_public_id: string;
   items_count: number;
   vendor_name?: string;
+  escrow?: EscrowInfo;
 }
+
+const orderSteps = [
+  { key: 'pending', label: 'En attente', icon: Clock },
+  { key: 'confirmed', label: 'Confirmée', icon: CheckCircle },
+  { key: 'preparing', label: 'En préparation', icon: Package },
+  { key: 'shipped', label: 'Expédiée', icon: Truck },
+  { key: 'delivered', label: 'Livrée', icon: CheckCircle },
+];
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800 border-yellow-300',
@@ -82,6 +99,22 @@ const statusIcons: Record<string, React.ReactNode> = {
   cancelled: <XCircle className="w-4 h-4" />
 };
 
+const escrowStatusColors: Record<string, string> = {
+  pending: 'bg-blue-100 text-blue-800 border-blue-300',
+  held: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+  released: 'bg-green-100 text-green-800 border-green-300',
+  refunded: 'bg-red-100 text-red-800 border-red-300',
+  disputed: 'bg-orange-100 text-orange-800 border-orange-300'
+};
+
+const escrowStatusLabels: Record<string, string> = {
+  pending: 'Fonds sécurisés',
+  held: 'En attente',
+  released: 'Fonds libérés',
+  refunded: 'Remboursé',
+  disputed: 'Litige'
+};
+
 const paymentStatusColors: Record<string, string> = {
   pending: 'bg-yellow-50 text-yellow-700 border-yellow-200',
   paid: 'bg-green-50 text-green-700 border-green-200',
@@ -96,6 +129,80 @@ const paymentStatusLabels: Record<string, string> = {
   refunded: 'Remboursé'
 };
 
+// Composant de suivi visuel des étapes
+function OrderProgressTracker({ currentStatus }: { currentStatus: string }) {
+  const getStepIndex = (status: string) => {
+    const statusMap: Record<string, number> = {
+      pending: 0,
+      confirmed: 1,
+      processing: 2,
+      preparing: 2,
+      ready: 2,
+      shipped: 3,
+      in_transit: 3,
+      delivered: 4,
+      completed: 4,
+      cancelled: -1
+    };
+    return statusMap[status] ?? 0;
+  };
+
+  const currentStep = getStepIndex(currentStatus);
+  const isCancelled = currentStatus === 'cancelled';
+
+  if (isCancelled) {
+    return (
+      <div className="flex items-center justify-center p-4 bg-red-50 rounded-xl border border-red-200">
+        <XCircle className="w-6 h-6 text-red-500 mr-2" />
+        <span className="font-medium text-red-700">Commande annulée</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="py-4">
+      <div className="flex items-center justify-between relative">
+        {/* Ligne de progression */}
+        <div className="absolute top-5 left-0 right-0 h-1 bg-slate-200 rounded-full mx-8" />
+        <div 
+          className="absolute top-5 left-0 h-1 bg-gradient-to-r from-blue-500 to-green-500 rounded-full mx-8 transition-all duration-500"
+          style={{ width: `calc(${(currentStep / (orderSteps.length - 1)) * 100}% - 4rem)` }}
+        />
+
+        {orderSteps.map((step, index) => {
+          const isCompleted = index <= currentStep;
+          const isCurrent = index === currentStep;
+          const StepIcon = step.icon;
+
+          return (
+            <div key={step.key} className="flex flex-col items-center relative z-10">
+              <div
+                className={cn(
+                  "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
+                  isCompleted
+                    ? "bg-gradient-to-br from-blue-500 to-green-500 text-white shadow-lg"
+                    : "bg-slate-100 text-slate-400 border-2 border-slate-200",
+                  isCurrent && "ring-4 ring-blue-100 scale-110"
+                )}
+              >
+                <StepIcon className="w-5 h-5" />
+              </div>
+              <span
+                className={cn(
+                  "text-xs mt-2 font-medium text-center max-w-[70px]",
+                  isCompleted ? "text-slate-800" : "text-slate-400"
+                )}
+              >
+                {step.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -107,6 +214,26 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
 
   useEffect(() => {
     loadOrders();
+    
+    // Écoute en temps réel
+    const ordersChannel = supabase
+      .channel('agent-orders-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        loadOrders();
+      })
+      .subscribe();
+
+    const escrowChannel = supabase
+      .channel('agent-escrow-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'escrow_transactions' }, () => {
+        loadOrders();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(ordersChannel);
+      supabase.removeChannel(escrowChannel);
+    };
   }, [agentId]);
 
   const loadOrders = async () => {
@@ -153,6 +280,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
           order_number,
           status,
           payment_status,
+          payment_method,
           total_amount,
           created_at,
           updated_at,
@@ -189,7 +317,29 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
         }
       }
 
-      // 6. Mapper les données
+      // 6. Récupérer les escrows pour toutes les commandes
+      const orderIds = ordersData?.map(o => o.id) || [];
+      let escrowMap: Record<string, EscrowInfo> = {};
+      
+      if (orderIds.length > 0) {
+        const { data: escrowData } = await supabase
+          .from('escrow_transactions')
+          .select('id, status, amount, created_at, order_id')
+          .in('order_id', orderIds);
+        
+        if (escrowData) {
+          escrowData.forEach(e => {
+            escrowMap[e.order_id] = {
+              id: e.id,
+              status: e.status,
+              amount: e.amount,
+              created_at: e.created_at
+            };
+          });
+        }
+      }
+
+      // 7. Mapper les données
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
       
       const mappedOrders: Order[] = (ordersData || []).map(order => {
@@ -201,6 +351,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
           order_number: order.order_number || order.id.slice(0, 8).toUpperCase(),
           status: order.status,
           payment_status: order.payment_status,
+          payment_method: order.payment_method,
           total_amount: order.total_amount,
           created_at: order.created_at,
           updated_at: order.updated_at,
@@ -210,7 +361,8 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
           customer_phone: profile?.phone || '',
           customer_public_id: profile?.public_id || '',
           items_count: order.order_items?.length || 0,
-          vendor_name: order.vendor_id ? vendorNames[order.vendor_id] : undefined
+          vendor_name: order.vendor_id ? vendorNames[order.vendor_id] : undefined,
+          escrow: escrowMap[order.id]
         };
       });
 
@@ -268,8 +420,9 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
   const stats = {
     total: orders.length,
     pending: orders.filter(o => o.status === 'pending').length,
-    processing: orders.filter(o => ['processing', 'preparing', 'confirmed'].includes(o.status)).length,
+    processing: orders.filter(o => ['processing', 'preparing', 'confirmed', 'shipped', 'in_transit'].includes(o.status)).length,
     completed: orders.filter(o => ['delivered', 'completed'].includes(o.status)).length,
+    escrowPending: orders.filter(o => o.escrow?.status === 'pending' || o.escrow?.status === 'held').length,
     totalRevenue: orders.filter(o => o.payment_status === 'paid').reduce((sum, o) => sum + o.total_amount, 0)
   };
 
@@ -307,12 +460,12 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-blue-100">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-blue-600 font-medium">Total Commandes</p>
+                <p className="text-xs text-blue-600 font-medium">Total</p>
                 <p className="text-2xl font-bold text-blue-900">{stats.total}</p>
               </div>
               <div className="p-3 bg-blue-500 rounded-xl">
@@ -354,11 +507,25 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-green-600 font-medium">Terminées</p>
+                <p className="text-xs text-green-600 font-medium">Livrées</p>
                 <p className="text-2xl font-bold text-green-900">{stats.completed}</p>
               </div>
               <div className="p-3 bg-green-500 rounded-xl">
                 <CheckCircle className="w-5 h-5 text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-md bg-gradient-to-br from-cyan-50 to-cyan-100">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-cyan-600 font-medium">Escrow actif</p>
+                <p className="text-2xl font-bold text-cyan-900">{stats.escrowPending}</p>
+              </div>
+              <div className="p-3 bg-cyan-500 rounded-xl">
+                <Shield className="w-5 h-5 text-white" />
               </div>
             </div>
           </CardContent>
@@ -370,7 +537,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-emerald-100 text-sm">Revenus générés (Commandes payées)</p>
+              <p className="text-emerald-100 text-sm">Revenus générés par mes utilisateurs</p>
               <p className="text-3xl font-bold">{formatCurrency(stats.totalRevenue)}</p>
             </div>
             <TrendingUp className="w-12 h-12 text-emerald-200" />
@@ -384,7 +551,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-slate-800">
               <ShoppingCart className="w-5 h-5 text-blue-600" />
-              Commandes de mes utilisateurs
+              Suivi des commandes de mes utilisateurs
             </CardTitle>
             <Button 
               variant="outline" 
@@ -417,8 +584,9 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                 <SelectItem value="all">Tous les statuts</SelectItem>
                 <SelectItem value="pending">En attente</SelectItem>
                 <SelectItem value="confirmed">Confirmée</SelectItem>
-                <SelectItem value="processing">En préparation</SelectItem>
+                <SelectItem value="preparing">En préparation</SelectItem>
                 <SelectItem value="shipped">Expédiée</SelectItem>
+                <SelectItem value="in_transit">En transit</SelectItem>
                 <SelectItem value="delivered">Livrée</SelectItem>
                 <SelectItem value="completed">Terminée</SelectItem>
                 <SelectItem value="cancelled">Annulée</SelectItem>
@@ -435,64 +603,111 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
             </div>
           ) : (
             <ScrollArea className="h-[500px]">
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {filteredOrders.map((order) => (
-                  <div
+                  <Card
                     key={order.id}
-                    className="p-4 rounded-xl border bg-white hover:shadow-md transition-all cursor-pointer"
+                    className="overflow-hidden hover:shadow-md transition-all cursor-pointer border-l-4"
+                    style={{
+                      borderLeftColor: order.escrow?.status === 'pending' ? '#3b82f6' : 
+                                       order.escrow?.status === 'released' ? '#22c55e' :
+                                       order.status === 'cancelled' ? '#ef4444' : '#e2e8f0'
+                    }}
                     onClick={() => loadOrderDetails(order)}
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 rounded-lg bg-blue-50">
-                          <Package className="w-5 h-5 text-blue-600" />
+                    <CardContent className="p-4">
+                      {/* Header */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 rounded-lg bg-blue-50">
+                            <Package className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-semibold text-slate-900">
+                                #{order.order_number}
+                              </span>
+                              {order.vendor_name && (
+                                <span className="text-xs text-slate-500">
+                                  • {order.vendor_name}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
+                              <User className="w-3 h-3" />
+                              <span>{order.customer_name}</span>
+                              {order.customer_public_id && (
+                                <Badge variant="secondary" className="text-xs font-mono">
+                                  {order.customer_public_id}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-semibold text-slate-900">
-                              #{order.order_number}
-                            </span>
-                            <Badge 
-                              variant="outline" 
-                              className={cn("text-xs", statusColors[order.status])}
-                            >
-                              {statusIcons[order.status]}
-                              <span className="ml-1">{statusLabels[order.status] || order.status}</span>
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
-                            <User className="w-3 h-3" />
-                            <span>{order.customer_name}</span>
-                            {order.customer_public_id && (
-                              <Badge variant="secondary" className="text-xs font-mono">
-                                {order.customer_public_id}
-                              </Badge>
-                            )}
-                          </div>
-                          {order.vendor_name && (
-                            <p className="text-xs text-slate-400 mt-1">
-                              Vendeur: {order.vendor_name}
-                            </p>
-                          )}
+
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="font-bold text-lg text-slate-900">
+                            {formatCurrency(order.total_amount)}
+                          </span>
+                          <span className="text-xs text-slate-400">
+                            {formatDate(order.created_at)}
+                          </span>
                         </div>
                       </div>
 
-                      <div className="flex flex-col items-end gap-1">
-                        <span className="font-bold text-lg text-slate-900">
-                          {formatCurrency(order.total_amount)}
-                        </span>
-                        <Badge 
-                          variant="outline" 
-                          className={cn("text-xs", paymentStatusColors[order.payment_status])}
-                        >
+                      {/* Progress Tracker */}
+                      <OrderProgressTracker currentStatus={order.status} />
+
+                      {/* Badges */}
+                      <div className="flex flex-wrap gap-2 mt-4">
+                        <Badge variant="outline" className={cn("text-xs", statusColors[order.status])}>
+                          {statusIcons[order.status]}
+                          <span className="ml-1">{statusLabels[order.status] || order.status}</span>
+                        </Badge>
+                        
+                        <Badge variant="outline" className={cn("text-xs", paymentStatusColors[order.payment_status])}>
+                          <Banknote className="w-3 h-3 mr-1" />
                           {paymentStatusLabels[order.payment_status] || order.payment_status}
                         </Badge>
-                        <span className="text-xs text-slate-400">
-                          {formatDate(order.created_at)}
-                        </span>
+
+                        {order.escrow && (
+                          <Badge variant="outline" className={cn("text-xs", escrowStatusColors[order.escrow.status])}>
+                            <Shield className="w-3 h-3 mr-1" />
+                            {escrowStatusLabels[order.escrow.status] || order.escrow.status}
+                          </Badge>
+                        )}
                       </div>
-                    </div>
-                  </div>
+
+                      {/* Escrow Info */}
+                      {order.escrow && (order.escrow.status === 'pending' || order.escrow.status === 'held') && (
+                        <div className="flex items-start gap-2 p-3 mt-4 bg-blue-50 rounded-lg border border-blue-200">
+                          <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-blue-800">
+                              Paiement protégé par Escrow
+                            </p>
+                            <p className="text-xs text-blue-700">
+                              {formatCurrency(order.escrow.amount)} sécurisés jusqu'à confirmation de livraison par le client
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {order.escrow?.status === 'released' && (
+                        <div className="flex items-start gap-2 p-3 mt-4 bg-green-50 rounded-lg border border-green-200">
+                          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-green-800">
+                              Paiement libéré au vendeur
+                            </p>
+                            <p className="text-xs text-green-700">
+                              Le client a confirmé la réception. {formatCurrency(order.escrow.amount)} transférés.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             </ScrollArea>
@@ -517,10 +732,13 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
             </div>
           ) : orderDetails ? (
             <div className="space-y-6">
+              {/* Progress Tracker in modal */}
+              <OrderProgressTracker currentStatus={orderDetails.status} />
+
               {/* Status & Payment */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl bg-slate-50">
-                  <p className="text-xs text-slate-500 mb-1">Statut</p>
+                  <p className="text-xs text-slate-500 mb-1">Statut commande</p>
                   <Badge className={cn("text-sm", statusColors[orderDetails.status])}>
                     {statusIcons[orderDetails.status]}
                     <span className="ml-1">{statusLabels[orderDetails.status]}</span>
@@ -534,11 +752,31 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                 </div>
               </div>
 
+              {/* Escrow Status */}
+              {selectedOrder?.escrow && (
+                <div className="p-4 rounded-xl border-2 border-blue-200 bg-blue-50">
+                  <h4 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
+                    <Shield className="w-4 h-4" />
+                    Protection Escrow
+                  </h4>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Badge className={cn("text-sm", escrowStatusColors[selectedOrder.escrow.status])}>
+                        {escrowStatusLabels[selectedOrder.escrow.status]}
+                      </Badge>
+                    </div>
+                    <span className="font-bold text-blue-900">
+                      {formatCurrency(selectedOrder.escrow.amount)}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Customer Info */}
               <div className="p-4 rounded-xl border">
                 <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
                   <User className="w-4 h-4 text-blue-600" />
-                  Client
+                  Client (créé par vous)
                 </h4>
                 <div className="space-y-1 text-sm">
                   <p><strong>Nom:</strong> {selectedOrder?.customer_name}</p>
