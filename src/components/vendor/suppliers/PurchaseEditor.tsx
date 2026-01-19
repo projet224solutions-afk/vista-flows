@@ -289,11 +289,11 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
         .from('vendor_expenses')
         .insert({
           vendor_id: vendorId,
-          category: 'Achat de stock',
-          description: `Achat ${purchase.purchase_number}`,
+          description: `Achat de stock - ${purchase.purchase_number}`,
           amount: items.reduce((sum, item) => sum + item.total_purchase, 0),
-          date: new Date().toISOString().split('T')[0],
-          is_recurring: false,
+          expense_date: new Date().toISOString().split('T')[0],
+          payment_method: 'cash',
+          status: 'paid',
         })
         .select()
         .single();
