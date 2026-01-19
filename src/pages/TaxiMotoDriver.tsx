@@ -43,6 +43,7 @@ import { DriverEarnings } from "@/components/taxi-moto/DriverEarnings";
 import { DriverNavigation } from "@/components/taxi-moto/DriverNavigation";
 import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
+import MyPurchasesOrdersList from "@/components/shared/MyPurchasesOrdersList";
 
 export default function TaxiMotoDriver() {
     const navigate = useNavigate();
@@ -596,6 +597,12 @@ export default function TaxiMotoDriver() {
             {activeTab === 'settings' && (
                 <div className="min-h-screen bg-gray-950 pb-24">
                     <DriverSettings driverId={driverId || ''} />
+                </div>
+            )}
+
+            {activeTab === 'my-purchases' && (
+                <div className="min-h-screen bg-gray-950 pb-24 p-4">
+                    <MyPurchasesOrdersList userId={user?.id || ''} userRole="taxi" />
                 </div>
             )}
 

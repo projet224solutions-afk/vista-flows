@@ -45,6 +45,7 @@ const DriverLayout = lazy(() => import('@/components/driver/DriverLayout').then(
 const DeliveryChat = lazy(() => import('@/components/delivery/DeliveryChat'));
 const DeliveryGPSNavigation = lazy(() => import('@/components/delivery/DeliveryGPSNavigation').then(m => ({ default: m.DeliveryGPSNavigation })));
 const DeliveryPaymentModal = lazy(() => import('@/components/delivery/DeliveryPaymentModal'));
+const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
 
 export default function LivreurDashboard() {
   const { user, profile } = useAuth();
@@ -417,7 +418,7 @@ export default function LivreurDashboard() {
 
         {/* Onglets de navigation - Responsive */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className={`grid bg-card/80 backdrop-blur mb-6 ${isMobile ? 'grid-cols-2' : 'grid-cols-4'} border border-orange-500/20`}>
+          <TabsList className={`grid bg-card/80 backdrop-blur mb-6 ${isMobile ? 'grid-cols-2' : 'grid-cols-5'} border border-orange-500/20`}>
             <TabsTrigger value="missions" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
               📦 {isMobile ? 'Missions' : 'Missions disponibles'}
               {nearbyDeliveries.length > 0 && (
@@ -436,7 +437,9 @@ export default function LivreurDashboard() {
                     <Badge variant="outline" className="ml-2 text-xs">{deliveryHistory.length + rideHistory.length}</Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="wallet" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-700 data-[state=active]:text-white">💰 Solde</TabsTrigger>
+                <TabsTrigger value="my-purchases" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-700 data-[state=active]:text-white">
+                  🛒 Mes Achats
+                </TabsTrigger>
               </>
             )}
           </TabsList>
@@ -857,6 +860,11 @@ export default function LivreurDashboard() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* 🛒 Mes Achats */}
+          <TabsContent value="my-purchases">
+            <MyPurchasesOrdersList title="Mes Achats Personnels" />
           </TabsContent>
         </Tabs>
       </ResponsiveContainer>

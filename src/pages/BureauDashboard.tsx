@@ -28,6 +28,7 @@ import { BureauOverviewContent } from '@/components/bureau/BureauOverviewContent
 import { BureauSyndicatSOSDashboard } from '@/components/bureau-syndicat/BureauSyndicatSOSDashboard';
 import TransportTicketGenerator from '@/components/syndicate/TransportTicketGenerator';
 import { ChangePasswordDialog, ChangeEmailDialog } from '@/components/bureau/BureauSettingsDialogs';
+import MyPurchasesOrdersList from '@/components/shared/MyPurchasesOrdersList';
 
 export default function BureauDashboard() {
   const { token } = useParams();
@@ -363,6 +364,11 @@ export default function BureauDashboard() {
             bureauId={bureau.id}
             bureauName={`Syndicat de ${bureau.commune} - ${bureau.prefecture}`}
           />
+        );
+
+      case 'my-purchases':
+        return (
+          <MyPurchasesOrdersList title="Mes Achats - Bureau Syndicat" />
         );
 
       case 'workers':
