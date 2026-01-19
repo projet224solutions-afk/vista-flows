@@ -308,7 +308,7 @@ export const translations: Record<string, Record<string, string>> = {
     "sidebar.orders": "Commandes",
     "sidebar.inventory": "Inventaire",
     "sidebar.warehouses": "Entrepôts",
-    "sidebar.suppliers": "Gestion Fournisseur et Achat",
+    "sidebar.suppliers": "Gestion Fournisseur & Achat",
     "sidebar.crm": "CRM",
     "sidebar.clients": "Clients",
     "sidebar.agents": "Agents",
