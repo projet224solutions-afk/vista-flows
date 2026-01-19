@@ -15606,6 +15606,176 @@ export type Database = {
           },
         ]
       }
+      stock_purchase_items: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          id: string
+          product_id: string | null
+          product_name: string
+          purchase_id: string
+          purchase_price: number
+          quantity: number
+          selling_price: number
+          supplier_id: string | null
+          total_profit: number | null
+          total_purchase: number | null
+          total_selling: number | null
+          unit_profit: number | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          product_id?: string | null
+          product_name: string
+          purchase_id: string
+          purchase_price: number
+          quantity?: number
+          selling_price: number
+          supplier_id?: string | null
+          total_profit?: number | null
+          total_purchase?: number | null
+          total_selling?: number | null
+          unit_profit?: number | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          product_id?: string | null
+          product_name?: string
+          purchase_id?: string
+          purchase_price?: number
+          quantity?: number
+          selling_price?: number
+          supplier_id?: string | null
+          total_profit?: number | null
+          total_purchase?: number | null
+          total_selling?: number | null
+          unit_profit?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_purchase_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_purchase_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_purchase_items_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "stock_purchases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_purchase_items_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_purchase_suppliers: {
+        Row: {
+          created_at: string
+          id: string
+          purchase_id: string
+          supplier_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          purchase_id: string
+          supplier_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          purchase_id?: string
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_purchase_suppliers_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "stock_purchases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_purchase_suppliers_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_purchases: {
+        Row: {
+          created_at: string
+          document_url: string | null
+          estimated_total_profit: number | null
+          expense_id: string | null
+          id: string
+          is_locked: boolean | null
+          notes: string | null
+          purchase_number: string
+          status: string
+          total_purchase_amount: number | null
+          total_selling_amount: number | null
+          updated_at: string
+          validated_at: string | null
+          validated_by: string | null
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_url?: string | null
+          estimated_total_profit?: number | null
+          expense_id?: string | null
+          id?: string
+          is_locked?: boolean | null
+          notes?: string | null
+          purchase_number: string
+          status?: string
+          total_purchase_amount?: number | null
+          total_selling_amount?: number | null
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string
+          document_url?: string | null
+          estimated_total_profit?: number | null
+          expense_id?: string | null
+          id?: string
+          is_locked?: boolean | null
+          notes?: string | null
+          purchase_number?: string
+          status?: string
+          total_purchase_amount?: number | null
+          total_selling_amount?: number | null
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+          vendor_id?: string
+        }
+        Relationships: []
+      }
       stripe_config: {
         Row: {
           created_at: string
@@ -20156,6 +20326,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vendor_suppliers: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          has_validated_purchases: boolean | null
+          id: string
+          is_active: boolean | null
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          has_validated_purchases?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          has_validated_purchases?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: []
       }
       vendor_transactions: {
         Row: {
