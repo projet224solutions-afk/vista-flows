@@ -24,12 +24,7 @@ export function GeocodedAddress({ address, className = '' }: GeocodedAddressProp
           </div>
         ) : (
           <p className="font-medium text-sm mt-1">
-            {formatted}
-          </p>
-        )}
-        {error && (
-          <p className="text-xs text-destructive mt-1">
-            {error}
+            {formatted || 'Adresse non disponible'}
           </p>
         )}
       </div>
