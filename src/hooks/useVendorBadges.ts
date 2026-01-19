@@ -24,12 +24,13 @@ export function useVendorBadges() {
 
     const fetchBadges = async () => {
       try {
-        // Fetch pending orders count
+        // Fetch pending ONLINE orders count only (not POS sales)
         const { count: pendingOrdersCount, error: ordersError } = await supabase
           .from('orders')
           .select('*', { count: 'exact', head: true })
           .eq('vendor_id', vendorId)
-          .eq('status', 'pending');
+          .eq('status', 'pending')
+          .eq('source', 'online');
 
         if (ordersError) {
           console.error('Error fetching orders:', ordersError);
