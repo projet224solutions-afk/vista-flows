@@ -22549,6 +22549,16 @@ export type Database = {
         Returns: string
       }
       create_wallet_for_user: { Args: { p_user_id: string }; Returns: number }
+      credit_agent_commission: {
+        Args: {
+          p_amount: number
+          p_metadata?: Json
+          p_source_type: string
+          p_transaction_id?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       credit_wallet:
         | {
             Args: {
@@ -23435,6 +23445,15 @@ export type Database = {
         Args: { p_transaction_id: string }
         Returns: Json
       }
+      process_professional_service_payment: {
+        Args: {
+          p_amount: number
+          p_service_id: string
+          p_service_type?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       process_secure_bureau_transfer: {
         Args: {
           p_amount: number
@@ -23475,6 +23494,15 @@ export type Database = {
       }
       process_taxi_card_payment: {
         Args: { p_stripe_payment_intent_id: string }
+        Returns: Json
+      }
+      process_wallet_order_payment: {
+        Args: {
+          p_amount: number
+          p_order_id: string
+          p_user_id: string
+          p_vendor_id: string
+        }
         Returns: Json
       }
       process_wallet_to_card: {
