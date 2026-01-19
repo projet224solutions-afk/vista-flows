@@ -283,7 +283,7 @@ export function VendorSidebar() {
                             {!collapsed && (
                               <>
                                 <span className={cn(
-                                  "flex-1 truncate",
+                                  "flex-1 text-left leading-tight",
                                   isPOS && hasAccess && "font-semibold",
                                   !hasAccess && "text-muted-foreground"
                                 )}>
