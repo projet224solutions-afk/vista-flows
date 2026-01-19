@@ -98,12 +98,6 @@ export function AgentLayoutProfessional({
       gradient: 'from-cyan-500 to-blue-500'
     },
     {
-      id: 'orders',
-      label: 'Commandes',
-      icon: <CreditCard className="w-5 h-5" />,
-      gradient: 'from-amber-500 to-orange-500'
-    },
-    {
       id: 'my-purchases',
       label: 'Mes Achats',
       icon: <ArrowUpRight className="w-5 h-5" />,
