@@ -5,11 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Shield, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertCircle, Eye, EyeOff, Send } from "lucide-react";
+import { Shield, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertCircle, Eye, EyeOff, Send, CreditCard, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import AgentWalletDiagnosticTool from "./AgentWalletDiagnosticTool";
 import TransferMoney from "./TransferMoney";
+import StripeWalletTopup from "@/components/wallet/StripeWalletTopup";
+import OrangeMoneyTopup from "@/components/wallet/OrangeMoneyTopup";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -467,17 +469,25 @@ export default function AgentWalletManagement({
 
       {/* Tabs pour les actions */}
       <Tabs defaultValue="transfer" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="transfer">
-            <Send className="w-4 h-4 mr-2" />
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="transfer" className="text-xs px-2">
+            <Send className="w-3 h-3 mr-1" />
             Transférer
           </TabsTrigger>
-          <TabsTrigger value="deposit">
-            <ArrowDownCircle className="w-4 h-4 mr-2" />
+          <TabsTrigger value="card" className="text-xs px-2">
+            <CreditCard className="w-3 h-3 mr-1" />
+            Carte
+          </TabsTrigger>
+          <TabsTrigger value="orange" className="text-xs px-2">
+            <Smartphone className="w-3 h-3 mr-1" />
+            Orange
+          </TabsTrigger>
+          <TabsTrigger value="deposit" className="text-xs px-2">
+            <ArrowDownCircle className="w-3 h-3 mr-1" />
             Dépôt
           </TabsTrigger>
-          <TabsTrigger value="withdraw">
-            <ArrowUpCircle className="w-4 h-4 mr-2" />
+          <TabsTrigger value="withdraw" className="text-xs px-2">
+            <ArrowUpCircle className="w-3 h-3 mr-1" />
             Retrait
           </TabsTrigger>
         </TabsList>
@@ -492,10 +502,45 @@ export default function AgentWalletManagement({
           />
         </TabsContent>
 
+        {/* Recharge par carte bancaire Stripe */}
+        <TabsContent value="card" className="space-y-4">
+          <StripeWalletTopup
+            userId={agentUserId || ''}
+            walletId={wallet.id}
+            onSuccess={loadWallet}
+          />
+        </TabsContent>
+
+        {/* Dépôt/Retrait Orange Money */}
+        <TabsContent value="orange" className="space-y-4">
+          <Tabs defaultValue="om-deposit" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="om-deposit">Dépôt OM</TabsTrigger>
+              <TabsTrigger value="om-withdraw">Retrait OM</TabsTrigger>
+            </TabsList>
+            <TabsContent value="om-deposit">
+              <OrangeMoneyTopup
+                userId={agentUserId || ''}
+                walletId={wallet.id}
+                onSuccess={loadWallet}
+                mode="deposit"
+              />
+            </TabsContent>
+            <TabsContent value="om-withdraw">
+              <OrangeMoneyTopup
+                userId={agentUserId || ''}
+                walletId={wallet.id}
+                onSuccess={loadWallet}
+                mode="withdraw"
+              />
+            </TabsContent>
+          </Tabs>
+        </TabsContent>
+
         <TabsContent value="deposit" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Effectuer un dépôt</CardTitle>
+              <CardTitle className="text-lg">Dépôt manuel (Espèces)</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -506,13 +551,14 @@ export default function AgentWalletManagement({
                   value={depositAmount}
                   onChange={(e) => setDepositAmount(e.target.value)}
                   placeholder="0"
-                  min="0"
+                  min="1000"
                 />
+                <p className="text-xs text-muted-foreground">Montant minimum: 1,000 GNF</p>
               </div>
               <Button
                 className="w-full"
                 onClick={() => setShowDepositConfirm(true)}
-                disabled={!depositAmount || parseFloat(depositAmount) <= 0 || busy}
+                disabled={!depositAmount || parseFloat(depositAmount) < 1000 || busy}
               >
                 <ArrowDownCircle className="w-4 h-4 mr-2" />
                 Déposer
@@ -524,7 +570,7 @@ export default function AgentWalletManagement({
         <TabsContent value="withdraw" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Retirer les commissions</CardTitle>
+              <CardTitle className="text-lg">Retrait manuel (Espèces)</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -535,17 +581,18 @@ export default function AgentWalletManagement({
                   value={withdrawAmount}
                   onChange={(e) => setWithdrawAmount(e.target.value)}
                   placeholder="0"
-                  min="0"
+                  min="5000"
                   max={wallet?.balance || 0}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Solde disponible: {wallet.balance.toLocaleString()} {wallet.currency}
+                  Minimum: 5,000 GNF | Disponible: {wallet.balance.toLocaleString()} {wallet.currency}
                 </p>
               </div>
               <Button
                 className="w-full"
+                variant="destructive"
                 onClick={() => setShowWithdrawConfirm(true)}
-                disabled={!withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > wallet.balance || busy}
+                disabled={!withdrawAmount || parseFloat(withdrawAmount) < 5000 || parseFloat(withdrawAmount) > wallet.balance || busy}
               >
                 <ArrowUpCircle className="w-4 h-4 mr-2" />
                 Retirer
