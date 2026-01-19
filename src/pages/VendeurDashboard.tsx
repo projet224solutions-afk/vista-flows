@@ -686,6 +686,10 @@ export default function VendeurDashboard() {
               } />
               
               {/* Services */}
+              {/* Mes Achats - Free */}
+              <Route path="my-purchases" element={
+                <MyPurchasesOrdersList title="Mes Achats Personnels" emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace" />
+              } />
               {/* Livraison - Basic+ */}
               <Route path="delivery" element={
                 <ProtectedRoute feature="delivery_tracking">
