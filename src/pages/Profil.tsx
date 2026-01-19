@@ -41,6 +41,11 @@ const userTypes = {
     description: "Transitaire international",
     color: "bg-transitaire-primary"
   },
+  agent: {
+    label: "Agent",
+    description: "Agent commercial",
+    color: "bg-purple-500"
+  },
   admin: {
     label: "PDG",
     description: "Président Directeur Général",
