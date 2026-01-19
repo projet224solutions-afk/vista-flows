@@ -164,7 +164,7 @@ export default function OrderManagement() {
     fetchOrders();
 
     // Mise à jour en temps réel des commandes (online ET pos)
-    const channel = supabase
+    const ordersChannel = supabase
       .channel('vendor-orders-realtime')
       .on(
         'postgres_changes',
@@ -188,8 +188,38 @@ export default function OrderManagement() {
       )
       .subscribe();
 
+    // Mise à jour en temps réel des escrow (pour voir quand le client confirme la livraison)
+    const escrowChannel = supabase
+      .channel('vendor-escrow-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'escrow_transactions'
+        },
+        (payload) => {
+          console.log('💰 Changement escrow (realtime):', payload);
+          const newStatus = (payload.new as any).status;
+          const oldStatus = (payload.old as any)?.status;
+          
+          // Notification quand l'escrow est libéré (client a confirmé la livraison)
+          if (newStatus === 'released' && oldStatus !== 'released') {
+            toast({
+              title: "💰 Paiement libéré !",
+              description: `Le client a confirmé la réception. ${((payload.new as any).amount || 0).toLocaleString()} GNF transférés sur votre compte.`,
+              duration: 10000
+            });
+          }
+          
+          fetchOrders(); // Recharger pour mettre à jour l'affichage
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(ordersChannel);
+      supabase.removeChannel(escrowChannel);
     };
   }, [vendorId, vendorLoading]);
 
@@ -1168,7 +1198,7 @@ export default function OrderManagement() {
                           order.escrow.status === 'pending' || order.escrow.status === 'held' 
                             ? 'bg-orange-100 text-orange-800 border-orange-300 border-2' :
                           order.escrow.status === 'released' 
-                            ? 'bg-green-100 text-green-800' :
+                            ? 'bg-green-100 text-green-800 border-green-300 border-2' :
                           order.escrow.status === 'refunded' 
                             ? 'bg-gray-100 text-gray-800' :
                           'bg-red-100 text-red-800'
@@ -1233,6 +1263,60 @@ export default function OrderManagement() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Escrow workflow info */}
+                  {order.escrow && (
+                    <div className={`p-3 rounded-lg border mb-4 ${
+                      order.escrow.status === 'pending' || order.escrow.status === 'held'
+                        ? 'bg-blue-50 border-blue-200'
+                        : order.escrow.status === 'released'
+                        ? 'bg-green-50 border-green-200'
+                        : 'bg-gray-50 border-gray-200'
+                    }`}>
+                      <div className="flex items-start gap-2">
+                        <Shield className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
+                          order.escrow.status === 'pending' || order.escrow.status === 'held'
+                            ? 'text-blue-600'
+                            : order.escrow.status === 'released'
+                            ? 'text-green-600'
+                            : 'text-gray-600'
+                        }`} />
+                        <div className="flex-1">
+                          <p className={`text-sm font-medium ${
+                            order.escrow.status === 'pending' || order.escrow.status === 'held'
+                              ? 'text-blue-800'
+                              : order.escrow.status === 'released'
+                              ? 'text-green-800'
+                              : 'text-gray-800'
+                          }`}>
+                            {(order.escrow.status === 'pending' || order.escrow.status === 'held') && (
+                              <>🔒 Fonds sécurisés - {order.escrow.amount.toLocaleString()} GNF</>
+                            )}
+                            {order.escrow.status === 'released' && (
+                              <>✅ Paiement libéré ! Vous avez reçu {order.escrow.amount.toLocaleString()} GNF</>
+                            )}
+                            {order.escrow.status === 'refunded' && '↩️ Commande remboursée au client'}
+                          </p>
+                          <p className={`text-xs mt-1 ${
+                            order.escrow.status === 'pending' || order.escrow.status === 'held'
+                              ? 'text-blue-700'
+                              : order.escrow.status === 'released'
+                              ? 'text-green-700'
+                              : 'text-gray-700'
+                          }`}>
+                            {(order.escrow.status === 'pending' || order.escrow.status === 'held') && (
+                              order.status === 'in_transit' 
+                                ? "⏳ En attente de confirmation de livraison par le client"
+                                : order.status === 'delivered'
+                                ? "📦 Commande livrée - le client doit confirmer la réception"
+                                : "Continuez le processus: Confirmer → Préparer → Expédier → Client confirme"
+                            )}
+                            {order.escrow.status === 'released' && 'Le client a confirmé la réception de sa commande'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Actions */}
                   <div className="flex gap-2 mt-4 flex-wrap">
