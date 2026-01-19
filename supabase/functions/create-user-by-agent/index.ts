@@ -355,6 +355,27 @@ serve(async (req) => {
 
     const publicId = profile.public_id;
 
+    // ✅ Mettre à jour le profil avec le rôle correct et marquer comme ayant un mot de passe
+    const { error: updateProfileError } = await supabaseClient
+      .from('profiles')
+      .update({
+        role: body.role,
+        has_password: true,
+        first_name: body.firstName,
+        last_name: body.lastName || '',
+        full_name: `${body.firstName} ${body.lastName || ''}`.trim(),
+        phone: body.phone,
+        country: body.country || 'Guinée',
+        city: body.city || null
+      })
+      .eq('id', authUser.user.id);
+
+    if (updateProfileError) {
+      console.warn('⚠️ Erreur mise à jour profil:', updateProfileError);
+    } else {
+      console.log('✅ Profil mis à jour avec rôle et mot de passe');
+    }
+
     // Créer le wallet si c'est un client
     if (body.role === 'client') {
       const { error: walletError } = await supabaseClient
@@ -392,26 +413,46 @@ serve(async (req) => {
         business_description?: string;
         business_address?: string;
       };
+      
+      // Générer un code vendeur unique
+      const vendorCode = `VND-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+      
+      // ✅ IMPORTANT: Vendeur créé par agent = KYC automatiquement vérifié et certifié
       const { error: vendorError } = await supabaseClient
         .from('vendors')
         .insert({
           user_id: authUser.user.id,
           business_name: vendorData.business_name || `${body.firstName} ${body.lastName || ''}`.trim(),
           description: vendorData.business_description,
-          address: vendorData.business_address, // Correction: 'address' au lieu de 'business_address'
+          address: vendorData.business_address,
           service_type: vendorData.service_type || null,
           phone: body.phone,
           email: body.email,
           city: body.city || null,
+          vendor_code: vendorCode,
           is_active: true,
-          is_verified: false
+          is_verified: true, // ✅ Automatiquement vérifié car créé par agent
+          kyc_status: 'verified', // ✅ KYC automatiquement validé
+          kyc_verified_at: new Date().toISOString() // ✅ Date de vérification
         });
 
       if (vendorError) {
         console.error('❌ Vendor error:', vendorError);
         throw new Error('Erreur lors de la création du profil vendeur: ' + vendorError.message);
       }
-      console.log('✅ Profil vendeur créé avec succès');
+      console.log('✅ Profil vendeur créé avec KYC vérifié automatiquement');
+      
+      // Créer un wallet pour le vendeur
+      const { error: vendorWalletError } = await supabaseClient
+        .from('wallets')
+        .insert({
+          user_id: authUser.user.id,
+          balance: 0
+        });
+
+      if (vendorWalletError) {
+        console.error('⚠️ Erreur création wallet vendeur:', vendorWalletError);
+      }
     }
 
     // Créer un profil livreur ou taxi si nécessaire
@@ -431,20 +472,37 @@ serve(async (req) => {
       if (driverData.vehicle_year) vehicleInfo.year = driverData.vehicle_year;
       if (driverData.vehicle_plate) vehicleInfo.plate = driverData.vehicle_plate;
 
+      // ✅ IMPORTANT: Chauffeur créé par agent = automatiquement vérifié
       const { error: driverError } = await supabaseClient
         .from('drivers')
         .insert({
           user_id: authUser.user.id,
           license_number: driverData.license_number || `LIC-${Date.now()}`,
           vehicle_type: driverData.vehicle_type || 'moto',
-          is_verified: false,
+          is_verified: true, // ✅ Automatiquement vérifié car créé par agent
           is_online: false,
-          vehicle_info: vehicleInfo
+          vehicle_info: vehicleInfo,
+          full_name: `${body.firstName} ${body.lastName || ''}`.trim(),
+          phone_number: body.phone,
+          email: body.email
         });
 
       if (driverError) {
         console.error('Driver error:', driverError);
         throw new Error('Erreur lors de la création du profil chauffeur: ' + driverError.message);
+      }
+      console.log('✅ Profil chauffeur créé avec vérification automatique');
+      
+      // Créer un wallet pour le chauffeur
+      const { error: driverWalletError } = await supabaseClient
+        .from('wallets')
+        .insert({
+          user_id: authUser.user.id,
+          balance: 0
+        });
+
+      if (driverWalletError) {
+        console.error('⚠️ Erreur création wallet chauffeur:', driverWalletError);
       }
     }
 
