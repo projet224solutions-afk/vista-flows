@@ -602,7 +602,10 @@ export default function TaxiMotoDriver() {
 
             {activeTab === 'my-purchases' && (
                 <div className="min-h-screen bg-gray-950 pb-24 p-4">
-                    <MyPurchasesOrdersList userId={user?.id || ''} userRole="taxi" />
+                    <MyPurchasesOrdersList 
+                        title="Mes Achats Personnels" 
+                        emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace" 
+                    />
                 </div>
             )}
 
