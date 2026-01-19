@@ -184,8 +184,15 @@ export default function MyPurchasesOrdersList({
         return;
       }
 
-      // Récupérer les commandes
-      const { data: ordersData, error } = await supabase
+      // Vérifier si l'utilisateur est aussi un vendeur (pour exclure ses propres ventes)
+      const { data: userVendor } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      // Récupérer les commandes où l'utilisateur est CLIENT (pas vendeur)
+      let query = supabase
         .from('orders')
         .select(`
           *,
@@ -194,6 +201,13 @@ export default function MyPurchasesOrdersList({
         `)
         .eq('customer_id', customer.id)
         .order('created_at', { ascending: false });
+
+      // Si l'utilisateur est aussi vendeur, exclure ses propres commandes reçues
+      if (userVendor?.id) {
+        query = query.neq('vendor_id', userVendor.id);
+      }
+
+      const { data: ordersData, error } = await query;
 
       if (error) throw error;
 
