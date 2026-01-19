@@ -56,18 +56,28 @@ serve(async (req) => {
       );
     }
 
+    // Récupérer les utilisateurs créés par cet agent
     const { data: createdUsers, error: usersError } = await supabaseAdmin
       .from('agent_created_users')
-      .select('user_id, user_email, user_role, created_at')
+      .select('user_id, user_role, created_at')
       .eq('agent_id', agent.id)
       .order('created_at', { ascending: false });
 
     if (usersError) throw usersError;
 
     const userIds = createdUsers?.map(u => u.user_id) || [];
+    
+    if (userIds.length === 0) {
+      return new Response(
+        JSON.stringify({ success: true, users: [] }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Récupérer les profils avec toutes les informations dont l'email
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from('profiles')
-      .select('id, first_name, last_name, phone, is_active, role')
+      .select('id, email, first_name, last_name, phone, is_active, role')
       .in('id', userIds);
 
     if (profilesError) throw profilesError;
@@ -76,7 +86,7 @@ serve(async (req) => {
       const profile = profiles?.find(p => p.id === cu.user_id);
       return {
         id: cu.user_id,
-        email: cu.user_email,
+        email: profile?.email || '',
         role: cu.user_role,
         first_name: profile?.first_name || '',
         last_name: profile?.last_name || '',

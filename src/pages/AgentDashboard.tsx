@@ -18,6 +18,7 @@ import AgentSubAgentsManagement from '@/components/agent/AgentSubAgentsManagemen
 import { ViewReportsSection } from '@/components/agent/ViewReportsSection';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 import { useAgentStats } from '@/hooks/useAgentStats';
+import { AgentCreatedUsersList } from '@/components/agent/AgentCreatedUsersList';
 
 export default function AgentDashboard() {
   const { user, signOut } = useAuth();
@@ -305,12 +306,16 @@ export default function AgentDashboard() {
                 onUserCreated={() => {
                   loadAgentData();
                   refetchStats();
+                  setActiveTab('my-users'); // Aller vers la liste après création
                   toast.success(t('agent.userCreatedSuccess'));
                 }}
               />
             </CardContent>
           </Card>
         );
+      
+      case 'my-users':
+        return <AgentCreatedUsersList agentId={agent.id} />;
       
       case 'sub-agents':
         return <AgentSubAgentsManagement agentId={agent.id} />;

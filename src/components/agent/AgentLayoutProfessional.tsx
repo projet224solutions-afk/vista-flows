@@ -92,6 +92,12 @@ export function AgentLayoutProfessional({
       gradient: 'from-violet-500 to-purple-500'
     },
     {
+      id: 'my-users',
+      label: 'Mes Utilisateurs',
+      icon: <Users className="w-5 h-5" />,
+      gradient: 'from-cyan-500 to-blue-500'
+    },
+    {
       id: 'sub-agents',
       label: 'Sous-Agents',
       icon: <Users className="w-5 h-5" />,
