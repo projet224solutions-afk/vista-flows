@@ -104,6 +104,12 @@ export function AgentLayoutProfessional({
       gradient: 'from-amber-500 to-orange-500'
     },
     {
+      id: 'my-purchases',
+      label: 'Mes Achats',
+      icon: <ArrowUpRight className="w-5 h-5" />,
+      gradient: 'from-teal-500 to-emerald-500'
+    },
+    {
       id: 'sub-agents',
       label: 'Sous-Agents',
       icon: <Users className="w-5 h-5" />,

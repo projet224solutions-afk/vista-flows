@@ -20,6 +20,7 @@ import CommunicationWidget from '@/components/communication/CommunicationWidget'
 import { useAgentStats } from '@/hooks/useAgentStats';
 import { AgentCreatedUsersList } from '@/components/agent/AgentCreatedUsersList';
 import { AgentOrdersTracking } from '@/components/agent/AgentOrdersTracking';
+import MyPurchasesOrdersList from '@/components/shared/MyPurchasesOrdersList';
 
 export default function AgentDashboard() {
   const { user, signOut } = useAuth();
@@ -320,6 +321,9 @@ export default function AgentDashboard() {
       
       case 'orders':
         return <AgentOrdersTracking agentId={agent.id} />;
+      
+      case 'my-purchases':
+        return <MyPurchasesOrdersList title="Mes Achats Personnels" emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace" />;
       
       case 'sub-agents':
         return <AgentSubAgentsManagement agentId={agent.id} />;
