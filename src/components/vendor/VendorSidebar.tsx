@@ -187,6 +187,7 @@ export function VendorSidebar() {
       label: t('sidebar.services'),
       icon: Truck,
       items: [
+        { title: "Mes Achats", icon: ShoppingCart, path: "my-purchases" },
         { title: t('sidebar.deliveries'), icon: Truck, path: "delivery" },
         { title: t('sidebar.ratings'), icon: Star, path: "ratings" },
         { title: "Avis Clients", icon: MessagesSquare, path: "reviews" },
