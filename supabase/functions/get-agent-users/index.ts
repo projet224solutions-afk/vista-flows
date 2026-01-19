@@ -74,10 +74,10 @@ serve(async (req) => {
       );
     }
     
-    // Récupérer les profils avec toutes les informations dont l'email
+    // Récupérer les profils avec toutes les informations dont l'email et le public_id
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from('profiles')
-      .select('id, email, first_name, last_name, phone, is_active, role')
+      .select('id, email, first_name, last_name, phone, is_active, role, public_id, custom_id')
       .in('id', userIds);
 
     if (profilesError) throw profilesError;
@@ -86,6 +86,7 @@ serve(async (req) => {
       const profile = profiles?.find(p => p.id === cu.user_id);
       return {
         id: cu.user_id,
+        public_id: profile?.public_id || profile?.custom_id || '',
         email: profile?.email || '',
         role: cu.user_role,
         first_name: profile?.first_name || '',

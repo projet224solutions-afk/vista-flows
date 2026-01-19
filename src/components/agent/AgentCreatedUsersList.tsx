@@ -31,6 +31,7 @@ import {
 
 interface CreatedUser {
   id: string;
+  public_id: string;
   email: string;
   role: string;
   first_name: string;
@@ -103,6 +104,7 @@ export function AgentCreatedUsersList({ agentId }: AgentCreatedUsersListProps) {
   const filteredUsers = users.filter(user => {
     const query = searchQuery.toLowerCase();
     return (
+      user.public_id?.toLowerCase().includes(query) ||
       user.email?.toLowerCase().includes(query) ||
       user.first_name?.toLowerCase().includes(query) ||
       user.last_name?.toLowerCase().includes(query) ||
@@ -217,10 +219,15 @@ export function AgentCreatedUsersList({ agentId }: AgentCreatedUsersListProps) {
                     </Avatar>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <h4 className="font-semibold text-slate-900 truncate">
                           {user.first_name} {user.last_name}
                         </h4>
+                        {user.public_id && (
+                          <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200 text-xs font-mono">
+                            {user.public_id}
+                          </Badge>
+                        )}
                         {user.is_active ? (
                           <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">
                             <UserCheck className="w-3 h-3 mr-1" />
