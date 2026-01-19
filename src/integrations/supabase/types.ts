@@ -10045,30 +10045,57 @@ export type Database = {
       }
       order_items: {
         Row: {
+          cost_price: number | null
           created_at: string | null
+          discount_amount: number | null
+          discount_type: string | null
+          discount_value: number | null
+          final_unit_price: number | null
           id: string
+          loss_amount: number | null
           order_id: string
+          original_unit_price: number | null
           product_id: string
+          profit_after_discount: number | null
+          profit_before_discount: number | null
           quantity: number
           total_price: number
           unit_price: number
           variant_id: string | null
         }
         Insert: {
+          cost_price?: number | null
           created_at?: string | null
+          discount_amount?: number | null
+          discount_type?: string | null
+          discount_value?: number | null
+          final_unit_price?: number | null
           id?: string
+          loss_amount?: number | null
           order_id: string
+          original_unit_price?: number | null
           product_id: string
+          profit_after_discount?: number | null
+          profit_before_discount?: number | null
           quantity: number
           total_price: number
           unit_price: number
           variant_id?: string | null
         }
         Update: {
+          cost_price?: number | null
           created_at?: string | null
+          discount_amount?: number | null
+          discount_type?: string | null
+          discount_value?: number | null
+          final_unit_price?: number | null
           id?: string
+          loss_amount?: number | null
           order_id?: string
+          original_unit_price?: number | null
           product_id?: string
+          profit_after_discount?: number | null
+          profit_before_discount?: number | null
           quantity?: number
           total_price?: number
           unit_price?: number
@@ -19864,7 +19891,9 @@ export type Database = {
           description: string | null
           expense_date: string
           id: string
+          is_locked: boolean | null
           payment_method: string | null
+          purchase_reference: string | null
           receipt_url: string | null
           status: string | null
           updated_at: string | null
@@ -19877,7 +19906,9 @@ export type Database = {
           description?: string | null
           expense_date?: string
           id?: string
+          is_locked?: boolean | null
           payment_method?: string | null
+          purchase_reference?: string | null
           receipt_url?: string | null
           status?: string | null
           updated_at?: string | null
@@ -19890,7 +19921,9 @@ export type Database = {
           description?: string | null
           expense_date?: string
           id?: string
+          is_locked?: boolean | null
           payment_method?: string | null
+          purchase_reference?: string | null
           receipt_url?: string | null
           status?: string | null
           updated_at?: string | null
@@ -22171,6 +22204,42 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_profit_stats: {
+        Row: {
+          items_sold: number | null
+          order_count: number | null
+          sale_date: string | null
+          total_discounts: number | null
+          total_losses: number | null
+          total_profit_after_discount: number | null
+          total_profit_before_discount: number | null
+          total_sales: number | null
+          vendor_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wallet_summary: {
         Row: {
           balance: number | null
@@ -23475,6 +23544,10 @@ export type Database = {
       }
       is_real_user: { Args: { p_user_id: string }; Returns: boolean }
       is_vehicle_blocked: { Args: { p_vehicle_id: string }; Returns: boolean }
+      lock_expense_for_purchase: {
+        Args: { expense_uuid: string }
+        Returns: undefined
+      }
       log_api_usage: {
         Args: { p_cost?: number; p_service_type: string }
         Returns: undefined
