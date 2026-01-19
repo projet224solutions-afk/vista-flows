@@ -678,32 +678,69 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                         )}
                       </div>
 
-                      {/* Escrow Info */}
-                      {order.escrow && (order.escrow.status === 'pending' || order.escrow.status === 'held') && (
-                        <div className="flex items-start gap-2 p-3 mt-4 bg-blue-50 rounded-lg border border-blue-200">
-                          <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-blue-800">
-                              Paiement protégé par Escrow
-                            </p>
-                            <p className="text-xs text-blue-700">
-                              {formatCurrency(order.escrow.amount)} sécurisés jusqu'à confirmation de livraison par le client
-                            </p>
+                      {/* Escrow Info avec étapes claires */}
+                      {order.escrow && (
+                        <div className={cn(
+                          "p-3 mt-4 rounded-lg border",
+                          order.escrow.status === 'pending' || order.escrow.status === 'held'
+                            ? "bg-blue-50 border-blue-200"
+                            : order.escrow.status === 'released'
+                            ? "bg-green-50 border-green-200"
+                            : order.escrow.status === 'refunded'
+                            ? "bg-red-50 border-red-200"
+                            : "bg-gray-50 border-gray-200"
+                        )}>
+                          <div className="flex items-start gap-2">
+                            <Shield className={cn(
+                              "w-5 h-5 flex-shrink-0 mt-0.5",
+                              order.escrow.status === 'pending' || order.escrow.status === 'held'
+                                ? "text-blue-600"
+                                : order.escrow.status === 'released'
+                                ? "text-green-600"
+                                : "text-gray-600"
+                            )} />
+                            <div className="flex-1">
+                              <p className={cn(
+                                "text-sm font-medium",
+                                order.escrow.status === 'pending' || order.escrow.status === 'held'
+                                  ? "text-blue-800"
+                                  : order.escrow.status === 'released'
+                                  ? "text-green-800"
+                                  : "text-gray-800"
+                              )}>
+                                {order.escrow.status === 'pending' && "🔒 Fonds sécurisés - En attente de livraison"}
+                                {order.escrow.status === 'held' && "🔒 Fonds bloqués - Le vendeur prépare la commande"}
+                                {order.escrow.status === 'released' && "✅ Paiement libéré au vendeur"}
+                                {order.escrow.status === 'refunded' && "↩️ Remboursement effectué"}
+                              </p>
+                              <p className={cn(
+                                "text-xs mt-1",
+                                order.escrow.status === 'pending' || order.escrow.status === 'held'
+                                  ? "text-blue-700"
+                                  : order.escrow.status === 'released'
+                                  ? "text-green-700"
+                                  : "text-gray-700"
+                              )}>
+                                {formatCurrency(order.escrow.amount)} • 
+                                {order.escrow.status === 'pending' || order.escrow.status === 'held'
+                                  ? " Le client doit confirmer la réception pour libérer les fonds"
+                                  : order.escrow.status === 'released'
+                                  ? " Le client a confirmé la réception"
+                                  : " Transaction terminée"
+                                }
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      )}
-
-                      {order.escrow?.status === 'released' && (
-                        <div className="flex items-start gap-2 p-3 mt-4 bg-green-50 rounded-lg border border-green-200">
-                          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-green-800">
-                              Paiement libéré au vendeur
-                            </p>
-                            <p className="text-xs text-green-700">
-                              Le client a confirmé la réception. {formatCurrency(order.escrow.amount)} transférés.
-                            </p>
-                          </div>
+                          
+                          {/* Workflow info pour l'agent */}
+                          {(order.escrow.status === 'pending' || order.escrow.status === 'held') && (
+                            <div className="mt-3 p-2 bg-white/60 rounded-md">
+                              <p className="text-xs text-slate-600 flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3" />
+                                Workflow: Vendeur confirme → Prépare → Expédie → Client confirme réception → Fonds libérés
+                              </p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </CardContent>
