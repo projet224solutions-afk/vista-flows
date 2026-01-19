@@ -24,7 +24,8 @@ import {
   MessageSquare,
   MapPin,
   ShieldAlert,
-  Ticket
+  Ticket,
+  ShoppingBag
 } from 'lucide-react';
 import { BureauWalletDisplay } from '@/components/wallet/BureauWalletDisplay';
 
@@ -94,6 +95,11 @@ export function BureauLayout({
       id: 'tickets',
       label: 'Tickets Transport',
       icon: <Ticket className="w-5 h-5 text-amber-600" />
+    },
+    {
+      id: 'my-purchases',
+      label: 'Mes Achats',
+      icon: <ShoppingBag className="w-5 h-5 text-emerald-600" />
     },
     {
       id: 'workers',

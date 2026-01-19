@@ -3,7 +3,7 @@
  * Design glassmorphism avec animations fluides
  */
 
-import { Home, MapPin, History, Settings, Wallet, Navigation } from "lucide-react";
+import { Home, MapPin, History, Settings, Wallet, Navigation, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BottomNavigationProps {
@@ -29,7 +29,7 @@ export function BottomNavigation({
       highlight: hasActiveRide
     },
     { id: 'earnings', label: 'Gains', icon: Wallet },
-    { id: 'history', label: 'Historique', icon: History },
+    { id: 'my-purchases', label: 'Achats', icon: ShoppingBag },
     { id: 'settings', label: 'Réglages', icon: Settings },
   ];
 
