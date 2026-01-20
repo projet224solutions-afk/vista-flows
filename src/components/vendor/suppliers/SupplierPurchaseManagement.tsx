@@ -37,12 +37,12 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
           .select('id', { count: 'exact', head: true })
           .eq('vendor_id', vendorId)
           .eq('status', 'validated'),
-        // Compter les brouillons
+        // Compter tous les achats non validés (brouillons)
         supabase
           .from('stock_purchases')
           .select('id', { count: 'exact', head: true })
           .eq('vendor_id', vendorId)
-          .eq('status', 'draft')
+          .neq('status', 'validated')
       ]);
 
       return {
