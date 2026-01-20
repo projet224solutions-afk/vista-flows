@@ -224,7 +224,7 @@ export function NewPurchaseDialog({
     const newProduct: PurchaseProduct = {
       productId: sp.product_id,
       productName: sp.product?.name || 'Produit inconnu',
-      unitCost: sp.unit_cost || sp.product?.cost_price || 0, // Uniquement prix d'achat, jamais prix de vente
+      unitCost: 0,
       unitCostCurrency: 'GNF',
       quantity: sp.default_quantity || 1,
       imageUrl: sp.product?.images?.[0] || null,
@@ -576,9 +576,8 @@ export function NewPurchaseDialog({
                   <ScrollArea className="flex-1">
                     <div className="p-2 space-y-2">
                       {filteredSupplierProducts.map((sp) => {
-                        const purchasePrice = sp.unit_cost || sp.product?.cost_price || sp.product?.price || 0;
                         return (
-                        <div
+                          <div
                           key={sp.id}
                           className="p-3 rounded-lg border bg-card hover:bg-accent/50 transition-all cursor-pointer"
                           onClick={() => addProductToSelection(sp)}
@@ -670,8 +669,16 @@ export function NewPurchaseDialog({
                               <Input
                                 type="number"
                                 min="0"
-                                value={product.unitCost}
-                                onChange={(e) => setProductUnitCost(product.productId, parseInt(e.target.value) || 0)}
+                                inputMode="decimal"
+                                placeholder=""
+                                value={product.unitCost === 0 ? '' : product.unitCost}
+                                onChange={(e) => {
+                                  const raw = e.target.value;
+                                  setProductUnitCost(
+                                    product.productId,
+                                    raw === '' ? 0 : Number.parseFloat(raw) || 0
+                                  );
+                                }}
                                 className="w-20 h-7 text-center text-xs"
                               />
                               <Select 
