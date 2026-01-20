@@ -11,22 +11,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,7 +31,9 @@ import {
   Trash2,
   Lock,
   Search,
+  Tag,
 } from 'lucide-react';
+import { SupplierFormDialog, SupplierFormData } from './SupplierFormDialog';
 
 interface VendorSuppliersListProps {
   vendorId: string;
@@ -66,30 +52,12 @@ interface Supplier {
   created_at: string;
 }
 
-const SUPPLIER_CATEGORIES = [
-  'Grossiste',
-  'Fabricant',
-  'Importateur',
-  'Distributeur',
-  'Détaillant',
-  'Prestataire',
-  'Autre'
-];
-
 export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [deleteSupplier, setDeleteSupplier] = useState<Supplier | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    address: '',
-    notes: '',
-    category: '',
-  });
 
   // Fetch suppliers
   const { data: suppliers = [], isLoading } = useQuery({
@@ -109,7 +77,10 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
 
   // Create/Update mutation
   const saveMutation = useMutation({
-    mutationFn: async (data: typeof formData & { id?: string }) => {
+    mutationFn: async (data: SupplierFormData) => {
+      // Save supplier
+      let supplierId = data.id;
+      
       if (data.id) {
         const { error } = await supabase
           .from('vendor_suppliers')
@@ -124,7 +95,7 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
           .eq('id', data.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { data: newSupplier, error } = await supabase
           .from('vendor_suppliers')
           .insert({
             vendor_id: vendorId,
@@ -134,13 +105,36 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
             address: data.address || null,
             notes: data.notes || null,
             category: data.category || null,
-          });
+          })
+          .select('id')
+          .single();
         if (error) throw error;
+        supplierId = newSupplier.id;
+      }
+
+      // Create new products if any
+      for (const lp of data.linkedProducts) {
+        if (lp.isNew && lp.productName) {
+          const { error } = await supabase
+            .from('products')
+            .insert({
+              vendor_id: vendorId,
+              name: lp.productName,
+              category_id: lp.categoryId || null,
+              price: 0,
+              stock_quantity: 0,
+              is_active: true,
+            });
+          if (error) {
+            console.error('Error creating product:', error);
+          }
+        }
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendor-suppliers', vendorId] });
       queryClient.invalidateQueries({ queryKey: ['supplier-purchase-stats', vendorId] });
+      queryClient.invalidateQueries({ queryKey: ['vendor-products-for-supplier', vendorId] });
       toast.success(editingSupplier ? 'Fournisseur modifié' : 'Fournisseur créé');
       handleCloseDialog();
     },
@@ -171,38 +165,21 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
 
   const handleOpenCreate = () => {
     setEditingSupplier(null);
-    setFormData({ name: '', phone: '', email: '', address: '', notes: '', category: '' });
     setIsDialogOpen(true);
   };
 
   const handleOpenEdit = (supplier: Supplier) => {
     setEditingSupplier(supplier);
-    setFormData({
-      name: supplier.name,
-      phone: supplier.phone || '',
-      email: supplier.email || '',
-      address: supplier.address || '',
-      notes: supplier.notes || '',
-      category: supplier.category || '',
-    });
     setIsDialogOpen(true);
   };
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingSupplier(null);
-    setFormData({ name: '', phone: '', email: '', address: '', notes: '', category: '' });
   };
 
-  const handleSubmit = () => {
-    if (!formData.name.trim()) {
-      toast.error('Le nom est requis');
-      return;
-    }
-    saveMutation.mutate({
-      ...formData,
-      id: editingSupplier?.id,
-    });
+  const handleSave = (data: SupplierFormData) => {
+    saveMutation.mutate(data);
   };
 
   const filteredSuppliers = suppliers.filter((s) =>
@@ -258,12 +235,20 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
                           <Lock className="w-3 h-3 text-muted-foreground" />
                         )}
                       </h3>
-                      <Badge
-                        variant={supplier.is_active ? 'default' : 'secondary'}
-                        className="text-xs mt-1"
-                      >
-                        {supplier.is_active ? 'Actif' : 'Inactif'}
-                      </Badge>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge
+                          variant={supplier.is_active ? 'default' : 'secondary'}
+                          className="text-xs"
+                        >
+                          {supplier.is_active ? 'Actif' : 'Inactif'}
+                        </Badge>
+                        {supplier.category && (
+                          <Badge variant="outline" className="text-xs gap-1">
+                            <Tag className="h-3 w-3" />
+                            {supplier.category}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-1">
@@ -313,92 +298,14 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
       )}
 
       {/* Dialog création/édition */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingSupplier ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="name">Nom *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Nom du fournisseur"
-              />
-            </div>
-            <div>
-              <Label htmlFor="category">Catégorie</Label>
-              <Select
-                value={formData.category}
-                onValueChange={(v) => setFormData({ ...formData, category: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner une catégorie..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {SUPPLIER_CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="phone">Téléphone</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="Numéro de téléphone"
-              />
-            </div>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="Email (optionnel)"
-              />
-            </div>
-            <div>
-              <Label htmlFor="address">Adresse</Label>
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="Adresse"
-              />
-            </div>
-            <div>
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Notes internes..."
-                rows={3}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCloseDialog}>
-              Annuler
-            </Button>
-            <Button onClick={handleSubmit} disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? 'Enregistrement...' : 'Enregistrer'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <SupplierFormDialog
+        vendorId={vendorId}
+        isOpen={isDialogOpen}
+        onClose={handleCloseDialog}
+        onSave={handleSave}
+        isSaving={saveMutation.isPending}
+        editingSupplier={editingSupplier}
+      />
 
       {/* Alert suppression */}
       <AlertDialog
