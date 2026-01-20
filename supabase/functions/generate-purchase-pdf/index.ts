@@ -68,7 +68,7 @@ serve(async (req) => {
       }).format(amount) + ' GNF';
     };
 
-    // Générer le contenu HTML du PDF - Facture d'achat professionnelle
+    // Générer le contenu HTML du PDF - Facture d'achat professionnelle (sans profit)
     const htmlContent = `
 <!DOCTYPE html>
 <html lang="fr">
@@ -254,10 +254,10 @@ serve(async (req) => {
   <table>
     <thead>
       <tr>
-        <th style="width: 45%;">Désignation</th>
+        <th style="width: 50%;">Désignation</th>
         <th class="text-center" style="width: 15%;">Quantité</th>
-        <th class="text-right" style="width: 20%;">Prix Unitaire</th>
-        <th class="text-right" style="width: 20%;">Montant</th>
+        <th class="text-right" style="width: 17%;">Prix Unitaire</th>
+        <th class="text-right" style="width: 18%;">Montant</th>
       </tr>
     </thead>
     <tbody>

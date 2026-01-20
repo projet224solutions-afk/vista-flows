@@ -527,31 +527,27 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
         )}
       </div>
 
-      {/* Récapitulatif financier */}
+      {/* Récapitulatif achat (pour bon d'achat - sans profit) */}
       <Card className="bg-muted/50">
         <CardContent className="p-4">
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Total achat</p>
-              <p className="text-lg font-bold text-destructive">
+              <p className="text-sm text-muted-foreground">Total de l'achat</p>
+              <p className="text-2xl font-bold text-primary">
                 {formatCurrency(totalPurchase)}
               </p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total vente</p>
-              <p className="text-lg font-bold">{formatCurrency(totalSelling)}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Profit estimé</p>
-              <p className="text-lg font-bold text-green-600">
-                +{formatCurrency(totalProfit)}
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">{items.length} article(s)</p>
+              <p className="text-sm text-muted-foreground">
+                {items.reduce((sum, item) => sum + item.quantity, 0)} unité(s)
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Liste des produits */}
+      {/* Liste des produits (sans profit) */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
@@ -577,16 +573,12 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                       <p className="font-medium text-sm">{item.product_name}</p>
                       <div className="flex gap-4 text-xs text-muted-foreground mt-1">
                         <span>Qté: {item.quantity}</span>
-                        <span>Achat: {formatCurrency(item.purchase_price)}</span>
-                        <span>Vente: {formatCurrency(item.selling_price)}</span>
+                        <span>Prix unitaire: {formatCurrency(item.purchase_price)}</span>
                       </div>
                     </div>
                     <div className="text-right mr-2">
                       <p className="text-sm font-semibold">
                         {formatCurrency(item.total_purchase)}
-                      </p>
-                      <p className="text-xs text-green-600">
-                        +{formatCurrency(item.total_profit)}
                       </p>
                     </div>
                     {!isLocked && (
@@ -602,6 +594,71 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                 ))}
               </div>
             </ScrollArea>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Analyse Financière (Profits) - Section séparée */}
+      <Card className="border-green-200 dark:border-green-900 bg-green-50/50 dark:bg-green-950/20">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2 text-green-700 dark:text-green-400">
+            <Calculator className="h-4 w-4" />
+            Analyse Financière & Profits
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4 text-center mb-4">
+            <div className="p-3 rounded-lg bg-background">
+              <p className="text-xs text-muted-foreground">Total Achat</p>
+              <p className="text-lg font-bold text-destructive">
+                {formatCurrency(totalPurchase)}
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-background">
+              <p className="text-xs text-muted-foreground">Total Vente Estimé</p>
+              <p className="text-lg font-bold">{formatCurrency(totalSelling)}</p>
+            </div>
+            <div className="p-3 rounded-lg bg-background">
+              <p className="text-xs text-muted-foreground">Profit Estimé</p>
+              <p className="text-lg font-bold text-green-600">
+                +{formatCurrency(totalProfit)}
+              </p>
+            </div>
+          </div>
+
+          {/* Détail profits par produit */}
+          {items.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Détail par produit
+              </p>
+              <div className="space-y-1">
+                {items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between p-2 rounded bg-background text-sm"
+                  >
+                    <div className="flex-1">
+                      <span className="font-medium">{item.product_name}</span>
+                      <span className="text-xs text-muted-foreground ml-2">
+                        ({item.quantity} × {formatCurrency(item.selling_price - item.purchase_price)})
+                      </span>
+                    </div>
+                    <span className={`font-semibold ${item.total_profit >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                      {item.total_profit >= 0 ? '+' : ''}{formatCurrency(item.total_profit)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Marge bénéficiaire */}
+              <div className="mt-3 pt-3 border-t flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Marge bénéficiaire</span>
+                <span className="font-bold text-green-600">
+                  {totalPurchase > 0 ? ((totalProfit / totalPurchase) * 100).toFixed(1) : 0}%
+                </span>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
