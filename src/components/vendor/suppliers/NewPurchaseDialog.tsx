@@ -260,11 +260,11 @@ export function NewPurchaseDialog({
     setProductSearchTerm('');
   };
 
-  // Change supplier in step 2
+  // Change supplier in step 2 - keep selected products
   const handleChangeSupplier = () => {
     setStep(1);
     setSelectedSupplier(null);
-    setSelectedProducts([]);
+    // Ne pas effacer les produits sélectionnés pour permettre d'acheter chez plusieurs fournisseurs
     setSelectedCategoryFilter('all');
     setProductSearchTerm('');
   };
@@ -545,7 +545,9 @@ export function NewPurchaseDialog({
                 ) : (
                   <ScrollArea className="flex-1">
                     <div className="p-2 space-y-2">
-                      {filteredSupplierProducts.map((sp) => (
+                      {filteredSupplierProducts.map((sp) => {
+                        const purchasePrice = sp.unit_cost || sp.product?.cost_price || sp.product?.price || 0;
+                        return (
                         <div
                           key={sp.id}
                           className="p-3 rounded-lg border bg-card hover:bg-accent/50 transition-all cursor-pointer"
@@ -565,16 +567,20 @@ export function NewPurchaseDialog({
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-sm truncate">{sp.product?.name}</p>
-                              <p className="text-xs text-muted-foreground">
-                                Stock: {sp.product?.stock_quantity || 0} • {sp.unit_cost?.toLocaleString() || 0} GNF
-                              </p>
+                              <div className="flex items-center gap-2 text-xs">
+                                <span className="text-muted-foreground">Stock: {sp.product?.stock_quantity || 0}</span>
+                                <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                                  Prix achat: {purchasePrice.toLocaleString()} GNF
+                                </Badge>
+                              </div>
                             </div>
                             <Button size="icon" variant="ghost" className="h-8 w-8 flex-shrink-0">
                               <Plus className="h-4 w-4" />
                             </Button>
                           </div>
                         </div>
-                      ))}
+                      );
+                      })}
                     </div>
                   </ScrollArea>
                 )}
