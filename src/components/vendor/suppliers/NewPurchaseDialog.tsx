@@ -224,7 +224,7 @@ export function NewPurchaseDialog({
     const newProduct: PurchaseProduct = {
       productId: sp.product_id,
       productName: sp.product?.name || 'Produit inconnu',
-      unitCost: sp.unit_cost || sp.product?.cost_price || sp.product?.price || 0,
+      unitCost: sp.unit_cost || sp.product?.cost_price || 0, // Uniquement prix d'achat, jamais prix de vente
       unitCostCurrency: 'GNF',
       quantity: sp.default_quantity || 1,
       imageUrl: sp.product?.images?.[0] || null,
