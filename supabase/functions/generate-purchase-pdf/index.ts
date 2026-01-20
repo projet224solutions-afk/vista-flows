@@ -68,56 +68,70 @@ serve(async (req) => {
       }).format(amount) + ' GNF';
     };
 
-    // Générer le contenu HTML du PDF
+    // Générer le contenu HTML du PDF - Facture d'achat professionnelle
     const htmlContent = `
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Bon d'achat - ${purchase.purchase_number}</title>
+  <title>Facture d'Achat - ${purchase.purchase_number}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { 
       font-family: 'Helvetica Neue', Arial, sans-serif; 
       font-size: 12px;
       color: #333;
-      padding: 20px;
+      padding: 30px;
+      background: #fff;
     }
     .header { 
       display: flex; 
       justify-content: space-between; 
       align-items: flex-start;
-      margin-bottom: 30px;
-      border-bottom: 2px solid #2563eb;
-      padding-bottom: 20px;
+      margin-bottom: 35px;
+      padding-bottom: 25px;
+      border-bottom: 3px solid #1e40af;
     }
-    .logo-section { max-width: 200px; }
-    .logo { max-width: 120px; max-height: 60px; }
-    .company-name { font-size: 18px; font-weight: bold; color: #1e40af; }
+    .logo-section { max-width: 250px; }
+    .logo { max-width: 140px; max-height: 70px; margin-bottom: 10px; }
+    .company-name { font-size: 20px; font-weight: bold; color: #1e40af; margin-bottom: 5px; }
+    .company-info { font-size: 11px; color: #64748b; line-height: 1.6; }
+    
     .document-info { text-align: right; }
     .doc-title { 
-      font-size: 24px; 
+      font-size: 28px; 
       font-weight: bold; 
       color: #1e40af;
-      margin-bottom: 10px;
+      margin-bottom: 15px;
+      letter-spacing: -0.5px;
     }
-    .doc-number { font-size: 14px; color: #666; }
-    .doc-date { font-size: 12px; color: #666; margin-top: 5px; }
+    .doc-badge {
+      display: inline-block;
+      background: #1e40af;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .doc-date { font-size: 12px; color: #64748b; margin-top: 8px; }
     
-    .summary-box {
+    .supplier-section {
       background: #f8fafc;
       border: 1px solid #e2e8f0;
       border-radius: 8px;
-      padding: 15px;
+      padding: 20px;
       margin-bottom: 25px;
     }
-    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-    .summary-item { text-align: center; }
-    .summary-label { font-size: 11px; color: #64748b; margin-bottom: 4px; }
-    .summary-value { font-size: 16px; font-weight: bold; }
-    .summary-value.expense { color: #dc2626; }
-    .summary-value.revenue { color: #333; }
-    .summary-value.profit { color: #16a34a; }
+    .supplier-title { 
+      font-size: 11px; 
+      color: #64748b; 
+      text-transform: uppercase; 
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .supplier-name { font-size: 16px; font-weight: 600; color: #1e3a5f; }
     
     table { 
       width: 100%; 
@@ -127,63 +141,83 @@ serve(async (req) => {
     th { 
       background: #1e40af; 
       color: white; 
-      padding: 10px 8px;
+      padding: 12px 10px;
       text-align: left;
       font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     th:first-child { border-radius: 6px 0 0 0; }
     th:last-child { border-radius: 0 6px 0 0; }
     td { 
-      padding: 10px 8px; 
+      padding: 12px 10px; 
       border-bottom: 1px solid #e2e8f0;
-      vertical-align: top;
+      vertical-align: middle;
     }
     tr:nth-child(even) { background: #f8fafc; }
+    tr:last-child td:first-child { border-radius: 0 0 0 6px; }
+    tr:last-child td:last-child { border-radius: 0 0 6px 0; }
     .text-right { text-align: right; }
     .text-center { text-align: center; }
-    .product-name { font-weight: 500; }
-    .supplier-name { font-size: 10px; color: #64748b; }
+    .product-name { font-weight: 600; color: #1e3a5f; }
+    .supplier-tag { 
+      font-size: 10px; 
+      color: #64748b; 
+      margin-top: 3px;
+    }
     
+    .totals-section {
+      display: flex;
+      justify-content: flex-end;
+    }
     .totals {
-      margin-left: auto;
-      width: 300px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      width: 320px;
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
       border-radius: 8px;
-      padding: 15px;
+      padding: 20px;
+      color: white;
     }
     .total-row { 
       display: flex; 
       justify-content: space-between; 
-      padding: 8px 0;
-      border-bottom: 1px solid #e2e8f0;
+      padding: 10px 0;
+      font-size: 13px;
     }
-    .total-row:last-child { border-bottom: none; }
     .total-row.main { 
-      font-size: 14px; 
+      font-size: 18px; 
       font-weight: bold;
-      border-top: 2px solid #1e40af;
-      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.3);
+      padding-top: 15px;
       margin-top: 5px;
     }
-    .total-row.profit { color: #16a34a; }
     
     .footer { 
-      margin-top: 40px; 
+      margin-top: 50px; 
       padding-top: 20px;
       border-top: 1px solid #e2e8f0;
       text-align: center;
-      color: #64748b;
+      color: #94a3b8;
       font-size: 10px;
     }
+    .footer-company { font-weight: 600; color: #64748b; }
+    
     .notes { 
-      background: #fffbeb;
-      border: 1px solid #fcd34d;
-      border-radius: 6px;
-      padding: 10px;
-      margin-bottom: 20px;
+      background: #fefce8;
+      border: 1px solid #fde047;
+      border-left: 4px solid #eab308;
+      border-radius: 0 6px 6px 0;
+      padding: 12px 15px;
+      margin-bottom: 25px;
     }
-    .notes-title { font-weight: bold; margin-bottom: 5px; }
+    .notes-title { font-weight: 600; color: #854d0e; margin-bottom: 5px; font-size: 11px; }
+    .notes-content { color: #713f12; font-size: 11px; }
+
+    .items-count {
+      font-size: 11px;
+      color: #64748b;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
@@ -191,49 +225,39 @@ serve(async (req) => {
     <div class="logo-section">
       ${vendor?.logo_url ? `<img src="${vendor.logo_url}" class="logo" alt="Logo">` : ''}
       <div class="company-name">${vendor?.business_name || 'Mon Entreprise'}</div>
-      ${vendor?.address ? `<div style="font-size: 11px; color: #666;">${vendor.address}</div>` : ''}
-      ${vendor?.phone ? `<div style="font-size: 11px; color: #666;">Tél: ${vendor.phone}</div>` : ''}
+      <div class="company-info">
+        ${vendor?.address ? `${vendor.address}<br>` : ''}
+        ${vendor?.phone ? `Tél: ${vendor.phone}` : ''}
+      </div>
     </div>
     <div class="document-info">
-      <div class="doc-title">BON D'ACHAT DE STOCK</div>
-      <div class="doc-number">${purchase.purchase_number}</div>
-      <div class="doc-date">Date: ${new Date(purchase.created_at).toLocaleDateString('fr-FR')}</div>
-    </div>
-  </div>
-  
-  <div class="summary-box">
-    <div class="summary-grid">
-      <div class="summary-item">
-        <div class="summary-label">TOTAL ACHAT</div>
-        <div class="summary-value expense">${formatCurrency(purchase.total_purchase_amount || 0)}</div>
-      </div>
-      <div class="summary-item">
-        <div class="summary-label">TOTAL VENTE ESTIMÉ</div>
-        <div class="summary-value revenue">${formatCurrency(purchase.total_selling_amount || 0)}</div>
-      </div>
-      <div class="summary-item">
-        <div class="summary-label">PROFIT ESTIMÉ</div>
-        <div class="summary-value profit">+${formatCurrency(purchase.estimated_total_profit || 0)}</div>
-      </div>
+      <div class="doc-title">FACTURE D'ACHAT</div>
+      <div class="doc-badge">${purchase.purchase_number}</div>
+      <div class="doc-date">Date d'émission: ${new Date(purchase.created_at).toLocaleDateString('fr-FR', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      })}</div>
     </div>
   </div>
   
   ${purchase.notes ? `
   <div class="notes">
-    <div class="notes-title">Notes:</div>
-    <div>${purchase.notes}</div>
+    <div class="notes-title">📝 Notes:</div>
+    <div class="notes-content">${purchase.notes}</div>
   </div>
   ` : ''}
+  
+  <div class="items-count">${(items || []).length} article(s)</div>
   
   <table>
     <thead>
       <tr>
-        <th style="width: 30%;">Produit</th>
-        <th class="text-center" style="width: 10%;">Qté</th>
-        <th class="text-right" style="width: 15%;">Prix Achat</th>
-        <th class="text-right" style="width: 15%;">Prix Vente</th>
-        <th class="text-right" style="width: 15%;">Total Achat</th>
-        <th class="text-right" style="width: 15%;">Profit</th>
+        <th style="width: 45%;">Désignation</th>
+        <th class="text-center" style="width: 15%;">Quantité</th>
+        <th class="text-right" style="width: 20%;">Prix Unitaire</th>
+        <th class="text-right" style="width: 20%;">Montant</th>
       </tr>
     </thead>
     <tbody>
@@ -241,36 +265,36 @@ serve(async (req) => {
         <tr>
           <td>
             <div class="product-name">${item.product_name}</div>
-            ${item.vendor_suppliers?.name ? `<div class="supplier-name">Fournisseur: ${item.vendor_suppliers.name}</div>` : ''}
+            ${item.vendor_suppliers?.name ? `<div class="supplier-tag">Fournisseur: ${item.vendor_suppliers.name}</div>` : ''}
           </td>
           <td class="text-center">${item.quantity}</td>
           <td class="text-right">${formatCurrency(item.purchase_price)}</td>
-          <td class="text-right">${formatCurrency(item.selling_price)}</td>
           <td class="text-right">${formatCurrency(item.total_purchase)}</td>
-          <td class="text-right" style="color: #16a34a;">+${formatCurrency(item.total_profit)}</td>
         </tr>
       `).join('')}
     </tbody>
   </table>
   
-  <div class="totals">
-    <div class="total-row">
-      <span>Sous-total achat:</span>
-      <span>${formatCurrency(purchase.total_purchase_amount || 0)}</span>
-    </div>
-    <div class="total-row">
-      <span>Sous-total vente:</span>
-      <span>${formatCurrency(purchase.total_selling_amount || 0)}</span>
-    </div>
-    <div class="total-row main profit">
-      <span>PROFIT ESTIMÉ:</span>
-      <span>+${formatCurrency(purchase.estimated_total_profit || 0)}</span>
+  <div class="totals-section">
+    <div class="totals">
+      <div class="total-row">
+        <span>Nombre d'articles:</span>
+        <span>${(items || []).length}</span>
+      </div>
+      <div class="total-row">
+        <span>Quantité totale:</span>
+        <span>${(items || []).reduce((sum: number, item: any) => sum + (item.quantity || 0), 0)}</span>
+      </div>
+      <div class="total-row main">
+        <span>MONTANT TOTAL:</span>
+        <span>${formatCurrency(purchase.total_purchase_amount || 0)}</span>
+      </div>
     </div>
   </div>
   
   <div class="footer">
-    <p>Document généré automatiquement le ${new Date().toLocaleString('fr-FR')}</p>
-    <p>${vendor?.business_name || 'Mon Entreprise'} - Système de Gestion des Achats</p>
+    <p class="footer-company">${vendor?.business_name || 'Mon Entreprise'}</p>
+    <p>Document généré le ${new Date().toLocaleString('fr-FR')} • Facture d'achat de stock</p>
   </div>
 </body>
 </html>
