@@ -120,8 +120,26 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
   const handleValidatePurchase = async (purchase: Purchase) => {
     setValidatingId(purchase.id);
     try {
+      // 1. Récupérer les items de l'achat
+      const { data: items, error: itemsError } = await supabase
+        .from('stock_purchase_items')
+        .select('id, product_id, supplier_id, product_name, quantity, purchase_price, selling_price, total_purchase')
+        .eq('purchase_id', purchase.id);
+
+      if (itemsError) throw itemsError;
+      if (!items || items.length === 0) {
+        throw new Error('Aucun article trouvé pour cet achat');
+      }
+
+      // 2. Appeler la fonction avec tous les paramètres requis
       const { data, error } = await supabase.functions.invoke('validate-purchase', {
-        body: { purchaseId: purchase.id }
+        body: { 
+          purchase_id: purchase.id,
+          vendor_id: vendorId,
+          items: items,
+          purchase_number: purchase.purchase_number,
+          total_amount: purchase.total_purchase_amount
+        }
       });
 
       if (error) throw error;
