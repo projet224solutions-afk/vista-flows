@@ -21,10 +21,12 @@ import {
   TrendingUp, TrendingDown, DollarSign, Package, AlertTriangle,
   Plus, Filter, Download, Upload, Eye, Calendar, CreditCard,
   Wallet, Receipt, Target, Activity, Brain, Bell, Search,
-  MoreHorizontal, Edit, Trash2, Check, X, FileText, Camera
+  MoreHorizontal, Edit, Trash2, Check, X, FileText, Camera, ShoppingCart
 } from 'lucide-react';
 import { useExpenseManagement } from '@/hooks/useExpenseManagement';
+import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import WalletDashboard from '@/components/vendor/WalletDashboard';
+import { PurchaseExpensesSection } from './PurchaseExpensesSection';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -43,9 +45,12 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
+  
+  // Récupérer le vendorId via le hook
+  const { vendorId, user, loading: vendorLoading } = useCurrentVendor();
 
-  // Hook principal de gestion des dépenses (avec fallback vers données simulées)
-  const expenseData = useExpenseManagement();
+  // Hook principal de gestion des dépenses - passer le user.id car vendor_expenses référence auth.users
+  const expenseData = useExpenseManagement(user?.id);
 
   const {
     categories,
@@ -260,10 +265,14 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
 
       {/* Onglets principaux */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="dashboard">
             <BarChart className="w-4 h-4 mr-2" />
             Dashboard
+          </TabsTrigger>
+          <TabsTrigger value="purchases">
+            <ShoppingCart className="w-4 h-4 mr-2" />
+            Achats
           </TabsTrigger>
           <TabsTrigger value="expenses">
             <Receipt className="w-4 h-4 mr-2" />
@@ -417,6 +426,19 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                 </CardContent>
               </Card>
             </div>
+          )}
+        </TabsContent>
+
+        {/* Achats - Dépenses liées aux achats de stock */}
+        <TabsContent value="purchases" className="space-y-6">
+          {user?.id ? (
+            <PurchaseExpensesSection userId={user.id} />
+          ) : (
+            <Card>
+              <CardContent className="p-6 text-center text-muted-foreground">
+                Chargement des données utilisateur...
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
 
