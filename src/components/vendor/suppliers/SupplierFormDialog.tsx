@@ -103,6 +103,7 @@ export function SupplierFormDialog({
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [showNewProductForm, setShowNewProductForm] = useState(false);
   const [newProductName, setNewProductName] = useState('');
+  const [productQuantities, setProductQuantities] = useState<Record<string, number>>({});
 
   // Fetch categories
   const { data: categories = [] } = useQuery({
@@ -183,6 +184,7 @@ export function SupplierFormDialog({
 
   const handleAddProduct = (product: { id: string; name: string; category_id: string | null; price?: number }) => {
     const category = categories.find((c) => c.id === product.category_id);
+    const quantity = productQuantities[product.id] || 1;
     setFormData({
       ...formData,
       linkedProducts: [
@@ -193,12 +195,18 @@ export function SupplierFormDialog({
           isNew: false,
           categoryId: product.category_id || '',
           categoryName: category?.name || 'Non catégorisé',
-          quantity: 1,
+          quantity: quantity,
           unitPrice: product.price || 0,
         },
       ],
     });
     setProductSearch('');
+    // Reset quantity for this product
+    setProductQuantities(prev => {
+      const updated = { ...prev };
+      delete updated[product.id];
+      return updated;
+    });
   };
 
   const handleAddNewProduct = () => {
@@ -340,55 +348,86 @@ export function SupplierFormDialog({
                             ? product.images[0]
                             : null;
                           
+                          const currentQty = productQuantities[product.id] || 1;
+                          
                           return (
                             <div
                               key={product.id}
-                              onClick={() => !isAlreadyAdded && handleAddProduct(product)}
-                              className={`w-full text-left p-3 rounded-lg border flex items-center gap-3 transition-all ${
+                              className={`w-full text-left p-3 rounded-lg border transition-all ${
                                 isAlreadyAdded
-                                  ? 'bg-primary/10 border-primary/30 cursor-default'
-                                  : 'hover:bg-accent hover:border-primary/30 cursor-pointer hover:shadow-sm'
+                                  ? 'bg-primary/10 border-primary/30'
+                                  : 'hover:bg-accent hover:border-primary/30'
                               }`}
                             >
-                              {/* Image produit */}
-                              <div className="w-14 h-14 rounded-md bg-muted flex-shrink-0 overflow-hidden border">
-                                {productImage ? (
-                                  <img
-                                    src={productImage}
-                                    alt={product.name}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center bg-muted">
-                                    <Package className="h-6 w-6 text-muted-foreground" />
-                                  </div>
-                                )}
-                              </div>
-                              
-                              {/* Infos produit */}
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm text-foreground line-clamp-1">
-                                  {product.name}
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                  {product.sku}
-                                </p>
-                                {product.price != null && product.price > 0 && (
-                                  <p className="text-xs font-semibold text-primary mt-1">
-                                    {product.price.toLocaleString()} GNF
+                              <div className="flex items-center gap-3">
+                                {/* Image produit */}
+                                <div className="w-12 h-12 rounded-md bg-muted flex-shrink-0 overflow-hidden border">
+                                  {productImage ? (
+                                    <img
+                                      src={productImage}
+                                      alt={product.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-muted">
+                                      <Package className="h-5 w-5 text-muted-foreground" />
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Infos produit */}
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-sm text-foreground line-clamp-1">
+                                    {product.name}
                                   </p>
-                                )}
+                                  <p className="text-xs text-muted-foreground">
+                                    {product.sku}
+                                  </p>
+                                  {product.price != null && product.price > 0 && (
+                                    <p className="text-xs font-semibold text-primary">
+                                      {product.price.toLocaleString()} GNF
+                                    </p>
+                                  )}
+                                </div>
                               </div>
                               
-                              {/* Badge état */}
-                              {isAlreadyAdded ? (
-                                <Badge variant="default" className="text-xs flex-shrink-0 bg-primary text-primary-foreground">
-                                  ✓ Ajouté
-                                </Badge>
+                              {/* Zone quantité et bouton ajouter */}
+                              {!isAlreadyAdded ? (
+                                <div className="flex items-center gap-2 mt-2 pt-2 border-t">
+                                  <Label className="text-xs text-muted-foreground whitespace-nowrap">
+                                    Qté:
+                                  </Label>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    value={currentQty}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onChange={(e) => {
+                                      e.stopPropagation();
+                                      const val = parseInt(e.target.value) || 1;
+                                      setProductQuantities(prev => ({ ...prev, [product.id]: Math.max(1, val) }));
+                                    }}
+                                    className="h-8 w-20 text-center"
+                                  />
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    className="ml-auto"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAddProduct(product);
+                                    }}
+                                  >
+                                    <Plus className="h-4 w-4 mr-1" />
+                                    Ajouter
+                                  </Button>
+                                </div>
                               ) : (
-                                <Badge variant="outline" className="text-xs flex-shrink-0">
-                                  + Ajouter
-                                </Badge>
+                                <div className="flex items-center justify-center mt-2 pt-2 border-t">
+                                  <Badge variant="default" className="bg-primary text-primary-foreground">
+                                    ✓ Ajouté
+                                  </Badge>
+                                </div>
                               )}
                             </div>
                           );
