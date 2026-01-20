@@ -93,6 +93,7 @@ export interface PurchaseProduct {
   productName: string;
   unitCost: number;
   unitCostCurrency: string;
+  sellingPrice: number; // Prix de vente du produit
   quantity: number;
   imageUrl: string | null;
   sku: string | null;
@@ -226,6 +227,7 @@ export function NewPurchaseDialog({
       productName: sp.product?.name || 'Produit inconnu',
       unitCost: 0,
       unitCostCurrency: 'GNF',
+      sellingPrice: sp.product?.price || 0, // Prix de vente actuel du produit
       quantity: sp.default_quantity || 1,
       imageUrl: sp.product?.images?.[0] || null,
       sku: sp.product?.sku || null,

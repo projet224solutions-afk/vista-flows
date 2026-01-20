@@ -142,7 +142,7 @@ export function PurchasesList({ vendorId }: PurchasesListProps) {
           product_name: p.productName,
           quantity: p.quantity,
           purchase_price: p.unitCost,
-          selling_price: p.unitCost, // Will be updated by user
+          selling_price: p.sellingPrice, // Prix de vente réel du produit
         }));
 
         if (items.length > 0) {
