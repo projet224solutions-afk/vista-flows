@@ -3,7 +3,7 @@
  * Workflow complet: Brouillon → Document généré → Validé
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -41,6 +41,8 @@ import {
 
 interface PurchasesListProps {
   vendorId: string;
+  initialPurchaseId?: string | null;
+  onPurchaseViewed?: () => void;
 }
 
 interface Purchase {
@@ -81,7 +83,7 @@ const STATUS_CONFIG = {
   },
 };
 
-export function PurchasesList({ vendorId }: PurchasesListProps) {
+export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }: PurchasesListProps) {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
@@ -105,6 +107,18 @@ export function PurchasesList({ vendorId }: PurchasesListProps) {
     },
     enabled: !!vendorId,
   });
+
+  // Effect to open purchase from external navigation
+  useEffect(() => {
+    if (initialPurchaseId && purchases.length > 0) {
+      const purchase = purchases.find(p => p.id === initialPurchaseId);
+      if (purchase) {
+        setSelectedPurchase(purchase);
+        setIsEditorOpen(true);
+        onPurchaseViewed?.();
+      }
+    }
+  }, [initialPurchaseId, purchases, onPurchaseViewed]);
 
   // Create new purchase with supplier and products
   const createMutation = useMutation({

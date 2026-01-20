@@ -24,6 +24,12 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
   const [activeTab, setActiveTab] = useState('purchases');
   const [isValidatedSheetOpen, setIsValidatedSheetOpen] = useState(false);
   const [isDraftSheetOpen, setIsDraftSheetOpen] = useState(false);
+  const [selectedPurchaseId, setSelectedPurchaseId] = useState<string | null>(null);
+
+  const handleViewPurchase = (purchaseId: string) => {
+    setSelectedPurchaseId(purchaseId);
+    setActiveTab('purchases');
+  };
 
   // Stats pour les badges
   const { data: stats } = useQuery({
@@ -154,7 +160,7 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
             </TabsList>
 
             <TabsContent value="purchases" className="mt-0">
-              <PurchasesList vendorId={vendorId} />
+              <PurchasesList vendorId={vendorId} initialPurchaseId={selectedPurchaseId} onPurchaseViewed={() => setSelectedPurchaseId(null)} />
             </TabsContent>
 
             <TabsContent value="suppliers" className="mt-0">
@@ -169,6 +175,7 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
         vendorId={vendorId}
         isOpen={isValidatedSheetOpen}
         onClose={() => setIsValidatedSheetOpen(false)}
+        onViewPurchase={handleViewPurchase}
       />
       <DraftPurchasesSheet
         vendorId={vendorId}
