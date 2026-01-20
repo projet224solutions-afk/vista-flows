@@ -151,6 +151,29 @@ export function SupplierFormDialog({
     enabled: !!vendorId && formData.category === 'Grossiste',
   });
 
+  // Fetch linked products for editing supplier
+  const { data: supplierLinkedProducts = [] } = useQuery({
+    queryKey: ['supplier-linked-products', editingSupplier?.id],
+    queryFn: async () => {
+      if (!editingSupplier?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('vendor_supplier_products')
+        .select(`
+          id,
+          product_id,
+          unit_cost,
+          default_quantity,
+          product:products(id, name, category_id, price)
+        `)
+        .eq('supplier_id', editingSupplier.id);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!editingSupplier?.id && isOpen,
+  });
+
   // Filter products by selected category
   const products = selectedCategoryId && selectedCategoryId !== 'all'
     ? allProducts.filter(p => p.category_id === selectedCategoryId)
@@ -186,6 +209,25 @@ export function SupplierFormDialog({
       setSelectedCategoryId('');
     }
   }, [isOpen, editingSupplier]);
+
+  // Load linked products when editing
+  useEffect(() => {
+    if (supplierLinkedProducts.length > 0 && editingSupplier && formData.linkedProducts.length === 0) {
+      const linkedProducts: LinkedProduct[] = supplierLinkedProducts.map((sp: any) => {
+        const category = categories.find((c) => c.id === sp.product?.category_id);
+        return {
+          productId: sp.product_id,
+          productName: sp.product?.name || 'Produit inconnu',
+          isNew: false,
+          categoryId: sp.product?.category_id || '',
+          categoryName: category?.name || '',
+          quantity: sp.default_quantity || 1,
+          unitPrice: sp.unit_cost || sp.product?.price || 0,
+        };
+      });
+      setFormData((prev) => ({ ...prev, linkedProducts }));
+    }
+  }, [supplierLinkedProducts, editingSupplier, categories, formData.linkedProducts.length]);
 
   const isGrossiste = formData.category === 'Grossiste';
   const totalSteps = isGrossiste ? 3 : 2;
