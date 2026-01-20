@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Sheet,
@@ -12,9 +12,19 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { 
   ShoppingCart, 
   Clock, 
@@ -22,15 +32,19 @@ import {
   Calendar, 
   CalendarRange,
   CheckCircle,
-  TrendingUp
+  TrendingUp,
+  Eye,
+  Trash2
 } from 'lucide-react';
 import { startOfDay, startOfWeek, startOfMonth, startOfYear, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 interface ValidatedPurchasesSheetProps {
   vendorId: string;
   isOpen: boolean;
   onClose: () => void;
+  onViewPurchase?: (purchaseId: string) => void;
 }
 
 interface Purchase {
@@ -45,8 +59,11 @@ interface Purchase {
 
 type PeriodFilter = 'today' | 'week' | 'month' | 'year' | 'all';
 
-export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose }: ValidatedPurchasesSheetProps) {
+export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurchase }: ValidatedPurchasesSheetProps) {
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
+  const [deletePurchase, setDeletePurchase] = useState<Purchase | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const queryClient = useQueryClient();
 
   const getDateFilter = () => {
     const now = new Date();
@@ -145,6 +162,38 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose }: Validated
     enabled: isOpen && !!vendorId,
   });
 
+  const handleDeletePurchase = async () => {
+    if (!deletePurchase) return;
+    
+    setIsDeleting(true);
+    try {
+      // Supprimer les items d'abord
+      await supabase
+        .from('stock_purchase_items')
+        .delete()
+        .eq('purchase_id', deletePurchase.id);
+
+      // Supprimer l'achat
+      const { error } = await supabase
+        .from('stock_purchases')
+        .delete()
+        .eq('id', deletePurchase.id);
+
+      if (error) throw error;
+
+      toast.success('Achat supprimé avec succès');
+      queryClient.invalidateQueries({ queryKey: ['validated-purchases'] });
+      queryClient.invalidateQueries({ queryKey: ['validated-purchases-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-purchases'] });
+    } catch (error) {
+      console.error('Error deleting purchase:', error);
+      toast.error('Erreur lors de la suppression');
+    } finally {
+      setIsDeleting(false);
+      setDeletePurchase(null);
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('fr-GN', {
       minimumFractionDigits: 0,
@@ -163,87 +212,137 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose }: Validated
   const currentStats = periodStats?.[periodFilter] || { count: 0, totalAmount: 0, totalProfit: 0 };
 
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-xl">
-        <SheetHeader className="pb-4">
-          <SheetTitle className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-green-500" />
-            Achats Validés
-          </SheetTitle>
-        </SheetHeader>
+    <>
+      <Sheet open={isOpen} onOpenChange={onClose}>
+        <SheetContent className="w-full sm:max-w-xl">
+          <SheetHeader className="pb-4">
+            <SheetTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              Achats Validés
+            </SheetTitle>
+          </SheetHeader>
 
-        <div className="space-y-4">
-          {/* Tabs de période */}
-          <Tabs value={periodFilter} onValueChange={(v) => setPeriodFilter(v as PeriodFilter)}>
-            <TabsList className="grid grid-cols-5 w-full">
-              {Object.entries(periodConfig).map(([key, { label, icon: Icon }]) => (
-                <TabsTrigger key={key} value={key} className="text-xs px-2">
-                  <Icon className="h-3 w-3 mr-1 hidden sm:inline" />
-                  {key === 'today' ? 'Jour' : key === 'week' ? 'Sem.' : key === 'month' ? 'Mois' : key === 'year' ? 'Année' : 'Tout'}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+          <div className="space-y-4">
+            {/* Tabs de période */}
+            <Tabs value={periodFilter} onValueChange={(v) => setPeriodFilter(v as PeriodFilter)}>
+              <TabsList className="grid grid-cols-5 w-full">
+                {Object.entries(periodConfig).map(([key, { label, icon: Icon }]) => (
+                  <TabsTrigger key={key} value={key} className="text-xs px-2">
+                    <Icon className="h-3 w-3 mr-1 hidden sm:inline" />
+                    {key === 'today' ? 'Jour' : key === 'week' ? 'Sem.' : key === 'month' ? 'Mois' : key === 'year' ? 'Année' : 'Tout'}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
 
-          {/* Stats résumé */}
-          <div className="grid grid-cols-3 gap-2">
-            <Card className="bg-primary/5 border-primary/20">
-              <CardContent className="p-3 text-center">
-                <p className="text-2xl font-bold">{currentStats.count}</p>
-                <p className="text-xs text-muted-foreground">Achats</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-muted/50">
-              <CardContent className="p-3 text-center">
-                <p className="text-lg font-bold">{formatCurrency(currentStats.totalAmount)}</p>
-                <p className="text-xs text-muted-foreground">Total investi</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-green-500/10 border-green-500/20">
-              <CardContent className="p-3 text-center">
-                <p className="text-lg font-bold text-green-600">{formatCurrency(currentStats.totalProfit)}</p>
-                <p className="text-xs text-muted-foreground">Profit estimé</p>
-              </CardContent>
-            </Card>
-          </div>
+            {/* Stats résumé */}
+            <div className="grid grid-cols-3 gap-2">
+              <Card className="bg-primary/5 border-primary/20">
+                <CardContent className="p-3 text-center">
+                  <p className="text-2xl font-bold">{currentStats.count}</p>
+                  <p className="text-xs text-muted-foreground">Achats</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-muted/50">
+                <CardContent className="p-3 text-center">
+                  <p className="text-lg font-bold">{formatCurrency(currentStats.totalAmount)}</p>
+                  <p className="text-xs text-muted-foreground">Total investi</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-green-500/10 border-green-500/20">
+                <CardContent className="p-3 text-center">
+                  <p className="text-lg font-bold text-green-600">{formatCurrency(currentStats.totalProfit)}</p>
+                  <p className="text-xs text-muted-foreground">Profit estimé</p>
+                </CardContent>
+              </Card>
+            </div>
 
-          {/* Liste des achats */}
-          <ScrollArea className="h-[calc(100vh-320px)]">
-            {isLoading ? (
-              <div className="text-center py-8 text-muted-foreground">Chargement...</div>
-            ) : purchases.length === 0 ? (
-              <div className="text-center py-12">
-                <ShoppingCart className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-                <p className="text-muted-foreground">Aucun achat validé pour cette période</p>
-              </div>
-            ) : (
-              <div className="space-y-2 pr-4">
-                {purchases.map((purchase) => (
-                  <Card key={purchase.id} className="hover:shadow-sm transition-shadow">
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-semibold text-sm">{purchase.purchase_number}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {purchase.validated_at && format(new Date(purchase.validated_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-sm">{formatCurrency(purchase.total_purchase_amount)}</p>
-                          <div className="flex items-center gap-1 text-xs text-green-600">
-                            <TrendingUp className="h-3 w-3" />
-                            +{formatCurrency(purchase.estimated_total_profit)}
+            {/* Liste des achats */}
+            <ScrollArea className="h-[calc(100vh-320px)]">
+              {isLoading ? (
+                <div className="text-center py-8 text-muted-foreground">Chargement...</div>
+              ) : purchases.length === 0 ? (
+                <div className="text-center py-12">
+                  <ShoppingCart className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+                  <p className="text-muted-foreground">Aucun achat validé pour cette période</p>
+                </div>
+              ) : (
+                <div className="space-y-2 pr-4">
+                  {purchases.map((purchase) => (
+                    <Card key={purchase.id} className="hover:shadow-sm transition-shadow">
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{purchase.purchase_number}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {purchase.validated_at && format(new Date(purchase.validated_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
+                            </p>
+                          </div>
+                          <div className="text-right mr-3">
+                            <p className="font-semibold text-sm">{formatCurrency(purchase.total_purchase_amount)}</p>
+                            <div className="flex items-center gap-1 text-xs text-green-600">
+                              <TrendingUp className="h-3 w-3" />
+                              +{formatCurrency(purchase.estimated_total_profit)}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {onViewPurchase && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                title="Voir les détails"
+                                onClick={() => {
+                                  onViewPurchase(purchase.id);
+                                  onClose();
+                                }}
+                              >
+                                <Eye className="h-4 w-4 text-primary" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              title="Supprimer l'achat"
+                              onClick={() => setDeletePurchase(purchase)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
-        </div>
-      </SheetContent>
-    </Sheet>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Dialog de confirmation de suppression */}
+      <AlertDialog open={!!deletePurchase} onOpenChange={() => setDeletePurchase(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cet achat ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer l'achat <strong>{deletePurchase?.purchase_number}</strong> ?
+              Cette action est irréversible et supprimera également tous les articles associés.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeletePurchase}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? 'Suppression...' : 'Supprimer'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
