@@ -115,23 +115,27 @@ export function PurchasesList({ vendorId }: PurchasesListProps) {
       supplierName: string;
       products: PurchaseProduct[];
     }) => {
-      // Create the purchase
+      // Generate purchase number
+      const purchaseNumber = `ACH-${Date.now().toString(36).toUpperCase()}`;
+      
+      // Create the purchase (supplier_id is stored in purchase items, not in purchase header)
       const { data: purchase, error: purchaseError } = await supabase
         .from('stock_purchases')
         .insert([{ 
           vendor_id: vendorId,
-          supplier_id: supplierId,
-          supplier_name: supplierName,
-        }] as any)
+          purchase_number: purchaseNumber,
+          notes: `Fournisseur: ${supplierName}`,
+        }])
         .select()
         .single();
 
       if (purchaseError) throw purchaseError;
 
-      // Insert purchase items if products are provided
+      // Insert purchase items with supplier_id
       if (products.length > 0) {
         const items = products.filter(p => p.quantity > 0).map(p => ({
           purchase_id: purchase.id,
+          supplier_id: supplierId,
           product_id: p.productId,
           product_name: p.productName,
           quantity: p.quantity,
