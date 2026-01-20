@@ -25,16 +25,19 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
   const { data: stats } = useQuery({
     queryKey: ['supplier-purchase-stats', vendorId],
     queryFn: async () => {
-      const [suppliersRes, purchasesRes, draftPurchasesRes] = await Promise.all([
+      const [suppliersRes, validatedPurchasesRes, draftPurchasesRes] = await Promise.all([
         supabase
           .from('vendor_suppliers')
           .select('id', { count: 'exact', head: true })
           .eq('vendor_id', vendorId)
           .eq('is_active', true),
+        // Compter uniquement les achats validés
         supabase
           .from('stock_purchases')
           .select('id', { count: 'exact', head: true })
-          .eq('vendor_id', vendorId),
+          .eq('vendor_id', vendorId)
+          .eq('status', 'validated'),
+        // Compter les brouillons
         supabase
           .from('stock_purchases')
           .select('id', { count: 'exact', head: true })
@@ -44,7 +47,7 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
 
       return {
         suppliersCount: suppliersRes.count || 0,
-        purchasesCount: purchasesRes.count || 0,
+        validatedPurchasesCount: validatedPurchasesRes.count || 0,
         draftPurchasesCount: draftPurchasesRes.count || 0
       };
     },
@@ -76,7 +79,7 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
                 <ShoppingCart className="h-5 w-5 text-green-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats?.purchasesCount || 0}</p>
+                <p className="text-2xl font-bold">{stats?.validatedPurchasesCount || 0}</p>
                 <p className="text-xs text-muted-foreground">Achats</p>
               </div>
             </div>
