@@ -344,17 +344,6 @@ export function SupplierFormDialog({
                 />
               </div>
 
-              {/* Notes */}
-              <div>
-                <Label htmlFor="notes">Notes internes</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Informations supplémentaires sur ce fournisseur..."
-                  className="mt-1 min-h-[80px]"
-                />
-              </div>
             </div>
 
             {/* Section produits pour Grossiste */}
