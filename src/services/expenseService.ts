@@ -176,24 +176,24 @@ class ExpenseService {
    */
   async getStats(vendorId: string): Promise<ExpenseStats> {
     try {
-      // Total des dépenses
+      // Total des dépenses (approved + paid pour inclure les achats)
       const { data: totalData, error: totalError } = await supabase
         .from('vendor_expenses')
         .select('amount')
         .eq('vendor_id', vendorId)
-        .eq('status', 'approved');
+        .in('status', ['approved', 'paid']);
 
       if (totalError) throw totalError;
 
       const totalExpenses = totalData?.reduce((sum, expense) => sum + expense.amount, 0) || 0;
 
-      // Dépenses du mois
+      // Dépenses du mois (approved + paid)
       const currentMonth = new Date().toISOString().slice(0, 7);
       const { data: monthlyData, error: monthlyError } = await supabase
         .from('vendor_expenses')
         .select('amount')
         .eq('vendor_id', vendorId)
-        .eq('status', 'approved')
+        .in('status', ['approved', 'paid'])
         .gte('created_at', `${currentMonth}-01`)
         .lt('created_at', `${currentMonth}-32`);
 
@@ -201,7 +201,7 @@ class ExpenseService {
 
       const monthlyExpenses = monthlyData?.reduce((sum, expense) => sum + expense.amount, 0) || 0;
 
-      // Répartition par catégorie
+      // Répartition par catégorie (approved + paid)
       const { data: categoryData, error: categoryError } = await supabase
         .from('vendor_expenses')
         .select(`
@@ -209,7 +209,7 @@ class ExpenseService {
           category:expense_categories(name)
         `)
         .eq('vendor_id', vendorId)
-        .eq('status', 'approved');
+        .in('status', ['approved', 'paid']);
 
       if (categoryError) throw categoryError;
 
