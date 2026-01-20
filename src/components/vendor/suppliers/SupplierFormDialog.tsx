@@ -230,15 +230,15 @@ export function SupplierFormDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>
             {editingSupplier ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4">
-          <div className="space-y-4 pb-4">
+        <ScrollArea className="flex-1 min-h-0 pr-2">
+          <div className="space-y-4 pb-4 pr-2">
             {/* Nom */}
             <div>
               <Label htmlFor="name">Nom *</Label>
