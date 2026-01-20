@@ -585,7 +585,7 @@ export function NewPurchaseDialog({
                                     >
                                       <Plus className="h-3 w-3" />
                                     </Button>
-                                    <span className="text-xs text-accent-foreground font-medium">
+                                    <span className="text-xs text-secondary-foreground font-semibold bg-secondary px-1.5 py-0.5 rounded">
                                       × {cartonCost.toLocaleString()} GNF
                                     </span>
                                     <span className="text-xs text-muted-foreground">
