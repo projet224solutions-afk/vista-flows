@@ -1,6 +1,7 @@
 /**
  * Formulaire de création/édition de fournisseur
  * Affiche les catégories produits et sélection/création de produits pour les grossistes
+ * Version 3 étapes avec stepper professionnel
  */
 
 import { useState, useEffect } from 'react';
@@ -10,7 +11,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -33,7 +33,14 @@ import {
   Search,
   Package,
   Tag,
+  User,
+  Phone,
+  Building2,
+  ChevronRight,
+  ChevronLeft,
+  Check,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface SupplierFormDialogProps {
   vendorId: string;
@@ -83,6 +90,12 @@ const SUPPLIER_CATEGORIES = [
   'Autre',
 ];
 
+const STEPS = [
+  { id: 1, title: 'Informations', icon: User },
+  { id: 2, title: 'Coordonnées', icon: Phone },
+  { id: 3, title: 'Produits', icon: Package },
+];
+
 export function SupplierFormDialog({
   vendorId,
   isOpen,
@@ -92,6 +105,7 @@ export function SupplierFormDialog({
   editingSupplier,
 }: SupplierFormDialogProps) {
   const navigate = useNavigate();
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<SupplierFormData>({
     name: '',
     phone: '',
@@ -103,8 +117,6 @@ export function SupplierFormDialog({
   });
   const [productSearch, setProductSearch] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
-  const [showNewProductForm, setShowNewProductForm] = useState(false);
-  const [newProductName, setNewProductName] = useState('');
   const [productQuantities, setProductQuantities] = useState<Record<string, number>>({});
 
   // Fetch categories
@@ -121,7 +133,7 @@ export function SupplierFormDialog({
     },
   });
 
-  // Fetch ALL products for vendor (not filtered by category in the query)
+  // Fetch ALL products for vendor
   const { data: allProducts = [], isLoading: productsLoading } = useQuery({
     queryKey: ['vendor-products-for-supplier', vendorId],
     queryFn: async () => {
@@ -139,14 +151,15 @@ export function SupplierFormDialog({
     enabled: !!vendorId && formData.category === 'Grossiste',
   });
 
-  // Filter products by selected category on the client side
+  // Filter products by selected category
   const products = selectedCategoryId && selectedCategoryId !== 'all'
     ? allProducts.filter(p => p.category_id === selectedCategoryId)
     : allProducts;
 
-  // Reset form when dialog opens/closes or editingSupplier changes
+  // Reset form when dialog opens/closes
   useEffect(() => {
     if (isOpen) {
+      setCurrentStep(1);
       if (editingSupplier) {
         setFormData({
           id: editingSupplier.id,
@@ -171,12 +184,11 @@ export function SupplierFormDialog({
       }
       setProductSearch('');
       setSelectedCategoryId('');
-      setShowNewProductForm(false);
-      setNewProductName('');
     }
   }, [isOpen, editingSupplier]);
 
   const isGrossiste = formData.category === 'Grossiste';
+  const totalSteps = isGrossiste ? 3 : 2;
 
   const filteredProducts = products.filter(
     (p) =>
@@ -203,34 +215,11 @@ export function SupplierFormDialog({
       ],
     });
     setProductSearch('');
-    // Reset quantity for this product
     setProductQuantities(prev => {
       const updated = { ...prev };
       delete updated[product.id];
       return updated;
     });
-  };
-
-  const handleAddNewProduct = () => {
-    if (!newProductName.trim() || !selectedCategoryId) return;
-    const category = categories.find((c) => c.id === selectedCategoryId);
-    setFormData({
-      ...formData,
-      linkedProducts: [
-        ...formData.linkedProducts,
-        {
-          productId: null,
-          productName: newProductName.trim(),
-          isNew: true,
-          categoryId: selectedCategoryId,
-          categoryName: category?.name || '',
-          quantity: 1,
-          unitPrice: 0,
-        },
-      ],
-    });
-    setNewProductName('');
-    setShowNewProductForm(false);
   };
 
   const handleUpdateQuantity = (index: number, quantity: number) => {
@@ -250,178 +239,282 @@ export function SupplierFormDialog({
     onSave(formData);
   };
 
+  const canGoNext = () => {
+    if (currentStep === 1) return formData.name.trim() !== '';
+    return true;
+  };
+
+  const handleNext = () => {
+    if (currentStep < totalSteps && canGoNext()) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const visibleSteps = isGrossiste ? STEPS : STEPS.slice(0, 2);
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader className="flex-shrink-0 border-b pb-4">
-          <DialogTitle className="text-xl font-semibold">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+        {/* Header avec Stepper */}
+        <DialogHeader className="flex-shrink-0 border-b p-6 pb-4">
+          <DialogTitle className="text-xl font-semibold mb-4">
             {editingSupplier ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}
           </DialogTitle>
+          
+          {/* Stepper professionnel */}
+          <div className="flex items-center justify-between">
+            {visibleSteps.map((step, index) => {
+              const StepIcon = step.icon;
+              const isActive = currentStep === step.id;
+              const isCompleted = currentStep > step.id;
+              
+              return (
+                <div key={step.id} className="flex items-center flex-1">
+                  <div className="flex flex-col items-center">
+                    <div
+                      className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all",
+                        isActive && "border-primary bg-primary text-primary-foreground",
+                        isCompleted && "border-primary bg-primary/20 text-primary",
+                        !isActive && !isCompleted && "border-muted-foreground/30 text-muted-foreground"
+                      )}
+                    >
+                      {isCompleted ? (
+                        <Check className="h-5 w-5" />
+                      ) : (
+                        <StepIcon className="h-5 w-5" />
+                      )}
+                    </div>
+                    <span className={cn(
+                      "text-xs mt-2 font-medium",
+                      isActive && "text-primary",
+                      !isActive && "text-muted-foreground"
+                    )}>
+                      {step.title}
+                    </span>
+                  </div>
+                  
+                  {index < visibleSteps.length - 1 && (
+                    <div className={cn(
+                      "flex-1 h-0.5 mx-4 rounded",
+                      currentStep > step.id ? "bg-primary" : "bg-muted"
+                    )} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0 pr-4">
-          <div className="space-y-6 py-4 pr-2">
-            {/* Section Informations de base */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                Informations générales
-              </h3>
-              
-              {/* Nom et Type sur la même ligne */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">Nom du fournisseur *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Ex: Société ABC Import"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="category">Type de fournisseur</Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(v) => setFormData({ ...formData, category: v })}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Sélectionner un type..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SUPPLIER_CATEGORIES.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            {/* Section Contact */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                Coordonnées
-              </h3>
-              
-              {/* Téléphone et Email sur la même ligne */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="phone">Téléphone</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="Ex: +224 620 00 00 00"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="Ex: contact@fournisseur.com"
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-
-              {/* Adresse */}
-              <div>
-                <Label htmlFor="address">Adresse</Label>
-                <Input
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Ex: Kaloum, Conakry, Guinée"
-                  className="mt-1"
-                />
-              </div>
-
-            </div>
-
-            {/* Section produits pour Grossiste */}
-            {isGrossiste && (
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                  Catalogue produits
-                </h3>
-                
-                <div className="border rounded-lg p-4 space-y-4 bg-muted/20">
-                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <Package className="h-4 w-4 text-primary" />
-                    Associer des produits à ce fournisseur
+        {/* Contenu des étapes */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          {/* Étape 1: Informations générales */}
+          {currentStep === 1 && (
+            <ScrollArea className="h-full">
+              <div className="p-6 space-y-6">
+                <div className="flex items-center gap-3 pb-4 border-b">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="h-5 w-5 text-primary" />
                   </div>
-
-                {/* Sélection catégorie produit */}
-                <div>
-                  <Label>Catégorie de produits</Label>
-                  <Select
-                    value={selectedCategoryId}
-                    onValueChange={setSelectedCategoryId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Filtrer par catégorie..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Toutes les catégories</SelectItem>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div>
+                    <h3 className="font-semibold">Informations générales</h3>
+                    <p className="text-sm text-muted-foreground">Identité et type du fournisseur</p>
+                  </div>
                 </div>
 
-                {/* Recherche produit existant */}
-                <div>
-                  <Label>Rechercher ou sélectionner un produit existant</Label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-medium">
+                      Nom du fournisseur <span className="text-destructive">*</span>
+                    </Label>
                     <Input
-                      placeholder="Nom ou SKU du produit..."
-                      value={productSearch}
-                      onChange={(e) => setProductSearch(e.target.value)}
-                      className="pl-9"
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Ex: Société ABC Import"
+                      className="h-11"
                     />
                   </div>
                   
-                  {/* Liste des produits disponibles avec images */}
-                  {productsLoading ? (
-                    <div className="mt-3 text-sm text-muted-foreground text-center py-4">
-                      Chargement des produits...
+                  <div className="space-y-2">
+                    <Label htmlFor="category" className="text-sm font-medium">
+                      Type de fournisseur
+                    </Label>
+                    <Select
+                      value={formData.category}
+                      onValueChange={(v) => setFormData({ ...formData, category: v })}
+                    >
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Sélectionner un type..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SUPPLIER_CATEGORIES.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {formData.category === 'Grossiste' && (
+                      <p className="text-xs text-primary flex items-center gap-1 mt-1">
+                        <Package className="h-3 w-3" />
+                        Vous pourrez associer des produits à l'étape 3
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </ScrollArea>
+          )}
+
+          {/* Étape 2: Coordonnées */}
+          {currentStep === 2 && (
+            <ScrollArea className="h-full">
+              <div className="p-6 space-y-6">
+                <div className="flex items-center gap-3 pb-4 border-b">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Phone className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Coordonnées</h3>
+                    <p className="text-sm text-muted-foreground">Informations de contact</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-sm font-medium">Téléphone</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="Ex: +224 620 00 00 00"
+                      className="h-11"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="Ex: contact@fournisseur.com"
+                      className="h-11"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="address" className="text-sm font-medium flex items-center gap-2">
+                    <Building2 className="h-4 w-4" />
+                    Adresse complète
+                  </Label>
+                  <Input
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="Ex: Quartier Almamya, Kaloum, Conakry, Guinée"
+                    className="h-11"
+                  />
+                </div>
+              </div>
+            </ScrollArea>
+          )}
+
+          {/* Étape 3: Produits (seulement pour Grossiste) */}
+          {currentStep === 3 && isGrossiste && (
+            <div className="h-full flex flex-col p-6 pt-4">
+              <div className="flex items-center gap-3 pb-4 border-b mb-4">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Package className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">Catalogue produits</h3>
+                  <p className="text-sm text-muted-foreground">Associez des produits à ce fournisseur</p>
+                </div>
+                {formData.linkedProducts.length > 0 && (
+                  <Badge variant="secondary" className="text-sm">
+                    {formData.linkedProducts.length} produit(s) sélectionné(s)
+                  </Badge>
+                )}
+              </div>
+
+              <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Colonne gauche: Recherche et sélection */}
+                <div className="flex flex-col space-y-4">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Filtrer par catégorie</Label>
+                    <Select
+                      value={selectedCategoryId}
+                      onValueChange={setSelectedCategoryId}
+                    >
+                      <SelectTrigger className="h-10">
+                        <SelectValue placeholder="Toutes les catégories..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Toutes les catégories</SelectItem>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Rechercher un produit</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Nom ou SKU du produit..."
+                        value={productSearch}
+                        onChange={(e) => setProductSearch(e.target.value)}
+                        className="pl-10 h-10"
+                      />
                     </div>
-                  ) : filteredProducts.length > 0 ? (
-                    <ScrollArea className="mt-3 h-64 border rounded-lg bg-background">
-                      <div className="p-2 space-y-2">
-                        {filteredProducts.slice(0, 30).map((product) => {
-                          const isAlreadyAdded = formData.linkedProducts.some(
-                            (lp) => lp.productId === product.id
-                          );
-                          const productImage = Array.isArray(product.images) && product.images.length > 0
-                            ? product.images[0]
-                            : null;
-                          
-                          const currentQty = productQuantities[product.id] || 1;
-                          
-                          return (
-                            <div
-                              key={product.id}
-                              className={`w-full text-left p-3 rounded-lg border transition-all ${
-                                isAlreadyAdded
-                                  ? 'bg-primary/10 border-primary/30'
-                                  : 'hover:bg-accent hover:border-primary/30'
-                              }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                {/* Image produit */}
+                  </div>
+
+                  {/* Liste des produits disponibles */}
+                  <div className="flex-1 min-h-0">
+                    <Label className="text-sm font-medium mb-2 block">
+                      Produits disponibles ({filteredProducts.length})
+                    </Label>
+                    {productsLoading ? (
+                      <div className="h-64 flex items-center justify-center border rounded-lg bg-muted/20">
+                        <p className="text-sm text-muted-foreground">Chargement...</p>
+                      </div>
+                    ) : filteredProducts.length > 0 ? (
+                      <ScrollArea className="h-64 border rounded-lg">
+                        <div className="p-2 space-y-2">
+                          {filteredProducts.slice(0, 50).map((product) => {
+                            const isAlreadyAdded = formData.linkedProducts.some(
+                              (lp) => lp.productId === product.id
+                            );
+                            const productImage = Array.isArray(product.images) && product.images.length > 0
+                              ? product.images[0]
+                              : null;
+                            
+                            return (
+                              <div
+                                key={product.id}
+                                className={cn(
+                                  "flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer",
+                                  isAlreadyAdded
+                                    ? "bg-primary/10 border-primary/40"
+                                    : "hover:bg-accent hover:border-primary/30"
+                                )}
+                                onClick={() => !isAlreadyAdded && handleAddProduct(product)}
+                              >
                                 <div className="w-12 h-12 rounded-md bg-muted flex-shrink-0 overflow-hidden border">
                                   {productImage ? (
                                     <img
@@ -430,20 +523,17 @@ export function SupplierFormDialog({
                                       className="w-full h-full object-cover"
                                     />
                                   ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-muted">
+                                    <div className="w-full h-full flex items-center justify-center">
                                       <Package className="h-5 w-5 text-muted-foreground" />
                                     </div>
                                   )}
                                 </div>
                                 
-                                {/* Infos produit */}
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-sm text-foreground line-clamp-1">
+                                  <p className="font-medium text-sm line-clamp-1">
                                     {product.name}
                                   </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {product.sku}
-                                  </p>
+                                  <p className="text-xs text-muted-foreground">{product.sku}</p>
                                   {product.price != null && product.price > 0 && (
                                     <p className="text-xs font-semibold text-primary">
                                       {product.price.toLocaleString()} GNF
@@ -451,158 +541,181 @@ export function SupplierFormDialog({
                                   )}
                                 </div>
 
-                                {/* Bouton ajouter ou badge ajouté */}
-                                {!isAlreadyAdded ? (
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleAddProduct(product);
-                                    }}
-                                  >
-                                    <Plus className="h-4 w-4 mr-1" />
-                                    Ajouter
-                                  </Button>
-                                ) : (
-                                  <Badge variant="default" className="bg-primary text-primary-foreground">
-                                    ✓ Ajouté
+                                {isAlreadyAdded ? (
+                                  <Badge variant="default" className="flex-shrink-0">
+                                    <Check className="h-3 w-3 mr-1" />
+                                    Ajouté
                                   </Badge>
+                                ) : (
+                                  <Button size="sm" variant="ghost" className="flex-shrink-0">
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
                                 )}
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
+                      </ScrollArea>
+                    ) : (
+                      <div className="h-64 flex flex-col items-center justify-center border rounded-lg bg-muted/20">
+                        <Package className="h-10 w-10 text-muted-foreground/50 mb-2" />
+                        <p className="text-sm text-muted-foreground">Aucun produit trouvé</p>
                       </div>
-                    </ScrollArea>
-                  ) : products.length === 0 ? (
-                    <div className="mt-3 p-4 border rounded-lg bg-muted/20 text-sm text-muted-foreground text-center">
-                      <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      Aucun produit dans cette catégorie.
-                      <br />
-                      Créez-en un nouveau ci-dessous.
-                    </div>
-                  ) : (
-                    <div className="mt-3 p-4 border rounded-lg bg-muted/20 text-sm text-muted-foreground text-center">
-                      Aucun produit correspondant à "{productSearch}".
-                    </div>
-                  )}
+                    )}
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      onClose();
+                      navigate('/vendeur/products?action=new');
+                    }}
+                    className="w-full"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Créer un nouveau produit
+                  </Button>
                 </div>
 
-                {/* Bouton ajouter nouveau produit - redirige vers la page complète */}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    // Fermer le dialog et naviguer vers la page de création de produit
-                    onClose();
-                    navigate('/vendeur/products?action=new');
-                  }}
-                  className="gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Créer un nouveau produit
-                </Button>
-
-                {/* Liste produits liés */}
-                {formData.linkedProducts.length > 0 && (
-                  <div className="space-y-2">
-                    <Label>Produits liés ({formData.linkedProducts.length})</Label>
-                    <div className="space-y-2">
-                      {formData.linkedProducts.map((lp, idx) => (
-                        <div
-                          key={idx}
-                          className="flex flex-col gap-3 p-3 border rounded-lg bg-primary/5 border-primary/20"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-start gap-3 flex-1 min-w-0">
+                {/* Colonne droite: Produits sélectionnés */}
+                <div className="flex flex-col space-y-4">
+                  <Label className="text-sm font-medium">
+                    Produits sélectionnés ({formData.linkedProducts.length})
+                  </Label>
+                  
+                  {formData.linkedProducts.length === 0 ? (
+                    <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed rounded-lg bg-muted/10 min-h-[300px]">
+                      <Package className="h-12 w-12 text-muted-foreground/30 mb-3" />
+                      <p className="text-sm text-muted-foreground text-center">
+                        Cliquez sur un produit à gauche<br />pour l'ajouter à la liste
+                      </p>
+                    </div>
+                  ) : (
+                    <ScrollArea className="flex-1 border rounded-lg min-h-[300px]">
+                      <div className="p-3 space-y-3">
+                        {formData.linkedProducts.map((lp, idx) => (
+                          <div
+                            key={idx}
+                            className="p-3 border rounded-lg bg-primary/5 border-primary/20"
+                          >
+                            <div className="flex items-start gap-3">
                               <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
                                 <Package className="h-5 w-5 text-primary" />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-foreground break-words">
+                                <p className="text-sm font-medium line-clamp-1">
                                   {lp.productName}
                                 </p>
-                                <div className="flex flex-wrap items-center gap-1 mt-1">
-                                  <Tag className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                                <div className="flex items-center gap-1 mt-0.5">
+                                  <Tag className="h-3 w-3 text-muted-foreground" />
                                   <span className="text-xs text-muted-foreground">
                                     {lp.categoryName}
                                   </span>
-                                  {lp.isNew && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      Nouveau
-                                    </Badge>
-                                  )}
                                 </div>
                               </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="flex-shrink-0 h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => handleRemoveProduct(idx)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          
-                          {/* Champ quantité */}
-                          <div className="flex items-center gap-3 ml-13">
-                            <Label className="text-xs text-muted-foreground whitespace-nowrap">
-                              Quantité à acheter:
-                            </Label>
-                            <div className="flex items-center gap-1">
                               <Button
-                                type="button"
-                                variant="outline"
+                                variant="ghost"
                                 size="icon"
-                                className="h-7 w-7"
-                                onClick={() => handleUpdateQuantity(idx, lp.quantity - 1)}
+                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+                                onClick={() => handleRemoveProduct(idx)}
                               >
-                                -
-                              </Button>
-                              <Input
-                                type="number"
-                                min="1"
-                                value={lp.quantity}
-                                onChange={(e) => handleUpdateQuantity(idx, parseInt(e.target.value) || 1)}
-                                className="h-7 w-16 text-center"
-                              />
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="icon"
-                                className="h-7 w-7"
-                                onClick={() => handleUpdateQuantity(idx, lp.quantity + 1)}
-                              >
-                                +
+                                <X className="h-4 w-4" />
                               </Button>
                             </div>
-                            {lp.unitPrice != null && lp.unitPrice > 0 && (
-                              <span className="text-xs font-medium text-primary ml-auto">
-                                Total: {(lp.unitPrice * lp.quantity).toLocaleString()} GNF
-                              </span>
-                            )}
+                            
+                            <div className="flex items-center gap-3 mt-3 pt-3 border-t border-primary/10">
+                              <Label className="text-xs text-muted-foreground whitespace-nowrap">
+                                Quantité:
+                              </Label>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() => handleUpdateQuantity(idx, lp.quantity - 1)}
+                                >
+                                  -
+                                </Button>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  value={lp.quantity}
+                                  onChange={(e) => handleUpdateQuantity(idx, parseInt(e.target.value) || 1)}
+                                  className="h-7 w-14 text-center"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() => handleUpdateQuantity(idx, lp.quantity + 1)}
+                                >
+                                  +
+                                </Button>
+                              </div>
+                              {lp.unitPrice != null && lp.unitPrice > 0 && (
+                                <span className="text-xs font-semibold text-primary ml-auto">
+                                  {(lp.unitPrice * lp.quantity).toLocaleString()} GNF
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  )}
+
+                  {/* Total */}
+                  {formData.linkedProducts.length > 0 && (
+                    <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">Total estimé</span>
+                        <span className="text-lg font-bold text-primary">
+                          {formData.linkedProducts
+                            .reduce((sum, lp) => sum + (lp.unitPrice || 0) * lp.quantity, 0)
+                            .toLocaleString()} GNF
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
                 </div>
               </div>
-            )}
-          </div>
-        </ScrollArea>
+            </div>
+          )}
+        </div>
 
-        <DialogFooter className="border-t pt-4">
-          <Button variant="outline" onClick={onClose}>
-            Annuler
-          </Button>
-          <Button onClick={handleSubmit} disabled={isSaving || !formData.name.trim()}>
-            {isSaving ? 'Enregistrement...' : 'Enregistrer'}
-          </Button>
+        {/* Footer avec navigation */}
+        <DialogFooter className="border-t p-4 flex-shrink-0">
+          <div className="flex w-full justify-between items-center">
+            <Button
+              variant="ghost"
+              onClick={currentStep === 1 ? onClose : handlePrev}
+            >
+              {currentStep === 1 ? (
+                'Annuler'
+              ) : (
+                <>
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Précédent
+                </>
+              )}
+            </Button>
+            
+            <div className="flex gap-2">
+              {currentStep < totalSteps ? (
+                <Button onClick={handleNext} disabled={!canGoNext()}>
+                  Suivant
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              ) : (
+                <Button onClick={handleSubmit} disabled={isSaving || !formData.name.trim()}>
+                  {isSaving ? 'Enregistrement...' : 'Enregistrer'}
+                </Button>
+              )}
+            </div>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
