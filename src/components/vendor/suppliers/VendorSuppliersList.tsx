@@ -80,7 +80,7 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
     mutationFn: async (data: SupplierFormData) => {
       // Save supplier
       let supplierId = data.id;
-      
+
       if (data.id) {
         const { error } = await supabase
           .from('vendor_suppliers')
@@ -112,9 +112,15 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
         supplierId = newSupplier.id;
       }
 
+      // Si le formulaire ne "touche" pas aux produits (édition), on évite d'écraser les liens existants.
+      const syncLinkedProducts = (data as SupplierFormData & { syncLinkedProducts?: boolean })
+        .syncLinkedProducts;
+
+      let linkedCount = 0;
+
       // Synchroniser les produits liés du fournisseur (catalogue)
       // Important: on supprime d'abord les liens existants pour refléter exactement la sélection UI
-      if (supplierId) {
+      if (supplierId && syncLinkedProducts) {
         const { error: deleteError } = await supabase
           .from('vendor_supplier_products')
           .delete()
@@ -161,6 +167,8 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
           }
         }
 
+        linkedCount = linksToInsert.length;
+
         if (linksToInsert.length > 0) {
           const { error: insertError } = await supabase
             .from('vendor_supplier_products')
@@ -168,15 +176,22 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
           if (insertError) throw insertError;
         }
       }
+
+      return { supplierId: supplierId ?? null, linkedCount };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['vendor-suppliers', vendorId] });
       queryClient.invalidateQueries({ queryKey: ['supplier-purchase-stats', vendorId] });
       queryClient.invalidateQueries({ queryKey: ['vendor-products-for-supplier', vendorId] });
       // Recharge les catalogues produits utilisés dans le dialog "Nouvel achat"
       queryClient.invalidateQueries({ queryKey: ['supplier-products'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-linked-products'] });
-      toast.success(editingSupplier ? 'Fournisseur modifié' : 'Fournisseur créé');
+
+      const suffix = result?.linkedCount
+        ? ` (${result.linkedCount} produit(s) lié(s))`
+        : '';
+
+      toast.success((editingSupplier ? 'Fournisseur modifié' : 'Fournisseur créé') + suffix);
       handleCloseDialog();
     },
     onError: (error: Error) => {
