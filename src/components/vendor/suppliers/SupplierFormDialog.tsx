@@ -117,7 +117,7 @@ export function SupplierFormDialog({
   });
 
   // Fetch products for vendor filtered by category
-  const { data: products = [] } = useQuery({
+  const { data: products = [], isLoading: productsLoading } = useQuery({
     queryKey: ['vendor-products-for-supplier', vendorId, selectedCategoryId],
     queryFn: async () => {
       let query = supabase
@@ -127,13 +127,14 @@ export function SupplierFormDialog({
         .eq('is_active', true)
         .order('name');
 
-      if (selectedCategoryId) {
+      // Only filter by category if a specific one is selected (not "all" or empty)
+      if (selectedCategoryId && selectedCategoryId !== 'all') {
         query = query.eq('category_id', selectedCategoryId);
       }
 
       const { data, error } = await query.limit(100);
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!vendorId && formData.category === 'Grossiste',
   });
@@ -300,7 +301,7 @@ export function SupplierFormDialog({
 
                 {/* Recherche produit existant */}
                 <div>
-                  <Label>Rechercher un produit existant</Label>
+                  <Label>Rechercher ou sélectionner un produit existant</Label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -310,24 +311,45 @@ export function SupplierFormDialog({
                       className="pl-9"
                     />
                   </div>
-                  {productSearch && filteredProducts.length > 0 && (
-                    <div className="mt-2 border rounded-md max-h-40 overflow-auto">
-                      {filteredProducts.slice(0, 10).map((product) => (
-                        <button
-                          key={product.id}
-                          onClick={() => handleAddProduct(product)}
-                          className="w-full text-left px-3 py-2 hover:bg-muted text-sm flex justify-between items-center"
-                        >
-                          <span>{product.name}</span>
-                          <span className="text-xs text-muted-foreground">{product.sku}</span>
-                        </button>
-                      ))}
+                  
+                  {/* Liste des produits disponibles */}
+                  {productsLoading ? (
+                    <div className="mt-2 text-sm text-muted-foreground">
+                      Chargement des produits...
                     </div>
-                  )}
-                  {productSearch && filteredProducts.length === 0 && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Aucun produit trouvé. Vous pouvez en créer un nouveau.
-                    </p>
+                  ) : filteredProducts.length > 0 ? (
+                    <div className="mt-2 border rounded-md max-h-48 overflow-auto">
+                      {filteredProducts.slice(0, 20).map((product) => {
+                        const isAlreadyAdded = formData.linkedProducts.some(
+                          (lp) => lp.productId === product.id
+                        );
+                        return (
+                          <button
+                            key={product.id}
+                            onClick={() => !isAlreadyAdded && handleAddProduct(product)}
+                            disabled={isAlreadyAdded}
+                            className={`w-full text-left px-3 py-2 text-sm flex justify-between items-center border-b last:border-b-0 ${
+                              isAlreadyAdded
+                                ? 'bg-muted/50 text-muted-foreground cursor-not-allowed'
+                                : 'hover:bg-muted'
+                            }`}
+                          >
+                            <span>{product.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {isAlreadyAdded ? 'Déjà ajouté' : product.sku}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : products.length === 0 ? (
+                    <div className="mt-2 p-3 border rounded-md bg-muted/20 text-sm text-muted-foreground">
+                      Aucun produit dans cette catégorie. Vous pouvez en créer un nouveau ci-dessous.
+                    </div>
+                  ) : (
+                    <div className="mt-2 p-3 border rounded-md bg-muted/20 text-sm text-muted-foreground">
+                      Aucun produit correspondant à "{productSearch}". Vous pouvez en créer un nouveau.
+                    </div>
                   )}
                 </div>
 
