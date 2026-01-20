@@ -609,14 +609,20 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                 onValueChange={(v) => setNewItem({ ...newItem, supplier_id: v })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner..." />
+                  <SelectValue placeholder={suppliers.length === 0 ? 'Aucun fournisseur disponible' : 'Sélectionner un fournisseur...'} />
                 </SelectTrigger>
                 <SelectContent>
-                  {suppliers.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
+                  {suppliers.length === 0 ? (
+                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                      Aucun fournisseur créé. Créez d'abord un fournisseur dans l'onglet "Fournisseurs".
+                    </div>
+                  ) : (
+                    suppliers.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
