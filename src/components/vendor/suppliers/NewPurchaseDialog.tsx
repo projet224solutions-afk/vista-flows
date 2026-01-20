@@ -289,6 +289,16 @@ export function NewPurchaseDialog({
     );
   };
 
+  const setProductUnitCost = (productId: string, unitCost: number) => {
+    setSelectedProducts((prev) =>
+      prev.map((p) =>
+        p.productId === productId
+          ? { ...p, unitCost: Math.max(0, unitCost) }
+          : p
+      )
+    );
+  };
+
   const updateCartonQuantity = (productId: string, delta: number) => {
     setSelectedProducts((prev) =>
       prev.map((p) =>
@@ -628,9 +638,6 @@ export function NewPurchaseDialog({
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="font-medium text-xs truncate">{product.productName}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {product.unitCost.toLocaleString()} GNF/u
-                                </p>
                               </div>
                               <Button 
                                 size="icon" 
@@ -640,6 +647,19 @@ export function NewPurchaseDialog({
                               >
                                 <Trash2 className="h-3 w-3" />
                               </Button>
+                            </div>
+
+                            {/* Prix d'achat */}
+                            <div className="flex items-center gap-2 mb-2 p-2 rounded bg-muted/50">
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">Prix achat:</span>
+                              <Input
+                                type="number"
+                                min="0"
+                                value={product.unitCost}
+                                onChange={(e) => setProductUnitCost(product.productId, parseInt(e.target.value) || 0)}
+                                className="w-24 h-7 text-center text-xs"
+                              />
+                              <span className="text-xs text-muted-foreground">GNF/u</span>
                             </div>
 
                             {/* Quantity controls */}
