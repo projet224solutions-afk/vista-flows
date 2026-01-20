@@ -466,19 +466,23 @@ export function SupplierFormDialog({
                       {formData.linkedProducts.map((lp, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between gap-2 p-2 border rounded-md bg-background"
+                          className="flex items-start justify-between gap-3 p-3 border rounded-lg bg-primary/5 border-primary/20"
                         >
-                          <div className="flex items-center gap-2">
-                            <Package className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <span className="text-sm font-medium">{lp.productName}</span>
-                              <div className="flex items-center gap-1 mt-0.5">
-                                <Tag className="h-3 w-3 text-muted-foreground" />
+                          <div className="flex items-start gap-3 flex-1 min-w-0">
+                            <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              <Package className="h-5 w-5 text-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground break-words">
+                                {lp.productName}
+                              </p>
+                              <div className="flex flex-wrap items-center gap-1 mt-1">
+                                <Tag className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                                 <span className="text-xs text-muted-foreground">
                                   {lp.categoryName}
                                 </span>
                                 {lp.isNew && (
-                                  <Badge variant="secondary" className="text-xs ml-1">
+                                  <Badge variant="secondary" className="text-xs">
                                     Nouveau
                                   </Badge>
                                 )}
@@ -488,6 +492,7 @@ export function SupplierFormDialog({
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="flex-shrink-0 h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                             onClick={() => handleRemoveProduct(idx)}
                           >
                             <X className="h-4 w-4" />
