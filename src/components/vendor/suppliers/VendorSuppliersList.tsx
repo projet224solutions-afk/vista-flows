@@ -14,6 +14,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -53,10 +60,21 @@ interface Supplier {
   email: string | null;
   address: string | null;
   notes: string | null;
+  category: string | null;
   is_active: boolean;
   has_validated_purchases: boolean;
   created_at: string;
 }
+
+const SUPPLIER_CATEGORIES = [
+  'Grossiste',
+  'Fabricant',
+  'Importateur',
+  'Distributeur',
+  'Détaillant',
+  'Prestataire',
+  'Autre'
+];
 
 export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
   const queryClient = useQueryClient();
@@ -70,6 +88,7 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
     email: '',
     address: '',
     notes: '',
+    category: '',
   });
 
   // Fetch suppliers
@@ -100,6 +119,7 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
             email: data.email || null,
             address: data.address || null,
             notes: data.notes || null,
+            category: data.category || null,
           })
           .eq('id', data.id);
         if (error) throw error;
@@ -113,6 +133,7 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
             email: data.email || null,
             address: data.address || null,
             notes: data.notes || null,
+            category: data.category || null,
           });
         if (error) throw error;
       }
@@ -150,7 +171,7 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
 
   const handleOpenCreate = () => {
     setEditingSupplier(null);
-    setFormData({ name: '', phone: '', email: '', address: '', notes: '' });
+    setFormData({ name: '', phone: '', email: '', address: '', notes: '', category: '' });
     setIsDialogOpen(true);
   };
 
@@ -162,6 +183,7 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
       email: supplier.email || '',
       address: supplier.address || '',
       notes: supplier.notes || '',
+      category: supplier.category || '',
     });
     setIsDialogOpen(true);
   };
@@ -169,7 +191,7 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingSupplier(null);
-    setFormData({ name: '', phone: '', email: '', address: '', notes: '' });
+    setFormData({ name: '', phone: '', email: '', address: '', notes: '', category: '' });
   };
 
   const handleSubmit = () => {
@@ -308,6 +330,24 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Nom du fournisseur"
               />
+            </div>
+            <div>
+              <Label htmlFor="category">Catégorie</Label>
+              <Select
+                value={formData.category}
+                onValueChange={(v) => setFormData({ ...formData, category: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner une catégorie..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {SUPPLIER_CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="phone">Téléphone</Label>

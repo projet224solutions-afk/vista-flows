@@ -20363,6 +20363,7 @@ export type Database = {
       vendor_suppliers: {
         Row: {
           address: string | null
+          category: string | null
           created_at: string
           email: string | null
           has_validated_purchases: boolean | null
@@ -20376,6 +20377,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          category?: string | null
           created_at?: string
           email?: string | null
           has_validated_purchases?: boolean | null
@@ -20389,6 +20391,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          category?: string | null
           created_at?: string
           email?: string | null
           has_validated_purchases?: boolean | null
