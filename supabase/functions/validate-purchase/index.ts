@@ -57,6 +57,21 @@ serve(async (req) => {
 
     console.log(`[validate-purchase] Démarrage validation achat ${purchase_number}`);
 
+    // Récupérer le user_id du vendor (vendor_expenses référence auth.users, pas vendors)
+    const { data: vendorData, error: vendorError } = await supabase
+      .from('vendors')
+      .select('user_id')
+      .eq('id', vendor_id)
+      .single();
+
+    if (vendorError || !vendorData?.user_id) {
+      console.error('[validate-purchase] Erreur récupération vendor:', vendorError);
+      throw new Error('Vendor non trouvé ou user_id manquant');
+    }
+
+    const userId = vendorData.user_id;
+    console.log(`[validate-purchase] User ID du vendor: ${userId}`);
+
     // Collecter les IDs des fournisseurs uniques
     const supplierIds = [...new Set(items.filter(i => i.supplier_id).map(i => i.supplier_id))];
     
@@ -75,11 +90,11 @@ serve(async (req) => {
       }
     }
 
-    // 1. Créer la dépense verrouillée
+    // 1. Créer la dépense verrouillée (utiliser userId, pas vendor_id)
     const { data: expense, error: expenseError } = await supabase
       .from('vendor_expenses')
       .insert({
-        vendor_id,
+        vendor_id: userId, // vendor_expenses.vendor_id référence auth.users.id
         description: expenseDescription,
         amount: total_amount,
         expense_date: new Date().toISOString().split('T')[0],
