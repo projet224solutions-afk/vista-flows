@@ -52,6 +52,7 @@ import {
   Building2,
   AlertTriangle,
 } from 'lucide-react';
+import { MissingProductsVerificationDialog } from './MissingProductsVerificationDialog';
 
 interface Purchase {
   id: string;
@@ -111,7 +112,9 @@ interface PurchaseEditorProps {
 export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorProps) {
   const queryClient = useQueryClient();
   const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
+  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const [showValidateConfirm, setShowValidateConfirm] = useState(false);
+  const [missingProductsData, setMissingProductsData] = useState<any[]>([]);
   const [notes, setNotes] = useState(purchase.notes || '');
   const [newItem, setNewItem] = useState({
     supplier_id: '',
@@ -633,7 +636,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
             Générer document
           </Button>
           <Button
-            onClick={() => setShowValidateConfirm(true)}
+            onClick={() => setShowVerificationDialog(true)}
             disabled={items.length === 0}
             className="gap-2 bg-green-600 hover:bg-green-700"
           >
@@ -915,6 +918,20 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
         </DialogContent>
       </Dialog>
 
+      {/* Dialog de vérification des produits manquants */}
+      <MissingProductsVerificationDialog
+        open={showVerificationDialog}
+        onOpenChange={setShowVerificationDialog}
+        suppliers={suppliers}
+        categories={categories}
+        purchaseNumber={purchase.purchase_number}
+        onConfirm={(hasMissing, missingEntries) => {
+          setMissingProductsData(missingEntries);
+          setShowVerificationDialog(false);
+          setShowValidateConfirm(true);
+        }}
+      />
+
       {/* Confirmation validation */}
       <AlertDialog open={showValidateConfirm} onOpenChange={setShowValidateConfirm}>
         <AlertDialogContent>
@@ -931,6 +948,17 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                 <li>Les prix de vente seront synchronisés</li>
                 <li>L'achat sera verrouillé</li>
               </ul>
+              {missingProductsData.length > 0 && (
+                <div className="mt-3 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
+                  <p className="text-sm font-medium text-destructive flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    {missingProductsData.length} produit(s) manquant(s) signalé(s)
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Ces informations seront enregistrées pour suivi.
+                  </p>
+                </div>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
