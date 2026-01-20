@@ -537,7 +537,7 @@ export function NewPurchaseDialog({
                                     min="0"
                                     value={product.quantity}
                                     onChange={(e) => setProductQuantity(product.productId, parseInt(e.target.value) || 0)}
-                                    className="w-14 h-7 text-center text-sm"
+                                    className="w-14 h-7 text-center text-sm text-foreground bg-background border-input"
                                   />
                                   <Button
                                     type="button"
@@ -574,7 +574,7 @@ export function NewPurchaseDialog({
                                       min="0"
                                       value={product.cartonQuantity}
                                       onChange={(e) => setCartonQuantity(product.productId, parseInt(e.target.value) || 0)}
-                                      className="w-14 h-7 text-center text-sm"
+                                      className="w-14 h-7 text-center text-sm text-foreground bg-background border-input"
                                     />
                                     <Button
                                       type="button"
