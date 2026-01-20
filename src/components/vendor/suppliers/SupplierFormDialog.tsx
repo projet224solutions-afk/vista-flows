@@ -68,6 +68,12 @@ export interface SupplierFormData {
   notes: string;
   category: string;
   linkedProducts: LinkedProduct[];
+
+  /**
+   * Interne UI: quand false (édition), on ne touche pas au catalogue existant
+   * pour éviter d'écraser des liens si l'utilisateur n'a pas modifié les produits.
+   */
+  syncLinkedProducts?: boolean;
 }
 
 export interface LinkedProduct {
@@ -118,6 +124,7 @@ export function SupplierFormDialog({
   const [productSearch, setProductSearch] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [productQuantities, setProductQuantities] = useState<Record<string, number>>({});
+  const [linkedProductsTouched, setLinkedProductsTouched] = useState(false);
 
   // Fetch categories
   const { data: categories = [] } = useQuery({
@@ -183,6 +190,7 @@ export function SupplierFormDialog({
   useEffect(() => {
     if (isOpen) {
       setCurrentStep(1);
+      setLinkedProductsTouched(false);
       if (editingSupplier) {
         setFormData({
           id: editingSupplier.id,
@@ -226,6 +234,8 @@ export function SupplierFormDialog({
         };
       });
       setFormData((prev) => ({ ...prev, linkedProducts }));
+      // important: ne pas marquer comme "modifié" juste parce qu'on a chargé les liens existants
+      setLinkedProductsTouched(false);
     }
   }, [supplierLinkedProducts, editingSupplier, categories, formData.linkedProducts.length]);
 
@@ -241,10 +251,11 @@ export function SupplierFormDialog({
   const handleAddProduct = (product: { id: string; name: string; category_id: string | null; price?: number }) => {
     const category = categories.find((c) => c.id === product.category_id);
     const quantity = productQuantities[product.id] || 1;
-    setFormData({
-      ...formData,
+
+    setFormData((prev) => ({
+      ...prev,
       linkedProducts: [
-        ...formData.linkedProducts,
+        ...prev.linkedProducts,
         {
           productId: product.id,
           productName: product.name,
@@ -255,9 +266,11 @@ export function SupplierFormDialog({
           unitPrice: product.price || 0,
         },
       ],
-    });
+    }));
+
+    setLinkedProductsTouched(true);
     setProductSearch('');
-    setProductQuantities(prev => {
+    setProductQuantities((prev) => {
       const updated = { ...prev };
       delete updated[product.id];
       return updated;
@@ -265,20 +278,30 @@ export function SupplierFormDialog({
   };
 
   const handleUpdateQuantity = (index: number, quantity: number) => {
-    const updated = [...formData.linkedProducts];
-    updated[index].quantity = Math.max(1, quantity);
-    setFormData({ ...formData, linkedProducts: updated });
+    setFormData((prev) => {
+      const updated = [...prev.linkedProducts];
+      if (!updated[index]) return prev;
+      updated[index] = { ...updated[index], quantity: Math.max(1, quantity) };
+      return { ...prev, linkedProducts: updated };
+    });
+    setLinkedProductsTouched(true);
   };
 
   const handleRemoveProduct = (index: number) => {
-    const updated = [...formData.linkedProducts];
-    updated.splice(index, 1);
-    setFormData({ ...formData, linkedProducts: updated });
+    setFormData((prev) => {
+      const updated = [...prev.linkedProducts];
+      updated.splice(index, 1);
+      return { ...prev, linkedProducts: updated };
+    });
+    setLinkedProductsTouched(true);
   };
 
   const handleSubmit = () => {
     if (!formData.name.trim()) return;
-    onSave(formData);
+    onSave({
+      ...formData,
+      syncLinkedProducts: isGrossiste ? linkedProductsTouched : false,
+    });
   };
 
   const canGoNext = () => {
