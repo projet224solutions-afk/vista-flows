@@ -32,7 +32,9 @@ import {
   Package,
   ArrowLeft,
   ArrowRight,
+  Box,
 } from 'lucide-react';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { cn } from '@/lib/utils';
 
 interface NewPurchaseDialogProps {
@@ -64,6 +66,10 @@ interface SupplierProduct {
     stock_quantity: number;
     images: string[] | null;
     sku: string | null;
+    sell_by_carton: boolean | null;
+    units_per_carton: number | null;
+    price_carton: number | null;
+    cost_price: number | null;
   };
 }
 
@@ -75,6 +81,12 @@ export interface PurchaseProduct {
   imageUrl: string | null;
   sku: string | null;
   currentStock: number;
+  // Carton support
+  saleType: 'unit' | 'carton';
+  sellByCarton: boolean;
+  unitsPerCarton: number | null;
+  priceCarton: number | null;
+  cartonQuantity: number;
 }
 
 export function NewPurchaseDialog({
@@ -130,7 +142,7 @@ export function NewPurchaseDialog({
           product_id,
           unit_cost,
           default_quantity,
-          product:products(id, name, price, stock_quantity, images, sku)
+          product:products(id, name, price, stock_quantity, images, sku, sell_by_carton, units_per_carton, price_carton, cost_price)
         `)
         .eq('supplier_id', selectedSupplier.id);
 
@@ -146,15 +158,27 @@ export function NewPurchaseDialog({
   // Initialize selected products when supplier products load
   useEffect(() => {
     if (supplierProducts.length > 0 && selectedProducts.length === 0) {
-      const initialProducts = supplierProducts.map((sp) => ({
-        productId: sp.product_id,
-        productName: sp.product?.name || 'Produit inconnu',
-        unitCost: sp.unit_cost || sp.product?.price || 0,
-        quantity: sp.default_quantity || 1,
-        imageUrl: sp.product?.images?.[0] || null,
-        sku: sp.product?.sku || null,
-        currentStock: sp.product?.stock_quantity || 0,
-      }));
+      const initialProducts: PurchaseProduct[] = supplierProducts.map((sp) => {
+        const sellByCarton = sp.product?.sell_by_carton || false;
+        const unitsPerCarton = sp.product?.units_per_carton || null;
+        const priceCarton = sp.product?.price_carton || null;
+        
+        return {
+          productId: sp.product_id,
+          productName: sp.product?.name || 'Produit inconnu',
+          unitCost: sp.unit_cost || sp.product?.cost_price || sp.product?.price || 0,
+          quantity: sp.default_quantity || 1,
+          imageUrl: sp.product?.images?.[0] || null,
+          sku: sp.product?.sku || null,
+          currentStock: sp.product?.stock_quantity || 0,
+          // Carton support
+          saleType: 'unit' as const,
+          sellByCarton,
+          unitsPerCarton,
+          priceCarton,
+          cartonQuantity: 0,
+        };
+      });
       setSelectedProducts(initialProducts);
     }
   }, [supplierProducts, selectedProducts.length]);
@@ -211,12 +235,57 @@ export function NewPurchaseDialog({
     );
   };
 
+  // Carton quantity handlers
+  const updateCartonQuantity = (productId: string, delta: number) => {
+    setSelectedProducts((prev) =>
+      prev.map((p) =>
+        p.productId === productId
+          ? { ...p, cartonQuantity: Math.max(0, p.cartonQuantity + delta) }
+          : p
+      )
+    );
+  };
+
+  const setCartonQuantity = (productId: string, cartonQty: number) => {
+    setSelectedProducts((prev) =>
+      prev.map((p) =>
+        p.productId === productId
+          ? { ...p, cartonQuantity: Math.max(0, cartonQty) }
+          : p
+      )
+    );
+  };
+
+  const toggleSaleType = (productId: string, type: 'unit' | 'carton') => {
+    setSelectedProducts((prev) =>
+      prev.map((p) =>
+        p.productId === productId
+          ? { ...p, saleType: type }
+          : p
+      )
+    );
+  };
+
+  // Calculate totals considering both units and cartons
+  const calculateProductTotal = (product: PurchaseProduct): number => {
+    const unitTotal = product.quantity * product.unitCost;
+    const cartonTotal = product.cartonQuantity * (product.priceCarton || product.unitCost * (product.unitsPerCarton || 1));
+    return unitTotal + cartonTotal;
+  };
+
+  // Calculate total units (including cartons converted to units)
+  const calculateTotalUnits = (product: PurchaseProduct): number => {
+    const unitCount = product.quantity;
+    const cartonUnits = product.cartonQuantity * (product.unitsPerCarton || 0);
+    return unitCount + cartonUnits;
+  };
+
   const totalAmount = selectedProducts.reduce(
-    (sum, p) => sum + p.unitCost * p.quantity,
+    (sum, p) => sum + calculateProductTotal(p),
     0
   );
 
-  const totalItems = selectedProducts.reduce((sum, p) => sum + p.quantity, 0);
+  const totalItems = selectedProducts.reduce((sum, p) => sum + calculateTotalUnits(p), 0);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
@@ -382,16 +451,16 @@ export function NewPurchaseDialog({
               <Label className="text-sm font-medium flex items-center justify-between">
                 <span>Produits à acheter</span>
                 <Badge variant="secondary">
-                  {selectedProducts.filter(p => p.quantity > 0).length} produit(s) • {totalItems} unité(s)
+                  {selectedProducts.filter(p => p.quantity > 0 || p.cartonQuantity > 0).length} produit(s) • {totalItems} unité(s)
                 </Badge>
               </Label>
 
               {loadingProducts ? (
-                <div className="h-64 flex items-center justify-center border rounded-lg bg-muted/20">
+                <div className="h-80 flex items-center justify-center border rounded-lg bg-muted/20">
                   <p className="text-sm text-muted-foreground">Chargement des produits...</p>
                 </div>
               ) : filteredProducts.length === 0 ? (
-                <div className="h-64 flex flex-col items-center justify-center border rounded-lg bg-muted/20">
+                <div className="h-80 flex flex-col items-center justify-center border rounded-lg bg-muted/20">
                   <Package className="h-12 w-12 text-muted-foreground/40 mb-3" />
                   <p className="text-sm text-muted-foreground text-center">
                     {supplierProducts.length === 0
@@ -400,92 +469,163 @@ export function NewPurchaseDialog({
                   </p>
                 </div>
               ) : (
-                <ScrollArea className="h-64 border rounded-lg">
+                <ScrollArea className="h-80 border rounded-lg">
                   <div className="p-3 space-y-3">
-                    {filteredProducts.map((product) => (
-                      <div
-                        key={product.productId}
-                        className={cn(
-                          "p-4 rounded-lg border transition-all",
-                          product.quantity > 0
-                            ? "border-primary/50 bg-primary/5"
-                            : "border-transparent bg-muted/30"
-                        )}
-                      >
-                        <div className="flex items-center gap-4">
-                          {/* Product image */}
-                          <div className="w-14 h-14 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                            {product.imageUrl ? (
-                              <img
-                                src={product.imageUrl}
-                                alt={product.productName}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <Package className="h-6 w-6 text-muted-foreground" />
-                            )}
-                          </div>
+                    {filteredProducts.map((product) => {
+                      const hasQuantity = product.quantity > 0 || product.cartonQuantity > 0;
+                      const productTotal = calculateProductTotal(product);
+                      const cartonCost = product.priceCarton || product.unitCost * (product.unitsPerCarton || 1);
+                      
+                      return (
+                        <div
+                          key={product.productId}
+                          className={cn(
+                            "p-4 rounded-lg border transition-all",
+                            hasQuantity
+                              ? "border-primary/50 bg-primary/5"
+                              : "border-transparent bg-muted/30"
+                          )}
+                        >
+                          <div className="flex items-start gap-4">
+                            {/* Product image */}
+                            <div className="w-14 h-14 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+                              {product.imageUrl ? (
+                                <img
+                                  src={product.imageUrl}
+                                  alt={product.productName}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <Package className="h-6 w-6 text-muted-foreground" />
+                              )}
+                            </div>
 
-                          {/* Product info */}
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-sm truncate">{product.productName}</h4>
-                            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                              {product.sku && <span>SKU: {product.sku}</span>}
-                              <span>Stock: {product.currentStock}</span>
-                              <span className="text-primary font-medium">
-                                {product.unitCost.toLocaleString()} GNF/unité
-                              </span>
+                            {/* Product info and controls */}
+                            <div className="flex-1 min-w-0 space-y-3">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-medium text-sm truncate">{product.productName}</h4>
+                                  {product.sellByCarton && (
+                                    <Badge variant="outline" className="text-xs flex-shrink-0">
+                                      <Box className="h-3 w-3 mr-1" />
+                                      Carton
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                                  {product.sku && <span>SKU: {product.sku}</span>}
+                                  <span>Stock: {product.currentStock}</span>
+                                </div>
+                              </div>
+
+                              {/* Quantity controls row */}
+                              <div className="flex flex-wrap items-center gap-4">
+                                {/* Unit quantity */}
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-muted-foreground whitespace-nowrap">Unités:</span>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() => updateProductQuantity(product.productId, -1)}
+                                  >
+                                    <Minus className="h-3 w-3" />
+                                  </Button>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    value={product.quantity}
+                                    onChange={(e) => setProductQuantity(product.productId, parseInt(e.target.value) || 0)}
+                                    className="w-14 h-7 text-center text-sm"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() => updateProductQuantity(product.productId, 1)}
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </Button>
+                                  <span className="text-xs text-primary font-medium">
+                                    × {product.unitCost.toLocaleString()} GNF
+                                  </span>
+                                </div>
+
+                                {/* Carton quantity (if available) */}
+                                {product.sellByCarton && product.unitsPerCarton && (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs text-muted-foreground whitespace-nowrap flex items-center gap-1">
+                                      <Box className="h-3 w-3" />
+                                      Cartons:
+                                    </span>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="icon"
+                                      className="h-7 w-7"
+                                      onClick={() => updateCartonQuantity(product.productId, -1)}
+                                    >
+                                      <Minus className="h-3 w-3" />
+                                    </Button>
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      value={product.cartonQuantity}
+                                      onChange={(e) => setCartonQuantity(product.productId, parseInt(e.target.value) || 0)}
+                                      className="w-14 h-7 text-center text-sm"
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="icon"
+                                      className="h-7 w-7"
+                                      onClick={() => updateCartonQuantity(product.productId, 1)}
+                                    >
+                                      <Plus className="h-3 w-3" />
+                                    </Button>
+                                    <span className="text-xs text-accent-foreground font-medium">
+                                      × {cartonCost.toLocaleString()} GNF
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      ({product.unitsPerCarton}u/ctn)
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Line total */}
+                              {hasQuantity && (
+                                <div className="flex items-center justify-between pt-2 border-t border-dashed">
+                                  <span className="text-xs text-muted-foreground">
+                                    Total: {calculateTotalUnits(product)} unités
+                                  </span>
+                                  <span className="font-semibold text-sm text-primary">
+                                    {productTotal.toLocaleString()} GNF
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </div>
-
-                          {/* Quantity controls */}
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => updateProductQuantity(product.productId, -1)}
-                            >
-                              <Minus className="h-4 w-4" />
-                            </Button>
-                            <Input
-                              type="number"
-                              min="0"
-                              value={product.quantity}
-                              onChange={(e) => setProductQuantity(product.productId, parseInt(e.target.value) || 0)}
-                              className="w-16 h-8 text-center"
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => updateProductQuantity(product.productId, 1)}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                          </div>
-
-                          {/* Line total */}
-                          <div className="w-28 text-right flex-shrink-0">
-                            <p className="font-semibold text-sm">
-                              {(product.unitCost * product.quantity).toLocaleString()} GNF
-                            </p>
-                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </ScrollArea>
               )}
             </div>
 
             {/* Total */}
-            {selectedProducts.some(p => p.quantity > 0) && (
+            {selectedProducts.some(p => p.quantity > 0 || p.cartonQuantity > 0) && (
               <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
                 <div className="flex justify-between items-center">
-                  <span className="font-medium">Total estimé de l'achat</span>
+                  <div>
+                    <span className="font-medium">Total estimé de l'achat</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {totalItems} unités au total
+                    </p>
+                  </div>
                   <span className="text-xl font-bold text-primary">
                     {totalAmount.toLocaleString()} GNF
                   </span>
@@ -518,7 +658,7 @@ export function NewPurchaseDialog({
               </Button>
               <Button
                 onClick={handleConfirm}
-                disabled={!selectedProducts.some(p => p.quantity > 0) || isCreating}
+                disabled={!selectedProducts.some(p => p.quantity > 0 || p.cartonQuantity > 0) || isCreating}
                 className="gap-2"
               >
                 {isCreating ? (
