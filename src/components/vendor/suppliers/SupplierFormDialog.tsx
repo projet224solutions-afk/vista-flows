@@ -318,7 +318,7 @@ export function SupplierFormDialog({
                       Chargement des produits...
                     </div>
                   ) : filteredProducts.length > 0 ? (
-                    <ScrollArea className="mt-3 h-64 border rounded-lg">
+                    <ScrollArea className="mt-3 h-64 border rounded-lg bg-background">
                       <div className="p-2 space-y-2">
                         {filteredProducts.slice(0, 30).map((product) => {
                           const isAlreadyAdded = formData.linkedProducts.some(
@@ -329,14 +329,13 @@ export function SupplierFormDialog({
                             : null;
                           
                           return (
-                            <button
+                            <div
                               key={product.id}
                               onClick={() => !isAlreadyAdded && handleAddProduct(product)}
-                              disabled={isAlreadyAdded}
-                              className={`w-full text-left p-3 rounded-lg border flex items-center gap-3 transition-colors ${
+                              className={`w-full text-left p-3 rounded-lg border flex items-center gap-3 transition-all ${
                                 isAlreadyAdded
-                                  ? 'bg-muted/50 border-muted cursor-not-allowed opacity-60'
-                                  : 'hover:bg-accent hover:border-primary/30 cursor-pointer'
+                                  ? 'bg-primary/10 border-primary/30 cursor-default'
+                                  : 'hover:bg-accent hover:border-primary/30 cursor-pointer hover:shadow-sm'
                               }`}
                             >
                               {/* Image produit */}
@@ -348,7 +347,7 @@ export function SupplierFormDialog({
                                     className="w-full h-full object-cover"
                                   />
                                 ) : (
-                                  <div className="w-full h-full flex items-center justify-center">
+                                  <div className="w-full h-full flex items-center justify-center bg-muted">
                                     <Package className="h-6 w-6 text-muted-foreground" />
                                   </div>
                                 )}
@@ -356,22 +355,30 @@ export function SupplierFormDialog({
                               
                               {/* Infos produit */}
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm line-clamp-1">{product.name}</p>
-                                <p className="text-xs text-muted-foreground mt-0.5">{product.sku}</p>
-                                {product.price && (
-                                  <p className="text-xs font-medium text-primary mt-1">
+                                <p className="font-medium text-sm text-foreground line-clamp-1">
+                                  {product.name}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {product.sku}
+                                </p>
+                                {product.price != null && product.price > 0 && (
+                                  <p className="text-xs font-semibold text-primary mt-1">
                                     {product.price.toLocaleString()} GNF
                                   </p>
                                 )}
                               </div>
                               
                               {/* Badge état */}
-                              {isAlreadyAdded && (
-                                <Badge variant="secondary" className="text-xs flex-shrink-0">
-                                  Ajouté
+                              {isAlreadyAdded ? (
+                                <Badge variant="default" className="text-xs flex-shrink-0 bg-primary text-primary-foreground">
+                                  ✓ Ajouté
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs flex-shrink-0">
+                                  + Ajouter
                                 </Badge>
                               )}
-                            </button>
+                            </div>
                           );
                         })}
                       </div>
