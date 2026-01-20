@@ -93,6 +93,7 @@ interface Product {
   name: string;
   price: number;
   category_id: string | null;
+  stock_quantity: number | null;
 }
 
 interface Category {
@@ -173,7 +174,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
     queryFn: async () => {
       let query = supabase
         .from('products')
-        .select('id, name, price, category_id')
+        .select('id, name, price, category_id, stock_quantity')
         .eq('vendor_id', vendorId)
         .order('name');
 
@@ -186,6 +187,9 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
       return data as Product[];
     },
   });
+
+  // Get selected product for display
+  const selectedProduct = products.find((p) => p.id === newItem.product_id);
 
   // Add item mutation
   const addItemMutation = useMutation({
@@ -594,86 +598,159 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
         </div>
       )}
 
-      {/* Dialog ajout produit */}
+      {/* Dialog ajout produit - Plus grand et professionnel */}
       <Dialog open={isAddItemDialogOpen} onOpenChange={setIsAddItemDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Ajouter un produit</DialogTitle>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="pb-4 border-b">
+            <DialogTitle className="text-xl flex items-center gap-2">
+              <Package className="h-5 w-5 text-primary" />
+              Ajouter un produit à l'achat
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Sélectionnez un produit existant ou créez-en un nouveau pour cet achat
+            </p>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div>
-              <Label>Fournisseur (optionnel)</Label>
-              <Select
-                value={newItem.supplier_id}
-                onValueChange={(v) => setNewItem({ ...newItem, supplier_id: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={suppliers.length === 0 ? 'Aucun fournisseur disponible' : 'Sélectionner un fournisseur...'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {suppliers.length === 0 ? (
-                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                      Aucun fournisseur créé. Créez d'abord un fournisseur dans l'onglet "Fournisseurs".
-                    </div>
-                  ) : (
-                    suppliers.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.name}
+          <div className="space-y-6 py-4">
+            {/* Section Sélection */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  Fournisseur (optionnel)
+                </Label>
+                <Select
+                  value={newItem.supplier_id}
+                  onValueChange={(v) => setNewItem({ ...newItem, supplier_id: v })}
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder={suppliers.length === 0 ? 'Aucun fournisseur disponible' : 'Sélectionner un fournisseur...'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {suppliers.length === 0 ? (
+                      <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                        Aucun fournisseur créé. Créez d'abord un fournisseur dans l'onglet "Fournisseurs".
+                      </div>
+                    ) : (
+                      suppliers.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Catégorie (optionnel)</Label>
+                <Select
+                  value={newItem.category_id}
+                  onValueChange={(v) => setNewItem({ ...newItem, category_id: v, product_id: '' })}
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Filtrer par catégorie..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
                       </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div>
-              <Label>Catégorie (optionnel)</Label>
-              <Select
-                value={newItem.category_id}
-                onValueChange={(v) => setNewItem({ ...newItem, category_id: v, product_id: '' })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <Separator />
+
+            {/* Sélection du produit avec images */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Sélectionner un produit existant</Label>
+              
+              {products.length > 0 ? (
+                <ScrollArea className="h-48 border rounded-lg p-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {products.map((product) => (
+                      <div
+                        key={product.id}
+                        onClick={() => handleProductSelect(product.id)}
+                        className={`flex flex-col items-center p-3 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
+                          newItem.product_id === product.id
+                            ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                            : 'border-muted hover:border-muted-foreground/30'
+                        }`}
+                      >
+                        <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center mb-2">
+                          <Package className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <span className="text-xs font-medium text-center line-clamp-2">
+                          {product.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatCurrency(product.price)}
+                        </span>
+                        {product.stock_quantity !== null && (
+                          <span className="text-xs text-primary mt-1">
+                            Stock: {product.stock_quantity}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              ) : (
+                <div className="h-32 border rounded-lg flex items-center justify-center text-muted-foreground text-sm">
+                  Aucun produit disponible. Créez des produits d'abord.
+                </div>
+              )}
             </div>
 
-            <div>
-              <Label>Produit existant (optionnel)</Label>
-              <Select value={newItem.product_id} onValueChange={handleProductSelect}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner ou saisir manuellement..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {products.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Produit sélectionné - Aperçu */}
+            {selectedProduct && (
+              <Card className="bg-primary/5 border-primary/20">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 h-20 bg-muted rounded-lg flex items-center justify-center">
+                      <Package className="h-10 w-10 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold">{selectedProduct.name}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Prix de vente actuel: {formatCurrency(selectedProduct.price)}
+                      </p>
+                      {selectedProduct.stock_quantity !== null && (
+                        <Badge variant="secondary" className="mt-1">
+                          Stock actuel: {selectedProduct.stock_quantity} unités
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-            <div>
-              <Label>Nom du produit *</Label>
+            <Separator />
+
+            {/* Nom du produit */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">
+                Nom du produit <span className="text-destructive">*</span>
+              </Label>
               <Input
                 value={newItem.product_name}
                 onChange={(e) => setNewItem({ ...newItem, product_name: e.target.value })}
-                placeholder="Nom du produit"
+                placeholder="Saisissez ou modifiez le nom du produit"
+                className="h-11"
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <Label>Quantité *</Label>
+            {/* Quantité et Prix */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Quantité <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   type="number"
                   min={1}
@@ -681,65 +758,106 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                   onChange={(e) =>
                     setNewItem({ ...newItem, quantity: parseInt(e.target.value) || 1 })
                   }
+                  className="h-11 text-center text-lg font-semibold"
                 />
               </div>
-              <div>
-                <Label>Prix achat *</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={newItem.purchase_price}
-                  onChange={(e) =>
-                    setNewItem({ ...newItem, purchase_price: parseFloat(e.target.value) || 0 })
-                  }
-                />
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Prix d'achat <span className="text-destructive">*</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    min={0}
+                    value={newItem.purchase_price}
+                    onChange={(e) =>
+                      setNewItem({ ...newItem, purchase_price: parseFloat(e.target.value) || 0 })
+                    }
+                    className="h-11 pr-12 text-right font-medium"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                    GNF
+                  </span>
+                </div>
               </div>
-              <div>
-                <Label>Prix vente *</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={newItem.selling_price}
-                  onChange={(e) =>
-                    setNewItem({ ...newItem, selling_price: parseFloat(e.target.value) || 0 })
-                  }
-                />
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Prix de vente <span className="text-destructive">*</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    min={0}
+                    value={newItem.selling_price}
+                    onChange={(e) =>
+                      setNewItem({ ...newItem, selling_price: parseFloat(e.target.value) || 0 })
+                    }
+                    className="h-11 pr-12 text-right font-medium"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                    GNF
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Calculs en temps réel */}
+            {/* Calculs en temps réel - Amélioré */}
             {newItem.purchase_price > 0 && newItem.selling_price > 0 && (
-              <Card className="bg-muted/50">
-                <CardContent className="p-3 text-sm">
-                  <div className="flex justify-between">
-                    <span>Profit unitaire:</span>
-                    <span className="font-semibold text-green-600">
-                      +{formatCurrency(newItem.selling_price - newItem.purchase_price)}
-                    </span>
+              <Card className={`${newItem.selling_price < newItem.purchase_price ? 'bg-destructive/10 border-destructive/30' : 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900'}`}>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Calculator className="h-4 w-4" />
+                    <span className="font-medium text-sm">Récapitulatif des calculs</span>
                   </div>
-                  <div className="flex justify-between mt-1">
-                    <span>Total achat:</span>
-                    <span className="font-semibold">
-                      {formatCurrency(newItem.quantity * newItem.purchase_price)}
-                    </span>
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Profit unitaire</p>
+                      <p className={`font-bold ${newItem.selling_price >= newItem.purchase_price ? 'text-green-600' : 'text-destructive'}`}>
+                        {newItem.selling_price >= newItem.purchase_price ? '+' : ''}
+                        {formatCurrency(newItem.selling_price - newItem.purchase_price)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Total achat</p>
+                      <p className="font-bold text-destructive">
+                        {formatCurrency(newItem.quantity * newItem.purchase_price)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Profit total</p>
+                      <p className={`font-bold ${newItem.selling_price >= newItem.purchase_price ? 'text-green-600' : 'text-destructive'}`}>
+                        {newItem.selling_price >= newItem.purchase_price ? '+' : ''}
+                        {formatCurrency(newItem.quantity * (newItem.selling_price - newItem.purchase_price))}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex justify-between mt-1">
-                    <span>Profit total:</span>
-                    <span className="font-semibold text-green-600">
-                      +{formatCurrency(newItem.quantity * (newItem.selling_price - newItem.purchase_price))}
-                    </span>
-                  </div>
+                  
+                  {newItem.selling_price < newItem.purchase_price && (
+                    <div className="mt-3 flex items-center gap-2 text-destructive text-sm">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span>Attention: Le prix de vente est inférieur au prix d'achat!</span>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddItemDialogOpen(false)}>
+          <DialogFooter className="pt-4 border-t gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsAddItemDialogOpen(false)}
+              className="min-w-24"
+            >
               Annuler
             </Button>
-            <Button onClick={handleAddItem} disabled={addItemMutation.isPending}>
-              {addItemMutation.isPending ? 'Ajout...' : 'Ajouter'}
+            <Button 
+              onClick={handleAddItem} 
+              disabled={addItemMutation.isPending}
+              className="min-w-32 gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              {addItemMutation.isPending ? 'Ajout...' : 'Ajouter le produit'}
             </Button>
           </DialogFooter>
         </DialogContent>
