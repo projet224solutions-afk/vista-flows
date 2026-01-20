@@ -252,88 +252,123 @@ export function SupplierFormDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0 border-b pb-4">
+          <DialogTitle className="text-xl font-semibold">
             {editingSupplier ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0 pr-2">
-          <div className="space-y-4 pb-4 pr-2">
-            {/* Nom */}
-            <div>
-              <Label htmlFor="name">Nom *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Nom du fournisseur"
-              />
+        <ScrollArea className="flex-1 min-h-0 pr-4">
+          <div className="space-y-6 py-4 pr-2">
+            {/* Section Informations de base */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                Informations générales
+              </h3>
+              
+              {/* Nom et Type sur la même ligne */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="name">Nom du fournisseur *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Ex: Société ABC Import"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="category">Type de fournisseur</Label>
+                  <Select
+                    value={formData.category}
+                    onValueChange={(v) => setFormData({ ...formData, category: v })}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Sélectionner un type..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SUPPLIER_CATEGORIES.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
 
-            {/* Téléphone */}
-            <div>
-              <Label htmlFor="phone">Téléphone</Label>
-              <Input
-                id="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="Numéro de téléphone"
-              />
-            </div>
+            {/* Section Contact */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                Coordonnées
+              </h3>
+              
+              {/* Téléphone et Email sur la même ligne */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="phone">Téléphone</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="Ex: +224 620 00 00 00"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="Ex: contact@fournisseur.com"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
 
-            {/* Email */}
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="Adresse email"
-              />
-            </div>
+              {/* Adresse */}
+              <div>
+                <Label htmlFor="address">Adresse</Label>
+                <Input
+                  id="address"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  placeholder="Ex: Kaloum, Conakry, Guinée"
+                  className="mt-1"
+                />
+              </div>
 
-            {/* Adresse */}
-            <div>
-              <Label htmlFor="address">Adresse</Label>
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="Adresse du fournisseur"
-              />
-            </div>
-
-            {/* Catégorie fournisseur */}
-            <div>
-              <Label htmlFor="category">Type de fournisseur</Label>
-              <Select
-                value={formData.category}
-                onValueChange={(v) => setFormData({ ...formData, category: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un type..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {SUPPLIER_CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* Notes */}
+              <div>
+                <Label htmlFor="notes">Notes internes</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="Informations supplémentaires sur ce fournisseur..."
+                  className="mt-1 min-h-[80px]"
+                />
+              </div>
             </div>
 
             {/* Section produits pour Grossiste */}
             {isGrossiste && (
-              <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <Package className="h-4 w-4" />
-                  Produits associés au fournisseur
-                </div>
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                  Catalogue produits
+                </h3>
+                
+                <div className="border rounded-lg p-4 space-y-4 bg-muted/20">
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <Package className="h-4 w-4 text-primary" />
+                    Associer des produits à ce fournisseur
+                  </div>
 
                 {/* Sélection catégorie produit */}
                 <div>
@@ -566,54 +601,9 @@ export function SupplierFormDialog({
                     </div>
                   </div>
                 )}
+                </div>
               </div>
             )}
-
-            {/* Téléphone */}
-            <div>
-              <Label htmlFor="phone">Téléphone</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="Numéro de téléphone"
-              />
-            </div>
-
-            {/* Email */}
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="Email (optionnel)"
-              />
-            </div>
-
-            {/* Adresse */}
-            <div>
-              <Label htmlFor="address">Adresse</Label>
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="Adresse"
-              />
-            </div>
-
-            {/* Notes */}
-            <div>
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Notes internes..."
-                rows={3}
-              />
-            </div>
           </div>
         </ScrollArea>
 
