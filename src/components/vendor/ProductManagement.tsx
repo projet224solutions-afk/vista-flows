@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,6 +72,7 @@ interface Category {
 export default function ProductManagement() {
   const { vendorId, user, loading: vendorLoading } = useCurrentVendor();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { captureError } = useVendorErrorBoundary();
   
   // Product actions hook
@@ -156,6 +157,19 @@ export default function ProductManagement() {
     loadProductLimit();
     loadPremiumStatus();
   }, [vendorId, vendorLoading]);
+
+  // Check if we should open the dialog from URL params (action=new)
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (action === 'new' && !vendorLoading && vendorId) {
+      setShowDialog(true);
+      setEditingProduct(null);
+      resetForm();
+      // Remove the param from URL to avoid reopening on refresh
+      searchParams.delete('action');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, vendorLoading, vendorId]);
 
   const loadProductLimit = async () => {
     if (!user?.id) return;

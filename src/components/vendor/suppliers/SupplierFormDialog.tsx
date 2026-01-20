@@ -458,7 +458,7 @@ export function SupplierFormDialog({
                   onClick={() => {
                     // Fermer le dialog et naviguer vers la page de création de produit
                     onClose();
-                    navigate('/vendeur/products/new');
+                    navigate('/vendeur/products?action=new');
                   }}
                   className="gap-2"
                 >
