@@ -94,6 +94,7 @@ interface Product {
   price: number;
   category_id: string | null;
   stock_quantity: number | null;
+  supplier_unit_cost?: number | null; // Coût chez le fournisseur
 }
 
 interface Category {
@@ -168,10 +169,52 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
     },
   });
 
-  // Fetch products
+  // Fetch products linked to selected supplier
   const { data: products = [] } = useQuery({
-    queryKey: ['vendor-products-select', vendorId, newItem.category_id],
+    queryKey: ['vendor-products-by-supplier', vendorId, newItem.supplier_id, newItem.category_id],
     queryFn: async () => {
+      // Si un fournisseur est sélectionné, on récupère ses produits liés
+      if (newItem.supplier_id) {
+        const { data: supplierProducts, error: spError } = await supabase
+          .from('vendor_supplier_products')
+          .select(`
+            id,
+            product_id,
+            unit_cost,
+            default_quantity,
+            products:product_id (
+              id,
+              name,
+              price,
+              category_id,
+              stock_quantity
+            )
+          `)
+          .eq('supplier_id', newItem.supplier_id);
+
+        if (spError) throw spError;
+
+        // Transformer les données pour avoir le format Product attendu
+        let filteredProducts = (supplierProducts || [])
+          .filter(sp => sp.products)
+          .map(sp => ({
+            id: (sp.products as any).id,
+            name: (sp.products as any).name,
+            price: (sp.products as any).price,
+            category_id: (sp.products as any).category_id,
+            stock_quantity: (sp.products as any).stock_quantity,
+            supplier_unit_cost: sp.unit_cost, // Coût unitaire chez ce fournisseur
+          }));
+
+        // Filtrer par catégorie si sélectionnée
+        if (newItem.category_id) {
+          filteredProducts = filteredProducts.filter(p => p.category_id === newItem.category_id);
+        }
+
+        return filteredProducts as Product[];
+      }
+
+      // Si aucun fournisseur, on affiche tous les produits du vendeur
       let query = supabase
         .from('products')
         .select('id, name, price, category_id, stock_quantity')
@@ -404,6 +447,8 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
         product_id: productId,
         product_name: product.name,
         selling_price: product.price,
+        // Utiliser le coût fournisseur si disponible
+        purchase_price: product.supplier_unit_cost || newItem.purchase_price,
       });
     }
   };
@@ -621,7 +666,14 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                 </Label>
                 <Select
                   value={newItem.supplier_id}
-                  onValueChange={(v) => setNewItem({ ...newItem, supplier_id: v })}
+                  onValueChange={(v) => setNewItem({ 
+                    ...newItem, 
+                    supplier_id: v, 
+                    product_id: '', 
+                    product_name: '',
+                    purchase_price: 0,
+                    selling_price: 0
+                  })}
                 >
                   <SelectTrigger className="h-11">
                     <SelectValue placeholder={suppliers.length === 0 ? 'Aucun fournisseur disponible' : 'Sélectionner un fournisseur...'} />
