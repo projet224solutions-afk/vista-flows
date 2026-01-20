@@ -21,10 +21,12 @@ import {
   Eye,
   Trash2,
   ShoppingCart,
+  Building2,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { PurchaseEditor } from './PurchaseEditor';
+import { NewPurchaseDialog } from './NewPurchaseDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,6 +55,8 @@ interface Purchase {
   validated_at: string | null;
   created_at: string;
   updated_at: string;
+  supplier_id?: string | null;
+  supplier_name?: string | null;
 }
 
 const STATUS_CONFIG = {
@@ -82,6 +86,7 @@ export function PurchasesList({ vendorId }: PurchasesListProps) {
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [deletePurchase, setDeletePurchase] = useState<Purchase | null>(null);
+  const [isNewPurchaseDialogOpen, setIsNewPurchaseDialogOpen] = useState(false);
 
   // Fetch purchases
   const { data: purchases = [], isLoading } = useQuery({
@@ -99,12 +104,16 @@ export function PurchasesList({ vendorId }: PurchasesListProps) {
     enabled: !!vendorId,
   });
 
-  // Create new purchase
+  // Create new purchase with supplier
   const createMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ supplierId, supplierName }: { supplierId: string; supplierName: string }) => {
       const { data, error } = await supabase
         .from('stock_purchases')
-        .insert([{ vendor_id: vendorId }] as any)
+        .insert([{ 
+          vendor_id: vendorId,
+          supplier_id: supplierId,
+          supplier_name: supplierName,
+        }] as any)
         .select()
         .single();
 
@@ -116,12 +125,17 @@ export function PurchasesList({ vendorId }: PurchasesListProps) {
       queryClient.invalidateQueries({ queryKey: ['supplier-purchase-stats', vendorId] });
       setSelectedPurchase(data);
       setIsEditorOpen(true);
+      setIsNewPurchaseDialogOpen(false);
       toast.success('Nouvel achat créé');
     },
     onError: (error: Error) => {
       toast.error(`Erreur: ${error.message}`);
     },
   });
+
+  const handleCreatePurchase = (supplierId: string, supplierName: string) => {
+    createMutation.mutate({ supplierId, supplierName });
+  };
 
   // Delete purchase
   const deleteMutation = useMutation({
@@ -194,8 +208,7 @@ export function PurchasesList({ vendorId }: PurchasesListProps) {
           />
         </div>
         <Button
-          onClick={() => createMutation.mutate()}
-          disabled={createMutation.isPending}
+          onClick={() => setIsNewPurchaseDialogOpen(true)}
           className="gap-2"
         >
           <Plus className="h-4 w-4" />
@@ -253,7 +266,7 @@ export function PurchasesList({ vendorId }: PurchasesListProps) {
                         <p className="font-semibold text-sm">
                           {formatCurrency(purchase.total_purchase_amount)}
                         </p>
-                        <p className="text-xs text-green-600">
+                        <p className="text-xs text-primary">
                           +{formatCurrency(purchase.estimated_total_profit)} profit
                         </p>
                       </div>
@@ -304,6 +317,15 @@ export function PurchasesList({ vendorId }: PurchasesListProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog nouvel achat */}
+      <NewPurchaseDialog
+        vendorId={vendorId}
+        isOpen={isNewPurchaseDialogOpen}
+        onClose={() => setIsNewPurchaseDialogOpen(false)}
+        onConfirm={handleCreatePurchase}
+        isCreating={createMutation.isPending}
+      />
     </div>
   );
 }
