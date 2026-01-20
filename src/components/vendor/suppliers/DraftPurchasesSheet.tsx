@@ -1,0 +1,188 @@
+/**
+ * Sheet affichant les achats non validés (brouillons)
+ */
+
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { 
+  Package, 
+  Clock, 
+  FileText,
+  AlertTriangle
+} from 'lucide-react';
+import { formatDistanceToNow, format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+interface DraftPurchasesSheetProps {
+  vendorId: string;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+interface Purchase {
+  id: string;
+  purchase_number: string;
+  status: 'draft' | 'document_generated' | 'validated';
+  total_purchase_amount: number;
+  total_selling_amount: number;
+  estimated_total_profit: number;
+  document_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+const STATUS_CONFIG = {
+  draft: {
+    label: 'Brouillon',
+    icon: Clock,
+    color: 'bg-orange-500/10 text-orange-600 border-orange-500/30',
+  },
+  document_generated: {
+    label: 'Document généré',
+    icon: FileText,
+    color: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
+  },
+  validated: {
+    label: 'Validé',
+    icon: Clock,
+    color: 'bg-green-500/10 text-green-600 border-green-500/30',
+  },
+};
+
+export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchasesSheetProps) {
+  const { data: purchases = [], isLoading } = useQuery({
+    queryKey: ['draft-purchases', vendorId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stock_purchases')
+        .select('*')
+        .eq('vendor_id', vendorId)
+        .neq('status', 'validated')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as Purchase[];
+    },
+    enabled: isOpen && !!vendorId,
+  });
+
+  // Stats par statut
+  const draftCount = purchases.filter(p => p.status === 'draft').length;
+  const documentGeneratedCount = purchases.filter(p => p.status === 'document_generated').length;
+  const totalAmount = purchases.reduce((sum, p) => sum + (p.total_purchase_amount || 0), 0);
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('fr-GN', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount) + ' GNF';
+  };
+
+  return (
+    <Sheet open={isOpen} onOpenChange={onClose}>
+      <SheetContent className="w-full sm:max-w-xl">
+        <SheetHeader className="pb-4">
+          <SheetTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5 text-orange-500" />
+            Achats en attente
+          </SheetTitle>
+          <SheetDescription>
+            Achats non validés nécessitant une action
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="space-y-4">
+          {/* Stats résumé */}
+          <div className="grid grid-cols-3 gap-2">
+            <Card className="bg-orange-500/10 border-orange-500/20">
+              <CardContent className="p-3 text-center">
+                <p className="text-2xl font-bold text-orange-600">{draftCount}</p>
+                <p className="text-xs text-muted-foreground">Brouillons</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-blue-500/10 border-blue-500/20">
+              <CardContent className="p-3 text-center">
+                <p className="text-2xl font-bold text-blue-600">{documentGeneratedCount}</p>
+                <p className="text-xs text-muted-foreground">Docs générés</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-muted/50">
+              <CardContent className="p-3 text-center">
+                <p className="text-lg font-bold">{formatCurrency(totalAmount)}</p>
+                <p className="text-xs text-muted-foreground">Total en attente</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Message d'alerte */}
+          {purchases.length > 0 && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+              <p className="text-xs text-amber-700">
+                Ces achats n'ont pas encore été validés. Le stock ne sera mis à jour qu'après validation.
+              </p>
+            </div>
+          )}
+
+          {/* Liste des achats */}
+          <ScrollArea className="h-[calc(100vh-340px)]">
+            {isLoading ? (
+              <div className="text-center py-8 text-muted-foreground">Chargement...</div>
+            ) : purchases.length === 0 ? (
+              <div className="text-center py-12">
+                <Package className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+                <p className="text-muted-foreground">Aucun achat en attente</p>
+                <p className="text-xs text-muted-foreground mt-1">Tous vos achats ont été validés</p>
+              </div>
+            ) : (
+              <div className="space-y-2 pr-4">
+                {purchases.map((purchase) => {
+                  const config = STATUS_CONFIG[purchase.status];
+                  const StatusIcon = config.icon;
+
+                  return (
+                    <Card key={purchase.id} className="hover:shadow-sm transition-shadow">
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg ${purchase.status === 'draft' ? 'bg-orange-500/20' : 'bg-blue-500/20'}`}>
+                              <StatusIcon className={`h-4 w-4 ${purchase.status === 'draft' ? 'text-orange-500' : 'text-blue-500'}`} />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-sm">{purchase.purchase_number}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatDistanceToNow(new Date(purchase.created_at), { addSuffix: true, locale: fr })}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant="outline" className={config.color}>
+                              {config.label}
+                            </Badge>
+                            <p className="font-semibold text-sm mt-1">
+                              {formatCurrency(purchase.total_purchase_amount)}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </ScrollArea>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
