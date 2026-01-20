@@ -68,6 +68,8 @@ export interface LinkedProduct {
   isNew: boolean;
   categoryId: string;
   categoryName: string;
+  quantity: number;
+  unitPrice?: number;
 }
 
 const SUPPLIER_CATEGORIES = [
@@ -179,7 +181,7 @@ export function SupplierFormDialog({
       p.sku?.toLowerCase().includes(productSearch.toLowerCase())
   );
 
-  const handleAddProduct = (product: { id: string; name: string; category_id: string | null }) => {
+  const handleAddProduct = (product: { id: string; name: string; category_id: string | null; price?: number }) => {
     const category = categories.find((c) => c.id === product.category_id);
     setFormData({
       ...formData,
@@ -191,6 +193,8 @@ export function SupplierFormDialog({
           isNew: false,
           categoryId: product.category_id || '',
           categoryName: category?.name || 'Non catégorisé',
+          quantity: 1,
+          unitPrice: product.price || 0,
         },
       ],
     });
@@ -210,11 +214,19 @@ export function SupplierFormDialog({
           isNew: true,
           categoryId: selectedCategoryId,
           categoryName: category?.name || '',
+          quantity: 1,
+          unitPrice: 0,
         },
       ],
     });
     setNewProductName('');
     setShowNewProductForm(false);
+  };
+
+  const handleUpdateQuantity = (index: number, quantity: number) => {
+    const updated = [...formData.linkedProducts];
+    updated[index].quantity = Math.max(1, quantity);
+    setFormData({ ...formData, linkedProducts: updated });
   };
 
   const handleRemoveProduct = (index: number) => {
@@ -466,37 +478,78 @@ export function SupplierFormDialog({
                       {formData.linkedProducts.map((lp, idx) => (
                         <div
                           key={idx}
-                          className="flex items-start justify-between gap-3 p-3 border rounded-lg bg-primary/5 border-primary/20"
+                          className="flex flex-col gap-3 p-3 border rounded-lg bg-primary/5 border-primary/20"
                         >
-                          <div className="flex items-start gap-3 flex-1 min-w-0">
-                            <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
-                              <Package className="h-5 w-5 text-primary" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-foreground break-words">
-                                {lp.productName}
-                              </p>
-                              <div className="flex flex-wrap items-center gap-1 mt-1">
-                                <Tag className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                                <span className="text-xs text-muted-foreground">
-                                  {lp.categoryName}
-                                </span>
-                                {lp.isNew && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    Nouveau
-                                  </Badge>
-                                )}
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-start gap-3 flex-1 min-w-0">
+                              <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                <Package className="h-5 w-5 text-primary" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-foreground break-words">
+                                  {lp.productName}
+                                </p>
+                                <div className="flex flex-wrap items-center gap-1 mt-1">
+                                  <Tag className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                                  <span className="text-xs text-muted-foreground">
+                                    {lp.categoryName}
+                                  </span>
+                                  {lp.isNew && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      Nouveau
+                                    </Badge>
+                                  )}
+                                </div>
                               </div>
                             </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="flex-shrink-0 h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => handleRemoveProduct(idx)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="flex-shrink-0 h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => handleRemoveProduct(idx)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+                          
+                          {/* Champ quantité */}
+                          <div className="flex items-center gap-3 ml-13">
+                            <Label className="text-xs text-muted-foreground whitespace-nowrap">
+                              Quantité à acheter:
+                            </Label>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => handleUpdateQuantity(idx, lp.quantity - 1)}
+                              >
+                                -
+                              </Button>
+                              <Input
+                                type="number"
+                                min="1"
+                                value={lp.quantity}
+                                onChange={(e) => handleUpdateQuantity(idx, parseInt(e.target.value) || 1)}
+                                className="h-7 w-16 text-center"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => handleUpdateQuantity(idx, lp.quantity + 1)}
+                              >
+                                +
+                              </Button>
+                            </div>
+                            {lp.unitPrice != null && lp.unitPrice > 0 && (
+                              <span className="text-xs font-medium text-primary ml-auto">
+                                Total: {(lp.unitPrice * lp.quantity).toLocaleString()} GNF
+                              </span>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
