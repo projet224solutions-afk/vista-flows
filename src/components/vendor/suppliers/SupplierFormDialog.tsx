@@ -272,6 +272,41 @@ export function SupplierFormDialog({
               />
             </div>
 
+            {/* Téléphone */}
+            <div>
+              <Label htmlFor="phone">Téléphone</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="Numéro de téléphone"
+              />
+            </div>
+
+            {/* Email */}
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="Adresse email"
+              />
+            </div>
+
+            {/* Adresse */}
+            <div>
+              <Label htmlFor="address">Adresse</Label>
+              <Input
+                id="address"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                placeholder="Adresse du fournisseur"
+              />
+            </div>
+
             {/* Catégorie fournisseur */}
             <div>
               <Label htmlFor="category">Type de fournisseur</Label>
