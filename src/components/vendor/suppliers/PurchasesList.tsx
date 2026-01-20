@@ -89,15 +89,16 @@ export function PurchasesList({ vendorId }: PurchasesListProps) {
   const [deletePurchase, setDeletePurchase] = useState<Purchase | null>(null);
   const [isNewPurchaseDialogOpen, setIsNewPurchaseDialogOpen] = useState(false);
 
-  // Fetch purchases
+  // Fetch only validated purchases for main list
   const { data: purchases = [], isLoading } = useQuery({
-    queryKey: ['stock-purchases', vendorId],
+    queryKey: ['stock-purchases-validated', vendorId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('stock_purchases')
         .select('*')
         .eq('vendor_id', vendorId)
-        .order('created_at', { ascending: false });
+        .eq('status', 'validated')
+        .order('validated_at', { ascending: false });
 
       if (error) throw error;
       return data as Purchase[];
