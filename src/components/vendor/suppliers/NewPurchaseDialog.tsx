@@ -92,6 +92,7 @@ export interface PurchaseProduct {
   productId: string;
   productName: string;
   unitCost: number;
+  unitCostCurrency: string;
   quantity: number;
   imageUrl: string | null;
   sku: string | null;
@@ -103,6 +104,14 @@ export interface PurchaseProduct {
   cartonQuantity: number;
   categoryId: string | null;
 }
+
+const CURRENCIES = [
+  { code: 'GNF', label: 'GNF' },
+  { code: 'USD', label: 'USD' },
+  { code: 'EUR', label: 'EUR' },
+  { code: 'XOF', label: 'XOF' },
+  { code: 'CNY', label: 'CNY' },
+];
 
 export function NewPurchaseDialog({
   vendorId,
@@ -216,6 +225,7 @@ export function NewPurchaseDialog({
       productId: sp.product_id,
       productName: sp.product?.name || 'Produit inconnu',
       unitCost: sp.unit_cost || sp.product?.cost_price || sp.product?.price || 0,
+      unitCostCurrency: 'GNF',
       quantity: sp.default_quantity || 1,
       imageUrl: sp.product?.images?.[0] || null,
       sku: sp.product?.sku || null,
@@ -294,6 +304,16 @@ export function NewPurchaseDialog({
       prev.map((p) =>
         p.productId === productId
           ? { ...p, unitCost: Math.max(0, unitCost) }
+          : p
+      )
+    );
+  };
+
+  const setProductCurrency = (productId: string, currency: string) => {
+    setSelectedProducts((prev) =>
+      prev.map((p) =>
+        p.productId === productId
+          ? { ...p, unitCostCurrency: currency }
           : p
       )
     );
@@ -577,12 +597,7 @@ export function NewPurchaseDialog({
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-sm truncate">{sp.product?.name}</p>
-                              <div className="flex items-center gap-2 text-xs">
-                                <span className="text-muted-foreground">Stock: {sp.product?.stock_quantity || 0}</span>
-                                <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
-                                  Prix achat: {purchasePrice.toLocaleString()} GNF
-                                </Badge>
-                              </div>
+                              <span className="text-xs text-muted-foreground">Stock: {sp.product?.stock_quantity || 0}</span>
                             </div>
                             <Button size="icon" variant="ghost" className="h-8 w-8 flex-shrink-0">
                               <Plus className="h-4 w-4" />
@@ -651,15 +666,29 @@ export function NewPurchaseDialog({
 
                             {/* Prix d'achat */}
                             <div className="flex items-center gap-2 mb-2 p-2 rounded bg-muted/50">
-                              <span className="text-xs text-muted-foreground whitespace-nowrap">Prix achat:</span>
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">Prix:</span>
                               <Input
                                 type="number"
                                 min="0"
                                 value={product.unitCost}
                                 onChange={(e) => setProductUnitCost(product.productId, parseInt(e.target.value) || 0)}
-                                className="w-24 h-7 text-center text-xs"
+                                className="w-20 h-7 text-center text-xs"
                               />
-                              <span className="text-xs text-muted-foreground">GNF/u</span>
+                              <Select 
+                                value={product.unitCostCurrency} 
+                                onValueChange={(val) => setProductCurrency(product.productId, val)}
+                              >
+                                <SelectTrigger className="w-20 h-7 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {CURRENCIES.map(c => (
+                                    <SelectItem key={c.code} value={c.code} className="text-xs">
+                                      {c.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </div>
 
                             {/* Quantity controls */}
