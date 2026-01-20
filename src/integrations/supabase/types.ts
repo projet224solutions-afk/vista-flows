@@ -20360,6 +20360,54 @@ export type Database = {
           },
         ]
       }
+      vendor_supplier_products: {
+        Row: {
+          created_at: string
+          default_quantity: number | null
+          id: string
+          notes: string | null
+          product_id: string
+          supplier_id: string
+          unit_cost: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_quantity?: number | null
+          id?: string
+          notes?: string | null
+          product_id: string
+          supplier_id: string
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_quantity?: number | null
+          id?: string
+          notes?: string | null
+          product_id?: string
+          supplier_id?: string
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_supplier_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_supplier_products_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_suppliers: {
         Row: {
           address: string | null

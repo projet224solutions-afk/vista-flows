@@ -26,7 +26,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { PurchaseEditor } from './PurchaseEditor';
-import { NewPurchaseDialog } from './NewPurchaseDialog';
+import { NewPurchaseDialog, PurchaseProduct } from './NewPurchaseDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -104,10 +104,19 @@ export function PurchasesList({ vendorId }: PurchasesListProps) {
     enabled: !!vendorId,
   });
 
-  // Create new purchase with supplier
+  // Create new purchase with supplier and products
   const createMutation = useMutation({
-    mutationFn: async ({ supplierId, supplierName }: { supplierId: string; supplierName: string }) => {
-      const { data, error } = await supabase
+    mutationFn: async ({ 
+      supplierId, 
+      supplierName, 
+      products 
+    }: { 
+      supplierId: string; 
+      supplierName: string;
+      products: PurchaseProduct[];
+    }) => {
+      // Create the purchase
+      const { data: purchase, error: purchaseError } = await supabase
         .from('stock_purchases')
         .insert([{ 
           vendor_id: vendorId,
@@ -117,8 +126,31 @@ export function PurchasesList({ vendorId }: PurchasesListProps) {
         .select()
         .single();
 
-      if (error) throw error;
-      return data as Purchase;
+      if (purchaseError) throw purchaseError;
+
+      // Insert purchase items if products are provided
+      if (products.length > 0) {
+        const items = products.filter(p => p.quantity > 0).map(p => ({
+          purchase_id: purchase.id,
+          product_id: p.productId,
+          product_name: p.productName,
+          quantity: p.quantity,
+          purchase_price: p.unitCost,
+          selling_price: p.unitCost, // Will be updated by user
+        }));
+
+        if (items.length > 0) {
+          const { error: itemsError } = await supabase
+            .from('stock_purchase_items')
+            .insert(items);
+
+          if (itemsError) {
+            console.error('Error inserting purchase items:', itemsError);
+          }
+        }
+      }
+
+      return purchase as Purchase;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['stock-purchases', vendorId] });
@@ -126,15 +158,15 @@ export function PurchasesList({ vendorId }: PurchasesListProps) {
       setSelectedPurchase(data);
       setIsEditorOpen(true);
       setIsNewPurchaseDialogOpen(false);
-      toast.success('Nouvel achat créé');
+      toast.success('Nouvel achat créé avec les produits');
     },
     onError: (error: Error) => {
       toast.error(`Erreur: ${error.message}`);
     },
   });
 
-  const handleCreatePurchase = (supplierId: string, supplierName: string) => {
-    createMutation.mutate({ supplierId, supplierName });
+  const handleCreatePurchase = (supplierId: string, supplierName: string, products: PurchaseProduct[]) => {
+    createMutation.mutate({ supplierId, supplierName, products });
   };
 
   // Delete purchase

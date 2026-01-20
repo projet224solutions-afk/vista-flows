@@ -112,21 +112,48 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
         supplierId = newSupplier.id;
       }
 
-      // Create new products if any
-      for (const lp of data.linkedProducts) {
-        if (lp.isNew && lp.productName) {
-          const { error } = await supabase
-            .from('products')
-            .insert({
-              vendor_id: vendorId,
-              name: lp.productName,
-              category_id: lp.categoryId || null,
-              price: 0,
-              stock_quantity: 0,
-              is_active: true,
+      // Save linked products to vendor_supplier_products table
+      if (supplierId && data.linkedProducts.length > 0) {
+        // First delete existing linked products for this supplier
+        await supabase
+          .from('vendor_supplier_products')
+          .delete()
+          .eq('supplier_id', supplierId);
+
+        // Create new products if any and get their IDs
+        const productIds: string[] = [];
+        for (const lp of data.linkedProducts) {
+          if (lp.isNew && lp.productName) {
+            const { data: newProduct, error } = await supabase
+              .from('products')
+              .insert({
+                vendor_id: vendorId,
+                name: lp.productName,
+                category_id: lp.categoryId || null,
+                price: lp.unitPrice || 0,
+                stock_quantity: 0,
+                is_active: true,
+              })
+              .select('id')
+              .single();
+            if (!error && newProduct) {
+              productIds.push(newProduct.id);
+              // Add to supplier products
+              await supabase.from('vendor_supplier_products').insert({
+                supplier_id: supplierId,
+                product_id: newProduct.id,
+                unit_cost: lp.unitPrice || 0,
+                default_quantity: lp.quantity || 1,
+              });
+            }
+          } else if (lp.productId) {
+            // Link existing product
+            await supabase.from('vendor_supplier_products').insert({
+              supplier_id: supplierId,
+              product_id: lp.productId,
+              unit_cost: lp.unitPrice || 0,
+              default_quantity: lp.quantity || 1,
             });
-          if (error) {
-            console.error('Error creating product:', error);
           }
         }
       }
