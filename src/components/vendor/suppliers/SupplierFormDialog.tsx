@@ -393,28 +393,12 @@ export function SupplierFormDialog({
                                 </div>
                               </div>
                               
-                              {/* Zone quantité et bouton ajouter */}
+                              {/* Bouton ajouter */}
                               {!isAlreadyAdded ? (
-                                <div className="flex items-center gap-2 mt-2 pt-2 border-t">
-                                  <Label className="text-xs text-muted-foreground whitespace-nowrap">
-                                    Qté:
-                                  </Label>
-                                  <Input
-                                    type="number"
-                                    min="1"
-                                    value={currentQty}
-                                    onClick={(e) => e.stopPropagation()}
-                                    onChange={(e) => {
-                                      e.stopPropagation();
-                                      const val = parseInt(e.target.value) || 1;
-                                      setProductQuantities(prev => ({ ...prev, [product.id]: Math.max(1, val) }));
-                                    }}
-                                    className="h-8 w-20 text-center"
-                                  />
+                                <div className="flex items-center justify-end mt-2 pt-2 border-t">
                                   <Button
                                     type="button"
                                     size="sm"
-                                    className="ml-auto"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleAddProduct(product);
