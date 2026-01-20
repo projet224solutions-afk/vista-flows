@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -90,6 +91,7 @@ export function SupplierFormDialog({
   isSaving,
   editingSupplier,
 }: SupplierFormDialogProps) {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<SupplierFormData>({
     name: '',
     phone: '',
@@ -448,66 +450,21 @@ export function SupplierFormDialog({
                   )}
                 </div>
 
-                {/* Bouton ajouter nouveau produit */}
-                {!showNewProductForm ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowNewProductForm(true)}
-                    className="gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Ajouter un nouveau produit
-                  </Button>
-                ) : (
-                  <div className="space-y-3 p-3 border rounded-lg bg-background">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Nouveau produit</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setShowNewProductForm(false)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div>
-                      <Label>Nom du produit *</Label>
-                      <Input
-                        value={newProductName}
-                        onChange={(e) => setNewProductName(e.target.value)}
-                        placeholder="Nom du nouveau produit"
-                      />
-                    </div>
-                    <div>
-                      <Label>Catégorie *</Label>
-                      <Select
-                        value={selectedCategoryId}
-                        onValueChange={setSelectedCategoryId}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner une catégorie..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((cat) => (
-                            <SelectItem key={cat.id} value={cat.id}>
-                              {cat.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={handleAddNewProduct}
-                      disabled={!newProductName.trim() || !selectedCategoryId}
-                    >
-                      Ajouter ce produit
-                    </Button>
-                  </div>
-                )}
+                {/* Bouton ajouter nouveau produit - redirige vers la page complète */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    // Fermer le dialog et naviguer vers la page de création de produit
+                    onClose();
+                    navigate('/vendeur/products/new');
+                  }}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Créer un nouveau produit
+                </Button>
 
                 {/* Liste produits liés */}
                 {formData.linkedProducts.length > 0 && (
