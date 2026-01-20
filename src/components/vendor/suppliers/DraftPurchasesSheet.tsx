@@ -1,9 +1,12 @@
 /**
  * Sheet affichant les achats non validés (brouillons)
+ * Avec boutons de modification et validation
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import {
   Sheet,
   SheetContent,
@@ -13,15 +16,20 @@ import {
 } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Package, 
   Clock, 
   FileText,
-  AlertTriangle
+  AlertTriangle,
+  Pencil,
+  CheckCircle,
+  Loader2
 } from 'lucide-react';
-import { formatDistanceToNow, format } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { PurchaseEditor } from './PurchaseEditor';
 
 interface DraftPurchasesSheetProps {
   vendorId: string;
@@ -37,6 +45,9 @@ interface Purchase {
   total_selling_amount: number;
   estimated_total_profit: number;
   document_url: string | null;
+  is_locked: boolean;
+  notes: string | null;
+  validated_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -60,7 +71,12 @@ const STATUS_CONFIG = {
 };
 
 export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchasesSheetProps) {
-  const { data: purchases = [], isLoading } = useQuery({
+  const queryClient = useQueryClient();
+  const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [validatingId, setValidatingId] = useState<string | null>(null);
+
+  const { data: purchases = [], isLoading, refetch } = useQuery({
     queryKey: ['draft-purchases', vendorId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -87,6 +103,56 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
       maximumFractionDigits: 0,
     }).format(amount) + ' GNF';
   };
+
+  const handleEditPurchase = (purchase: Purchase) => {
+    setSelectedPurchase(purchase);
+    setIsEditorOpen(true);
+  };
+
+  const handleCloseEditor = () => {
+    setIsEditorOpen(false);
+    setSelectedPurchase(null);
+    refetch();
+    queryClient.invalidateQueries({ queryKey: ['supplier-purchase-stats', vendorId] });
+    queryClient.invalidateQueries({ queryKey: ['stock-purchases-validated', vendorId] });
+  };
+
+  const handleValidatePurchase = async (purchase: Purchase) => {
+    setValidatingId(purchase.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('validate-purchase', {
+        body: { purchaseId: purchase.id }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success('Achat validé avec succès! Stock mis à jour.');
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ['supplier-purchase-stats', vendorId] });
+      queryClient.invalidateQueries({ queryKey: ['stock-purchases-validated', vendorId] });
+    } catch (error: any) {
+      console.error('Validation error:', error);
+      toast.error(`Erreur de validation: ${error.message}`);
+    } finally {
+      setValidatingId(null);
+    }
+  };
+
+  // Si l'éditeur est ouvert, on l'affiche en plein écran
+  if (isEditorOpen && selectedPurchase) {
+    return (
+      <Sheet open={isOpen} onOpenChange={onClose}>
+        <SheetContent className="w-full sm:max-w-4xl p-0">
+          <PurchaseEditor
+            purchase={selectedPurchase}
+            vendorId={vendorId}
+            onClose={handleCloseEditor}
+          />
+        </SheetContent>
+      </Sheet>
+    );
+  }
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -145,33 +211,64 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
                 <p className="text-xs text-muted-foreground mt-1">Tous vos achats ont été validés</p>
               </div>
             ) : (
-              <div className="space-y-2 pr-4">
+              <div className="space-y-3 pr-4">
                 {purchases.map((purchase) => {
                   const config = STATUS_CONFIG[purchase.status];
                   const StatusIcon = config.icon;
+                  const isValidating = validatingId === purchase.id;
 
                   return (
-                    <Card key={purchase.id} className="hover:shadow-sm transition-shadow">
-                      <CardContent className="p-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${purchase.status === 'draft' ? 'bg-orange-500/20' : 'bg-blue-500/20'}`}>
-                              <StatusIcon className={`h-4 w-4 ${purchase.status === 'draft' ? 'text-orange-500' : 'text-blue-500'}`} />
+                    <Card key={purchase.id} className="hover:shadow-md transition-shadow border-l-4 border-l-orange-500">
+                      <CardContent className="p-4">
+                        <div className="flex flex-col gap-3">
+                          {/* Header */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className={`p-2 rounded-lg ${purchase.status === 'draft' ? 'bg-orange-500/20' : 'bg-blue-500/20'}`}>
+                                <StatusIcon className={`h-4 w-4 ${purchase.status === 'draft' ? 'text-orange-500' : 'text-blue-500'}`} />
+                              </div>
+                              <div>
+                                <p className="font-semibold">{purchase.purchase_number}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {formatDistanceToNow(new Date(purchase.created_at), { addSuffix: true, locale: fr })}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-semibold text-sm">{purchase.purchase_number}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {formatDistanceToNow(new Date(purchase.created_at), { addSuffix: true, locale: fr })}
+                            <div className="text-right">
+                              <Badge variant="outline" className={config.color}>
+                                {config.label}
+                              </Badge>
+                              <p className="font-bold text-lg mt-1">
+                                {formatCurrency(purchase.total_purchase_amount)}
                               </p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <Badge variant="outline" className={config.color}>
-                              {config.label}
-                            </Badge>
-                            <p className="font-semibold text-sm mt-1">
-                              {formatCurrency(purchase.total_purchase_amount)}
-                            </p>
+
+                          {/* Actions */}
+                          <div className="flex gap-2 pt-2 border-t">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 gap-2"
+                              onClick={() => handleEditPurchase(purchase)}
+                              disabled={purchase.is_locked}
+                            >
+                              <Pencil className="h-4 w-4" />
+                              Modifier
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="flex-1 gap-2 bg-green-600 hover:bg-green-700"
+                              onClick={() => handleValidatePurchase(purchase)}
+                              disabled={isValidating || purchase.total_purchase_amount === 0}
+                            >
+                              {isValidating ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <CheckCircle className="h-4 w-4" />
+                              )}
+                              Valider
+                            </Button>
                           </div>
                         </div>
                       </CardContent>
