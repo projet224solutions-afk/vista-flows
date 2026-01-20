@@ -22,6 +22,7 @@ import {
   Trash2,
   ShoppingCart,
   Building2,
+  Pencil,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -307,13 +308,24 @@ export function PurchasesList({ vendorId }: PurchasesListProps) {
                         </p>
                       </div>
                       <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" title="Voir les détails">
                           <Eye className="h-4 w-4" />
                         </Button>
+                        {!purchase.is_locked && purchase.status !== 'validated' && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Modifier l'achat"
+                            onClick={() => handleOpenPurchase(purchase)}
+                          >
+                            <Pencil className="h-4 w-4 text-primary" />
+                          </Button>
+                        )}
                         {purchase.status === 'draft' && (
                           <Button
                             variant="ghost"
                             size="icon"
+                            title="Supprimer l'achat"
                             onClick={() => setDeletePurchase(purchase)}
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
