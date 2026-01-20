@@ -121,28 +121,28 @@ export function SupplierFormDialog({
     },
   });
 
-  // Fetch products for vendor filtered by category (with images)
-  const { data: products = [], isLoading: productsLoading } = useQuery({
-    queryKey: ['vendor-products-for-supplier', vendorId, selectedCategoryId],
+  // Fetch ALL products for vendor (not filtered by category in the query)
+  const { data: allProducts = [], isLoading: productsLoading } = useQuery({
+    queryKey: ['vendor-products-for-supplier', vendorId],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from('products')
         .select('id, name, sku, category_id, images, price')
         .eq('vendor_id', vendorId)
         .eq('is_active', true)
-        .order('name');
-
-      // Only filter by category if a specific one is selected (not "all" or empty)
-      if (selectedCategoryId && selectedCategoryId !== 'all') {
-        query = query.eq('category_id', selectedCategoryId);
-      }
-
-      const { data, error } = await query.limit(100);
+        .order('name')
+        .limit(500);
+      
       if (error) throw error;
       return data || [];
     },
     enabled: !!vendorId && formData.category === 'Grossiste',
   });
+
+  // Filter products by selected category on the client side
+  const products = selectedCategoryId && selectedCategoryId !== 'all'
+    ? allProducts.filter(p => p.category_id === selectedCategoryId)
+    : allProducts;
 
   // Reset form when dialog opens/closes or editingSupplier changes
   useEffect(() => {
