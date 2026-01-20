@@ -112,49 +112,60 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
         supplierId = newSupplier.id;
       }
 
-      // Save linked products to vendor_supplier_products table
-      if (supplierId && data.linkedProducts.length > 0) {
-        // First delete existing linked products for this supplier
-        await supabase
+      // Synchroniser les produits liés du fournisseur (catalogue)
+      // Important: on supprime d'abord les liens existants pour refléter exactement la sélection UI
+      if (supplierId) {
+        const { error: deleteError } = await supabase
           .from('vendor_supplier_products')
           .delete()
           .eq('supplier_id', supplierId);
+        if (deleteError) throw deleteError;
 
-        // Create new products if any and get their IDs
-        const productIds: string[] = [];
+        const linksToInsert: Array<{
+          supplier_id: string;
+          product_id: string;
+          unit_cost: number;
+          default_quantity: number;
+        }> = [];
+
         for (const lp of data.linkedProducts) {
-          if (lp.isNew && lp.productName) {
-            const { data: newProduct, error } = await supabase
+          if (lp.isNew && lp.productName?.trim()) {
+            const { data: newProduct, error: newProductError } = await supabase
               .from('products')
               .insert({
                 vendor_id: vendorId,
-                name: lp.productName,
+                name: lp.productName.trim(),
                 category_id: lp.categoryId || null,
-                price: lp.unitPrice || 0,
+                price: lp.unitPrice ?? 0,
                 stock_quantity: 0,
                 is_active: true,
               })
               .select('id')
               .single();
-            if (!error && newProduct) {
-              productIds.push(newProduct.id);
-              // Add to supplier products
-              await supabase.from('vendor_supplier_products').insert({
-                supplier_id: supplierId,
-                product_id: newProduct.id,
-                unit_cost: lp.unitPrice || 0,
-                default_quantity: lp.quantity || 1,
-              });
-            }
+
+            if (newProductError) throw newProductError;
+
+            linksToInsert.push({
+              supplier_id: supplierId,
+              product_id: newProduct.id,
+              unit_cost: lp.unitPrice ?? 0,
+              default_quantity: lp.quantity || 1,
+            });
           } else if (lp.productId) {
-            // Link existing product
-            await supabase.from('vendor_supplier_products').insert({
+            linksToInsert.push({
               supplier_id: supplierId,
               product_id: lp.productId,
-              unit_cost: lp.unitPrice || 0,
+              unit_cost: lp.unitPrice ?? 0,
               default_quantity: lp.quantity || 1,
             });
           }
+        }
+
+        if (linksToInsert.length > 0) {
+          const { error: insertError } = await supabase
+            .from('vendor_supplier_products')
+            .insert(linksToInsert);
+          if (insertError) throw insertError;
         }
       }
     },
@@ -162,6 +173,9 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
       queryClient.invalidateQueries({ queryKey: ['vendor-suppliers', vendorId] });
       queryClient.invalidateQueries({ queryKey: ['supplier-purchase-stats', vendorId] });
       queryClient.invalidateQueries({ queryKey: ['vendor-products-for-supplier', vendorId] });
+      // Recharge les catalogues produits utilisés dans le dialog "Nouvel achat"
+      queryClient.invalidateQueries({ queryKey: ['supplier-products'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-linked-products'] });
       toast.success(editingSupplier ? 'Fournisseur modifié' : 'Fournisseur créé');
       handleCloseDialog();
     },
