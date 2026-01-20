@@ -116,13 +116,13 @@ export function SupplierFormDialog({
     },
   });
 
-  // Fetch products for vendor filtered by category
+  // Fetch products for vendor filtered by category (with images)
   const { data: products = [], isLoading: productsLoading } = useQuery({
     queryKey: ['vendor-products-for-supplier', vendorId, selectedCategoryId],
     queryFn: async () => {
       let query = supabase
         .from('products')
-        .select('id, name, sku, category_id')
+        .select('id, name, sku, category_id, images, price')
         .eq('vendor_id', vendorId)
         .eq('is_active', true)
         .order('name');
@@ -312,43 +312,80 @@ export function SupplierFormDialog({
                     />
                   </div>
                   
-                  {/* Liste des produits disponibles */}
+                  {/* Liste des produits disponibles avec images */}
                   {productsLoading ? (
-                    <div className="mt-2 text-sm text-muted-foreground">
+                    <div className="mt-3 text-sm text-muted-foreground text-center py-4">
                       Chargement des produits...
                     </div>
                   ) : filteredProducts.length > 0 ? (
-                    <div className="mt-2 border rounded-md max-h-48 overflow-auto">
-                      {filteredProducts.slice(0, 20).map((product) => {
-                        const isAlreadyAdded = formData.linkedProducts.some(
-                          (lp) => lp.productId === product.id
-                        );
-                        return (
-                          <button
-                            key={product.id}
-                            onClick={() => !isAlreadyAdded && handleAddProduct(product)}
-                            disabled={isAlreadyAdded}
-                            className={`w-full text-left px-3 py-2 text-sm flex justify-between items-center border-b last:border-b-0 ${
-                              isAlreadyAdded
-                                ? 'bg-muted/50 text-muted-foreground cursor-not-allowed'
-                                : 'hover:bg-muted'
-                            }`}
-                          >
-                            <span>{product.name}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {isAlreadyAdded ? 'Déjà ajouté' : product.sku}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <ScrollArea className="mt-3 h-64 border rounded-lg">
+                      <div className="p-2 space-y-2">
+                        {filteredProducts.slice(0, 30).map((product) => {
+                          const isAlreadyAdded = formData.linkedProducts.some(
+                            (lp) => lp.productId === product.id
+                          );
+                          const productImage = Array.isArray(product.images) && product.images.length > 0
+                            ? product.images[0]
+                            : null;
+                          
+                          return (
+                            <button
+                              key={product.id}
+                              onClick={() => !isAlreadyAdded && handleAddProduct(product)}
+                              disabled={isAlreadyAdded}
+                              className={`w-full text-left p-3 rounded-lg border flex items-center gap-3 transition-colors ${
+                                isAlreadyAdded
+                                  ? 'bg-muted/50 border-muted cursor-not-allowed opacity-60'
+                                  : 'hover:bg-accent hover:border-primary/30 cursor-pointer'
+                              }`}
+                            >
+                              {/* Image produit */}
+                              <div className="w-14 h-14 rounded-md bg-muted flex-shrink-0 overflow-hidden border">
+                                {productImage ? (
+                                  <img
+                                    src={productImage}
+                                    alt={product.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <Package className="h-6 w-6 text-muted-foreground" />
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Infos produit */}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm line-clamp-1">{product.name}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">{product.sku}</p>
+                                {product.price && (
+                                  <p className="text-xs font-medium text-primary mt-1">
+                                    {product.price.toLocaleString()} GNF
+                                  </p>
+                                )}
+                              </div>
+                              
+                              {/* Badge état */}
+                              {isAlreadyAdded && (
+                                <Badge variant="secondary" className="text-xs flex-shrink-0">
+                                  Ajouté
+                                </Badge>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </ScrollArea>
                   ) : products.length === 0 ? (
-                    <div className="mt-2 p-3 border rounded-md bg-muted/20 text-sm text-muted-foreground">
-                      Aucun produit dans cette catégorie. Vous pouvez en créer un nouveau ci-dessous.
+                    <div className="mt-3 p-4 border rounded-lg bg-muted/20 text-sm text-muted-foreground text-center">
+                      <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      Aucun produit dans cette catégorie.
+                      <br />
+                      Créez-en un nouveau ci-dessous.
                     </div>
                   ) : (
-                    <div className="mt-2 p-3 border rounded-md bg-muted/20 text-sm text-muted-foreground">
-                      Aucun produit correspondant à "{productSearch}". Vous pouvez en créer un nouveau.
+                    <div className="mt-3 p-4 border rounded-lg bg-muted/20 text-sm text-muted-foreground text-center">
+                      Aucun produit correspondant à "{productSearch}".
                     </div>
                   )}
                 </div>
