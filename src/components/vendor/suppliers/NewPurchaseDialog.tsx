@@ -62,7 +62,7 @@ interface SupplierProduct {
     name: string;
     price: number;
     stock_quantity: number;
-    image_url: string | null;
+    images: string[] | null;
     sku: string | null;
   };
 }
@@ -130,7 +130,7 @@ export function NewPurchaseDialog({
           product_id,
           unit_cost,
           default_quantity,
-          product:products(id, name, price, stock_quantity, image_url, sku)
+          product:products(id, name, price, stock_quantity, images, sku)
         `)
         .eq('supplier_id', selectedSupplier.id);
 
@@ -151,7 +151,7 @@ export function NewPurchaseDialog({
         productName: sp.product?.name || 'Produit inconnu',
         unitCost: sp.unit_cost || sp.product?.price || 0,
         quantity: sp.default_quantity || 1,
-        imageUrl: sp.product?.image_url || null,
+        imageUrl: sp.product?.images?.[0] || null,
         sku: sp.product?.sku || null,
         currentStock: sp.product?.stock_quantity || 0,
       }));
