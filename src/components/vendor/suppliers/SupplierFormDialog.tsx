@@ -426,11 +426,9 @@ export function SupplierFormDialog({
                                     </p>
                                   )}
                                 </div>
-                              </div>
-                              
-                              {/* Bouton ajouter */}
-                              {!isAlreadyAdded ? (
-                                <div className="flex items-center justify-end mt-2 pt-2 border-t">
+
+                                {/* Bouton ajouter ou badge ajouté */}
+                                {!isAlreadyAdded ? (
                                   <Button
                                     type="button"
                                     size="sm"
@@ -442,14 +440,12 @@ export function SupplierFormDialog({
                                     <Plus className="h-4 w-4 mr-1" />
                                     Ajouter
                                   </Button>
-                                </div>
-                              ) : (
-                                <div className="flex items-center justify-center mt-2 pt-2 border-t">
+                                ) : (
                                   <Badge variant="default" className="bg-primary text-primary-foreground">
                                     ✓ Ajouté
                                   </Badge>
-                                </div>
-                              )}
+                                )}
+                              </div>
                             </div>
                           );
                         })}
