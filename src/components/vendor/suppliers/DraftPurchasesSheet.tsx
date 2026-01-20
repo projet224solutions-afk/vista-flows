@@ -274,19 +274,6 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
                               <Pencil className="h-4 w-4" />
                               Modifier
                             </Button>
-                            <Button
-                              size="sm"
-                              className="flex-1 gap-2 bg-green-600 hover:bg-green-700"
-                              onClick={() => handleValidatePurchase(purchase)}
-                              disabled={isValidating || purchase.total_purchase_amount === 0}
-                            >
-                              {isValidating ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <CheckCircle className="h-4 w-4" />
-                              )}
-                              Valider
-                            </Button>
                           </div>
                         </div>
                       </CardContent>
