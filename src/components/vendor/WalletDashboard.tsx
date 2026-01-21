@@ -43,6 +43,7 @@ export default function WalletDashboard() {
   const [busy, setBusy] = useState(false);
   const [showTransferPreview, setShowTransferPreview] = useState(false);
   const [transferPreview, setTransferPreview] = useState<any>(null);
+  const [showFedaPayDialog, setShowFedaPayDialog] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
