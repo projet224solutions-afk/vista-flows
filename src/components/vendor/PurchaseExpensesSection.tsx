@@ -24,7 +24,7 @@ import { startOfDay, startOfWeek, startOfMonth, startOfYear, format } from 'date
 import { fr } from 'date-fns/locale';
 
 interface PurchaseExpensesSectionProps {
-  userId: string;
+  vendorId: string;
 }
 
 type PeriodFilter = 'today' | 'week' | 'month' | 'year' | 'all';
@@ -39,7 +39,7 @@ interface PurchaseExpense {
   created_at: string;
 }
 
-export function PurchaseExpensesSection({ userId }: PurchaseExpensesSectionProps) {
+export function PurchaseExpensesSection({ vendorId }: PurchaseExpensesSectionProps) {
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
 
   const getDateFilter = () => {
@@ -60,13 +60,13 @@ export function PurchaseExpensesSection({ userId }: PurchaseExpensesSectionProps
 
   // Récupérer les dépenses liées aux achats (avec purchase_reference)
   const { data: purchaseExpenses = [], isLoading } = useQuery({
-    queryKey: ['purchase-expenses', userId, periodFilter],
+    queryKey: ['purchase-expenses', vendorId, periodFilter],
     queryFn: async () => {
       const dateFilter = getDateFilter();
       let query = supabase
         .from('vendor_expenses')
         .select('*')
-        .eq('vendor_id', userId)
+        .eq('vendor_id', vendorId)
         .not('purchase_reference', 'is', null)
         .order('created_at', { ascending: false });
 
@@ -78,12 +78,12 @@ export function PurchaseExpensesSection({ userId }: PurchaseExpensesSectionProps
       if (error) throw error;
       return data as PurchaseExpense[];
     },
-    enabled: !!userId,
+    enabled: !!vendorId,
   });
 
   // Stats par période
   const { data: periodStats } = useQuery({
-    queryKey: ['purchase-expenses-stats', userId],
+    queryKey: ['purchase-expenses-stats', vendorId],
     queryFn: async () => {
       const now = new Date();
       const todayStart = startOfDay(now).toISOString();
@@ -95,31 +95,31 @@ export function PurchaseExpensesSection({ userId }: PurchaseExpensesSectionProps
         supabase
           .from('vendor_expenses')
           .select('id, amount')
-          .eq('vendor_id', userId)
+          .eq('vendor_id', vendorId)
           .not('purchase_reference', 'is', null)
           .gte('created_at', todayStart),
         supabase
           .from('vendor_expenses')
           .select('id, amount')
-          .eq('vendor_id', userId)
+          .eq('vendor_id', vendorId)
           .not('purchase_reference', 'is', null)
           .gte('created_at', weekStart),
         supabase
           .from('vendor_expenses')
           .select('id, amount')
-          .eq('vendor_id', userId)
+          .eq('vendor_id', vendorId)
           .not('purchase_reference', 'is', null)
           .gte('created_at', monthStart),
         supabase
           .from('vendor_expenses')
           .select('id, amount')
-          .eq('vendor_id', userId)
+          .eq('vendor_id', vendorId)
           .not('purchase_reference', 'is', null)
           .gte('created_at', yearStart),
         supabase
           .from('vendor_expenses')
           .select('id, amount')
-          .eq('vendor_id', userId)
+          .eq('vendor_id', vendorId)
           .not('purchase_reference', 'is', null),
       ]);
 
@@ -136,7 +136,7 @@ export function PurchaseExpensesSection({ userId }: PurchaseExpensesSectionProps
         all: calcStats(allRes.data),
       };
     },
-    enabled: !!userId,
+    enabled: !!vendorId,
   });
 
   const formatCurrency = (amount: number) => {
@@ -156,7 +156,7 @@ export function PurchaseExpensesSection({ userId }: PurchaseExpensesSectionProps
 
   const currentStats = periodStats?.[periodFilter] || { count: 0, totalAmount: 0 };
 
-  if (!userId) {
+  if (!vendorId) {
     return (
       <Card>
         <CardContent className="p-6 text-center text-muted-foreground">

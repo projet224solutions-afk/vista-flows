@@ -188,14 +188,17 @@ class ExpenseService {
       const totalExpenses = totalData?.reduce((sum, expense) => sum + expense.amount, 0) || 0;
 
       // Dépenses du mois (approved + paid)
-      const currentMonth = new Date().toISOString().slice(0, 7);
+      // IMPORTANT: ne pas utiliser "-32" (date invalide) -> calcule le début du mois et le début du mois suivant
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
       const { data: monthlyData, error: monthlyError } = await supabase
         .from('vendor_expenses')
         .select('amount')
         .eq('vendor_id', vendorId)
         .in('status', ['approved', 'paid'])
-        .gte('created_at', `${currentMonth}-01`)
-        .lt('created_at', `${currentMonth}-32`);
+        .gte('created_at', monthStart)
+        .lt('created_at', nextMonthStart);
 
       if (monthlyError) throw monthlyError;
 
