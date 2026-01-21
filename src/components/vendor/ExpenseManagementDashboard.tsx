@@ -431,12 +431,12 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
 
         {/* Achats - Dépenses liées aux achats de stock */}
         <TabsContent value="purchases" className="space-y-6">
-          {user?.id ? (
-            <PurchaseExpensesSection userId={user.id} />
+          {vendorId ? (
+            <PurchaseExpensesSection vendorId={vendorId} />
           ) : (
             <Card>
               <CardContent className="p-6 text-center text-muted-foreground">
-                Chargement des données utilisateur...
+                Chargement des données vendeur...
               </CardContent>
             </Card>
           )}
