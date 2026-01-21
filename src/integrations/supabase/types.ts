@@ -12136,6 +12136,42 @@ export type Database = {
         }
         Relationships: []
       }
+      profit_history: {
+        Row: {
+          created_at: string | null
+          discount: number | null
+          id: string
+          product_id: string
+          profit: number
+          purchase_price: number
+          sale_id: string
+          sale_price: number
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          discount?: number | null
+          id?: string
+          product_id: string
+          profit: number
+          purchase_price: number
+          sale_id: string
+          sale_price: number
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          discount?: number | null
+          id?: string
+          product_id?: string
+          profit?: number
+          purchase_price?: number
+          sale_id?: string
+          sale_price?: number
+          vendor_id?: string
+        }
+        Relationships: []
+      }
       promo_codes: {
         Row: {
           code: string

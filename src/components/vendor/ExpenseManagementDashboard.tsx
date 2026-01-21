@@ -47,10 +47,10 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
   
   // Récupérer le vendorId via le hook
-  const { vendorId, user, loading: vendorLoading } = useCurrentVendor();
+  const { vendorId, loading: vendorLoading } = useCurrentVendor();
 
-  // Hook principal de gestion des dépenses - passer le user.id car vendor_expenses référence auth.users
-  const expenseData = useExpenseManagement(user?.id);
+  // Hook principal de gestion des dépenses - utiliser vendorId
+  const expenseData = useExpenseManagement(vendorId);
 
   const {
     categories,
