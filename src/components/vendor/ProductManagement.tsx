@@ -1167,19 +1167,6 @@ export default function ProductManagement() {
                   >
                     Existante
                   </Button>
-                  <Button
-                    type="button"
-                    variant={categoryMode === 'new' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => {
-                      console.log('[Category] Switching to NEW mode');
-                      setCategoryMode('new');
-                      setFormData(prev => ({ ...prev, category_id: '', category_name: '' }));
-                    }}
-                  >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Nouvelle
-                  </Button>
                 </div>
 
                 {categoryMode === 'existing' ? (
