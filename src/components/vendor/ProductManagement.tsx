@@ -1168,8 +1168,9 @@ export default function ProductManagement() {
                     variant={categoryMode === 'new' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => {
+                      console.log('[Category] Switching to NEW mode');
                       setCategoryMode('new');
-                      setFormData(prev => ({ ...prev, category_id: '' }));
+                      setFormData(prev => ({ ...prev, category_id: '', category_name: '' }));
                     }}
                   >
                     <Plus className="h-3 w-3 mr-1" />
@@ -1222,11 +1223,18 @@ export default function ProductManagement() {
                     </PopoverContent>
                   </Popover>
                 ) : (
-                  <Input
-                    value={formData.category_name}
-                    onChange={(e) => setFormData({ ...formData, category_name: e.target.value })}
-                    placeholder="Nom de la nouvelle catégorie..."
-                  />
+                  <div className="space-y-1">
+                    <Input
+                      autoFocus
+                      value={formData.category_name}
+                      onChange={(e) => setFormData({ ...formData, category_name: e.target.value })}
+                      placeholder="Tapez le nom de la nouvelle catégorie..."
+                      className="border-primary/50 focus:border-primary"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Une nouvelle catégorie sera créée avec ce nom lors de l'enregistrement du produit.
+                    </p>
+                  </div>
                 )}
               </div>
 
