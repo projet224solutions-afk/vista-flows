@@ -22,6 +22,7 @@ interface ProductFormData {
   low_stock_threshold: string;
   category_id?: string;
   category_name?: string;
+  section?: string; // Section personnalisée du vendeur
   weight?: string;
   tags?: string;
   is_active: boolean;
@@ -347,6 +348,7 @@ export function useProductActions({
         stock_quantity: parseInt(formData.stock_quantity),
         low_stock_threshold: parseInt(formData.low_stock_threshold),
         category_id: categoryId,
+        section: formData.section?.trim() || null, // Section personnalisée
         weight: formData.weight ? parseFloat(formData.weight) : null,
         tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()) : null,
         is_active: formData.is_active,
@@ -444,6 +446,7 @@ export function useProductActions({
         stock_quantity: parseInt(formData.stock_quantity),
         low_stock_threshold: parseInt(formData.low_stock_threshold),
         category_id: categoryId,
+        section: formData.section?.trim() || null, // Section personnalisée
         weight: formData.weight ? parseFloat(formData.weight) : null,
         tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()) : null,
         is_active: formData.is_active,
