@@ -130,27 +130,8 @@ export default function InventoryManagement() {
     return cleanup;
   }, [refresh, toast]);
 
-  // Recharger automatiquement quand on revient sur l'onglet (focus) ou qu'il redevient visible
-  useEffect(() => {
-    if (!vendorId) return;
-
-    const reload = () => {
-      fetchProducts();
-      refresh();
-    };
-
-    const onVisibilityChange = () => {
-      if (!document.hidden) reload();
-    };
-
-    window.addEventListener('focus', reload);
-    document.addEventListener('visibilitychange', onVisibilityChange);
-
-    return () => {
-      window.removeEventListener('focus', reload);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-    };
-  }, [vendorId, fetchProducts, refresh]);
+  // Note: Rechargement automatique désactivé pour éviter les actualisations intempestives
+  // L'utilisateur peut rafraîchir manuellement si nécessaire
 
   // Synchronisation produits gérée dans useInventoryService (centralisée)
 
