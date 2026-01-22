@@ -3,7 +3,7 @@
  * Interface professionnelle avec gestion IA améliorée
  */
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -76,6 +76,18 @@ export default function ProductManagement() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { captureError } = useVendorErrorBoundary();
+
+  // ------------------------------
+  // Persistence UI (anti-fermeture sur refresh mobile)
+  // ------------------------------
+  const PRODUCT_DRAFT_VERSION = 1;
+  const PRODUCT_DRAFT_MAX_AGE_MS = 2 * 60 * 60 * 1000; // 2h
+  const productDraftKey = useMemo(
+    () => (vendorId ? `vendor_product_draft_v${PRODUCT_DRAFT_VERSION}:${vendorId}` : null),
+    [vendorId]
+  );
+  const draftRestoredRef = useRef(false);
+  const draftSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Product actions hook
   const {
@@ -87,11 +99,13 @@ export default function ProductManagement() {
     vendorId,
     onProductCreated: () => {
       fetchProducts();
+      if (productDraftKey) localStorage.removeItem(productDraftKey);
       setShowDialog(false);
       resetForm();
     },
     onProductUpdated: () => {
       fetchProducts();
+      if (productDraftKey) localStorage.removeItem(productDraftKey);
       setShowDialog(false);
       resetForm();
     },
@@ -152,6 +166,101 @@ export default function ProductManagement() {
     carton_sku: '',
     cartons_in_stock: ''
   });
+
+  const saveDraftNow = useCallback(() => {
+    if (!productDraftKey) return;
+    // On ne persiste que le mode création (pas l'édition) pour éviter les incohérences.
+    if (!showDialog || !!editingProduct) return;
+    if (saving) return;
+
+    try {
+      const payload = {
+        ts: Date.now(),
+        mode: 'create' as const,
+        formData,
+      };
+      localStorage.setItem(productDraftKey, JSON.stringify(payload));
+    } catch {
+      // ignore
+    }
+  }, [productDraftKey, showDialog, editingProduct, saving, formData]);
+
+  const clearDraft = useCallback(() => {
+    if (!productDraftKey) return;
+    try {
+      localStorage.removeItem(productDraftKey);
+    } catch {
+      // ignore
+    }
+  }, [productDraftKey]);
+
+  // Si le dialog est fermé (ou si on passe en mode édition), on nettoie le draft
+  useEffect(() => {
+    if (!productDraftKey) return;
+    if (!showDialog || !!editingProduct) {
+      clearDraft();
+    }
+  }, [productDraftKey, showDialog, editingProduct, clearDraft]);
+
+  // Restaurer le draft si la page se "refresh" quand l'utilisateur sort/revient
+  useEffect(() => {
+    if (!productDraftKey || !vendorId || vendorLoading) return;
+    if (draftRestoredRef.current) return;
+    draftRestoredRef.current = true;
+
+    try {
+      const raw = localStorage.getItem(productDraftKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { ts?: number; mode?: string; formData?: any };
+      const ts = typeof parsed?.ts === 'number' ? parsed.ts : 0;
+      if (!ts || Date.now() - ts > PRODUCT_DRAFT_MAX_AGE_MS) {
+        localStorage.removeItem(productDraftKey);
+        return;
+      }
+      if (parsed?.mode !== 'create' || !parsed?.formData) return;
+
+      // Réouvrir le formulaire et restaurer les champs
+      setEditingProduct(null);
+      setFormData((prev) => ({ ...prev, ...parsed.formData }));
+      setShowDialog(true);
+    } catch {
+      // ignore
+    }
+  }, [productDraftKey, vendorId, vendorLoading]);
+
+  // Sauvegarde automatique (debounced) + sauvegarde immédiate sur sortie d'onglet/app
+  useEffect(() => {
+    if (!productDraftKey) return;
+    if (!showDialog || !!editingProduct) return;
+
+    if (draftSaveTimeoutRef.current) clearTimeout(draftSaveTimeoutRef.current);
+    draftSaveTimeoutRef.current = setTimeout(() => {
+      saveDraftNow();
+    }, 250);
+
+    return () => {
+      if (draftSaveTimeoutRef.current) clearTimeout(draftSaveTimeoutRef.current);
+    };
+  }, [productDraftKey, showDialog, editingProduct, formData, saveDraftNow]);
+
+  useEffect(() => {
+    if (!productDraftKey) return;
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') saveDraftNow();
+    };
+    const handlePageHide = () => saveDraftNow();
+    const handleBlur = () => saveDraftNow();
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('blur', handleBlur);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, [productDraftKey, saveDraftNow]);
 
   // Load initial data
   useEffect(() => {
@@ -1725,6 +1834,7 @@ export default function ProductManagement() {
             <Button
               variant="outline"
               onClick={() => {
+                  clearDraft();
                 setShowDialog(false);
                 resetForm();
               }}

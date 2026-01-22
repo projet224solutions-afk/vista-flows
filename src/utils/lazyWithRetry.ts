@@ -43,6 +43,47 @@ const OfflineFallback = () => {
   ]);
 };
 
+// Fallback pour erreurs de chunk/caches: proposer un refresh MANUEL (pas automatique)
+const ReloadFallback = () => {
+  return createElement('div', {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '200px',
+      padding: '20px',
+      textAlign: 'center',
+      color: '#666'
+    }
+  }, [
+    createElement('div', {
+      key: 'icon',
+      style: { fontSize: '48px', marginBottom: '16px' }
+    }, '🧩'),
+    createElement('h3', {
+      key: 'title',
+      style: { margin: '0 0 8px 0', color: '#333' }
+    }, 'Mise à jour requise'),
+    createElement('p', {
+      key: 'message',
+      style: { margin: '0', fontSize: '14px' }
+    }, "Impossible de charger une partie de l'application. Actualisez pour continuer."),
+    createElement('button', {
+      key: 'button',
+      onClick: () => window.location.reload(),
+      style: {
+        marginTop: '16px',
+        padding: '8px 16px',
+        border: '1px solid #ddd',
+        borderRadius: '6px',
+        background: '#fff',
+        cursor: 'pointer'
+      }
+    }, 'Actualiser')
+  ]);
+};
+
 /**
  * Vérifie si l'app est en mode hors ligne
  */
@@ -114,21 +155,18 @@ export function lazyWithRetry<T extends ComponentType<any>>(
         }
 
         // Si les retries échouent et qu'on est toujours online, recharger la page
-        if (navigator.onLine) {
-          console.warn('[LazyRetry] All retries failed, reloading page...');
-          sessionStorage.setItem('page_reloaded_for_chunk', 'true');
-          window.location.reload();
-        }
-        
-        // Fallback si le reload n'a pas fonctionné
-        return { default: OfflineFallback as unknown as T };
+        // IMPORTANT: ne pas recharger automatiquement (ça ferme des formulaires/modals sur mobile)
+        // → on propose un refresh manuel à l'utilisateur.
+        console.warn('[LazyRetry] All retries failed, showing manual refresh fallback...');
+        sessionStorage.setItem('page_reloaded_for_chunk', 'true');
+        return { default: ReloadFallback as unknown as T };
       }
 
       // Si on a déjà rechargé, afficher le fallback au lieu de planter
       if (pageHasAlreadyReloaded && isChunkLoadError) {
         console.warn('[LazyRetry] Already reloaded, showing fallback');
         sessionStorage.removeItem('page_reloaded_for_chunk');
-        return { default: OfflineFallback as unknown as T };
+        return { default: ReloadFallback as unknown as T };
       }
 
       // Pour les autres erreurs, propager
