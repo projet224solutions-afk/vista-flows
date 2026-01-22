@@ -419,6 +419,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
       console.log('🔔 Auth state change:', event, nextSession?.user?.email || 'no user');
 
+      // ✨ Ignorer les événements TOKEN_REFRESHED pour éviter les re-renders inutiles
+      // Ces événements ne changent pas l'utilisateur, juste le token
+      if (event === 'TOKEN_REFRESHED') {
+        console.log('⏭️ Token refresh ignoré (pas de re-render)');
+        // Mettre à jour silencieusement la session sans déclencher de re-render du user
+        setSession(nextSession);
+        return;
+      }
+
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
 
