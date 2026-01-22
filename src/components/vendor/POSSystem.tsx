@@ -1885,7 +1885,7 @@ export function POSSystem() {
                         </div>
                         
                         {/* Contrôles quantité ultra compacts */}
-                        <div className="flex items-center bg-muted/40 rounded-md">
+                        <div className="flex items-center bg-muted/40 rounded-md flex-shrink-0 overflow-visible">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1896,11 +1896,11 @@ export function POSSystem() {
                                 : 1;
                               updateQuantity(item.id, item.quantity - decrementBy);
                             }}
-                            className="h-6 w-6 p-0 hover:bg-destructive/20"
+                            className="h-6 w-6 min-w-[24px] p-0 hover:bg-destructive/20"
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
-                          <span className="font-mono font-bold text-xs w-5 text-center">
+                          <span className="font-mono font-bold text-xs min-w-[20px] w-auto px-1 text-center">
                             {item.saleType === 'carton' && item.units_per_carton 
                               ? Math.floor(item.quantity / item.units_per_carton)
                               : item.quantity}
@@ -1909,7 +1909,7 @@ export function POSSystem() {
                             variant="ghost"
                             size="sm"
                             onClick={() => item.saleType === 'carton' ? addToCartByCarton(item) : addToCart(item)}
-                            className="h-6 w-6 p-0 hover:bg-primary/20"
+                            className="h-6 w-6 min-w-[24px] p-0 hover:bg-primary/20"
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
