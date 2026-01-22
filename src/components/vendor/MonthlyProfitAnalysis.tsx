@@ -75,7 +75,8 @@ interface FixedCost {
 }
 
 interface MonthlyProfitAnalysisProps {
-  vendorId: string;
+  vendorId: string; // ID de vendors (pour orders, stock_purchases)
+  userId: string;   // ID de auth.users (pour vendor_expenses, vendor_fixed_costs)
 }
 
 const COST_TYPE_LABELS: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
@@ -96,7 +97,7 @@ const formatCurrency = (amount: number): string => {
   }).format(amount) + ' GNF';
 };
 
-export function MonthlyProfitAnalysis({ vendorId }: MonthlyProfitAnalysisProps) {
+export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysisProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -107,24 +108,24 @@ export function MonthlyProfitAnalysis({ vendorId }: MonthlyProfitAnalysisProps) 
     amount: ''
   });
 
-  // Récupérer les coûts fixes
+  // Récupérer les coûts fixes (utilise userId car vendor_fixed_costs référence auth.users)
   const { data: fixedCosts = [], isLoading: loadingCosts } = useQuery({
-    queryKey: ['vendor-fixed-costs', vendorId],
+    queryKey: ['vendor-fixed-costs', userId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('vendor_fixed_costs')
         .select('*')
-        .eq('vendor_id', vendorId)
+        .eq('vendor_id', userId)
         .eq('is_active', true)
         .order('cost_type');
       
       if (error) throw error;
       return (data || []) as FixedCost[];
     },
-    enabled: !!vendorId
+    enabled: !!userId
   });
 
-  // Récupérer les ventes du mois (orders completed)
+  // Récupérer les ventes du mois (orders - utilise vendorId car orders référence vendors)
   const { data: monthlySales = 0, isLoading: loadingSales } = useQuery({
     queryKey: ['vendor-monthly-sales', vendorId],
     queryFn: async () => {
@@ -146,7 +147,7 @@ export function MonthlyProfitAnalysis({ vendorId }: MonthlyProfitAnalysisProps) 
     enabled: !!vendorId
   });
 
-  // Récupérer les achats du mois (stock purchases)
+  // Récupérer les achats du mois (stock_purchases - utilise vendorId)
   const { data: monthlyPurchases = 0, isLoading: loadingPurchases } = useQuery({
     queryKey: ['vendor-monthly-purchases', vendorId],
     queryFn: async () => {
@@ -168,13 +169,13 @@ export function MonthlyProfitAnalysis({ vendorId }: MonthlyProfitAnalysisProps) 
     enabled: !!vendorId
   });
 
-  // Mutation pour ajouter un coût fixe
+  // Mutation pour ajouter un coût fixe (utilise userId)
   const addCostMutation = useMutation({
     mutationFn: async (data: { cost_type: string; label: string; amount: number }) => {
       const { error } = await supabase
         .from('vendor_fixed_costs')
         .insert({
-          vendor_id: vendorId,
+          vendor_id: userId,
           cost_type: data.cost_type,
           label: data.label,
           amount: data.amount,
@@ -183,7 +184,7 @@ export function MonthlyProfitAnalysis({ vendorId }: MonthlyProfitAnalysisProps) 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vendor-fixed-costs', vendorId] });
+      queryClient.invalidateQueries({ queryKey: ['vendor-fixed-costs', userId] });
       toast({ title: 'Coût fixe ajouté avec succès' });
       setIsAddDialogOpen(false);
       resetForm();
@@ -207,7 +208,7 @@ export function MonthlyProfitAnalysis({ vendorId }: MonthlyProfitAnalysisProps) 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vendor-fixed-costs', vendorId] });
+      queryClient.invalidateQueries({ queryKey: ['vendor-fixed-costs', userId] });
       toast({ title: 'Coût fixe mis à jour' });
       setEditingCost(null);
       resetForm();
@@ -227,7 +228,7 @@ export function MonthlyProfitAnalysis({ vendorId }: MonthlyProfitAnalysisProps) 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vendor-fixed-costs', vendorId] });
+      queryClient.invalidateQueries({ queryKey: ['vendor-fixed-costs', userId] });
       toast({ title: 'Coût fixe supprimé' });
     },
     onError: () => {
