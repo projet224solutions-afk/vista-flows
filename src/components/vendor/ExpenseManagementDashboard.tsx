@@ -21,12 +21,13 @@ import {
   TrendingUp, TrendingDown, DollarSign, Package, AlertTriangle,
   Plus, Filter, Download, Upload, Eye, Calendar, CreditCard,
   Wallet, Receipt, Target, Activity, Brain, Bell, Search,
-  MoreHorizontal, Edit, Trash2, Check, X, FileText, Camera, ShoppingCart
+  MoreHorizontal, Edit, Trash2, Check, X, FileText, Camera, ShoppingCart, Calculator
 } from 'lucide-react';
 import { useExpenseManagement } from '@/hooks/useExpenseManagement';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import WalletDashboard from '@/components/vendor/WalletDashboard';
 import { PurchaseExpensesSection } from './PurchaseExpensesSection';
+import { MonthlyProfitAnalysis } from './MonthlyProfitAnalysis';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -43,7 +44,7 @@ interface ExpenseManagementDashboardProps {
 
 export default function ExpenseManagementDashboard({ className }: ExpenseManagementDashboardProps) {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('profit');
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
   
   // Récupérer le vendorId via le hook
@@ -265,7 +266,11 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
 
       {/* Onglets principaux */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
+          <TabsTrigger value="profit">
+            <Calculator className="w-4 h-4 mr-2" />
+            Profit
+          </TabsTrigger>
           <TabsTrigger value="dashboard">
             <BarChart className="w-4 h-4 mr-2" />
             Dashboard
@@ -291,6 +296,19 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
             Wallet
           </TabsTrigger>
         </TabsList>
+
+        {/* Analyse de Profit Mensuel */}
+        <TabsContent value="profit" className="space-y-6">
+          {vendorId ? (
+            <MonthlyProfitAnalysis vendorId={vendorId} />
+          ) : (
+            <Card>
+              <CardContent className="p-6 text-center text-muted-foreground">
+                Chargement des données vendeur...
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
 
         {/* Dashboard - Graphiques et analyses */}
         <TabsContent value="dashboard" className="space-y-6">
