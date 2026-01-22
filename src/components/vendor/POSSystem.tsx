@@ -1871,7 +1871,7 @@ export function POSSystem() {
                     {cart.map(item => (
                       <div 
                         key={`${item.id}-${item.saleType || 'unit'}`} 
-                        className="flex items-center gap-1.5 p-1.5 sm:p-2 bg-background/80 rounded-lg border border-border/30"
+                        className="flex items-center gap-2 p-1.5 sm:p-2 bg-background/80 rounded-lg border border-border/30"
                       >
                         {/* Nom + Prix */}
                         <div className="flex-1 min-w-0">
@@ -1884,32 +1884,31 @@ export function POSSystem() {
                           </p>
                         </div>
                         
-                        {/* Contrôles quantité ultra compacts */}
-                        <div className="flex items-center bg-muted/40 rounded-md flex-shrink-0 overflow-visible">
+                        {/* Contrôles quantité */}
+                        <div className="flex items-center bg-muted/40 rounded-md flex-shrink-0">
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size="icon"
                             onClick={() => {
-                              // Pour carton, décrémenter par unités de carton entier
                               const decrementBy = item.saleType === 'carton' && item.units_per_carton 
                                 ? item.units_per_carton 
                                 : 1;
                               updateQuantity(item.id, item.quantity - decrementBy);
                             }}
-                            className="h-6 w-6 min-w-[24px] p-0 hover:bg-destructive/20"
+                            className="h-7 w-7 p-0 hover:bg-destructive/20"
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
-                          <span className="font-mono font-bold text-xs min-w-[20px] w-auto px-1 text-center">
+                          <span className="font-mono font-bold text-xs w-6 text-center">
                             {item.saleType === 'carton' && item.units_per_carton 
                               ? Math.floor(item.quantity / item.units_per_carton)
                               : item.quantity}
                           </span>
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size="icon"
                             onClick={() => item.saleType === 'carton' ? addToCartByCarton(item) : addToCart(item)}
-                            className="h-6 w-6 min-w-[24px] p-0 hover:bg-primary/20"
+                            className="h-7 w-7 p-0 hover:bg-primary/20"
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
