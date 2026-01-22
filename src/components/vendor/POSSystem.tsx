@@ -1858,7 +1858,7 @@ export function POSSystem() {
             </div>
 
             {/* Liste des produits du panier - Zone scrollable optimisée */}
-            <div className="overflow-auto p-1.5 sm:p-2 max-h-[180px] md:flex-1 md:max-h-none md:min-h-0">
+            <div className="overflow-hidden p-1.5 sm:p-2 max-h-[180px] md:flex-1 md:max-h-none md:min-h-0">
               <ScrollArea className="h-full">
                 {cart.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-32 text-center">
@@ -1867,7 +1867,7 @@ export function POSSystem() {
                     <p className="text-xs text-muted-foreground/80">Ajoutez des produits</p>
                   </div>
                 ) : (
-                  <div className="space-y-1 pr-3">
+                  <div className="space-y-1 pr-5">
                     {cart.map(item => (
                       <div 
                         key={`${item.id}-${item.saleType || 'unit'}`} 
