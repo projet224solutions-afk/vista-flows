@@ -367,31 +367,31 @@ export function NewPurchaseDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
-        <DialogHeader className="p-6 pb-4 border-b flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <ShoppingCart className="h-6 w-6 text-primary" />
+      <DialogContent className="max-w-4xl w-[95vw] sm:w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="p-3 sm:p-6 pb-3 sm:pb-4 border-b flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             </div>
-            <div>
-              <DialogTitle className="text-xl font-semibold">
+            <div className="min-w-0 flex-1">
+              <DialogTitle className="text-base sm:text-xl font-semibold">
                 Nouvel achat de stock
               </DialogTitle>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1 truncate">
                 {step === 1
                   ? 'Étape 1/2: Sélectionnez le fournisseur'
-                  : 'Étape 2/2: Sélectionnez les produits à acheter'}
+                  : 'Étape 2/2: Sélectionnez les produits'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 mt-4">
+          <div className="flex items-center gap-1.5 sm:gap-2 mt-3 sm:mt-4">
             <div className={cn(
-              "flex-1 h-2 rounded-full transition-colors",
+              "flex-1 h-1.5 sm:h-2 rounded-full transition-colors",
               step >= 1 ? "bg-primary" : "bg-muted"
             )} />
             <div className={cn(
-              "flex-1 h-2 rounded-full transition-colors",
+              "flex-1 h-1.5 sm:h-2 rounded-full transition-colors",
               step >= 2 ? "bg-primary" : "bg-muted"
             )} />
           </div>
@@ -399,38 +399,38 @@ export function NewPurchaseDialog({
 
         {/* Step 1: Supplier Selection */}
         {step === 1 && (
-          <div className="flex-1 min-h-0 p-6 space-y-4">
+          <div className="flex-1 min-h-0 p-3 sm:p-6 space-y-3 sm:space-y-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Rechercher un fournisseur..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-11"
+                className="pl-10 h-10 sm:h-11 text-sm"
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium flex items-center justify-between">
+              <Label className="text-xs sm:text-sm font-medium flex items-center justify-between">
                 <span>Fournisseurs disponibles</span>
-                <Badge variant="secondary">{filteredSuppliers.length}</Badge>
+                <Badge variant="secondary" className="text-xs">{filteredSuppliers.length}</Badge>
               </Label>
 
               {loadingSuppliers ? (
-                <div className="h-64 flex items-center justify-center border rounded-lg bg-muted/20">
+                <div className="h-48 sm:h-64 flex items-center justify-center border rounded-lg bg-muted/20">
                   <p className="text-sm text-muted-foreground">Chargement...</p>
                 </div>
               ) : filteredSuppliers.length === 0 ? (
-                <div className="h-64 flex flex-col items-center justify-center border rounded-lg bg-muted/20">
-                  <Building2 className="h-12 w-12 text-muted-foreground/40 mb-3" />
-                  <p className="text-sm text-muted-foreground text-center">
+                <div className="h-48 sm:h-64 flex flex-col items-center justify-center border rounded-lg bg-muted/20 px-4">
+                  <Building2 className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground/40 mb-2 sm:mb-3" />
+                  <p className="text-xs sm:text-sm text-muted-foreground text-center">
                     {suppliers.length === 0
-                      ? "Aucun fournisseur. Créez-en un d'abord dans l'onglet Fournisseurs."
+                      ? "Aucun fournisseur. Créez-en un d'abord."
                       : 'Aucun fournisseur trouvé'}
                   </p>
                 </div>
               ) : (
-                <ScrollArea className="h-80 border rounded-lg">
+                <ScrollArea className="h-[45vh] sm:h-80 border rounded-lg">
                   <div className="p-2 space-y-2">
                     {filteredSuppliers.map((supplier) => {
                       const isSelected = selectedSupplier?.id === supplier.id;
@@ -440,51 +440,51 @@ export function NewPurchaseDialog({
                           key={supplier.id}
                           onClick={() => setSelectedSupplier(supplier)}
                           className={cn(
-                            "p-4 rounded-lg border-2 cursor-pointer transition-all",
+                            "p-3 sm:p-4 rounded-lg border-2 cursor-pointer transition-all",
                             isSelected
                               ? "border-primary bg-primary/5"
-                              : "border-transparent bg-muted/30 hover:bg-accent hover:border-primary/30"
+                              : "border-transparent bg-muted/30 hover:bg-accent active:bg-accent/80"
                           )}
                         >
-                          <div className="flex items-start gap-4">
+                          <div className="flex items-start gap-2.5 sm:gap-4">
                             <div className={cn(
-                              "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0",
+                              "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0",
                               isSelected ? "bg-primary text-primary-foreground" : "bg-muted"
                             )}>
                               {isSelected ? (
-                                <Check className="h-5 w-5" />
+                                <Check className="h-4 w-4 sm:h-5 sm:w-5" />
                               ) : (
-                                <Building2 className="h-5 w-5 text-muted-foreground" />
+                                <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                               )}
                             </div>
 
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h4 className="font-semibold text-sm">{supplier.name}</h4>
+                              <div className="flex items-center gap-2 mb-0.5 sm:mb-1 flex-wrap">
+                                <h4 className="font-semibold text-sm truncate">{supplier.name}</h4>
                                 {supplier.category && (
-                                  <Badge variant="outline" className="text-xs">
+                                  <Badge variant="outline" className="text-[10px] sm:text-xs">
                                     {supplier.category}
                                   </Badge>
                                 )}
                               </div>
 
-                              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                              <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] sm:text-xs text-muted-foreground">
                                 {supplier.phone && (
                                   <span className="flex items-center gap-1">
-                                    <Phone className="h-3 w-3" />
-                                    {supplier.phone}
+                                    <Phone className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                                    <span className="truncate max-w-[100px]">{supplier.phone}</span>
                                   </span>
                                 )}
                                 {supplier.email && (
-                                  <span className="flex items-center gap-1">
+                                  <span className="hidden sm:flex items-center gap-1">
                                     <Mail className="h-3 w-3" />
-                                    {supplier.email}
+                                    <span className="truncate max-w-[120px]">{supplier.email}</span>
                                   </span>
                                 )}
                                 {supplier.address && (
-                                  <span className="flex items-center gap-1">
+                                  <span className="hidden sm:flex items-center gap-1">
                                     <MapPin className="h-3 w-3" />
-                                    {supplier.address}
+                                    <span className="truncate max-w-[120px]">{supplier.address}</span>
                                   </span>
                                 )}
                               </div>
@@ -502,42 +502,44 @@ export function NewPurchaseDialog({
 
         {/* Step 2: Product Selection */}
         {step === 2 && (
-          <div className="flex-1 min-h-0 p-6 space-y-4 overflow-hidden flex flex-col">
+          <div className="flex-1 min-h-0 p-3 sm:p-6 space-y-3 sm:space-y-4 overflow-hidden flex flex-col">
             {/* Supplier info with change button */}
-            <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Building2 className="h-5 w-5 text-primary flex-shrink-0" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Fournisseur sélectionné</p>
-                  <p className="font-semibold text-sm">{selectedSupplier?.name}</p>
+            <div className="p-2.5 sm:p-3 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-between">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Fournisseur</p>
+                  <p className="font-semibold text-xs sm:text-sm truncate">{selectedSupplier?.name}</p>
                 </div>
               </div>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={handleChangeSupplier}
-                className="text-xs gap-1"
+                className="text-[10px] sm:text-xs gap-1 px-2 h-7 sm:h-8 flex-shrink-0"
               >
                 <RefreshCw className="h-3 w-3" />
-                Changer
+                <span className="hidden xs:inline">Changer</span>
               </Button>
             </div>
 
             {/* Filters: Search + Category */}
-            <div className="flex gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <div className="flex gap-2 sm:gap-3">
+              <div className="relative flex-1 min-w-0">
+                <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher un produit..."
+                  placeholder="Recherche..."
                   value={productSearchTerm}
                   onChange={(e) => setProductSearchTerm(e.target.value)}
-                  className="pl-10 h-10"
+                  className="pl-8 sm:pl-10 h-9 sm:h-10 text-sm"
                 />
               </div>
               <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
-                <SelectTrigger className="w-48 h-10">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Catégorie" />
+                <SelectTrigger className="w-[130px] sm:w-48 h-9 sm:h-10 text-xs sm:text-sm">
+                  <Filter className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+                  <span className="truncate">
+                    <SelectValue placeholder="Catégorie" />
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Toutes catégories</SelectItem>
@@ -548,44 +550,44 @@ export function NewPurchaseDialog({
               </Select>
             </div>
 
-            {/* Two columns: Available products / Selected products */}
-            <div className="flex-1 grid grid-cols-2 gap-4 min-h-0">
+            {/* Two columns on desktop, stacked tabs on mobile */}
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 min-h-0">
               {/* Available products to add */}
               <div className="flex flex-col min-h-0 border rounded-lg">
-                <div className="p-3 border-b bg-muted/30">
-                  <Label className="text-sm font-medium flex items-center justify-between">
+                <div className="p-2 sm:p-3 border-b bg-muted/30">
+                  <Label className="text-xs sm:text-sm font-medium flex items-center justify-between">
                     <span>Produits disponibles</span>
-                    <Badge variant="secondary">{filteredSupplierProducts.length}</Badge>
+                    <Badge variant="secondary" className="text-[10px] sm:text-xs">{filteredSupplierProducts.length}</Badge>
                   </Label>
                 </div>
                 
                 {loadingProducts ? (
-                  <div className="flex-1 flex items-center justify-center">
-                    <p className="text-sm text-muted-foreground">Chargement...</p>
+                  <div className="flex-1 flex items-center justify-center min-h-[120px] sm:min-h-0">
+                    <p className="text-xs sm:text-sm text-muted-foreground">Chargement...</p>
                   </div>
                 ) : filteredSupplierProducts.length === 0 ? (
-                  <div className="flex-1 flex flex-col items-center justify-center p-4">
-                    <Package className="h-10 w-10 text-muted-foreground/40 mb-2" />
-                    <p className="text-xs text-muted-foreground text-center">
+                  <div className="flex-1 flex flex-col items-center justify-center p-3 min-h-[120px] sm:min-h-0">
+                    <Package className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/40 mb-2" />
+                    <p className="text-[10px] sm:text-xs text-muted-foreground text-center">
                       {supplierProducts.length === 0
-                        ? "Aucun produit lié à ce fournisseur"
+                        ? "Aucun produit lié"
                         : selectedProducts.length === supplierProducts.length
-                        ? "Tous les produits ont été ajoutés"
-                        : 'Aucun produit trouvé'}
+                        ? "Tous ajoutés"
+                        : 'Aucun trouvé'}
                     </p>
                   </div>
                 ) : (
-                  <ScrollArea className="flex-1">
-                    <div className="p-2 space-y-2">
+                  <ScrollArea className="flex-1 max-h-[25vh] sm:max-h-none">
+                    <div className="p-1.5 sm:p-2 space-y-1.5 sm:space-y-2">
                       {filteredSupplierProducts.map((sp) => {
                         return (
                           <div
                           key={sp.id}
-                          className="p-3 rounded-lg border bg-card hover:bg-accent/50 transition-all cursor-pointer"
+                          className="p-2 sm:p-3 rounded-lg border bg-card hover:bg-accent/50 active:bg-accent transition-all cursor-pointer"
                           onClick={() => addProductToSelection(sp)}
                         >
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
                               {sp.product?.images?.[0] ? (
                                 <img
                                   src={sp.product.images[0]}
@@ -593,15 +595,15 @@ export function NewPurchaseDialog({
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
-                                <Package className="h-5 w-5 text-muted-foreground" />
+                                <Package className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate">{sp.product?.name}</p>
-                              <span className="text-xs text-muted-foreground">Stock: {sp.product?.stock_quantity || 0}</span>
+                              <p className="font-medium text-xs sm:text-sm truncate">{sp.product?.name}</p>
+                              <span className="text-[10px] sm:text-xs text-muted-foreground">Stock: {sp.product?.stock_quantity || 0}</span>
                             </div>
-                            <Button size="icon" variant="ghost" className="h-8 w-8 flex-shrink-0">
-                              <Plus className="h-4 w-4" />
+                            <Button size="icon" variant="ghost" className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0">
+                              <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             </Button>
                           </div>
                         </div>
@@ -614,34 +616,33 @@ export function NewPurchaseDialog({
 
               {/* Selected products with quantities */}
               <div className="flex flex-col min-h-0 border rounded-lg border-primary/30">
-                <div className="p-3 border-b bg-primary/5">
-                  <Label className="text-sm font-medium flex items-center justify-between">
-                    <span className="text-primary">Produits sélectionnés</span>
-                    <Badge className="bg-primary">{selectedProducts.length} produit(s)</Badge>
+                <div className="p-2 sm:p-3 border-b bg-primary/5">
+                  <Label className="text-xs sm:text-sm font-medium flex items-center justify-between">
+                    <span className="text-primary">Sélectionnés</span>
+                    <Badge className="bg-primary text-[10px] sm:text-xs">{selectedProducts.length} produit(s)</Badge>
                   </Label>
                 </div>
                 
                 {selectedProducts.length === 0 ? (
-                  <div className="flex-1 flex flex-col items-center justify-center p-4">
-                    <ShoppingCart className="h-10 w-10 text-muted-foreground/40 mb-2" />
-                    <p className="text-xs text-muted-foreground text-center">
-                      Cliquez sur un produit à gauche pour l'ajouter
+                  <div className="flex-1 flex flex-col items-center justify-center p-3 min-h-[120px] sm:min-h-0">
+                    <ShoppingCart className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/40 mb-2" />
+                    <p className="text-[10px] sm:text-xs text-muted-foreground text-center">
+                      Cliquez sur un produit pour l'ajouter
                     </p>
                   </div>
                 ) : (
-                  <ScrollArea className="flex-1">
-                    <div className="p-2 space-y-2">
+                  <ScrollArea className="flex-1 max-h-[25vh] sm:max-h-none">
+                    <div className="p-1.5 sm:p-2 space-y-1.5 sm:space-y-2">
                       {selectedProducts.map((product) => {
                         const productTotal = calculateProductTotal(product);
-                        const cartonCost = product.priceCarton || product.unitCost * (product.unitsPerCarton || 1);
                         
                         return (
                           <div
                             key={product.productId}
-                            className="p-3 rounded-lg border bg-card"
+                            className="p-2 sm:p-3 rounded-lg border bg-card"
                           >
                             <div className="flex items-start gap-2 mb-2">
-                              <div className="w-8 h-8 rounded bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
                                 {product.imageUrl ? (
                                   <img
                                     src={product.imageUrl}
@@ -649,25 +650,25 @@ export function NewPurchaseDialog({
                                     className="w-full h-full object-cover"
                                   />
                                 ) : (
-                                  <Package className="h-4 w-4 text-muted-foreground" />
+                                  <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium text-xs truncate">{product.productName}</p>
+                                <p className="font-medium text-[11px] sm:text-xs truncate">{product.productName}</p>
                               </div>
                               <Button 
                                 size="icon" 
                                 variant="ghost" 
-                                className="h-6 w-6 text-destructive hover:text-destructive"
+                                className="h-5 w-5 sm:h-6 sm:w-6 text-destructive hover:text-destructive"
                                 onClick={() => removeProductFromSelection(product.productId)}
                               >
-                                <Trash2 className="h-3 w-3" />
+                                <Trash2 className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                               </Button>
                             </div>
 
                             {/* Prix d'achat */}
-                            <div className="flex items-center gap-2 mb-2 p-2 rounded bg-muted/50">
-                              <span className="text-xs text-muted-foreground whitespace-nowrap">Prix:</span>
+                            <div className="flex items-center gap-1.5 sm:gap-2 mb-2 p-1.5 sm:p-2 rounded bg-muted/50">
+                              <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">Prix:</span>
                               <Input
                                 type="number"
                                 min="0"
@@ -681,13 +682,13 @@ export function NewPurchaseDialog({
                                     raw === '' ? 0 : Number.parseFloat(raw) || 0
                                   );
                                 }}
-                                className="w-20 h-7 text-center text-xs"
+                                className="w-16 sm:w-20 h-6 sm:h-7 text-center text-[10px] sm:text-xs"
                               />
                               <Select 
                                 value={product.unitCostCurrency} 
                                 onValueChange={(val) => setProductCurrency(product.productId, val)}
                               >
-                                <SelectTrigger className="w-20 h-7 text-xs">
+                                <SelectTrigger className="w-16 sm:w-20 h-6 sm:h-7 text-[10px] sm:text-xs">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -701,74 +702,76 @@ export function NewPurchaseDialog({
                             </div>
 
                             {/* Quantity controls */}
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-muted-foreground w-12">Unités:</span>
+                            <div className="space-y-1.5 sm:space-y-2">
+                              <div className="flex items-center gap-1.5 sm:gap-2">
+                                <span className="text-[10px] sm:text-xs text-muted-foreground w-10 sm:w-12">Unités:</span>
                                 <Button
                                   type="button"
                                   variant="outline"
                                   size="icon"
-                                  className="h-6 w-6"
+                                  className="h-5 w-5 sm:h-6 sm:w-6"
                                   onClick={() => updateProductQuantity(product.productId, -1)}
                                 >
-                                  <Minus className="h-3 w-3" />
+                                  <Minus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                 </Button>
                                 <Input
                                   type="number"
                                   min="0"
+                                  inputMode="numeric"
                                   value={product.quantity}
                                   onChange={(e) => setProductQuantity(product.productId, parseInt(e.target.value) || 0)}
-                                  className="w-12 h-6 text-center text-xs"
+                                  className="w-10 sm:w-12 h-5 sm:h-6 text-center text-[10px] sm:text-xs"
                                 />
                                 <Button
                                   type="button"
                                   variant="outline"
                                   size="icon"
-                                  className="h-6 w-6"
+                                  className="h-5 w-5 sm:h-6 sm:w-6"
                                   onClick={() => updateProductQuantity(product.productId, 1)}
                                 >
-                                  <Plus className="h-3 w-3" />
+                                  <Plus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                 </Button>
                               </div>
 
                               {product.sellByCarton && product.unitsPerCarton && (
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs text-muted-foreground w-12 flex items-center gap-1">
-                                    <Box className="h-3 w-3" />
+                                <div className="flex items-center gap-1.5 sm:gap-2">
+                                  <span className="text-[10px] sm:text-xs text-muted-foreground w-10 sm:w-12 flex items-center gap-0.5 sm:gap-1">
+                                    <Box className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                     Ctn:
                                   </span>
                                   <Button
                                     type="button"
                                     variant="outline"
                                     size="icon"
-                                    className="h-6 w-6"
+                                    className="h-5 w-5 sm:h-6 sm:w-6"
                                     onClick={() => updateCartonQuantity(product.productId, -1)}
                                   >
-                                    <Minus className="h-3 w-3" />
+                                    <Minus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                   </Button>
                                   <Input
                                     type="number"
                                     min="0"
+                                    inputMode="numeric"
                                     value={product.cartonQuantity}
                                     onChange={(e) => setCartonQuantity(product.productId, parseInt(e.target.value) || 0)}
-                                    className="w-12 h-6 text-center text-xs"
+                                    className="w-10 sm:w-12 h-5 sm:h-6 text-center text-[10px] sm:text-xs"
                                   />
                                   <Button
                                     type="button"
                                     variant="outline"
                                     size="icon"
-                                    className="h-6 w-6"
+                                    className="h-5 w-5 sm:h-6 sm:w-6"
                                     onClick={() => updateCartonQuantity(product.productId, 1)}
                                   >
-                                    <Plus className="h-3 w-3" />
+                                    <Plus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                   </Button>
-                                  <span className="text-xs text-muted-foreground">
+                                  <span className="text-[10px] sm:text-xs text-muted-foreground">
                                     ({product.unitsPerCarton}u)
                                   </span>
                                 </div>
                               )}
 
-                              <div className="flex justify-between items-center pt-1 border-t border-dashed text-xs">
+                              <div className="flex justify-between items-center pt-1 border-t border-dashed text-[10px] sm:text-xs">
                                 <span className="text-muted-foreground">
                                   {calculateTotalUnits(product)} unités
                                 </span>
@@ -788,15 +791,15 @@ export function NewPurchaseDialog({
 
             {/* Total */}
             {selectedProducts.length > 0 && (
-              <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 flex-shrink-0">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <span className="font-medium">Total estimé de l'achat</span>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {selectedProducts.length} produit(s) • {totalItems} unités au total
+              <div className="p-2.5 sm:p-4 rounded-lg bg-primary/10 border border-primary/20 flex-shrink-0">
+                <div className="flex justify-between items-center gap-2">
+                  <div className="min-w-0">
+                    <span className="font-medium text-xs sm:text-base">Total estimé</span>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">
+                      {selectedProducts.length} produit(s) • {totalItems} unités
                     </p>
                   </div>
-                  <span className="text-xl font-bold text-primary">
+                  <span className="text-base sm:text-xl font-bold text-primary flex-shrink-0">
                     {totalAmount.toLocaleString()} GNF
                   </span>
                 </div>
@@ -805,38 +808,38 @@ export function NewPurchaseDialog({
           </div>
         )}
 
-        <DialogFooter className="p-4 border-t flex-shrink-0">
+        <DialogFooter className="p-3 sm:p-4 border-t flex-shrink-0 gap-2 sm:gap-0">
           {step === 1 ? (
             <>
-              <Button variant="outline" onClick={handleClose} disabled={isCreating}>
+              <Button variant="outline" onClick={handleClose} disabled={isCreating} size="sm" className="text-xs sm:text-sm h-9 sm:h-10">
                 Annuler
               </Button>
               <Button
                 onClick={handleNextStep}
                 disabled={!selectedSupplier}
-                className="gap-2"
+                className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-9 sm:h-10 flex-1 sm:flex-none"
               >
                 Suivant
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Button>
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={handlePreviousStep} disabled={isCreating} className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
+              <Button variant="outline" onClick={handlePreviousStep} disabled={isCreating} className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-9 sm:h-10">
+                <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 Retour
               </Button>
               <Button
                 onClick={handleConfirm}
                 disabled={!selectedProducts.some(p => p.quantity > 0 || p.cartonQuantity > 0) || isCreating}
-                className="gap-2"
+                className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-9 sm:h-10 flex-1 sm:flex-none"
               >
                 {isCreating ? (
                   'Création...'
                 ) : (
                   <>
-                    <Plus className="h-4 w-4" />
-                    Créer l'achat ({totalAmount.toLocaleString()} GNF)
+                    <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <span className="truncate">Créer ({totalAmount.toLocaleString()} GNF)</span>
                   </>
                 )}
               </Button>
