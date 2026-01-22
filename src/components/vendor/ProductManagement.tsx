@@ -395,6 +395,14 @@ export default function ProductManagement() {
       return;
     }
 
+    // Validation obligatoire de l'image
+    const hasExistingImages = editingProduct?.images && editingProduct.images.length > 0;
+    const hasNewImages = selectedImages.length > 0;
+    if (!hasExistingImages && !hasNewImages) {
+      toast.error('Veuillez ajouter au moins une image pour le produit');
+      return;
+    }
+
     if (saving) return;
     setSaving(true);
 
