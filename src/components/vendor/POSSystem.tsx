@@ -70,6 +70,7 @@ interface Product {
   images?: string[];
   category: string;
   categoryId?: string | null;
+  section?: string; // Section personnalisée du vendeur
   stock: number;
   barcode?: string;
   // Champs carton
@@ -347,6 +348,7 @@ export function POSSystem() {
           sku,
           images,
           category_id,
+          section,
           categories(id, name),
           sell_by_carton,
           units_per_carton,
@@ -364,6 +366,7 @@ export function POSSystem() {
         price: Number(p.price || 0),
         category: p.categories?.name || 'Divers',
         categoryId: p.categories?.id || null,
+        section: p.section || undefined,
         stock: Number(p.stock_quantity || 0),
         barcode: p.barcode || p.sku || undefined,
         images: p.images || [],
@@ -433,6 +436,7 @@ export function POSSystem() {
   }, [products]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedSection, setSelectedSection] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'mobile_money' | 'card'>('cash');
@@ -518,8 +522,28 @@ export function POSSystem() {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.barcode?.includes(searchTerm);
     const matchesCategory = selectedCategory === 'all' || product.categoryId === selectedCategory;
-    return matchesSearch && matchesCategory;
+    const matchesSection = selectedSection === 'all' || product.section === selectedSection;
+    return matchesSearch && matchesCategory && matchesSection;
   });
+
+  // Sections uniques disponibles (filtrées par catégorie si sélectionnée)
+  const availableSections = useMemo(() => {
+    const productsInCategory = selectedCategory === 'all' 
+      ? products 
+      : products.filter(p => p.categoryId === selectedCategory);
+    
+    const sections = [...new Set(productsInCategory
+      .map(p => p.section)
+      .filter((s): s is string => !!s && s.trim() !== '')
+    )];
+    
+    return sections.sort((a, b) => a.localeCompare(b));
+  }, [products, selectedCategory]);
+
+  // Réinitialiser la section quand la catégorie change
+  useEffect(() => {
+    setSelectedSection('all');
+  }, [selectedCategory]);
 
   // Trier les produits: les 3 derniers sélectionnés en premier
   const sortedProducts = [...filteredProducts].sort((a, b) => {
@@ -1602,6 +1626,45 @@ export function POSSystem() {
                   </>
                 )}
               </div>
+
+              {/* Sélecteur de Section - Affiché uniquement s'il y a des sections disponibles */}
+              {availableSections.length > 0 && (
+                <div 
+                  className="flex gap-1.5 md:gap-2 mt-2 overflow-x-auto pb-2 max-w-full"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+                >
+                  <Button
+                    variant={selectedSection === 'all' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => setSelectedSection('all')}
+                    className="flex-shrink-0 text-xs whitespace-nowrap h-7"
+                  >
+                    Toutes sections
+                  </Button>
+                  {availableSections.map(section => {
+                    const sectionProductCount = products.filter(p => 
+                      p.section === section && 
+                      (selectedCategory === 'all' || p.categoryId === selectedCategory)
+                    ).length;
+                    return (
+                      <Button
+                        key={section}
+                        variant={selectedSection === section ? 'secondary' : 'ghost'}
+                        size="sm"
+                        onClick={() => setSelectedSection(section)}
+                        className={`flex-shrink-0 text-xs whitespace-nowrap h-7 ${
+                          selectedSection === section ? 'bg-secondary' : 'bg-muted/50'
+                        }`}
+                      >
+                        {section}
+                        <span className="ml-1 text-[10px] opacity-70">
+                          ({sectionProductCount})
+                        </span>
+                      </Button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
           {/* Grille de produits professionnelle - Mobile optimisé - Sans fond blanc */}

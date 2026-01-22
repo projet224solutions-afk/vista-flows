@@ -11856,6 +11856,7 @@ export type Database = {
           public_id: string | null
           rating: number | null
           reviews_count: number | null
+          section: string | null
           sell_by_carton: boolean | null
           seo_description: string | null
           seo_title: string | null
@@ -11890,6 +11891,7 @@ export type Database = {
           public_id?: string | null
           rating?: number | null
           reviews_count?: number | null
+          section?: string | null
           sell_by_carton?: boolean | null
           seo_description?: string | null
           seo_title?: string | null
@@ -11924,6 +11926,7 @@ export type Database = {
           public_id?: string | null
           rating?: number | null
           reviews_count?: number | null
+          section?: string | null
           sell_by_carton?: boolean | null
           seo_description?: string | null
           seo_title?: string | null

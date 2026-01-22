@@ -49,6 +49,7 @@ interface Product {
   is_active: boolean;
   category_id?: string;
   category?: { id: string; name: string } | null;
+  section?: string; // Section personnalisée du vendeur
   images?: string[];
   promotional_videos?: string[]; // URLs des vidéos publicitaires (max 2)
   tags?: string[];
@@ -139,6 +140,7 @@ export default function ProductManagement() {
     low_stock_threshold: '10',
     category_id: '',
     category_name: '',
+    section: '', // Section personnalisée du vendeur
     weight: '',
     tags: '',
     is_active: true,
@@ -455,6 +457,7 @@ export default function ProductManagement() {
       low_stock_threshold: product.low_stock_threshold.toString(),
       category_id: product.category_id || '',
       category_name: '',
+      section: product.section || '', // Section personnalisée
       weight: product.weight?.toString() || '',
       tags: product.tags?.join(', ') || '',
       is_active: product.is_active,
@@ -510,6 +513,7 @@ export default function ProductManagement() {
       low_stock_threshold: '10',
       category_id: '',
       category_name: '',
+      section: '', // Section personnalisée
       weight: '',
       tags: '',
       is_active: true,
@@ -1237,6 +1241,26 @@ export default function ProductManagement() {
                   </div>
                 )}
               </div>
+
+              {/* Section - Affiché uniquement si une catégorie est sélectionnée */}
+              {(formData.category_id || formData.category_name) && (
+                <div className="space-y-2">
+                  <Label htmlFor="section" className="flex items-center gap-2">
+                    <FolderOpen className="h-4 w-4" />
+                    Section (optionnel)
+                  </Label>
+                  <Input
+                    id="section"
+                    value={formData.section}
+                    onChange={(e) => setFormData({ ...formData, section: e.target.value })}
+                    placeholder="Ex: Moteurs, Accessoires, Carrosserie..."
+                    className="border-muted focus:border-primary"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Organisez vos produits par section dans votre POS pour les retrouver plus facilement.
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="tags" className="flex items-center gap-2">
