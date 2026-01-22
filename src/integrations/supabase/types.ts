@@ -19975,6 +19975,61 @@ export type Database = {
           },
         ]
       }
+      vendor_fixed_costs: {
+        Row: {
+          amount: number
+          cost_type: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          label: string
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          amount?: number
+          cost_type: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          label: string
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          amount?: number
+          cost_type?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          label?: string
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_fixed_costs_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_fixed_costs_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_fixed_costs_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_kyc: {
         Row: {
           created_at: string | null
