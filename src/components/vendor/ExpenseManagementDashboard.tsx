@@ -47,11 +47,11 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
   const [activeTab, setActiveTab] = useState('profit');
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
   
-  // Récupérer le vendorId via le hook
-  const { vendorId, loading: vendorLoading } = useCurrentVendor();
+  // Récupérer le vendorId et userId via le hook
+  const { vendorId, userId, loading: vendorLoading } = useCurrentVendor();
 
-  // Hook principal de gestion des dépenses - utiliser vendorId
-  const expenseData = useExpenseManagement(vendorId);
+  // Hook principal de gestion des dépenses - utiliser userId pour vendor_expenses
+  const expenseData = useExpenseManagement(userId);
 
   const {
     categories,
@@ -299,8 +299,8 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
 
         {/* Analyse de Profit Mensuel */}
         <TabsContent value="profit" className="space-y-6">
-          {vendorId ? (
-            <MonthlyProfitAnalysis vendorId={vendorId} />
+          {vendorId && userId ? (
+            <MonthlyProfitAnalysis vendorId={vendorId} userId={userId} />
           ) : (
             <Card>
               <CardContent className="p-6 text-center text-muted-foreground">
@@ -449,8 +449,8 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
 
         {/* Achats - Dépenses liées aux achats de stock */}
         <TabsContent value="purchases" className="space-y-6">
-          {vendorId ? (
-            <PurchaseExpensesSection vendorId={vendorId} />
+          {userId ? (
+            <PurchaseExpensesSection vendorId={userId} />
           ) : (
             <Card>
               <CardContent className="p-6 text-center text-muted-foreground">

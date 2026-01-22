@@ -31,6 +31,7 @@ export interface VendorAgentPermissions {
 
 interface VendorData {
   vendorId: string;
+  userId: string; // L'ID auth.users - utilisé par vendor_expenses
   isAgent: boolean;
   agentPermissions?: VendorAgentPermissions;
   user: any;
@@ -76,15 +77,16 @@ export const useCurrentVendor = () => {
       if (hasAgent && agentVendorId) {
         console.log('🔄 Mode Agent - Chargement données vendeur:', agentVendorId);
         
-        // Récupérer le business_type du vendeur
+        // Récupérer le business_type et user_id du vendeur
         const { data: vendorInfo } = await supabase
           .from('vendors')
-          .select('business_type')
+          .select('business_type, user_id')
           .eq('id', agentVendorId)
           .maybeSingle();
         
         setVendorData({
           vendorId: agentVendorId,
+          userId: vendorInfo?.user_id || agentVendorId,
           isAgent: true,
           agentPermissions: (agentContext.agent?.permissions as VendorAgentPermissions) || {},
           user: { id: agentVendorId },
@@ -94,6 +96,7 @@ export const useCurrentVendor = () => {
         
         console.log('✅ Données vendeur chargées (mode agent):', {
           vendorId: agentVendorId,
+          userId: vendorInfo?.user_id,
           businessType: vendorInfo?.business_type,
           agentPermissions: agentContext.agent?.permissions
         });
@@ -118,13 +121,14 @@ export const useCurrentVendor = () => {
 
         setVendorData({
           vendorId: vendorId,
+          userId: authUserId, // L'ID auth.users
           isAgent: false,
           user: auth.user,
           profile: auth.profile,
           businessType: businessType || 'hybrid' // Default pour nouveaux vendeurs
         });
         
-        console.log('✅ Données vendeur chargées (mode direct):', { vendorId, businessType });
+        console.log('✅ Données vendeur chargées (mode direct):', { vendorId, userId: authUserId, businessType });
       } else if (!hasAgent) {
         // CAS 3: Aucun contexte valide (ni agent ni vendeur)
         console.warn('⚠️ Aucun contexte vendeur valide');
@@ -147,6 +151,7 @@ export const useCurrentVendor = () => {
 
   return {
     vendorId: vendorData?.vendorId || null,
+    userId: vendorData?.userId || null, // L'ID auth.users - pour vendor_expenses
     isAgent: vendorData?.isAgent || false,
     agentPermissions: vendorData?.agentPermissions,
     user: vendorData?.user,
