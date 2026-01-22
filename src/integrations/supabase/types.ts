@@ -11835,6 +11835,8 @@ export type Database = {
       products: {
         Row: {
           barcode: string | null
+          barcode_format: string | null
+          barcode_value: string | null
           carton_sku: string | null
           category_id: string | null
           compare_price: number | null
@@ -11870,6 +11872,8 @@ export type Database = {
         }
         Insert: {
           barcode?: string | null
+          barcode_format?: string | null
+          barcode_value?: string | null
           carton_sku?: string | null
           category_id?: string | null
           compare_price?: number | null
@@ -11905,6 +11909,8 @@ export type Database = {
         }
         Update: {
           barcode?: string | null
+          barcode_format?: string | null
+          barcode_value?: string | null
           carton_sku?: string | null
           category_id?: string | null
           compare_price?: number | null
@@ -22697,6 +22703,7 @@ export type Database = {
         Args: { lat1: number; lat2: number; lng1: number; lng2: number }
         Returns: number
       }
+      calculate_ean13_check_digit: { Args: { code: string }; Returns: string }
       calculate_expense_stats: {
         Args: { p_end_date: string; p_start_date: string; p_vendor_id: string }
         Returns: Json
@@ -23225,6 +23232,7 @@ export type Database = {
       generate_transaction_id: { Args: never; Returns: string }
       generate_unique_agent_code: { Args: never; Returns: string }
       generate_unique_agent_token: { Args: never; Returns: string }
+      generate_unique_barcode: { Args: never; Returns: string }
       generate_unique_custom_id: { Args: never; Returns: string }
       generate_unique_id: { Args: { prefix: string }; Returns: string }
       generate_unique_invitation_token: { Args: never; Returns: string }

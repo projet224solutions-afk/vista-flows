@@ -345,6 +345,8 @@ export function POSSystem() {
           price,
           stock_quantity,
           barcode,
+          barcode_value,
+          barcode_format,
           sku,
           images,
           category_id,
@@ -368,7 +370,8 @@ export function POSSystem() {
         categoryId: p.categories?.id || null,
         section: p.section || undefined,
         stock: Number(p.stock_quantity || 0),
-        barcode: p.barcode || p.sku || undefined,
+        // Utiliser barcode_value (POS) en priorité, sinon barcode, sinon sku
+        barcode: p.barcode_value || p.barcode || p.sku || undefined,
         images: p.images || [],
         // Champs carton
         sell_by_carton: p.sell_by_carton || false,
