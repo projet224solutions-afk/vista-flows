@@ -32,6 +32,7 @@ import {
   Sparkles, Loader2, ImagePlus, Tags, FolderOpen, Barcode, AlertCircle, Video
 } from "lucide-react";
 import { ProductBarcodeDisplay } from "./ProductBarcodeDisplay";
+import { BarcodeLabelsA4Generator } from "./BarcodeLabelsA4Generator";
 
 interface Product {
   id: string;
@@ -828,10 +829,13 @@ export default function ProductManagement() {
             </p>
           </div>
         </div>
-        <Button onClick={() => { resetForm(); setShowDialog(true); }} className="w-full sm:w-auto" disabled={productLimit && !productLimit.can_add}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nouveau produit
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <BarcodeLabelsA4Generator vendorId={vendorId || ''} />
+          <Button onClick={() => { resetForm(); setShowDialog(true); }} className="flex-1 sm:flex-initial" disabled={productLimit && !productLimit.can_add}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nouveau produit
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}

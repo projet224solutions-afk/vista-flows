@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { usePublicId } from '@/hooks/usePublicId';
 import { SubscriptionService } from '@/services/subscriptionService';
 import { useAuth } from '@/hooks/useAuth';
+import { generateEAN13Barcode } from '@/lib/barcodeGenerator';
 
 interface ProductFormData {
   name: string;
@@ -335,6 +336,10 @@ export function useProductActions({
       // Générer SKU unique si non fourni
       const sku = formData.sku?.trim() || (await generateUniqueSKU());
 
+      // ✅ Générer automatiquement un code-barres EAN-13 unique pour le POS
+      const barcodeValue = generateEAN13Barcode();
+      console.log('[ProductCreate] Generated barcode:', barcodeValue);
+
       // Préparer données produit
       const productData = {
         public_id,
@@ -345,6 +350,8 @@ export function useProductActions({
         cost_price: formData.cost_price ? parseFloat(formData.cost_price) : null,
         sku,
         barcode: formData.barcode || null,
+        barcode_value: barcodeValue, // Code-barres POS auto-généré
+        barcode_format: 'EAN13', // Format EAN-13 standard
         stock_quantity: parseInt(formData.stock_quantity),
         low_stock_threshold: parseInt(formData.low_stock_threshold),
         category_id: categoryId,
