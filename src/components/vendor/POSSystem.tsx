@@ -1823,7 +1823,7 @@ export function POSSystem() {
         </div>
 
         {/* Section Panier - Interface professionnelle - Responsive optimisé mobile */}
-        <div className={`w-full md:w-72 lg:w-[320px] flex-shrink-0 flex flex-col min-w-0 max-w-full md:min-h-0 md:max-h-full ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
+        <div className={`w-full md:w-80 lg:w-[380px] flex-shrink-0 flex flex-col min-w-0 max-w-full md:min-h-0 md:max-h-full ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
           {/* Panier - Design ultra compact mobile */}
           <Card className="shadow-xl border-0 bg-card overflow-hidden flex flex-col max-w-full md:flex-1 md:max-h-full">
             {/* En-tête compact */}
@@ -1867,7 +1867,7 @@ export function POSSystem() {
                     <p className="text-xs text-muted-foreground/80">Ajoutez des produits</p>
                   </div>
                 ) : (
-                  <div className="space-y-1 pr-8">
+                  <div className="space-y-1 pr-4">
                     {cart.map(item => (
                       <div 
                         key={`${item.id}-${item.saleType || 'unit'}`} 
