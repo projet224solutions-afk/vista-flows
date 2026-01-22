@@ -1916,9 +1916,6 @@ export function POSSystem() {
                         
                         {/* Total + Supprimer - taille fixe */}
                         <div className="flex items-center shrink-0">
-                          <span className="font-bold text-primary text-[10px] sm:text-xs text-right mr-0.5">
-                            {item.total.toLocaleString()}
-                          </span>
                           <Button 
                             variant="ghost" 
                             size="icon"
