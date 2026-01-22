@@ -89,7 +89,7 @@ export function useRobustQuery<T>(
     onCircuitOpen,
     enabled = true,
     refetchOnMount = true,
-    refetchOnFocus = true,
+    refetchOnFocus = false,
     refetchInterval = false
   } = options;
 

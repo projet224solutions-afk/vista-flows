@@ -78,7 +78,7 @@ export default function Home() {
 
   const handleProductClick = useCallback(
     (productId: string) => {
-      navigate(`/marketplace?product=${productId}`);
+      navigate(`/product/${productId}`);
     },
     [navigate]
   );
