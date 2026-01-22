@@ -9,7 +9,6 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -31,7 +30,6 @@ import {
   Search,
   ShoppingCart,
   Plus,
-  Minus,
   Check,
   Phone,
   Mail,
@@ -43,8 +41,13 @@ import {
   Filter,
   Trash2,
   RefreshCw,
+  Edit3,
+  DollarSign,
+  Hash,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PurchaseInputKeypad } from './PurchaseInputKeypad';
+import { Input } from '@/components/ui/input';
 
 interface NewPurchaseDialogProps {
   vendorId: string;
@@ -127,6 +130,15 @@ export function NewPurchaseDialog({
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<PurchaseProduct[]>([]);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
+  
+  // Keypad state
+  const [keypadOpen, setKeypadOpen] = useState(false);
+  const [keypadMode, setKeypadMode] = useState<'price' | 'quantity' | 'carton'>('quantity');
+  const [keypadProductId, setKeypadProductId] = useState<string | null>(null);
+  const [keypadProductName, setKeypadProductName] = useState('');
+  const [keypadCurrentValue, setKeypadCurrentValue] = useState(0);
+  const [keypadCurrency, setKeypadCurrency] = useState('GNF');
+  const [keypadUnitsPerCarton, setKeypadUnitsPerCarton] = useState<number | null>(null);
 
   // Reset state when dialog closes
   useEffect(() => {
@@ -339,6 +351,37 @@ export function NewPurchaseDialog({
           : p
       )
     );
+  };
+
+  // Open keypad for editing
+  const openKeypadFor = (product: PurchaseProduct, mode: 'price' | 'quantity' | 'carton') => {
+    setKeypadProductId(product.productId);
+    setKeypadProductName(product.productName);
+    setKeypadMode(mode);
+    setKeypadCurrency(product.unitCostCurrency);
+    setKeypadUnitsPerCarton(product.unitsPerCarton);
+    
+    if (mode === 'price') {
+      setKeypadCurrentValue(product.unitCost);
+    } else if (mode === 'quantity') {
+      setKeypadCurrentValue(product.quantity);
+    } else {
+      setKeypadCurrentValue(product.cartonQuantity);
+    }
+    
+    setKeypadOpen(true);
+  };
+
+  const handleKeypadConfirm = (value: number) => {
+    if (!keypadProductId) return;
+    
+    if (keypadMode === 'price') {
+      setProductUnitCost(keypadProductId, value);
+    } else if (keypadMode === 'quantity') {
+      setProductQuantity(keypadProductId, value);
+    } else {
+      setCartonQuantity(keypadProductId, value);
+    }
   };
 
   const calculateProductTotal = (product: PurchaseProduct): number => {
@@ -639,10 +682,11 @@ export function NewPurchaseDialog({
                         return (
                           <div
                             key={product.productId}
-                            className="p-2 sm:p-3 rounded-lg border bg-card"
+                            className="p-3 rounded-xl border-2 bg-card shadow-sm"
                           >
-                            <div className="flex items-start gap-2 mb-2">
-                              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                            {/* Product header */}
+                            <div className="flex items-start gap-2 mb-3">
+                              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
                                 {product.imageUrl ? (
                                   <img
                                     src={product.imageUrl}
@@ -650,133 +694,109 @@ export function NewPurchaseDialog({
                                     className="w-full h-full object-cover"
                                   />
                                 ) : (
-                                  <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+                                  <Package className="h-5 w-5 text-muted-foreground" />
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium text-[11px] sm:text-xs truncate">{product.productName}</p>
+                                <p className="font-semibold text-sm truncate">{product.productName}</p>
+                                <p className="text-xs text-muted-foreground">Stock: {product.currentStock}</p>
                               </div>
                               <Button 
                                 size="icon" 
                                 variant="ghost" 
-                                className="h-5 w-5 sm:h-6 sm:w-6 text-destructive hover:text-destructive"
+                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                                 onClick={() => removeProductFromSelection(product.productId)}
                               >
-                                <Trash2 className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
 
-                            {/* Prix d'achat */}
-                            <div className="flex items-center gap-1.5 sm:gap-2 mb-2 p-1.5 sm:p-2 rounded bg-muted/50">
-                              <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">Prix:</span>
-                              <Input
-                                type="number"
-                                min="0"
-                                inputMode="decimal"
-                                placeholder=""
-                                value={product.unitCost === 0 ? '' : product.unitCost}
-                                onChange={(e) => {
-                                  const raw = e.target.value;
-                                  setProductUnitCost(
-                                    product.productId,
-                                    raw === '' ? 0 : Number.parseFloat(raw) || 0
-                                  );
-                                }}
-                                className="w-16 sm:w-20 h-6 sm:h-7 text-center text-[10px] sm:text-xs"
-                              />
-                              <Select 
-                                value={product.unitCostCurrency} 
-                                onValueChange={(val) => setProductCurrency(product.productId, val)}
+                            {/* Mobile-optimized input buttons */}
+                            <div className="space-y-2">
+                              {/* Price button - tap to open keypad */}
+                              <button
+                                type="button"
+                                onClick={() => openKeypadFor(product, 'price')}
+                                className="w-full flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border-2 border-emerald-500/30 hover:border-emerald-500/50 active:scale-[0.98] transition-all"
                               >
-                                <SelectTrigger className="w-16 sm:w-20 h-6 sm:h-7 text-[10px] sm:text-xs">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {CURRENCIES.map(c => (
-                                    <SelectItem key={c.code} value={c.code} className="text-xs">
-                                      {c.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            {/* Quantity controls */}
-                            <div className="space-y-1.5 sm:space-y-2">
-                              <div className="flex items-center gap-1.5 sm:gap-2">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground w-10 sm:w-12">Unités:</span>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-5 w-5 sm:h-6 sm:w-6"
-                                  onClick={() => updateProductQuantity(product.productId, -1)}
-                                >
-                                  <Minus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                                </Button>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  inputMode="numeric"
-                                  value={product.quantity}
-                                  onChange={(e) => setProductQuantity(product.productId, parseInt(e.target.value) || 0)}
-                                  className="w-10 sm:w-12 h-5 sm:h-6 text-center text-[10px] sm:text-xs"
-                                />
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-5 w-5 sm:h-6 sm:w-6"
-                                  onClick={() => updateProductQuantity(product.productId, 1)}
-                                >
-                                  <Plus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                                </Button>
-                              </div>
-
-                              {product.sellByCarton && product.unitsPerCarton && (
-                                <div className="flex items-center gap-1.5 sm:gap-2">
-                                  <span className="text-[10px] sm:text-xs text-muted-foreground w-10 sm:w-12 flex items-center gap-0.5 sm:gap-1">
-                                    <Box className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                                    Ctn:
-                                  </span>
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-5 w-5 sm:h-6 sm:w-6"
-                                    onClick={() => updateCartonQuantity(product.productId, -1)}
-                                  >
-                                    <Minus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                                  </Button>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    inputMode="numeric"
-                                    value={product.cartonQuantity}
-                                    onChange={(e) => setCartonQuantity(product.productId, parseInt(e.target.value) || 0)}
-                                    className="w-10 sm:w-12 h-5 sm:h-6 text-center text-[10px] sm:text-xs"
-                                  />
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-5 w-5 sm:h-6 sm:w-6"
-                                    onClick={() => updateCartonQuantity(product.productId, 1)}
-                                  >
-                                    <Plus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                                  </Button>
-                                  <span className="text-[10px] sm:text-xs text-muted-foreground">
-                                    ({product.unitsPerCarton}u)
-                                  </span>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                                    <DollarSign className="h-4 w-4 text-emerald-600" />
+                                  </div>
+                                  <span className="text-sm font-medium text-muted-foreground">Prix d'achat</span>
                                 </div>
+                                <div className="flex items-center gap-2">
+                                  <span className={cn(
+                                    "text-lg font-bold tabular-nums",
+                                    product.unitCost > 0 ? "text-emerald-600" : "text-muted-foreground"
+                                  )}>
+                                    {product.unitCost > 0 ? product.unitCost.toLocaleString() : '0'}
+                                  </span>
+                                  <Badge variant="outline" className="text-xs">
+                                    {product.unitCostCurrency}
+                                  </Badge>
+                                  <Edit3 className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                              </button>
+
+                              {/* Quantity button - tap to open keypad */}
+                              <button
+                                type="button"
+                                onClick={() => openKeypadFor(product, 'quantity')}
+                                className="w-full flex items-center justify-between p-3 rounded-xl bg-blue-500/10 border-2 border-blue-500/30 hover:border-blue-500/50 active:scale-[0.98] transition-all"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                                    <Hash className="h-4 w-4 text-blue-600" />
+                                  </div>
+                                  <span className="text-sm font-medium text-muted-foreground">Quantité (unités)</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className={cn(
+                                    "text-lg font-bold tabular-nums",
+                                    product.quantity > 0 ? "text-blue-600" : "text-muted-foreground"
+                                  )}>
+                                    {product.quantity}
+                                  </span>
+                                  <Edit3 className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                              </button>
+
+                              {/* Carton quantity button - only if sell by carton */}
+                              {product.sellByCarton && product.unitsPerCarton && (
+                                <button
+                                  type="button"
+                                  onClick={() => openKeypadFor(product, 'carton')}
+                                  className="w-full flex items-center justify-between p-3 rounded-xl bg-purple-500/10 border-2 border-purple-500/30 hover:border-purple-500/50 active:scale-[0.98] transition-all"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                                      <Box className="h-4 w-4 text-purple-600" />
+                                    </div>
+                                    <div className="text-left">
+                                      <span className="text-sm font-medium text-muted-foreground block">Cartons</span>
+                                      <span className="text-[10px] text-muted-foreground/70">({product.unitsPerCarton} u/ctn)</span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className={cn(
+                                      "text-lg font-bold tabular-nums",
+                                      product.cartonQuantity > 0 ? "text-purple-600" : "text-muted-foreground"
+                                    )}>
+                                      {product.cartonQuantity}
+                                    </span>
+                                    <Edit3 className="h-4 w-4 text-muted-foreground" />
+                                  </div>
+                                </button>
                               )}
 
-                              <div className="flex justify-between items-center pt-1 border-t border-dashed text-[10px] sm:text-xs">
-                                <span className="text-muted-foreground">
-                                  {calculateTotalUnits(product)} unités
+                              {/* Summary */}
+                              <div className="flex justify-between items-center pt-2 border-t border-dashed">
+                                <span className="text-sm text-muted-foreground">
+                                  {calculateTotalUnits(product)} unités total
                                 </span>
-                                <span className="font-semibold text-primary">
-                                  {productTotal.toLocaleString()} GNF
+                                <span className="text-base font-bold text-primary">
+                                  {productTotal.toLocaleString()} {product.unitCostCurrency}
                                 </span>
                               </div>
                             </div>
@@ -847,6 +867,18 @@ export function NewPurchaseDialog({
           )}
         </DialogFooter>
       </DialogContent>
+
+      {/* Numeric keypad for mobile input */}
+      <PurchaseInputKeypad
+        open={keypadOpen}
+        onOpenChange={setKeypadOpen}
+        mode={keypadMode}
+        productName={keypadProductName}
+        currentValue={keypadCurrentValue}
+        currency={keypadCurrency}
+        unitsPerCarton={keypadUnitsPerCarton}
+        onConfirm={handleKeypadConfirm}
+      />
     </Dialog>
   );
 }
