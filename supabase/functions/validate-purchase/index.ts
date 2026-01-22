@@ -90,11 +90,11 @@ serve(async (req) => {
       }
     }
 
-    // 1. Créer la dépense verrouillée (utiliser userId, pas vendor_id)
+    // 1. Créer la dépense verrouillée (utiliser vendor_id de la table vendors)
     const { data: expense, error: expenseError } = await supabase
       .from('vendor_expenses')
       .insert({
-        vendor_id: userId, // vendor_expenses.vendor_id référence auth.users.id
+        vendor_id: vendor_id, // vendor_expenses.vendor_id référence vendors.id
         description: expenseDescription,
         amount: total_amount,
         expense_date: new Date().toISOString().split('T')[0],
