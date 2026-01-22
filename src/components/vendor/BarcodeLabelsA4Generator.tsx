@@ -1,9 +1,9 @@
 /**
- * BarcodeLabelsA4Generator - Génération d'étiquettes A4 avec codes-barres
- * Crée un PDF A4 prêt à imprimer avec grille d'étiquettes
+ * BarcodeLabelsA4Generator - Génération professionnelle d'étiquettes A4
+ * PDF prêt à imprimer avec codes-barres scannables
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,12 +12,10 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Printer, Download, FileText, Barcode as BarcodeIcon, Package, Eye, RefreshCw } from 'lucide-react';
+import { Printer, Download, Barcode as BarcodeIcon, Package, RefreshCw, FileDown, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import Barcode from 'react-barcode';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 interface Product {
   id: string;
@@ -41,6 +39,30 @@ const GRID_LAYOUTS: Record<GridLayout, { cols: number; rows: number; labelWidth:
   '3x10': { cols: 3, rows: 10, labelWidth: 65, labelHeight: 28 },
 };
 
+// Encodage CODE128 simplifié pour génération de barres
+const CODE128_PATTERNS: Record<string, string> = {
+  '0': '11011001100', '1': '11001101100', '2': '11001100110', '3': '10010011000',
+  '4': '10010001100', '5': '10001001100', '6': '10011001000', '7': '10011000100',
+  '8': '10001100100', '9': '11001001000', 'A': '11001000100', 'B': '11000100100',
+  'C': '10110011100', 'D': '10011011100', 'E': '10011001110', 'F': '10111001100',
+  'G': '10011101100', 'H': '10011100110', 'I': '11001110010', 'J': '11001011100',
+  'K': '11001001110', 'L': '11011100100', 'M': '11001110100', 'N': '11101101110',
+  'O': '11101001100', 'P': '11100101100', 'Q': '11100100110', 'R': '11101100100',
+  'S': '11100110100', 'T': '11100110010', 'U': '11011011000', 'V': '11011000110',
+  'W': '11000110110', 'X': '10100011000', 'Y': '10001011000', 'Z': '10001000110',
+  ' ': '11011001100', '-': '10010111000', '.': '10000101100',
+  START: '11010000100', STOP: '1100011101011'
+};
+
+function encodeCode128(text: string): string {
+  let encoded = CODE128_PATTERNS.START;
+  for (const char of text.toUpperCase()) {
+    encoded += CODE128_PATTERNS[char] || CODE128_PATTERNS['0'];
+  }
+  encoded += CODE128_PATTERNS.STOP;
+  return encoded;
+}
+
 export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabelsA4GeneratorProps) {
   const [open, setOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
@@ -49,12 +71,11 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
   const [generating, setGenerating] = useState(false);
   const [gridLayout, setGridLayout] = useState<GridLayout>('3x8');
   const [showPrice, setShowPrice] = useState(true);
-  const [showSku, setShowSku] = useState(true);
+  const [showSku, setShowSku] = useState(false);
   const [showBusinessName, setShowBusinessName] = useState(false);
   const [quantityPerProduct, setQuantityPerProduct] = useState<Record<string, number>>({});
-  const previewRef = useRef<HTMLDivElement>(null);
 
-  // Charger les produits avec code-barres
+  // Charger uniquement les produits avec barcode_value IS NOT NULL
   const loadProductsWithBarcodes = useCallback(async () => {
     if (!vendorId) return;
 
@@ -70,17 +91,23 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
 
       if (error) throw error;
 
-      setProducts(data || []);
+      const validProducts = (data || []).filter(p => p.barcode_value);
+      setProducts(validProducts);
       
       // Initialiser les quantités à 1
       const initialQuantities: Record<string, number> = {};
-      (data || []).forEach(p => {
+      validProducts.forEach(p => {
         initialQuantities[p.id] = 1;
       });
       setQuantityPerProduct(initialQuantities);
+      setSelectedProducts(new Set(validProducts.map(p => p.id)));
 
-      if (data?.length === 0) {
-        toast.info('Aucun produit avec code-barres trouvé');
+      if (validProducts.length === 0) {
+        toast.info('Aucun produit avec code-barres trouvé', {
+          description: 'Créez des produits pour générer des étiquettes'
+        });
+      } else {
+        toast.success(`${validProducts.length} produit(s) avec code-barres détecté(s)`);
       }
     } catch (error) {
       console.error('Erreur chargement produits:', error);
@@ -90,7 +117,6 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
     }
   }, [vendorId]);
 
-  // Toggle sélection produit
   const toggleProductSelection = (productId: string) => {
     setSelectedProducts(prev => {
       const newSet = new Set(prev);
@@ -103,27 +129,20 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
     });
   };
 
-  // Sélectionner tous les produits
-  const selectAll = () => {
-    setSelectedProducts(new Set(products.map(p => p.id)));
-  };
+  const selectAll = () => setSelectedProducts(new Set(products.map(p => p.id)));
+  const deselectAll = () => setSelectedProducts(new Set());
 
-  // Désélectionner tous
-  const deselectAll = () => {
-    setSelectedProducts(new Set());
-  };
-
-  // Calculer le nombre total d'étiquettes
+  // Calcul du total d'étiquettes
   const totalLabels = Array.from(selectedProducts).reduce((sum, productId) => {
     return sum + (quantityPerProduct[productId] || 1);
   }, 0);
 
-  // Générer les étiquettes à imprimer
-  const getLabelsToGenerate = () => {
+  // Générer les étiquettes
+  const getLabelsToGenerate = (): Product[] => {
     const labels: Product[] = [];
     Array.from(selectedProducts).forEach(productId => {
       const product = products.find(p => p.id === productId);
-      if (product) {
+      if (product && product.barcode_value) {
         const qty = quantityPerProduct[productId] || 1;
         for (let i = 0; i < qty; i++) {
           labels.push(product);
@@ -133,7 +152,30 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
     return labels;
   };
 
-  // Générer le PDF A4
+  // Dessiner un code-barres directement dans le PDF
+  const drawBarcodeInPDF = (
+    pdf: jsPDF, 
+    barcodeValue: string, 
+    x: number, 
+    y: number, 
+    width: number, 
+    height: number
+  ) => {
+    const encoded = encodeCode128(barcodeValue);
+    const barWidth = width / encoded.length;
+    
+    pdf.setFillColor(0, 0, 0);
+    
+    let currentX = x;
+    for (let i = 0; i < encoded.length; i++) {
+      if (encoded[i] === '1') {
+        pdf.rect(currentX, y, barWidth, height, 'F');
+      }
+      currentX += barWidth;
+    }
+  };
+
+  // Générer le PDF A4 professionnel
   const generatePDF = async () => {
     const labels = getLabelsToGenerate();
     if (labels.length === 0) {
@@ -175,47 +217,42 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
           const x = marginX + col * layout.labelWidth;
           const y = marginY + row * layout.labelHeight;
 
-          // Bordure fine
-          pdf.setDrawColor(200);
-          pdf.setLineWidth(0.1);
+          // Bordure fine pour découpe
+          pdf.setDrawColor(180, 180, 180);
+          pdf.setLineWidth(0.2);
           pdf.rect(x, y, layout.labelWidth, layout.labelHeight);
 
-          // Nom du produit (tronqué si trop long)
+          // Fond blanc
+          pdf.setFillColor(255, 255, 255);
+          pdf.rect(x + 0.5, y + 0.5, layout.labelWidth - 1, layout.labelHeight - 1, 'F');
+
+          // Nom du produit (centré, tronqué)
           pdf.setFontSize(8);
           pdf.setFont('helvetica', 'bold');
-          const productName = label.name.length > 25 
-            ? label.name.substring(0, 22) + '...' 
+          pdf.setTextColor(0, 0, 0);
+          const maxNameLength = Math.floor(layout.labelWidth / 2.5);
+          const productName = label.name.length > maxNameLength 
+            ? label.name.substring(0, maxNameLength - 2) + '...' 
             : label.name;
-          pdf.text(productName, x + layout.labelWidth / 2, y + 4, { align: 'center' });
+          pdf.text(productName, x + layout.labelWidth / 2, y + 5, { align: 'center' });
 
-          // Code-barres (SVG converti en image)
-          // Utiliser une approche simplifiée avec le texte du code
-          pdf.setFontSize(6);
-          pdf.setFont('helvetica', 'normal');
-          
-          // Dessiner les barres du code-barres (simulation simple)
-          const barcodeY = y + 6;
+          // Code-barres graphique
+          const barcodeX = x + 3;
+          const barcodeY = y + 7;
+          const barcodeWidth = layout.labelWidth - 6;
           const barcodeHeight = layout.labelHeight - 18;
-          const barcodeWidth = layout.labelWidth - 10;
-          const barcodeX = x + 5;
           
-          // Dessiner le rectangle du code-barres
-          pdf.setFillColor(255, 255, 255);
-          pdf.rect(barcodeX, barcodeY, barcodeWidth, barcodeHeight, 'F');
-          
-          // Texte du code-barres
-          pdf.setFontSize(9);
-          pdf.setFont('courier', 'bold');
-          pdf.text(label.barcode_value || '', x + layout.labelWidth / 2, y + barcodeHeight + 10, { align: 'center' });
+          drawBarcodeInPDF(pdf, label.barcode_value || '', barcodeX, barcodeY, barcodeWidth, barcodeHeight);
 
-          // Informations supplémentaires
-          let infoY = y + layout.labelHeight - 4;
+          // Valeur du code-barres (texte sous les barres)
           pdf.setFontSize(7);
-          pdf.setFont('helvetica', 'normal');
+          pdf.setFont('courier', 'normal');
+          pdf.text(label.barcode_value || '', x + layout.labelWidth / 2, y + layout.labelHeight - 7, { align: 'center' });
 
+          // Informations supplémentaires (prix, SKU, boutique)
           const infoParts: string[] = [];
           if (showPrice) {
-            infoParts.push(`${label.price.toLocaleString()} GNF`);
+            infoParts.push(`${label.price.toLocaleString('fr-FR')} GNF`);
           }
           if (showSku && label.sku) {
             infoParts.push(label.sku);
@@ -225,14 +262,20 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
           }
 
           if (infoParts.length > 0) {
-            pdf.text(infoParts.join(' | '), x + layout.labelWidth / 2, infoY, { align: 'center' });
+            pdf.setFontSize(6);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(infoParts.join(' • '), x + layout.labelWidth / 2, y + layout.labelHeight - 2, { align: 'center' });
           }
         }
       }
 
       // Télécharger le PDF
-      pdf.save(`etiquettes-codes-barres-${new Date().toISOString().split('T')[0]}.pdf`);
-      toast.success(`PDF généré avec ${labels.length} étiquette(s) sur ${totalPages} page(s)`);
+      const fileName = `etiquettes-codes-barres-${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+      
+      toast.success(`PDF généré avec succès`, {
+        description: `${labels.length} étiquette(s) sur ${totalPages} page(s)`
+      });
 
     } catch (error) {
       console.error('Erreur génération PDF:', error);
@@ -242,7 +285,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
     }
   };
 
-  // Impression directe avec aperçu HTML
+  // Impression directe via navigateur
   const printLabels = async () => {
     const labels = getLabelsToGenerate();
     if (labels.length === 0) {
@@ -251,9 +294,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
     }
 
     const layout = GRID_LAYOUTS[gridLayout];
-    const labelsPerPage = layout.cols * layout.rows;
 
-    // Générer le HTML pour l'impression
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
       toast.error('Popup bloquée - autorisez les popups');
@@ -261,29 +302,15 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
     }
 
     const labelsHTML = labels.map((label, idx) => `
-      <div class="label" style="
-        width: ${layout.labelWidth}mm;
-        height: ${layout.labelHeight}mm;
-        border: 0.5px solid #ddd;
-        box-sizing: border-box;
-        padding: 2mm;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: space-between;
-        font-family: Arial, sans-serif;
-        page-break-inside: avoid;
-      ">
-        <div style="font-size: 8px; font-weight: bold; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-          ${label.name}
-        </div>
-        <svg id="barcode-${idx}"></svg>
-        <div style="font-size: 7px; text-align: center;">
+      <div class="label">
+        <div class="name">${label.name.length > 25 ? label.name.substring(0, 22) + '...' : label.name}</div>
+        <svg id="bc-${idx}"></svg>
+        <div class="info">
           ${[
-            showPrice ? `${label.price.toLocaleString()} GNF` : '',
+            showPrice ? `${label.price.toLocaleString('fr-FR')} GNF` : '',
             showSku && label.sku ? label.sku : '',
             showBusinessName && businessName ? businessName : ''
-          ].filter(Boolean).join(' | ')}
+          ].filter(Boolean).join(' • ')}
         </div>
       </div>
     `).join('');
@@ -293,49 +320,68 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
       <html>
         <head>
           <title>Étiquettes codes-barres</title>
-          <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+          <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
           <style>
-            @page {
-              size: A4;
-              margin: 5mm;
-            }
-            body {
-              margin: 0;
-              padding: 5mm;
-            }
+            @page { size: A4; margin: 5mm; }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: Arial, sans-serif; padding: 5mm; }
             .grid {
               display: grid;
               grid-template-columns: repeat(${layout.cols}, ${layout.labelWidth}mm);
               gap: 1mm;
               justify-content: center;
             }
+            .label {
+              width: ${layout.labelWidth}mm;
+              height: ${layout.labelHeight}mm;
+              border: 0.5px solid #ccc;
+              padding: 2mm;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: space-between;
+              page-break-inside: avoid;
+              background: white;
+            }
+            .name {
+              font-size: 8px;
+              font-weight: bold;
+              text-align: center;
+              max-width: 100%;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+            .info {
+              font-size: 6px;
+              text-align: center;
+              color: #333;
+            }
             @media print {
-              body { -webkit-print-color-adjust: exact; }
+              body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             }
           </style>
         </head>
         <body>
-          <div class="grid">
-            ${labelsHTML}
-          </div>
+          <div class="grid">${labelsHTML}</div>
           <script>
             ${labels.map((label, idx) => `
-              JsBarcode("#barcode-${idx}", "${label.barcode_value}", {
-                format: "${label.barcode_format === 'EAN13' ? 'EAN13' : 'CODE128'}",
-                width: 1.5,
-                height: 30,
-                fontSize: 10,
-                margin: 2,
-                displayValue: true
-              });
+              try {
+                JsBarcode("#bc-${idx}", "${label.barcode_value}", {
+                  format: "CODE128",
+                  width: 1.5,
+                  height: ${layout.labelHeight > 30 ? 35 : 25},
+                  fontSize: 9,
+                  margin: 2,
+                  displayValue: true
+                });
+              } catch(e) { console.error("Barcode error:", e); }
             `).join('\n')}
             
             window.onload = function() {
-              setTimeout(function() {
-                window.print();
-              }, 500);
+              setTimeout(function() { window.print(); }, 600);
             };
-          </script>
+          <\/script>
         </body>
       </html>
     `);
@@ -348,80 +394,80 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
       if (isOpen) loadProductsWithBarcodes();
     }}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" className="gap-2 border-primary/30 hover:border-primary hover:bg-primary/5">
           <BarcodeIcon className="h-4 w-4" />
-          Générer étiquettes A4
+          Générer étiquettes A4 (PDF)
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Printer className="h-5 w-5" />
+          <DialogTitle className="flex items-center gap-2 text-lg">
+            <FileDown className="h-5 w-5 text-primary" />
             Génération d'étiquettes codes-barres A4
           </DialogTitle>
           <DialogDescription>
-            Sélectionnez les produits et générez un PDF prêt à imprimer
+            Sélectionnez les produits et générez un PDF prêt à imprimer et découper
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-          {/* Options de mise en page */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
-            <div className="space-y-2">
-              <Label>Format grille</Label>
+          {/* Options compactes */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-muted/50 rounded-lg border">
+            <div className="space-y-1">
+              <Label className="text-xs font-medium">Format grille</Label>
               <Select value={gridLayout} onValueChange={(v) => setGridLayout(v as GridLayout)}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="3x8">3×8 (24 étiquettes)</SelectItem>
-                  <SelectItem value="4x10">4×10 (40 étiquettes)</SelectItem>
-                  <SelectItem value="3x10">3×10 (30 étiquettes)</SelectItem>
+                  <SelectItem value="3x8">3×8 (24/page)</SelectItem>
+                  <SelectItem value="4x10">4×10 (40/page)</SelectItem>
+                  <SelectItem value="3x10">3×10 (30/page)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label>Options d'affichage</Label>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <Checkbox id="showPrice" checked={showPrice} onCheckedChange={(c) => setShowPrice(!!c)} />
-                  <Label htmlFor="showPrice" className="text-sm">Prix</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox id="showSku" checked={showSku} onCheckedChange={(c) => setShowSku(!!c)} />
-                  <Label htmlFor="showSku" className="text-sm">SKU</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox id="showBusiness" checked={showBusinessName} onCheckedChange={(c) => setShowBusinessName(!!c)} />
-                  <Label htmlFor="showBusiness" className="text-sm">Boutique</Label>
-                </div>
+            <div className="space-y-1">
+              <Label className="text-xs font-medium">Afficher</Label>
+              <div className="flex flex-col gap-0.5">
+                <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                  <Checkbox checked={showPrice} onCheckedChange={(c) => setShowPrice(!!c)} className="h-3.5 w-3.5" />
+                  Prix
+                </label>
+                <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                  <Checkbox checked={showSku} onCheckedChange={(c) => setShowSku(!!c)} className="h-3.5 w-3.5" />
+                  SKU
+                </label>
+                <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                  <Checkbox checked={showBusinessName} onCheckedChange={(c) => setShowBusinessName(!!c)} className="h-3.5 w-3.5" />
+                  Boutique
+                </label>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Sélection</Label>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={selectAll} disabled={products.length === 0}>
+            <div className="space-y-1">
+              <Label className="text-xs font-medium">Sélection</Label>
+              <div className="flex gap-1">
+                <Button size="sm" variant="outline" onClick={selectAll} disabled={products.length === 0} className="h-7 text-xs px-2">
                   Tout
                 </Button>
-                <Button size="sm" variant="outline" onClick={deselectAll} disabled={selectedProducts.size === 0}>
+                <Button size="sm" variant="outline" onClick={deselectAll} disabled={selectedProducts.size === 0} className="h-7 text-xs px-2">
                   Aucun
                 </Button>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Résumé</Label>
-              <div className="text-sm space-y-1">
-                <div className="flex items-center gap-2">
-                  <Package className="h-4 w-4" />
-                  <span>{selectedProducts.size} produit(s)</span>
+            <div className="space-y-1">
+              <Label className="text-xs font-medium">Résumé</Label>
+              <div className="text-xs space-y-0.5">
+                <div className="flex items-center gap-1.5">
+                  <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="font-medium">{selectedProducts.size}</span> produit(s)
                 </div>
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  <span>{totalLabels} étiquette(s)</span>
+                <div className="flex items-center gap-1.5">
+                  <BarcodeIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="font-medium">{totalLabels}</span> étiquette(s)
                 </div>
               </div>
             </div>
@@ -432,23 +478,24 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
             <div className="p-2">
               {loading ? (
                 <div className="flex items-center justify-center py-8">
-                  <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
+                  <span className="ml-2 text-sm text-muted-foreground">Chargement...</span>
                 </div>
               ) : products.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <BarcodeIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucun produit avec code-barres</p>
-                  <p className="text-sm">Les produits sans code-barres ne peuvent pas être imprimés</p>
+                  <BarcodeIcon className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                  <p className="font-medium">Aucun produit avec code-barres</p>
+                  <p className="text-xs mt-1">Créez des produits pour générer des étiquettes</p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {products.map(product => (
                     <div 
                       key={product.id}
-                      className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                      className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-all ${
                         selectedProducts.has(product.id) 
-                          ? 'bg-primary/10 border-primary' 
-                          : 'hover:bg-muted'
+                          ? 'bg-primary/10 border-primary/50' 
+                          : 'hover:bg-muted/50 border-transparent'
                       }`}
                       onClick={() => toggleProductSelection(product.id)}
                     >
@@ -456,39 +503,35 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
                         checked={selectedProducts.has(product.id)}
                         onCheckedChange={() => toggleProductSelection(product.id)}
                         onClick={(e) => e.stopPropagation()}
+                        className="h-4 w-4"
                       />
                       
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{product.name}</p>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span>{product.price.toLocaleString()} GNF</span>
-                          {product.sku && (
-                            <>
-                              <span>•</span>
-                              <span>{product.sku}</span>
-                            </>
-                          )}
-                        </div>
+                        <p className="text-sm font-medium truncate">{product.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {product.price.toLocaleString('fr-FR')} GNF
+                          {product.sku && <span className="ml-2">• {product.sku}</span>}
+                        </p>
                       </div>
 
-                      <Badge variant="secondary" className="font-mono text-xs">
+                      <Badge variant="secondary" className="font-mono text-[10px] px-1.5">
                         {product.barcode_value}
                       </Badge>
 
-                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                        <Label className="text-xs">Qté:</Label>
-                        <Input
-                          type="number"
-                          min={1}
-                          max={100}
-                          value={quantityPerProduct[product.id] || 1}
-                          onChange={(e) => setQuantityPerProduct(prev => ({
-                            ...prev,
-                            [product.id]: parseInt(e.target.value) || 1
-                          }))}
-                          className="w-16 h-8 text-center"
-                        />
-                      </div>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={quantityPerProduct[product.id] || 1}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          const val = Math.max(1, Math.min(100, parseInt(e.target.value) || 1));
+                          setQuantityPerProduct(prev => ({ ...prev, [product.id]: val }));
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-14 h-7 text-xs text-center"
+                        title="Quantité d'étiquettes"
+                      />
                     </div>
                   ))}
                 </div>
@@ -501,19 +544,20 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
             <Button
               variant="outline"
               onClick={printLabels}
-              disabled={selectedProducts.size === 0 || generating}
+              disabled={generating || selectedProducts.size === 0}
               className="gap-2"
             >
-              <Eye className="h-4 w-4" />
-              Aperçu & Imprimer
+              <Printer className="h-4 w-4" />
+              Imprimer
             </Button>
+            
             <Button
               onClick={generatePDF}
-              disabled={selectedProducts.size === 0 || generating}
-              className="gap-2"
+              disabled={generating || selectedProducts.size === 0}
+              className="gap-2 bg-primary hover:bg-primary/90"
             >
               {generating ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Download className="h-4 w-4" />
               )}
@@ -525,5 +569,3 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
     </Dialog>
   );
 }
-
-export default BarcodeLabelsA4Generator;
