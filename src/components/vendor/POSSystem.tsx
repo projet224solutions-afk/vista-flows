@@ -1867,7 +1867,7 @@ export function POSSystem() {
                     <p className="text-xs text-muted-foreground/80">Ajoutez des produits</p>
                   </div>
                 ) : (
-                  <div className="space-y-1">
+                  <div className="space-y-1 pr-3">
                     {cart.map(item => (
                       <div 
                         key={`${item.id}-${item.saleType || 'unit'}`} 
