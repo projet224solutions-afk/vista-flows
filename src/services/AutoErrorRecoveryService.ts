@@ -55,15 +55,12 @@ class AutoErrorRecoveryService {
           const newVersion = String(parseInt(currentVersion) + 1);
           localStorage.setItem(this.CACHE_BUST_KEY, newVersion);
 
-          // Notifier l'utilisateur et recharger
-          console.log('🔄 Cache invalidé, rechargement...');
-          
-          // Attendre un peu avant de recharger
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // Recharger la page pour obtenir les nouveaux assets
-          window.location.reload();
-          return true;
+          // IMPORTANT: ne JAMAIS recharger automatiquement.
+          // Sur mobile/PWA, un refresh automatique (au retour sur l'app / changement réseau)
+          // ferme les formulaires et donne l'impression d'une actualisation constante.
+          // Les erreurs de chunks sont déjà gérées via lazyWithRetry() avec un fallback de refresh manuel.
+          console.warn('🧩 [AutoRecovery] Chunk/module load error détecté — cache invalidé, refresh manuel requis.');
+          return false;
         } catch {
           return false;
         }
