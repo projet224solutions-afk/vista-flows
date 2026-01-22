@@ -920,7 +920,7 @@ export function POSSystem() {
             tax_amount: tax,
             discount_amount: discountValue,
             payment_status: 'pending',
-            status: 'pending',
+            status: 'processing', // POS orders start as processing, not pending
             payment_method: paymentMethod,
             shipping_address: { address: 'Point de vente' },
             notes: `Paiement Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange Money' : 'MTN MoMo'}) - ${mobileMoneyPhone}`,
@@ -992,9 +992,9 @@ export function POSSystem() {
           if (finalStatus?.status === 'completed' || finalStatus?.status === 'success') {
             toast.success('🎉 Paiement confirmé !');
             
-            // Mettre à jour la commande
+            // Mettre à jour la commande - POS orders are completed immediately (no delivery needed)
             await supabase.from('orders')
-              .update({ payment_status: 'paid', status: 'processing' })
+              .update({ payment_status: 'paid', status: 'completed' })
               .eq('id', order.id);
             
             setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
@@ -1031,7 +1031,7 @@ export function POSSystem() {
             return;
           }
 
-          // Créer la commande en attente
+          // Créer la commande - POS orders start as processing (awaiting payment confirmation)
           const { data: order, error: orderError } = await supabase
             .from('orders')
             .insert({
@@ -1042,7 +1042,7 @@ export function POSSystem() {
               tax_amount: tax,
               discount_amount: discountValue,
               payment_status: 'pending',
-              status: 'pending',
+              status: 'processing', // POS orders don't need delivery workflow
               payment_method: 'card',
               shipping_address: { address: 'Point de vente' },
               notes: 'Paiement par carte bancaire - En attente',
@@ -1169,7 +1169,7 @@ export function POSSystem() {
           tax_amount: tax,
           discount_amount: discountValue,
           payment_status: 'paid',
-          status: 'confirmed',
+          status: 'completed', // POS cash sales are completed immediately (no delivery)
           payment_method: paymentMethod,
           shipping_address: { address: 'Point de vente' },
           notes: `Paiement POS - Espèces`,
@@ -1197,13 +1197,9 @@ export function POSSystem() {
       if (itemsError) throw itemsError;
 
       // IMPORTANT: laisser la BDD faire le décrément du stock exactement 1 fois.
-      // Le trigger update_inventory_on_order_completion (orders.status -> processing/completed)
-      // met à jour inventory.quantity, puis sync_inventory_to_products_trigger synchronise products.stock_quantity.
-      await supabase.from('orders').update({ status: 'processing' }).eq('id', order.id);
-
-      // 4. Stock: mis à jour automatiquement par la BDD
-      // - Trigger `update_inventory_on_order_trigger` (AFTER INSERT ON order_items) décrémente inventory
-      // - Trigger `sync_inventory_to_products_trigger` synchronise products.stock_quantity
+      // Le trigger update_inventory_on_order_trigger (AFTER INSERT ON order_items) décrémente inventory
+      // - Trigger `sync_inventory_to_products_trigger` synchronise products.stock_quantity.
+      // NOTE: POS orders are already created with status 'completed', no need to update again
 
 
       setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
@@ -2316,15 +2312,14 @@ export function POSSystem() {
           sellerId={vendorId}
           description={`Vente POS - ${cart.length} article(s)`}
           onSuccess={async (paymentIntentId) => {
-            // Paiement réussi - le webhook Stripe mettra à jour le wallet vendeur
+            // Paiement réussi - POS orders are completed immediately (no delivery needed)
             console.log('✅ Paiement Stripe réussi:', paymentIntentId);
             
-            // Ne PAS marquer comme payé ici - le webhook s'en charge
-            // Juste mettre à jour le statut pour indiquer que le paiement est en cours de traitement
+            // Marquer comme payé et complété - POS n'a pas besoin de workflow de livraison
             await supabase.from('orders')
               .update({ 
-                payment_status: 'processing',
-                status: 'processing',
+                payment_status: 'paid',
+                status: 'completed', // POS orders are completed immediately
                 notes: `Paiement Stripe confirmé - Intent: ${paymentIntentId}`
               })
               .eq('id', pendingStripeOrder.id);
