@@ -1,4 +1,24 @@
-# Welcome to your Lovable project
+# 224Solutions - Application Multi-Services
+
+## Architecture du Projet
+
+```
+224solutions/
+├── src/                    # 🎨 Frontend React/TypeScript
+│   ├── components/         # Composants UI
+│   ├── pages/              # Pages de l'application
+│   ├── hooks/              # Hooks personnalisés
+│   ├── services/           # Services métier
+│   ├── lib/                # Utilitaires
+│   └── integrations/       # Intégrations Supabase
+├── backend/                # 🔧 Backend Node.js/Express
+│   ├── server.js           # Point d'entrée serveur
+│   └── ...
+├── supabase/               # ☁️ Edge Functions Supabase
+│   └── functions/          # Fonctions serverless
+├── public/                 # 📁 Assets statiques
+└── index.html              # Point d'entrée HTML
+```
 
 ## Project info
 
