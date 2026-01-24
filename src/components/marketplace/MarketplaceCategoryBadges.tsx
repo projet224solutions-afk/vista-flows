@@ -1,5 +1,5 @@
 /**
- * MARKETPLACE CATEGORY BADGES - Badges Catégories Premium
+ * MARKETPLACE CATEGORY BADGES - Badges Ultra-Compacts Mobile
  * 224Solutions - Design E-Commerce International
  */
 
@@ -31,29 +31,28 @@ export function MarketplaceCategoryBadges({
 
   return (
     <section className={cn(
-      "px-2 sm:px-4 py-2 sm:py-2.5 border-b border-border/50 bg-card/50",
+      "px-2 py-1.5 sm:px-4 sm:py-2 border-b border-border/40 bg-muted/20",
       className
     )}>
-      <div className="flex gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+      <div className="flex gap-1 sm:gap-1.5 overflow-x-auto scrollbar-hide">
         {categories.map((category, index) => {
           const isSelected = selectedCategory === category.id;
           
           return (
             <motion.div
               key={category.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.03 }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.02 }}
             >
               <Badge
                 variant={isSelected ? "default" : "secondary"}
                 className={cn(
-                  "cursor-pointer whitespace-nowrap shrink-0 transition-all duration-200",
-                  "px-3 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-medium rounded-full",
-                  "border border-transparent",
+                  "cursor-pointer whitespace-nowrap shrink-0 transition-all duration-150",
+                  "px-2 sm:px-3 py-1 sm:py-1.5 text-[9px] sm:text-[10px] font-medium rounded-full",
                   isSelected
-                    ? "bg-primary text-primary-foreground shadow-md hover:bg-primary/90 hover:shadow-lg" 
-                    : "bg-secondary/80 text-secondary-foreground hover:bg-secondary hover:border-primary/30 hover:shadow-sm"
+                    ? "bg-primary text-primary-foreground shadow-sm" 
+                    : "bg-secondary/60 hover:bg-secondary"
                 )}
                 onClick={() => onCategoryChange(category.id)}
               >

@@ -1,11 +1,11 @@
 /**
- * MARKETPLACE TYPE SELECTOR - Sélecteur de Type Ultra-Moderne
+ * MARKETPLACE TYPE SELECTOR - Sélecteur Ultra-Compact Mobile
  * 224Solutions - Design E-Commerce Premium
  */
 
-import { Briefcase, Laptop, Package, Sparkles } from "lucide-react";
+import { Briefcase, Laptop } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 interface TypeOption {
   id: 'all' | 'product' | 'professional_service' | 'digital_product';
@@ -14,30 +14,24 @@ interface TypeOption {
   icon: typeof Briefcase;
   gradient: string;
   activeGradient: string;
-  iconBg: string;
-  description?: string;
 }
 
 const TYPE_OPTIONS: TypeOption[] = [
   {
     id: 'professional_service',
-    label: 'Services Professionnels',
+    label: 'Services Pro',
     shortLabel: 'Services',
     icon: Briefcase,
-    gradient: 'from-blue-500 via-blue-600 to-indigo-600',
-    activeGradient: 'shadow-blue-500/40',
-    iconBg: 'bg-blue-100 text-blue-600',
-    description: 'Experts locaux'
+    gradient: 'from-blue-500 to-indigo-600',
+    activeGradient: 'shadow-blue-500/30',
   },
   {
     id: 'digital_product',
-    label: 'Produits Numériques',
+    label: 'Digital',
     shortLabel: 'Digital',
     icon: Laptop,
-    gradient: 'from-purple-500 via-purple-600 to-fuchsia-600',
-    activeGradient: 'shadow-purple-500/40',
-    iconBg: 'bg-purple-100 text-purple-600',
-    description: 'Logiciels & Formations'
+    gradient: 'from-purple-500 to-fuchsia-600',
+    activeGradient: 'shadow-purple-500/30',
   }
 ];
 
@@ -54,11 +48,11 @@ export function MarketplaceTypeSelector({
 }: MarketplaceTypeSelectorProps) {
   return (
     <section className={cn(
-      "px-3 sm:px-6 py-3 sm:py-4 border-b border-border/50",
-      "bg-gradient-to-r from-muted/30 via-background to-muted/30",
+      "px-3 py-2 sm:px-4 sm:py-3 border-b border-border/40",
+      "bg-gradient-to-r from-muted/20 via-transparent to-muted/20",
       className
     )}>
-      <div className="flex justify-center gap-3 sm:gap-4 max-w-md mx-auto">
+      <div className="flex justify-center gap-2 sm:gap-3 max-w-xs sm:max-w-sm mx-auto">
         {TYPE_OPTIONS.map((option) => {
           const Icon = option.icon;
           const isSelected = selectedType === option.id;
@@ -67,66 +61,36 @@ export function MarketplaceTypeSelector({
             <motion.button
               key={option.id}
               onClick={() => onTypeChange(option.id)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileTap={{ scale: 0.97 }}
               className={cn(
-                "group relative flex-1 min-w-0 rounded-2xl overflow-hidden transition-all duration-300",
-                "flex flex-col items-center justify-center gap-1.5 sm:gap-2 py-3 sm:py-4 px-2 sm:px-4",
+                "relative flex-1 rounded-xl overflow-hidden transition-all duration-200",
+                "flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 px-3 sm:px-4",
                 isSelected
                   ? cn(
-                      "bg-gradient-to-br text-white shadow-xl",
+                      "bg-gradient-to-r text-white shadow-lg",
                       option.gradient,
                       option.activeGradient
                     )
-                  : "bg-card border border-border/60 hover:border-primary/40 hover:shadow-lg"
+                  : "bg-card border border-border/50 hover:border-primary/30 hover:shadow-md"
               )}
             >
-              {/* Shimmer effect when selected */}
+              {/* Subtle shimmer on selected */}
               {isSelected && (
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent animate-shimmer" />
               )}
               
-              {/* Icon Container */}
-              <div className={cn(
-                "relative p-2 sm:p-2.5 rounded-xl transition-all duration-300",
-                isSelected 
-                  ? "bg-white/20 backdrop-blur-sm" 
-                  : option.iconBg
+              <Icon className={cn(
+                "w-4 h-4 sm:w-5 sm:h-5 shrink-0",
+                isSelected ? "text-white" : "text-muted-foreground"
+              )} />
+              
+              <span className={cn(
+                "text-[11px] sm:text-xs font-semibold",
+                isSelected ? "text-white" : "text-foreground"
               )}>
-                <Icon className={cn(
-                  "w-5 h-5 sm:w-6 sm:h-6 transition-transform duration-300",
-                  "group-hover:scale-110",
-                  isSelected ? "text-white" : ""
-                )} />
-              </div>
-              
-              {/* Labels */}
-              <div className="text-center min-w-0">
-                <span className={cn(
-                  "block text-[10px] sm:text-xs font-semibold truncate",
-                  isSelected ? "text-white" : "text-foreground"
-                )}>
-                  <span className="sm:hidden">{option.shortLabel}</span>
-                  <span className="hidden sm:inline">{option.label}</span>
-                </span>
-                {option.description && (
-                  <span className={cn(
-                    "hidden sm:block text-[9px] mt-0.5 truncate",
-                    isSelected ? "text-white/80" : "text-muted-foreground"
-                  )}>
-                    {option.description}
-                  </span>
-                )}
-              </div>
-              
-              {/* Active Indicator */}
-              {isSelected && (
-                <motion.div
-                  layoutId="type-indicator"
-                  className="absolute bottom-1 w-6 h-1 rounded-full bg-white/60"
-                  transition={{ type: "spring", bounce: 0.3 }}
-                />
-              )}
+                <span className="sm:hidden">{option.shortLabel}</span>
+                <span className="hidden sm:inline">{option.label}</span>
+              </span>
             </motion.button>
           );
         })}
