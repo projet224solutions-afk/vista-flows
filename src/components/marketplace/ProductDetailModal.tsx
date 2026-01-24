@@ -297,6 +297,12 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
   const handleAddToCart = () => {
     if (!product) return;
 
+    // Pour les produits affiliés, ne pas ajouter au panier mais informer l'utilisateur
+    if (product.is_affiliate && product.affiliate_url) {
+      toast.info('Ce produit est vendu par un partenaire. Utilisez "Acheter chez le partenaire" pour être redirigé.');
+      return;
+    }
+
     for (let i = 0; i < quantity; i++) {
       addToCart({
         id: product.id,
@@ -304,7 +310,11 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
         price: product.price,
         image: product.images?.[0],
         vendor_id: product.vendor_id,
-        vendor_name: product.vendors?.business_name
+        vendor_name: product.vendors?.business_name,
+        // Inclure les infos d'affiliation pour la gestion dans le panier
+        item_type: product.product_mode === 'affiliate' ? 'digital_product' : undefined,
+        product_mode: product.product_mode as 'direct' | 'affiliate' | undefined,
+        affiliate_url: product.affiliate_url
       });
     }
     
