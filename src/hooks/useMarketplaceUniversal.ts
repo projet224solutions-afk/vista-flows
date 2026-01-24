@@ -47,6 +47,9 @@ export interface MarketplaceItem {
   download_url?: string;
   file_size?: string;
   license_type?: string;
+  // Champs pour affiliés
+  product_mode?: 'direct' | 'affiliate';
+  affiliate_url?: string;
 }
 
 interface UseMarketplaceUniversalOptions {
@@ -344,6 +347,9 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           file_size: product.file_type || undefined,
           license_type: product.product_mode === "affiliate" ? "Affiliation" : "Vente directe",
           created_at: product.created_at,
+          // Exposer product_mode et affiliate_url pour le panier
+          product_mode: product.product_mode as 'direct' | 'affiliate' | undefined,
+          affiliate_url: product.affiliate_url || undefined,
         };
       });
     } catch (error) {
