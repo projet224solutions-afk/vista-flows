@@ -171,12 +171,17 @@ export function MarketplaceProductCard({
       
       {/* Content */}
       <CardContent className="marketplace-card-content">
-        {/* Type de produit - Masqué mobile */}
-        {category && (
-          <span className="hidden sm:block text-[9px] sm:text-[10px] text-primary font-medium uppercase tracking-wide mb-0.5">
-            {category}
+        {/* Type de produit - Masqué mobile (réserve l'espace pour uniformiser la hauteur) */}
+        <div className="hidden sm:block mb-0.5 min-h-[0.75rem]">
+          <span
+            className={cn(
+              "block text-[9px] sm:text-[10px] text-primary font-medium uppercase tracking-wide",
+              !category && "invisible"
+            )}
+          >
+            {category || "—"}
           </span>
-        )}
+        </div>
 
         {/* Title - 1 ligne */}
         <h3 className="marketplace-card-title" title={title}>

@@ -39,16 +39,7 @@ export function MediaAutoCarousel({
   const videoRef = useRef<HTMLVideoElement>(null);
   const imageTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Pas de media
-  if (videos.length === 0 && images.length === 0) {
-    return (
-      <div className={cn('relative w-full aspect-square bg-muted/30 rounded-lg overflow-hidden', className)}>
-        <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">
-          Aucune image
-        </div>
-      </div>
-    );
-  }
+  const isEmpty = videos.length === 0 && images.length === 0;
 
   // Nettoyer le timer d'image
   const clearImageTimer = useCallback(() => {
@@ -169,6 +160,17 @@ export function MediaAutoCarousel({
   const totalItems = videos.length + images.length;
   const currentIndex = isPlayingVideo ? currentVideoIndex : videos.length + currentImageIndex;
 
+  // IMPORTANT: garder les retours conditionnels APRÈS tous les hooks
+  if (isEmpty) {
+    return (
+      <div className={cn('relative w-full aspect-square bg-muted/30 rounded-lg overflow-hidden', className)}>
+        <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">
+          Aucune image
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
@@ -286,7 +288,7 @@ export function MediaAutoCarousel({
 
       {/* Progress dots */}
       {totalItems > 1 && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 z-30">
+        <div className="absolute bottom-1 sm:bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-0.5 sm:gap-1 z-30">
           {/* Video dots */}
           {videos.map((_, index) => (
             <button
@@ -299,8 +301,8 @@ export function MediaAutoCarousel({
               className={cn(
                 'transition-all duration-300 rounded-full',
                 isPlayingVideo && index === currentVideoIndex
-                  ? 'w-6 h-1.5 bg-red-500 shadow-lg'
-                  : 'w-1.5 h-1.5 bg-red-500/50 hover:bg-red-500/80'
+                  ? 'w-3 h-1 sm:w-5 sm:h-1.5 bg-red-500 shadow-md'
+                  : 'w-1 h-1 sm:w-1.5 sm:h-1.5 bg-red-500/50 hover:bg-red-500/80'
               )}
               aria-label={`Video ${index + 1}`}
             />
@@ -308,7 +310,7 @@ export function MediaAutoCarousel({
           
           {/* Separator */}
           {videos.length > 0 && images.length > 0 && (
-            <div className="w-px h-2 bg-white/30 mx-0.5" />
+            <div className="w-px h-1.5 sm:h-2 bg-white/30 mx-0.5" />
           )}
           
           {/* Image dots */}
@@ -324,8 +326,8 @@ export function MediaAutoCarousel({
               className={cn(
                 'transition-all duration-300 rounded-full',
                 !isPlayingVideo && index === currentImageIndex
-                  ? 'w-6 h-1.5 bg-white shadow-lg'
-                  : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/80'
+                  ? 'w-3 h-1 sm:w-5 sm:h-1.5 bg-white shadow-md'
+                  : 'w-1 h-1 sm:w-1.5 sm:h-1.5 bg-white/60 hover:bg-white/80'
               )}
               aria-label={`Image ${index + 1}`}
             />
