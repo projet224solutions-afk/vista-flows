@@ -7,13 +7,17 @@ import { useCart } from '@/contexts/CartContext';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
 
 export default function Cart() {
   const navigate = useNavigate();
   const { cartItems, removeFromCart, updateQuantity, clearCart, getCartTotal, getCartCount } = useCart();
+  const { convert, userCurrency } = usePriceConverter();
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('fr-FR').format(price) + ' GNF';
+  // Formater le prix dans la devise locale de l'utilisateur
+  const formatPrice = (price: number, sourceCurrency: string = 'GNF') => {
+    const converted = convert(price, sourceCurrency);
+    return converted.formatted;
   };
 
   // Séparer les produits affiliés des produits normaux
