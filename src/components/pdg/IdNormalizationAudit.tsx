@@ -400,13 +400,27 @@ export default function IdNormalizationAudit() {
 
         console.log(`🔄 Correction ID (tentative ${attempt}/${maxAttempts}): ${originalId} → ${newId} (${roleType})`);
 
+        // 1. Mettre à jour user_ids.custom_id
         const { error: updateError } = await supabase
           .from('user_ids')
           .update({ custom_id: newId })
           .eq('id', item.id);
 
         if (!updateError) {
-          // Log the normalization (best effort)
+          // 2. CRITIQUE: Synchroniser profiles.public_id pour éviter les désynchronisations
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({ public_id: newId })
+            .eq('id', item.user_id);
+
+          if (profileError) {
+            console.error('⚠️ Erreur sync profiles.public_id:', profileError);
+            // Continuer quand même, l'ID principal est corrigé
+          } else {
+            console.log(`✅ profiles.public_id synchronisé: ${newId}`);
+          }
+
+          // 3. Log the normalization (best effort)
           const { error: logError } = await supabase
             .from('id_normalization_logs')
             .insert({
@@ -419,6 +433,7 @@ export default function IdNormalizationAudit() {
                 original_format: originalId,
                 corrected_format: newId,
                 correction_type: 'manual_pdg_correction',
+                profiles_synced: !profileError,
                 timestamp: new Date().toISOString()
               },
               metadata: {
@@ -505,13 +520,24 @@ export default function IdNormalizationAudit() {
           attempt++;
           const newId = await generateUniqueId(roleType);
 
+          // 1. Mettre à jour user_ids.custom_id
           const { error: updateError } = await supabase
             .from('user_ids')
             .update({ custom_id: newId })
             .eq('id', item.id);
 
           if (!updateError) {
-            // Log the normalization (best effort)
+            // 2. CRITIQUE: Synchroniser profiles.public_id
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .update({ public_id: newId })
+              .eq('id', item.user_id);
+
+            if (profileError) {
+              console.error(`⚠️ Erreur sync profiles.public_id pour ${item.user_id}:`, profileError);
+            }
+
+            // 3. Log the normalization (best effort)
             await supabase
               .from('id_normalization_logs')
               .insert({
@@ -524,6 +550,7 @@ export default function IdNormalizationAudit() {
                   original_format: originalId,
                   corrected_format: newId,
                   correction_type: 'bulk_pdg_correction',
+                  profiles_synced: !profileError,
                   timestamp: new Date().toISOString()
                 },
                 metadata: {
