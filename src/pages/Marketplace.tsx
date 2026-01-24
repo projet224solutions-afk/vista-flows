@@ -326,8 +326,8 @@ export default function Marketplace() {
         isMobile={isMobile}
       />
 
-      {/* Results Section */}
-      <section className="px-3 sm:px-4 py-4 sm:py-6">
+      {/* Results Section - Padding contrôlé */}
+      <section className="px-2 sm:px-4 py-3 sm:py-5">
         {/* Professional Services Grid */}
         {selectedItemType === 'professional_service' ? (
           <ServiceTypesGrid 

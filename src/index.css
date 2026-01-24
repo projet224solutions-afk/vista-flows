@@ -506,26 +506,23 @@ All colors MUST be HSL.
      ================================================ */
   .marketplace-grid {
     display: grid;
-    gap: 0.75rem;
+    gap: 0.5rem;
     width: 100%;
-    padding: 0.75rem;
   }
 
-  /* Mobile (≤600px): 2 colonnes - Images grandes premium */
+  /* Mobile (≤600px): 2 colonnes - Ultra compact */
   @media (max-width: 600px) {
     .marketplace-grid {
       grid-template-columns: repeat(2, 1fr);
-      gap: 0.625rem;
-      padding: 0.625rem;
+      gap: 0.5rem;
     }
   }
 
-  /* Tablette portrait (601px - 768px): 2-3 colonnes */
+  /* Tablette portrait (601px - 768px): 2 colonnes */
   @media (min-width: 601px) and (max-width: 768px) {
     .marketplace-grid {
       grid-template-columns: repeat(2, 1fr);
-      gap: 0.875rem;
-      padding: 0.875rem;
+      gap: 0.75rem;
     }
   }
 
@@ -533,35 +530,31 @@ All colors MUST be HSL.
   @media (min-width: 769px) and (max-width: 1024px) {
     .marketplace-grid {
       grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      padding: 1rem;
+      gap: 0.875rem;
     }
   }
 
-  /* Desktop petit (1025px - 1280px): 3-4 colonnes */
+  /* Desktop petit (1025px - 1280px): 4 colonnes */
   @media (min-width: 1025px) and (max-width: 1280px) {
+    .marketplace-grid {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+  }
+
+  /* Desktop standard (1281px - 1536px): 5 colonnes */
+  @media (min-width: 1281px) and (max-width: 1536px) {
     .marketplace-grid {
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 1rem;
-      padding: 1rem;
     }
   }
 
-  /* Desktop standard (1281px - 1536px): 4-5 colonnes */
-  @media (min-width: 1281px) and (max-width: 1536px) {
+  /* Grand écran (1537px - 1920px): 6 colonnes */
+  @media (min-width: 1537px) and (max-width: 1920px) {
     .marketplace-grid {
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 1.25rem;
-      padding: 1.25rem;
-    }
-  }
-
-  /* Grand écran (1537px - 1920px): 5-6 colonnes */
-  @media (min-width: 1537px) and (max-width: 1920px) {
-    .marketplace-grid {
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.25rem;
-      padding: 1.5rem;
     }
   }
 
@@ -569,9 +562,8 @@ All colors MUST be HSL.
   @media (min-width: 1921px) {
     .marketplace-grid {
       grid-template-columns: repeat(6, 1fr);
-      gap: 1.5rem;
-      padding: 1.5rem;
-      max-width: 2000px;
+      gap: 1.25rem;
+      max-width: 1920px;
       margin: 0 auto;
     }
   }
@@ -618,9 +610,9 @@ All colors MUST be HSL.
     transform: scale(1.08);
   }
 
-  /* Contenu card - Padding responsive et overflow caché */
+  /* Contenu card - Padding ultra-compact mobile */
   .marketplace-card-content {
-    padding: 0.5rem;
+    padding: 0.375rem;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -629,24 +621,24 @@ All colors MUST be HSL.
 
   @media (min-width: 601px) {
     .marketplace-card-content {
-      padding: 0.875rem;
+      padding: 0.75rem;
     }
   }
 
   @media (min-width: 1025px) {
     .marketplace-card-content {
-      padding: 1rem;
+      padding: 0.875rem;
     }
   }
 
-  /* Titre produit - 1 ligne max */
+  /* Titre produit - Plus compact mobile */
   .marketplace-card-title {
     font-family: 'Poppins', sans-serif;
     font-weight: 600;
-    font-size: 0.813rem;
-    line-height: 1.35;
+    font-size: 0.688rem;
+    line-height: 1.25;
     color: hsl(var(--foreground));
-    margin-bottom: 0.375rem;
+    margin-bottom: 0.25rem;
     display: -webkit-box;
     -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
@@ -656,65 +648,75 @@ All colors MUST be HSL.
 
   @media (min-width: 601px) {
     .marketplace-card-title {
-      font-size: 0.875rem;
-      margin-bottom: 0.5rem;
+      font-size: 0.813rem;
+      margin-bottom: 0.375rem;
     }
   }
 
   @media (min-width: 1025px) {
     .marketplace-card-title {
-      font-size: 0.938rem;
+      font-size: 0.875rem;
     }
   }
 
-  /* Prix produit - Bien visible */
+  /* Prix produit - Compact mobile */
   .marketplace-card-price {
     font-family: 'Rubik', sans-serif;
     font-weight: 700;
-    font-size: 0.938rem;
+    font-size: 0.813rem;
     color: hsl(var(--primary));
   }
 
   @media (min-width: 601px) {
     .marketplace-card-price {
-      font-size: 1rem;
+      font-size: 0.938rem;
     }
   }
 
   @media (min-width: 1025px) {
     .marketplace-card-price {
-      font-size: 1.063rem;
+      font-size: 1rem;
     }
   }
 
-  /* Avis étoiles */
+  /* Avis étoiles - Compact */
   .marketplace-card-rating {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
-    margin-bottom: 0.25rem;
+    gap: 0.125rem;
+    margin-bottom: 0.125rem;
   }
 
-  /* Vendeur info */
+  @media (min-width: 601px) {
+    .marketplace-card-rating {
+      gap: 0.25rem;
+      margin-bottom: 0.25rem;
+    }
+  }
+
+  /* Vendeur info - Ultra compact */
   .marketplace-card-vendor {
-    font-size: 0.688rem;
+    font-size: 0.625rem;
     color: hsl(var(--muted-foreground));
     display: flex;
     align-items: center;
-    gap: 0.25rem;
-    margin-bottom: 0.375rem;
+    gap: 0.125rem;
+    margin-bottom: 0.25rem;
+    overflow: hidden;
   }
 
   @media (min-width: 601px) {
     .marketplace-card-vendor {
-      font-size: 0.75rem;
+      font-size: 0.688rem;
+      gap: 0.25rem;
+      margin-bottom: 0.375rem;
     }
   }
 
-  /* Boutons action - Compacts sur mobile */
+  /* Boutons action - Ultra compacts sur mobile */
   .marketplace-card-actions {
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
     gap: 0.25rem;
     margin-top: auto;
     padding-top: 0.375rem;
@@ -723,26 +725,39 @@ All colors MUST be HSL.
   @media (max-width: 600px) {
     .marketplace-card-actions {
       gap: 0.125rem;
+      flex-wrap: nowrap;
     }
 
-    .marketplace-card-actions > button,
+    /* Bouton principal Voir - Plus compact */
+    .marketplace-card-actions > button.flex-1,
     .marketplace-card-actions > .flex-1 {
+      flex: 1 1 auto;
       min-width: 0;
-      padding-left: 0.375rem;
-      padding-right: 0.375rem;
+      height: 1.625rem;
+      padding: 0 0.5rem;
+      font-size: 0.625rem;
     }
 
-    .marketplace-card-actions > button:not(.flex-1) {
-      width: 1.75rem;
-      height: 1.75rem;
+    /* Boutons icônes - Très compacts */
+    .marketplace-card-actions > button:not(.flex-1),
+    .marketplace-card-actions > div > button {
+      width: 1.5rem;
+      height: 1.5rem;
       padding: 0;
+      flex-shrink: 0;
+    }
+
+    .marketplace-card-actions > button:not(.flex-1) svg,
+    .marketplace-card-actions > div > button svg {
+      width: 0.75rem;
+      height: 0.75rem;
     }
   }
 
   @media (min-width: 601px) {
     .marketplace-card-actions {
-      gap: 0.5rem;
-      padding-top: 0.625rem;
+      gap: 0.375rem;
+      padding-top: 0.5rem;
     }
   }
 
