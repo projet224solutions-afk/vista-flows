@@ -57,27 +57,27 @@ export default function VendorContracts() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Gestion des Contrats</h1>
-        <p className="text-muted-foreground">
+    <div className="container mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2">Gestion des Contrats</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Créez et gérez vos contrats professionnels
         </p>
       </div>
 
       <Tabs defaultValue="ai" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="ai" className="gap-2">
-            <Sparkles className="w-4 h-4" />
-            Contrat IA
+        <TabsList className="w-full h-auto flex flex-wrap gap-1 p-1">
+          <TabsTrigger value="ai" className="flex-1 min-w-0 gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-2">
+            <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+            <span className="truncate">Contrat IA</span>
           </TabsTrigger>
-          <TabsTrigger value="create" className="gap-2">
-            <FileText className="w-4 h-4" />
-            Créer Manuellement
+          <TabsTrigger value="create" className="flex-1 min-w-0 gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-2">
+            <FileText className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+            <span className="truncate">Manuel</span>
           </TabsTrigger>
-          <TabsTrigger value="list" className="gap-2">
-            <History className="w-4 h-4" />
-            Mes Contrats
+          <TabsTrigger value="list" className="flex-1 min-w-0 gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-2">
+            <History className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+            <span className="truncate">Contrats</span>
           </TabsTrigger>
         </TabsList>
 

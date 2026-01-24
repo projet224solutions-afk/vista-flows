@@ -152,56 +152,53 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
   }
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      {/* En-tête avec alertes */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Gestion des Dépenses</h2>
-          <div>
-            <p className="text-gray-600">Suivez et analysez vos dépenses professionnelles</p>
-          </div>
+    <div className={`space-y-4 sm:space-y-6 ${className}`}>
+      {/* En-tête avec alertes - Mobile optimized */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h2 className="text-lg sm:text-2xl font-bold text-gray-900">Gestion des Dépenses</h2>
+          <p className="text-xs sm:text-sm text-gray-600 line-clamp-1">Suivez vos dépenses professionnelles</p>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Alertes non lues */}
+        <div className="flex items-center gap-2">
           {alerts.length > 0 && (
-            <Badge variant="destructive" className="animate-pulse">
+            <Badge variant="destructive" className="animate-pulse text-xs">
               <Bell className="w-3 h-3 mr-1" />
-              {alerts.length} alertes
+              {alerts.length}
             </Badge>
           )}
 
-          <Button size="sm" variant="outline" onClick={refetch}>
-            <Activity className="w-4 h-4 mr-2" />
-            Actualiser
+          <Button size="sm" variant="outline" onClick={refetch} className="text-xs sm:text-sm">
+            <Activity className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="hidden xs:inline">Actualiser</span>
           </Button>
         </div>
       </div>
 
-      {/* Métriques principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Métriques principales - Grid 2x2 on mobile */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         {/* Total des dépenses */}
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Dépenses</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {safeStats.total_expenses?.toLocaleString() || 0} GNF
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Dépenses</p>
+                <p className="text-base sm:text-2xl font-bold text-gray-900 truncate">
+                  {safeStats.total_expenses?.toLocaleString() || 0}
                 </p>
-                <div className="flex items-center mt-2">
+                <div className="flex items-center mt-1">
                   {metrics.monthlyChange >= 0 ? (
-                    <TrendingUp className="w-4 h-4 text-red-500 mr-1" />
+                    <TrendingUp className="w-3 h-3 text-red-500 mr-1" />
                   ) : (
-                    <TrendingDown className="w-4 h-4 text-green-500 mr-1" />
+                    <TrendingDown className="w-3 h-3 text-green-500 mr-1" />
                   )}
-                  <span className={`text-sm ${metrics.monthlyChange >= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                    {Math.abs(metrics.monthlyChange).toFixed(1)}% vs mois dernier
+                  <span className={`text-xs ${metrics.monthlyChange >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    {Math.abs(metrics.monthlyChange).toFixed(0)}%
                   </span>
                 </div>
               </div>
-              <div className="p-3 bg-red-50 rounded-full">
-                <DollarSign className="w-6 h-6 text-red-600" />
+              <div className="p-2 sm:p-3 bg-red-50 rounded-full shrink-0">
+                <DollarSign className="w-4 h-4 sm:w-6 sm:h-6 text-red-600" />
               </div>
             </div>
           </CardContent>
@@ -209,17 +206,17 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
 
         {/* Nombre de dépenses */}
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Nombre de Dépenses</p>
-                <p className="text-2xl font-bold text-gray-900">{expenses.length}</p>
-                <p className="text-sm text-gray-500 mt-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Nb. Dépenses</p>
+                <p className="text-base sm:text-2xl font-bold text-gray-900">{expenses.length}</p>
+                <p className="text-xs text-gray-500 mt-1 truncate">
                   {metrics.currentMonthCount} ce mois
                 </p>
               </div>
-              <div className="p-3 bg-blue-50 rounded-full">
-                <Receipt className="w-6 h-6 text-blue-600" />
+              <div className="p-2 sm:p-3 bg-blue-50 rounded-full shrink-0">
+                <Receipt className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600" />
               </div>
             </div>
           </CardContent>
@@ -227,19 +224,19 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
 
         {/* Dépense moyenne */}
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Dépense Moyenne</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {(expenses.length > 0 ? (safeStats.total_expenses || 0) / expenses.length : 0).toLocaleString()} GNF
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Dép. Moyenne</p>
+                <p className="text-base sm:text-2xl font-bold text-gray-900 truncate">
+                  {(expenses.length > 0 ? (safeStats.total_expenses || 0) / expenses.length : 0).toLocaleString()}
                 </p>
-                <p className="text-sm text-gray-500 mt-2">
-                  {metrics.averageExpense.toLocaleString()} GNF ce mois
+                <p className="text-xs text-gray-500 mt-1 truncate">
+                  {metrics.averageExpense.toLocaleString()} ce mois
                 </p>
               </div>
-              <div className="p-3 bg-green-50 rounded-full">
-                <Target className="w-6 h-6 text-green-600" />
+              <div className="p-2 sm:p-3 bg-green-50 rounded-full shrink-0">
+                <Target className="w-4 h-4 sm:w-6 sm:h-6 text-green-600" />
               </div>
             </div>
           </CardContent>
@@ -247,55 +244,57 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
 
         {/* Catégories actives */}
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Catégories</p>
-                <p className="text-2xl font-bold text-gray-900">{categories?.length || 0}</p>
-                <p className="text-sm text-gray-500 mt-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Catégories</p>
+                <p className="text-base sm:text-2xl font-bold text-gray-900">{categories?.length || 0}</p>
+                <p className="text-xs text-gray-500 mt-1 truncate">
                   {categories.filter(c => expenses.some(e => e.category_id === c.id)).length} utilisées
                 </p>
               </div>
-              <div className="p-3 bg-purple-50 rounded-full">
-                <Package className="w-6 h-6 text-purple-600" />
+              <div className="p-2 sm:p-3 bg-purple-50 rounded-full shrink-0">
+                <Package className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600" />
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Onglets principaux */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger value="profit">
-            <Calculator className="w-4 h-4 mr-2" />
-            Profit
-          </TabsTrigger>
-          <TabsTrigger value="dashboard">
-            <BarChart className="w-4 h-4 mr-2" />
-            Dashboard
-          </TabsTrigger>
-          <TabsTrigger value="purchases">
-            <ShoppingCart className="w-4 h-4 mr-2" />
-            Achats
-          </TabsTrigger>
-          <TabsTrigger value="expenses">
-            <Receipt className="w-4 h-4 mr-2" />
-            Dépenses
-          </TabsTrigger>
-          <TabsTrigger value="categories">
-            <Package className="w-4 h-4 mr-2" />
-            Catégories
-          </TabsTrigger>
-          <TabsTrigger value="analytics">
-            <Brain className="w-4 h-4 mr-2" />
-            Analyses IA
-          </TabsTrigger>
-          <TabsTrigger value="wallet">
-            <Wallet className="w-4 h-4 mr-2" />
-            Wallet
-          </TabsTrigger>
-        </TabsList>
+      {/* Onglets principaux - Scrollable on mobile */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
+          <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-7 h-auto p-1 gap-1">
+            <TabsTrigger value="profit" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap">
+              <Calculator className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              Profit
+            </TabsTrigger>
+            <TabsTrigger value="dashboard" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap">
+              <BarChart className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="purchases" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap">
+              <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              Achats
+            </TabsTrigger>
+            <TabsTrigger value="expenses" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap">
+              <Receipt className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              Dépenses
+            </TabsTrigger>
+            <TabsTrigger value="categories" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap">
+              <Package className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              Catégories
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap">
+              <Brain className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              IA
+            </TabsTrigger>
+            <TabsTrigger value="wallet" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap">
+              <Wallet className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              Wallet
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Analyse de Profit Mensuel */}
         <TabsContent value="profit" className="space-y-6">

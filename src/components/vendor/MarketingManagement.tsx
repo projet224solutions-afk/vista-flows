@@ -210,35 +210,36 @@ export default function MarketingManagement() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Tabs defaultValue="traffic" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="traffic" className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4" />
-            Trafic & Visites
+        <TabsList className="w-full h-auto flex p-1 mb-4 sm:mb-6">
+          <TabsTrigger value="traffic" className="flex-1 flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-2">
+            <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+            <span className="truncate">Trafic</span>
           </TabsTrigger>
-          <TabsTrigger value="marketing" className="flex items-center gap-2">
-            <Megaphone className="w-4 h-4" />
-            Marketing & Promotions
+          <TabsTrigger value="marketing" className="flex-1 flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-2">
+            <Megaphone className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+            <span className="truncate">Marketing</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="traffic" className="space-y-6">
+        <TabsContent value="traffic" className="space-y-4 sm:space-y-6">
           <TrafficAnalyticsSection />
         </TabsContent>
 
-        <TabsContent value="marketing" className="space-y-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-2xl font-bold">Marketing & Promotions</h2>
-              <p className="text-muted-foreground">Gérez vos campagnes marketing et codes promotionnels</p>
+        <TabsContent value="marketing" className="space-y-4 sm:space-y-6">
+          {/* Header - Mobile optimized */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
+            <div className="min-w-0">
+              <h2 className="text-lg sm:text-2xl font-bold">Marketing & Promotions</h2>
+              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">Gérez vos campagnes et codes promo</p>
             </div>
-        <div className="flex gap-2">
+            <div className="flex gap-2">
           <Dialog open={isPromoDialogOpen} onOpenChange={setIsPromoDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">
-                <Tag className="w-4 h-4 mr-2" />
-                Code promo
+              <Button variant="outline" size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm">
+                <Tag className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="truncate">Code promo</span>
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -342,9 +343,9 @@ export default function MarketingManagement() {
 
           <Dialog open={isCampaignDialogOpen} onOpenChange={setIsCampaignDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Campagne
+              <Button size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm">
+                <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="truncate">Campagne</span>
               </Button>
             </DialogTrigger>
             <DialogContent>

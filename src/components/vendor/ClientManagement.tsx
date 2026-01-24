@@ -190,100 +190,99 @@ export default function ClientManagement() {
   if (loading) return <div className="p-4">Chargement des clients...</div>;
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Gestion des Clients</h2>
-          <p className="text-muted-foreground">Gérez vos relations clients et analysez leur comportement</p>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header - Mobile optimized */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
+        <div className="min-w-0">
+          <h2 className="text-lg sm:text-2xl font-bold truncate">Gestion des Clients</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">Gérez vos relations clients</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => {
-            // Contact all clients functionality
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm" onClick={() => {
             toast({
               title: "Fonction en développement",
               description: "La fonctionnalité de contact groupé sera bientôt disponible."
             });
           }}>
-            <MessageSquare className="w-4 h-4 mr-2" />
-            Contacter tous
+            <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="hidden xs:inline">Contacter</span>
           </Button>
-          <Button variant="outline" onClick={() => {
-            // Newsletter functionality  
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm" onClick={() => {
             toast({
               title: "Newsletter",
               description: "La fonctionnalité newsletter sera bientôt disponible."
             });
           }}>
-            <Mail className="w-4 h-4 mr-2" />
-            Newsletter
+            <Mail className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="hidden xs:inline">Newsletter</span>
           </Button>
         </div>
       </div>
 
-      {/* Statistiques clients */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      {/* Statistiques clients - Grid 2x3 on mobile */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-blue-600" />
-              <div>
-                <p className="text-sm text-muted-foreground">Total clients</p>
-                <p className="text-2xl font-bold">{stats.totalClients}</p>
+              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Total clients</p>
+                <p className="text-lg sm:text-2xl font-bold">{stats.totalClients}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-green-600" />
-              <div>
-                <p className="text-sm text-muted-foreground">Nouveaux (30j)</p>
-                <p className="text-2xl font-bold text-green-600">{stats.newClientsThisMonth}</p>
+              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Nouveaux (30j)</p>
+                <p className="text-lg sm:text-2xl font-bold text-green-600">{stats.newClientsThisMonth}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <div className="flex items-center gap-2">
-              <Award className="w-5 h-5 text-yellow-600" />
-              <div>
-                <p className="text-sm text-muted-foreground">Clients VIP</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.vipClients}</p>
+              <Award className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Clients VIP</p>
+                <p className="text-lg sm:text-2xl font-bold text-yellow-600">{stats.vipClients}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-purple-600" />
-              <div>
-                <p className="text-sm text-muted-foreground">Actifs (30j)</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.activeClients}</p>
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Actifs (30j)</p>
+                <p className="text-lg sm:text-2xl font-bold text-purple-600">{stats.activeClients}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <div className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-green-600" />
-              <div>
-                <p className="text-sm text-muted-foregreen">CA total</p>
-                <p className="text-xl font-bold">{stats.totalRevenue.toLocaleString()} GNF</p>
+              <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">CA total</p>
+                <p className="text-base sm:text-xl font-bold truncate">{stats.totalRevenue.toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <div className="flex items-center gap-2">
-              <ShoppingCart className="w-5 h-5 text-orange-600" />
-              <div>
-                <p className="text-sm text-muted-foreground">Panier moyen</p>
-                <p className="text-xl font-bold">{stats.averageOrderValue.toLocaleString()} GNF</p>
+              <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Panier moyen</p>
+                <p className="text-base sm:text-xl font-bold truncate">{stats.averageOrderValue.toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
