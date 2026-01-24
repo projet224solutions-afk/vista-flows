@@ -20,13 +20,7 @@ import {
   Eye,
   ExternalLink,
   Star,
-  ShoppingCart,
-  Sparkles,
-  TrendingUp,
-  Users,
-  Globe,
-  ChevronRight,
-  Zap
+  ShoppingCart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -50,64 +44,57 @@ interface ProductModule {
   descriptionKey: string;
   gradient: string;
   category: 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom' | 'ai' | 'physique_affilie';
-  stats?: { label: string; value: string };
 }
 
 // Dropshipping retiré de l'affichage mais catégorie conservée pour l'auth
 const productModules: ProductModule[] = [
   {
     id: 'voyage',
-    icon: <Plane className="w-6 h-6" />,
+    icon: <Plane className="w-7 h-7" />,
     titleKey: 'digital.modules.flight',
     descriptionKey: 'digital.modules.flightDesc',
-    gradient: 'from-sky-500 via-blue-500 to-indigo-600',
-    category: 'voyage',
-    stats: { label: 'Destinations', value: '190+' }
+    gradient: 'from-blue-500 to-cyan-500',
+    category: 'voyage'
   },
   {
     id: 'logiciel',
-    icon: <Monitor className="w-6 h-6" />,
+    icon: <Monitor className="w-7 h-7" />,
     titleKey: 'digital.modules.software',
     descriptionKey: 'digital.modules.softwareDesc',
-    gradient: 'from-violet-500 via-purple-500 to-fuchsia-600',
-    category: 'logiciel',
-    stats: { label: 'Apps', value: '500+' }
+    gradient: 'from-purple-500 to-pink-500',
+    category: 'logiciel'
   },
   {
     id: 'formation',
-    icon: <GraduationCap className="w-6 h-6" />,
+    icon: <GraduationCap className="w-7 h-7" />,
     titleKey: 'digital.modules.training',
     descriptionKey: 'digital.modules.trainingDesc',
-    gradient: 'from-emerald-500 via-green-500 to-teal-600',
-    category: 'formation',
-    stats: { label: 'Cours', value: '1K+' }
+    gradient: 'from-green-500 to-emerald-500',
+    category: 'formation'
   },
   {
     id: 'livre',
-    icon: <BookOpen className="w-6 h-6" />,
+    icon: <BookOpen className="w-7 h-7" />,
     titleKey: 'digital.modules.books',
     descriptionKey: 'digital.modules.booksDesc',
-    gradient: 'from-amber-500 via-orange-500 to-yellow-600',
-    category: 'livre',
-    stats: { label: 'Ebooks', value: '2K+' }
+    gradient: 'from-amber-500 to-yellow-500',
+    category: 'livre'
   },
   {
     id: 'ai',
-    icon: <Bot className="w-6 h-6" />,
+    icon: <Bot className="w-7 h-7" />,
     titleKey: 'digital.modules.ai',
     descriptionKey: 'digital.modules.aiDesc',
-    gradient: 'from-pink-500 via-rose-500 to-red-600',
-    category: 'ai',
-    stats: { label: 'Outils IA', value: '50+' }
+    gradient: 'from-violet-500 to-fuchsia-500',
+    category: 'ai'
   },
   {
     id: 'physique_affilie',
-    icon: <ShoppingBag className="w-6 h-6" />,
+    icon: <ShoppingBag className="w-7 h-7" />,
     titleKey: 'digital.modules.physicalAffiliate',
     descriptionKey: 'digital.modules.physicalAffiliateDesc',
-    gradient: 'from-orange-500 via-red-500 to-rose-600',
-    category: 'physique_affilie',
-    stats: { label: 'Produits', value: '10K+' }
+    gradient: 'from-orange-500 to-red-500',
+    category: 'physique_affilie'
   }
 ];
 
@@ -213,28 +200,22 @@ export default function DigitalProducts() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 pb-24">
-      {/* Header Premium */}
-      <header className="bg-gradient-to-r from-card via-card to-card/95 backdrop-blur-xl border-b border-border/50 sticky top-0 z-40 shadow-sm">
+    <div className="min-h-screen bg-background pb-24">
+      {/* Header */}
+      <header className="bg-card/95 backdrop-blur-md border-b border-border sticky top-0 z-40">
         <div className="px-4 py-3">
           <div className="flex items-center gap-3">
             <Button 
               variant="ghost" 
               size="icon"
               onClick={() => navigate('/')}
-              className="shrink-0 hover:bg-muted/80"
+              className="shrink-0"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold text-foreground truncate">{t('digital.title')}</h1>
-                <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px] px-1.5">
-                  <Sparkles className="w-3 h-3 mr-0.5" />
-                  Pro
-                </Badge>
-              </div>
-              <p className="text-[11px] text-muted-foreground truncate">
+            <div className="flex-1">
+              <h1 className="text-lg font-bold text-foreground">{t('digital.title')}</h1>
+              <p className="text-xs text-muted-foreground">
                 {t('digital.subtitle')}
               </p>
             </div>
@@ -243,82 +224,30 @@ export default function DigitalProducts() {
                 variant="outline"
                 size="sm"
                 onClick={() => navigate('/marketplace?type=digital')}
-                className="shrink-0 h-8 text-xs border-primary/30 hover:bg-primary/5"
+                className="shrink-0"
               >
-                <Store className="w-3.5 h-3.5 mr-1" />
-                <span className="hidden xs:inline">{t('nav.marketplace')}</span>
+                <Store className="w-4 h-4 mr-1.5" />
+                {t('nav.marketplace')}
               </Button>
             )}
           </div>
         </div>
       </header>
 
-      {/* Hero Section Premium */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-purple-500/5 to-pink-500/5" />
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-purple-500/10 to-transparent rounded-full blur-3xl" />
-        
-        <div className="relative px-4 py-6 sm:py-8">
-          <div className="text-center max-w-md mx-auto">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-primary/20 to-purple-500/20 backdrop-blur-sm rounded-full mb-4 border border-primary/20">
-              <Zap className="w-3.5 h-3.5 text-primary" />
-              <span className="text-xs font-semibold text-primary">{t('digital.marketplaceDigital')}</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent mb-3">
-              {t('digital.discover')}
-            </h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {t('digital.discoverDesc')}
-            </p>
-          </div>
-
-          {/* Stats rapides */}
-          <div className="flex justify-center gap-6 mt-6">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-primary mb-1">
-                <Users className="w-4 h-4" />
-                <span className="text-lg font-bold">15K+</span>
-              </div>
-              <span className="text-[10px] text-muted-foreground">Utilisateurs</span>
-            </div>
-            <div className="h-8 w-px bg-border" />
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-purple-500 mb-1">
-                <Package className="w-4 h-4" />
-                <span className="text-lg font-bold">5K+</span>
-              </div>
-              <span className="text-[10px] text-muted-foreground">Produits</span>
-            </div>
-            <div className="h-8 w-px bg-border" />
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-green-500 mb-1">
-                <Globe className="w-4 h-4" />
-                <span className="text-lg font-bold">50+</span>
-              </div>
-              <span className="text-[10px] text-muted-foreground">Pays</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Barre de recherche Premium */}
-      <section className="px-4 py-3 -mt-2">
+      {/* Barre de recherche */}
+      <section className="px-4 py-3 border-b border-border">
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10 rounded-xl blur-sm" />
-          <div className="relative bg-card/80 backdrop-blur-sm rounded-xl border border-border/50 shadow-sm">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Rechercher un produit numérique..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-11 bg-transparent border-0 focus-visible:ring-1 focus-visible:ring-primary/50"
-            />
-          </div>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Rechercher un produit numérique..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 h-10 bg-muted/50 border-border"
+          />
         </div>
         {isSearching && (
-          <p className="text-xs text-muted-foreground mt-2 ml-1">
+          <p className="text-xs text-muted-foreground mt-2">
             {filteredProducts.length} résultat{filteredProducts.length !== 1 ? 's' : ''} pour "{searchQuery}"
           </p>
         )}
@@ -333,7 +262,7 @@ export default function DigitalProducts() {
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="text-center py-12">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center bg-muted">
                 <Search className="w-8 h-8 text-muted-foreground" />
               </div>
               <h3 className="font-semibold text-foreground mb-2">
@@ -351,15 +280,15 @@ export default function DigitalProducts() {
               {filteredProducts.map((product) => (
                 <Card 
                   key={product.id}
-                  className="cursor-pointer overflow-hidden hover:shadow-xl transition-all duration-300 border-border/50 group"
+                  className="cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-200"
                   onClick={() => handleProductClick(product)}
                 >
-                  <div className="relative aspect-square bg-muted overflow-hidden">
+                  <div className="relative aspect-square bg-muted">
                     {product.images && product.images[0] ? (
                       <img 
                         src={product.images[0]} 
                         alt={product.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className={cn(
@@ -374,13 +303,13 @@ export default function DigitalProducts() {
                     {/* Badges */}
                     <div className="absolute top-2 left-2 flex flex-col gap-1">
                       {product.product_mode === 'affiliate' && (
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 bg-background/90 backdrop-blur-sm">
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
                           <ExternalLink className="w-3 h-3 mr-1" />
                           Affilié
                         </Badge>
                       )}
                       {product.is_featured && (
-                        <Badge className="text-[10px] px-1.5 py-0.5 bg-gradient-to-r from-amber-500 to-yellow-500 border-0">
+                        <Badge className="text-[10px] px-1.5 py-0.5 bg-yellow-500">
                           <Star className="w-3 h-3 mr-1" />
                           Featured
                         </Badge>
@@ -419,25 +348,22 @@ export default function DigitalProducts() {
         </section>
       ) : (
         <>
-          {/* Status Banner Premium */}
+          {/* Status Banner */}
           {user && !isMerchant && (
-            <div className="mx-4 my-3 p-3 bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10 rounded-xl border border-primary/20 backdrop-blur-sm">
+            <div className="px-4 py-3 bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10 border-b border-primary/20">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center shrink-0">
-                    <TrendingUp className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-foreground">{t('digital.wantToSell')}</p>
-                    <p className="text-xs text-muted-foreground truncate">{t('digital.activateMerchant')}</p>
+                <div className="flex items-center gap-2 flex-1">
+                  <Store className="w-4 h-4 text-primary shrink-0" />
+                  <div className="text-xs">
+                    <p className="font-medium text-foreground">{t('digital.wantToSell')}</p>
+                    <p className="text-muted-foreground">{t('digital.activateMerchant')}</p>
                   </div>
                 </div>
                 <Button
                   size="sm"
                   onClick={handleBecomeMerchant}
-                  className="shrink-0 h-9 px-4 bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 shadow-lg shadow-primary/25"
+                  className="shrink-0 h-8 text-xs"
                 >
-                  <Sparkles className="w-3.5 h-3.5 mr-1.5" />
                   {t('digital.becomeMerchant')}
                 </Button>
               </div>
@@ -445,90 +371,58 @@ export default function DigitalProducts() {
           )}
 
           {user && isMerchant && (
-            <div className="mx-4 my-3 p-3 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-xl border border-green-500/20">
-              <div className="flex items-center justify-center gap-2 text-green-600">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <div className="px-4 py-2.5 bg-green-500/10 text-green-600 border-b border-green-500/20 text-center text-sm">
+              <span className="flex items-center justify-center gap-2">
                 <Store className="w-4 h-4" />
-                <span className="text-sm font-medium">{t('digital.merchantActive')}</span>
-              </div>
+                {t('digital.merchantActive')}
+              </span>
             </div>
           )}
 
-          {/* Section Titre */}
-          <div className="px-4 pt-4 pb-2">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-foreground">Catégories</h3>
-              <Badge variant="outline" className="text-[10px] text-muted-foreground">
-                {productModules.length} disponibles
-              </Badge>
+          {/* Hero Section */}
+          <section className="px-4 py-6">
+            <div className="text-center">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 rounded-full mb-3">
+                <Package className="w-4 h-4 text-primary" />
+                <span className="text-xs font-medium text-primary">{t('digital.marketplaceDigital')}</span>
+              </div>
+              <h2 className="text-xl font-bold text-foreground mb-2">
+                {t('digital.discover')}
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                {t('digital.discoverDesc')}
+                {!isMerchant && ` ${t('digital.becomeSellerPrompt')}`}
+              </p>
             </div>
-          </div>
+          </section>
 
-          {/* Modules Grid Premium */}
+          {/* Modules Grid */}
           <section className="px-4 pb-6">
             <div className="grid grid-cols-2 gap-3">
-              {productModules.map((module, index) => (
+              {productModules.map((module) => (
                 <Card 
                   key={module.id}
                   className={cn(
-                    'cursor-pointer overflow-hidden transition-all duration-300 group',
-                    'hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-0.5',
-                    'border-0 bg-gradient-to-br from-card to-card/80',
-                    'ring-1 ring-border/50 hover:ring-primary/30'
+                    'cursor-pointer overflow-hidden transition-all duration-200',
+                    'hover:shadow-lg hover:scale-[1.02]',
+                    'border-border/50 bg-card'
                   )}
                   onClick={() => handleModuleClick(module)}
-                  style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <CardContent className="p-0">
-                    {/* Gradient Header */}
+                  <CardContent className="p-4">
                     <div className={cn(
-                      'relative h-20 sm:h-24 bg-gradient-to-br flex items-center justify-center overflow-hidden',
+                      'w-12 h-12 rounded-xl flex items-center justify-center mb-3',
+                      'bg-gradient-to-br text-white shadow-md',
                       module.gradient
                     )}>
-                      {/* Decorative elements */}
-                      <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl" />
-                      <div className="absolute bottom-0 left-0 w-12 h-12 bg-white/10 rounded-full blur-lg" />
-                      
-                      <div className="relative z-10 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                        <div className="text-white">
-                          {module.icon}
-                        </div>
-                      </div>
-
-                      {/* Stats Badge */}
-                      {module.stats && (
-                        <div className="absolute top-2 right-2 px-2 py-0.5 bg-white/20 backdrop-blur-sm rounded-full">
-                          <span className="text-[9px] font-semibold text-white">
-                            {module.stats.value}
-                          </span>
-                        </div>
-                      )}
+                      {module.icon}
                     </div>
-
-                    {/* Content */}
-                    <div className="p-3 sm:p-4">
-                      <div className="flex items-start justify-between gap-1">
-                        <h3 className="font-bold text-foreground text-sm line-clamp-1">
-                          {t(module.titleKey)}
-                        </h3>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </div>
-                      <p className="text-[11px] text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
-                        {t(module.descriptionKey)}
-                      </p>
-                      
-                      {/* Mini stats */}
-                      {module.stats && (
-                        <div className="mt-2 pt-2 border-t border-border/50">
-                          <div className="flex items-center gap-1.5">
-                            <TrendingUp className="w-3 h-3 text-green-500" />
-                            <span className="text-[10px] text-muted-foreground">
-                              {module.stats.label}: <span className="font-semibold text-foreground">{module.stats.value}</span>
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    <h3 className="font-semibold text-foreground text-sm mb-1">
+                      {t(module.titleKey)}
+                    </h3>
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {t(module.descriptionKey)}
+                    </p>
                   </CardContent>
                 </Card>
               ))}
