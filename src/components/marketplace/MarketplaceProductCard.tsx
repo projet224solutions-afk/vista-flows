@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { ShareButton } from "@/components/shared/ShareButton";
 import { usePriceConverter } from "@/hooks/usePriceConverter";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useDisplayCurrency } from "./CurrencyIndicator";
@@ -86,11 +85,6 @@ export function MarketplaceProductCard({
   // Hook pour certification vendeur
   const { certification } = useVendorCertification(vendorId);
 
-  const handleShareClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
-  // Formater le prix avec conversion automatique depuis la devise du produit
   const formatPrice = (value: number) => {
     if (priceLoading) {
       return `${value.toLocaleString('fr-GN')} ${currency}`;
@@ -282,19 +276,6 @@ export function MarketplaceProductCard({
           >
             <MessageCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           </Button>
-          <div onClick={handleShareClick}>
-            <ShareButton
-              title={title}
-              text={`${t('marketplace.discover') || 'Découvrez'} ${title} - ${formatPrice(price)}`}
-              url={`${window.location.origin}/product/${id}`}
-              variant="outline"
-              size="icon"
-              className="h-7 w-7 sm:h-8 sm:w-8 border-border/60 hover:bg-accent hover:border-primary/30"
-              resourceType="product"
-              resourceId={id}
-              useShortUrl={true}
-            />
-          </div>
         </div>
       </CardContent>
     </Card>
