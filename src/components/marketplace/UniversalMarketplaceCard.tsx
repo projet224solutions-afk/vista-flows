@@ -227,17 +227,17 @@ export function UniversalMarketplaceCard({
           )}
         </div>
 
-        {/* Bouton d'action */}
+        {/* Bouton d'action - Optimisé mobile */}
         <Button
           onClick={(e) => {
             e.stopPropagation();
             handleMainAction();
           }}
-          className="w-full"
+          className="w-full h-9 text-xs sm:text-sm font-medium gap-1.5"
           size="sm"
         >
           {getMainActionIcon()}
-          <span className="ml-2">{getMainActionLabel()}</span>
+          <span className="truncate">{getMainActionLabel()}</span>
         </Button>
       </CardContent>
     </Card>
