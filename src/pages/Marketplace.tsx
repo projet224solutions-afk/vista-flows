@@ -375,13 +375,13 @@ export default function Marketplace() {
       </header>
 
       {/* Categories Responsive */}
-      <section className="px-4 py-3 border-b border-border overflow-hidden">
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+      <section className="px-2 sm:px-4 py-2 border-b border-border overflow-hidden">
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
           {categories.map((category) => (
             <Badge
               key={category.id}
               variant={selectedCategory === category.id ? "default" : "secondary"}
-              className={`cursor-pointer whitespace-nowrap shrink-0 px-3 py-1.5 text-xs ${
+              className={`cursor-pointer whitespace-nowrap shrink-0 px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs ${
                 selectedCategory === category.id
                   ? "bg-primary text-primary-foreground" 
                   : "hover:bg-accent"
@@ -394,65 +394,65 @@ export default function Marketplace() {
         </div>
       </section>
 
-      {/* Filtres de type - Boutons icônes stylés - Services Pro en premier */}
-      <section className="px-4 py-3 border-b border-border bg-gradient-to-r from-muted/50 via-background to-muted/50">
-        <div className="flex justify-center gap-3 sm:gap-6">
+      {/* Filtres de type - Boutons icônes compacts pour mobile */}
+      <section className="px-3 py-2 border-b border-border bg-gradient-to-r from-muted/50 via-background to-muted/50">
+        <div className="flex justify-center gap-2 sm:gap-4">
           {/* Services Pro - EN PREMIER */}
           <button
             onClick={() => {
               setSelectedItemType('professional_service');
-              setSelectedDigitalCategory('all'); // Reset digital category when switching
+              setSelectedDigitalCategory('all');
             }}
-            className={`group relative w-28 h-16 sm:w-36 sm:h-20 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center gap-1 sm:gap-1.5 transition-all duration-300 ${
+            className={`group relative flex-1 max-w-[140px] h-14 sm:h-20 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-0.5 sm:gap-1.5 transition-all duration-300 ${
               selectedItemType === 'professional_service' 
-                ? 'bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 text-white shadow-lg sm:shadow-xl shadow-blue-500/40 scale-105 ring-2 ring-blue-300/50' 
-                : 'bg-card border-2 border-border hover:border-blue-400 hover:shadow-lg hover:scale-102'
+                ? 'bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 scale-[1.02] ring-2 ring-blue-300/50' 
+                : 'bg-card border border-border hover:border-blue-400 hover:shadow-md'
             }`}
           >
-            <div className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all ${
+            <div className={`p-1.5 sm:p-2 rounded-lg transition-all ${
               selectedItemType === 'professional_service' 
                 ? 'bg-white/20' 
                 : 'bg-blue-100'
             }`}>
-              <Briefcase className={`w-5 h-5 sm:w-7 sm:h-7 transition-transform group-hover:scale-110 ${
+              <Briefcase className={`w-4 h-4 sm:w-6 sm:h-6 transition-transform group-hover:scale-110 ${
                 selectedItemType === 'professional_service' ? 'text-white' : 'text-blue-600'
               }`} />
             </div>
-            <span className={`text-[10px] sm:text-xs font-semibold ${
+            <span className={`text-[9px] sm:text-xs font-medium ${
               selectedItemType === 'professional_service' ? 'text-white' : 'text-muted-foreground'
             }`}>
               Services Pro
             </span>
             {selectedItemType === 'professional_service' && (
-              <span className="absolute -bottom-1 sm:-bottom-1.5 w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-blue-300 animate-pulse shadow-lg" />
+              <span className="absolute -bottom-0.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-300 animate-pulse" />
             )}
           </button>
 
           {/* Produits Numériques */}
           <button
             onClick={() => setSelectedItemType('digital_product')}
-            className={`group relative w-28 h-16 sm:w-36 sm:h-20 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center gap-1 sm:gap-1.5 transition-all duration-300 ${
+            className={`group relative flex-1 max-w-[140px] h-14 sm:h-20 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-0.5 sm:gap-1.5 transition-all duration-300 ${
               selectedItemType === 'digital_product' 
-                ? 'bg-gradient-to-br from-purple-500 via-purple-600 to-fuchsia-600 text-white shadow-lg sm:shadow-xl shadow-purple-500/40 scale-105 ring-2 ring-purple-300/50' 
-                : 'bg-card border-2 border-border hover:border-purple-400 hover:shadow-lg hover:scale-102'
+                ? 'bg-gradient-to-br from-purple-500 via-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-500/30 scale-[1.02] ring-2 ring-purple-300/50' 
+                : 'bg-card border border-border hover:border-purple-400 hover:shadow-md'
             }`}
           >
-            <div className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all ${
+            <div className={`p-1.5 sm:p-2 rounded-lg transition-all ${
               selectedItemType === 'digital_product' 
                 ? 'bg-white/20' 
                 : 'bg-purple-100'
             }`}>
-              <Laptop className={`w-5 h-5 sm:w-7 sm:h-7 transition-transform group-hover:scale-110 ${
+              <Laptop className={`w-4 h-4 sm:w-6 sm:h-6 transition-transform group-hover:scale-110 ${
                 selectedItemType === 'digital_product' ? 'text-white' : 'text-purple-600'
               }`} />
             </div>
-            <span className={`text-[10px] sm:text-xs font-semibold ${
+            <span className={`text-[9px] sm:text-xs font-medium ${
               selectedItemType === 'digital_product' ? 'text-white' : 'text-muted-foreground'
             }`}>
               Numériques
             </span>
             {selectedItemType === 'digital_product' && (
-              <span className="absolute -bottom-1 sm:-bottom-1.5 w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-purple-300 animate-pulse shadow-lg" />
+              <span className="absolute -bottom-0.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-purple-300 animate-pulse" />
             )}
           </button>
         </div>
@@ -460,8 +460,8 @@ export default function Marketplace() {
 
       {/* 🔥 Filtre Catégories Numériques - Visible uniquement pour les produits numériques */}
       {selectedItemType === 'digital_product' && (
-        <section className="px-4 py-3 border-b border-border bg-gradient-to-r from-purple-500/5 via-background to-purple-500/5">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+        <section className="px-2 py-2 border-b border-border bg-gradient-to-r from-purple-500/5 via-background to-purple-500/5">
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
             {DIGITAL_CATEGORIES.map((cat) => {
               const IconComponent = cat.icon;
               const isSelected = selectedDigitalCategory === cat.id;
@@ -470,24 +470,27 @@ export default function Marketplace() {
                   key={cat.id}
                   onClick={() => setSelectedDigitalCategory(cat.id)}
                   className={cn(
-                    'flex items-center gap-2 px-3 py-2 rounded-xl shrink-0 transition-all duration-200',
-                    'border text-sm font-medium',
+                    'flex items-center gap-1.5 px-2 py-1.5 rounded-lg shrink-0 transition-all duration-200',
+                    'border text-xs font-medium',
                     isSelected
-                      ? 'bg-gradient-to-r text-white border-transparent shadow-md scale-[1.02]'
+                      ? 'bg-gradient-to-r text-white border-transparent shadow-sm scale-[1.02]'
                       : 'bg-card border-border hover:border-purple-400/50 hover:bg-purple-50/50 dark:hover:bg-purple-950/20',
                     isSelected && cat.gradient
                   )}
                 >
                   <div className={cn(
-                    'w-6 h-6 rounded-lg flex items-center justify-center',
+                    'w-5 h-5 rounded-md flex items-center justify-center',
                     isSelected ? 'bg-white/20' : `bg-gradient-to-br ${cat.gradient}`
                   )}>
                     <IconComponent className={cn(
-                      'w-3.5 h-3.5',
+                      'w-3 h-3',
                       isSelected ? 'text-white' : 'text-white'
                     )} />
                   </div>
-                  <span className={isSelected ? 'text-white' : 'text-foreground'}>
+                  <span className={cn(
+                    'hidden xs:inline',
+                    isSelected ? 'text-white' : 'text-foreground'
+                  )}>
                     {cat.name}
                   </span>
                 </button>
@@ -498,28 +501,28 @@ export default function Marketplace() {
       )}
 
       {/* Filters & View Controls Responsive */}
-      <section className="px-4 py-3 border-b border-border">
+      <section className="px-2 sm:px-4 py-2 border-b border-border">
         {/* Première ligne de filtres - scrollable horizontalement */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
+        <div className="flex gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
           {/* Tri */}
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="h-9 shrink-0 w-auto min-w-[120px] text-xs border-border bg-background">
-              <ArrowUpDown className="w-3 h-3 mr-1.5 shrink-0" />
+            <SelectTrigger className="h-8 shrink-0 w-auto min-w-[100px] sm:min-w-[120px] text-[10px] sm:text-xs border-border bg-background">
+              <ArrowUpDown className="w-3 h-3 mr-1 shrink-0" />
               <span className="truncate"><SelectValue /></span>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="newest">Plus récents</SelectItem>
               <SelectItem value="popular">Popularité</SelectItem>
-              <SelectItem value="price_asc">Prix croissant</SelectItem>
-              <SelectItem value="price_desc">Prix décroissant</SelectItem>
+              <SelectItem value="price_asc">Prix ↑</SelectItem>
+              <SelectItem value="price_desc">Prix ↓</SelectItem>
               <SelectItem value="rating">Mieux notés</SelectItem>
             </SelectContent>
           </Select>
 
           {/* Filtre Pays */}
           <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-            <SelectTrigger className="h-9 shrink-0 w-auto min-w-[130px] text-xs border-border bg-background">
-              <Globe className="w-3 h-3 mr-1.5 shrink-0" />
+            <SelectTrigger className="h-8 shrink-0 w-auto min-w-[105px] sm:min-w-[130px] text-[10px] sm:text-xs border-border bg-background">
+              <Globe className="w-3 h-3 mr-1 shrink-0" />
               <span className="truncate"><SelectValue placeholder="Tous les pays" /></span>
             </SelectTrigger>
             <SelectContent>
@@ -532,9 +535,9 @@ export default function Marketplace() {
 
           {/* Filtre Ville */}
           <Select value={selectedCity} onValueChange={setSelectedCity}>
-            <SelectTrigger className="h-9 shrink-0 w-auto min-w-[140px] text-xs border-border bg-background">
-              <MapPin className="w-3 h-3 mr-1.5 shrink-0" />
-              <span className="truncate"><SelectValue placeholder="Toutes les villes" /></span>
+            <SelectTrigger className="h-8 shrink-0 w-auto min-w-[100px] sm:min-w-[140px] text-[10px] sm:text-xs border-border bg-background">
+              <MapPin className="w-3 h-3 mr-1 shrink-0" />
+              <span className="truncate"><SelectValue placeholder="Toutes villes" /></span>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toutes les villes</SelectItem>
