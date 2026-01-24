@@ -688,13 +688,6 @@ export default function Marketplace() {
                     category={item.category_name}
                     onBuy={() => handleProductClick(item.id)}
                     onAddToCart={() => {
-                      // Pour les produits affiliés, rediriger directement vers le lien partenaire
-                      if (item.item_type === 'digital_product' && item.product_mode === 'affiliate' && item.affiliate_url) {
-                        window.open(item.affiliate_url, '_blank');
-                        toast.success('Redirection vers le partenaire...');
-                        return;
-                      }
-                      
                       addToCart({
                         id: item.id,
                         name: item.name,
