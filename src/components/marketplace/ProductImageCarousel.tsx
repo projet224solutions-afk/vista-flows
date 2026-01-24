@@ -30,8 +30,29 @@ export function ProductImageCarousel({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const restartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const isEmpty = !images || images.length === 0;
-  const isSingle = !!images && images.length === 1;
+  // Si pas d'images ou qu'une seule, pas de carousel
+  if (!images || images.length === 0) {
+    return (
+      <div className={cn('relative w-full aspect-square bg-muted/30 rounded-lg overflow-hidden', className)}>
+        <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">
+          No image
+        </div>
+      </div>
+    );
+  }
+
+  if (images.length === 1) {
+    return (
+      <div className={cn('relative w-full aspect-square bg-muted/10 rounded-lg overflow-hidden', className)}>
+        <img
+          src={images[0]}
+          alt={alt}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+      </div>
+    );
+  }
 
   // Auto-défilement
   useEffect(() => {
@@ -153,30 +174,6 @@ export function ProductImageCarousel({
     }
   }, [isHovered, images]);
 
-  // IMPORTANT: garder les retours conditionnels APRÈS tous les hooks
-  if (isEmpty) {
-    return (
-      <div className={cn('relative w-full aspect-square bg-muted/30 rounded-lg overflow-hidden', className)}>
-        <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">
-          No image
-        </div>
-      </div>
-    );
-  }
-
-  if (isSingle) {
-    return (
-      <div className={cn('relative w-full aspect-square bg-muted/10 rounded-lg overflow-hidden', className)}>
-        <img
-          src={images[0]}
-          alt={alt}
-          className="w-full h-full object-cover"
-          loading="lazy"
-        />
-      </div>
-    );
-  }
-
   return (
     <div
       className={cn(
@@ -238,9 +235,9 @@ export function ProductImageCarousel({
         )}
       />
 
-      {/* Indicateurs (Dots) - Ultra compacts mobile */}
+      {/* Indicateurs (Dots) */}
       {showDots && images.length > 1 && (
-        <div className="absolute bottom-1 sm:bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-0.5 sm:gap-1 z-30">
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-30">
           {images.map((_, index) => (
             <button
               key={index}
@@ -252,8 +249,8 @@ export function ProductImageCarousel({
                 'transition-all duration-300 rounded-full',
                 'hover:scale-110 active:scale-95',
                 index === currentIndex
-                  ? 'w-3 h-1 sm:w-5 sm:h-1.5 bg-white shadow-md'
-                  : 'w-1 h-1 sm:w-1.5 sm:h-1.5 bg-white/60 hover:bg-white/80'
+                  ? 'w-6 h-1.5 bg-white shadow-lg'
+                  : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/80'
               )}
               aria-label={`Go to image ${index + 1}`}
             />

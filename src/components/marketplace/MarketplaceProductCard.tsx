@@ -171,52 +171,60 @@ export function MarketplaceProductCard({
       
       {/* Content */}
       <CardContent className="marketplace-card-content">
-        {/* Type de produit - Masqué mobile (réserve l'espace pour uniformiser la hauteur) */}
-        <div className="hidden sm:block mb-0.5 min-h-[0.75rem]">
-          <span
-            className={cn(
-              "block text-[9px] sm:text-[10px] text-primary font-medium uppercase tracking-wide",
-              !category && "invisible"
-            )}
-          >
-            {category || "—"}
+        {/* Type de produit si existant */}
+        {category && (
+          <span className="text-[10px] text-primary font-medium uppercase tracking-wide mb-1 block">
+            Type de produit: {category}
           </span>
-        </div>
+        )}
 
         {/* Title - 1 ligne */}
         <h3 className="marketplace-card-title" title={title}>
           {title}
         </h3>
         
-        {/* Rating / Avis clients - Compact */}
+        {/* Rating / Avis clients */}
         <div className="marketplace-card-rating">
           {renderStars(rating)}
-          <span className="text-[9px] sm:text-[11px] font-medium text-foreground ml-0.5">{rating.toFixed(1)}</span>
-          <span className="text-[8px] sm:text-[10px] text-muted-foreground">({reviewCount})</span>
+          <span className="text-[11px] font-medium text-foreground ml-1">{rating.toFixed(1)}</span>
+          <span className="text-[10px] text-muted-foreground">({reviewCount})</span>
         </div>
         
-        {/* Vendor Info - Simplifié mobile */}
+        {/* Vendor Info avec localisation */}
         <div className="marketplace-card-vendor">
-          <span className="truncate flex-1 flex items-center gap-0.5">
+          <span className="truncate flex-1 flex items-center gap-1">
             {vendor}
             {certification && (
-              <CertifiedIcon status={certification.status} className="w-3 h-3" />
+              <CertifiedIcon status={certification.status} className="w-3.5 h-3.5" />
             )}
           </span>
+          {vendorLocation && (
+            <>
+              <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
+              <span className="truncate text-[10px]">{vendorLocation}</span>
+            </>
+          )}
         </div>
+
+        {/* Temps de livraison si disponible */}
+        {deliveryTime && (
+          <div className="text-[10px] text-muted-foreground mb-1.5 flex items-center gap-1">
+            <Package className="w-2.5 h-2.5" />
+            <span>{t('marketplace.delivery') || 'Livraison'}: {deliveryTime}</span>
+          </div>
+        )}
         
-        {/* Price - Compact */}
-        <div className="flex items-center gap-1 mb-1.5 sm:mb-2">
+        {/* Price + Stock Status avec conversion automatique */}
+        <div className="flex items-center justify-between gap-1.5 mb-2">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                {/* Réserve l'espace de la ligne prix barré pour garder toutes les cartes identiques */}
-                <div className="flex flex-col min-h-[2.125rem] sm:min-h-[2.5rem]">
+                <div className="flex flex-col">
                   <span className="marketplace-card-price">
                     {formatPrice(price)}
                   </span>
                   {originalPrice && originalPrice > price && (
-                    <span className="text-[9px] sm:text-[11px] text-muted-foreground line-through">
+                    <span className="text-[11px] text-muted-foreground line-through">
                       {formatPrice(originalPrice)}
                     </span>
                   )}
@@ -227,18 +235,31 @@ export function MarketplaceProductCard({
                   <div className="text-xs">
                     <p className="font-semibold">{t('marketplace.card.originalPrice') || 'Prix original'}:</p>
                     <p>{getOriginalPrice(price)}</p>
+                    {originalPrice && originalPrice > price && (
+                      <p className="text-muted-foreground line-through">{getOriginalPrice(originalPrice)}</p>
+                    )}
                   </div>
                 </TooltipContent>
               )}
             </Tooltip>
           </TooltipProvider>
+          {stock !== undefined && (
+            <span className={cn(
+              "text-[10px] font-semibold",
+              stock === 0 ? "text-destructive" : "text-green-600"
+            )}>
+              {stock === 0 
+                ? (t('marketplace.outOfStock') || 'Rupture de stock') 
+                : (t('marketplace.inStock') || 'En stock')}
+            </span>
+          )}
         </div>
         
-        {/* Actions - Ultra compacts pour mobile */}
+        {/* Actions - CTA compacts pour mobile */}
         <div className="marketplace-card-actions" onClick={(e) => e.stopPropagation()}>
           <Button 
             onClick={(e) => { e.stopPropagation(); onBuy?.(); }}
-            className="flex-1 h-6 sm:h-8 text-[9px] sm:text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm px-2"
+            className="flex-1 h-7 sm:h-8 text-[10px] sm:text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm px-2 sm:px-3"
             size="sm"
           >
             {t('common.view') || 'Voir'}
@@ -247,19 +268,19 @@ export function MarketplaceProductCard({
             onClick={(e) => { e.stopPropagation(); onAddToCart?.(); }}
             variant="outline" 
             size="sm"
-            className="h-6 w-6 sm:h-8 sm:w-8 p-0 border-border/60 hover:bg-accent"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0 border-border/60 hover:bg-accent hover:border-primary/30"
             title={t('marketplace.addToCart') || 'Ajouter au panier'}
           >
-            <ShoppingCart className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
+            <ShoppingCart className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           </Button>
           <Button 
             onClick={(e) => { e.stopPropagation(); onContact?.(); }}
             variant="outline" 
             size="sm"
-            className="h-6 w-6 sm:h-8 sm:w-8 p-0 border-border/60 hover:bg-accent"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0 border-border/60 hover:bg-accent hover:border-primary/30"
             title={t('marketplace.contactVendor') || 'Contacter le vendeur'}
           >
-            <MessageCircle className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
+            <MessageCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           </Button>
           <div onClick={handleShareClick}>
             <ShareButton
@@ -268,7 +289,7 @@ export function MarketplaceProductCard({
               url={`${window.location.origin}/product/${id}`}
               variant="outline"
               size="icon"
-              className="h-6 w-6 sm:h-8 sm:w-8 border-border/60 hover:bg-accent"
+              className="h-7 w-7 sm:h-8 sm:w-8 border-border/60 hover:bg-accent hover:border-primary/30"
               resourceType="product"
               resourceId={id}
               useShortUrl={true}
