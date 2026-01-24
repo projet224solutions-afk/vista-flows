@@ -10,6 +10,8 @@ export interface CartItem {
   image?: string;
   vendor_id: string;
   vendor_name?: string;
+  // Devise source du produit (pour conversion)
+  currency?: string;
   // Champs pour produits numériques/affiliés
   item_type?: 'product' | 'digital_product' | 'professional_service';
   product_mode?: 'direct' | 'affiliate';

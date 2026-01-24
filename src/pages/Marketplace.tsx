@@ -695,6 +695,7 @@ export default function Marketplace() {
                         image: item.images?.[0],
                         vendor_id: item.vendor_id,
                         vendor_name: item.vendor_name,
+                        currency: item.currency || 'GNF',
                         item_type: item.item_type,
                         product_mode: item.product_mode,
                         affiliate_url: item.affiliate_url
