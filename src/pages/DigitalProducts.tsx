@@ -126,14 +126,8 @@ export default function DigitalProducts() {
   const isSearching = searchQuery.trim().length > 0;
 
   const handleModuleClick = (module: ProductModule) => {
-    // Pour le module voyage, afficher le module dédié
-    if (module.category === 'voyage') {
-      setShowTravelModule(true);
-      return;
-    }
-    
     // Afficher directement les produits de la catégorie
-    // Que l'utilisateur soit connecté ou non, il peut consulter
+    // Tous les modules fonctionnent de la même manière - les utilisateurs publient leurs liens d'affiliation
     setSelectedModule(module);
     setShowCategoryProducts(true);
   };
