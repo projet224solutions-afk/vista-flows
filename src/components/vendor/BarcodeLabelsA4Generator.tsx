@@ -394,9 +394,9 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
       if (isOpen) loadProductsWithBarcodes();
     }}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2 border-primary/30 hover:border-primary hover:bg-primary/5">
-          <BarcodeIcon className="h-4 w-4" />
-          Générer étiquettes A4 (PDF)
+        <Button variant="outline" className="w-full sm:w-auto gap-1.5 border-primary/30 hover:border-primary hover:bg-primary/5 text-sm px-3">
+          <BarcodeIcon className="h-4 w-4 shrink-0" />
+          <span className="truncate">Étiquettes</span>
         </Button>
       </DialogTrigger>
 
