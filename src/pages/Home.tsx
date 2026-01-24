@@ -109,6 +109,7 @@ export default function Home() {
         image: typeof product.images === 'string' ? product.images : product.images?.[0],
         vendor_id: product.vendor_id,
         vendor_name: product.vendor_name,
+        currency: product.currency || 'GNF',
       });
       toast.success('Produit ajouté au panier');
     },

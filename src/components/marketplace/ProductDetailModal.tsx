@@ -311,6 +311,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
         image: product.images?.[0],
         vendor_id: product.vendor_id,
         vendor_name: product.vendors?.business_name,
+        currency: product.currency || 'GNF',
         // Inclure les infos d'affiliation pour la gestion dans le panier
         item_type: product.product_mode === 'affiliate' ? 'digital_product' : undefined,
         product_mode: product.product_mode as 'direct' | 'affiliate' | undefined,

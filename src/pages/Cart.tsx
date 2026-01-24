@@ -12,10 +12,10 @@ import { usePriceConverter } from '@/hooks/usePriceConverter';
 export default function Cart() {
   const navigate = useNavigate();
   const { cartItems, removeFromCart, updateQuantity, clearCart, getCartTotal, getCartCount } = useCart();
-  const { convert, userCurrency } = usePriceConverter();
+  const { convert } = usePriceConverter();
 
   // Formater le prix dans la devise locale de l'utilisateur
-  const formatPrice = (price: number, sourceCurrency: string = 'GNF') => {
+  const formatLocalPrice = (price: number, sourceCurrency: string = 'GNF') => {
     const converted = convert(price, sourceCurrency);
     return converted.formatted;
   };
@@ -129,7 +129,7 @@ export default function Cart() {
                         Partenaire: {item.vendor_name}
                       </p>
                     )}
-                    <p className="text-primary font-bold text-sm">{formatPrice(item.price)}</p>
+                    <p className="text-primary font-bold text-sm">{formatLocalPrice(item.price, item.currency)}</p>
                   </div>
                   <div className="flex flex-col gap-2">
                     <Button
@@ -181,7 +181,7 @@ export default function Cart() {
                         Vendu par {item.vendor_name}
                       </p>
                     )}
-                    <p className="text-primary font-bold">{formatPrice(item.price)}</p>
+                    <p className="text-primary font-bold">{formatLocalPrice(item.price, item.currency)}</p>
                   </div>
                   <div className="flex flex-col items-end justify-between">
                     <Button
@@ -211,7 +211,7 @@ export default function Cart() {
                       </Button>
                     </div>
                     <p className="text-sm font-semibold">
-                      Total: {formatPrice(item.price * item.quantity)}
+                      Total: {formatLocalPrice(item.price * item.quantity, item.currency)}
                     </p>
                   </div>
                 </div>
@@ -230,7 +230,7 @@ export default function Cart() {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Sous-total ({normalItems.length} article{normalItems.length > 1 ? 's' : ''})</span>
-                  <span className="font-semibold">{formatPrice(normalItemsTotal)}</span>
+                  <span className="font-semibold">{formatLocalPrice(normalItemsTotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Frais de livraison</span>
@@ -239,7 +239,7 @@ export default function Cart() {
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total</span>
-                  <span className="text-primary">{formatPrice(normalItemsTotal)}</span>
+                  <span className="text-primary">{formatLocalPrice(normalItemsTotal)}</span>
                 </div>
               </div>
               <Button 
