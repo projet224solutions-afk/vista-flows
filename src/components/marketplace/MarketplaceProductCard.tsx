@@ -210,7 +210,8 @@ export function MarketplaceProductCard({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex flex-col">
+                {/* Réserve l'espace de la ligne prix barré pour garder toutes les cartes identiques */}
+                <div className="flex flex-col min-h-[2.125rem] sm:min-h-[2.5rem]">
                   <span className="marketplace-card-price">
                     {formatPrice(price)}
                   </span>
