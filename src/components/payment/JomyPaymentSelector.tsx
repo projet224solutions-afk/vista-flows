@@ -218,6 +218,14 @@ export function JomyPaymentSelector({
 
     // Paiement par carte Stripe
     if (selectedMethod === 'STRIPE_CARD') {
+      // Stripe requiert un montant minimum (~500 GNF pour être ≥ 30 pence)
+      const MIN_STRIPE_AMOUNT = 500;
+      if (amount < MIN_STRIPE_AMOUNT) {
+        toast.error('Montant insuffisant', {
+          description: `Le montant minimum pour le paiement par carte est ${MIN_STRIPE_AMOUNT.toLocaleString()} GNF`
+        });
+        return;
+      }
       console.log('🔵 [JomyPaymentSelector] Opening Stripe modal');
       setShowStripeModal(true);
       return;
@@ -429,7 +437,7 @@ export function JomyPaymentSelector({
                   className={cn(
                     "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all",
                     selectedMethod === method.id
-                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/50 ring-offset-0"
                       : "border-border hover:border-primary/50 hover:bg-muted/30",
                     processing && "opacity-50 cursor-not-allowed"
                   )}
@@ -438,7 +446,7 @@ export function JomyPaymentSelector({
                     value={method.id} 
                     id={method.id}
                     disabled={processing}
-                    className="border-2 flex-shrink-0"
+                    className="border-2 flex-shrink-0 focus-visible:ring-1 focus-visible:ring-offset-0"
                   />
                   
                   <div className={cn("flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0", method.iconBg)}>
