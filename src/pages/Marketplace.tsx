@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon, MapPin, Globe, Share2, Filter, Package, Briefcase, Laptop } from "lucide-react";
+import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon, MapPin, Globe, Share2, Filter, Package, Briefcase, Laptop, Plane, Monitor, GraduationCap, BookOpen, Bot, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,18 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/hooks/useAuth";
 import { ShareButton } from "@/components/shared/ShareButton";
 import { useTranslation } from "@/hooks/useTranslation";
+import { cn } from "@/lib/utils";
+
+// Configuration des catégories numériques pour le filtre
+const DIGITAL_CATEGORIES = [
+  { id: 'all', name: 'Tous', icon: Package, gradient: 'from-slate-500 to-slate-600' },
+  { id: 'voyage', name: 'Voyage', icon: Plane, gradient: 'from-blue-500 to-cyan-500' },
+  { id: 'logiciel', name: 'Logiciels', icon: Monitor, gradient: 'from-purple-500 to-pink-500' },
+  { id: 'formation', name: 'Formations', icon: GraduationCap, gradient: 'from-green-500 to-emerald-500' },
+  { id: 'livre', name: 'Livres', icon: BookOpen, gradient: 'from-amber-500 to-yellow-500' },
+  { id: 'ai', name: 'IA', icon: Bot, gradient: 'from-violet-500 to-fuchsia-500' },
+  { id: 'physique_affilie', name: 'Affiliés', icon: ShoppingBag, gradient: 'from-orange-500 to-red-500' },
+] as const;
 
 const PAGE_LIMIT = 24;
 
@@ -61,6 +73,7 @@ export default function Marketplace() {
   const [selectedCountry, setSelectedCountry] = useState("all");
   const [selectedCity, setSelectedCity] = useState("all");
   const [selectedItemType, setSelectedItemType] = useState<'all' | 'product' | 'professional_service' | 'digital_product'>('all');
+  const [selectedDigitalCategory, setSelectedDigitalCategory] = useState<string>("all");
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'popular' | 'price_asc' | 'price_desc' | 'rating' | 'newest'>("newest");
   const [showFilters, setShowFilters] = useState(false);
@@ -74,6 +87,13 @@ export default function Marketplace() {
 
   const [vendorSlug, setVendorSlug] = useState<string | null>(null);
 
+  // Déterminer quelle catégorie passer au hook:
+  // - Si on filtre par produits numériques et une catégorie numérique est sélectionnée, l'utiliser
+  // - Sinon utiliser la catégorie e-commerce classique
+  const effectiveCategory = selectedItemType === 'digital_product' && selectedDigitalCategory !== 'all' 
+    ? selectedDigitalCategory 
+    : selectedCategory;
+
   // 🔥 UTILISER LE HOOK UNIVERSEL pour charger TOUT (produits + services pro + numériques)
   const { 
     items: marketplaceItems,
@@ -83,7 +103,7 @@ export default function Marketplace() {
     loadMore: marketplaceLoadMore
   } = useMarketplaceUniversal({
     limit: 24,
-    category: selectedCategory,
+    category: effectiveCategory,
     searchQuery,
     minPrice: filters.minPrice,
     maxPrice: filters.maxPrice,
@@ -379,7 +399,10 @@ export default function Marketplace() {
         <div className="flex justify-center gap-3 sm:gap-6">
           {/* Services Pro - EN PREMIER */}
           <button
-            onClick={() => setSelectedItemType('professional_service')}
+            onClick={() => {
+              setSelectedItemType('professional_service');
+              setSelectedDigitalCategory('all'); // Reset digital category when switching
+            }}
             className={`group relative w-28 h-16 sm:w-36 sm:h-20 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center gap-1 sm:gap-1.5 transition-all duration-300 ${
               selectedItemType === 'professional_service' 
                 ? 'bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 text-white shadow-lg sm:shadow-xl shadow-blue-500/40 scale-105 ring-2 ring-blue-300/50' 
@@ -434,6 +457,45 @@ export default function Marketplace() {
           </button>
         </div>
       </section>
+
+      {/* 🔥 Filtre Catégories Numériques - Visible uniquement pour les produits numériques */}
+      {selectedItemType === 'digital_product' && (
+        <section className="px-4 py-3 border-b border-border bg-gradient-to-r from-purple-500/5 via-background to-purple-500/5">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+            {DIGITAL_CATEGORIES.map((cat) => {
+              const IconComponent = cat.icon;
+              const isSelected = selectedDigitalCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedDigitalCategory(cat.id)}
+                  className={cn(
+                    'flex items-center gap-2 px-3 py-2 rounded-xl shrink-0 transition-all duration-200',
+                    'border text-sm font-medium',
+                    isSelected
+                      ? 'bg-gradient-to-r text-white border-transparent shadow-md scale-[1.02]'
+                      : 'bg-card border-border hover:border-purple-400/50 hover:bg-purple-50/50 dark:hover:bg-purple-950/20',
+                    isSelected && cat.gradient
+                  )}
+                >
+                  <div className={cn(
+                    'w-6 h-6 rounded-lg flex items-center justify-center',
+                    isSelected ? 'bg-white/20' : `bg-gradient-to-br ${cat.gradient}`
+                  )}>
+                    <IconComponent className={cn(
+                      'w-3.5 h-3.5',
+                      isSelected ? 'text-white' : 'text-white'
+                    )} />
+                  </div>
+                  <span className={isSelected ? 'text-white' : 'text-foreground'}>
+                    {cat.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Filters & View Controls Responsive */}
       <section className="px-4 py-3 border-b border-border">
