@@ -235,9 +235,9 @@ export function ProductImageCarousel({
         )}
       />
 
-      {/* Indicateurs (Dots) */}
+      {/* Indicateurs (Dots) - Ultra compacts mobile */}
       {showDots && images.length > 1 && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-30">
+        <div className="absolute bottom-1 sm:bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-0.5 sm:gap-1 z-30">
           {images.map((_, index) => (
             <button
               key={index}
@@ -249,8 +249,8 @@ export function ProductImageCarousel({
                 'transition-all duration-300 rounded-full',
                 'hover:scale-110 active:scale-95',
                 index === currentIndex
-                  ? 'w-6 h-1.5 bg-white shadow-lg'
-                  : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/80'
+                  ? 'w-3 h-1 sm:w-5 sm:h-1.5 bg-white shadow-md'
+                  : 'w-1 h-1 sm:w-1.5 sm:h-1.5 bg-white/60 hover:bg-white/80'
               )}
               aria-label={`Go to image ${index + 1}`}
             />
