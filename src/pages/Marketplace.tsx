@@ -688,13 +688,23 @@ export default function Marketplace() {
                     category={item.category_name}
                     onBuy={() => handleProductClick(item.id)}
                     onAddToCart={() => {
+                      // Pour les produits affiliés, rediriger directement vers le lien partenaire
+                      if (item.item_type === 'digital_product' && item.product_mode === 'affiliate' && item.affiliate_url) {
+                        window.open(item.affiliate_url, '_blank');
+                        toast.success('Redirection vers le partenaire...');
+                        return;
+                      }
+                      
                       addToCart({
                         id: item.id,
                         name: item.name,
                         price: item.price,
                         image: item.images?.[0],
                         vendor_id: item.vendor_id,
-                        vendor_name: item.vendor_name
+                        vendor_name: item.vendor_name,
+                        item_type: item.item_type,
+                        product_mode: item.product_mode,
+                        affiliate_url: item.affiliate_url
                       });
                       toast.success('Ajouté au panier');
                     }}

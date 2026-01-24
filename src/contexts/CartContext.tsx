@@ -10,6 +10,10 @@ export interface CartItem {
   image?: string;
   vendor_id: string;
   vendor_name?: string;
+  // Champs pour produits numériques/affiliés
+  item_type?: 'product' | 'digital_product' | 'professional_service';
+  product_mode?: 'direct' | 'affiliate';
+  affiliate_url?: string;
 }
 
 interface CartContextType {
