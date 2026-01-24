@@ -147,29 +147,29 @@ export default function ProductCard({
           </div>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-1.5 sm:gap-2">
           <Button 
             onClick={onBuy}
-            className="flex-1 bg-primary hover:bg-primary/90 text-white glow-on-hover font-inter font-medium border-0 shadow-lg"
+            className="flex-1 min-w-0 bg-primary hover:bg-primary/90 text-white glow-on-hover font-inter font-medium border-0 shadow-lg text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
             size="sm"
           >
-            Acheter
+            <span className="truncate">Voir</span>
           </Button>
           <Button 
             onClick={onAddToCart}
             variant="outline" 
             size="sm"
-            className="border-primary/30 hover:bg-primary/10 hover:border-primary text-foreground"
+            className="border-primary/30 hover:bg-primary/10 hover:border-primary text-foreground h-8 sm:h-9 w-8 sm:w-9 p-0 shrink-0"
           >
-            <ShoppingCart className="w-4 h-4" />
+            <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </Button>
           <Button 
             onClick={onContact}
             variant="outline" 
             size="sm"
-            className="border-primary/30 hover:bg-primary/10 hover:border-primary text-foreground"
+            className="border-primary/30 hover:bg-primary/10 hover:border-primary text-foreground h-8 sm:h-9 w-8 sm:w-9 p-0 shrink-0"
           >
-            <MessageCircle className="w-4 h-4" />
+            <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </Button>
         </div>
       </CardContent>
