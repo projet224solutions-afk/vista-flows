@@ -1,5 +1,6 @@
 /**
  * Gestion des produits numériques du vendeur
+ * Optimisé mobile-first
  */
 
 import { useState } from "react";
@@ -124,51 +125,51 @@ export default function VendorDigitalProducts() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header - Mobile optimized */}
+      <div className="flex flex-col gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Produits Numériques</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-lg sm:text-2xl font-bold text-foreground">Produits Numériques</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Gérez vos produits numériques et affiliations
           </p>
         </div>
-        <Button onClick={() => navigate('/digital-products')} className="gap-2">
+        <Button onClick={() => navigate('/digital-products')} className="w-full sm:w-auto gap-2">
           <Plus className="w-4 h-4" />
           Ajouter un produit
         </Button>
       </div>
 
-      {/* Stats rapides */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Stats rapides - Compact sur mobile */}
+      <div className="grid grid-cols-2 gap-2 sm:gap-4 md:grid-cols-4">
         <Card>
-          <CardContent className="pt-4">
-            <div className="text-2xl font-bold">{products.length}</div>
-            <p className="text-sm text-muted-foreground">Total produits</p>
+          <CardContent className="p-3 sm:pt-4">
+            <div className="text-lg sm:text-2xl font-bold">{products.length}</div>
+            <p className="text-xs text-muted-foreground truncate">Total</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4">
-            <div className="text-2xl font-bold text-green-600">
+          <CardContent className="p-3 sm:pt-4">
+            <div className="text-lg sm:text-2xl font-bold text-green-600">
               {products.filter(p => p.status === 'published').length}
             </div>
-            <p className="text-sm text-muted-foreground">Publiés</p>
+            <p className="text-xs text-muted-foreground truncate">Publiés</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4">
-            <div className="text-2xl font-bold text-purple-600">
+          <CardContent className="p-3 sm:pt-4">
+            <div className="text-lg sm:text-2xl font-bold text-purple-600">
               {products.filter(p => p.product_mode === 'affiliate').length}
             </div>
-            <p className="text-sm text-muted-foreground">Affiliations</p>
+            <p className="text-xs text-muted-foreground truncate">Affiliations</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4">
-            <div className="text-2xl font-bold text-blue-600">
+          <CardContent className="p-3 sm:pt-4">
+            <div className="text-lg sm:text-2xl font-bold text-blue-600">
               {products.reduce((sum, p) => sum + (p.views_count || 0), 0)}
             </div>
-            <p className="text-sm text-muted-foreground">Vues totales</p>
+            <p className="text-xs text-muted-foreground truncate">Vues</p>
           </CardContent>
         </Card>
       </div>
@@ -176,10 +177,10 @@ export default function VendorDigitalProducts() {
       {/* Liste des produits */}
       {products.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <Package className="w-16 h-16 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Aucun produit numérique</h3>
-            <p className="text-muted-foreground mb-4 max-w-sm">
+          <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12 text-center">
+            <Package className="w-12 h-12 sm:w-16 sm:h-16 text-muted-foreground/50 mb-4" />
+            <h3 className="text-base sm:text-lg font-semibold mb-2">Aucun produit numérique</h3>
+            <p className="text-sm text-muted-foreground mb-4 max-w-sm px-4">
               Commencez à vendre des produits numériques ou à promouvoir des affiliations
             </p>
             <Button onClick={() => navigate('/digital-products')} className="gap-2">
@@ -189,15 +190,15 @@ export default function VendorDigitalProducts() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-3">
           {products.map((product) => {
             const CategoryIcon = categoryIcons[product.category] || Package;
             const mainImage = product.images?.[0] || '/placeholder.svg';
             
             return (
               <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                {/* Image */}
-                <div className="relative h-40 bg-muted">
+                {/* Image - Plus compacte sur mobile */}
+                <div className="relative h-32 sm:h-40 bg-muted">
                   <img
                     src={mainImage}
                     alt={product.title}
@@ -206,20 +207,21 @@ export default function VendorDigitalProducts() {
                       (e.target as HTMLImageElement).src = '/placeholder.svg';
                     }}
                   />
+                  {/* Badges positionnés */}
                   <div className="absolute top-2 left-2 flex gap-1">
-                    <Badge className={categoryColors[product.category] || categoryColors.custom}>
+                    <Badge className={`text-[10px] px-1.5 py-0.5 ${categoryColors[product.category] || categoryColors.custom}`}>
                       <CategoryIcon className="w-3 h-3 mr-1" />
                       {product.category}
                     </Badge>
                   </div>
                   <div className="absolute top-2 right-2">
-                    <Badge className={statusColors[product.status] || statusColors.draft}>
+                    <Badge className={`text-[10px] px-1.5 py-0.5 ${statusColors[product.status] || statusColors.draft}`}>
                       {statusLabels[product.status] || product.status}
                     </Badge>
                   </div>
                   {product.product_mode === 'affiliate' && (
                     <div className="absolute bottom-2 left-2">
-                      <Badge variant="outline" className="bg-white/90">
+                      <Badge variant="outline" className="bg-white/90 text-[10px] px-1.5 py-0.5">
                         <ExternalLink className="w-3 h-3 mr-1" />
                         Affiliation
                       </Badge>
@@ -227,45 +229,47 @@ export default function VendorDigitalProducts() {
                   )}
                 </div>
 
-                {/* Content */}
-                <CardContent className="p-4">
-                  <h3 className="font-semibold text-foreground line-clamp-1 mb-1">
+                {/* Content - Compact sur mobile */}
+                <CardContent className="p-3 sm:p-4">
+                  <h3 className="font-semibold text-sm sm:text-base text-foreground line-clamp-1 mb-1">
                     {product.title}
                   </h3>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                  <p className="text-xs text-muted-foreground line-clamp-2 mb-2 sm:mb-3">
                     {product.short_description || product.description || 'Aucune description'}
                   </p>
 
-                  <div className="flex items-center justify-between mb-3">
+                  {/* Prix */}
+                  <div className="flex items-center justify-between mb-2 sm:mb-3">
                     <div>
                       {product.price > 0 ? (
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-lg text-primary">
+                        <div className="flex items-center gap-1 sm:gap-2">
+                          <span className="font-bold text-base sm:text-lg text-primary">
                             {formatPrice(product.price, product.currency)}
                           </span>
                           {product.original_price && product.original_price > product.price && (
-                            <span className="text-sm text-muted-foreground line-through">
+                            <span className="text-xs text-muted-foreground line-through">
                               {formatPrice(product.original_price, product.currency)}
                             </span>
                           )}
                         </div>
                       ) : (
-                        <span className="font-bold text-lg text-green-600">Gratuit</span>
+                        <span className="font-bold text-base sm:text-lg text-green-600">Gratuit</span>
                       )}
                     </div>
                     {product.product_mode === 'affiliate' && product.commission_rate > 0 && (
-                      <Badge variant="secondary" className="text-xs">
-                        {product.commission_rate}% commission
+                      <Badge variant="secondary" className="text-[10px]">
+                        {product.commission_rate}%
                       </Badge>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
+                  {/* Stats */}
+                  <div className="flex items-center gap-3 text-[10px] sm:text-xs text-muted-foreground mb-3">
                     <span className="flex items-center gap-1">
                       <Eye className="w-3 h-3" />
                       {product.views_count || 0} vues
                     </span>
-                    <span>
+                    <span className="truncate">
                       {formatDistanceToNow(new Date(product.created_at), {
                         addSuffix: true,
                         locale: fr
@@ -273,20 +277,21 @@ export default function VendorDigitalProducts() {
                     </span>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2">
+                  {/* Actions - Layout optimisé mobile */}
+                  <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1"
+                      className="flex-1 h-9 text-xs sm:text-sm"
                       onClick={() => navigate(`/digital-product/${product.id}`)}
                     >
-                      <Eye className="w-4 h-4 mr-1" />
+                      <Eye className="w-4 h-4 mr-1.5" />
                       Voir
                     </Button>
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="icon"
+                      className="h-9 w-9 shrink-0"
                       onClick={() => setEditingProduct(product)}
                       aria-label="Modifier le produit"
                     >
@@ -294,7 +299,8 @@ export default function VendorDigitalProducts() {
                     </Button>
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="icon"
+                      className="h-9 w-9 shrink-0"
                       onClick={() => setDeleteProduct(product)}
                       aria-label="Supprimer le produit"
                     >
