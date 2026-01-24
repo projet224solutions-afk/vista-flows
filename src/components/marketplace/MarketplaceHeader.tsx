@@ -1,9 +1,9 @@
 /**
- * MARKETPLACE HEADER - Header Premium Ultra-Professionnel
+ * MARKETPLACE HEADER - Header Premium Ultra-Professionnel Mobile-First
  * 224Solutions - Design E-Commerce International
  */
 
-import { ShoppingCart as ShoppingCartIcon, Menu, ChevronLeft } from "lucide-react";
+import { ShoppingCart as ShoppingCartIcon, ChevronLeft, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import SearchBar from "@/components/SearchBar";
@@ -14,6 +14,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface MarketplaceHeaderProps {
   vendorName?: string | null;
@@ -42,55 +43,65 @@ export function MarketplaceHeader({
   const { user } = useAuth();
   const { getCartCount } = useCart();
   const { t } = useTranslation();
+  const cartCount = getCartCount();
 
   return (
-    <header className="bg-gradient-to-b from-card to-card/95 border-b border-border/50 sticky top-0 z-40 backdrop-blur-xl shadow-sm">
-      {/* Top Bar - Logo & Actions */}
-      <div className="px-3 sm:px-6 py-2.5 sm:py-3">
-        <div className="flex items-center justify-between gap-2 sm:gap-4">
-          {/* Left - Logo/Back + Title */}
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-            {vendorId && (
+    <header className="bg-card/95 backdrop-blur-xl border-b border-border/40 sticky top-0 z-50 shadow-sm">
+      {/* Compact Top Bar */}
+      <div className="px-3 py-2 sm:px-4 sm:py-2.5">
+        <div className="flex items-center justify-between gap-2">
+          {/* Left - Back/Logo */}
+          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+            {vendorId ? (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate('/marketplace')}
-                className="h-8 w-8 shrink-0 rounded-full hover:bg-primary/10"
+                className="h-7 w-7 shrink-0 rounded-full hover:bg-primary/10"
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft className="w-4 h-4" />
               </Button>
-            )}
-            <div className="min-w-0">
-              <h1 className={cn(
-                "font-poppins font-bold text-foreground truncate",
-                vendorName ? "text-base sm:text-lg" : "text-lg sm:text-xl"
-              )}>
-                {vendorName || (
-                  <span className="bg-gradient-to-r from-primary via-primary to-blue-600 bg-clip-text text-transparent">
-                    Marketplace 224
-                  </span>
-                )}
-              </h1>
-              {vendorName && itemCount > 0 && (
-                <p className="text-[10px] sm:text-xs text-muted-foreground">
-                  {itemCount} article{itemCount > 1 ? 's' : ''} disponible{itemCount > 1 ? 's' : ''}
-                </p>
+            ) : null}
+            
+            <div className="min-w-0 flex-1">
+              {vendorName ? (
+                <div>
+                  <h1 className="text-sm sm:text-base font-bold text-foreground truncate max-w-[140px] sm:max-w-none">
+                    {vendorName}
+                  </h1>
+                  {itemCount > 0 && (
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground">
+                      {itemCount} article{itemCount > 1 ? 's' : ''}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <motion.div 
+                  className="flex items-center gap-1"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  <h1 className="text-sm sm:text-lg font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+                    Marketplace
+                  </h1>
+                </motion.div>
               )}
             </div>
           </div>
 
-          {/* Right - Actions */}
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          {/* Right - Compact Actions */}
+          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
             <CurrencyIndicator variant="compact" />
             
             {vendorId && vendorSlug && (
               <ShareButton
                 title={vendorName || 'Boutique'}
-                text={`Découvrez la boutique ${vendorName} sur 224 Solutions`}
+                text={`Découvrez ${vendorName}`}
                 url={`${window.location.origin}/boutique/${vendorSlug || vendorId}`}
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-primary/10"
+                className="h-7 w-7 sm:h-8 sm:w-8 rounded-full"
                 resourceType="shop"
                 resourceId={vendorId}
                 useShortUrl={true}
@@ -101,13 +112,13 @@ export function MarketplaceHeader({
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-primary/10"
+                className="relative h-7 w-7 sm:h-8 sm:w-8 rounded-full hover:bg-primary/10"
                 onClick={() => navigate('/cart')}
               >
-                <ShoppingCartIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                {getCartCount() > 0 && (
-                  <Badge className="absolute -top-0.5 -right-0.5 h-4 w-4 sm:h-5 sm:w-5 p-0 flex items-center justify-center text-[9px] sm:text-[10px] bg-destructive border-2 border-card">
-                    {getCartCount() > 99 ? '99+' : getCartCount()}
+                <ShoppingCartIcon className="w-4 h-4" />
+                {cartCount > 0 && (
+                  <Badge className="absolute -top-0.5 -right-0.5 h-4 w-4 p-0 flex items-center justify-center text-[8px] bg-destructive border-[1.5px] border-card font-bold">
+                    {cartCount > 99 ? '99+' : cartCount}
                   </Badge>
                 )}
               </Button>
@@ -115,19 +126,16 @@ export function MarketplaceHeader({
           </div>
         </div>
         
-        {/* Search Bar */}
-        <div className="mt-2.5 sm:mt-3">
-          <div className="relative">
-            <SearchBar
-              value={searchQuery}
-              onChange={onSearchChange}
-              placeholder={t('marketplace.searchProducts')}
-              showFilter
-              onFilter={onFilterToggle}
-              showCamera
-              onCameraCapture={onCameraCapture}
-            />
-          </div>
+        <div className="mt-2">
+          <SearchBar
+            value={searchQuery}
+            onChange={onSearchChange}
+            placeholder={isMobile ? "Rechercher..." : t('marketplace.searchProducts')}
+            showFilter
+            onFilter={onFilterToggle}
+            showCamera
+            onCameraCapture={onCameraCapture}
+          />
         </div>
       </div>
     </header>
