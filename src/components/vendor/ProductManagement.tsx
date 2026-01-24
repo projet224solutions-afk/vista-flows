@@ -926,11 +926,11 @@ export default function ProductManagement() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <Package className="h-6 w-6 md:h-8 md:w-8 text-primary flex-shrink-0" />
           <div>
-            <h1 className="text-xl md:text-3xl font-bold">
+            <h1 className="text-lg md:text-3xl font-bold">
               Gestion des produits
             </h1>
             <p className="text-xs md:text-sm text-muted-foreground">
@@ -938,11 +938,16 @@ export default function ProductManagement() {
             </p>
           </div>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
+        {/* Boutons en grille sur mobile */}
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
           <BarcodeLabelsA4Generator vendorId={vendorId || ''} />
-          <Button onClick={() => { resetForm(); setShowDialog(true); }} className="flex-1 sm:flex-initial" disabled={productLimit && !productLimit.can_add}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nouveau produit
+          <Button 
+            onClick={() => { resetForm(); setShowDialog(true); }} 
+            className="w-full sm:w-auto text-sm" 
+            disabled={productLimit && !productLimit.can_add}
+          >
+            <Plus className="h-4 w-4 mr-1 shrink-0" />
+            <span className="truncate">Nouveau</span>
           </Button>
         </div>
       </div>
