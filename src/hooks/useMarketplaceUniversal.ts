@@ -31,6 +31,7 @@ export interface MarketplaceItem {
   vendor_id: string;
   vendor_name: string;
   vendor_user_id?: string;
+  vendor_public_id?: string; // public_id du vendeur (VND0001, etc.)
   category_name?: string;
   service_type?: string;
   rating: number;
@@ -160,23 +161,48 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         return true;
       });
 
-      return filtered.map(product => ({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        description: product.description || '',
-        images: Array.isArray(product.images) ? (product.images as string[]) : [],
-        promotional_videos: Array.isArray(product.promotional_videos) ? (product.promotional_videos as string[]) : [],
-        vendor_id: product.vendor_id,
-        vendor_name: (product.vendors as any)?.business_name || 'Vendeur',
-        vendor_user_id: (product.vendors as any)?.user_id,
-        category_name: (product.categories as any)?.name || 'Général',
-        rating: product.rating || 0,
-        reviews_count: product.reviews_count || 0,
-        item_type: 'product' as const,
-        free_shipping: product.free_shipping || false,
-        created_at: product.created_at
-      }));
+      // Récupérer les public_id des vendeurs depuis profiles
+      const vendorUserIds = filtered
+        .map(p => (p.vendors as any)?.user_id)
+        .filter(Boolean);
+      
+      let vendorPublicIds: Record<string, string> = {};
+      if (vendorUserIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, public_id')
+          .in('id', vendorUserIds);
+        
+        if (profiles) {
+          vendorPublicIds = Object.fromEntries(
+            profiles.map(p => [p.id, p.public_id || ''])
+          );
+        }
+      }
+
+      return filtered.map(product => {
+        const vendor = product.vendors as any;
+        const vendorUserId = vendor?.user_id;
+        
+        return {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          description: product.description || '',
+          images: Array.isArray(product.images) ? (product.images as string[]) : [],
+          promotional_videos: Array.isArray(product.promotional_videos) ? (product.promotional_videos as string[]) : [],
+          vendor_id: product.vendor_id,
+          vendor_name: vendor?.business_name || 'Vendeur',
+          vendor_user_id: vendorUserId,
+          vendor_public_id: vendorUserId ? vendorPublicIds[vendorUserId] : undefined,
+          category_name: (product.categories as any)?.name || 'Général',
+          rating: product.rating || 0,
+          reviews_count: product.reviews_count || 0,
+          item_type: 'product' as const,
+          free_shipping: product.free_shipping || false,
+          created_at: product.created_at
+        };
+      });
     } catch (error) {
       console.error('Erreur chargement produits:', error);
       return [];
@@ -321,9 +347,29 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       const { data, error } = await query;
       if (error) throw error;
 
+      // Récupérer les public_id des vendeurs depuis profiles
+      const vendorUserIds = (data || [])
+        .map((p: any) => (p.vendors as any)?.user_id || p.merchant_id)
+        .filter(Boolean);
+      
+      let vendorPublicIds: Record<string, string> = {};
+      if (vendorUserIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, public_id')
+          .in('id', vendorUserIds);
+        
+        if (profiles) {
+          vendorPublicIds = Object.fromEntries(
+            profiles.map(p => [p.id, p.public_id || ''])
+          );
+        }
+      }
+
       return (data || []).map((product: any) => {
         const images = Array.isArray(product.images) ? (product.images as string[]) : [];
         const v = product.vendors as any;
+        const vendorUserId = v?.user_id || product.merchant_id;
 
         return {
           id: product.id,
@@ -336,7 +382,8 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           promotional_videos: [],
           vendor_id: product.vendor_id || product.merchant_id,
           vendor_name: v?.business_name || "Vendeur",
-          vendor_user_id: product.merchant_id,
+          vendor_user_id: vendorUserId,
+          vendor_public_id: vendorUserId ? vendorPublicIds[vendorUserId] : undefined,
           // Afficher product_type (saisi par l'utilisateur) s'il existe, sinon fallback sur category
           category_name: product.product_type?.trim() || CATEGORY_DISPLAY_NAMES[product.category] || product.category || "Numérique",
           service_type: product.product_mode,
