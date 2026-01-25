@@ -510,7 +510,10 @@ All colors MUST be HSL.
     grid-template-columns: repeat(2, 1fr);
     gap: 0.5rem;
     width: 100%;
+    max-width: 100%;
     padding: 0.5rem;
+    overflow-x: hidden;
+    box-sizing: border-box;
   }
 
   /* Tablette portrait (601px - 768px): 2-3 colonnes */
