@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>224Solutions - Diagnostic Mobile</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: white;
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .card h2 {
+      font-size: 1rem;
+      color: #333;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status {
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      margin-top: 10px;
+    }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .pending { background: #fff3cd; color: #856404; }
+    .info { background: #e7f1ff; color: #004085; }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .log {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 0.75rem;
+      max-height: 150px;
+      overflow-y: auto;
+      margin-top: 10px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .test-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .test-item:last-child { border-bottom: none; }
+    .badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-success { background: #28a745; color: white; }
+    .badge-error { background: #dc3545; color: white; }
+    .badge-pending { background: #ffc107; color: #333; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Diagnostic Mobile 224Solutions</h1>
+
+    <!-- Test Réseau -->
+    <div class="card">
+      <h2>📡 Connectivité Réseau</h2>
+      <div class="test-item">
+        <span>Statut Internet</span>
+        <span id="network-status" class="badge badge-pending">...</span>
+      </div>
+      <div class="test-item">
+        <span>Type de connexion</span>
+        <span id="connection-type" class="badge badge-pending">...</span>
+      </div>
+    </div>
+
+    <!-- Test Supabase -->
+    <div class="card">
+      <h2>🔐 Connexion Supabase</h2>
+      <div class="test-item">
+        <span>API Supabase</span>
+        <span id="supabase-api" class="badge badge-pending">...</span>
+      </div>
+      <div class="test-item">
+        <span>Authentification</span>
+        <span id="supabase-auth" class="badge badge-pending">...</span>
+      </div>
+      <div class="test-item">
+        <span>Base de données</span>
+        <span id="supabase-db" class="badge badge-pending">...</span>
+      </div>
+      <div id="supabase-log" class="log" style="display:none;"></div>
+    </div>
+
+    <!-- Test Service Worker -->
+    <div class="card">
+      <h2>⚙️ Service Worker / PWA</h2>
+      <div class="test-item">
+        <span>Service Worker</span>
+        <span id="sw-status" class="badge badge-pending">...</span>
+      </div>
+      <div class="test-item">
+        <span>Cache Version</span>
+        <span id="sw-cache" class="badge badge-pending">...</span>
+      </div>
+      <button onclick="clearCacheAndReload()">🗑️ Vider le cache et recharger</button>
+    </div>
+
+    <!-- Test Local Storage -->
+    <div class="card">
+      <h2>💾 Stockage Local</h2>
+      <div class="test-item">
+        <span>Session stockée</span>
+        <span id="session-stored" class="badge badge-pending">...</span>
+      </div>
+      <div class="test-item">
+        <span>Token valide</span>
+        <span id="token-valid" class="badge badge-pending">...</span>
+      </div>
+      <button onclick="clearLocalStorage()">🗑️ Effacer le stockage local</button>
+    </div>
+
+    <!-- Actions -->
+    <div class="card">
+      <h2>🚀 Actions</h2>
+      <button onclick="runAllTests()">▶️ Relancer tous les tests</button>
+      <button onclick="window.location.href='/'">🏠 Aller à l'accueil</button>
+      <button onclick="forceReinstall()">📱 Réinstaller l'app</button>
+    </div>
+
+    <!-- Logs -->
+    <div class="card">
+      <h2>📋 Logs détaillés</h2>
+      <div id="detailed-log" class="log"></div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
+
+    let logs = [];
+    
+    function log(message) {
+      const timestamp = new Date().toLocaleTimeString();
+      logs.push(`[${timestamp}] ${message}`);
+      document.getElementById('detailed-log').textContent = logs.join('\n');
+    }
+
+    function setBadge(id, status, text) {
+      const el = document.getElementById(id);
+      el.textContent = text;
+      el.className = 'badge badge-' + status;
+    }
+
+    // Test réseau
+    function testNetwork() {
+      log('🔍 Test réseau...');
+      
+      if (navigator.onLine) {
+        setBadge('network-status', 'success', '✅ En ligne');
+        log('✅ Connecté à Internet');
+      } else {
+        setBadge('network-status', 'error', '❌ Hors ligne');
+        log('❌ Pas de connexion Internet');
+      }
+
+      const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      if (connection) {
+        setBadge('connection-type', 'success', connection.effectiveType || connection.type || 'Inconnu');
+        log(`📶 Type: ${connection.effectiveType || connection.type}`);
+      } else {
+        setBadge('connection-type', 'pending', 'N/A');
+      }
+    }
+
+    // Test Supabase
+    async function testSupabase() {
+      log('🔍 Test Supabase...');
+      const logEl = document.getElementById('supabase-log');
+      logEl.style.display = 'block';
+      logEl.textContent = 'Test en cours...';
+
+      // Test API
+      try {
+        const start = Date.now();
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+          }
+        });
+        const latency = Date.now() - start;
+        
+        if (response.ok) {
+          setBadge('supabase-api', 'success', `✅ ${latency}ms`);
+          log(`✅ API Supabase OK (${latency}ms)`);
+          logEl.textContent += `\nAPI: OK (${latency}ms)`;
+        } else {
+          setBadge('supabase-api', 'error', `❌ ${response.status}`);
+          log(`❌ API Supabase: ${response.status}`);
+          logEl.textContent += `\nAPI: Erreur ${response.status}`;
+        }
+      } catch (e) {
+        setBadge('supabase-api', 'error', '❌ Erreur');
+        log(`❌ API Supabase: ${e.message}`);
+        logEl.textContent += `\nAPI: ${e.message}`;
+      }
+
+      // Test DB - produits
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=id&limit=1`, {
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setBadge('supabase-db', 'success', `✅ ${data.length} prod`);
+          log(`✅ DB OK - ${data.length} produit(s) trouvé(s)`);
+          logEl.textContent += `\nDB: OK`;
+        } else {
+          setBadge('supabase-db', 'error', '❌ Erreur');
+          log(`❌ DB: ${response.status}`);
+          logEl.textContent += `\nDB: Erreur ${response.status}`;
+        }
+      } catch (e) {
+        setBadge('supabase-db', 'error', '❌ Erreur');
+        log(`❌ DB: ${e.message}`);
+        logEl.textContent += `\nDB: ${e.message}`;
+      }
+
+      // Test Auth
+      const session = localStorage.getItem('sb-uakkxaibujzxdiqzpnpr-auth-token');
+      if (session) {
+        try {
+          const parsed = JSON.parse(session);
+          if (parsed.access_token) {
+            const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+              headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${parsed.access_token}`
+              }
+            });
+            
+            if (response.ok) {
+              setBadge('supabase-auth', 'success', '✅ Connecté');
+              log('✅ Utilisateur authentifié');
+              logEl.textContent += `\nAuth: Connecté`;
+            } else {
+              setBadge('supabase-auth', 'error', '❌ Token expiré');
+              log('❌ Token expiré');
+              logEl.textContent += `\nAuth: Token expiré`;
+            }
+          }
+        } catch (e) {
+          setBadge('supabase-auth', 'error', '❌ Erreur');
+          log(`❌ Auth: ${e.message}`);
+        }
+      } else {
+        setBadge('supabase-auth', 'pending', '⚠️ Non connecté');
+        log('⚠️ Aucune session stockée');
+        logEl.textContent += `\nAuth: Non connecté`;
+      }
+    }
+
+    // Test Service Worker
+    async function testServiceWorker() {
+      log('🔍 Test Service Worker...');
+      
+      if ('serviceWorker' in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.getRegistration();
+          if (registration) {
+            setBadge('sw-status', 'success', '✅ Actif');
+            log(`✅ SW actif: ${registration.active?.scriptURL}`);
+            
+            // Essayer de récupérer la version du cache
+            const caches_names = await caches.keys();
+            const version = caches_names.find(n => n.includes('224solutions')) || 'Inconnu';
+            setBadge('sw-cache', 'success', version.split('-').pop() || 'v?');
+            log(`📦 Caches: ${caches_names.join(', ')}`);
+          } else {
+            setBadge('sw-status', 'error', '❌ Non enregistré');
+            setBadge('sw-cache', 'pending', 'N/A');
+            log('❌ Service Worker non enregistré');
+          }
+        } catch (e) {
+          setBadge('sw-status', 'error', '❌ Erreur');
+          log(`❌ SW: ${e.message}`);
+        }
+      } else {
+        setBadge('sw-status', 'pending', '⚠️ Non supporté');
+        setBadge('sw-cache', 'pending', 'N/A');
+        log('⚠️ Service Worker non supporté');
+      }
+    }
+
+    // Test Local Storage
+    function testLocalStorage() {
+      log('🔍 Test stockage local...');
+      
+      const session = localStorage.getItem('sb-uakkxaibujzxdiqzpnpr-auth-token');
+      if (session) {
+        setBadge('session-stored', 'success', '✅ Présent');
+        log('✅ Session stockée trouvée');
+        
+        try {
+          const parsed = JSON.parse(session);
+          const expiresAt = parsed.expires_at;
+          const now = Math.floor(Date.now() / 1000);
+          
+          if (expiresAt && expiresAt > now) {
+            const remaining = Math.floor((expiresAt - now) / 60);
+            setBadge('token-valid', 'success', `✅ ${remaining}min`);
+            log(`✅ Token valide (${remaining} minutes restantes)`);
+          } else {
+            setBadge('token-valid', 'error', '❌ Expiré');
+            log('❌ Token expiré');
+          }
+        } catch (e) {
+          setBadge('token-valid', 'error', '❌ Corrompu');
+          log(`❌ Session corrompue: ${e.message}`);
+        }
+      } else {
+        setBadge('session-stored', 'pending', '⚠️ Absent');
+        setBadge('token-valid', 'pending', 'N/A');
+        log('⚠️ Aucune session stockée');
+      }
+    }
+
+    // Actions
+    async function clearCacheAndReload() {
+      log('🗑️ Vidage du cache...');
+      
+      if ('caches' in window) {
+        const names = await caches.keys();
+        await Promise.all(names.map(name => caches.delete(name)));
+        log(`✅ ${names.length} cache(s) supprimé(s)`);
+      }
+      
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(r => r.unregister()));
+        log(`✅ ${registrations.length} Service Worker(s) désenregistré(s)`);
+      }
+      
+      setTimeout(() => {
+        window.location.reload(true);
+      }, 1000);
+    }
+
+    function clearLocalStorage() {
+      log('🗑️ Effacement du stockage local...');
+      localStorage.clear();
+      sessionStorage.clear();
+      log('✅ Stockage local effacé');
+      runAllTests();
+    }
+
+    function forceReinstall() {
+      log('📱 Préparation réinstallation...');
+      clearCacheAndReload();
+    }
+
+    async function runAllTests() {
+      logs = [];
+      log('🚀 Démarrage des tests...');
+      log(`📱 User Agent: ${navigator.userAgent}`);
+      log(`🕐 Date: ${new Date().toLocaleString()}`);
+      
+      testNetwork();
+      await testSupabase();
+      await testServiceWorker();
+      testLocalStorage();
+      
+      log('✅ Tests terminés');
+    }
+
+    // Lancer les tests au chargement
+    window.addEventListener('load', runAllTests);
+    
+    // Écouter les changements de connexion
+    window.addEventListener('online', () => {
+      log('📶 Connexion rétablie');
+      testNetwork();
+    });
+    window.addEventListener('offline', () => {
+      log('📴 Connexion perdue');
+      testNetwork();
+    });
+  </script>
+</body>
+</html>
