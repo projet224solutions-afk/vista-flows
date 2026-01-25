@@ -130,10 +130,10 @@ export default function Payment() {
         // Grouper par vendeur (pour simplifier, on prend le premier vendeur)
         const firstItem = cartItems[0];
         
-        // Charger les infos du vendeur (inclut des IDs publics accessibles côté client)
+        // Charger les infos du vendeur
         const { data: vendorInfo, error: vendorError } = await supabase
           .from('vendors')
-          .select('id, user_id, vendor_code, public_id')
+          .select('id, user_id')
           .eq('id', firstItem.vendor_id)
           .single();
 
@@ -145,6 +145,17 @@ export default function Payment() {
             description: "Impossible de charger les informations du vendeur"
           });
           return;
+        }
+
+        // Récupérer le public_id depuis profiles (source de vérité)
+        const { data: vendorProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('public_id')
+          .eq('id', vendorInfo.user_id)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error('Erreur chargement profil vendeur:', profileError);
         }
 
         // Stocker les infos du panier (produits physiques par défaut)
@@ -159,11 +170,8 @@ export default function Payment() {
         // Pré-remplir les champs
         setPaymentAmount(totalAmount.toString());
 
-        // Utiliser l'ID vendeur public (vendor_code), puis public_id, sinon fallback
-        const vendorCode =
-          vendorInfo.vendor_code ||
-          vendorInfo.public_id ||
-          `VEN-${vendorInfo.user_id.substring(0, 8).toUpperCase()}`;
+        // Utiliser le public_id depuis profiles (source de vérité unique - ex: VND0003)
+        const vendorCode = vendorProfile?.public_id || `VEN-${vendorInfo.user_id.substring(0, 8).toUpperCase()}`;
 
         setRecipientId(vendorCode);
 
@@ -262,7 +270,7 @@ export default function Payment() {
               name,
               price,
               vendor_id,
-              vendors!inner(user_id, vendor_code, public_id)
+              vendors!inner(user_id)
             `)
             .eq('id', id)
             .single();
@@ -286,22 +294,15 @@ export default function Payment() {
             // Pré-remplir les champs
             setPaymentAmount(totalAmount.toString());
 
-            // Utiliser vendor_code/public_id depuis vendors (accessible côté client), sinon fallback
-            const v = product.vendors as any;
-            let vendorCode: string | null = v?.vendor_code || v?.public_id || null;
+            // Récupérer le public_id depuis profiles (source de vérité unique)
+            const { data: vendorProfile } = await supabase
+              .from('profiles')
+              .select('public_id')
+              .eq('id', vendorUserId)
+              .maybeSingle();
 
-            // Si aucun code public n'est disponible, tenter profiles (peut être bloqué par RLS)
-            if (!vendorCode) {
-              const { data: vendorProfile } = await supabase
-                .from('profiles')
-                .select('custom_id, public_id')
-                .eq('id', vendorUserId)
-                .maybeSingle();
-
-              vendorCode = vendorProfile?.custom_id || vendorProfile?.public_id || null;
-            }
-
-            setRecipientId(vendorCode || `VEN-${vendorUserId.substring(0, 8).toUpperCase()}`);
+            // Utiliser le public_id depuis profiles (ex: VND0003)
+            setRecipientId(vendorProfile?.public_id || `VEN-${vendorUserId.substring(0, 8).toUpperCase()}`);
 
             setPaymentDescription(`Achat: ${product.name} (x${qty})`);
             
