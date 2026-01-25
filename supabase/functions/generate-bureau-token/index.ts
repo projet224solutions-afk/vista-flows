@@ -101,7 +101,7 @@ serve(async (req) => {
       });
     }
 
-    console.log('✅ Token généré:', { bureau_id, expires_in_hours });
+    // Token généré avec succès (log supprimé pour sécurité)
 
     return new Response(
       JSON.stringify({

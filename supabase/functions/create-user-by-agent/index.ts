@@ -547,7 +547,6 @@ serve(async (req) => {
 
       // Générer un access token unique pour le bureau
       const accessToken = crypto.randomUUID();
-      console.log('🔑 Access token généré:', accessToken);
 
       const bureauData = {
         bureau_code: syndicatData.bureau_code,
