@@ -18,6 +18,7 @@ interface Product {
   images?: string | string[];
   vendor_id?: string;
   vendor_name?: string;
+  vendor_public_id?: string;
   rating?: number;
   reviews_count?: number;
   is_hot?: boolean;
@@ -106,6 +107,7 @@ export function LatestProductsSection({
                 title={product.name}
                 price={product.price}
                 vendor={product.vendor_name}
+                vendorPublicId={product.vendor_public_id}
                 rating={product.rating}
                 reviewCount={product.reviews_count}
                 onBuy={() => onProductClick(product.id)}

@@ -219,7 +219,13 @@ export function UniversalMarketplaceCard({
 
         {/* Vendeur et avis */}
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
-          <span className="line-clamp-1">
+          <span className="line-clamp-1 flex items-center gap-1">
+            {item.vendor_public_id && (
+              <>
+                <span className="text-primary font-medium">{item.vendor_public_id}</span>
+                <span>•</span>
+              </>
+            )}
             {t('marketplace.card.soldBy') || 'Vendu par'} {item.vendor_name}
           </span>
           {item.reviews_count > 0 && (

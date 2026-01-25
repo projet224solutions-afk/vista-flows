@@ -36,6 +36,7 @@ interface MarketplaceProductCardProps {
   currency?: string; // Devise du produit (USD, EUR, GNF, etc.)
   vendor: string;
   vendorId?: string;
+  vendorPublicId?: string; // public_id du vendeur (VND0001, etc.)
   vendorLocation?: string;
   vendorRating?: number;
   vendorRatingCount?: number;
@@ -59,6 +60,7 @@ export function MarketplaceProductCard({
   currency = 'GNF', // Devise par défaut
   vendor,
   vendorId,
+  vendorPublicId,
   vendorLocation,
   vendorRating = 0,
   vendorRatingCount = 0,
@@ -187,6 +189,10 @@ export function MarketplaceProductCard({
         {/* Vendor Info avec localisation */}
         <div className="marketplace-card-vendor">
           <span className="truncate flex-1 flex items-center gap-1">
+            {vendorPublicId && (
+              <span className="text-primary font-semibold">{vendorPublicId}</span>
+            )}
+            {vendorPublicId && <span className="text-muted-foreground">•</span>}
             {vendor}
             {certification && (
               <CertifiedIcon status={certification.status} className="w-3.5 h-3.5" />

@@ -34,6 +34,7 @@ interface Vendor {
   is_active: boolean;
   user_id: string;
   shop_slug?: string;
+  public_id?: string; // public_id du vendeur depuis profiles
 }
 
 interface Product {
@@ -136,7 +137,18 @@ export default function VendorShop() {
         return;
       }
 
-      setVendor(vendorData);
+      // Récupérer le public_id depuis profiles
+      let vendorPublicId: string | undefined;
+      if (vendorData.user_id) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('public_id')
+          .eq('id', vendorData.user_id)
+          .maybeSingle();
+        vendorPublicId = profileData?.public_id || undefined;
+      }
+
+      setVendor({ ...vendorData, public_id: vendorPublicId });
 
       // Boutique inactive: on affiche la page mais on ne charge pas les produits pour les clients
       if (!vendorData.is_active && !vendorIsOwned) {
@@ -478,6 +490,7 @@ export default function VendorShop() {
                       price={product.price}
                       vendor={vendor.business_name}
                       vendorId={vendor.id}
+                      vendorPublicId={vendor.public_id}
                       rating={vendor.rating || 0}
                       reviewCount={vendor.total_orders || 0}
                       stock={product.stock_quantity}
@@ -577,6 +590,7 @@ export default function VendorShop() {
                     price={product.price}
                     vendor={vendor.business_name}
                     vendorId={vendor.id}
+                    vendorPublicId={vendor.public_id}
                     rating={vendor.rating || 0}
                     reviewCount={vendor.total_orders || 0}
                     stock={product.stock_quantity}
