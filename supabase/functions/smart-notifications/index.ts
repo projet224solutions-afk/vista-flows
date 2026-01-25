@@ -59,10 +59,63 @@ serve(async (req) => {
 
     console.log('✅ Notification created:', notification.id);
 
-    // 3️⃣ ENVOYER PUSH NOTIFICATION (si activé)
+    // 3️⃣ ENVOYER PUSH NOTIFICATION VIA FCM (si activé)
     if (payload.sendPush && preferences.pushEnabled !== false) {
-      // TODO: Intégrer Firebase Cloud Messaging ou OneSignal
-      console.log('📱 Push notification would be sent');
+      try {
+        // Récupérer le token FCM de l'utilisateur
+        const { data: fcmData } = await supabaseClient
+          .from('user_fcm_tokens')
+          .select('fcm_token')
+          .eq('user_id', payload.userId)
+          .eq('is_active', true)
+          .single();
+
+        if (fcmData?.fcm_token) {
+          const fcmServerKey = Deno.env.get('FIREBASE_SERVER_KEY');
+          
+          if (fcmServerKey) {
+            // Envoyer via Firebase Cloud Messaging HTTP v1
+            const fcmResponse = await fetch(
+              `https://fcm.googleapis.com/fcm/send`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `key=${fcmServerKey}`
+                },
+                body: JSON.stringify({
+                  to: fcmData.fcm_token,
+                  notification: {
+                    title: payload.title,
+                    body: payload.message,
+                    icon: '/icon-192.png',
+                    click_action: payload.actionUrl || '/'
+                  },
+                  data: {
+                    type: payload.type,
+                    notification_id: notification.id,
+                    action_url: payload.actionUrl,
+                    ...payload.data
+                  }
+                })
+              }
+            );
+
+            if (fcmResponse.ok) {
+              console.log('📱 Push notification sent via FCM');
+            } else {
+              const errorText = await fcmResponse.text();
+              console.error('❌ FCM error:', errorText);
+            }
+          } else {
+            console.warn('⚠️ FIREBASE_SERVER_KEY non configuré - push notification ignorée');
+          }
+        } else {
+          console.log('ℹ️ Pas de token FCM pour cet utilisateur');
+        }
+      } catch (pushError) {
+        console.error('❌ Erreur push notification:', pushError);
+      }
     }
 
     // 4️⃣ ENVOYER EMAIL (si activé)
