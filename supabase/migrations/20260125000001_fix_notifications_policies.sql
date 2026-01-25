@@ -37,7 +37,61 @@ BEGIN
   END IF;
 END $$;
 
--- 5. Index pour améliorer les performances des requêtes de notifications
+-- ============================================================================
+-- 5. ACTIVER REALTIME POUR LES NOTIFICATIONS (CRITIQUE!)
+-- Sans cela, les notifications en temps réel ne fonctionnent pas
+-- ============================================================================
+
+-- Ajouter la table notifications à la publication Realtime
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' 
+    AND tablename = 'notifications'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+    RAISE NOTICE 'Table notifications ajoutée à supabase_realtime';
+  END IF;
+END $$;
+
+-- Ajouter aussi taxi_notifications si elle existe
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'taxi_notifications') THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_publication_tables 
+      WHERE pubname = 'supabase_realtime' 
+      AND tablename = 'taxi_notifications'
+    ) THEN
+      ALTER PUBLICATION supabase_realtime ADD TABLE public.taxi_notifications;
+      RAISE NOTICE 'Table taxi_notifications ajoutée à supabase_realtime';
+    END IF;
+  END IF;
+END $$;
+
+-- Ajouter user_fcm_tokens pour sync temps réel des tokens
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'user_fcm_tokens') THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_publication_tables 
+      WHERE pubname = 'supabase_realtime' 
+      AND tablename = 'user_fcm_tokens'
+    ) THEN
+      ALTER PUBLICATION supabase_realtime ADD TABLE public.user_fcm_tokens;
+      RAISE NOTICE 'Table user_fcm_tokens ajoutée à supabase_realtime';
+    END IF;
+  END IF;
+END $$;
+
+-- Définir replica identity pour que Realtime puisse envoyer les anciennes valeurs
+ALTER TABLE public.notifications REPLICA IDENTITY FULL;
+
+-- ============================================================================
+-- 6. Index pour améliorer les performances des requêtes de notifications
+-- ============================================================================
+
 CREATE INDEX IF NOT EXISTS idx_notifications_user_unread 
   ON public.notifications (user_id, read) 
   WHERE read = false;
@@ -48,7 +102,10 @@ CREATE INDEX IF NOT EXISTS idx_notifications_user_created
 CREATE INDEX IF NOT EXISTS idx_notifications_type 
   ON public.notifications (type);
 
--- 6. Commentaires
+-- ============================================================================
+-- 7. Commentaires
+-- ============================================================================
+
 COMMENT ON POLICY "Service role can insert notifications" ON public.notifications 
   IS 'Permet aux Edge Functions d''insérer des notifications';
 
