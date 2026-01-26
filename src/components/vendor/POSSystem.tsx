@@ -169,9 +169,32 @@ export function POSSystem() {
   };
   
 
+  // Clé de cache pour les catégories
+  const CATEGORIES_CACHE_KEY = 'pos_categories';
+  const CATEGORIES_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 heures
+
   const loadCategories = async () => {
     try {
       setCategoriesLoading(true);
+      
+      // ✨ MODE OFFLINE: Récupérer depuis le cache
+      if (!navigator.onLine) {
+        try {
+          const { default: offlineDB } = await import('@/lib/offlineDB');
+          const cachedCategories = await offlineDB.getCachedData<Array<{id: string, name: string}>>(CATEGORIES_CACHE_KEY);
+          
+          if (cachedCategories && cachedCategories.length > 0) {
+            console.log('📦 [POS] Catégories depuis cache offline');
+            setCategories(cachedCategories);
+            return;
+          }
+        } catch (cacheError) {
+          console.warn('Erreur lecture cache catégories:', cacheError);
+        }
+        setCategoriesLoading(false);
+        return;
+      }
+      
       const { data: categoriesData, error } = await supabase
         .from('categories')
         .select('id, name')
@@ -181,9 +204,26 @@ export function POSSystem() {
       if (error) throw error;
 
       setCategories(categoriesData || []);
+      
+      // ✨ Sauvegarder dans le cache
+      try {
+        const { default: offlineDB } = await import('@/lib/offlineDB');
+        await offlineDB.cacheData(CATEGORIES_CACHE_KEY, categoriesData || [], CATEGORIES_CACHE_TTL, false);
+      } catch (cacheError) {
+        console.warn('Erreur écriture cache catégories:', cacheError);
+      }
+      
     } catch (error) {
       console.error('Erreur chargement catégories:', error);
-      toast.error('Erreur lors du chargement des catégories');
+      
+      // Fallback sur cache
+      if (!navigator.onLine) {
+        try {
+          const { default: offlineDB } = await import('@/lib/offlineDB');
+          const cached = await offlineDB.getCachedData<Array<{id: string, name: string}>>(CATEGORIES_CACHE_KEY);
+          if (cached) setCategories(cached);
+        } catch (e) {}
+      }
     } finally {
       setCategoriesLoading(false);
     }
@@ -332,11 +372,45 @@ export function POSSystem() {
     return () => window.removeEventListener('online', handleOnline);
   }, [vendorId]);
   
+  // Clé de cache pour les produits
+  const PRODUCTS_CACHE_KEY = 'pos_products';
+  const PRODUCTS_CACHE_TTL = 12 * 60 * 60 * 1000; // 12 heures
+  
   const loadVendorProducts = async () => {
     if (!vendorId) return;
     
     try {
       setProductsLoading(true);
+      
+      // ✨ MODE OFFLINE: Récupérer depuis le cache
+      if (!navigator.onLine) {
+        try {
+          const { default: offlineDB } = await import('@/lib/offlineDB');
+          const cachedProducts = await offlineDB.getCachedData<Product[]>(`${PRODUCTS_CACHE_KEY}_${vendorId}`);
+          
+          if (cachedProducts && cachedProducts.length > 0) {
+            console.log('📦 [POS] Utilisation du cache offline:', cachedProducts.length, 'produits');
+            setProducts(cachedProducts);
+            toast.info('Mode hors ligne - Produits chargés depuis le cache', {
+              description: `${cachedProducts.length} produit(s) disponible(s)`,
+              duration: 3000
+            });
+            return;
+          }
+        } catch (cacheError) {
+          console.warn('Erreur lecture cache produits:', cacheError);
+        }
+        
+        // Pas de cache disponible
+        toast.error('Mode hors ligne - Aucun produit en cache', {
+          description: 'Visitez le POS une fois avec internet pour charger les produits.',
+          duration: 5000
+        });
+        setProductsLoading(false);
+        return;
+      }
+      
+      // MODE ONLINE: Charger depuis Supabase
       const { data: productsData, error } = await supabase
         .from('products')
         .select(`
@@ -387,8 +461,41 @@ export function POSSystem() {
       });
 
       setProducts(sortedProducts);
+      
+      // ✨ Sauvegarder dans le cache pour utilisation offline
+      try {
+        const { default: offlineDB } = await import('@/lib/offlineDB');
+        await offlineDB.cacheData(
+          `${PRODUCTS_CACHE_KEY}_${vendorId}`,
+          sortedProducts,
+          PRODUCTS_CACHE_TTL,
+          false // Pas de cryptage pour les produits (données non sensibles)
+        );
+        console.log('💾 [POS] Cache produits mis à jour:', sortedProducts.length, 'produits');
+      } catch (cacheError) {
+        console.warn('Erreur écriture cache produits:', cacheError);
+      }
+      
     } catch (error) {
       console.error('Erreur chargement produits:', error);
+      
+      // ✨ En cas d'erreur, essayer le cache
+      if (!navigator.onLine) {
+        try {
+          const { default: offlineDB } = await import('@/lib/offlineDB');
+          const cachedProducts = await offlineDB.getCachedData<Product[]>(`${PRODUCTS_CACHE_KEY}_${vendorId}`);
+          
+          if (cachedProducts && cachedProducts.length > 0) {
+            console.log('📦 [POS] Fallback sur cache après erreur');
+            setProducts(cachedProducts);
+            toast.info('Mode hors ligne - Produits chargés depuis le cache');
+            return;
+          }
+        } catch (cacheError) {
+          console.warn('Erreur fallback cache:', cacheError);
+        }
+      }
+      
       toast.error('Erreur lors du chargement des produits');
     } finally {
       setProductsLoading(false);
@@ -1119,25 +1226,38 @@ export function POSSystem() {
           // Stocker dans IndexedDB via offlineDB
           const { default: offlineDB } = await import('@/lib/offlineDB');
           await offlineDB.initDB();
-          await offlineDB.storeEvent(saleData, true);
+          const eventId = await offlineDB.storeEvent(saleData, true);
+          
+          console.log('✅ [POS Offline] Vente stockée:', eventId);
           
           // Mettre à jour le stock localement (décrémenter)
-          setProducts(prevProducts => 
-            prevProducts.map(product => {
-              const cartItem = cart.find(item => item.id === product.id);
-              if (cartItem) {
-                return { ...product, stock: Math.max(0, product.stock - cartItem.quantity) };
-              }
-              return product;
-            })
-          );
+          const updatedProducts = products.map(product => {
+            const cartItem = cart.find(item => item.id === product.id);
+            if (cartItem) {
+              return { ...product, stock: Math.max(0, product.stock - cartItem.quantity) };
+            }
+            return product;
+          });
+          setProducts(updatedProducts);
+          
+          // Mettre à jour le cache avec les nouveaux stocks
+          try {
+            await offlineDB.cacheData(
+              `${PRODUCTS_CACHE_KEY}_${vendorId}`,
+              updatedProducts,
+              PRODUCTS_CACHE_TTL,
+              false
+            );
+          } catch (cachErr) {
+            console.warn('Erreur mise à jour cache:', cachErr);
+          }
           
           setLastOrderNumber(offlineOrderNumber);
           setShowOrderSummary(false);
           setShowReceipt(true);
           
           toast.success('✅ Vente enregistrée (mode hors-ligne)', {
-            description: 'La vente sera synchronisée automatiquement à la reconnexion.',
+            description: `N° ${offlineOrderNumber} - Sera synchronisée à la reconnexion.`,
             duration: 5000
           });
           
@@ -1147,8 +1267,20 @@ export function POSSystem() {
           
         } catch (offlineError: any) {
           console.error('Erreur stockage offline:', offlineError);
-          toast.error('Erreur lors de l\'enregistrement hors-ligne', {
-            description: 'Veuillez réessayer.'
+          
+          // Diagnostic plus précis de l'erreur
+          let errorMessage = 'Veuillez réessayer.';
+          if (offlineError.message?.includes('QuotaExceeded')) {
+            errorMessage = 'Stockage plein. Supprimez des données ou reconnectez-vous pour synchroniser.';
+          } else if (offlineError.name === 'InvalidStateError') {
+            errorMessage = 'Base de données offline non disponible. Essayez de recharger la page.';
+          } else if (offlineError.message) {
+            errorMessage = offlineError.message;
+          }
+          
+          toast.error('Erreur enregistrement hors-ligne', {
+            description: errorMessage,
+            duration: 6000
           });
           setIsProcessingPayment(false);
           return;

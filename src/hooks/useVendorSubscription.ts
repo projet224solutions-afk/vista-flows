@@ -3,12 +3,31 @@ import { useAuth } from './useAuth';
 import { SubscriptionService, ActiveSubscription, Plan } from '@/services/subscriptionService';
 import { toast } from 'sonner';
 
+// Clé de cache pour l'abonnement
+const SUBSCRIPTION_CACHE_KEY = 'vendor_subscription';
+const SUBSCRIPTION_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 heures
+
 export function useVendorSubscription() {
   const { user, profile } = useAuth();
   const [subscription, setSubscription] = useState<ActiveSubscription | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  // Détecter le mode offline
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     // ✅ Optimisation: Utiliser uniquement les IDs (primitives) pour éviter rechargements
@@ -17,13 +36,42 @@ export function useVendorSubscription() {
     } else if (!user?.id) {
       setLoading(false);
     }
-  }, [user?.id, profile?.role]); // ✅ Dépendances stables
+  }, [user?.id, profile?.role, isOffline]); // ✅ Dépendances stables + offline
 
   const loadSubscriptionData = async () => {
     if (!user) return;
     
     try {
       setLoading(true);
+      
+      // ✨ MODE OFFLINE: Récupérer depuis le cache
+      if (!navigator.onLine) {
+        try {
+          const { default: offlineDB } = await import('@/lib/offlineDB');
+          const cachedData = await offlineDB.getCachedData<{
+            subscription: ActiveSubscription | null;
+            plans: Plan[];
+            userId: string;
+          }>(`${SUBSCRIPTION_CACHE_KEY}_${user.id}`);
+          
+          if (cachedData && cachedData.userId === user.id) {
+            console.log('📦 [Subscription] Utilisation du cache offline');
+            setSubscription(cachedData.subscription);
+            setPlans(cachedData.plans);
+            setHasAccess(!!cachedData.subscription && cachedData.subscription.status === 'active');
+            return;
+          }
+        } catch (cacheError) {
+          console.warn('Erreur lecture cache subscription:', cacheError);
+        }
+        
+        // Pas de cache disponible en offline
+        console.warn('⚠️ [Subscription] Mode offline sans cache');
+        setLoading(false);
+        return;
+      }
+      
+      // MODE ONLINE: Charger depuis Supabase
       const [subData, plansData] = await Promise.all([
         SubscriptionService.getActiveSubscription(user.id),
         SubscriptionService.getPlans()
@@ -32,9 +80,44 @@ export function useVendorSubscription() {
       setSubscription(subData);
       setPlans(plansData);
       setHasAccess(!!subData && subData.status === 'active');
+      
+      // ✨ Sauvegarder dans le cache pour utilisation offline
+      try {
+        const { default: offlineDB } = await import('@/lib/offlineDB');
+        await offlineDB.cacheData(
+          `${SUBSCRIPTION_CACHE_KEY}_${user.id}`,
+          { subscription: subData, plans: plansData, userId: user.id },
+          SUBSCRIPTION_CACHE_TTL,
+          true // Crypter les données
+        );
+        console.log('💾 [Subscription] Cache mis à jour');
+      } catch (cacheError) {
+        console.warn('Erreur écriture cache subscription:', cacheError);
+      }
+      
     } catch (error) {
       console.error('Erreur chargement abonnement:', error);
-      // Ne plus afficher de toast pour éviter les notifications intempestives
+      
+      // ✨ En cas d'erreur réseau, essayer le cache
+      if (!navigator.onLine) {
+        try {
+          const { default: offlineDB } = await import('@/lib/offlineDB');
+          const cachedData = await offlineDB.getCachedData<{
+            subscription: ActiveSubscription | null;
+            plans: Plan[];
+            userId: string;
+          }>(`${SUBSCRIPTION_CACHE_KEY}_${user.id}`);
+          
+          if (cachedData) {
+            console.log('📦 [Subscription] Fallback sur cache après erreur');
+            setSubscription(cachedData.subscription);
+            setPlans(cachedData.plans);
+            setHasAccess(!!cachedData.subscription && cachedData.subscription.status === 'active');
+          }
+        } catch (cacheError) {
+          console.warn('Erreur fallback cache:', cacheError);
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -81,6 +164,7 @@ export function useVendorSubscription() {
     daysRemaining: getDaysRemaining(),
     expiryDate: getExpiryDate(),
     priceFormatted: formatPrice(),
-    refresh: loadSubscriptionData
+    refresh: loadSubscriptionData,
+    isOffline
   };
 }
