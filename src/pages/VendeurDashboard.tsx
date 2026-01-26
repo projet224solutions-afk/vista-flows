@@ -224,8 +224,34 @@ export default function VendeurDashboard() {
   const isLoading = !user || typeof profile === 'undefined' || statsLoading;
   
   // Afficher un message d'erreur si les stats ne chargent pas
+  // Note: En mode offline, stats ne sera jamais null car on utilise le cache ou des valeurs par défaut
   if (!isLoading && stats === null) {
     const isVendorMissing = statsError === 'Vendor profile not found';
+    const isOffline = !navigator.onLine;
+
+    // Si offline et stats null, c'est probablement un problème de première visite
+    if (isOffline) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background p-6">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <CardTitle>Mode hors ligne</CardTitle>
+              <CardDescription>
+                Vous êtes actuellement hors ligne. Veuillez vous connecter à Internet pour charger vos données vendeur pour la première fois.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Une fois connecté une première fois, vos données seront mises en cache pour fonctionner hors ligne.
+              </p>
+              <Button onClick={() => window.location.reload()} className="w-full">
+                Réessayer
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
 
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-6">

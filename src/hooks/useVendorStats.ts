@@ -1,11 +1,17 @@
 /**
  * 🔧 HOOK: STATISTIQUES VENDEUR
  * Récupère les statistiques en temps réel du vendeur
+ * Avec support mode hors ligne via IndexedDB
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
+import { cacheData, getCachedData } from '@/lib/offlineDB';
+
+// Clés et TTL pour le cache
+const CACHE_KEY_VENDOR_STATS = 'vendor_stats';
+const CACHE_TTL_STATS = 30 * 60 * 1000; // 30 minutes
 
 export interface VendorStats {
   vendorId: string | null;
@@ -30,10 +36,41 @@ export function useVendorStats() {
       return;
     }
 
+    const isOnline = navigator.onLine;
+    const cacheKey = `${CACHE_KEY_VENDOR_STATS}_${vendorId}`;
+
     try {
       setLoading(true);
       setError(null);
 
+      // 📴 Mode hors ligne : utiliser le cache
+      if (!isOnline) {
+        console.log('📴 Mode hors ligne - Récupération stats depuis cache');
+        const cachedStats = await getCachedData<VendorStats>(cacheKey);
+        
+        if (cachedStats) {
+          console.log('✅ Stats récupérées du cache');
+          setStats(cachedStats);
+          setLoading(false);
+          return;
+        } else {
+          // Pas de cache, utiliser des stats par défaut
+          console.warn('⚠️ Pas de cache stats disponible en mode offline');
+          setStats({
+            vendorId,
+            revenue: 0,
+            orders_count: 0,
+            customers_count: 0,
+            products_count: 0,
+            pending_orders: 0,
+            low_stock_products: 0
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 🌐 Mode en ligne : récupérer depuis Supabase
       // Statistiques parallèles avec gestion d'erreur individuelle
       const [
         revenueResult,
@@ -93,7 +130,7 @@ export function useVendorStats() {
         ? lowStockResult.value.data.filter((p) => p.stock_quantity <= (p.low_stock_threshold || 0)).length
         : 0;
 
-      setStats({
+      const newStats: VendorStats = {
         vendorId,
         revenue,
         orders_count: ordersResult.status === 'fulfilled' ? (ordersResult.value.count || 0) : 0,
@@ -101,10 +138,30 @@ export function useVendorStats() {
         products_count: productsResult.status === 'fulfilled' ? (productsResult.value.count || 0) : 0,
         pending_orders: pendingResult.status === 'fulfilled' ? (pendingResult.value.count || 0) : 0,
         low_stock_products: lowStockCount
-      });
+      };
+
+      setStats(newStats);
+      
+      // 💾 Mettre en cache pour mode offline
+      await cacheData(cacheKey, newStats, CACHE_TTL_STATS);
+      console.log('💾 Stats mises en cache');
 
     } catch (err: any) {
       console.error('Erreur chargement stats:', err);
+      
+      // Essayer le cache en cas d'erreur
+      try {
+        const cachedStats = await getCachedData<VendorStats>(cacheKey);
+        if (cachedStats) {
+          console.log('🔄 Stats récupérées du cache après erreur');
+          setStats(cachedStats);
+          setError(null);
+          return;
+        }
+      } catch (cacheError) {
+        console.error('❌ Erreur récupération cache:', cacheError);
+      }
+      
       setError(err.message || 'Erreur lors du chargement des statistiques');
       // Définir des stats par défaut en cas d'erreur
       setStats({
@@ -130,8 +187,12 @@ export function useVendorStats() {
 
     fetchStats();
 
-    // Actualiser toutes les 30 secondes
-    const interval = setInterval(fetchStats, 30000);
+    // Actualiser toutes les 30 secondes (seulement si en ligne)
+    const interval = setInterval(() => {
+      if (navigator.onLine) {
+        fetchStats();
+      }
+    }, 30000);
     return () => clearInterval(interval);
   }, [vendorId, vendorLoading, fetchStats]);
 
