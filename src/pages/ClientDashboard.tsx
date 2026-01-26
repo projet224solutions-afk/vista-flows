@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   ShoppingBag, Heart, Package, Search, CreditCard, MessageSquare,
   LogOut, Home, Grid3X3, ShoppingCart, TrendingUp, Star, Eye,
-  Plus, Truck, Bot, User
+  Plus, Truck, Bot, User, Settings
 } from 'lucide-react';
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -38,6 +38,7 @@ const ClientOrdersList = lazy(() => import("@/components/client/ClientOrdersList
 const ResponsiveGrid = lazy(() => import("@/components/responsive/ResponsiveContainer").then(m => ({ default: m.ResponsiveGrid })));
 const ResponsiveStack = lazy(() => import("@/components/responsive/ResponsiveContainer").then(m => ({ default: m.ResponsiveStack })));
 const ProductDetailModal = lazy(() => import("@/components/marketplace/ProductDetailModal"));
+const ClientSettings = lazy(() => import("@/components/client/ClientSettings"));
 
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -335,7 +336,7 @@ export default function ClientDashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
           {/* Navigation par onglets - Responsive */}
           <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0">
-            <TabsList className={`${responsive.isMobile ? 'inline-flex w-max' : 'grid w-full grid-cols-6 lg:w-auto lg:inline-grid'} bg-muted/50 min-w-full md:min-w-0`}>
+            <TabsList className={`${responsive.isMobile ? 'inline-flex w-max' : 'grid w-full grid-cols-7 lg:w-auto lg:inline-grid'} bg-muted/50 min-w-full md:min-w-0`}>
               <TabsTrigger 
                 value="overview" 
                 className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
@@ -381,6 +382,14 @@ export default function ClientDashboard() {
                 <Bot className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
                 <span className={responsive.isMobile ? 'hidden' : ''}>Assistant IA</span>
                 <span className={responsive.isMobile ? '' : 'hidden'}>IA</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="settings" 
+                className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
+              >
+                <Settings className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
+                <span className={responsive.isMobile ? 'hidden' : ''}>Paramètres</span>
+                <span className={responsive.isMobile ? '' : 'hidden'}>⚙️</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -665,6 +674,11 @@ export default function ClientDashboard() {
                 <CopiloteChat />
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Paramètres */}
+          <TabsContent value="settings" className="animate-fade-in">
+            <ClientSettings />
           </TabsContent>
         </Tabs>
       </main>
