@@ -485,7 +485,7 @@ async function getAllStoredFiles(): Promise<OfflineFile[]> {
   }));
 }
 
-// Exports nommés pour utilisation directe
+// Named exports pour compatibilité avec les imports destructurés
 export {
   initDB,
   storeEvent,
