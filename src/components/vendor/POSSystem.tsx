@@ -1199,6 +1199,7 @@ export function POSSystem() {
           const saleData = {
             type: 'sale',
             vendor_id: vendorId,
+            created_at: new Date().toISOString(), // ✅ Requis par offlineDB
             data: {
               offline_order_id: offlineOrderId,
               order_number: offlineOrderNumber,

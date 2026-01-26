@@ -60,40 +60,74 @@ interface OfflineDBSchema extends DBSchema {
 }
 
 let db: IDBPDatabase<OfflineDBSchema> | null = null;
+let dbInitPromise: Promise<IDBPDatabase<OfflineDBSchema>> | null = null;
 
 /**
  * Initialise la base de données IndexedDB
  */
 async function initDB(): Promise<IDBPDatabase<OfflineDBSchema>> {
+  // Si déjà initialisé, retourner l'instance
   if (db) return db;
+  
+  // Si une initialisation est en cours, attendre
+  if (dbInitPromise) return dbInitPromise;
 
-  db = await openDB<OfflineDBSchema>('224Solutions-OfflineDB', 3, {
-    upgrade(database, oldVersion) {
-      // Store pour les événements
-      if (!database.objectStoreNames.contains('events')) {
-        const eventStore = database.createObjectStore('events', {
-          keyPath: 'client_event_id'
-        });
-        eventStore.createIndex('by-status', 'status');
-        eventStore.createIndex('by-type', 'type');
-        eventStore.createIndex('by-created', 'created_at');
+  dbInitPromise = (async () => {
+    try {
+      // Vérifier si IndexedDB est disponible
+      if (typeof indexedDB === 'undefined') {
+        throw new Error('IndexedDB non disponible dans ce navigateur');
       }
 
-      // Store pour le cache
-      if (!database.objectStoreNames.contains('cache')) {
-        database.createObjectStore('cache', { keyPath: 'key' });
-      }
+      db = await openDB<OfflineDBSchema>('224Solutions-OfflineDB', 3, {
+        upgrade(database, oldVersion, newVersion, transaction) {
+          console.log(`📦 Mise à jour DB offline: v${oldVersion} -> v${newVersion}`);
+          
+          // Store pour les événements
+          if (!database.objectStoreNames.contains('events')) {
+            const eventStore = database.createObjectStore('events', {
+              keyPath: 'client_event_id'
+            });
+            eventStore.createIndex('by-status', 'status');
+            eventStore.createIndex('by-type', 'type');
+            eventStore.createIndex('by-created', 'created_at');
+          }
 
-      // Store pour les fichiers
-      if (!database.objectStoreNames.contains('files')) {
-        const fileStore = database.createObjectStore('files', { keyPath: 'id' });
-        fileStore.createIndex('by-event', 'event_id');
-      }
+          // Store pour le cache
+          if (!database.objectStoreNames.contains('cache')) {
+            database.createObjectStore('cache', { keyPath: 'key' });
+          }
+
+          // Store pour les fichiers
+          if (!database.objectStoreNames.contains('files')) {
+            const fileStore = database.createObjectStore('files', { keyPath: 'id' });
+            fileStore.createIndex('by-event', 'event_id');
+          }
+        },
+        blocked() {
+          console.warn('⚠️ Base de données bloquée par un autre onglet');
+        },
+        blocking() {
+          // Fermer la connexion si une nouvelle version est disponible
+          db?.close();
+          db = null;
+        },
+        terminated() {
+          console.warn('⚠️ Connexion à la base de données terminée de manière inattendue');
+          db = null;
+        }
+      });
+
+      console.log('✅ Base de données offline initialisée');
+      return db;
+    } catch (error: any) {
+      console.error('❌ Erreur initialisation IndexedDB:', error);
+      dbInitPromise = null;
+      throw new Error(`Impossible d'initialiser le stockage offline: ${error.message || 'Erreur inconnue'}`);
     }
-  });
+  })();
 
-  console.log('✅ Base de données offline initialisée');
-  return db;
+  return dbInitPromise;
 }
 
 /**
@@ -103,25 +137,41 @@ async function storeEvent(
   event: Omit<OfflineEvent, 'client_event_id' | 'status' | 'retry_count' | 'encrypted'>,
   encrypt: boolean = true
 ): Promise<string> {
-  const database = await initDB();
-  const clientEventId = `evt_${Date.now()}_${generateSecureToken().substring(0, 12)}`;
+  try {
+    const database = await initDB();
+    const clientEventId = `evt_${Date.now()}_${generateSecureToken().substring(0, 12)}`;
 
-  // Crypter les données sensibles
-  const eventData = encrypt ? encryptData(event.data) : event.data;
+    // S'assurer que created_at est présent
+    const createdAt = event.created_at || new Date().toISOString();
 
-  const fullEvent: OfflineEvent = {
-    ...event,
-    data: eventData,
-    client_event_id: clientEventId,
-    status: 'pending',
-    retry_count: 0,
-    encrypted: encrypt
-  };
+    // Crypter les données sensibles (avec fallback si erreur)
+    let eventData;
+    try {
+      eventData = encrypt ? encryptData(event.data) : event.data;
+    } catch (encryptError) {
+      console.warn('⚠️ Erreur cryptage, stockage non crypté:', encryptError);
+      eventData = event.data;
+      encrypt = false;
+    }
 
-  await database.put('events', fullEvent);
-  console.log('📦 Événement stocké offline (crypté):', clientEventId);
+    const fullEvent: OfflineEvent = {
+      ...event,
+      data: eventData,
+      created_at: createdAt,
+      client_event_id: clientEventId,
+      status: 'pending',
+      retry_count: 0,
+      encrypted: encrypt
+    };
 
-  return clientEventId;
+    await database.put('events', fullEvent);
+    console.log('📦 Événement stocké offline:', clientEventId, encrypt ? '(crypté)' : '(non crypté)');
+
+    return clientEventId;
+  } catch (error: any) {
+    console.error('❌ Erreur storeEvent:', error);
+    throw new Error(`Impossible de stocker l'événement offline: ${error.message || 'Erreur inconnue'}`);
+  }
 }
 
 /**
@@ -256,38 +306,67 @@ async function getEventStats(): Promise<{
  * Stocke des données en cache avec TTL (cryptées)
  */
 async function cacheData(key: string, data: any, ttlMs: number = 3600000, encrypt: boolean = true): Promise<void> {
-  const database = await initDB();
-  
-  const cachedData: CachedData = {
-    key,
-    data: encrypt ? encryptData(data) : data,
-    timestamp: Date.now(),
-    ttl: ttlMs,
-    encrypted: encrypt
-  };
-  
-  await database.put('cache', cachedData);
-  console.log('💾 Données mises en cache:', key);
+  try {
+    const database = await initDB();
+    
+    // Crypter avec fallback
+    let dataToStore = data;
+    let wasEncrypted = encrypt;
+    
+    if (encrypt) {
+      try {
+        dataToStore = encryptData(data);
+      } catch (encErr) {
+        console.warn('⚠️ Erreur cryptage cache, stockage non crypté:', encErr);
+        wasEncrypted = false;
+      }
+    }
+    
+    const cachedData: CachedData = {
+      key,
+      data: dataToStore,
+      timestamp: Date.now(),
+      ttl: ttlMs,
+      encrypted: wasEncrypted
+    };
+    
+    await database.put('cache', cachedData);
+    console.log('💾 Données mises en cache:', key);
+  } catch (error: any) {
+    console.error('❌ Erreur cacheData:', error);
+    // Ne pas propager l'erreur pour ne pas bloquer l'app
+  }
 }
 
 /**
  * Récupère des données du cache (décryptées)
  */
 async function getCachedData<T>(key: string): Promise<T | null> {
-  const database = await initDB();
-  const cached = await database.get('cache', key);
+  try {
+    const database = await initDB();
+    const cached = await database.get('cache', key);
 
-  if (!cached) return null;
+    if (!cached) return null;
 
-  // Vérifier le TTL
-  if (Date.now() - cached.timestamp > cached.ttl) {
-    await database.delete('cache', key);
+    // Vérifier le TTL
+    if (Date.now() - cached.timestamp > cached.ttl) {
+      await database.delete('cache', key);
+      return null;
+    }
+
+    // Décrypter si nécessaire
+    try {
+      const data = cached.encrypted ? decryptData(cached.data) : cached.data;
+      return data as T;
+    } catch (decryptError) {
+      console.warn('⚠️ Erreur décryptage cache:', decryptError);
+      // Essayer de retourner les données brutes
+      return cached.data as T;
+    }
+  } catch (error: any) {
+    console.error('❌ Erreur getCachedData:', error);
     return null;
   }
-
-  // Décrypter si nécessaire
-  const data = cached.encrypted ? decryptData(cached.data) : cached.data;
-  return data as T;
 }
 
 /**
