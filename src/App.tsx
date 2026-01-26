@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import OAuthPasswordGate from "@/components/auth/OAuthPasswordGate";
 import { ThemeProvider } from "next-themes";
+import { OfflineBanner } from "@/components/common/OfflineBanner";
 
 const MerchantOnboarding = lazyWithRetry(() => import("@/components/onboarding/MerchantOnboarding"));
 const WebRTCCallProvider = lazyWithRetry(() => import("@/components/communication/WebRTCCallProvider"));
@@ -192,6 +193,7 @@ function App() {
                 <TooltipProvider>
                 <Toaster />
                 <Sonner />
+                <OfflineBanner />
                 <InstallPromptBanner />
                 <DeepLinkInitializer />
                 <Suspense fallback={null}>

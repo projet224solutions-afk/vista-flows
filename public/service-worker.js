@@ -1,5 +1,5 @@
-// Service Worker v8 - PWA + Firebase Cloud Messaging + Mode Offline Desktop & Mobile
-const CACHE_VERSION = "v8";
+// Service Worker v9 - PWA + Firebase Cloud Messaging + Mode Offline Desktop & Mobile
+const CACHE_VERSION = "v9";
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
 const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
@@ -80,18 +80,23 @@ function getNotificationActions(type) {
 }
 
 // Assets essentiels à précacher pour le mode offline
+// NOTE: On ne précache que les icônes essentiels pour réduire la taille du cache initial
 const PRECACHE_ASSETS = [
   "/",
   "/index.html",
   "/manifest.webmanifest",
   "/offline.html",
   "/favicon.png",
+  "/icon-192.png",  // Icône principal pour PWA
+];
+
+// Icônes additionnels (cachés à la demande, pas au précache)
+const OPTIONAL_ICONS = [
   "/icon-72.png",
-  "/icon-96.png",
+  "/icon-96.png", 
   "/icon-128.png",
   "/icon-144.png",
   "/icon-152.png",
-  "/icon-192.png",
   "/icon-384.png",
   "/icon-512.png",
   "/apple-touch-icon.png"
@@ -124,25 +129,44 @@ const CORE_ROUTES = [
   "/signup"
 ];
 
+// Timeout pour fetch avec limite
+function fetchWithTimeout(url, timeout = 5000) {
+  return Promise.race([
+    fetch(url),
+    new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Timeout')), timeout)
+    )
+  ]);
+}
+
 // Pré-cache robuste: index.html + assets build (/assets/...) pour éviter l'écran blanc au redémarrage offline (iOS)
 async function precacheIndexAndBuildAssets() {
   const staticCache = await caches.open(STATIC_CACHE);
 
-  // 1) Assets essentiels (best-effort)
+  // 1) Assets essentiels avec timeout pour éviter blocage
+  console.log('[SW] Précache des assets essentiels...');
   await Promise.allSettled(
-    PRECACHE_ASSETS.map((url) =>
-      staticCache.add(url).catch((err) => console.warn(`[SW] Échec cache ${url}:`, err))
-    )
+    PRECACHE_ASSETS.map(async (url) => {
+      try {
+        const response = await fetchWithTimeout(url, 10000);
+        if (response.ok) {
+          await staticCache.put(url, response);
+          console.log(`[SW] ✓ ${url}`);
+        }
+      } catch (err) {
+        console.warn(`[SW] Échec cache ${url}:`, err.message || err);
+      }
+    })
   );
 
   // 2) Index + extraction des assets Vite (/assets/*.js|css)
   try {
-    const res = await fetch('/index.html', {
-      cache: 'reload',
-      credentials: 'same-origin',
-    });
+    const res = await fetchWithTimeout('/index.html', 10000);
 
-    if (!res || !res.ok) return;
+    if (!res || !res.ok) {
+      console.warn('[SW] index.html non disponible');
+      return;
+    }
 
     // Garder une copie "app shell" pour les routes SPA
     const shellCache = await caches.open(APP_SHELL_CACHE);
@@ -157,22 +181,33 @@ async function precacheIndexAndBuildAssets() {
     ).map((m) => m[1]);
 
     const uniqueAssetUrls = Array.from(new Set(assetUrls));
+    console.log(`[SW] ${uniqueAssetUrls.length} assets Vite détectés`);
 
+    // Précacher les assets JS/CSS critiques
+    const criticalAssets = uniqueAssetUrls.filter(u => /\.(js|css)$/.test(u));
+    
     await Promise.allSettled(
-      uniqueAssetUrls.map((u) =>
-        staticCache.add(new Request(u, { cache: 'reload' })).catch(() => {})
-      )
+      criticalAssets.map(async (u) => {
+        try {
+          const response = await fetchWithTimeout(u, 15000);
+          if (response.ok) {
+            await staticCache.put(u, response);
+          }
+        } catch (e) {
+          // Silencieux
+        }
+      })
     );
 
-    console.log('[SW] Précache build assets:', uniqueAssetUrls.length);
+    console.log('[SW] Précache build assets:', criticalAssets.length);
   } catch (e) {
-    console.warn('[SW] Impossible de précacher index/assets:', e);
+    console.warn('[SW] Impossible de précacher index/assets:', e.message || e);
   }
 }
 
 // INSTALL - Précacher les assets essentiels (mobile + desktop)
 self.addEventListener("install", (event) => {
-  console.log("[SW] Installation v8 - Mode offline desktop & mobile activé");
+  console.log("[SW] Installation v9 - Mode offline amélioré");
 
   event.waitUntil(
     precacheIndexAndBuildAssets().then(() => {
@@ -184,7 +219,7 @@ self.addEventListener("install", (event) => {
 
 // ACTIVATE - Nettoyer anciens caches et mettre en cache les routes vendeur + core
 self.addEventListener("activate", (event) => {
-  console.log("[SW] Activation v8");
+  console.log("[SW] Activation v9");
 
   event.waitUntil(
     Promise.all([
@@ -491,4 +526,4 @@ self.addEventListener("notificationclose", (event) => {
   console.log("[FCM SW] Notification fermée:", event.notification.tag);
 });
 
-console.log("[SW] Service Worker chargé (v8 - Desktop & Mobile Offline)");
+console.log("[SW] Service Worker chargé (v9 - Desktop & Mobile Offline Amélioré)");
