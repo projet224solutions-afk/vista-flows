@@ -477,37 +477,35 @@ export default function ClientDashboard() {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent>
-                <ScrollArea className="w-full">
-                  <div className="flex gap-4 pb-4">
-                    {universalProducts.slice(0, 6).map((product) => (
-                      <ProductCard
-                        key={product.id}
-                        id={product.id}
-                        image={product.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop'}
-                        title={product.name}
-                        price={product.price}
-                        vendor={product.vendor_name}
-                        rating={product.rating}
-                        reviewCount={product.reviews_count}
-                        onBuy={() => handleProductClick(product.id)}
-                        onAddToCart={() => {
-                          addToCartContext({
-                            id: product.id,
-                            name: product.name,
-                            price: product.price,
-                            image: product.images?.[0],
-                            vendor_id: product.vendor_id,
-                            vendor_name: product.vendor_name
-                          });
-                          toast.success('Produit ajouté au panier');
-                        }}
-                        onContact={() => handleContactVendor(product)}
-                        isPremium={product.is_hot}
-                      />
-                    ))}
-                  </div>
-                </ScrollArea>
+              <CardContent className="px-3 sm:px-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                  {universalProducts.slice(0, 6).map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      id={product.id}
+                      image={product.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop'}
+                      title={product.name}
+                      price={product.price}
+                      vendor={product.vendor_name}
+                      rating={product.rating}
+                      reviewCount={product.reviews_count}
+                      onBuy={() => handleProductClick(product.id)}
+                      onAddToCart={() => {
+                        addToCartContext({
+                          id: product.id,
+                          name: product.name,
+                          price: product.price,
+                          image: product.images?.[0],
+                          vendor_id: product.vendor_id,
+                          vendor_name: product.vendor_name
+                        });
+                        toast.success('Produit ajouté au panier');
+                      }}
+                      onContact={() => handleContactVendor(product)}
+                      isPremium={product.is_hot}
+                    />
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
