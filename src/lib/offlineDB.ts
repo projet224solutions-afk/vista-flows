@@ -485,6 +485,29 @@ async function getAllStoredFiles(): Promise<OfflineFile[]> {
   }));
 }
 
+// Named exports pour compatibilité avec les imports destructurés
+export {
+  initDB,
+  storeEvent,
+  getPendingEvents,
+  getFailedEvents,
+  markEventAsSynced,
+  markEventAsFailed,
+  retryEvent,
+  cleanupSyncedEvents,
+  getEventStats,
+  cacheData,
+  getCachedData,
+  clearCache,
+  getEvent,
+  deleteEvent,
+  storeFile,
+  getStoredFile,
+  getFilesByEvent,
+  deleteStoredFile,
+  getAllStoredFiles
+};
+
 export default {
   initDB,
   storeEvent,
