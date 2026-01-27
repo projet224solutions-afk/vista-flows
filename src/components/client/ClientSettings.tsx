@@ -38,6 +38,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useStorageUpload } from '@/hooks/useStorageUpload';
 
 // Workaround pour les tables non encore générées dans les types Supabase
 const supabaseAny = supabase as any;
@@ -100,6 +101,7 @@ const countries = [
 const ClientSettings: React.FC = () => {
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { uploadFile, isUploading: avatarUploading } = useStorageUpload();
 
   // États du profil
   const [profileData, setProfileData] = useState<ProfileData>({
@@ -112,7 +114,6 @@ const ClientSettings: React.FC = () => {
   });
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileSaving, setProfileSaving] = useState(false);
-  const [avatarUploading, setAvatarUploading] = useState(false);
 
   // États des adresses
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -226,66 +227,38 @@ const ClientSettings: React.FC = () => {
     }
   };
 
-  // Upload d'avatar
+  // Upload d'avatar vers Google Cloud Storage
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !user?.id) return;
 
-    // Vérifier le type et la taille
-    if (!file.type.startsWith('image/')) {
-      toast.error('Veuillez sélectionner une image');
-      return;
-    }
-
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('L\'image ne doit pas dépasser 2 Mo');
-      return;
-    }
-
-    setAvatarUploading(true);
     try {
-      // Supprimer l'ancien avatar si existant
-      if (profileData.avatar_url) {
-        const oldPath = profileData.avatar_url.split('/').pop();
-        if (oldPath) {
-          await supabase.storage.from('avatars').remove([`${user.id}/${oldPath}`]);
-        }
+      // Upload vers GCS via le hook unifié
+      const result = await uploadFile(file, {
+        folder: 'avatars',
+        subfolder: user.id,
+      });
+
+      if (!result.success || !result.publicUrl) {
+        throw new Error(result.error || 'Échec de l\'upload');
       }
 
-      // Upload du nouveau fichier
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      // Obtenir l'URL publique
-      const { data: urlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      // Mettre à jour le profil
+      // Mettre à jour le profil avec la nouvelle URL
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ 
-          avatar_url: urlData.publicUrl,
+          avatar_url: result.publicUrl,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
 
       if (updateError) throw updateError;
 
-      setProfileData(prev => ({ ...prev, avatar_url: urlData.publicUrl }));
+      setProfileData(prev => ({ ...prev, avatar_url: result.publicUrl! }));
       toast.success('Photo de profil mise à jour');
     } catch (error: any) {
       console.error('Erreur upload avatar:', error);
       toast.error(error.message || 'Erreur lors de l\'upload');
-    } finally {
-      setAvatarUploading(false);
     }
   };
 

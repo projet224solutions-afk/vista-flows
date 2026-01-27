@@ -14,6 +14,7 @@ import QuickFooter from "@/components/QuickFooter";
 import LanguageSelector from "@/components/LanguageSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useStorageUpload } from "@/hooks/useStorageUpload";
 
 const userTypes = {
   client: {
@@ -84,9 +85,9 @@ type ActivityItem = { id: string | number; type?: string; title: string; descrip
 export default function Profil() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const { uploadFile, isUploading: uploading } = useStorageUpload();
   const [isEditing, setIsEditing] = useState(false);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
-  const [uploading, setUploading] = useState(false);
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -304,21 +305,22 @@ export default function Profil() {
       const file = input.files?.[0];
       if (!file || !user) return;
       try {
-        setUploading(true);
-        const fileExt = file.name.split('.').pop();
-        const filePath = `avatars/${user.id}-${Date.now()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage.from('public-assets').upload(filePath, file, { upsert: true });
-        if (uploadError) throw uploadError;
-        const { data: publicUrl } = supabase.storage.from('public-assets').getPublicUrl(filePath);
-        const avatarUrl = publicUrl.publicUrl;
-        const { error: updErr } = await supabase.from('profiles').update({ avatar_url: avatarUrl }).eq('id', user.id);
+        // Upload vers GCS via le hook unifié
+        const result = await uploadFile(file, {
+          folder: 'avatars',
+          subfolder: user.id,
+        });
+
+        if (!result.success || !result.publicUrl) {
+          throw new Error(result.error || 'Échec de l\'upload');
+        }
+
+        const { error: updErr } = await supabase.from('profiles').update({ avatar_url: result.publicUrl }).eq('id', user.id);
         if (updErr) throw updErr;
         toast.success('Avatar mis à jour');
         window.location.reload();
       } catch (e: any) {
         toast.error(e?.message || 'Erreur upload avatar');
-      } finally {
-        setUploading(false);
       }
     };
     input.click();
