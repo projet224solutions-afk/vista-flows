@@ -57,7 +57,7 @@ const ALLOWED_TYPES: Record<StorageFolder, string[]> = {
 
 // Taille max par catégorie (en bytes)
 const MAX_SIZES: Record<StorageFolder, number> = {
-  avatars: 2 * 1024 * 1024, // 2 MB
+  avatars: 10 * 1024 * 1024, // 10 MB
   products: 10 * 1024 * 1024, // 10 MB
   videos: 100 * 1024 * 1024, // 100 MB
   audio: 50 * 1024 * 1024, // 50 MB
