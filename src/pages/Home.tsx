@@ -27,7 +27,6 @@ import {
   NearbyTaxiModal,
   NearbyDeliveryModal,
 } from '@/components/home';
-import { InstallAppButton } from '@/components/pwa/InstallAppButton';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -155,9 +154,6 @@ export default function Home() {
 
       {/* Bottom Navigation */}
       <BottomNavigation />
-
-      {/* Bouton d'installation PWA flottant */}
-      <InstallAppButton variant="floating" />
 
       {/* Modals */}
       <NearbyVendorsModal 
