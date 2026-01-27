@@ -1668,11 +1668,8 @@ export default function Auth() {
 
       {/* Formulaire de connexion/inscription/reset */}
       {!showServiceSelection && (
-        <div className="max-w-6xl mx-auto px-4 mt-8">
-          <div className="grid lg:grid-cols-2 gap-6 items-start">
-            {/* Carte principale (formulaire) : login = gauche, signup = droite */}
-            <div className={showSignupLayout ? 'lg:order-2' : 'lg:order-1'}>
-              <div className="max-w-md mx-auto">
+        <div className="max-w-md mx-auto px-4 mt-8">
+              <div>
                 <Card className="shadow-lg border-2 border-primary/20">
                   <CardContent className="p-8">
             {/* Écran de chargement pendant la vérification du lien de réinitialisation */}
@@ -1706,6 +1703,38 @@ export default function Auth() {
             )}
 
             {/* Messages d'information */}
+            {/* Boutons Connexion / Créer un compte - toujours visibles sauf reset password */}
+            {!showResetPassword && !showNewPasswordForm && (
+              <div className="flex gap-2 mb-4">
+                <Button
+                  type="button"
+                  variant={!showSignup ? "default" : "outline"}
+                  className="flex-1"
+                  onClick={() => {
+                    setShowSignup(false);
+                    setSelectedRole(null);
+                    setError(null);
+                    setSuccess(null);
+                  }}
+                >
+                  Connexion
+                </Button>
+                <Button
+                  type="button"
+                  variant={showSignup ? "default" : "outline"}
+                  className="flex-1"
+                  onClick={() => {
+                    setShowSignup(true);
+                    setIsLogin(false);
+                    setError(null);
+                    setSuccess(null);
+                  }}
+                >
+                  Créer un compte
+                </Button>
+              </div>
+            )}
+
             {!showSignup && !showResetPassword && (
               <>
                 <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -2393,56 +2422,6 @@ export default function Auth() {
                   </CardContent>
                 </Card>
               </div>
-            </div>
-
-            {/* Panneau à droite: CTA (login) ou retour (signup). Caché sur mobile en mode inscription */}
-            <div className={showSignupLayout ? 'hidden lg:block lg:order-1' : 'lg:order-2'}>
-              <div className="max-w-md mx-auto">
-                <Card className="border border-border/60 shadow-sm">
-                  <CardContent className="p-8">
-                    {!showSignupLayout ? (
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-bold">Créer un compte</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Cliquez pour accéder à l'inscription (Marchand, Livreur, Taxi Moto, Transitaire, Client).
-                        </p>
-                        <Button
-                          className="w-full"
-                          onClick={() => {
-                            setShowSignup(true);
-                            setIsLogin(false);
-                            setError(null);
-                            setSuccess(null);
-                          }}
-                        >
-                          Créer votre compte
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-bold">Déjà un compte ?</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Revenez à la connexion.
-                        </p>
-                        <Button
-                          variant="outline"
-                          className="w-full"
-                          onClick={() => {
-                            setShowSignup(false);
-                            setSelectedRole(null);
-                            setError(null);
-                            setSuccess(null);
-                          }}
-                        >
-                          Se connecter
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </div>
         </div>
       )}
 
