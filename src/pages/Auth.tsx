@@ -1895,11 +1895,32 @@ export default function Auth() {
             )}
             
               {showSignup && (
-              <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                <p className="text-purple-800 text-sm">
+              <div className={`mb-6 p-4 rounded-lg border ${
+                selectedRole === 'vendeur' ? 'bg-blue-50 border-blue-200' :
+                selectedRole === 'livreur' ? 'bg-orange-50 border-orange-200' :
+                selectedRole === 'taxi' ? 'bg-yellow-50 border-yellow-200' :
+                selectedRole === 'transitaire' ? 'bg-purple-50 border-purple-200' :
+                selectedRole === 'client' ? 'bg-emerald-50 border-emerald-200' :
+                'bg-muted/50 border-border'
+              }`}>
+                <p className={`text-sm ${
+                  selectedRole === 'vendeur' ? 'text-blue-800' :
+                  selectedRole === 'livreur' ? 'text-orange-800' :
+                  selectedRole === 'taxi' ? 'text-yellow-800' :
+                  selectedRole === 'transitaire' ? 'text-purple-800' :
+                  selectedRole === 'client' ? 'text-emerald-800' :
+                  'text-foreground'
+                }`}>
                   <strong>🎯 Création de compte :</strong> Remplissez les informations ci-dessous pour créer votre compte {selectedRole ? `en tant que ${selectedRole === 'vendeur' ? (selectedServiceType ? 'Marchand Professionnel' : 'Vendeur E-commerce') : selectedRole}` : ''}.
                   {selectedServiceType && (
-                    <span className="block mt-2 font-semibold text-primary">
+                    <span className={`block mt-2 font-semibold ${
+                      selectedRole === 'vendeur' ? 'text-blue-700' :
+                      selectedRole === 'livreur' ? 'text-orange-700' :
+                      selectedRole === 'taxi' ? 'text-yellow-700' :
+                      selectedRole === 'transitaire' ? 'text-purple-700' :
+                      selectedRole === 'client' ? 'text-emerald-700' :
+                      'text-primary'
+                    }`}>
                       ✓ Service sélectionné : {(() => {
                         const allServices = [
                           // Services de Proximité Populaires (6)
@@ -1930,7 +1951,7 @@ export default function Auth() {
                     </span>
                   )}
                   {selectedRole === 'vendeur' && !selectedServiceType && (
-                    <span className="block mt-1 font-semibold text-green-700">
+                    <span className="block mt-1 font-semibold text-blue-700">
                       ✓ Mode Vendeur E-commerce classique (vente de produits uniquement)
                     </span>
                   )}
