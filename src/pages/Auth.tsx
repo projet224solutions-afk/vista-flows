@@ -2464,33 +2464,23 @@ export default function Auth() {
               </div>
               {/* ===== FIN OAUTH BUTTONS ===== */}
 
-              {/* Section basculer Connexion / Inscription - Design professionnel */}
-              <div className="mt-6 pt-6 border-t border-border/50">
+              {/* Section basculer Connexion / Inscription - Design compact */}
+              <div className="mt-5 pt-5 border-t border-border/40">
                 {!showSignup ? (
-                  <div className="text-center space-y-3">
-                    <p className="text-sm text-muted-foreground">Vous n'avez pas encore de compte ?</p>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-sm text-muted-foreground">Pas de compte ?</span>
                     <button
                       type="button"
-                      onClick={() => {
-                        setShowSignup(true);
-                        setIsLogin(false);
-                        setError(null);
-                        setSuccess(null);
-                      }}
-                      className="group w-full py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold rounded-xl shadow-lg shadow-emerald-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-[1.02]"
+                      onClick={() => setShowRoleSelectionModal(true)}
+                      className="inline-flex items-center gap-1.5 py-2 px-4 text-sm font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200 transition-all duration-200"
                     >
-                      <span className="flex items-center justify-center gap-2">
-                        <UserPlus className="h-5 w-5" />
-                        Créer votre compte professionnel
-                      </span>
+                      <UserPlus className="h-4 w-4" />
+                      Créer un compte
                     </button>
-                    <p className="text-xs text-muted-foreground">
-                      Marchand • Livreur • Taxi Moto • Transitaire • Client
-                    </p>
                   </div>
                 ) : (
-                  <div className="text-center space-y-3">
-                    <p className="text-sm text-muted-foreground">Vous avez déjà un compte ?</p>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-sm text-muted-foreground">Déjà inscrit ?</span>
                     <button
                       type="button"
                       onClick={() => {
@@ -2499,12 +2489,10 @@ export default function Auth() {
                         setError(null);
                         setSuccess(null);
                       }}
-                      className="group w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-[1.02]"
+                      className="inline-flex items-center gap-1.5 py-2 px-4 text-sm font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-all duration-200"
                     >
-                      <span className="flex items-center justify-center gap-2">
-                        <LogIn className="h-5 w-5" />
-                        Se connecter
-                      </span>
+                      <LogIn className="h-4 w-4" />
+                      Se connecter
                     </button>
                   </div>
                 )}
