@@ -37,9 +37,9 @@ interface MessageItemProps {
     file_size?: number;
     attachments?: { type: string; url: string; name: string }[];
   };
-  onDelete?: (messageId: string) => void;
+  onDelete?: (messageId: string, deleteForEveryone: boolean) => void;
   onEdit?: (messageId: string, newContent: string) => void;
-  onReply?: (messageId: string) => void;
+  onReply?: () => void;
 }
 
 export default function MessageItem({ 
@@ -50,6 +50,7 @@ export default function MessageItem({
 }: MessageItemProps) {
   const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteForEveryone, setDeleteForEveryone] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
   const [showImagePreview, setShowImagePreview] = useState(false);
@@ -110,11 +111,12 @@ export default function MessageItem({
   };
 
   const handleDelete = () => {
-    onDelete?.(message.id);
+    onDelete?.(message.id, deleteForEveryone);
     setShowDeleteDialog(false);
+    setDeleteForEveryone(false);
     toast({
       title: "Message supprimé",
-      description: "Le message a été supprimé avec succès"
+      description: deleteForEveryone ? "Le message a été supprimé pour tous" : "Le message a été supprimé pour vous"
     });
   };
 
@@ -203,7 +205,7 @@ export default function MessageItem({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align={message.isOwn ? "start" : "end"}>
-                <DropdownMenuItem onClick={() => onReply?.(message.id)}>
+                <DropdownMenuItem onClick={() => onReply?.()}>
                   <Reply className="w-4 h-4 mr-2" />
                   Répondre
                 </DropdownMenuItem>
@@ -218,13 +220,38 @@ export default function MessageItem({
                       Modifier
                     </DropdownMenuItem>
                     <DropdownMenuItem 
-                      onClick={() => setShowDeleteDialog(true)}
+                      onClick={() => {
+                        setDeleteForEveryone(false);
+                        setShowDeleteDialog(true);
+                      }}
                       className="text-destructive"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
-                      Supprimer
+                      Supprimer pour moi
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        setDeleteForEveryone(true);
+                        setShowDeleteDialog(true);
+                      }}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Supprimer pour tous
                     </DropdownMenuItem>
                   </>
+                )}
+                {!message.isOwn && (
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      setDeleteForEveryone(false);
+                      setShowDeleteDialog(true);
+                    }}
+                    className="text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Supprimer pour moi
+                  </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -556,11 +583,13 @@ export default function MessageItem({
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer ce message ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. Le message sera définitivement supprimé.
+              {deleteForEveryone 
+                ? "Ce message sera supprimé pour tous les participants. Cette action est irréversible."
+                : "Ce message sera supprimé uniquement pour vous. Les autres participants pourront toujours le voir."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setDeleteForEveryone(false)}>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
               Supprimer
             </AlertDialogAction>

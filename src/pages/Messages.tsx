@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Send, User, Search, MessageCircle, Phone, Video, MoreVertical, Shield, Check, CheckCheck, Clock, XCircle, UserPlus, Loader2 } from "lucide-react";
+import { ArrowLeft, Send, User, Search, MessageCircle, Phone, Video, MoreVertical, Shield, Check, CheckCheck, Clock, XCircle, UserPlus, Loader2, Reply, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,6 +16,10 @@ import AgoraVideoCall from "@/components/communication/AgoraVideoCall";
 import AgoraAudioCall from "@/components/communication/AgoraAudioCall";
 import MessageInput from "@/components/communication/MessageInput";
 import MessageItem from "@/components/communication/MessageItem";
+import { PresenceIndicator, TypingIndicator, MessageStatusBadge } from "@/components/communication/PresenceIndicator";
+import { ReplyBar } from "@/components/communication/EnhancedMessageBubble";
+import { usePresence } from "@/hooks/usePresence";
+import type { PresenceStatus, Message as MessageType } from "@/types/communication.types";
 
 interface Message {
   id: string;
@@ -24,7 +28,12 @@ interface Message {
   recipient_id: string;
   created_at: string;
   read_at: string | null;
-  status?: 'sent' | 'delivered' | 'read' | 'failed';
+  delivered_at?: string | null;
+  edited_at?: string | null;
+  deleted_at?: string | null;
+  deleted_for?: string[];
+  reply_to_id?: string | null;
+  status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
   type?: 'text' | 'image' | 'video' | 'audio' | 'file' | 'location' | 'call';
   file_url?: string;
   file_name?: string;
@@ -33,6 +42,13 @@ interface Message {
   conversation_id?: string;
   public_id?: string;
   metadata?: any;
+  reply_to?: Message | null;
+  sender?: {
+    id: string;
+    first_name?: string;
+    last_name?: string;
+    avatar_url?: string;
+  };
 }
 
 interface Conversation {
@@ -75,6 +91,23 @@ export default function Messages() {
   const [searchingUsers, setSearchingUsers] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // États pour les nouvelles fonctionnalités
+  const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
+  const [otherUserPresence, setOtherUserPresence] = useState<PresenceStatus>('offline');
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Hook de présence
+  const {
+    updatePresence,
+    getUserPresence,
+    subscribeToPresence,
+    setTyping,
+    subscribeToTyping,
+    typingUsers,
+    presenceCache,
+  } = usePresence();
 
   useEffect(() => {
     loadCurrentUser();
@@ -132,6 +165,55 @@ export default function Messages() {
       supabase.removeChannel(channel);
     };
   }, [selectedConversation, currentUser]);
+
+  // Subscription à la présence de l'autre utilisateur
+  useEffect(() => {
+    if (!selectedConversation) return;
+
+    // Charger la présence initiale
+    getUserPresence(selectedConversation).then((presence) => {
+      if (presence) {
+        setOtherUserPresence(presence.status);
+      }
+    });
+
+    // S'abonner aux changements
+    const unsubscribe = subscribeToPresence(selectedConversation, (presence) => {
+      setOtherUserPresence(presence.status);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [selectedConversation, getUserPresence, subscribeToPresence]);
+
+  // Subscription aux indicateurs de frappe
+  useEffect(() => {
+    if (!selectedConversation) return;
+
+    const unsubscribe = subscribeToTyping(selectedConversation, (indicators) => {
+      setIsTyping(indicators.length > 0);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [selectedConversation, subscribeToTyping]);
+
+  // Gérer l'indicateur de frappe lors de la saisie
+  const handleTyping = useCallback(() => {
+    if (!selectedConversation) return;
+    
+    setTyping(selectedConversation, true);
+    
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    typingTimeoutRef.current = setTimeout(() => {
+      setTyping(selectedConversation, false);
+    }, 3000);
+  }, [selectedConversation, setTyping]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -358,11 +440,14 @@ export default function Messages() {
 
     try {
       // Charger les messages directement via sender_id et recipient_id
-      const { data, error } = await supabase
+      // Essayer d'inclure les messages de réponse (reply_to)
+      let query = supabase
         .from('messages')
         .select('*')
         .or(`and(sender_id.eq.${currentUser.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${currentUser.id})`)
         .order('created_at', { ascending: true });
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Erreur requête messages:', error);
@@ -370,14 +455,33 @@ export default function Messages() {
         return;
       }
       
-      // Caster les données pour correspondre à l'interface Message
-      const messagesData = (data || []).map(msg => ({
-        ...msg,
-        status: msg.status as 'sent' | 'delivered' | 'read' | 'failed' | undefined,
-        type: msg.type as 'text' | 'image' | 'video' | 'audio' | 'file' | 'location' | 'call' | undefined
+      // Charger les messages de réponse séparément si reply_to_id existe
+      const messagesWithReplies = await Promise.all((data || []).map(async (msg) => {
+        let replyTo = null;
+        if (msg.reply_to_id) {
+          const { data: replyData } = await supabase
+            .from('messages')
+            .select('id, content, sender_id')
+            .eq('id', msg.reply_to_id)
+            .single();
+          replyTo = replyData;
+        }
+        
+        return {
+          ...msg,
+          status: msg.status as 'sending' | 'sent' | 'delivered' | 'read' | 'failed' | undefined,
+          type: msg.type as 'text' | 'image' | 'video' | 'audio' | 'file' | 'location' | 'call' | undefined,
+          reply_to: replyTo as Message | null,
+        };
       }));
       
-      setMessages(messagesData);
+      setMessages(messagesWithReplies);
+
+      // Marquer les messages comme lus
+      await universalCommunicationService.markConversationAsRead(
+        `direct_${otherUserId}`,
+        currentUser.id
+      ).catch(() => {}); // Non-bloquant
 
     } catch (error) {
       console.error('Erreur chargement messages:', error);
@@ -389,20 +493,35 @@ export default function Messages() {
     if (!newMessage.trim() || !selectedConversation || !currentUser) return;
 
     try {
+      // Arrêter l'indicateur de frappe
+      setTyping(selectedConversation, false);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
+      // Construire le message
+      const messageData: any = {
+        sender_id: currentUser.id,
+        recipient_id: selectedConversation,
+        content: newMessage.trim(),
+        type: 'text',
+        status: 'sent'
+      };
+
+      // Ajouter la référence au message de réponse si présent
+      if (replyToMessage) {
+        messageData.reply_to_id = replyToMessage.id;
+      }
+
       // Insérer le message directement avec sender_id et recipient_id
       const { error } = await supabase
         .from('messages')
-        .insert({
-          sender_id: currentUser.id,
-          recipient_id: selectedConversation,
-          content: newMessage.trim(),
-          type: 'text',
-          status: 'sent'
-        });
+        .insert(messageData);
 
       if (error) throw error;
 
       setNewMessage("");
+      setReplyToMessage(null); // Réinitialiser la réponse
       loadMessages(selectedConversation);
       loadConversations();
       scrollToBottom();
@@ -411,6 +530,33 @@ export default function Messages() {
       toast.error("Erreur lors de l'envoi du message");
     }
   };
+
+  // Gérer la réponse à un message
+  const handleReplyToMessage = useCallback((message: Message) => {
+    setReplyToMessage(message);
+    inputRef.current?.focus();
+  }, []);
+
+  // Annuler la réponse
+  const cancelReply = useCallback(() => {
+    setReplyToMessage(null);
+  }, []);
+
+  // Supprimer un message
+  const handleDeleteMessage = useCallback(async (messageId: string, deleteForEveryone: boolean) => {
+    if (!currentUser) return;
+
+    try {
+      await universalCommunicationService.softDeleteMessage(messageId, currentUser.id, deleteForEveryone);
+      toast.success('Message supprimé');
+      if (selectedConversation) {
+        loadMessages(selectedConversation);
+      }
+    } catch (error: any) {
+      console.error('Erreur suppression:', error);
+      toast.error(error.message || 'Erreur lors de la suppression');
+    }
+  }, [currentUser, selectedConversation]);
 
   const handleSendFile = async (file: File) => {
     if (!selectedConversation || !currentUser) {
@@ -752,11 +898,15 @@ export default function Messages() {
                   }
                 }}
               >
-                <Avatar className="w-10 h-10 flex-shrink-0">
+                <Avatar className="w-10 h-10 flex-shrink-0 relative">
                   <AvatarImage src={selectedConvData?.other_user_avatar} />
                   <AvatarFallback className="bg-primary/10 text-primary">
                     {selectedConvData?.other_user_name?.substring(0, 2).toUpperCase() || 'U'}
                   </AvatarFallback>
+                  {/* Indicateur de présence */}
+                  <div className="absolute -bottom-0.5 -right-0.5">
+                    <PresenceIndicator status={otherUserPresence} size="sm" />
+                  </div>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -785,8 +935,13 @@ export default function Messages() {
                         Client
                       </Badge>
                     )}
+                    {/* Statut de présence textuel */}
                     <span className="text-xs text-muted-foreground">
-                      {selectedConvData?.vendor_phone ? selectedConvData.vendor_phone : 'En ligne'}
+                      {otherUserPresence === 'online' && '• En ligne'}
+                      {otherUserPresence === 'away' && '• Absent'}
+                      {otherUserPresence === 'busy' && '• Occupé'}
+                      {otherUserPresence === 'in_call' && '• En appel'}
+                      {otherUserPresence === 'offline' && '• Hors ligne'}
                     </span>
                   </div>
                 </div>
@@ -829,7 +984,13 @@ export default function Messages() {
                     </p>
                   </div>
                   ) : (
-                    messages.map((message) => {
+                    messages
+                      // Filtrer les messages supprimés pour l'utilisateur courant
+                      .filter(message => {
+                        const deletedFor = message.deleted_for || [];
+                        return !deletedFor.includes(currentUser?.id);
+                      })
+                      .map((message) => {
                       const isOwnMessage = message.sender_id === currentUser?.id;
                       const messageStatus = message.status || (message.read_at ? 'read' : 'delivered');
 
@@ -838,23 +999,64 @@ export default function Messages() {
                           ? 'text'
                           : (message.type as any) || 'text';
                       
+                      // Vérifier si le message est supprimé pour tout le monde
+                      if (message.deleted_at) {
+                        return (
+                          <div key={message.id} className={cn(
+                            "flex mb-3",
+                            isOwnMessage ? "justify-end" : "justify-start"
+                          )}>
+                            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50 text-muted-foreground italic text-sm">
+                              <X className="w-4 h-4" />
+                              <span>Ce message a été supprimé</span>
+                            </div>
+                          </div>
+                        );
+                      }
+
                       return (
-                        <MessageItem
-                          key={message.id}
-                          message={{
-                            id: message.id,
-                            content: safeType !== 'text' ? '' : message.content,
-                            timestamp: new Date(message.created_at).toLocaleTimeString('fr-FR', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            }),
-                            isOwn: isOwnMessage,
-                            type: safeType,
-                            file_url: message.file_url,
-                            file_name: message.file_name,
-                            file_size: message.file_size
-                          }}
-                        />
+                        <div key={message.id} className="mb-3">
+                          {/* Afficher le message de réponse s'il existe */}
+                          {message.reply_to_id && message.reply_to && (
+                            <div className={cn(
+                              "flex mb-1",
+                              isOwnMessage ? "justify-end" : "justify-start"
+                            )}>
+                              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/30 text-xs max-w-[70%]">
+                                <Reply className="w-3 h-3 flex-shrink-0 rotate-180" />
+                                <span className="truncate opacity-75">
+                                  {message.reply_to.content || 'Message'}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                          <MessageItem
+                            message={{
+                              id: message.id,
+                              content: safeType !== 'text' ? '' : message.content,
+                              timestamp: new Date(message.created_at).toLocaleTimeString('fr-FR', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }),
+                              isOwn: isOwnMessage,
+                              type: safeType,
+                              file_url: message.file_url,
+                              file_name: message.file_name,
+                              file_size: message.file_size
+                            }}
+                            onReply={() => handleReplyToMessage(message)}
+                            onDelete={(msgId, deleteForEveryone) => handleDeleteMessage(msgId, deleteForEveryone)}
+                          />
+                          {/* Indicateur de statut pour les messages envoyés */}
+                          {isOwnMessage && (
+                            <div className="flex justify-end mt-0.5 pr-2">
+                              <MessageStatusBadge 
+                                status={messageStatus as any}
+                                readAt={message.read_at || undefined}
+                              />
+                            </div>
+                          )}
+                        </div>
                       );
                     })
                   )}
@@ -862,23 +1064,57 @@ export default function Messages() {
               </div>
             </ScrollArea>
 
+            {/* Indicateur de frappe */}
+            {isTyping && (
+              <div className="px-4 py-2 bg-muted/30">
+                <TypingIndicator 
+                  userNames={[selectedConvData?.other_user_name || 'Utilisateur']} 
+                />
+              </div>
+            )}
+
+            {/* Barre de réponse */}
+            {replyToMessage && (
+              <ReplyBar 
+                message={replyToMessage as any}
+                onCancel={cancelReply}
+                className="mx-3 mt-2"
+              />
+            )}
+
             {/* Zone de saisie avec MessageInput */}
             <MessageInput
               onSendText={async (text) => {
                 if (!currentUser || !selectedConversation) return;
-                const conversationId = `direct_${selectedConversation}`;
-                await universalCommunicationService.sendTextMessage(
-                  conversationId,
-                  currentUser.id,
-                  text
-                );
+                
+                // Arrêter l'indicateur de frappe
+                setTyping(selectedConversation, false);
+                
+                // Si c'est une réponse
+                if (replyToMessage) {
+                  await universalCommunicationService.sendReplyMessage(
+                    `direct_${selectedConversation}`,
+                    currentUser.id,
+                    text,
+                    replyToMessage.id
+                  );
+                  setReplyToMessage(null);
+                } else {
+                  const conversationId = `direct_${selectedConversation}`;
+                  await universalCommunicationService.sendTextMessage(
+                    conversationId,
+                    currentUser.id,
+                    text
+                  );
+                }
                 loadMessages(selectedConversation);
                 loadConversations();
               }}
               onSendFile={handleSendFile}
               disabled={!selectedConversation}
-              placeholder="Écrivez votre message..."
+              placeholder={replyToMessage ? "Répondre..." : "Écrivez votre message..."}
               className="sticky bottom-0 z-50"
+              onInputChange={handleTyping}
             />
           </>
         ) : (

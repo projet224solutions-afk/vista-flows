@@ -1041,6 +1041,261 @@ class UniversalCommunicationService {
       }
     }
   }
+
+  // ==========================================================================
+  // NOUVELLES FONCTIONNALITÉS - PRESENCE & READ RECEIPTS
+  // ==========================================================================
+
+  /**
+   * Envoyer un message avec réponse à un autre message
+   */
+  async sendReplyMessage(
+    conversationId: string,
+    senderId: string,
+    content: string,
+    replyToMessageId: string
+  ): Promise<Message> {
+    if (!content.trim()) {
+      throw new Error('Le message ne peut pas être vide');
+    }
+
+    try {
+      console.log('[Communication] 📤 Envoi réponse:', { conversationId, replyToMessageId });
+
+      let recipientId: string;
+      let dbConversationId: string | null;
+
+      if (isDirectConversation(conversationId)) {
+        recipientId = extractRecipientFromDirectId(conversationId);
+        dbConversationId = null;
+      } else {
+        const conversation = await this.getConversationById(conversationId);
+        const recipient = conversation.participants.find(p => p.user_id !== senderId);
+        if (!recipient) throw new Error('Aucun destinataire trouvé');
+        recipientId = recipient.user_id;
+        dbConversationId = conversationId;
+      }
+
+      const { data, error } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: dbConversationId,
+          sender_id: senderId,
+          recipient_id: recipientId,
+          content: content.trim(),
+          type: 'text',
+          status: 'sent',
+          reply_to_id: replyToMessageId,
+          created_at: new Date().toISOString(),
+        })
+        .select('*')
+        .single();
+
+      if (error) throw error;
+
+      console.log('[Communication] ✅ Réponse envoyée:', data.id);
+      return data as Message;
+    } catch (error) {
+      console.error('[Communication] Erreur sendReplyMessage:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Supprimer un message (soft delete)
+   */
+  async softDeleteMessage(
+    messageId: string,
+    userId: string,
+    deleteForEveryone: boolean = false
+  ): Promise<boolean> {
+    try {
+      // Essayer d'abord avec la fonction RPC
+      const { data, error } = await supabase.rpc('soft_delete_message', {
+        p_message_id: messageId,
+        p_user_id: userId,
+        p_delete_for_everyone: deleteForEveryone,
+      });
+
+      if (error) {
+        console.warn('[Communication] RPC soft_delete_message failed, using direct query:', error);
+        
+        // Fallback: utiliser une requête directe
+        if (deleteForEveryone) {
+          // Vérifier que l'utilisateur est l'expéditeur
+          const { data: msgData } = await supabase
+            .from('messages')
+            .select('sender_id')
+            .eq('id', messageId)
+            .single();
+            
+          if (msgData?.sender_id === userId) {
+            const { error: updateError } = await supabase
+              .from('messages')
+              .update({ 
+                deleted_at: new Date().toISOString(),
+                content: '[Message supprimé]'
+              })
+              .eq('id', messageId);
+              
+            if (updateError) throw updateError;
+          } else {
+            throw new Error('Vous ne pouvez supprimer ce message pour tous que si vous en êtes l\'expéditeur');
+          }
+        } else {
+          // Supprimer uniquement pour cet utilisateur
+          // Récupérer d'abord le tableau deleted_for actuel
+          const { data: msgData } = await supabase
+            .from('messages')
+            .select('deleted_for')
+            .eq('id', messageId)
+            .single();
+            
+          const currentDeletedFor = (msgData?.deleted_for as string[]) || [];
+          
+          if (!currentDeletedFor.includes(userId)) {
+            const { error: updateError } = await supabase
+              .from('messages')
+              .update({ 
+                deleted_for: [...currentDeletedFor, userId]
+              })
+              .eq('id', messageId);
+              
+            if (updateError) throw updateError;
+          }
+        }
+      }
+
+      await this.logAudit(userId, 'message_deleted', messageId);
+      console.log('[Communication] ✅ Message supprimé:', messageId);
+      return true;
+    } catch (error) {
+      console.error('[Communication] Erreur softDeleteMessage:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Marquer un message spécifique comme lu
+   */
+  async markMessageAsRead(messageId: string, userId: string): Promise<void> {
+    try {
+      await supabase.rpc('mark_message_read_v2', {
+        p_message_id: messageId,
+        p_user_id: userId,
+      });
+      console.log('[Communication] ✅ Message marqué comme lu:', messageId);
+    } catch (error) {
+      console.error('[Communication] Erreur markMessageAsRead:', error);
+      // Non-bloquant
+    }
+  }
+
+  /**
+   * Marquer tous les messages d'une conversation comme lus
+   */
+  async markConversationAsRead(conversationId: string, userId: string): Promise<number> {
+    try {
+      const { data, error } = await supabase.rpc('mark_conversation_messages_read', {
+        p_conversation_id: conversationId,
+        p_user_id: userId,
+      });
+
+      if (error) throw error;
+
+      console.log('[Communication] ✅ Conversation marquée comme lue:', data, 'messages');
+      return data || 0;
+    } catch (error) {
+      console.error('[Communication] Erreur markConversationAsRead:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Obtenir les accusés de lecture d'un message
+   */
+  async getMessageReadReceipts(messageId: string): Promise<Array<{ user_id: string; read_at: string }>> {
+    try {
+      const { data, error } = await supabase
+        .from('message_read_receipts')
+        .select('user_id, read_at')
+        .eq('message_id', messageId);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('[Communication] Erreur getMessageReadReceipts:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Obtenir le message original d'une réponse
+   */
+  async getReplyToMessage(messageId: string): Promise<Message | null> {
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select(`
+          *,
+          sender:profiles!messages_sender_id_fkey(id, first_name, last_name, avatar_url)
+        `)
+        .eq('id', messageId)
+        .single();
+
+      if (error) throw error;
+      return data as Message;
+    } catch (error) {
+      console.error('[Communication] Erreur getReplyToMessage:', error);
+      return null;
+    }
+  }
+
+  /**
+   * S'abonner aux changements de statut de lecture des messages
+   */
+  subscribeToReadReceipts(
+    conversationId: string,
+    callback: (receipt: { message_id: string; user_id: string; read_at: string }) => void
+  ) {
+    console.log('[Communication] 🔔 Subscription read receipts:', conversationId);
+
+    const channel = supabase
+      .channel(`read_receipts:${conversationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'message_read_receipts',
+        },
+        (payload) => {
+          callback(payload.new as any);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          const newMsg = payload.new as any;
+          if (newMsg.read_at) {
+            callback({
+              message_id: newMsg.id,
+              user_id: newMsg.recipient_id,
+              read_at: newMsg.read_at,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return channel;
+  }
 }
 
 // ============================================================================

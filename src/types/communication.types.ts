@@ -36,8 +36,12 @@ export interface Message {
   metadata?: MessageMetadata;
   created_at: string;
   read_at?: string;
+  delivered_at?: string;
   edited_at?: string;
   deleted_at?: string;
+  deleted_for?: string[];
+  reply_to_id?: string;
+  reply_to?: Message; // Message auquel on répond
   sender?: UserProfile;
   recipient?: UserProfile;
 }
@@ -161,14 +165,33 @@ export interface UserPresence {
   user_id: string;
   status: PresenceStatus;
   last_seen: string;
-  device?: string;
-  metadata?: {
-    activity?: string;
-    [key: string]: any;
-  };
+  last_active?: string;
+  current_device?: 'web' | 'mobile' | 'desktop';
+  custom_status?: string;
+  is_typing_in?: string;
+  is_online: boolean;
 }
 
-export type PresenceStatus = 'online' | 'offline' | 'away' | 'busy';
+export type PresenceStatus = 'online' | 'offline' | 'away' | 'busy' | 'in_call';
+
+// Read Receipt types
+export interface MessageReadReceipt {
+  id: string;
+  message_id: string;
+  user_id: string;
+  read_at: string;
+  delivered_at?: string;
+}
+
+// Typing Indicator types
+export interface TypingIndicator {
+  conversation_id: string;
+  user_id: string;
+  user_name?: string;
+  user_avatar?: string;
+  started_at: string;
+  expires_at: string;
+}
 
 export interface AuditLog {
   id: string;

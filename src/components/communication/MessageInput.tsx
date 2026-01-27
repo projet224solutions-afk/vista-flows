@@ -28,6 +28,7 @@ interface MessageInputProps {
   placeholder?: string;
   className?: string;
   maxVideoDuration?: number; // En secondes, défaut 10
+  onInputChange?: () => void; // Callback pour indicateur de frappe
 }
 
 interface AttachmentPreview {
@@ -43,7 +44,8 @@ export default function MessageInput({
   disabled = false,
   placeholder = "Tapez votre message...",
   className,
-  maxVideoDuration = 10
+  maxVideoDuration = 10,
+  onInputChange
 }: MessageInputProps) {
   const [message, setMessage] = useState('');
   const [attachments, setAttachments] = useState<AttachmentPreview[]>([]);
@@ -405,7 +407,11 @@ export default function MessageInput({
         <Input
           placeholder={placeholder}
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={(e) => {
+            setMessage(e.target.value);
+            // Notifier que l'utilisateur tape
+            onInputChange?.();
+          }}
           onKeyPress={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
