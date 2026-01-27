@@ -2464,6 +2464,52 @@ export default function Auth() {
               </div>
               {/* ===== FIN OAUTH BUTTONS ===== */}
 
+              {/* Section basculer Connexion / Inscription - Design professionnel */}
+              <div className="mt-6 pt-6 border-t border-border/50">
+                {!showSignup ? (
+                  <div className="text-center space-y-3">
+                    <p className="text-sm text-muted-foreground">Vous n'avez pas encore de compte ?</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowSignup(true);
+                        setIsLogin(false);
+                        setError(null);
+                        setSuccess(null);
+                      }}
+                      className="group w-full py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold rounded-xl shadow-lg shadow-emerald-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-[1.02]"
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        <UserPlus className="h-5 w-5" />
+                        Créer votre compte professionnel
+                      </span>
+                    </button>
+                    <p className="text-xs text-muted-foreground">
+                      Marchand • Livreur • Taxi Moto • Transitaire • Client
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-center space-y-3">
+                    <p className="text-sm text-muted-foreground">Vous avez déjà un compte ?</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowSignup(false);
+                        setSelectedRole(null);
+                        setError(null);
+                        setSuccess(null);
+                      }}
+                      className="group w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-[1.02]"
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        <LogIn className="h-5 w-5" />
+                        Se connecter
+                      </span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
             </form>
             )}
             </>
