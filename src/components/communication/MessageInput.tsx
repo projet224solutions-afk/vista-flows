@@ -185,8 +185,36 @@ export default function MessageInput({
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100,
+        }
+      });
+      
+      // Déterminer le meilleur format supporté
+      // Priorité: mp4 (iOS) > webm (Android/Desktop) > ogg
+      let mimeType = 'audio/webm;codecs=opus';
+      let fileExtension = 'webm';
+      
+      if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        mimeType = 'audio/mp4';
+        fileExtension = 'm4a';
+      } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        mimeType = 'audio/webm;codecs=opus';
+        fileExtension = 'webm';
+      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+        mimeType = 'audio/webm';
+        fileExtension = 'webm';
+      } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
+        mimeType = 'audio/ogg;codecs=opus';
+        fileExtension = 'ogg';
+      }
+      
+      console.log('[Audio] Format d\'enregistrement:', mimeType);
+      
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
       
       audioChunksRef.current = [];
 
@@ -197,9 +225,14 @@ export default function MessageInput({
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const audioFile = audioBlob as any as File;
-        Object.defineProperty(audioFile, 'name', { value: `vocal_${Date.now()}.webm` });
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        
+        // Créer un vrai objet File
+        const audioFile = new File(
+          [audioBlob], 
+          `vocal_${Date.now()}.${fileExtension}`,
+          { type: mimeType }
+        );
         
         stream.getTracks().forEach(track => track.stop());
         
@@ -214,7 +247,7 @@ export default function MessageInput({
         }
       };
 
-      mediaRecorder.start();
+      mediaRecorder.start(1000); // Collecter des données toutes les secondes
       mediaRecorderRef.current = mediaRecorder;
       setIsRecording(true);
       toast.success('Enregistrement en cours...');

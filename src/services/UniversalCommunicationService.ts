@@ -490,19 +490,32 @@ class UniversalCommunicationService {
         dbConversationId = conversationId;
       }
 
-      // Créer le message
+      // Créer le message avec les informations audio si applicable
+      const messageData: Record<string, any> = {
+        sender_id: senderId,
+        recipient_id: recipientId,
+        content: file.name,
+        type: fileType,
+        status: 'sent',
+        file_url: publicUrl,
+        file_name: file.name,
+        file_size: file.size,
+      };
+
+      // Ajouter le format audio si c'est un fichier audio
+      if (fileType === 'audio') {
+        const audioExt = file.name.split('.').pop()?.toLowerCase();
+        messageData.audio_format = audioExt;
+        messageData.audio_mime_type = file.type;
+        console.log('[Communication] 🎤 Format audio détecté:', { 
+          format: audioExt, 
+          mimeType: file.type 
+        });
+      }
+
       const { data, error } = await supabase
         .from('messages')
-        .insert({
-          sender_id: senderId,
-          recipient_id: recipientId,
-          content: file.name,
-          type: fileType,
-          status: 'sent',
-          file_url: publicUrl,
-          file_name: file.name,
-          file_size: file.size,
-        } as any)
+        .insert(messageData)
         .select()
         .single();
 

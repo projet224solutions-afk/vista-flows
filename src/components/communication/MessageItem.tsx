@@ -20,7 +20,7 @@ import {
   Dialog,
   DialogContent,
 } from '@/components/ui/dialog';
-import { MoreVertical, Trash2, Copy, Reply, Edit, Download, Play, Pause, Volume2, Volume, FileVideo, Image as ImageIcon, Mic } from 'lucide-react';
+import { MoreVertical, Trash2, Copy, Reply, Edit, Download, Play, Pause, Volume2, Volume, FileVideo, Image as ImageIcon, Mic, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -59,6 +59,8 @@ export default function MessageItem({
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [audioDurations, setAudioDurations] = useState<Record<string, number>>({});
   const [audioCurrentTimes, setAudioCurrentTimes] = useState<Record<string, number>>({});
+  const [audioErrors, setAudioErrors] = useState<Record<string, boolean>>({});
+  const [audioLoading, setAudioLoading] = useState<Record<string, boolean>>({});
   const audioRefs = useRef<Record<string, HTMLAudioElement>>({});
   const videoRefs = useRef<Record<string, HTMLVideoElement>>({})
 
@@ -74,13 +76,15 @@ export default function MessageItem({
     };
   }, []);
 
-  // Fonction pour enregistrer une ref audio
+  // Fonction pour enregistrer une ref audio avec gestion des erreurs
   const setAudioRef = (id: string, element: HTMLAudioElement | null) => {
     if (element) {
       audioRefs.current[id] = element;
       
       const handleLoadedMetadata = () => {
         setAudioDurations(prev => ({ ...prev, [id]: element.duration }));
+        setAudioLoading(prev => ({ ...prev, [id]: false }));
+        setAudioErrors(prev => ({ ...prev, [id]: false }));
       };
       const handleTimeUpdate = () => {
         setAudioCurrentTimes(prev => ({ ...prev, [id]: element.currentTime }));
@@ -88,10 +92,35 @@ export default function MessageItem({
       const handleEnded = () => {
         setPlayingAudioId(null);
       };
+      const handleError = (e: Event) => {
+        console.error('[Audio] Erreur de lecture:', e, element.error);
+        setAudioErrors(prev => ({ ...prev, [id]: true }));
+        setAudioLoading(prev => ({ ...prev, [id]: false }));
+        
+        // Log l'erreur pour debug
+        const errorCodes: Record<number, string> = {
+          1: 'MEDIA_ERR_ABORTED',
+          2: 'MEDIA_ERR_NETWORK',
+          3: 'MEDIA_ERR_DECODE',
+          4: 'MEDIA_ERR_SRC_NOT_SUPPORTED'
+        };
+        if (element.error) {
+          console.error('[Audio] Code erreur:', errorCodes[element.error.code] || element.error.code);
+        }
+      };
+      const handleCanPlay = () => {
+        setAudioLoading(prev => ({ ...prev, [id]: false }));
+      };
+      const handleLoadStart = () => {
+        setAudioLoading(prev => ({ ...prev, [id]: true }));
+      };
       
       element.addEventListener('loadedmetadata', handleLoadedMetadata);
       element.addEventListener('timeupdate', handleTimeUpdate);
       element.addEventListener('ended', handleEnded);
+      element.addEventListener('error', handleError);
+      element.addEventListener('canplay', handleCanPlay);
+      element.addEventListener('loadstart', handleLoadStart);
     }
   };
 
@@ -131,9 +160,18 @@ export default function MessageItem({
     setIsEditing(false);
   };
 
-  const toggleAudio = (audioId: string) => {
+  const toggleAudio = async (audioId: string) => {
     const audio = audioRefs.current[audioId];
     if (!audio) return;
+    
+    // Si erreur, proposer le téléchargement
+    if (audioErrors[audioId]) {
+      toast({
+        title: "Format non supporté",
+        description: "Téléchargez le fichier pour l'écouter avec une autre application"
+      });
+      return;
+    }
     
     if (playingAudioId === audioId) {
       audio.pause();
@@ -145,8 +183,27 @@ export default function MessageItem({
           otherAudio.pause();
         }
       });
-      audio.play();
-      setPlayingAudioId(audioId);
+      
+      try {
+        await audio.play();
+        setPlayingAudioId(audioId);
+      } catch (error: any) {
+        console.error('[Audio] Erreur lecture:', error);
+        
+        // Gestion spéciale pour les erreurs de format sur iOS
+        if (error.name === 'NotSupportedError' || error.name === 'NotAllowedError') {
+          setAudioErrors(prev => ({ ...prev, [audioId]: true }));
+          toast({
+            title: "Format audio non supporté",
+            description: "Ce format n'est pas compatible avec votre appareil. Téléchargez le fichier."
+          });
+        } else {
+          toast({
+            title: "Erreur de lecture",
+            description: "Impossible de lire ce fichier audio"
+          });
+        }
+      }
     }
   };
 
@@ -315,48 +372,95 @@ export default function MessageItem({
                       
                       {/* Audio/Vocal */}
                       {(attachment.type.startsWith('audio/') || attachment.type === 'voice' || attachment.name.includes('vocal')) && (
-                        <div className="flex items-center gap-2 p-3 bg-background/10 rounded-lg">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => toggleAudio(`attachment-${index}`)}
-                            className="h-10 w-10 rounded-full flex-shrink-0"
-                          >
-                            {playingAudioId === `attachment-${index}` ? (
-                              <Pause className="w-4 h-4" />
-                            ) : (
-                              <Play className="w-4 h-4" />
-                            )}
-                          </Button>
-                          
-                          <div className="flex-1 min-w-0 space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Mic className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                              <span className="text-xs text-muted-foreground truncate">
-                                {attachment.name || 'Message vocal'}
-                              </span>
-                            </div>
-                            
-                            {/* Barre de progression */}
-                            <div className="flex items-center gap-2">
-                              <div className="flex-1 h-1.5 bg-background/20 rounded-full overflow-hidden">
-                                <div 
-                                  className="h-full bg-primary transition-all duration-100"
-                                  style={{ 
-                                    width: audioDurations[`attachment-${index}`] > 0 
-                                      ? `${(audioCurrentTimes[`attachment-${index}`] / audioDurations[`attachment-${index}`]) * 100}%` 
-                                      : '0%' 
-                                  }}
-                                />
+                        <div className={cn(
+                          "flex items-center gap-2 p-3 bg-background/10 rounded-lg",
+                          audioErrors[`attachment-${index}`] && "border border-red-500/30"
+                        )}>
+                          {audioErrors[`attachment-${index}`] ? (
+                            // État d'erreur
+                            <>
+                              <div className="h-10 w-10 rounded-full flex-shrink-0 bg-red-500/20 flex items-center justify-center">
+                                <AlertCircle className="w-4 h-4 text-red-500" />
                               </div>
-                              <span className="text-xs text-muted-foreground tabular-nums min-w-[35px]">
-                                {formatTime(playingAudioId === `attachment-${index}` 
-                                  ? audioCurrentTimes[`attachment-${index}`] || 0
-                                  : audioDurations[`attachment-${index}`] || 0
+                              <div className="flex-1 min-w-0">
+                                <span className="text-xs text-red-500 font-medium">Format non supporté</span>
+                              </div>
+                              <a
+                                href={attachment.url}
+                                download={attachment.name || 'vocal.m4a'}
+                                onClick={(e) => e.stopPropagation()}
+                                className="flex items-center gap-1 px-2 py-1 rounded bg-primary text-primary-foreground text-xs font-medium"
+                              >
+                                <Download className="w-3 h-3" />
+                                Télécharger
+                              </a>
+                            </>
+                          ) : audioLoading[`attachment-${index}`] ? (
+                            // État de chargement
+                            <>
+                              <div className="h-10 w-10 rounded-full flex-shrink-0 bg-muted/50 flex items-center justify-center animate-pulse">
+                                <Mic className="w-4 h-4 opacity-50" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <span className="text-xs opacity-60">Chargement...</span>
+                              </div>
+                            </>
+                          ) : (
+                            // État normal
+                            <>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => toggleAudio(`attachment-${index}`)}
+                                className="h-10 w-10 rounded-full flex-shrink-0"
+                              >
+                                {playingAudioId === `attachment-${index}` ? (
+                                  <Pause className="w-4 h-4" />
+                                ) : (
+                                  <Play className="w-4 h-4" />
                                 )}
-                              </span>
-                            </div>
-                          </div>
+                              </Button>
+                              
+                              <div className="flex-1 min-w-0 space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <Mic className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                  <span className="text-xs text-muted-foreground truncate">
+                                    {attachment.name || 'Message vocal'}
+                                  </span>
+                                </div>
+                                
+                                {/* Barre de progression */}
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 h-1.5 bg-background/20 rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full bg-primary transition-all duration-100"
+                                      style={{ 
+                                        width: audioDurations[`attachment-${index}`] > 0 
+                                          ? `${(audioCurrentTimes[`attachment-${index}`] / audioDurations[`attachment-${index}`]) * 100}%` 
+                                          : '0%' 
+                                      }}
+                                    />
+                                  </div>
+                                  <span className="text-xs text-muted-foreground tabular-nums min-w-[35px]">
+                                    {formatTime(playingAudioId === `attachment-${index}` 
+                                      ? audioCurrentTimes[`attachment-${index}`] || 0
+                                      : audioDurations[`attachment-${index}`] || 0
+                                    )}
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              <a
+                                href={attachment.url}
+                                download={attachment.name || 'vocal.m4a'}
+                                onClick={(e) => e.stopPropagation()}
+                                className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-background/20 transition-colors"
+                                title="Télécharger"
+                              >
+                                <Download className="w-3.5 h-3.5 opacity-70" />
+                              </a>
+                            </>
+                          )}
                           
                           <audio 
                             ref={(el) => setAudioRef(`attachment-${index}`, el)}
@@ -433,88 +537,145 @@ export default function MessageItem({
                     message.file_name?.endsWith('.mp3') ||
                     message.file_name?.endsWith('.wav') ||
                     message.file_name?.endsWith('.ogg') ||
-                    message.file_name?.endsWith('.m4a')) && (
+                    message.file_name?.endsWith('.m4a') ||
+                    message.file_name?.endsWith('.mp4')) && (
                     <div className={cn(
                       "flex items-center gap-3 p-3 rounded-xl",
                       message.isOwn 
                         ? "bg-primary-foreground/10" 
-                        : "bg-muted/50"
+                        : "bg-muted/50",
+                      audioErrors['direct-audio'] && "border border-red-500/30"
                     )}>
-                      {/* Bouton Play/Pause */}
-                      <Button
-                        size="sm"
-                        variant={message.isOwn ? "secondary" : "outline"}
-                        onClick={() => toggleAudio('direct-audio')}
-                        className="h-11 w-11 rounded-full flex-shrink-0 shadow-sm"
-                      >
-                        {playingAudioId === 'direct-audio' ? (
-                          <Pause className="w-5 h-5" />
-                        ) : (
-                          <Play className="w-5 h-5 ml-0.5" />
-                        )}
-                      </Button>
-                      
-                      <div className="flex-1 min-w-0 space-y-1.5">
-                        {/* Indicateur vocal */}
-                        <div className="flex items-center gap-2">
-                          <Mic className="w-3.5 h-3.5 flex-shrink-0 opacity-70" />
-                          <span className="text-xs font-medium opacity-80">
-                            Message vocal
-                          </span>
-                        </div>
-                        
-                        {/* Barre de progression interactive */}
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className={cn(
-                              "flex-1 h-2 rounded-full overflow-hidden cursor-pointer",
-                              message.isOwn ? "bg-primary-foreground/20" : "bg-muted"
-                            )}
-                            onClick={(e) => {
-                              const audio = audioRefs.current['direct-audio'];
-                              if (audio && audioDurations['direct-audio']) {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const percent = (e.clientX - rect.left) / rect.width;
-                                audio.currentTime = percent * audioDurations['direct-audio'];
-                              }
-                            }}
-                          >
-                            <div 
-                              className={cn(
-                                "h-full transition-all duration-100 rounded-full",
-                                message.isOwn ? "bg-primary-foreground" : "bg-primary"
-                              )}
-                              style={{ 
-                                width: audioDurations['direct-audio'] > 0 
-                                  ? `${(audioCurrentTimes['direct-audio'] / audioDurations['direct-audio']) * 100}%` 
-                                  : '0%' 
-                              }}
-                            />
+                      {/* Affichage conditionnel selon l'état */}
+                      {audioErrors['direct-audio'] ? (
+                        // État d'erreur - format non supporté
+                        <>
+                          <div className="h-11 w-11 rounded-full flex-shrink-0 bg-red-500/20 flex items-center justify-center">
+                            <AlertCircle className="w-5 h-5 text-red-500" />
                           </div>
-                          <span className="text-xs tabular-nums min-w-[40px] opacity-70">
-                            {formatTime(playingAudioId === 'direct-audio'
-                              ? audioCurrentTimes['direct-audio'] || 0
-                              : audioDurations['direct-audio'] || 0
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Mic className="w-3.5 h-3.5 flex-shrink-0 text-red-500" />
+                              <span className="text-xs font-medium text-red-500">
+                                Format non supporté
+                              </span>
+                            </div>
+                            <p className="text-xs opacity-60">
+                              Ce vocal ne peut pas être lu sur votre appareil
+                            </p>
+                          </div>
+                          {/* Bouton Télécharger visible */}
+                          <a
+                            href={message.file_url}
+                            download={message.file_name || 'vocal.m4a'}
+                            onClick={(e) => e.stopPropagation()}
+                            className={cn(
+                              "flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-xs transition-colors",
+                              "bg-primary text-primary-foreground hover:bg-primary/90"
                             )}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      {/* Bouton Télécharger */}
-                      <a
-                        href={message.file_url}
-                        download={message.file_name || 'vocal.webm'}
-                        onClick={(e) => e.stopPropagation()}
-                        className={cn(
-                          "h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
-                          message.isOwn 
-                            ? "hover:bg-primary-foreground/20" 
-                            : "hover:bg-muted"
-                        )}
-                        title="Télécharger"
-                      >
-                        <Download className="w-4 h-4 opacity-70" />
-                      </a>
+                          >
+                            <Download className="w-4 h-4" />
+                            Télécharger
+                          </a>
+                        </>
+                      ) : audioLoading['direct-audio'] ? (
+                        // État de chargement
+                        <>
+                          <div className="h-11 w-11 rounded-full flex-shrink-0 bg-muted/50 flex items-center justify-center animate-pulse">
+                            <Mic className="w-5 h-5 opacity-50" />
+                          </div>
+                          <div className="flex-1 min-w-0 space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium opacity-60">
+                                Chargement...
+                              </span>
+                            </div>
+                            <div className={cn(
+                              "h-2 rounded-full overflow-hidden animate-pulse",
+                              message.isOwn ? "bg-primary-foreground/20" : "bg-muted"
+                            )} />
+                          </div>
+                        </>
+                      ) : (
+                        // État normal - lecture disponible
+                        <>
+                          {/* Bouton Play/Pause */}
+                          <Button
+                            size="sm"
+                            variant={message.isOwn ? "secondary" : "outline"}
+                            onClick={() => toggleAudio('direct-audio')}
+                            className="h-11 w-11 rounded-full flex-shrink-0 shadow-sm"
+                          >
+                            {playingAudioId === 'direct-audio' ? (
+                              <Pause className="w-5 h-5" />
+                            ) : (
+                              <Play className="w-5 h-5 ml-0.5" />
+                            )}
+                          </Button>
+                          
+                          <div className="flex-1 min-w-0 space-y-1.5">
+                            {/* Indicateur vocal */}
+                            <div className="flex items-center gap-2">
+                              <Mic className="w-3.5 h-3.5 flex-shrink-0 opacity-70" />
+                              <span className="text-xs font-medium opacity-80">
+                                Message vocal
+                              </span>
+                            </div>
+                            
+                            {/* Barre de progression interactive */}
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className={cn(
+                                  "flex-1 h-2 rounded-full overflow-hidden cursor-pointer",
+                                  message.isOwn ? "bg-primary-foreground/20" : "bg-muted"
+                                )}
+                                onClick={(e) => {
+                                  const audio = audioRefs.current['direct-audio'];
+                                  if (audio && audioDurations['direct-audio']) {
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const percent = (e.clientX - rect.left) / rect.width;
+                                    audio.currentTime = percent * audioDurations['direct-audio'];
+                                  }
+                                }}
+                              >
+                                <div 
+                                  className={cn(
+                                    "h-full transition-all duration-100 rounded-full",
+                                    message.isOwn ? "bg-primary-foreground" : "bg-primary"
+                                  )}
+                                  style={{ 
+                                    width: audioDurations['direct-audio'] > 0 
+                                      ? `${(audioCurrentTimes['direct-audio'] / audioDurations['direct-audio']) * 100}%` 
+                                      : '0%' 
+                                  }}
+                                />
+                              </div>
+                              <span className="text-xs tabular-nums min-w-[40px] opacity-70">
+                                {formatTime(playingAudioId === 'direct-audio'
+                                  ? audioCurrentTimes['direct-audio'] || 0
+                                  : audioDurations['direct-audio'] || 0
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Bouton Télécharger */}
+                          <a
+                            href={message.file_url}
+                            download={message.file_name || 'vocal.m4a'}
+                            onClick={(e) => e.stopPropagation()}
+                            className={cn(
+                              "h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
+                              message.isOwn 
+                                ? "hover:bg-primary-foreground/20" 
+                                : "hover:bg-muted"
+                            )}
+                            title="Télécharger"
+                          >
+                            <Download className="w-4 h-4 opacity-70" />
+                          </a>
+                        </>
+                      )}
                       
                       <audio 
                         ref={(el) => setAudioRef('direct-audio', el)}
