@@ -315,21 +315,21 @@ export default function PDG224Solutions() {
         <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
       </div>
 
-      <div className="relative z-10 h-screen overflow-y-auto scrollbar-thin">
+      <div className="relative z-10 h-screen overflow-y-auto scrollbar-thin overflow-x-hidden">
         {/* Header - Mobile Optimized */}
-        <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl">
-          <div className="max-w-[1600px] mx-auto px-3 py-3 sm:px-6 sm:py-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-6">
-              <div className="flex items-center gap-3 sm:gap-6">
-                <div className="relative">
+        <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl w-full">
+          <div className="max-w-[1600px] mx-auto px-4 py-3 sm:px-6 sm:py-6 w-full">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-6 w-full">
+              <div className="flex items-center gap-3 sm:gap-6 min-w-0 w-full">
+                <div className="relative flex-shrink-0">
                   <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/60 blur-xl opacity-50" />
                   <div className="relative bg-gradient-to-br from-primary to-primary/80 p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-2xl">
                     <Shield className="w-5 h-5 sm:w-8 sm:h-8 text-primary-foreground" />
                   </div>
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 overflow-hidden">
                   <div className="flex items-center gap-2 sm:gap-3 mb-1 flex-wrap">
-                    <h1 className="text-lg sm:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent truncate">
+                    <h1 className="text-base sm:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                       PDG 224SOLUTIONS
                     </h1>
                     <UserIdDisplay layout="horizontal" showBadge={true} />

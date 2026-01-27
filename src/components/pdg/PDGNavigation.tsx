@@ -155,15 +155,15 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
   // Version Mobile - Menu Sheet
   if (isMobile) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 w-full overflow-hidden">
         {/* Bouton menu + navigation actuelle */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full">
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button 
                 variant="outline" 
                 size="sm"
-                className="gap-2 flex-1 justify-between h-12 px-3"
+                className="gap-2 flex-1 justify-between h-12 px-3 min-w-0"
               >
                 <div className="flex items-center gap-2">
                   <Menu className="w-4 h-4" />
@@ -264,7 +264,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
         </div>
 
         {/* Accès rapide catégories - horizontal scroll */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none w-full px-0.5">
           {categories.map((category) => {
             const hasActiveItem = category.items.some(item => item.value === activeTab);
             return (
@@ -275,7 +275,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
                   setMobileMenuOpen(true);
                 }}
                 className={cn(
-                  "flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition-all",
+                  "flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
                   "bg-gradient-to-r text-white",
                   category.color,
                   hasActiveItem && "ring-2 ring-offset-1 ring-primary"
