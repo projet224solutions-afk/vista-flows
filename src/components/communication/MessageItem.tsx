@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -20,9 +20,46 @@ import {
   Dialog,
   DialogContent,
 } from '@/components/ui/dialog';
-import { MoreVertical, Trash2, Copy, Reply, Edit, Download, Play, Pause, Volume2, Volume, FileVideo, Image as ImageIcon, Mic, AlertCircle } from 'lucide-react';
+import { MoreVertical, Trash2, Copy, Reply, Edit, Download, Play, Pause, Volume2, Volume, FileVideo, Image as ImageIcon, Mic, AlertCircle, Smartphone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+
+// Détection plateforme (exécutée une seule fois)
+const detectPlatform = () => {
+  if (typeof window === 'undefined') return { isIOS: false, isSafari: false };
+  const ua = navigator.userAgent;
+  const isIOS = /iPhone|iPad|iPod/i.test(ua);
+  const isSafari = /Safari/i.test(ua) && !/CriOS|FxiOS|Chrome/i.test(ua);
+  return { isIOS, isSafari };
+};
+
+// Vérifier si un format audio est supporté pour la lecture
+const canPlayAudioFormat = (url: string, fileName?: string): boolean => {
+  const { isIOS, isSafari } = detectPlatform();
+  
+  // Extraire l'extension du fichier
+  const ext = (fileName || url).split('.').pop()?.toLowerCase() || '';
+  
+  // Sur iOS Safari, seuls ces formats sont supportés
+  if (isIOS || isSafari) {
+    const iosSupportedFormats = ['mp3', 'mp4', 'm4a', 'aac', 'wav', 'caf'];
+    return iosSupportedFormats.includes(ext);
+  }
+  
+  // Sur autres navigateurs, la plupart des formats sont supportés
+  return true;
+};
+
+// Obtenir un message d'erreur approprié
+const getAudioErrorMessage = (fileName?: string): string => {
+  const { isIOS } = detectPlatform();
+  const ext = (fileName || '').split('.').pop()?.toLowerCase() || '';
+  
+  if (isIOS && (ext === 'webm' || ext === 'ogg')) {
+    return `Le format .${ext} n'est pas supporté sur iPhone. Téléchargez le fichier pour l'écouter.`;
+  }
+  return "Ce format audio n'est pas supporté sur votre appareil.";
+};
 
 interface MessageItemProps {
   message: {
@@ -538,30 +575,40 @@ export default function MessageItem({
                     message.file_name?.endsWith('.wav') ||
                     message.file_name?.endsWith('.ogg') ||
                     message.file_name?.endsWith('.m4a') ||
-                    message.file_name?.endsWith('.mp4')) && (
+                    message.file_name?.endsWith('.mp4')) && (() => {
+                    // Vérifier la compatibilité du format AVANT de tenter la lecture
+                    const isFormatSupported = canPlayAudioFormat(message.file_url!, message.file_name);
+                    const platformInfo = detectPlatform();
+                    const hasError = audioErrors['direct-audio'] || !isFormatSupported;
+                    
+                    return (
                     <div className={cn(
                       "flex items-center gap-3 p-3 rounded-xl",
                       message.isOwn 
                         ? "bg-primary-foreground/10" 
                         : "bg-muted/50",
-                      audioErrors['direct-audio'] && "border border-red-500/30"
+                      hasError && "border border-red-500/30"
                     )}>
                       {/* Affichage conditionnel selon l'état */}
-                      {audioErrors['direct-audio'] ? (
+                      {hasError ? (
                         // État d'erreur - format non supporté
                         <>
                           <div className="h-11 w-11 rounded-full flex-shrink-0 bg-red-500/20 flex items-center justify-center">
-                            <AlertCircle className="w-5 h-5 text-red-500" />
+                            {platformInfo.isIOS ? (
+                              <Smartphone className="w-5 h-5 text-red-500" />
+                            ) : (
+                              <AlertCircle className="w-5 h-5 text-red-500" />
+                            )}
                           </div>
                           <div className="flex-1 min-w-0 space-y-1">
                             <div className="flex items-center gap-2">
                               <Mic className="w-3.5 h-3.5 flex-shrink-0 text-red-500" />
                               <span className="text-xs font-medium text-red-500">
-                                Format non supporté
+                                {platformInfo.isIOS ? 'Non supporté sur iPhone' : 'Format non supporté'}
                               </span>
                             </div>
                             <p className="text-xs opacity-60">
-                              Ce vocal ne peut pas être lu sur votre appareil
+                              {getAudioErrorMessage(message.file_name)}
                             </p>
                           </div>
                           {/* Bouton Télécharger visible */}
@@ -677,14 +724,18 @@ export default function MessageItem({
                         </>
                       )}
                       
-                      <audio 
-                        ref={(el) => setAudioRef('direct-audio', el)}
-                        src={message.file_url}
-                        preload="metadata"
-                        className="hidden"
-                      />
+                      {/* Ne charger l'audio que si le format est supporté */}
+                      {isFormatSupported && (
+                        <audio 
+                          ref={(el) => setAudioRef('direct-audio', el)}
+                          src={message.file_url}
+                          preload="metadata"
+                          className="hidden"
+                        />
+                      )}
                     </div>
-                  )}
+                    );
+                  })()}
                   
                   {/* Vidéo */}
                   {message.type === 'video' && (

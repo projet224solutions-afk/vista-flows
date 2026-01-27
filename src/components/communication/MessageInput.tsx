@@ -185,75 +185,158 @@ export default function MessageInput({
 
   const startRecording = async () => {
     try {
+      // Détecter iOS
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const isSafari = /Safari/i.test(navigator.userAgent) && !/CriOS|FxiOS|Chrome/i.test(navigator.userAgent);
+      
+      console.log('[Audio] Détection plateforme:', { isIOS, isSafari });
+      
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          sampleRate: 44100,
+          // Sur iOS, utiliser une configuration audio plus simple
+          ...(isIOS ? {} : { sampleRate: 44100 }),
         }
       });
       
       // Déterminer le meilleur format supporté
-      // Priorité: mp4 (iOS) > webm (Android/Desktop) > ogg
-      let mimeType = 'audio/webm;codecs=opus';
+      // iOS Safari: supporte uniquement audio/mp4 ou parfois aucun format spécifique
+      // Android/Desktop: webm avec opus est le meilleur choix
+      let mimeType = '';
       let fileExtension = 'webm';
       
-      if (MediaRecorder.isTypeSupported('audio/mp4')) {
-        mimeType = 'audio/mp4';
-        fileExtension = 'm4a';
-      } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-        mimeType = 'audio/webm;codecs=opus';
-        fileExtension = 'webm';
-      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
-        mimeType = 'audio/webm';
-        fileExtension = 'webm';
-      } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
-        mimeType = 'audio/ogg;codecs=opus';
-        fileExtension = 'ogg';
+      // Tester les formats dans l'ordre de préférence
+      const formatsToTry = [
+        { mime: 'audio/mp4', ext: 'm4a' },
+        { mime: 'audio/aac', ext: 'aac' },
+        { mime: 'audio/webm;codecs=opus', ext: 'webm' },
+        { mime: 'audio/webm', ext: 'webm' },
+        { mime: 'audio/ogg;codecs=opus', ext: 'ogg' },
+        { mime: 'audio/wav', ext: 'wav' },
+        { mime: '', ext: 'webm' }, // Fallback sans type MIME spécifié
+      ];
+      
+      for (const format of formatsToTry) {
+        if (format.mime === '' || MediaRecorder.isTypeSupported(format.mime)) {
+          mimeType = format.mime;
+          fileExtension = format.ext;
+          console.log('[Audio] Format sélectionné:', format.mime || 'default');
+          break;
+        }
       }
       
-      console.log('[Audio] Format d\'enregistrement:', mimeType);
+      // Configuration du MediaRecorder
+      const recorderOptions: MediaRecorderOptions = {};
+      if (mimeType) {
+        recorderOptions.mimeType = mimeType;
+      }
+      // Bitrate pour une meilleure qualité/compatibilité
+      recorderOptions.audioBitsPerSecond = 128000;
       
-      const mediaRecorder = new MediaRecorder(stream, { mimeType });
+      console.log('[Audio] Options MediaRecorder:', recorderOptions);
+      
+      let mediaRecorder: MediaRecorder;
+      try {
+        mediaRecorder = new MediaRecorder(stream, recorderOptions);
+      } catch (e) {
+        console.warn('[Audio] Erreur avec options, essai sans options:', e);
+        // Fallback: créer sans options spécifiques
+        mediaRecorder = new MediaRecorder(stream);
+        // Récupérer le mimeType réellement utilisé
+        mimeType = mediaRecorder.mimeType;
+        fileExtension = mimeType.includes('mp4') ? 'm4a' : 
+                        mimeType.includes('webm') ? 'webm' : 
+                        mimeType.includes('ogg') ? 'ogg' : 'audio';
+      }
+      
+      // Log le type MIME réellement utilisé
+      console.log('[Audio] Type MIME effectif:', mediaRecorder.mimeType);
       
       audioChunksRef.current = [];
 
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
           audioChunksRef.current.push(e.data);
+          console.log('[Audio] Chunk reçu:', e.data.size, 'bytes');
         }
       };
 
+      mediaRecorder.onerror = (e) => {
+        console.error('[Audio] Erreur MediaRecorder:', e);
+        toast.error("Erreur lors de l'enregistrement");
+        stream.getTracks().forEach(track => track.stop());
+        setIsRecording(false);
+      };
+
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        console.log('[Audio] Enregistrement terminé, chunks:', audioChunksRef.current.length);
+        
+        // Utiliser le mimeType réel du recorder
+        const actualMimeType = mediaRecorder.mimeType || mimeType || 'audio/webm';
+        const audioBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
+        
+        // Déterminer l'extension basée sur le type MIME réel
+        let finalExtension = fileExtension;
+        if (actualMimeType.includes('mp4') || actualMimeType.includes('m4a')) {
+          finalExtension = 'm4a';
+        } else if (actualMimeType.includes('webm')) {
+          finalExtension = 'webm';
+        } else if (actualMimeType.includes('ogg')) {
+          finalExtension = 'ogg';
+        } else if (actualMimeType.includes('wav')) {
+          finalExtension = 'wav';
+        }
         
         // Créer un vrai objet File
         const audioFile = new File(
           [audioBlob], 
-          `vocal_${Date.now()}.${fileExtension}`,
-          { type: mimeType }
+          `vocal_${Date.now()}.${finalExtension}`,
+          { type: actualMimeType }
         );
         
+        console.log('[Audio] Fichier créé:', {
+          name: audioFile.name,
+          type: audioFile.type,
+          size: audioFile.size
+        });
+        
         stream.getTracks().forEach(track => track.stop());
+        
+        if (audioFile.size < 1000) {
+          toast.error("L'enregistrement est trop court ou vide");
+          setIsRecording(false);
+          return;
+        }
         
         try {
           setIsSending(true);
           await onSendFile(audioFile);
           toast.success('Message vocal envoyé');
         } catch (error: any) {
+          console.error('[Audio] Erreur envoi:', error);
           toast.error("Erreur lors de l'envoi du message vocal");
         } finally {
           setIsSending(false);
         }
       };
 
-      mediaRecorder.start(1000); // Collecter des données toutes les secondes
+      // Démarrer l'enregistrement
+      // Sur iOS, utiliser un timeslice plus grand pour éviter les problèmes
+      const timeslice = isIOS ? 1000 : 500;
+      mediaRecorder.start(timeslice);
       mediaRecorderRef.current = mediaRecorder;
       setIsRecording(true);
       toast.success('Enregistrement en cours...');
-    } catch (error) {
-      console.error('Erreur enregistrement:', error);
-      toast.error("Impossible d'accéder au microphone");
+    } catch (error: any) {
+      console.error('[Audio] Erreur enregistrement:', error);
+      if (error.name === 'NotAllowedError') {
+        toast.error("Accès au microphone refusé. Autorisez l'accès dans les paramètres.");
+      } else if (error.name === 'NotFoundError') {
+        toast.error("Aucun microphone détecté");
+      } else {
+        toast.error("Impossible d'accéder au microphone");
+      }
     }
   };
 
