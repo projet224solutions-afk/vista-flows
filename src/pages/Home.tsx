@@ -122,7 +122,6 @@ export default function Home() {
       <HomeHeader
         cartCount={user ? getCartCount() : 0}
         notificationCount={notificationCount}
-        location="Conakry, Guinée"
       />
 
       {/* Premium Search Bar */}
