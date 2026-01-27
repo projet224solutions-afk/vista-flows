@@ -1110,6 +1110,8 @@ class UniversalCommunicationService {
     deleteForEveryone: boolean = false
   ): Promise<boolean> {
     try {
+      console.log('[Communication] 🗑️ Tentative suppression message:', { messageId, userId, deleteForEveryone });
+      
       // Essayer d'abord avec la fonction RPC
       const { data, error } = await supabase.rpc('soft_delete_message', {
         p_message_id: messageId,
@@ -1118,16 +1120,23 @@ class UniversalCommunicationService {
       });
 
       if (error) {
-        console.warn('[Communication] RPC soft_delete_message failed, using direct query:', error);
+        console.warn('[Communication] RPC soft_delete_message failed:', error.message);
         
         // Fallback: utiliser une requête directe
         if (deleteForEveryone) {
+          console.log('[Communication] Tentative suppression pour tous via requête directe');
+          
           // Vérifier que l'utilisateur est l'expéditeur
-          const { data: msgData } = await supabase
+          const { data: msgData, error: selectError } = await supabase
             .from('messages')
             .select('sender_id')
             .eq('id', messageId)
             .single();
+          
+          if (selectError) {
+            console.error('[Communication] Erreur select message:', selectError);
+            throw new Error('Message non trouvé');
+          }
             
           if (msgData?.sender_id === userId) {
             const { error: updateError } = await supabase
@@ -1138,36 +1147,58 @@ class UniversalCommunicationService {
               })
               .eq('id', messageId);
               
-            if (updateError) throw updateError;
+            if (updateError) {
+              console.error('[Communication] Erreur update deleted_at:', updateError);
+              throw updateError;
+            }
+            console.log('[Communication] ✅ Message supprimé pour tous');
           } else {
             throw new Error('Vous ne pouvez supprimer ce message pour tous que si vous en êtes l\'expéditeur');
           }
         } else {
-          // Supprimer uniquement pour cet utilisateur
-          // Récupérer d'abord le tableau deleted_for actuel
-          const { data: msgData } = await supabase
-            .from('messages')
-            .select('deleted_for')
-            .eq('id', messageId)
-            .single();
-            
-          const currentDeletedFor = (msgData?.deleted_for as string[]) || [];
+          console.log('[Communication] Tentative suppression pour moi via requête directe');
           
-          if (!currentDeletedFor.includes(userId)) {
-            const { error: updateError } = await supabase
+          // Supprimer uniquement pour cet utilisateur via SQL brut
+          // Utiliser une approche différente: mettre à jour directement
+          const { error: updateError } = await supabase
+            .from('messages')
+            .update({ 
+              deleted_for: supabase.sql`array_append(COALESCE(deleted_for, '{}'), ${userId}::uuid)`
+            } as any)
+            .eq('id', messageId);
+          
+          if (updateError) {
+            console.warn('[Communication] Erreur update deleted_for avec SQL:', updateError);
+            
+            // Fallback 2: récupérer et mettre à jour manuellement
+            const { data: msgData } = await supabase
               .from('messages')
-              .update({ 
-                deleted_for: [...currentDeletedFor, userId]
-              })
-              .eq('id', messageId);
+              .select('deleted_for')
+              .eq('id', messageId)
+              .single();
               
-            if (updateError) throw updateError;
+            const currentDeletedFor = (msgData?.deleted_for as string[]) || [];
+            
+            if (!currentDeletedFor.includes(userId)) {
+              const newDeletedFor = [...currentDeletedFor, userId];
+              const { error: updateError2 } = await supabase
+                .from('messages')
+                .update({ deleted_for: newDeletedFor })
+                .eq('id', messageId);
+                
+              if (updateError2) {
+                console.error('[Communication] Erreur update deleted_for:', updateError2);
+                throw updateError2;
+              }
+            }
           }
+          console.log('[Communication] ✅ Message supprimé pour moi');
         }
+      } else {
+        console.log('[Communication] ✅ Message supprimé via RPC');
       }
 
-      await this.logAudit(userId, 'message_deleted', messageId);
-      console.log('[Communication] ✅ Message supprimé:', messageId);
+      await this.logAudit(userId, 'message_deleted', messageId).catch(() => {});
       return true;
     } catch (error) {
       console.error('[Communication] Erreur softDeleteMessage:', error);
