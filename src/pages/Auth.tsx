@@ -2465,7 +2465,7 @@ export default function Auth() {
               {/* ===== FIN OAUTH BUTTONS ===== */}
 
               {/* Section basculer Connexion / Inscription - Design compact */}
-              <div className="mt-5 pt-5 border-t border-border/40">
+              <div className="mt-3 pt-3 border-t border-border/30">
                 {!showSignup ? (
                   <div className="flex items-center justify-center gap-2">
                     <span className="text-sm text-muted-foreground">Pas de compte ?</span>
