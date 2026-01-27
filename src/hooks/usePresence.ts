@@ -84,6 +84,8 @@ export function usePresence(options: UsePresenceOptions = {}): UsePresenceReturn
     try {
       const device = /Mobile|Android|iPhone/i.test(navigator.userAgent) ? 'mobile' : 'web';
       
+      console.log('[Presence] 📡 Mise à jour présence:', { userId: user.id, status, device });
+      
       // Utiliser une requête SQL directe au lieu de rpc pour éviter les erreurs de type
       const { error } = await supabase
         .from('user_presence' as any)
@@ -101,6 +103,8 @@ export function usePresence(options: UsePresenceOptions = {}): UsePresenceReturn
         console.warn('[Presence] Error updating:', error);
         return;
       }
+
+      console.log('[Presence] ✅ Présence mise à jour:', status);
 
       setMyPresence(prev => ({
         ...prev!,
@@ -129,6 +133,8 @@ export function usePresence(options: UsePresenceOptions = {}): UsePresenceReturn
   // Obtenir la présence d'un utilisateur
   const getUserPresence = useCallback(async (userId: string): Promise<UserPresence | null> => {
     try {
+      console.log('[Presence] 🔍 Récupération présence pour:', userId);
+      
       const { data, error } = await supabase
         .from('user_presence' as any)
         .select('*')
@@ -136,6 +142,7 @@ export function usePresence(options: UsePresenceOptions = {}): UsePresenceReturn
         .single();
 
       if (error) {
+        console.warn('[Presence] Erreur ou pas de données:', error.message);
         // Si la table n'existe pas ou pas de données, retourner offline
         return {
           user_id: userId,
@@ -146,6 +153,8 @@ export function usePresence(options: UsePresenceOptions = {}): UsePresenceReturn
       }
       
       const row = data as any;
+      console.log('[Presence] 📊 Données reçues:', row);
+      
       const presence: UserPresence = {
         user_id: userId,
         status: row?.status || 'offline',
@@ -154,6 +163,8 @@ export function usePresence(options: UsePresenceOptions = {}): UsePresenceReturn
         custom_status: row?.custom_status,
         is_online: ['online', 'busy', 'away'].includes(row?.status),
       };
+      
+      console.log('[Presence] ✅ Présence récupérée:', presence.status, '- En ligne:', presence.is_online);
       
       // Mettre en cache
       setPresenceCache(prev => new Map(prev).set(userId, presence));

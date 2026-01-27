@@ -477,11 +477,43 @@ export default function Messages() {
       
       setMessages(messagesWithReplies);
 
-      // Marquer les messages comme lus
-      await universalCommunicationService.markConversationAsRead(
-        `direct_${otherUserId}`,
-        currentUser.id
-      ).catch(() => {}); // Non-bloquant
+      // Marquer les messages reçus comme lus immédiatement
+      const unreadMessages = messagesWithReplies.filter(
+        msg => msg.sender_id === otherUserId && !msg.read_at
+      );
+      
+      if (unreadMessages.length > 0) {
+        console.log('[Messages] 📖 Marquage de', unreadMessages.length, 'messages comme lus');
+        
+        // Marquer tous les messages non lus de cette conversation
+        const { error: readError } = await supabase
+          .from('messages')
+          .update({ read_at: new Date().toISOString(), status: 'read' })
+          .eq('sender_id', otherUserId)
+          .eq('recipient_id', currentUser.id)
+          .is('read_at', null);
+        
+        if (readError) {
+          console.warn('[Messages] Erreur marquage lu:', readError);
+        } else {
+          console.log('[Messages] ✅ Messages marqués comme lus');
+          // Recharger pour mettre à jour l'affichage
+          const { data: updatedData } = await supabase
+            .from('messages')
+            .select('*')
+            .or(`and(sender_id.eq.${currentUser.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${currentUser.id})`)
+            .order('created_at', { ascending: true });
+          
+          if (updatedData) {
+            const updatedMessages = updatedData.map(msg => ({
+              ...msg,
+              status: msg.status as 'sending' | 'sent' | 'delivered' | 'read' | 'failed' | undefined,
+              type: msg.type as 'text' | 'image' | 'video' | 'audio' | 'file' | 'location' | 'call' | undefined,
+            }));
+            setMessages(updatedMessages);
+          }
+        }
+      }
 
     } catch (error) {
       console.error('Erreur chargement messages:', error);
@@ -935,14 +967,24 @@ export default function Messages() {
                         Client
                       </Badge>
                     )}
-                    {/* Statut de présence textuel */}
-                    <span className="text-xs text-muted-foreground">
-                      {otherUserPresence === 'online' && '• En ligne'}
-                      {otherUserPresence === 'away' && '• Absent'}
-                      {otherUserPresence === 'busy' && '• Occupé'}
-                      {otherUserPresence === 'in_call' && '• En appel'}
-                      {otherUserPresence === 'offline' && '• Hors ligne'}
-                    </span>
+                    {/* Indicateur de présence visuel */}
+                    <div className="flex items-center gap-1.5">
+                      <span className={cn(
+                        "w-2 h-2 rounded-full",
+                        otherUserPresence === 'online' && "bg-green-500 animate-pulse",
+                        otherUserPresence === 'away' && "bg-yellow-500",
+                        otherUserPresence === 'busy' && "bg-red-500",
+                        otherUserPresence === 'in_call' && "bg-purple-500 animate-pulse",
+                        otherUserPresence === 'offline' && "bg-gray-400"
+                      )} />
+                      <span className="text-xs text-muted-foreground">
+                        {otherUserPresence === 'online' && 'En ligne'}
+                        {otherUserPresence === 'away' && 'Absent'}
+                        {otherUserPresence === 'busy' && 'Occupé'}
+                        {otherUserPresence === 'in_call' && 'En appel'}
+                        {otherUserPresence === 'offline' && 'Hors ligne'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -992,7 +1034,18 @@ export default function Messages() {
                       })
                       .map((message) => {
                       const isOwnMessage = message.sender_id === currentUser?.id;
-                      const messageStatus = message.status || (message.read_at ? 'read' : 'delivered');
+                      
+                      // Calculer le statut correctement
+                      let messageStatus: 'sending' | 'sent' | 'delivered' | 'read' | 'failed' = 'sent';
+                      if (message.status) {
+                        messageStatus = message.status;
+                      } else if (message.read_at) {
+                        messageStatus = 'read';
+                      } else if (message.delivered_at) {
+                        messageStatus = 'delivered';
+                      } else {
+                        messageStatus = 'sent';
+                      }
 
                       const safeType: 'text' | 'image' | 'video' | 'audio' | 'file' =
                         message.type === 'call' || message.type === 'location'
