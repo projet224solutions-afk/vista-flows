@@ -1,6 +1,6 @@
 // @ts-nocheck
-import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Camera, Upload, ArrowLeft, Search, Loader2, X, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,6 +17,7 @@ interface SearchResult {
 
 export default function VisualSearch() {
   const navigate = useNavigate();
+  const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -24,6 +25,19 @@ export default function VisualSearch() {
   const [showCamera, setShowCamera] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  // Charger l'image passée depuis la navigation (Home ou Marketplace)
+  useEffect(() => {
+    const stateImage = location.state?.capturedImage;
+    if (stateImage && stateImage instanceof File) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageData = e.target?.result as string;
+        setCapturedImage(imageData);
+      };
+      reader.readAsDataURL(stateImage);
+    }
+  }, [location.state]);
 
   const startCamera = async () => {
     try {
