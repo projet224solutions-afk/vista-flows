@@ -68,6 +68,19 @@ export default function AgentCreation() {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Vérifier le type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('Format non supporté. Utilisez JPG, PNG, GIF ou WebP');
+        return;
+      }
+
+      // Vérifier la taille - Max 10 Mo
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('L\'image ne doit pas dépasser 10 Mo');
+        return;
+      }
+
       setPhotoFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {

@@ -62,15 +62,16 @@ export default function VendorShopImagesSettings({ vendorId }: VendorShopImagesS
     if (!file) return;
 
     // Vérifier le type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Veuillez sélectionner une image');
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Format non supporté. Utilisez JPG, PNG, GIF ou WebP');
       return;
     }
 
-    // Vérifier la taille (5 MB max pour couverture, 2 MB pour logo)
-    const maxSize = type === 'cover' ? 5 * 1024 * 1024 : 2 * 1024 * 1024;
+    // Vérifier la taille (10 MB max)
+    const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      toast.error(`L'image ne doit pas dépasser ${type === 'cover' ? '5' : '2'} MB`);
+      toast.error(`L'image ne doit pas dépasser 10 Mo`);
       return;
     }
 
@@ -314,14 +315,14 @@ export default function VendorShopImagesSettings({ vendorId }: VendorShopImagesS
             <div className="p-3 bg-muted rounded-lg">
               <Label className="font-medium">Photo de profil</Label>
               <p className="text-muted-foreground mt-1">
-                Format: PNG, JPG • Max: 2 MB<br />
+                Format: PNG, JPG, GIF, WebP • Max: 10 Mo<br />
                 Recommandé: 500x500px (carré)
               </p>
             </div>
             <div className="p-3 bg-muted rounded-lg">
               <Label className="font-medium">Photo de couverture</Label>
               <p className="text-muted-foreground mt-1">
-                Format: PNG, JPG • Max: 5 MB<br />
+                Format: PNG, JPG, GIF, WebP • Max: 10 Mo<br />
                 Recommandé: 1500x500px (3:1)
               </p>
             </div>

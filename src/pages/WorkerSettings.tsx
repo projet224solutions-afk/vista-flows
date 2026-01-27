@@ -73,6 +73,19 @@ export default function WorkerSettings() {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Vérifier le type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('Format non supporté. Utilisez JPG, PNG, GIF ou WebP');
+        return;
+      }
+
+      // Vérifier la taille - Max 10 Mo
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('L\'image ne doit pas dépasser 10 Mo');
+        return;
+      }
+
       setPhotoFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -210,7 +223,7 @@ export default function WorkerSettings() {
                     disabled={saving}
                   />
                   <p className="text-xs text-muted-foreground mt-2">
-                    Formats acceptés: JPG, PNG. Taille max: 5MB
+                    Formats acceptés: JPG, PNG, GIF, WebP. Taille max: 10 Mo
                   </p>
                 </div>
               </div>
