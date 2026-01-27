@@ -8,7 +8,6 @@ import { useAuth } from './useAuth';
  * ⚠️ IMPORTANT: Les liens partagés (/s/, /boutique/, /shop/, /product/) doivent être ici!
  */
 const PUBLIC_ROUTES = [
-  '/',            // Page d'accueil racine - accessible aux utilisateurs connectés
   '/home',        // Page d'accueil - accessible aux utilisateurs connectés
   '/marketplace',
   '/tracking',
@@ -27,9 +26,9 @@ const PUBLIC_ROUTES = [
   '/cart',
   '/product',
   '/produit',
-  '/shop',
-  '/boutique',
-  '/s',  // Short links - très important!
+  '/shop',        // Boutique par vendorId - IMPORTANT pour les liens partagés
+  '/boutique',    // Boutique par slug - IMPORTANT pour les liens partagés
+  '/s',           // Short links - très important!
   '/contact-user',
   '/communication',
   '/bug-bounty',
@@ -37,8 +36,10 @@ const PUBLIC_ROUTES = [
   '/categories',
   '/digital-products',
   '/boutiques',
-  '/ref',  // Affiliate links
-  '/service',  // Page de détail d'un service professionnel
+  '/ref',         // Affiliate links
+  '/service',     // Page de détail d'un service professionnel
+  '/restaurant',  // Menu restaurant public
+  '/digital-product', // Produit numérique
 ];
 
 /**

@@ -40,25 +40,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useStorageUpload } from '@/hooks/useStorageUpload';
 
-// Workaround pour les tables non encore générées dans les types Supabase
-const supabaseAny = supabase as any;
-
+// Utilise la table user_addresses qui existe dans la DB
 interface Address {
   id: string;
   user_id: string;
   label: string;
   recipient_name: string;
   phone: string;
-  address_line_1: string;
-  address_line_2?: string;
+  street: string;  // Colonne correcte dans user_addresses
   city: string;
-  region?: string;
   postal_code?: string;
   country: string;
   is_default: boolean;
-  delivery_instructions?: string;
-  latitude?: number;
-  longitude?: number;
   created_at: string;
   updated_at: string;
 }
@@ -122,18 +115,15 @@ const ClientSettings: React.FC = () => {
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [addressSaving, setAddressSaving] = useState(false);
 
-  // Formulaire d'adresse
+  // Formulaire d'adresse - adapté aux colonnes de user_addresses
   const [addressForm, setAddressForm] = useState({
     label: 'domicile',
     recipient_name: '',
     phone: '',
-    address_line_1: '',
-    address_line_2: '',
+    street: '',  // Colonne correcte
     city: '',
-    region: '',
     postal_code: '',
-    country: 'BJ',
-    delivery_instructions: '',
+    country: 'GN',  // Guinée par défaut
     is_default: false
   });
 
@@ -179,8 +169,8 @@ const ClientSettings: React.FC = () => {
     
     setAddressesLoading(true);
     try {
-      const { data, error } = await supabaseAny
-        .from('customer_addresses')
+      const { data, error } = await supabase
+        .from('user_addresses')
         .select('*')
         .eq('user_id', user.id)
         .order('is_default', { ascending: false })
@@ -190,10 +180,7 @@ const ClientSettings: React.FC = () => {
       setAddresses(data || []);
     } catch (error: any) {
       console.error('Erreur chargement adresses:', error);
-      // Ne pas afficher l'erreur si la table n'existe pas encore
-      if (!error.message?.includes('does not exist')) {
-        toast.error('Erreur lors du chargement des adresses');
-      }
+      toast.error('Erreur lors du chargement des adresses');
       setAddresses([]);
     } finally {
       setAddressesLoading(false);
@@ -270,13 +257,10 @@ const ClientSettings: React.FC = () => {
         label: address.label,
         recipient_name: address.recipient_name,
         phone: address.phone,
-        address_line_1: address.address_line_1,
-        address_line_2: address.address_line_2 || '',
+        street: address.street,
         city: address.city,
-        region: address.region || '',
         postal_code: address.postal_code || '',
         country: address.country,
-        delivery_instructions: address.delivery_instructions || '',
         is_default: address.is_default
       });
     } else {
@@ -285,13 +269,10 @@ const ClientSettings: React.FC = () => {
         label: 'domicile',
         recipient_name: `${profileData.first_name} ${profileData.last_name}`.trim(),
         phone: profileData.phone,
-        address_line_1: '',
-        address_line_2: '',
+        street: '',
         city: '',
-        region: '',
         postal_code: '',
-        country: 'BJ',
-        delivery_instructions: '',
+        country: 'GN',
         is_default: addresses.length === 0
       });
     }
@@ -311,7 +292,7 @@ const ClientSettings: React.FC = () => {
       toast.error('Le numéro de téléphone est requis');
       return;
     }
-    if (!addressForm.address_line_1.trim()) {
+    if (!addressForm.street.trim()) {
       toast.error('L\'adresse est requise');
       return;
     }
@@ -324,8 +305,8 @@ const ClientSettings: React.FC = () => {
     try {
       // Si c'est la nouvelle adresse par défaut, retirer le statut des autres
       if (addressForm.is_default && !editingAddress?.is_default) {
-        await supabaseAny
-          .from('customer_addresses')
+        await supabase
+          .from('user_addresses')
           .update({ is_default: false })
           .eq('user_id', user.id);
       }
@@ -335,28 +316,25 @@ const ClientSettings: React.FC = () => {
         label: addressForm.label,
         recipient_name: addressForm.recipient_name.trim(),
         phone: addressForm.phone.trim(),
-        address_line_1: addressForm.address_line_1.trim(),
-        address_line_2: addressForm.address_line_2.trim() || null,
+        street: addressForm.street.trim(),
         city: addressForm.city.trim(),
-        region: addressForm.region.trim() || null,
         postal_code: addressForm.postal_code.trim() || null,
         country: addressForm.country,
-        delivery_instructions: addressForm.delivery_instructions.trim() || null,
         is_default: addressForm.is_default,
         updated_at: new Date().toISOString()
       };
 
       if (editingAddress) {
-        const { error } = await supabaseAny
-          .from('customer_addresses')
+        const { error } = await supabase
+          .from('user_addresses')
           .update(addressData)
           .eq('id', editingAddress.id);
 
         if (error) throw error;
         toast.success('Adresse mise à jour');
       } else {
-        const { error } = await supabaseAny
-          .from('customer_addresses')
+        const { error } = await supabase
+          .from('user_addresses')
           .insert({ ...addressData, created_at: new Date().toISOString() });
 
         if (error) throw error;
@@ -376,8 +354,8 @@ const ClientSettings: React.FC = () => {
   // Supprimer une adresse
   const handleDeleteAddress = async (addressId: string) => {
     try {
-      const { error } = await supabaseAny
-        .from('customer_addresses')
+      const { error } = await supabase
+        .from('user_addresses')
         .delete()
         .eq('id', addressId);
 
@@ -397,14 +375,14 @@ const ClientSettings: React.FC = () => {
     
     try {
       // Retirer le statut par défaut de toutes les adresses
-      await supabaseAny
-        .from('customer_addresses')
+      await supabase
+        .from('user_addresses')
         .update({ is_default: false })
         .eq('user_id', user.id);
 
       // Définir la nouvelle adresse par défaut
-      const { error } = await supabaseAny
-        .from('customer_addresses')
+      const { error } = await supabase
+        .from('user_addresses')
         .update({ is_default: true })
         .eq('id', addressId);
 
@@ -684,19 +662,12 @@ const ClientSettings: React.FC = () => {
                         <div className="space-y-1 text-sm">
                           <p className="font-medium">{address.recipient_name}</p>
                           <p className="text-muted-foreground">{address.phone}</p>
-                          <p>{address.address_line_1}</p>
-                          {address.address_line_2 && <p>{address.address_line_2}</p>}
+                          <p>{address.street}</p>
                           <p>
                             {address.city}
-                            {address.region && `, ${address.region}`}
                             {address.postal_code && ` ${address.postal_code}`}
                           </p>
                           <p>{countries.find(c => c.code === address.country)?.name || address.country}</p>
-                          {address.delivery_instructions && (
-                            <p className="text-xs text-muted-foreground italic mt-2">
-                              📝 {address.delivery_instructions}
-                            </p>
-                          )}
                         </div>
 
                         {!address.is_default && (
@@ -780,26 +751,16 @@ const ClientSettings: React.FC = () => {
 
             {/* Adresse */}
             <div className="space-y-2">
-              <Label htmlFor="address_line_1">Adresse *</Label>
+              <Label htmlFor="street">Adresse *</Label>
               <Input
-                id="address_line_1"
-                value={addressForm.address_line_1}
-                onChange={(e) => setAddressForm(prev => ({ ...prev, address_line_1: e.target.value }))}
+                id="street"
+                value={addressForm.street}
+                onChange={(e) => setAddressForm(prev => ({ ...prev, street: e.target.value }))}
                 placeholder="Numéro et nom de rue"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="address_line_2">Complément d'adresse</Label>
-              <Input
-                id="address_line_2"
-                value={addressForm.address_line_2}
-                onChange={(e) => setAddressForm(prev => ({ ...prev, address_line_2: e.target.value }))}
-                placeholder="Appartement, étage, bâtiment..."
-              />
-            </div>
-
-            {/* Ville et région */}
+            {/* Ville */}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="city">Ville *</Label>
@@ -807,61 +768,38 @@ const ClientSettings: React.FC = () => {
                   id="city"
                   value={addressForm.city}
                   onChange={(e) => setAddressForm(prev => ({ ...prev, city: e.target.value }))}
-                  placeholder="Cotonou"
+                  placeholder="Conakry"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="region">Région / Département</Label>
-                <Input
-                  id="region"
-                  value={addressForm.region}
-                  onChange={(e) => setAddressForm(prev => ({ ...prev, region: e.target.value }))}
-                  placeholder="Littoral"
-                />
-              </div>
-            </div>
-
-            {/* Code postal et pays */}
-            <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="postal_code">Code postal</Label>
                 <Input
                   id="postal_code"
                   value={addressForm.postal_code}
                   onChange={(e) => setAddressForm(prev => ({ ...prev, postal_code: e.target.value }))}
-                  placeholder="01 BP 1234"
+                  placeholder="BP 1234"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="country">Pays *</Label>
-                <Select
-                  value={addressForm.country}
-                  onValueChange={(value) => setAddressForm(prev => ({ ...prev, country: value }))}
-                >
-                  <SelectTrigger id="country">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {countries.map((country) => (
-                      <SelectItem key={country.code} value={country.code}>
-                        {country.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
             </div>
 
-            {/* Instructions de livraison */}
+            {/* Pays */}
             <div className="space-y-2">
-              <Label htmlFor="delivery_instructions">Instructions de livraison</Label>
-              <Textarea
-                id="delivery_instructions"
-                value={addressForm.delivery_instructions}
-                onChange={(e) => setAddressForm(prev => ({ ...prev, delivery_instructions: e.target.value }))}
-                placeholder="Ex: Sonner 2 fois, appeler avant d'arriver..."
-                rows={2}
-              />
+              <Label htmlFor="country">Pays *</Label>
+              <Select
+                value={addressForm.country}
+                onValueChange={(value) => setAddressForm(prev => ({ ...prev, country: value }))}
+              >
+                <SelectTrigger id="country">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {countries.map((country) => (
+                    <SelectItem key={country.code} value={country.code}>
+                      {country.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Adresse par défaut */}
