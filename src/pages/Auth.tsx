@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship, Crown, Utensils, ShoppingBag, Scissors, Car, GraduationCap, Stethoscope, Wrench, Home, Plane, Camera, ArrowLeft, Eye, EyeOff, Chrome, Search, ChevronDown, Check, RefreshCw, Sparkles } from "lucide-react";
+import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship, Crown, Utensils, ShoppingBag, Scissors, Car, GraduationCap, Stethoscope, Wrench, Home, Plane, Camera, ArrowLeft, Eye, EyeOff, Chrome, Search, ChevronDown, Check, RefreshCw, Sparkles, LogIn, UserPlus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Separator } from "@/components/ui/separator";
@@ -1704,121 +1704,185 @@ export default function Auth() {
 
             {/* Messages d'information */}
             {/* Boutons Connexion / Créer un compte - toujours visibles sauf reset password */}
+            {/* Onglets Connexion / Inscription - Design professionnel */}
             {!showResetPassword && !showNewPasswordForm && (
-              <div className="flex gap-2 mb-4">
-                <Button
-                  type="button"
-                  variant={!showSignup ? "default" : "outline"}
-                  className="flex-1"
-                  onClick={() => {
-                    setShowSignup(false);
-                    setSelectedRole(null);
-                    setError(null);
-                    setSuccess(null);
-                  }}
-                >
-                  Connexion
-                </Button>
-                <Button
-                  type="button"
-                  variant={showSignup ? "default" : "outline"}
-                  className="flex-1"
-                  onClick={() => {
-                    setShowSignup(true);
-                    setIsLogin(false);
-                    setError(null);
-                    setSuccess(null);
-                  }}
-                >
-                  Créer un compte
-                </Button>
+              <div className="mb-6">
+                <div className="relative flex p-1 bg-gradient-to-r from-muted/50 to-muted/30 rounded-2xl border border-border/50 shadow-inner">
+                  {/* Indicateur animé */}
+                  <div 
+                    className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-gradient-to-r from-primary to-primary/90 rounded-xl shadow-lg transition-all duration-300 ease-out ${
+                      showSignup ? 'left-[calc(50%+2px)]' : 'left-1'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowSignup(false);
+                      setSelectedRole(null);
+                      setError(null);
+                      setSuccess(null);
+                    }}
+                    className={`relative z-10 flex-1 py-3 px-4 text-sm font-semibold rounded-xl transition-all duration-300 ${
+                      !showSignup 
+                        ? 'text-primary-foreground' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      <LogIn className="h-4 w-4" />
+                      Connexion
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowSignup(true);
+                      setIsLogin(false);
+                      setError(null);
+                      setSuccess(null);
+                    }}
+                    className={`relative z-10 flex-1 py-3 px-4 text-sm font-semibold rounded-xl transition-all duration-300 ${
+                      showSignup 
+                        ? 'text-primary-foreground' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      <UserPlus className="h-4 w-4" />
+                      Créer un compte
+                    </span>
+                  </button>
+                </div>
               </div>
             )}
 
             {!showSignup && !showResetPassword && (
               <>
-                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-blue-800 text-sm">
-                    <strong>✨ Connexion intelligente :</strong> Utilisez vos identifiants habituels.
-                    Le système reconnaîtra automatiquement votre type de compte (Client, Marchand, Livreur, ou Transitaire).
-                  </p>
+                <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/60 rounded-xl shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                      <Sparkles className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-blue-900 font-semibold text-sm mb-1">Connexion intelligente</p>
+                      <p className="text-blue-700 text-xs leading-relaxed">
+                        Utilisez vos identifiants habituels. Le système reconnaîtra automatiquement votre type de compte.
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="mb-6 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <p className="text-amber-800 text-xs">
-                    <strong>💡 Note :</strong> Si vous venez de vous inscrire, n'oubliez pas de confirmer votre email avant de vous connecter.
-                  </p>
+                <div className="mb-6 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 rounded-xl">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                    <p className="text-amber-700 text-xs">
+                      Nouveau inscrit ? Confirmez votre email avant de vous connecter.
+                    </p>
+                  </div>
                 </div>
               </>
             )}
 
-            {/* Types de comptes supportés (affichés uniquement pendant l'inscription) */}
+            {/* Types de comptes supportés - Design moderne avec grille */}
             {showSignupLayout && (
-              <div className="mb-6 bg-muted/30 border border-border rounded-xl p-4">
-                <h3 className="text-sm font-semibold text-center mb-3">Types de comptes supportés</h3>
-                <div className="flex flex-wrap justify-center gap-2">
+              <div className="mb-6 bg-gradient-to-br from-muted/20 via-background to-muted/10 border border-border/50 rounded-2xl p-5 shadow-sm">
+                <div className="text-center mb-4">
+                  <h3 className="text-sm font-bold text-foreground mb-1">Choisissez votre profil</h3>
+                  <p className="text-xs text-muted-foreground">Sélectionnez le type de compte qui vous correspond</p>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => handleRoleClick('vendeur')}
-                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium border transition-all ${
+                    className={`group flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 ${
                       selectedRole === 'vendeur'
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-background text-foreground border-input hover:border-primary/40'
+                        ? 'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/25 scale-[1.02]'
+                        : 'bg-background border-border/60 hover:border-blue-300 hover:bg-blue-50/50'
                     }`}
                   >
-                    <Store className="h-4 w-4" />
-                    Marchand
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                      selectedRole === 'vendeur' ? 'bg-white/20' : 'bg-blue-100 group-hover:bg-blue-200'
+                    }`}>
+                      <Store className={`h-5 w-5 ${selectedRole === 'vendeur' ? 'text-white' : 'text-blue-600'}`} />
+                    </div>
+                    <span className={`text-xs font-semibold ${selectedRole === 'vendeur' ? 'text-white' : 'text-foreground'}`}>
+                      Marchand
+                    </span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleRoleClick('livreur')}
-                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium border transition-all ${
+                    className={`group flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 ${
                       selectedRole === 'livreur'
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-background text-foreground border-input hover:border-primary/40'
+                        ? 'bg-gradient-to-br from-orange-500 to-orange-600 border-orange-500 text-white shadow-lg shadow-orange-500/25 scale-[1.02]'
+                        : 'bg-background border-border/60 hover:border-orange-300 hover:bg-orange-50/50'
                     }`}
                   >
-                    <Truck className="h-4 w-4" />
-                    Livreur
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                      selectedRole === 'livreur' ? 'bg-white/20' : 'bg-orange-100 group-hover:bg-orange-200'
+                    }`}>
+                      <Truck className={`h-5 w-5 ${selectedRole === 'livreur' ? 'text-white' : 'text-orange-600'}`} />
+                    </div>
+                    <span className={`text-xs font-semibold ${selectedRole === 'livreur' ? 'text-white' : 'text-foreground'}`}>
+                      Livreur
+                    </span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleRoleClick('taxi')}
-                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium border transition-all ${
+                    className={`group flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 ${
                       selectedRole === 'taxi'
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-background text-foreground border-input hover:border-primary/40'
+                        ? 'bg-gradient-to-br from-yellow-500 to-amber-500 border-yellow-500 text-white shadow-lg shadow-yellow-500/25 scale-[1.02]'
+                        : 'bg-background border-border/60 hover:border-yellow-300 hover:bg-yellow-50/50'
                     }`}
                   >
-                    <Bike className="h-4 w-4" />
-                    Taxi Moto
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                      selectedRole === 'taxi' ? 'bg-white/20' : 'bg-yellow-100 group-hover:bg-yellow-200'
+                    }`}>
+                      <Bike className={`h-5 w-5 ${selectedRole === 'taxi' ? 'text-white' : 'text-yellow-600'}`} />
+                    </div>
+                    <span className={`text-xs font-semibold ${selectedRole === 'taxi' ? 'text-white' : 'text-foreground'}`}>
+                      Taxi Moto
+                    </span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleRoleClick('transitaire')}
-                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium border transition-all ${
+                    className={`group flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 ${
                       selectedRole === 'transitaire'
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-background text-foreground border-input hover:border-primary/40'
+                        ? 'bg-gradient-to-br from-purple-500 to-purple-600 border-purple-500 text-white shadow-lg shadow-purple-500/25 scale-[1.02]'
+                        : 'bg-background border-border/60 hover:border-purple-300 hover:bg-purple-50/50'
                     }`}
                   >
-                    <Ship className="h-4 w-4" />
-                    Transitaire
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                      selectedRole === 'transitaire' ? 'bg-white/20' : 'bg-purple-100 group-hover:bg-purple-200'
+                    }`}>
+                      <Ship className={`h-5 w-5 ${selectedRole === 'transitaire' ? 'text-white' : 'text-purple-600'}`} />
+                    </div>
+                    <span className={`text-xs font-semibold ${selectedRole === 'transitaire' ? 'text-white' : 'text-foreground'}`}>
+                      Transitaire
+                    </span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleRoleClick('client')}
-                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium border transition-all ${
+                    className={`group flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 col-span-2 sm:col-span-1 ${
                       selectedRole === 'client'
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-background text-foreground border-input hover:border-primary/40'
+                        ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-500/25 scale-[1.02]'
+                        : 'bg-background border-border/60 hover:border-emerald-300 hover:bg-emerald-50/50'
                     }`}
                   >
-                    <UserIcon className="h-4 w-4" />
-                    Client
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                      selectedRole === 'client' ? 'bg-white/20' : 'bg-emerald-100 group-hover:bg-emerald-200'
+                    }`}>
+                      <UserIcon className={`h-5 w-5 ${selectedRole === 'client' ? 'text-white' : 'text-emerald-600'}`} />
+                    </div>
+                    <span className={`text-xs font-semibold ${selectedRole === 'client' ? 'text-white' : 'text-foreground'}`}>
+                      Client
+                    </span>
                   </button>
                 </div>
               </div>
