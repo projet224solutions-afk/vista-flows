@@ -1789,7 +1789,7 @@ export default function Auth() {
                   <h3 className="text-sm font-bold text-foreground mb-1">Choisissez votre profil</h3>
                   <p className="text-xs text-muted-foreground">Sélectionnez le type de compte qui vous correspond</p>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-5 gap-2">
                   <button
                     type="button"
                     onClick={() => handleRoleClick('vendeur')}
@@ -1869,7 +1869,7 @@ export default function Auth() {
                   <button
                     type="button"
                     onClick={() => handleRoleClick('client')}
-                    className={`group flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 col-span-2 sm:col-span-1 ${
+                    className={`group flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 ${
                       selectedRole === 'client'
                         ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-500/25 scale-[1.02]'
                         : 'bg-background border-border/60 hover:border-emerald-300 hover:bg-emerald-50/50'
