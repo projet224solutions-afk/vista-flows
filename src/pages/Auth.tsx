@@ -2464,21 +2464,6 @@ export default function Auth() {
               </div>
               {/* ===== FIN OAUTH BUTTONS ===== */}
 
-              <div className="text-center pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    // Nouveau flow UI: bascule Connexion <-> Inscription (panneau à droite)
-                    setShowSignup(!showSignup);
-                    if (showSignup) setSelectedRole(null);
-                    setError(null);
-                    setSuccess(null);
-                  }}
-                  className="text-sm text-purple-600 font-medium hover:underline"
-                >
-                  {showSignup ? `${t('auth.hasAccount')} ${t('auth.loginHere')}` : `${t('auth.noAccount')} ${t('auth.createOne')}`}
-                </button>
-              </div>
             </form>
             )}
             </>
