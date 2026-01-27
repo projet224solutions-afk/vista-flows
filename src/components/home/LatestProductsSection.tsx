@@ -112,7 +112,7 @@ export function LatestProductsSection({
                 reviewCount={product.reviews_count}
                 onBuy={() => onProductClick(product.id)}
                 onAddToCart={() => onAddToCart(product)}
-                onContact={() => navigate(`/messages?vendorId=${product.id}`)}
+                onContact={() => product.vendor_id ? navigate(`/messages?vendorId=${product.vendor_id}`) : null}
                 isPremium={product.is_hot}
               />
             </div>
