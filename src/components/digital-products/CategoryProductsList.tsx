@@ -255,10 +255,13 @@ export function CategoryProductsList({
                       size="sm"
                       className="font-bold text-primary"
                     />
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Eye className="w-3 h-3" />
-                      <span className="text-xs">{product.views_count || 0}</span>
-                    </div>
+                    {/* Nombre de vues visible uniquement par le vendeur propriétaire */}
+                    {isMerchant && user?.id === product.vendor_id && (
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Eye className="w-3 h-3" />
+                        <span className="text-xs">{product.views_count || 0}</span>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
