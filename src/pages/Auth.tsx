@@ -2472,7 +2472,7 @@ export default function Auth() {
                     <button
                       type="button"
                       onClick={() => setShowRoleSelectionModal(true)}
-                      className="inline-flex items-center gap-1.5 py-2 px-4 text-sm font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200 transition-all duration-200"
+                      className="inline-flex items-center gap-1.5 py-2 px-4 text-sm font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-all duration-200"
                     >
                       <UserPlus className="h-4 w-4" />
                       Créer un compte
