@@ -1451,6 +1451,10 @@ export default function Auth() {
     }
   };
 
+  // UI: panneau d'inscription (à droite) uniquement quand on est vraiment en mode inscription
+  // (pas pendant reset password / nouveau mot de passe)
+  const showSignupLayout = showSignup && !showResetPassword && !showNewPasswordForm;
+
   return (
     <div className="min-h-screen bg-white pb-24 overflow-x-hidden">
       {/* Header avec 224SOLUTIONS et boutons */}
@@ -1490,80 +1494,7 @@ export default function Auth() {
         </h2>
       </div>
 
-      {/* Sélection du type de compte - collé au titre */}
-      <div className="max-w-4xl mx-auto px-6 -mt-2">
-        <div className="bg-gradient-to-br from-slate-50 to-blue-50 border border-border/50 rounded-3xl p-6 shadow-lg transition-all">
-          <h3 className="text-xl font-bold text-center mb-4">
-            {showSignup ? t('auth.selectAccountType') : t('auth.supportedAccounts')}
-          </h3>
-          
-          {/* Ligne des 4 boutons professionnels (Marchand, Livreur, Taxi, Transitaire) */}
-          <div className="flex flex-wrap justify-center gap-2 mb-3">
-            <button
-              onClick={() => handleRoleClick('vendeur')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
-                selectedRole === 'vendeur' 
-                  ? 'bg-primary text-primary-foreground shadow-lg scale-105' 
-                  : 'bg-white text-primary border-2 border-primary hover:bg-primary/10'
-              }`}
-            >
-              <Store className="h-4 w-4" />
-              <span>{t('auth.merchant')}</span>
-            </button>
-            
-            <button
-              onClick={() => handleRoleClick('livreur')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
-                selectedRole === 'livreur' 
-                  ? 'bg-orange-600 text-white shadow-lg scale-105' 
-                  : 'bg-white text-orange-700 border-2 border-orange-200 hover:border-orange-400 hover:bg-orange-50'
-              }`}
-            >
-              <Truck className="h-4 w-4" />
-              <span>{t('auth.deliveryDriver')}</span>
-            </button>
-            
-            <button
-              onClick={() => handleRoleClick('taxi')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
-                selectedRole === 'taxi' 
-                  ? 'bg-yellow-600 text-white shadow-lg scale-105' 
-                  : 'bg-white text-yellow-700 border-2 border-yellow-200 hover:border-yellow-400 hover:bg-yellow-50'
-              }`}
-            >
-              <Bike className="h-4 w-4" />
-              <span>{t('auth.taxiMoto')}</span>
-            </button>
-            
-            <button
-              onClick={() => handleRoleClick('transitaire')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
-                selectedRole === 'transitaire' 
-                  ? 'bg-indigo-600 text-white shadow-lg scale-105' 
-                  : 'bg-white text-indigo-700 border-2 border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50'
-              }`}
-            >
-              <Ship className="h-4 w-4" />
-              <span>{t('auth.transitAgent')}</span>
-            </button>
-          </div>
-          
-          {/* Bouton Client centré en bas */}
-          <div className="flex justify-center">
-            <button
-              onClick={() => handleRoleClick('client')}
-              className={`flex items-center justify-center gap-2 px-8 py-2.5 rounded-full text-sm font-medium transition-all ${
-                selectedRole === 'client' 
-                  ? 'bg-primary text-primary-foreground shadow-lg scale-105' 
-                  : 'bg-white text-primary border-2 border-primary hover:bg-primary/10'
-              }`}
-            >
-              <UserIcon className="h-4 w-4" />
-              <span>{t('auth.client')}</span>
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* NB: Les types de comptes sont désormais affichés dans le panneau d'inscription (à droite) */}
 
       {/* Sélection du type de service professionnel pour les marchands */}
       {showServiceSelection && (
@@ -1737,9 +1668,13 @@ export default function Auth() {
 
       {/* Formulaire de connexion/inscription/reset */}
       {!showServiceSelection && (
-        <div className="max-w-md mx-auto px-6 mt-8">
-        <Card className="shadow-lg border-2 border-primary/20">
-          <CardContent className="p-8">
+        <div className="max-w-6xl mx-auto px-4 mt-8">
+          <div className="grid lg:grid-cols-2 gap-6 items-start">
+            {/* Carte principale (formulaire) : login = gauche, signup = droite */}
+            <div className={showSignupLayout ? 'lg:order-2' : 'lg:order-1'}>
+              <div className="max-w-md mx-auto">
+                <Card className="shadow-lg border-2 border-primary/20">
+                  <CardContent className="p-8">
             {/* Écran de chargement pendant la vérification du lien de réinitialisation */}
             {checkingResetLink ? (
               <div className="flex flex-col items-center justify-center py-12 space-y-4">
@@ -1785,6 +1720,79 @@ export default function Auth() {
                   </p>
                 </div>
               </>
+            )}
+
+            {/* Types de comptes supportés (affichés uniquement pendant l'inscription) */}
+            {showSignupLayout && (
+              <div className="mb-6 bg-muted/30 border border-border rounded-xl p-4">
+                <h3 className="text-sm font-semibold text-center mb-3">Types de comptes supportés</h3>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleRoleClick('vendeur')}
+                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium border transition-all ${
+                      selectedRole === 'vendeur'
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background text-foreground border-input hover:border-primary/40'
+                    }`}
+                  >
+                    <Store className="h-4 w-4" />
+                    Marchand
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRoleClick('livreur')}
+                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium border transition-all ${
+                      selectedRole === 'livreur'
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background text-foreground border-input hover:border-primary/40'
+                    }`}
+                  >
+                    <Truck className="h-4 w-4" />
+                    Livreur
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRoleClick('taxi')}
+                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium border transition-all ${
+                      selectedRole === 'taxi'
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background text-foreground border-input hover:border-primary/40'
+                    }`}
+                  >
+                    <Bike className="h-4 w-4" />
+                    Taxi Moto
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRoleClick('transitaire')}
+                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium border transition-all ${
+                      selectedRole === 'transitaire'
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background text-foreground border-input hover:border-primary/40'
+                    }`}
+                  >
+                    <Ship className="h-4 w-4" />
+                    Transitaire
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRoleClick('client')}
+                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium border transition-all ${
+                      selectedRole === 'client'
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background text-foreground border-input hover:border-primary/40'
+                    }`}
+                  >
+                    <UserIcon className="h-4 w-4" />
+                    Client
+                  </button>
+                </div>
+              </div>
             )}
             
               {showSignup && (
@@ -2367,18 +2375,11 @@ export default function Auth() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (!showSignup && !selectedRole) {
-                      // L'utilisateur veut s'inscrire mais n'a pas sélectionné de type de compte
-                      // Afficher le modal de sélection
-                      setShowRoleSelectionModal(true);
-                    } else {
-                      setShowSignup(!showSignup);
-                      if (showSignup) {
-                        setSelectedRole(null);
-                      }
-                      setError(null);
-                      setSuccess(null);
-                    }
+                    // Nouveau flow UI: bascule Connexion <-> Inscription (panneau à droite)
+                    setShowSignup(!showSignup);
+                    if (showSignup) setSelectedRole(null);
+                    setError(null);
+                    setSuccess(null);
                   }}
                   className="text-sm text-purple-600 font-medium hover:underline"
                 >
@@ -2389,9 +2390,60 @@ export default function Auth() {
             )}
             </>
             )}
-          </CardContent>
-        </Card>
-      </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* Panneau à droite: CTA (login) ou retour (signup). Caché sur mobile en mode inscription */}
+            <div className={showSignupLayout ? 'hidden lg:block lg:order-1' : 'lg:order-2'}>
+              <div className="max-w-md mx-auto">
+                <Card className="border border-border/60 shadow-sm">
+                  <CardContent className="p-8">
+                    {!showSignupLayout ? (
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-bold">Créer un compte</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Cliquez pour accéder à l'inscription (Marchand, Livreur, Taxi Moto, Transitaire, Client).
+                        </p>
+                        <Button
+                          className="w-full"
+                          onClick={() => {
+                            setShowSignup(true);
+                            setIsLogin(false);
+                            setError(null);
+                            setSuccess(null);
+                          }}
+                        >
+                          Créer votre compte
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-bold">Déjà un compte ?</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Revenez à la connexion.
+                        </p>
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => {
+                            setShowSignup(false);
+                            setSelectedRole(null);
+                            setError(null);
+                            setSuccess(null);
+                          }}
+                        >
+                          Se connecter
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Modal de sélection de type de compte */}
