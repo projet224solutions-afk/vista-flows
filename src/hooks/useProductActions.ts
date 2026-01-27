@@ -10,6 +10,7 @@ import { usePublicId } from '@/hooks/usePublicId';
 import { SubscriptionService } from '@/services/subscriptionService';
 import { useAuth } from '@/hooks/useAuth';
 import { generateEAN13Barcode } from '@/lib/barcodeGenerator';
+import { useStorageUpload } from '@/hooks/useStorageUpload';
 
 interface ProductFormData {
   name: string;
@@ -49,51 +50,31 @@ export function useProductActions({
 }: UseProductActionsProps) {
   const { generatePublicId } = usePublicId();
   const { user } = useAuth();
+  const { uploadFile: gcsUploadFile, uploadMultipleFiles } = useStorageUpload();
 
   /**
-   * Upload des images vers Supabase Storage
+   * Upload des images vers Google Cloud Storage
    */
   const uploadImages = useCallback(async (files: File[]): Promise<string[]> => {
     if (!vendorId || files.length === 0) return [];
 
-    const imageUrls: string[] = [];
-
     toast.info(`Upload de ${files.length} image(s)...`);
 
-    for (const file of files) {
-      try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${vendorId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const results = await uploadMultipleFiles(files, {
+      folder: 'products',
+      subfolder: vendorId,
+    });
 
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('product-images')
-          .upload(fileName, file, {
-            cacheControl: '3600',
-            upsert: false,
-          });
-
-        if (uploadError) {
-          console.error('[ProductUpload] Error:', uploadError);
-          toast.error(`Échec upload ${file.name}: ${uploadError.message}`);
-          continue;
-        }
-
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from('product-images').getPublicUrl(fileName);
-
-        imageUrls.push(publicUrl);
-      } catch (error) {
-        console.error('[ProductUpload] Exception:', error);
-      }
-    }
+    const imageUrls = results
+      .filter(r => r.success && r.publicUrl)
+      .map(r => r.publicUrl!);
 
     if (imageUrls.length > 0) {
       toast.success(`${imageUrls.length} image(s) uploadée(s)`);
     }
 
     return imageUrls;
-  }, [vendorId]);
+  }, [vendorId, uploadMultipleFiles]);
 
   /**
    * Supprimer une vidéo du storage
@@ -126,7 +107,7 @@ export function useProductActions({
   }, []);
 
   /**
-   * Upload vidéo publicitaire vers Supabase Storage (Premium uniquement)
+   * Upload vidéo publicitaire vers Google Cloud Storage (Premium uniquement)
    */
   const uploadPromotionalVideo = useCallback(async (file: File): Promise<string | null> => {
     if (!vendorId || !file) return null;
@@ -134,33 +115,23 @@ export function useProductActions({
     try {
       toast.info('Upload vidéo publicitaire...');
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${vendorId}/videos/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const result = await gcsUploadFile(file, {
+        folder: 'videos',
+        subfolder: vendorId,
+      });
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('product-videos')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false,
-        });
-
-      if (uploadError) {
-        console.error('[VideoUpload] Error:', uploadError);
-        toast.error(`Échec upload vidéo: ${uploadError.message}`);
+      if (!result.success || !result.publicUrl) {
+        toast.error(`Échec upload vidéo: ${result.error}`);
         return null;
       }
 
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('product-videos').getPublicUrl(fileName);
-
       toast.success('Vidéo publicitaire uploadée');
-      return publicUrl;
+      return result.publicUrl;
     } catch (error) {
       console.error('[VideoUpload] Exception:', error);
       return null;
     }
-  }, [vendorId]);
+  }, [vendorId, gcsUploadFile]);
 
   /**
    * Synchroniser le stock dans la table inventory (stock réel utilisé en POS)

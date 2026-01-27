@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useStorageUpload } from '@/hooks/useStorageUpload';
 
 interface RestaurantSettingsProps {
   serviceId: string;
@@ -58,10 +59,10 @@ const DEFAULT_HOURS: OpeningHours = {
 };
 
 export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
+  const { uploadFile, isUploading } = useStorageUpload();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingType, setUploadingType] = useState<'logo' | 'cover' | null>(null);
   
   const [formData, setFormData] = useState({
     business_name: '',
@@ -158,36 +159,24 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
   const handleImageUpload = async (file: File, type: 'logo' | 'cover') => {
     if (!file) return;
     
-    const isLogo = type === 'logo';
-    const setUploading = isLogo ? setUploadingLogo : setUploadingCover;
-    const maxSize = isLogo ? 2 : 5; // MB
-    
-    if (file.size > maxSize * 1024 * 1024) {
-      toast.error(`L'image ne doit pas dépasser ${maxSize}MB`);
-      return;
-    }
-    
     try {
-      setUploading(true);
+      setUploadingType(type);
       
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${serviceId}_${type}_${Date.now()}.${fileExt}`;
-      const filePath = `restaurants/${fileName}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('public-images')
-        .upload(filePath, file, { upsert: true });
+      // Upload vers GCS via le hook unifié
+      const result = await uploadFile(file, {
+        folder: 'restaurant',
+        subfolder: serviceId,
+        metadata: { type },
+      });
 
-      if (uploadError) throw uploadError;
+      if (!result.success || !result.publicUrl) {
+        throw new Error(result.error || 'Échec de l\'upload');
+      }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('public-images')
-        .getPublicUrl(filePath);
-
-      if (isLogo) {
-        setFormData(prev => ({ ...prev, logo_url: publicUrl }));
+      if (type === 'logo') {
+        setFormData(prev => ({ ...prev, logo_url: result.publicUrl! }));
       } else {
-        setFormData(prev => ({ ...prev, cover_image_url: publicUrl }));
+        setFormData(prev => ({ ...prev, cover_image_url: result.publicUrl! }));
       }
       
       toast.success('Image uploadée !');
@@ -195,7 +184,7 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
       console.error('Upload error:', err);
       toast.error('Erreur lors de l\'upload');
     } finally {
-      setUploading(false);
+      setUploadingType(null);
     }
   };
 
@@ -369,16 +358,16 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
                     accept="image/*"
                     className="hidden"
                     onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'logo')}
-                    disabled={uploadingLogo}
+                    disabled={uploadingType === 'logo'}
                   />
-                  <Button variant="outline" size="sm" asChild disabled={uploadingLogo}>
+                  <Button variant="outline" size="sm" asChild disabled={uploadingType === 'logo'}>
                     <span className="cursor-pointer">
-                      {uploadingLogo ? (
+                      {uploadingType === 'logo' ? (
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       ) : (
                         <Upload className="w-4 h-4 mr-2" />
                       )}
-                      {uploadingLogo ? 'Upload...' : 'Changer le logo'}
+                      {uploadingType === 'logo' ? 'Upload...' : 'Changer le logo'}
                     </span>
                   </Button>
                 </label>
@@ -415,16 +404,16 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
                     accept="image/*"
                     className="hidden"
                     onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'cover')}
-                    disabled={uploadingCover}
+                    disabled={uploadingType === 'cover'}
                   />
-                  <Button variant="outline" size="sm" asChild disabled={uploadingCover}>
+                  <Button variant="outline" size="sm" asChild disabled={uploadingType === 'cover'}>
                     <span className="cursor-pointer">
-                      {uploadingCover ? (
+                      {uploadingType === 'cover' ? (
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       ) : (
                         <Upload className="w-4 h-4 mr-2" />
                       )}
-                      {uploadingCover ? 'Upload...' : 'Changer l\'image'}
+                      {uploadingType === 'cover' ? 'Upload...' : 'Changer l\'image'}
                     </span>
                   </Button>
                 </label>
