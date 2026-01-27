@@ -1668,7 +1668,7 @@ export default function Auth() {
 
       {/* Formulaire de connexion/inscription/reset */}
       {!showServiceSelection && (
-        <div className="max-w-md mx-auto px-4 mt-8">
+        <div className="max-w-md mx-auto px-4 mt-3">
               <div>
                 <Card className="shadow-lg border-2 border-primary/20">
                   <CardContent className="p-8">
