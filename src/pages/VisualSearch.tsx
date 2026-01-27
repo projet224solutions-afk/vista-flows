@@ -1,9 +1,10 @@
 // @ts-nocheck
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Camera, Upload, ArrowLeft, Search, Loader2, X, ImageIcon } from "lucide-react";
+import { Camera, Upload, ArrowLeft, Search, Loader2, X, ImageIcon, Sparkles, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -15,6 +16,13 @@ interface SearchResult {
   similarity?: number;
 }
 
+interface AnalysisResult {
+  products: string[];
+  category: string;
+  colors: string[];
+  description: string;
+}
+
 export default function VisualSearch() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,6 +30,8 @@ export default function VisualSearch() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [keywords, setKeywords] = useState<string[]>([]);
   const [showCamera, setShowCamera] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -101,33 +111,51 @@ export default function VisualSearch() {
     }
 
     setIsSearching(true);
+    setAnalysis(null);
+    setKeywords([]);
+    
     try {
-      // Pour l'instant, on fait une recherche textuelle basée sur les catégories
-      // Une vraie implémentation utiliserait un modèle de vision IA
-      const { data: products, error } = await supabase
-        .from('products')
-        .select('id, name, price, images')
-        .eq('is_active', true)
-        .limit(12);
+      // Appeler l'edge function pour analyser l'image avec l'IA
+      const { data, error } = await supabase.functions.invoke('visual-search', {
+        body: { imageBase64: capturedImage }
+      });
 
       if (error) throw error;
 
-      // Simuler des résultats avec des scores de similarité
-      const searchResults: SearchResult[] = (products || []).map((p, index) => ({
-        ...p,
-        similarity: Math.max(0.5, 1 - (index * 0.05))
-      }));
-
-      setResults(searchResults);
-      
-      if (searchResults.length === 0) {
-        toast.info("Aucun produit similaire trouvé");
+      if (data.success) {
+        setResults(data.results || []);
+        setAnalysis(data.analysis || null);
+        setKeywords(data.keywords || []);
+        
+        if (data.results?.length > 0) {
+          toast.success(`${data.results.length} produits similaires trouvés !`);
+        } else {
+          toast.info("Aucun produit similaire trouvé. Essayez une autre image.");
+        }
       } else {
-        toast.success(`${searchResults.length} produits similaires trouvés`);
+        throw new Error(data.error || 'Erreur de recherche');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur recherche:', error);
-      toast.error("Erreur lors de la recherche");
+      toast.error("Erreur lors de la recherche visuelle");
+      
+      // Fallback: recherche basique si l'IA échoue
+      try {
+        const { data: products } = await supabase
+          .from('products')
+          .select('id, name, price, images')
+          .eq('is_active', true)
+          .limit(12);
+        
+        if (products) {
+          setResults(products.map((p, i) => ({
+            ...p,
+            similarity: Math.max(0.3, 0.8 - (i * 0.05))
+          })));
+        }
+      } catch (fallbackError) {
+        console.error('Erreur fallback:', fallbackError);
+      }
     } finally {
       setIsSearching(false);
     }
@@ -136,6 +164,8 @@ export default function VisualSearch() {
   const clearImage = () => {
     setCapturedImage(null);
     setResults([]);
+    setAnalysis(null);
+    setKeywords([]);
   };
 
   return (
@@ -260,10 +290,41 @@ export default function VisualSearch() {
           </Button>
         )}
 
+        {/* Analyse IA - Affichage des mots-clés détectés */}
+        {analysis && (
+          <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span className="font-semibold text-sm">Analyse IA</span>
+              </div>
+              {analysis.description && (
+                <p className="text-sm text-muted-foreground mb-3">{analysis.description}</p>
+              )}
+              <div className="flex flex-wrap gap-2">
+                {keywords.map((keyword, index) => (
+                  <Badge 
+                    key={index} 
+                    variant="secondary"
+                    className="gap-1 cursor-pointer hover:bg-primary hover:text-primary-foreground"
+                    onClick={() => navigate(`/marketplace?search=${encodeURIComponent(keyword)}`)}
+                  >
+                    <Tag className="w-3 h-3" />
+                    {keyword}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Résultats */}
         {results.length > 0 && (
           <div className="space-y-4">
-            <h3 className="font-semibold text-foreground">Produits similaires</h3>
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
+              <Search className="w-4 h-4" />
+              {results.length} produits similaires trouvés
+            </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {results.map((product) => (
                 <Card 
