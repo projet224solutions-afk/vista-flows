@@ -105,33 +105,36 @@ export default function PDGFinance() {
   }));
 
   return (
-    <Tabs defaultValue="overview" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 lg:w-auto">
-        <TabsTrigger value="overview">
-          <DollarSign className="w-4 h-4 mr-2" />
-          Revenus
-        </TabsTrigger>
-        <TabsTrigger value="transactions">
-          <Wallet className="w-4 h-4 mr-2" />
-          Transactions
-        </TabsTrigger>
-        <TabsTrigger value="pdg-revenue">
-          <BarChart3 className="w-4 h-4 mr-2" />
-          PDG
-        </TabsTrigger>
-        <TabsTrigger value="subscriptions">
-          <Sparkles className="w-4 h-4 mr-2" />
-          Abonnements
-        </TabsTrigger>
-        <TabsTrigger value="escrow">
-          <Shield className="w-4 h-4 mr-2" />
-          Escrow
-        </TabsTrigger>
-        <TabsTrigger value="driver-subscriptions">
-          <Bike className="w-4 h-4 mr-2" />
-          Drivers
-        </TabsTrigger>
-      </TabsList>
+    <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
+      {/* Mobile: Horizontal scrollable tabs */}
+      <div className="overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0">
+        <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-6 gap-1 bg-muted/50 p-1 rounded-xl">
+          <TabsTrigger value="overview" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
+            <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>Revenus</span>
+          </TabsTrigger>
+          <TabsTrigger value="transactions" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
+            <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>Transactions</span>
+          </TabsTrigger>
+          <TabsTrigger value="pdg-revenue" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
+            <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>PDG</span>
+          </TabsTrigger>
+          <TabsTrigger value="subscriptions" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
+            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>Abonnements</span>
+          </TabsTrigger>
+          <TabsTrigger value="escrow" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
+            <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>Escrow</span>
+          </TabsTrigger>
+          <TabsTrigger value="driver-subscriptions" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
+            <Bike className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>Drivers</span>
+          </TabsTrigger>
+        </TabsList>
+      </div>
 
       <TabsContent value="overview" className="space-y-6">
         <PlatformRevenueOverview />

@@ -160,181 +160,183 @@ export default function PlatformRevenueOverview() {
   }
 
   return (
-    <Tabs defaultValue="summary" className="space-y-6">
-      <TabsList className="grid w-full max-w-md grid-cols-2">
-        <TabsTrigger value="summary" className="gap-2">
-          <TrendingUp className="w-4 h-4" />
-          Résumé
-        </TabsTrigger>
-        <TabsTrigger value="details" className="gap-2">
-          <List className="w-4 h-4" />
-          Transactions Détaillées
-        </TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="summary" className="space-y-6">
-        {/* Résumé Global */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <DollarSign className="w-4 h-4 text-green-500" />
-              </div>
-              Revenus Totaux Plateforme
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <p className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                {formatAmount(revenues?.total_revenue || 0)}
-              </p>
-              <p className="text-xs text-green-500 flex items-center gap-1">
-                <TrendingUp className="w-3 h-3" />
-                Tous services confondus
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-blue-500" />
-              </div>
-              Commissions Totales
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <p className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                {formatAmount(revenues?.total_commission || 0)}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {revenues?.total_transactions || 0} transactions
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-purple-500" />
-              </div>
-              Taux de Commission Moyen
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <p className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                {revenues?.total_revenue && revenues?.total_commission
-                  ? ((revenues.total_commission / revenues.total_revenue) * 100).toFixed(2)
-                  : 0}%
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Calculé sur tous les services
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+    <Tabs defaultValue="summary" className="space-y-4 sm:space-y-6">
+      <div className="overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0">
+        <TabsList className="inline-flex w-max sm:w-full sm:max-w-md sm:grid sm:grid-cols-2 gap-1 bg-muted/50 p-1 rounded-xl">
+          <TabsTrigger value="summary" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
+            <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>Résumé</span>
+          </TabsTrigger>
+          <TabsTrigger value="details" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
+            <List className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>Transactions Détaillées</span>
+          </TabsTrigger>
+        </TabsList>
       </div>
 
-      {/* Détail par Service */}
-      <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-primary" />
-                Revenus par Service
+      <TabsContent value="summary" className="space-y-4 sm:space-y-6">
+        {/* Résumé Global - Mobile: Full width single column */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+          <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardHeader className="pb-2 sm:pb-3 p-4 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                  <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" />
+                </div>
+                <span className="truncate">Revenus Totaux Plateforme</span>
               </CardTitle>
-              <CardDescription>Détail des revenus et commissions par type de service</CardDescription>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="gap-2"
-            >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-              Actualiser
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {!revenues?.services || revenues.services.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Aucune transaction enregistrée pour le moment
+            </CardHeader>
+            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+              <div className="space-y-1.5 sm:space-y-2">
+                <p className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  {formatAmount(revenues?.total_revenue || 0)}
+                </p>
+                <p className="text-[10px] sm:text-xs text-green-500 flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" />
+                  Tous services confondus
+                </p>
               </div>
-            ) : (
-              revenues.services
-                .filter(service => service.transaction_count > 0) // Afficher seulement les services avec transactions
-                .map((service, index) => (
-                <div
-                  key={service.service_name}
-                  className={`p-6 rounded-xl bg-gradient-to-br border transition-all duration-300 hover:shadow-lg animate-fade-in ${getServiceColor(service.service_name)}`}
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-background/50 flex items-center justify-center">
-                        {getServiceIcon(service.service_name)}
+            </CardContent>
+          </Card>
+
+          <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardHeader className="pb-2 sm:pb-3 p-4 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500" />
+                </div>
+                <span className="truncate">Commissions Totales</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+              <div className="space-y-1.5 sm:space-y-2">
+                <p className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  {formatAmount(revenues?.total_commission || 0)}
+                </p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">
+                  {revenues?.total_transactions || 0} transactions
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group sm:col-span-2 lg:col-span-1">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardHeader className="pb-2 sm:pb-3 p-4 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-500" />
+                </div>
+                <span className="truncate">Taux de Commission Moyen</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+              <div className="space-y-1.5 sm:space-y-2">
+                <p className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  {revenues?.total_revenue && revenues?.total_commission
+                    ? ((revenues.total_commission / revenues.total_revenue) * 100).toFixed(2)
+                    : 0}%
+                </p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">
+                  Calculé sur tous les services
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Détail par Service - Mobile optimized */}
+        <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+          <CardHeader className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+              <div className="min-w-0">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+                  <span className="truncate">Revenus par Service</span>
+                </CardTitle>
+                <CardDescription className="text-xs sm:text-sm mt-1">Détail par type de service</CardDescription>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="gap-2 w-full sm:w-auto"
+              >
+                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                <span className="sm:inline">Actualiser</span>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="space-y-3 sm:space-y-4">
+              {!revenues?.services || revenues.services.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground text-sm">
+                  Aucune transaction enregistrée pour le moment
+                </div>
+              ) : (
+                revenues.services
+                  .filter(service => service.transaction_count > 0)
+                  .map((service, index) => (
+                  <div
+                    key={service.service_name}
+                    className={`p-3 sm:p-6 rounded-xl bg-gradient-to-br border transition-all duration-300 hover:shadow-lg animate-fade-in ${getServiceColor(service.service_name)}`}
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+                      <div className="flex items-center gap-3 sm:gap-4">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-background/50 flex items-center justify-center flex-shrink-0">
+                          {getServiceIcon(service.service_name)}
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="font-semibold text-sm sm:text-lg truncate">{getServiceLabel(service.service_name)}</h4>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
+                            {service.transaction_count} transaction{service.transaction_count > 1 ? 's' : ''}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-lg">{getServiceLabel(service.service_name)}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {service.transaction_count} transaction{service.transaction_count > 1 ? 's' : ''}
+                      <div className="flex items-center justify-between sm:flex-col sm:items-end gap-1 mt-2 sm:mt-0 pl-13 sm:pl-0">
+                        <p className="text-lg sm:text-2xl font-bold">
+                          {formatAmount(service.total_revenue)}
                         </p>
+                        {service.total_commission > 0 && (
+                          <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20 text-[10px] sm:text-xs whitespace-nowrap">
+                            +{formatAmount(service.total_commission)}
+                          </Badge>
+                        )}
                       </div>
-                    </div>
-                    <div className="text-right space-y-1">
-                      <p className="text-2xl font-bold">
-                        {formatAmount(service.total_revenue)}
-                      </p>
-                      {service.total_commission > 0 && (
-                        <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
-                          +{formatAmount(service.total_commission)} commission
-                        </Badge>
-                      )}
                     </div>
                   </div>
-                </div>
-              ))
-            )}
-          </div>
-        </CardContent>
-      </Card>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Information */}
-      <Card className="border-blue-500/30 bg-blue-500/5">
-        <CardContent className="p-6">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-              <DollarSign className="w-5 h-5 text-blue-500" />
+        {/* Information - Mobile optimized */}
+        <Card className="border-blue-500/30 bg-blue-500/5">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
+              </div>
+              <div className="space-y-2 min-w-0">
+                <h4 className="font-semibold text-blue-900 dark:text-blue-100 text-sm sm:text-base">
+                  💡 Fonctionnement des Commissions
+                </h4>
+                <ul className="text-xs sm:text-sm space-y-1 text-blue-800 dark:text-blue-200 list-disc list-inside">
+                  <li>Les commissions sont calculées automatiquement</li>
+                  <li>Chaque service a sa propre configuration</li>
+                  <li className="hidden sm:list-item">Les frais sont automatiquement appliqués lors des transactions</li>
+                  <li className="hidden sm:list-item">Les revenus sont trackés en temps réel par service</li>
+                  <li className="hidden sm:list-item">Les configurations peuvent être modifiées dans l'onglet "Configuration"</li>
+                </ul>
+              </div>
             </div>
-            <div className="space-y-2">
-              <h4 className="font-semibold text-blue-900 dark:text-blue-100">
-                💡 Fonctionnement des Commissions
-              </h4>
-              <ul className="text-sm space-y-1 text-blue-800 dark:text-blue-200 list-disc list-inside">
-                <li>Les commissions sont calculées selon les configurations actives</li>
-                <li>Chaque service (E-Commerce, Taxi, Livraison) a sa propre configuration</li>
-                <li>Les frais sont automatiquement appliqués lors des transactions</li>
-                <li>Les revenus sont trackés en temps réel par service</li>
-                <li>Les configurations peuvent être modifiées dans l'onglet "Configuration"</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
       </TabsContent>
 
       <TabsContent value="details">
