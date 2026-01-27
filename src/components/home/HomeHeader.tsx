@@ -6,16 +6,16 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, ShoppingCart, Bell, Globe } from 'lucide-react';
+import { MapPin, ShoppingCart, Bell, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import LanguageSelector from '@/components/LanguageSelector';
+import { useUserLocation } from '@/hooks/useUserLocation';
 import { cn } from '@/lib/utils';
 
 interface HomeHeaderProps {
   cartCount?: number;
   notificationCount?: number;
-  location?: string;
   onCartClick?: () => void;
   onNotificationClick?: () => void;
   className?: string;
@@ -24,12 +24,12 @@ interface HomeHeaderProps {
 export function HomeHeader({
   cartCount = 0,
   notificationCount = 0,
-  location = 'Conakry, Guinée',
   onCartClick,
   onNotificationClick,
   className,
 }: HomeHeaderProps) {
   const navigate = useNavigate();
+  const { location, loading, refresh } = useUserLocation();
 
   return (
     <header
@@ -58,10 +58,20 @@ export function HomeHeader({
               </h1>
               <button 
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors group"
-                onClick={() => {/* Open location picker */}}
+                onClick={() => refresh()}
+                disabled={loading}
               >
-                <MapPin className="w-3 h-3 text-primary group-hover:scale-110 transition-transform" />
-                <span className="truncate">{location}</span>
+                {loading ? (
+                  <Loader2 className="w-3 h-3 text-primary animate-spin" />
+                ) : (
+                  <MapPin className="w-3 h-3 text-primary group-hover:scale-110 transition-transform" />
+                )}
+                <span className="truncate max-w-[150px]">
+                  {loading ? 'Détection...' : location?.address || 'Conakry, Guinée'}
+                </span>
+                {!loading && (
+                  <RefreshCw className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                )}
               </button>
             </div>
           </div>
