@@ -866,36 +866,45 @@ export default function IdNormalizationAudit() {
 
       {/* Tabs */}
       <Tabs defaultValue="non-standard" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger value="non-standard" className="gap-2">
-            <AlertTriangle className="w-4 h-4" />
-            Non-Standard ({nonStandardUsers.length})
-          </TabsTrigger>
-          <TabsTrigger value="reorganize" className="gap-2">
-            <Layers className="w-4 h-4" />
-            Réorganiser
-          </TabsTrigger>
-          <TabsTrigger value="activity" className="gap-2">
-            <Eye className="w-4 h-4" />
-            Activité
-          </TabsTrigger>
-          <TabsTrigger value="wallet-audit" className="gap-2">
-            <Wallet className="w-4 h-4" />
-            Audit Wallet
-          </TabsTrigger>
-          <TabsTrigger value="search" className="gap-2">
-            <Search className="w-4 h-4" />
-            Rechercher ID
-          </TabsTrigger>
-          <TabsTrigger value="logs" className="gap-2">
-            <Hash className="w-4 h-4" />
-            Logs
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="gap-2">
-            <TrendingUp className="w-4 h-4" />
-            Analytiques
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <TabsList className="inline-flex h-auto min-w-max gap-1 p-1 sm:grid sm:w-full sm:grid-cols-7">
+            <TabsTrigger value="non-standard" className="gap-1 px-2 py-1.5 text-xs sm:text-sm sm:px-3 sm:py-2 whitespace-nowrap">
+              <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Non-Standard</span>
+              <span className="sm:hidden">NS</span>
+              <span className="text-[10px] sm:text-xs">({nonStandardUsers.length})</span>
+            </TabsTrigger>
+            <TabsTrigger value="reorganize" className="gap-1 px-2 py-1.5 text-xs sm:text-sm sm:px-3 sm:py-2 whitespace-nowrap">
+              <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Réorganiser</span>
+              <span className="sm:hidden">Réorg</span>
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="gap-1 px-2 py-1.5 text-xs sm:text-sm sm:px-3 sm:py-2 whitespace-nowrap">
+              <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Activité</span>
+              <span className="sm:hidden">Act</span>
+            </TabsTrigger>
+            <TabsTrigger value="wallet-audit" className="gap-1 px-2 py-1.5 text-xs sm:text-sm sm:px-3 sm:py-2 whitespace-nowrap">
+              <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Audit Wallet</span>
+              <span className="sm:hidden">Wallet</span>
+            </TabsTrigger>
+            <TabsTrigger value="search" className="gap-1 px-2 py-1.5 text-xs sm:text-sm sm:px-3 sm:py-2 whitespace-nowrap">
+              <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Rechercher ID</span>
+              <span className="sm:hidden">Rech</span>
+            </TabsTrigger>
+            <TabsTrigger value="logs" className="gap-1 px-2 py-1.5 text-xs sm:text-sm sm:px-3 sm:py-2 whitespace-nowrap">
+              <Hash className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Logs
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-1 px-2 py-1.5 text-xs sm:text-sm sm:px-3 sm:py-2 whitespace-nowrap">
+              <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Analytiques</span>
+              <span className="sm:hidden">Stats</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Non-Standard Users Tab */}
         <TabsContent value="non-standard" className="space-y-4">
