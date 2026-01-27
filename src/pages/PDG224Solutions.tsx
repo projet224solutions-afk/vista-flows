@@ -445,8 +445,8 @@ export default function PDG224Solutions() {
           </div>
         )}
 
-        {/* Main Content */}
-        <div className="max-w-[1600px] mx-auto px-6 py-8">
+        {/* Main Content - Mobile optimized padding */}
+        <div className="max-w-[1600px] mx-auto px-3 sm:px-6 py-4 sm:py-8 pb-24 sm:pb-8">
           {/* Navigation */}
           <PDGNavigation 
             activeTab={activeTab}
@@ -454,8 +454,8 @@ export default function PDG224Solutions() {
             aiActive={aiActive}
           />
 
-          {/* Content */}
-          <div className="mt-8 animate-fade-in">
+          {/* Content - Mobile spacing */}
+          <div className="mt-4 sm:mt-8 animate-fade-in">
                 <Suspense fallback={
                   <div className="flex items-center justify-center py-12">
                     <div className="flex items-center gap-3">
