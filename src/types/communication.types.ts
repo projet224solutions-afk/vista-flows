@@ -20,6 +20,7 @@ export interface UserProfile {
   public_id?: string;
   role?: string;
   phone?: string;
+  preferred_language?: string; // Langue préférée pour les traductions
 }
 
 export interface Message {
@@ -36,6 +37,13 @@ export interface Message {
   audio_format?: string; // Format audio original (mp4, webm, ogg, etc.)
   audio_format_ios?: string; // Format audio converti pour iOS
   audio_mime_type?: string; // Type MIME complet
+  // Champs de traduction
+  translated_content?: string; // Contenu traduit
+  original_language?: string; // Langue détectée du message original
+  target_language?: string; // Langue cible de la traduction
+  translation_status?: 'none' | 'pending' | 'completed' | 'failed'; // Statut de traduction
+  display_content?: string; // Contenu à afficher (traduit ou original)
+  is_translated?: boolean; // Indique si le message affiché est une traduction
   status: MessageStatus;
   metadata?: MessageMetadata;
   created_at: string;
