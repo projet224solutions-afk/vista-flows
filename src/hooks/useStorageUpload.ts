@@ -121,6 +121,21 @@ export function useStorageUpload(): UseStorageUploadReturn {
       // Construire le chemin du dossier
       const folderPath = subfolder ? `${folder}/${subfolder}` : folder;
 
+      // Vérifier si l'utilisateur est authentifié
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('[useStorageUpload] Erreur session:', sessionError);
+        throw new Error('Erreur de session. Veuillez vous reconnecter.');
+      }
+
+      if (!session) {
+        console.error('[useStorageUpload] Pas de session active');
+        throw new Error('Session expirée. Veuillez vous reconnecter.');
+      }
+
+      console.log(`[useStorageUpload] Session valide, user: ${session.user.id}`);
+
       // Étape 1: Obtenir une URL signée pour l'upload
       console.log(`[useStorageUpload] Requesting signed URL for ${folderPath}/${file.name}`);
       
@@ -137,8 +152,14 @@ export function useStorageUpload(): UseStorageUploadReturn {
         }
       );
 
-      if (signedUrlError || !signedUrlData?.signedUrl) {
-        throw new Error(signedUrlError?.message || 'Échec de l\'obtention de l\'URL d\'upload');
+      if (signedUrlError) {
+        console.error('[useStorageUpload] Erreur Edge Function:', signedUrlError);
+        throw new Error(signedUrlError?.message || 'Erreur du service d\'upload');
+      }
+
+      if (!signedUrlData?.signedUrl) {
+        console.error('[useStorageUpload] Pas d\'URL signée retournée:', signedUrlData);
+        throw new Error(signedUrlData?.error || 'Échec de l\'obtention de l\'URL d\'upload');
       }
 
       setProgress(10);
