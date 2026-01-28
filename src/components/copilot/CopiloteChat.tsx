@@ -50,6 +50,11 @@ interface CopiloteChatProps {
   userRole?: 'client' | 'vendeur';
 }
 
+// Générer un ID de session unique pour la conversation
+const generateSessionId = () => {
+  return `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+};
+
 export default function CopiloteChat({ className = '', height = '600px', userRole = 'client' }: CopiloteChatProps) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -58,6 +63,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
   const [userContext, setUserContext] = useState<UserContext | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [sessionId, setSessionId] = useState<string>('');
   const [vendorAccess, setVendorAccess] = useState<{ loading: boolean; hasVendor: boolean | null }>({
     loading: userRole === 'vendeur',
     hasVendor: userRole === 'vendeur' ? null : true,
@@ -70,6 +76,20 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Initialiser ou récupérer le session ID
+  useEffect(() => {
+    const storageKey = `copilote-session-${userRole}-${user?.id || 'anonymous'}`;
+    let existingSession = localStorage.getItem(storageKey);
+    
+    if (!existingSession) {
+      existingSession = generateSessionId();
+      localStorage.setItem(storageKey, existingSession);
+    }
+    
+    setSessionId(existingSession);
+    console.log(`📍 Copilote session: ${existingSession}`);
+  }, [userRole, user?.id]);
 
   // Synchroniser les messages du vendorCopilot avec l'état local en mode Enterprise
   useEffect(() => {
@@ -89,14 +109,14 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
       setMessages([{
         id: 'welcome',
         role: 'assistant',
-        content: '👋 Bonjour ! Je suis votre Copilote IA. Je peux vous aider à analyser vos ventes, gérer votre inventaire, et optimiser votre boutique. Que puis-je faire pour vous ?',
+        content: '👋 Bienvenue dans votre espace vendeur ! Je peux analyser vos ventes, optimiser votre inventaire ou répondre à vos questions sur votre boutique. Dites-moi ce que vous souhaitez faire.',
         timestamp: new Date().toISOString(),
       }]);
     } else if (messages.length === 0 && userRole === 'client') {
       setMessages([{
         id: 'welcome',
         role: 'assistant',
-        content: '👋 Bonjour ! Je suis votre assistant pour vos achats sur 224Solutions. Comment puis-je vous aider ?',
+        content: '👋 Bienvenue sur 224Solutions ! Je suis là pour vous aider à trouver des produits, comparer les prix, découvrir des boutiques ou commander. Que recherchez-vous ?',
         timestamp: new Date().toISOString(),
       }]);
     }
@@ -237,6 +257,21 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
       const functionsBaseUrl = 'https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1';
       const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
 
+      // Préparer l'historique (15 derniers messages max pour le contexte)
+      // Exclure le message de bienvenue initial (id='welcome')
+      const historyMessages = messages
+        .filter(m => m.id !== 'welcome')
+        .slice(-15)
+        .map(m => ({ role: m.role, content: m.content }));
+      
+      // Ajouter le nouveau message utilisateur
+      const conversationMessages = [
+        ...historyMessages,
+        { role: 'user', content: userMessage.content }
+      ];
+
+      console.log(`📜 Sending ${conversationMessages.length} messages to AI (history: ${historyMessages.length}, session: ${sessionId})`);
+
       const response = await fetch(
         `${functionsBaseUrl}/${functionName}`,
         {
@@ -248,9 +283,9 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
           },
           body: JSON.stringify({
             message: userMessage.content,
-            messages: messages
-              .map(m => ({ role: m.role, content: m.content }))
-              .concat([{ role: 'user', content: userMessage.content }])
+            messages: conversationMessages,
+            sessionId: sessionId, // Pour la traçabilité côté serveur
+            userRole: userRole
           }),
         }
       );
@@ -398,7 +433,15 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
         const storageKey = `copilote-history-${userRole}`;
         localStorage.removeItem(storageKey);
       }
-      toast.success('Historique effacé');
+      
+      // Générer une nouvelle session après effacement
+      const sessionKey = `copilote-session-${userRole}-${user?.id || 'anonymous'}`;
+      const newSession = generateSessionId();
+      localStorage.setItem(sessionKey, newSession);
+      setSessionId(newSession);
+      console.log(`🔄 Nouvelle session créée: ${newSession}`);
+      
+      toast.success('Conversation réinitialisée');
     } catch (error) {
       console.error('Erreur lors de l\'effacement:', error);
       toast.error('Erreur lors de l\'effacement de l\'historique');
