@@ -436,7 +436,7 @@ export class OfflineSyncService {
               ? decryptData(record.local_data) 
               : record.local_data;
 
-            const { data, error } = await supabase
+            const { data, error } = await (supabase as any)
               .from(config.table)
               .upsert(localData, { onConflict: config.primaryKey })
               .select()
@@ -464,7 +464,7 @@ export class OfflineSyncService {
         const metadata = await database.get('sync_metadata', entity);
         const lastSync = metadata?.last_incremental_sync;
 
-        let query = supabase
+        let query = (supabase as any)
           .from(config.table)
           .select(config.columns.join(','))
           .order(config.lastModifiedColumn, { ascending: false })

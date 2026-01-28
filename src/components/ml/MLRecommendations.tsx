@@ -175,7 +175,7 @@ export function MLRecommendations({
   onProductClick
 }: MLRecommendationsProps) {
   const navigate = useNavigate();
-  const { addItem } = useCart();
+  const { addToCart } = useCart();
   
   const {
     recommendations,
@@ -213,11 +213,10 @@ export function MLRecommendations({
   };
 
   const handleAddToCart = (rec: ProductRecommendation) => {
-    addItem({
+    addToCart({
       id: rec.product_id,
       name: rec.product_name,
       price: rec.product_price,
-      quantity: 1,
       image: rec.product_image,
       vendor_id: rec.vendor_id
     });

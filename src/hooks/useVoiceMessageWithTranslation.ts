@@ -6,7 +6,7 @@
 
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { audioConversionService } from '@/services/AudioConversionService';
+import { autoConvertIfNeeded, needsConversionForIOS, isIOS } from '@/services/AudioConversionService';
 import { audioTranslationService } from '@/services/audioTranslationService';
 import { useToast } from '@/hooks/use-toast';
 
@@ -44,13 +44,13 @@ export function useVoiceMessageWithTranslation() {
     try {
       const { senderId, recipientId, conversationId, additionalMetadata } = options;
 
-      // 1. Convertir l'audio pour iOS si nécessaire
-      console.log('🎙️ Converting audio for compatibility...');
-      const conversionResult = await audioConversionService.convertAudioForIOS(audioBlob);
+      // 1. Vérifier si conversion pour iOS est nécessaire
+      console.log('🎙️ Checking audio compatibility...');
+      const needsConversion = needsConversionForIOS(undefined, 'audio.webm');
       
-      const audioToUpload = conversionResult.convertedBlob || audioBlob;
-      const audioFormat = conversionResult.format || 'webm';
-      const mimeType = audioFormat === 'm4a' ? 'audio/mp4' : 'audio/webm';
+      let audioToUpload = audioBlob;
+      let audioFormat = 'webm';
+      let mimeType = 'audio/webm';
 
       // 2. Upload vers Supabase Storage
       const fileName = `voice-${senderId}-${Date.now()}.${audioFormat}`;

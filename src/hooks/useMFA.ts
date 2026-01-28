@@ -50,7 +50,8 @@ export interface UseMFAResult {
 }
 
 export function useMFA(): UseMFAResult {
-  const { user, userType } = useAuth();
+  const { user, profile } = useAuth();
+  const userType = profile?.role || 'customer';
   
   const [status, setStatus] = useState<MFAStatus>('not_enrolled');
   const [factors, setFactors] = useState<MFAFactor[]>([]);

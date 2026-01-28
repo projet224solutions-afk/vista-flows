@@ -201,11 +201,11 @@ class AudioTranslationService {
 
       if (error) throw error;
 
-      const result = data?.[0];
+      const result = data?.[0] as any;
       return {
         audioUrl: result?.audio_url || '',
         isTranslated: result?.is_translated || false,
-        transcribedText: result?.transcribed_text
+        transcribedText: result?.transcribed_text || result?.display_text
       };
     } catch (error) {
       console.error('Error getting audio for user:', error);
@@ -242,7 +242,7 @@ class AudioTranslationService {
    */
   async getPendingAudioTranslations(limit: number = 10): Promise<AudioMessage[]> {
     try {
-      const { data, error } = await supabase.rpc('get_pending_audio_translations', {
+      const { data, error } = await (supabase.rpc as any)('get_pending_audio_translations', {
         p_limit: limit
       });
 

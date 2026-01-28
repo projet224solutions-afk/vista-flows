@@ -15,7 +15,7 @@ import {
   X,
   Loader2,
   FileVideo,
-  File,
+  File as FileIcon,
   Play,
   AlertTriangle
 } from 'lucide-react';
@@ -351,7 +351,7 @@ export default function MessageInput({
     if (file.type.startsWith('image/')) return <ImageIcon className="w-4 h-4" />;
     if (file.type.startsWith('video/')) return <FileVideo className="w-4 h-4" />;
     if (file.type.startsWith('audio/') || file.name.includes('vocal')) return <Mic className="w-4 h-4" />;
-    return <File className="w-4 h-4" />;
+    return <FileIcon className="w-4 h-4" />;
   };
 
   const formatFileSize = (bytes: number) => {

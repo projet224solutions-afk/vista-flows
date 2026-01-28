@@ -5,7 +5,9 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
-import { encode as base32Encode } from 'hi-base32';
+
+// Cast du client pour les tables MFA non définies dans le schéma
+const mfaDb = supabase as any;
 
 // Types
 export type MFAMethod = 'totp' | 'sms' | 'email' | 'webauthn';
@@ -108,7 +110,7 @@ export class MFAService {
     const { data: authFactors } = await supabase.auth.mfa.listFactors();
 
     // Récupérer les facteurs personnalisés (SMS, email)
-    const { data: customFactors } = await supabase
+    const { data: customFactors } = await (supabase as any)
       .from('mfa_factors')
       .select('*')
       .eq('user_id', this.userId)
@@ -218,7 +220,7 @@ export class MFAService {
       }
 
       // Créer le facteur
-      const { data, error } = await supabase
+      const { data, error } = await mfaDb
         .from('mfa_factors')
         .insert({
           user_id: this.userId,
@@ -260,7 +262,7 @@ export class MFAService {
       }
 
       // Créer le facteur
-      const { data, error } = await supabase
+      const { data, error } = await mfaDb
         .from('mfa_factors')
         .insert({
           user_id: this.userId,
@@ -328,7 +330,7 @@ export class MFAService {
   async verifyCode(factorId: string, code: string): Promise<MFAVerifyResult> {
     try {
       // Vérifier le code dans la base de données
-      const { data: challenge, error: fetchError } = await supabase
+      const { data: challenge, error: fetchError } = await mfaDb
         .from('mfa_challenges')
         .select('*')
         .eq('factor_id', factorId)
@@ -341,7 +343,7 @@ export class MFAService {
       }
 
       // Marquer le facteur comme vérifié
-      const { error: updateError } = await supabase
+      const { error: updateError } = await mfaDb
         .from('mfa_factors')
         .update({ verified: true, last_used_at: new Date().toISOString() })
         .eq('id', factorId);
@@ -349,7 +351,7 @@ export class MFAService {
       if (updateError) throw updateError;
 
       // Supprimer le challenge utilisé
-      await supabase
+      await mfaDb
         .from('mfa_challenges')
         .delete()
         .eq('id', challenge.id);
@@ -372,7 +374,7 @@ export class MFAService {
   async createChallenge(factorId: string): Promise<{ success: boolean; challenge?: MFAChallenge; error?: string }> {
     try {
       // Récupérer le facteur
-      const { data: factor } = await supabase
+      const { data: factor } = await mfaDb
         .from('mfa_factors')
         .select('*')
         .eq('id', factorId)
@@ -393,7 +395,7 @@ export class MFAService {
             id: data.id,
             factor_id: factorId,
             method: 'totp',
-            expires_at: data.expires_at
+            expires_at: String(data.expires_at)
           }
         };
       }
@@ -402,7 +404,7 @@ export class MFAService {
       const code = this.generateOTP();
       const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes
 
-      const { data: challenge, error } = await supabase
+      const { data: challengeData, error } = await mfaDb
         .from('mfa_challenges')
         .insert({
           factor_id: factorId,
@@ -424,9 +426,9 @@ export class MFAService {
       return {
         success: true,
         challenge: {
-          id: challenge.id,
+          id: challengeData?.id || '',
           factor_id: factorId,
-          method: factor.method as MFAMethod,
+          method: (factor as any)?.method as MFAMethod || 'sms',
           expires_at: expiresAt
         }
       };
@@ -445,7 +447,7 @@ export class MFAService {
     if (!this.userId) throw new Error('MFA Service not initialized');
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await mfaDb
         .from('mfa_backup_codes')
         .select('*')
         .eq('user_id', this.userId)
@@ -458,10 +460,10 @@ export class MFAService {
       }
 
       // Marquer comme utilisé
-      await supabase
+      await mfaDb
         .from('mfa_backup_codes')
         .update({ used: true, used_at: new Date().toISOString() })
-        .eq('id', data.id);
+        .eq('id', (data as any)?.id);
 
       return {
         success: true,
@@ -489,7 +491,7 @@ export class MFAService {
         if (error) throw error;
       } else {
         // Facteur personnalisé
-        const { error } = await supabase
+        const { error } = await mfaDb
           .from('mfa_factors')
           .delete()
           .eq('id', factorId);
@@ -510,7 +512,7 @@ export class MFAService {
 
     try {
       // Supprimer les anciens codes
-      await supabase
+      await mfaDb
         .from('mfa_backup_codes')
         .delete()
         .eq('user_id', this.userId);
@@ -552,7 +554,7 @@ export class MFAService {
       used: false
     }));
 
-    await supabase
+    await mfaDb
       .from('mfa_backup_codes')
       .insert(backupEntries);
   }
@@ -562,7 +564,7 @@ export class MFAService {
     
     // Sauvegarder le challenge
     if (!code) {
-      await supabase
+      await mfaDb
         .from('mfa_challenges')
         .insert({
           factor_id: factorId,
@@ -585,7 +587,7 @@ export class MFAService {
     
     // Sauvegarder le challenge
     if (!code) {
-      await supabase
+      await mfaDb
         .from('mfa_challenges')
         .insert({
           factor_id: factorId,
