@@ -618,11 +618,14 @@ export default function Messages() {
         .from('communication-files')
         .getPublicUrl(fileName);
 
-      // Déterminer le type de fichier - utiliser UNIQUEMENT les types acceptés par la DB
-      // (la table messages n'accepte pas "audio"/"video" ici)
-      let fileType: 'image' | 'file' = 'file';
+      // Déterminer le type de fichier - types acceptés par la DB: text, image, file, audio, video
+      let fileType: 'image' | 'file' | 'audio' | 'video' = 'file';
       if (file.type.startsWith('image/')) {
         fileType = 'image';
+      } else if (file.type.startsWith('audio/') || file.name.includes('vocal_') || file.name.includes('audio_')) {
+        fileType = 'audio';
+      } else if (file.type.startsWith('video/')) {
+        fileType = 'video';
       }
 
       // Insérer message avec fichier directement
