@@ -160,13 +160,13 @@ export class MLRecommendationService {
       }
 
       // Panier actuel
-      const { data: cart } = await supabase
+      const { data: cart } = await (supabase as any)
         .from('cart_items')
         .select('product_id')
         .eq('user_id', userId);
       
       if (cart) {
-        behavior.cart_products = cart.map(c => c.product_id);
+        behavior.cart_products = cart.map((c: any) => c.product_id);
       }
 
       // Termes recherchés (si table existe)
@@ -182,16 +182,16 @@ export class MLRecommendationService {
       }
 
       // Catégories favorites (basées sur les achats)
-      const { data: categories } = await supabase
+      const { data: categories } = await (supabase as any)
         .from('products')
-        .select('category')
+        .select('category_id')
         .in('id', behavior.purchased_products.slice(0, 20));
       
       if (categories) {
         const categoryCount: Record<string, number> = {};
-        categories.forEach(c => {
-          if (c.category) {
-            categoryCount[c.category] = (categoryCount[c.category] || 0) + 1;
+        categories.forEach((c: any) => {
+          if (c.category_id) {
+            categoryCount[c.category_id] = (categoryCount[c.category_id] || 0) + 1;
           }
         });
         behavior.favorite_categories = Object.entries(categoryCount)
@@ -239,7 +239,7 @@ export class MLRecommendationService {
     try {
       // Récupérer les produits des catégories favorites
       if (behavior.favorite_categories.length > 0) {
-        const { data: products } = await supabase
+        const { data: products } = await (supabase as any)
           .from('products')
           .select(`
             id,

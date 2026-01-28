@@ -515,7 +515,7 @@ class UniversalCommunicationService {
 
       const { data, error } = await supabase
         .from('messages')
-        .insert(messageData)
+        .insert(messageData as any)
         .select()
         .single();
 
@@ -1188,14 +1188,25 @@ class UniversalCommunicationService {
         } else {
           console.log('[Communication] Tentative suppression pour moi via requête directe');
           
-          // Supprimer uniquement pour cet utilisateur via SQL brut
-          // Utiliser une approche différente: mettre à jour directement
-          const { error: updateError } = await supabase
+          // Supprimer uniquement pour cet utilisateur
+          // Récupérer puis mettre à jour manuellement
+          const { data: msgData } = await supabase
             .from('messages')
-            .update({ 
-              deleted_for: supabase.sql`array_append(COALESCE(deleted_for, '{}'), ${userId}::uuid)`
-            } as any)
-            .eq('id', messageId);
+            .select('deleted_for')
+            .eq('id', messageId)
+            .single();
+            
+          const currentDeletedFor = (msgData?.deleted_for as string[]) || [];
+          
+          let updateError: any = null;
+          if (!currentDeletedFor.includes(userId)) {
+            const newDeletedFor = [...currentDeletedFor, userId];
+            const { error } = await supabase
+              .from('messages')
+              .update({ deleted_for: newDeletedFor })
+              .eq('id', messageId);
+            updateError = error;
+          }
           
           if (updateError) {
             console.warn('[Communication] Erreur update deleted_for avec SQL:', updateError);
@@ -1305,7 +1316,7 @@ class UniversalCommunicationService {
         .single();
 
       if (error) throw error;
-      return data as Message;
+      return data as unknown as Message;
     } catch (error) {
       console.error('[Communication] Erreur getReplyToMessage:', error);
       return null;

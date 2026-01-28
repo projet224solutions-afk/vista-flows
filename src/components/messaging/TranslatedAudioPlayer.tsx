@@ -249,7 +249,7 @@ export const CompactAudioPlayer: React.FC<{
       </div>
 
       {isTranslated && (
-        <Globe className="w-4 h-4 text-blue-400" title="Audio traduit" />
+        <Globe className="w-4 h-4 text-primary" aria-label="Audio traduit" />
       )}
     </div>
   );
