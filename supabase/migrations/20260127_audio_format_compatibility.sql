@@ -5,12 +5,19 @@
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS audio_format TEXT;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS audio_mime_type TEXT;
 
+-- Ajouter une colonne pour l'URL du fichier converti (compatible iOS)
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_url_ios TEXT;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS audio_format_ios TEXT;
+
 -- Créer un index pour optimiser les requêtes sur les fichiers audio
 CREATE INDEX IF NOT EXISTS idx_messages_audio_format ON messages(audio_format) WHERE audio_format IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_file_url_ios ON messages(file_url_ios) WHERE file_url_ios IS NOT NULL;
 
 -- Commentaires
 COMMENT ON COLUMN messages.audio_format IS 'Format du fichier audio (mp4, webm, mp3, ogg, wav, m4a)';
 COMMENT ON COLUMN messages.audio_mime_type IS 'Type MIME complet du fichier audio (audio/webm, audio/mp4, etc.)';
+COMMENT ON COLUMN messages.file_url_ios IS 'URL du fichier audio converti pour iOS (format m4a/mp4)';
+COMMENT ON COLUMN messages.audio_format_ios IS 'Format du fichier audio converti pour iOS';
 
 -- Fonction pour détecter le format audio à partir du nom de fichier
 CREATE OR REPLACE FUNCTION get_audio_format(file_name TEXT)

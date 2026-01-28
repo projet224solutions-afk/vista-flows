@@ -524,6 +524,23 @@ class UniversalCommunicationService {
       await this.logAudit(senderId, 'message_sent', data.id);
       
       console.log('[Communication] Fichier envoyé:', data.id);
+
+      // 🎵 Conversion automatique pour iOS si c'est un audio WebM/OGG
+      if (fileType === 'audio') {
+        const audioExt = file.name.split('.').pop()?.toLowerCase();
+        const formatsNeedingConversion = ['webm', 'ogg', 'opus'];
+        
+        if (audioExt && formatsNeedingConversion.includes(audioExt)) {
+          console.log('[Communication] 🔄 Lancement conversion iOS en arrière-plan...');
+          
+          // Import dynamique pour éviter les dépendances circulaires
+          import('@/services/AudioConversionService').then(({ autoConvertIfNeeded }) => {
+            autoConvertIfNeeded(data.id, publicUrl, file.name)
+              .catch(err => console.error('[Communication] Erreur conversion:', err));
+          });
+        }
+      }
+
       return data as Message;
     } catch (error) {
       console.error('[Communication] Erreur sendFileMessage:', error);

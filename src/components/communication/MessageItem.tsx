@@ -34,8 +34,13 @@ const detectPlatform = () => {
 };
 
 // Vérifier si un format audio est supporté pour la lecture
-const canPlayAudioFormat = (url: string, fileName?: string): boolean => {
+const canPlayAudioFormat = (url: string, fileName?: string, hasIOSUrl?: boolean): boolean => {
   const { isIOS, isSafari } = detectPlatform();
+  
+  // Si on a une URL iOS disponible, on peut toujours lire
+  if ((isIOS || isSafari) && hasIOSUrl) {
+    return true;
+  }
   
   // Extraire l'extension du fichier
   const ext = (fileName || url).split('.').pop()?.toLowerCase() || '';
@@ -70,8 +75,11 @@ interface MessageItemProps {
     senderName?: string;
     type?: 'text' | 'image' | 'video' | 'audio' | 'file';
     file_url?: string;
+    file_url_ios?: string; // URL du fichier converti pour iOS
     file_name?: string;
     file_size?: number;
+    audio_format?: string;
+    audio_format_ios?: string;
     attachments?: { type: string; url: string; name: string }[];
   };
   onDelete?: (messageId: string, deleteForEveryone: boolean) => void;
@@ -576,9 +584,17 @@ export default function MessageItem({
                     message.file_name?.endsWith('.ogg') ||
                     message.file_name?.endsWith('.m4a') ||
                     message.file_name?.endsWith('.mp4')) && (() => {
-                    // Vérifier la compatibilité du format AVANT de tenter la lecture
-                    const isFormatSupported = canPlayAudioFormat(message.file_url!, message.file_name);
+                    // Détection plateforme
                     const platformInfo = detectPlatform();
+                    
+                    // URL audio à utiliser (iOS convertie si disponible)
+                    const audioUrl = platformInfo.isIOS && message.file_url_ios 
+                      ? message.file_url_ios 
+                      : message.file_url!;
+                    
+                    // Vérifier la compatibilité du format AVANT de tenter la lecture
+                    const hasIOSUrl = !!message.file_url_ios;
+                    const isFormatSupported = canPlayAudioFormat(audioUrl, message.file_name, hasIOSUrl);
                     const hasError = audioErrors['direct-audio'] || !isFormatSupported;
                     
                     return (
@@ -613,7 +629,7 @@ export default function MessageItem({
                           </div>
                           {/* Bouton Télécharger visible */}
                           <a
-                            href={message.file_url}
+                            href={audioUrl}
                             download={message.file_name || 'vocal.m4a'}
                             onClick={(e) => e.stopPropagation()}
                             className={cn(
@@ -708,7 +724,7 @@ export default function MessageItem({
                           
                           {/* Bouton Télécharger */}
                           <a
-                            href={message.file_url}
+                            href={audioUrl}
                             download={message.file_name || 'vocal.m4a'}
                             onClick={(e) => e.stopPropagation()}
                             className={cn(
@@ -728,7 +744,7 @@ export default function MessageItem({
                       {isFormatSupported && (
                         <audio 
                           ref={(el) => setAudioRef('direct-audio', el)}
-                          src={message.file_url}
+                          src={audioUrl}
                           preload="metadata"
                           className="hidden"
                         />
