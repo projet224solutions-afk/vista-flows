@@ -9676,53 +9676,130 @@ export type Database = {
           },
         ]
       }
+      message_read_receipts: {
+        Row: {
+          delivered_at: string | null
+          id: string
+          message_id: string
+          read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          delivered_at?: string | null
+          id?: string
+          message_id: string
+          read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          delivered_at?: string | null
+          id?: string
+          message_id?: string
+          read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_read_receipts_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
+          audio_format: string | null
+          audio_format_ios: string | null
+          audio_mime_type: string | null
+          audio_translation_status: string | null
           content: string
           conversation_id: string | null
           created_at: string | null
+          deleted_at: string | null
+          deleted_for: string[] | null
+          delivered_at: string | null
+          edited_at: string | null
           file_name: string | null
           file_size: number | null
           file_url: string | null
+          file_url_ios: string | null
           id: string
           metadata: Json | null
+          original_language: string | null
           public_id: string | null
           read_at: string | null
           recipient_id: string
+          reply_to_id: string | null
           sender_id: string
           status: string | null
+          target_language: string | null
+          transcribed_text: string | null
+          translated_audio_url: string | null
+          translated_text: string | null
           type: Database["public"]["Enums"]["message_type"] | null
         }
         Insert: {
+          audio_format?: string | null
+          audio_format_ios?: string | null
+          audio_mime_type?: string | null
+          audio_translation_status?: string | null
           content: string
           conversation_id?: string | null
           created_at?: string | null
+          deleted_at?: string | null
+          deleted_for?: string[] | null
+          delivered_at?: string | null
+          edited_at?: string | null
           file_name?: string | null
           file_size?: number | null
           file_url?: string | null
+          file_url_ios?: string | null
           id?: string
           metadata?: Json | null
+          original_language?: string | null
           public_id?: string | null
           read_at?: string | null
           recipient_id: string
+          reply_to_id?: string | null
           sender_id: string
           status?: string | null
+          target_language?: string | null
+          transcribed_text?: string | null
+          translated_audio_url?: string | null
+          translated_text?: string | null
           type?: Database["public"]["Enums"]["message_type"] | null
         }
         Update: {
+          audio_format?: string | null
+          audio_format_ios?: string | null
+          audio_mime_type?: string | null
+          audio_translation_status?: string | null
           content?: string
           conversation_id?: string | null
           created_at?: string | null
+          deleted_at?: string | null
+          deleted_for?: string[] | null
+          delivered_at?: string | null
+          edited_at?: string | null
           file_name?: string | null
           file_size?: number | null
           file_url?: string | null
+          file_url_ios?: string | null
           id?: string
           metadata?: Json | null
+          original_language?: string | null
           public_id?: string | null
           read_at?: string | null
           recipient_id?: string
+          reply_to_id?: string | null
           sender_id?: string
           status?: string | null
+          target_language?: string | null
+          transcribed_text?: string | null
+          translated_audio_url?: string | null
+          translated_text?: string | null
           type?: Database["public"]["Enums"]["message_type"] | null
         }
         Relationships: [
@@ -9752,6 +9829,13 @@ export type Database = {
             columns: ["recipient_id"]
             isOneToOne: false
             referencedRelation: "user_search_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
           {
@@ -12072,6 +12156,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          auto_translate_audio: boolean | null
           avatar_url: string | null
           city: string | null
           country: string | null
@@ -12090,12 +12175,14 @@ export type Database = {
           last_geo_update: string | null
           last_name: string | null
           phone: string | null
+          preferred_language: string | null
           public_id: string | null
           role: Database["public"]["Enums"]["user_role"]
           status: string | null
           updated_at: string | null
         }
         Insert: {
+          auto_translate_audio?: boolean | null
           avatar_url?: string | null
           city?: string | null
           country?: string | null
@@ -12114,12 +12201,14 @@ export type Database = {
           last_geo_update?: string | null
           last_name?: string | null
           phone?: string | null
+          preferred_language?: string | null
           public_id?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           status?: string | null
           updated_at?: string | null
         }
         Update: {
+          auto_translate_audio?: boolean | null
           avatar_url?: string | null
           city?: string | null
           country?: string | null
@@ -12138,6 +12227,7 @@ export type Database = {
           last_geo_update?: string | null
           last_name?: string | null
           phone?: string | null
+          preferred_language?: string | null
           public_id?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           status?: string | null
@@ -18463,6 +18553,30 @@ export type Database = {
           },
         ]
       }
+      typing_indicators: {
+        Row: {
+          conversation_id: string
+          expires_at: string | null
+          id: string
+          started_at: string | null
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          expires_at?: string | null
+          id?: string
+          started_at?: string | null
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          expires_at?: string | null
+          id?: string
+          started_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_2fa_settings: {
         Row: {
           backup_codes_encrypted: string | null
@@ -18663,6 +18777,39 @@ export type Database = {
           created_at?: string
           custom_id?: string
           id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_presence: {
+        Row: {
+          current_device: string | null
+          custom_status: string | null
+          is_typing_in: string | null
+          last_active: string | null
+          last_seen: string | null
+          status: Database["public"]["Enums"]["user_presence_status"] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          current_device?: string | null
+          custom_status?: string | null
+          is_typing_in?: string | null
+          last_active?: string | null
+          last_seen?: string | null
+          status?: Database["public"]["Enums"]["user_presence_status"] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          current_device?: string | null
+          custom_status?: string | null
+          is_typing_in?: string | null
+          last_active?: string | null
+          last_seen?: string | null
+          status?: Database["public"]["Enums"]["user_presence_status"] | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -22026,6 +22173,14 @@ export type Database = {
           },
         ]
       }
+      audio_translation_stats: {
+        Row: {
+          count: number | null
+          day: string | null
+          status: string | null
+        }
+        Relationships: []
+      }
       bureau_pwa_stats: {
         Row: {
           bureau_id: string | null
@@ -22825,6 +22980,7 @@ export type Database = {
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_system_errors: { Args: never; Returns: Json }
       cleanup_realtime_events: { Args: never; Returns: number }
+      cleanup_typing_indicators: { Args: never; Returns: number }
       compute_daily_analytics: { Args: { p_date?: string }; Returns: number }
       confirm_delivery_and_release_escrow: {
         Args: { p_customer_id: string; p_escrow_id: string; p_notes?: string }
@@ -23373,6 +23529,16 @@ export type Database = {
       }
       get_active_subscription: { Args: { p_user_id: string }; Returns: Json }
       get_agent_permissions: { Args: { p_agent_id: string }; Returns: Json }
+      get_audio_for_user: {
+        Args: { p_message_id: string; p_user_id: string }
+        Returns: {
+          audio_url: string
+          display_text: string
+          is_translated: boolean
+          translation_status: string
+        }[]
+      }
+      get_audio_format: { Args: { file_name: string }; Returns: string }
       get_bureau_realtime_stats: {
         Args: { p_bureau_id: string }
         Returns: {
@@ -23564,6 +23730,16 @@ export type Database = {
           unread_count: number
         }[]
       }
+      get_user_presence: {
+        Args: { p_user_id: string }
+        Returns: {
+          current_device: string
+          custom_status: string
+          is_online: boolean
+          last_seen: string
+          status: Database["public"]["Enums"]["user_presence_status"]
+        }[]
+      }
       get_vehicle_security_summary: {
         Args: { p_vehicle_id: string }
         Returns: Json
@@ -23748,7 +23924,16 @@ export type Database = {
         Returns: string
       }
       longtransactionsenabled: { Args: never; Returns: boolean }
+      mark_conversation_messages_read: {
+        Args: { p_conversation_id: string; p_user_id: string }
+        Returns: number
+      }
       mark_expired_driver_subscriptions: { Args: never; Returns: number }
+      mark_inactive_users_offline: { Args: never; Returns: number }
+      mark_message_read_v2: {
+        Args: { p_message_id: string; p_user_id: string }
+        Returns: undefined
+      }
       mark_messages_as_read: {
         Args: { p_conversation_id: string; p_user_id: string }
         Returns: undefined
@@ -23882,6 +24067,16 @@ export type Database = {
       process_payment_by_type: {
         Args: { p_transaction_id: string }
         Returns: Json
+      }
+      process_pending_audio_translations: {
+        Args: { max_messages?: number }
+        Returns: {
+          file_url: string
+          message_id: string
+          original_language: string
+          sender_id: string
+          target_language: string
+        }[]
       }
       process_professional_service_payment: {
         Args: {
@@ -24116,6 +24311,22 @@ export type Database = {
       }
       set_syndicate_worker_permissions: {
         Args: { p_permissions: Json; p_worker_id: string }
+        Returns: boolean
+      }
+      set_typing_indicator: {
+        Args: {
+          p_conversation_id: string
+          p_is_typing?: boolean
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      soft_delete_message: {
+        Args: {
+          p_delete_for_everyone?: boolean
+          p_message_id: string
+          p_user_id: string
+        }
         Returns: boolean
       }
       st_3dclosestpoint: {
@@ -24860,6 +25071,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_user_presence_v2: {
+        Args: {
+          p_custom_status?: string
+          p_device?: string
+          p_status?: Database["public"]["Enums"]["user_presence_status"]
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       update_wallet_balance_atomic:
         | {
             Args: {
@@ -25087,6 +25307,7 @@ export type Database = {
         | "mobile_money_out"
         | "card_payment"
         | "bank_transfer"
+      user_presence_status: "online" | "offline" | "away" | "busy" | "in_call"
       user_role:
         | "admin"
         | "vendeur"
@@ -25384,6 +25605,7 @@ export const Constants = {
         "card_payment",
         "bank_transfer",
       ],
+      user_presence_status: ["online", "offline", "away", "busy", "in_call"],
       user_role: [
         "admin",
         "vendeur",

@@ -3,7 +3,7 @@
  * 224SOLUTIONS - Gestion du profil et des adresses de livraison
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { toast } from 'sonner';
 import { 
   Settings, 
@@ -22,8 +22,12 @@ import {
   Save,
   Loader2,
   X,
-  Check
+  Check,
+  Shield
 } from 'lucide-react';
+
+// Lazy loading du composant de changement de mot de passe
+const ClientPasswordChange = lazy(() => import('./ClientPasswordChange'));
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -432,7 +436,7 @@ const ClientSettings: React.FC = () => {
           Paramètres du compte
         </h2>
         <p className="text-muted-foreground">
-          Gérez votre profil et vos adresses de livraison
+          Gérez votre profil, vos adresses de livraison et la sécurité de votre compte
         </p>
       </div>
 
@@ -445,6 +449,10 @@ const ClientSettings: React.FC = () => {
           <TabsTrigger value="addresses" className="flex items-center gap-2">
             <MapPin className="w-4 h-4" />
             Adresses
+          </TabsTrigger>
+          <TabsTrigger value="security" className="flex items-center gap-2">
+            <Shield className="w-4 h-4" />
+            Sécurité
           </TabsTrigger>
         </TabsList>
 
@@ -688,6 +696,19 @@ const ClientSettings: React.FC = () => {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Onglet Sécurité */}
+        <TabsContent value="security" className="space-y-6">
+          <Suspense fallback={
+            <Card>
+              <CardContent className="py-8 flex items-center justify-center">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </CardContent>
+            </Card>
+          }>
+            <ClientPasswordChange />
+          </Suspense>
         </TabsContent>
       </Tabs>
 
