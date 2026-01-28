@@ -30,8 +30,12 @@ export interface Message {
   content: string;
   type: MessageType;
   file_url?: string;
+  file_url_ios?: string; // URL du fichier audio converti pour iOS
   file_name?: string;
   file_size?: number;
+  audio_format?: string; // Format audio original (mp4, webm, ogg, etc.)
+  audio_format_ios?: string; // Format audio converti pour iOS
+  audio_mime_type?: string; // Type MIME complet
   status: MessageStatus;
   metadata?: MessageMetadata;
   created_at: string;

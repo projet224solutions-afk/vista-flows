@@ -29,7 +29,7 @@ export function useVendorCopilot() {
     {
       id: 'welcome',
       role: 'system',
-      content: '👋 Bonjour ! Je suis votre Copilote IA ENTERPRISE. Je peux analyser vos ventes, gérer votre inventaire, répondre aux avis clients, et optimiser votre boutique. Que puis-je faire pour vous ?',
+      content: '👋 Bienvenue dans votre espace vendeur ! Je peux analyser vos ventes, gérer votre inventaire, répondre aux avis clients, et optimiser votre boutique. Dites-moi ce que vous souhaitez faire.',
       timestamp: new Date(),
       type: 'system',
     }

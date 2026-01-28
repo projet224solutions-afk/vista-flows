@@ -36,9 +36,12 @@ interface Message {
   status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
   type?: 'text' | 'image' | 'video' | 'audio' | 'file' | 'location' | 'call';
   file_url?: string;
+  file_url_ios?: string;  // URL du fichier audio converti pour iOS
   file_name?: string;
   file_size?: number;
   file_type?: string;
+  audio_format?: string;  // Format audio original
+  audio_format_ios?: string;  // Format audio converti pour iOS
   conversation_id?: string;
   public_id?: string;
   metadata?: any;
@@ -1094,8 +1097,11 @@ export default function Messages() {
                               isOwn: isOwnMessage,
                               type: safeType,
                               file_url: message.file_url,
+                              file_url_ios: message.file_url_ios,
                               file_name: message.file_name,
-                              file_size: message.file_size
+                              file_size: message.file_size,
+                              audio_format: message.audio_format,
+                              audio_format_ios: message.audio_format_ios
                             }}
                             onReply={() => handleReplyToMessage(message)}
                             onDelete={(msgId, deleteForEveryone) => handleDeleteMessage(msgId, deleteForEveryone)}
