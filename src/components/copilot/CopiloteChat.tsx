@@ -116,7 +116,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
       setMessages([{
         id: 'welcome',
         role: 'assistant',
-        content: '👋 Bienvenue sur 224Solutions ! Je suis là pour vous aider à trouver des produits, comparer les prix, découvrir des boutiques ou commander. Que recherchez-vous ?',
+        content: '👋 Bienvenue ! Je suis votre conseiller 224Solutions. Je peux vous aider avec votre compte, vos transactions, vos commandes ou vos achats. Dites-moi ce dont vous avez besoin.',
         timestamp: new Date().toISOString(),
       }]);
     }
