@@ -37,13 +37,18 @@ export interface Message {
   audio_format?: string; // Format audio original (mp4, webm, ogg, etc.)
   audio_format_ios?: string; // Format audio converti pour iOS
   audio_mime_type?: string; // Type MIME complet
-  // Champs de traduction
+  // Champs de traduction texte
   translated_content?: string; // Contenu traduit
   original_language?: string; // Langue détectée du message original
   target_language?: string; // Langue cible de la traduction
-  translation_status?: 'none' | 'pending' | 'completed' | 'failed'; // Statut de traduction
+  translation_status?: 'none' | 'pending' | 'completed' | 'failed'; // Statut de traduction texte
   display_content?: string; // Contenu à afficher (traduit ou original)
   is_translated?: boolean; // Indique si le message affiché est une traduction
+  // Champs de traduction audio
+  transcribed_text?: string; // Texte transcrit du message audio (speech-to-text)
+  translated_text?: string; // Texte traduit du message audio
+  translated_audio_url?: string; // URL de l'audio traduit et synthétisé
+  audio_translation_status?: 'none' | 'pending' | 'text_only' | 'completed' | 'failed'; // Statut traduction audio
   status: MessageStatus;
   metadata?: MessageMetadata;
   created_at: string;
