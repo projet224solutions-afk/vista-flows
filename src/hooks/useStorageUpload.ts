@@ -1,6 +1,6 @@
 /**
  * Hook unifié pour gérer tous les uploads vers Google Cloud Storage
- * Remplace les uploads vers Supabase Storage
+ * Avec fallback vers Supabase Storage si GCS échoue
  */
 
 import { useState, useCallback } from 'react';
@@ -19,11 +19,26 @@ export type StorageFolder =
   | 'travel'
   | 'misc';
 
+// Mapping des folders vers les buckets Supabase pour le fallback
+const SUPABASE_BUCKET_MAP: Record<StorageFolder, string> = {
+  avatars: 'avatars',
+  products: 'product-images',
+  videos: 'communication-files',
+  audio: 'communication-files',
+  documents: 'communication-files',
+  stamps: 'communication-files',
+  restaurant: 'restaurant-assets',
+  'digital-products': 'digital-products',
+  travel: 'communication-files',
+  misc: 'communication-files',
+};
+
 interface UploadOptions {
   folder: StorageFolder;
   subfolder?: string; // Ex: userId, productId, etc.
   onProgress?: (progress: number) => void;
   metadata?: Record<string, string>;
+  preferSupabase?: boolean; // Force Supabase Storage instead of GCS
 }
 
 interface UploadResult {
@@ -31,6 +46,7 @@ interface UploadResult {
   publicUrl?: string;
   objectPath?: string;
   error?: string;
+  provider?: 'gcs' | 'supabase';
 }
 
 interface UseStorageUploadReturn {
@@ -99,13 +115,58 @@ export function useStorageUpload(): UseStorageUploadReturn {
   }, []);
 
   /**
-   * Upload un fichier vers Google Cloud Storage
+   * Upload via Supabase Storage (fallback)
+   */
+  const uploadToSupabase = useCallback(async (
+    file: File,
+    folder: StorageFolder,
+    subfolder?: string,
+    onProgress?: (progress: number) => void
+  ): Promise<UploadResult> => {
+    const bucket = SUPABASE_BUCKET_MAP[folder];
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 8);
+    const extension = file.name.split('.').pop() || '';
+    const baseName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9]/g, '-');
+    const fileName = `${baseName}-${timestamp}-${random}.${extension}`;
+    const filePath = subfolder ? `${subfolder}/${fileName}` : `${folder}/${fileName}`;
+
+    console.log(`[useStorageUpload] Uploading to Supabase bucket: ${bucket}, path: ${filePath}`);
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, file, {
+        contentType: file.type,
+        upsert: true
+      });
+
+    if (uploadError) {
+      console.error('[useStorageUpload] Supabase upload error:', uploadError);
+      throw new Error(uploadError.message);
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(filePath);
+
+    onProgress?.(100);
+
+    return {
+      success: true,
+      publicUrl: publicUrlData.publicUrl,
+      objectPath: filePath,
+      provider: 'supabase' as const,
+    };
+  }, []);
+
+  /**
+   * Upload un fichier (GCS avec fallback Supabase)
    */
   const uploadFile = useCallback(async (
     file: File,
     options: UploadOptions
   ): Promise<UploadResult> => {
-    const { folder, subfolder, onProgress } = options;
+    const { folder, subfolder, onProgress, preferSupabase } = options;
 
     // Validation
     const validation = validateFile(file, folder);
@@ -118,6 +179,14 @@ export function useStorageUpload(): UseStorageUploadReturn {
     setProgress(0);
 
     try {
+      // Si preferSupabase est true, utiliser directement Supabase
+      if (preferSupabase) {
+        console.log('[useStorageUpload] Using Supabase Storage (preferSupabase=true)');
+        const result = await uploadToSupabase(file, folder, subfolder, onProgress);
+        setProgress(100);
+        return result;
+      }
+
       // Construire le chemin du dossier
       const folderPath = subfolder ? `${folder}/${subfolder}` : folder;
 
@@ -126,91 +195,109 @@ export function useStorageUpload(): UseStorageUploadReturn {
       
       if (sessionError) {
         console.error('[useStorageUpload] Erreur session:', sessionError);
-        throw new Error('Erreur de session. Veuillez vous reconnecter.');
+        // Fallback vers Supabase sans authentification
+        console.log('[useStorageUpload] Falling back to Supabase Storage (session error)');
+        const result = await uploadToSupabase(file, folder, subfolder, onProgress);
+        setProgress(100);
+        return result;
       }
 
       if (!session) {
         console.error('[useStorageUpload] Pas de session active');
-        throw new Error('Session expirée. Veuillez vous reconnecter.');
+        // Fallback vers Supabase
+        console.log('[useStorageUpload] Falling back to Supabase Storage (no session)');
+        const result = await uploadToSupabase(file, folder, subfolder, onProgress);
+        setProgress(100);
+        return result;
       }
 
       console.log(`[useStorageUpload] Session valide, user: ${session.user.id}`);
 
-      // Étape 1: Obtenir une URL signée pour l'upload
-      console.log(`[useStorageUpload] Requesting signed URL for ${folderPath}/${file.name}`);
-      
-      const { data: signedUrlData, error: signedUrlError } = await supabase.functions.invoke(
-        'gcs-signed-url',
-        {
-          body: {
-            action: 'upload',
-            fileName: file.name,
-            contentType: file.type,
-            folder: folderPath,
-            expiresInMinutes: 15,
-          },
-        }
-      );
-
-      if (signedUrlError) {
-        console.error('[useStorageUpload] Erreur Edge Function:', signedUrlError);
-        throw new Error(signedUrlError?.message || 'Erreur du service d\'upload');
-      }
-
-      if (!signedUrlData?.signedUrl) {
-        console.error('[useStorageUpload] Pas d\'URL signée retournée:', signedUrlData);
-        throw new Error(signedUrlData?.error || 'Échec de l\'obtention de l\'URL d\'upload');
-      }
-
-      setProgress(10);
-      onProgress?.(10);
-
-      console.log(`[useStorageUpload] Got signed URL, uploading to GCS...`);
-
-      // Étape 2: Upload direct vers GCS via l'URL signée
-      const uploadResponse = await fetch(signedUrlData.signedUrl, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': file.type,
-        },
-        body: file,
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error(`Échec de l'upload: ${uploadResponse.statusText}`);
-      }
-
-      setProgress(80);
-      onProgress?.(80);
-
-      console.log(`[useStorageUpload] Upload successful: ${signedUrlData.publicUrl}`);
-
-      // Étape 3: Notifier le backend (optionnel, pour tracking)
+      // Essayer GCS en premier
       try {
-        await supabase.functions.invoke('gcs-upload-complete', {
-          body: {
-            objectPath: signedUrlData.objectPath,
-            fileType: folder,
-            metadata: {
-              originalName: file.name,
-              size: file.size,
-              mimeType: file.type,
-              ...options.metadata,
+        // Étape 1: Obtenir une URL signée pour l'upload
+        console.log(`[useStorageUpload] Requesting signed URL for ${folderPath}/${file.name}`);
+        
+        const { data: signedUrlData, error: signedUrlError } = await supabase.functions.invoke(
+          'gcs-signed-url',
+          {
+            body: {
+              action: 'upload',
+              fileName: file.name,
+              contentType: file.type,
+              folder: folderPath,
+              expiresInMinutes: 15,
             },
+          }
+        );
+
+        if (signedUrlError || !signedUrlData?.signedUrl) {
+          console.warn('[useStorageUpload] GCS signed URL failed, falling back to Supabase');
+          const result = await uploadToSupabase(file, folder, subfolder, onProgress);
+          setProgress(100);
+          return result;
+        }
+
+        setProgress(10);
+        onProgress?.(10);
+
+        console.log(`[useStorageUpload] Got signed URL, uploading to GCS...`);
+
+        // Étape 2: Upload direct vers GCS via l'URL signée
+        const uploadResponse = await fetch(signedUrlData.signedUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': file.type,
           },
+          body: file,
         });
-      } catch (notifyError) {
-        console.warn('[useStorageUpload] Upload notification failed (non-critical):', notifyError);
+
+        if (!uploadResponse.ok) {
+          console.warn('[useStorageUpload] GCS upload failed, falling back to Supabase');
+          const result = await uploadToSupabase(file, folder, subfolder, onProgress);
+          setProgress(100);
+          return result;
+        }
+
+        setProgress(80);
+        onProgress?.(80);
+
+        console.log(`[useStorageUpload] Upload successful: ${signedUrlData.publicUrl}`);
+
+        // Étape 3: Notifier le backend (optionnel, pour tracking)
+        try {
+          await supabase.functions.invoke('gcs-upload-complete', {
+            body: {
+              objectPath: signedUrlData.objectPath,
+              fileType: folder,
+              metadata: {
+                originalName: file.name,
+                size: file.size,
+                mimeType: file.type,
+                ...options.metadata,
+              },
+            },
+          });
+        } catch (notifyError) {
+          console.warn('[useStorageUpload] Upload notification failed (non-critical):', notifyError);
+        }
+
+        setProgress(100);
+        onProgress?.(100);
+
+        return {
+          success: true,
+          publicUrl: signedUrlData.publicUrl,
+          objectPath: signedUrlData.objectPath,
+          provider: 'gcs' as const,
+        };
+
+      } catch (gcsError: any) {
+        console.warn('[useStorageUpload] GCS error, falling back to Supabase:', gcsError);
+        const result = await uploadToSupabase(file, folder, subfolder, onProgress);
+        setProgress(100);
+        return result;
       }
-
-      setProgress(100);
-      onProgress?.(100);
-
-      return {
-        success: true,
-        publicUrl: signedUrlData.publicUrl,
-        objectPath: signedUrlData.objectPath,
-      };
 
     } catch (error: any) {
       console.error('[useStorageUpload] Error:', error);
@@ -222,7 +309,7 @@ export function useStorageUpload(): UseStorageUploadReturn {
     } finally {
       setIsUploading(false);
     }
-  }, [validateFile]);
+  }, [validateFile, uploadToSupabase]);
 
   /**
    * Upload multiple fichiers
