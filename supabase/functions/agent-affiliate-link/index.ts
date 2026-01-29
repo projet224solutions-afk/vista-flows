@@ -3,12 +3,16 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-agent-token',
 };
 
 /**
  * Agent Affiliate Link Management
  * Endpoints: create, list, update, track-click, validate-token
+ * 
+ * Supporte DEUX modes d'authentification:
+ * 1. Supabase Auth (Authorization header avec JWT)
+ * 2. Token Agent (X-Agent-Token header avec access_token)
  */
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -36,43 +40,75 @@ serve(async (req) => {
       return await validateToken(supabaseAdmin, token);
     }
 
-    // Actions authentifiées
+    // === AUTHENTIFICATION MULTI-MODE ===
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
+    const agentToken = req.headers.get('X-Agent-Token');
+    
+    let agent = null;
+
+    // Mode 1: Token d'agent (X-Agent-Token)
+    if (agentToken) {
+      console.log('🔑 Authentification par token agent');
+      const { data: agentData, error: agentError } = await supabaseAdmin
+        .from('agents_management')
+        .select('*')
+        .eq('access_token', agentToken)
+        .eq('is_active', true)
+        .single();
+
+      if (agentError || !agentData) {
+        console.error('❌ Token agent invalide:', agentError);
+        return new Response(
+          JSON.stringify({ error: 'Token agent invalide ou expiré' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      agent = agentData;
+    }
+    // Mode 2: Supabase Auth (Authorization header)
+    else if (authHeader) {
+      console.log('🔐 Authentification par Supabase Auth');
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        { global: { headers: { Authorization: authHeader } } }
+      );
+
+      const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+      if (authError || !user) {
+        console.error('❌ Auth Supabase échouée:', authError);
+        return new Response(
+          JSON.stringify({ error: 'Non authentifié' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Trouver l'agent par user_id
+      const { data: agentData, error: agentError } = await supabaseAdmin
+        .from('agents_management')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single();
+
+      if (agentError || !agentData) {
+        console.error('❌ Agent non trouvé pour user_id:', user.id);
+        return new Response(
+          JSON.stringify({ error: 'Agent non trouvé ou inactif' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      agent = agentData;
+    }
+    // Aucune authentification
+    else {
       return new Response(
-        JSON.stringify({ error: 'Non autorisé' }),
+        JSON.stringify({ error: 'Authentification requise (Authorization ou X-Agent-Token)' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Non authentifié' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Vérifier que l'utilisateur est un agent actif
-    const { data: agent, error: agentError } = await supabaseAdmin
-      .from('agents_management')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-      .single();
-
-    if (agentError || !agent) {
-      return new Response(
-        JSON.stringify({ error: 'Agent non trouvé ou inactif' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    console.log('✅ Agent authentifié:', agent.agent_code);
 
     const body = req.method === 'POST' || req.method === 'PUT' 
       ? await req.json() 
@@ -95,7 +131,7 @@ serve(async (req) => {
     }
 
   } catch (error) {
-    console.error('Erreur:', error);
+    console.error('❌ Erreur:', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Erreur inconnue' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -246,7 +282,7 @@ async function trackClick(supabase: any, body: any, req: Request) {
     .eq('id', link.id);
 
   // Récupérer l'agent
-  const { data: agent } = await supabase
+  const { data: agentData } = await supabase
     .from('agents_management')
     .select('id, name, commission_rate')
     .eq('id', link.agent_id)
@@ -256,9 +292,9 @@ async function trackClick(supabase: any, body: any, req: Request) {
     JSON.stringify({
       success: true,
       agent_id: link.agent_id,
-      agent_name: agent?.name,
+      agent_name: agentData?.name,
       target_role: link.target_role,
-      commission_rate: link.commission_override || agent?.commission_rate || 5
+      commission_rate: link.commission_override || agentData?.commission_rate || 5
     }),
     { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );

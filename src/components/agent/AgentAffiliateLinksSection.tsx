@@ -54,9 +54,10 @@ interface Stats {
 
 interface AgentAffiliateLinksSectionProps {
   agentId: string;
+  agentToken?: string; // Token d'accès de l'agent (pour auth via X-Agent-Token)
 }
 
-export function AgentAffiliateLinksSection({ agentId }: AgentAffiliateLinksSectionProps) {
+export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffiliateLinksSectionProps) {
   const [links, setLinks] = useState<AffiliateLink[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,27 +72,55 @@ export function AgentAffiliateLinksSection({ agentId }: AgentAffiliateLinksSecti
     expires_days: ''
   });
 
+  // Récupérer le token depuis l'URL si non fourni en props
+  const getAgentToken = (): string | null => {
+    if (agentToken) return agentToken;
+    
+    // Essayer de récupérer depuis l'URL
+    const pathParts = window.location.pathname.split('/');
+    const agentIndex = pathParts.indexOf('agent');
+    if (agentIndex !== -1 && pathParts[agentIndex + 1]) {
+      return pathParts[agentIndex + 1];
+    }
+    
+    // Essayer depuis sessionStorage
+    return sessionStorage.getItem('agent_access_token');
+  };
+
   useEffect(() => {
     loadData();
   }, [agentId]);
+
+  const invokeWithAgentAuth = async (action: string, body?: any) => {
+    const token = getAgentToken();
+    
+    // Préparer les headers
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['X-Agent-Token'] = token;
+    }
+
+    const response = await supabase.functions.invoke(`agent-affiliate-link?action=${action}`, {
+      body: body || {},
+      headers
+    });
+
+    return response;
+  };
 
   const loadData = async () => {
     setLoading(true);
     try {
       // Charger les liens
-      const { data: linksRes } = await supabase.functions.invoke('agent-affiliate-link', {
-        body: {},
-        method: 'GET'
-      });
-
-      // Alternative: utiliser query params
-      const linksResponse = await supabase.functions.invoke('agent-affiliate-link?action=list');
+      const linksResponse = await invokeWithAgentAuth('list');
       if (linksResponse.data?.links) {
         setLinks(linksResponse.data.links);
+      } else if (linksResponse.error) {
+        console.error('Erreur chargement liens:', linksResponse.error);
       }
 
       // Charger les stats
-      const statsResponse = await supabase.functions.invoke('agent-affiliate-link?action=stats');
+      const statsResponse = await invokeWithAgentAuth('stats');
       if (statsResponse.data?.stats) {
         setStats(statsResponse.data.stats);
       }
@@ -120,9 +149,7 @@ export function AgentAffiliateLinksSection({ agentId }: AgentAffiliateLinksSecti
         body.expires_at = expiresAt.toISOString();
       }
 
-      const response = await supabase.functions.invoke('agent-affiliate-link?action=create', {
-        body
-      });
+      const response = await invokeWithAgentAuth('create', body);
 
       if (response.error) throw response.error;
 
@@ -151,9 +178,7 @@ export function AgentAffiliateLinksSection({ agentId }: AgentAffiliateLinksSecti
 
   const toggleLinkStatus = async (linkId: string, isActive: boolean) => {
     try {
-      await supabase.functions.invoke('agent-affiliate-link?action=update', {
-        body: { link_id: linkId, is_active: !isActive }
-      });
+      await invokeWithAgentAuth('update', { link_id: linkId, is_active: !isActive });
       loadData();
       toast.success(isActive ? 'Lien désactivé' : 'Lien activé');
     } catch (error: any) {
@@ -283,7 +308,7 @@ export function AgentAffiliateLinksSection({ agentId }: AgentAffiliateLinksSecti
               </Button>
               <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                 <DialogTrigger asChild>
-                  <Button>
+                  <Button className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600">
                     <Plus className="h-4 w-4 mr-2" />
                     Nouveau lien
                   </Button>

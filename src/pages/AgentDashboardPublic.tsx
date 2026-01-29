@@ -721,7 +721,7 @@ export default function AgentDashboardPublic() {
         );
 
       case 'affiliate':
-        return <AgentAffiliateLinksSection agentId={agent.id} />;
+        return <AgentAffiliateLinksSection agentId={agent.id} agentToken={token} />;
 
       default:
         return null;
