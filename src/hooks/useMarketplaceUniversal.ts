@@ -39,6 +39,8 @@ export interface MarketplaceItem {
   item_type: 'product' | 'digital_product' | 'professional_service';
   free_shipping?: boolean;
   created_at: string;
+  marketplace_position?: number; // Position dans le marketplace (rotation automatique)
+  is_sponsored?: boolean; // Produit sponsorisé (toujours en tête)
   // Champs spécifiques aux services professionnels
   business_name?: string;
   address?: string;
@@ -64,7 +66,7 @@ interface UseMarketplaceUniversalOptions {
   country?: string;
   city?: string;
   itemType?: 'all' | 'product' | 'digital_product' | 'professional_service';
-  sortBy?: 'popular' | 'price_asc' | 'price_desc' | 'rating' | 'newest';
+  sortBy?: 'popular' | 'price_asc' | 'price_desc' | 'rating' | 'newest' | 'position';
   autoLoad?: boolean;
 }
 
@@ -114,6 +116,8 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           reviews_count,
           free_shipping,
           created_at,
+          marketplace_position,
+          is_sponsored,
           vendors(business_name, user_id, business_type, country, city),
           categories(name)
         `)
@@ -200,7 +204,9 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           reviews_count: product.reviews_count || 0,
           item_type: 'product' as const,
           free_shipping: product.free_shipping || false,
-          created_at: product.created_at
+          created_at: product.created_at,
+          marketplace_position: (product as any).marketplace_position || 0,
+          is_sponsored: (product as any).is_sponsored || false,
         };
       });
     } catch (error) {
@@ -318,6 +324,8 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           created_at,
           affiliate_url,
           file_type,
+          marketplace_position,
+          is_sponsored,
           vendors:vendors!digital_products_vendor_id_fkey (business_name, user_id, shop_slug)
         `
         )
@@ -394,6 +402,8 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           file_size: product.file_type || undefined,
           license_type: product.product_mode === "affiliate" ? "Affiliation" : "Vente directe",
           created_at: product.created_at,
+          marketplace_position: product.marketplace_position || 0,
+          is_sponsored: product.is_sponsored || false,
           // Exposer product_mode et affiliate_url pour le panier
           product_mode: product.product_mode as 'direct' | 'affiliate' | undefined,
           affiliate_url: product.affiliate_url || undefined,
@@ -481,26 +491,44 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       }
 
       // Tri
-      switch (sortBy) {
-        case 'price_asc':
-          allItems.sort((a, b) => a.price - b.price);
-          break;
-        case 'price_desc':
-          allItems.sort((a, b) => b.price - a.price);
-          break;
-        case 'rating':
-          allItems.sort((a, b) => b.rating - a.rating);
-          break;
-        case 'popular':
-          allItems.sort((a, b) => b.reviews_count - a.reviews_count);
-          break;
-        case 'newest':
-        default:
-          allItems.sort((a, b) => 
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          );
-          break;
-      }
+      // D'abord, séparer les produits sponsorisés (toujours en tête)
+      const sponsored = allItems.filter(item => item.is_sponsored);
+      const nonSponsored = allItems.filter(item => !item.is_sponsored);
+      
+      // Fonction de tri pour les non-sponsorisés
+      const sortItems = (items: MarketplaceItem[]) => {
+        switch (sortBy) {
+          case 'position':
+            // Tri par position de rotation (le plus petit = en tête)
+            items.sort((a, b) => (a.marketplace_position || 0) - (b.marketplace_position || 0));
+            break;
+          case 'price_asc':
+            items.sort((a, b) => a.price - b.price);
+            break;
+          case 'price_desc':
+            items.sort((a, b) => b.price - a.price);
+            break;
+          case 'rating':
+            items.sort((a, b) => b.rating - a.rating);
+            break;
+          case 'popular':
+            items.sort((a, b) => b.reviews_count - a.reviews_count);
+            break;
+          case 'newest':
+          default:
+            // Par défaut, utiliser la position de rotation pour un ordre équitable
+            items.sort((a, b) => (a.marketplace_position || 0) - (b.marketplace_position || 0));
+            break;
+        }
+        return items;
+      };
+      
+      // Trier les deux groupes séparément
+      sortItems(sponsored);
+      sortItems(nonSponsored);
+      
+      // Combiner: sponsorisés en tête, puis les autres
+      allItems = [...sponsored, ...nonSponsored];
 
       // Pagination
       const currentPage = reset ? 1 : page;

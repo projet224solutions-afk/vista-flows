@@ -4825,6 +4825,8 @@ export type Database = {
           images: string[] | null
           is_featured: boolean | null
           is_premium: boolean | null
+          is_sponsored: boolean | null
+          marketplace_position: number | null
           merchant_id: string | null
           metadata: Json | null
           original_price: number | null
@@ -4838,6 +4840,7 @@ export type Database = {
           short_description: string | null
           source_platform: string | null
           source_url: string | null
+          sponsored_until: string | null
           status: string
           tags: string[] | null
           title: string
@@ -4860,6 +4863,8 @@ export type Database = {
           images?: string[] | null
           is_featured?: boolean | null
           is_premium?: boolean | null
+          is_sponsored?: boolean | null
+          marketplace_position?: number | null
           merchant_id?: string | null
           metadata?: Json | null
           original_price?: number | null
@@ -4873,6 +4878,7 @@ export type Database = {
           short_description?: string | null
           source_platform?: string | null
           source_url?: string | null
+          sponsored_until?: string | null
           status?: string
           tags?: string[] | null
           title: string
@@ -4895,6 +4901,8 @@ export type Database = {
           images?: string[] | null
           is_featured?: boolean | null
           is_premium?: boolean | null
+          is_sponsored?: boolean | null
+          marketplace_position?: number | null
           merchant_id?: string | null
           metadata?: Json | null
           original_price?: number | null
@@ -4908,6 +4916,7 @@ export type Database = {
           short_description?: string | null
           source_platform?: string | null
           source_url?: string | null
+          sponsored_until?: string | null
           status?: string
           tags?: string[] | null
           title?: string
@@ -10277,6 +10286,75 @@ export type Database = {
           },
         ]
       }
+      marketplace_rotation_config: {
+        Row: {
+          batch_size: number
+          created_at: string
+          current_batch_offset: number
+          id: string
+          is_active: boolean
+          last_rotation_at: string
+          rotation_interval_minutes: number
+          total_batches: number
+          updated_at: string
+        }
+        Insert: {
+          batch_size?: number
+          created_at?: string
+          current_batch_offset?: number
+          id?: string
+          is_active?: boolean
+          last_rotation_at?: string
+          rotation_interval_minutes?: number
+          total_batches?: number
+          updated_at?: string
+        }
+        Update: {
+          batch_size?: number
+          created_at?: string
+          current_batch_offset?: number
+          id?: string
+          is_active?: boolean
+          last_rotation_at?: string
+          rotation_interval_minutes?: number
+          total_batches?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      marketplace_rotation_history: {
+        Row: {
+          batch_offset_after: number
+          batch_offset_before: number
+          created_at: string
+          digital_products_rotated: number
+          duration_ms: number | null
+          id: string
+          products_rotated: number
+          rotation_at: string
+        }
+        Insert: {
+          batch_offset_after: number
+          batch_offset_before: number
+          created_at?: string
+          digital_products_rotated?: number
+          duration_ms?: number | null
+          id?: string
+          products_rotated?: number
+          rotation_at?: string
+        }
+        Update: {
+          batch_offset_after?: number
+          batch_offset_before?: number
+          created_at?: string
+          digital_products_rotated?: number
+          duration_ms?: number | null
+          id?: string
+          products_rotated?: number
+          rotation_at?: string
+        }
+        Relationships: []
+      }
       members: {
         Row: {
           bureau_id: string | null
@@ -12644,7 +12722,9 @@ export type Database = {
           is_active: boolean | null
           is_featured: boolean | null
           is_hot: boolean | null
+          is_sponsored: boolean | null
           low_stock_threshold: number | null
+          marketplace_position: number | null
           name: string
           price: number
           price_carton: number | null
@@ -12657,6 +12737,7 @@ export type Database = {
           seo_description: string | null
           seo_title: string | null
           sku: string | null
+          sponsored_until: string | null
           stock_quantity: number | null
           tags: string[] | null
           units_per_carton: number | null
@@ -12681,7 +12762,9 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           is_hot?: boolean | null
+          is_sponsored?: boolean | null
           low_stock_threshold?: number | null
+          marketplace_position?: number | null
           name: string
           price: number
           price_carton?: number | null
@@ -12694,6 +12777,7 @@ export type Database = {
           seo_description?: string | null
           seo_title?: string | null
           sku?: string | null
+          sponsored_until?: string | null
           stock_quantity?: number | null
           tags?: string[] | null
           units_per_carton?: number | null
@@ -12718,7 +12802,9 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           is_hot?: boolean | null
+          is_sponsored?: boolean | null
           low_stock_threshold?: number | null
+          marketplace_position?: number | null
           name?: string
           price?: number
           price_carton?: number | null
@@ -12731,6 +12817,7 @@ export type Database = {
           seo_description?: string | null
           seo_title?: string | null
           sku?: string | null
+          sponsored_until?: string | null
           stock_quantity?: number | null
           tags?: string[] | null
           units_per_carton?: number | null
@@ -25740,6 +25827,7 @@ export type Database = {
         Returns: Json
       }
       resolve_cache_errors: { Args: never; Returns: number }
+      rotate_marketplace_products: { Args: never; Returns: Json }
       run_daily_wallet_audit: { Args: never; Returns: Json }
       schedule_funds_release: {
         Args: {
