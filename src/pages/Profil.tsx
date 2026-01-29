@@ -108,9 +108,9 @@ export default function Profil() {
             .select('type_agent, role')
             .eq('user_id', user.id)
             .single();
-          
+
           if (data && !error) {
-            const typeLabel = data.type_agent 
+            const typeLabel = data.type_agent
               ? data.type_agent.charAt(0).toUpperCase() + data.type_agent.slice(1)
               : 'Agent';
             const roleLabel = data.role || '';
@@ -127,12 +127,12 @@ export default function Profil() {
     fetchAgentType();
   }, [profile?.role, user?.id]);
 
-  const baseUserTypeInfo = (profile?.role && userTypes[profile.role as keyof typeof userTypes]) 
-    ? userTypes[profile.role as keyof typeof userTypes] 
+  const baseUserTypeInfo = (profile?.role && userTypes[profile.role as keyof typeof userTypes])
+    ? userTypes[profile.role as keyof typeof userTypes]
     : userTypes.client;
-  
+
   // Utiliser les infos dynamiques de l'agent si disponibles
-  const userTypeInfo = profile?.role === 'agent' && agentTypeInfo 
+  const userTypeInfo = profile?.role === 'agent' && agentTypeInfo
     ? { ...baseUserTypeInfo, label: agentTypeInfo.label, description: agentTypeInfo.description }
     : baseUserTypeInfo;
 
@@ -155,7 +155,7 @@ export default function Profil() {
         .eq('customer_id', user.id)
         .order('created_at', { ascending: false })
         .limit(20);
-      
+
       if (error) {
         console.error('Error loading orders:', error);
         toast.error('Erreur lors du chargement des commandes');
@@ -191,7 +191,7 @@ export default function Profil() {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50);
-      
+
       if (error) {
         console.error('Error loading transactions:', error);
         toast.error('Erreur lors du chargement des transactions');
@@ -223,7 +223,7 @@ export default function Profil() {
 
   const handleSaveSettings = async () => {
     if (!user) return;
-    
+
     setSaving(true);
     try {
       // Mise à jour de l'email
@@ -241,7 +241,7 @@ export default function Profil() {
           .from('profiles')
           .update({ phone: editPhone })
           .eq('id', user.id);
-        
+
         if (profileError) throw profileError;
         toast.success('Numéro de téléphone mis à jour');
       }
@@ -419,11 +419,11 @@ export default function Profil() {
                   </Button>
                 )}
               </div>
-              
+
               <div className="flex-1 min-w-0">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-2">
                   <h2 className="text-lg sm:text-xl font-bold truncate">
-                    {profile?.first_name && profile?.last_name 
+                    {profile?.first_name && profile?.last_name
                       ? `${profile.first_name} ${profile.last_name}`
                       : user.email
                     }
@@ -432,13 +432,13 @@ export default function Profil() {
                     {userTypeInfo.label}
                   </Badge>
                 </div>
-                
+
                 <p className="text-sm sm:text-base text-muted-foreground mb-1 sm:mb-2 break-all">{user.email}</p>
-                
+
                 {profile?.phone && (
                   <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">{profile.phone}</p>
                 )}
-                
+
                 <p className="text-xs sm:text-sm text-muted-foreground">
                   {userTypeInfo.description}
                 </p>
@@ -446,7 +446,7 @@ export default function Profil() {
             </div>
           </CardContent>
         </Card>
-        
+
         {/* User ID Card */}
         <Card className="mt-3 sm:mt-4">
           <CardContent className="p-3 sm:p-4">
@@ -632,7 +632,7 @@ export default function Profil() {
               <label className="text-sm font-medium">Rôle</label>
               <p className="text-muted-foreground mt-1">{profile?.role || 'client'}</p>
             </div>
-            
+
             {/* Sélecteur de langue */}
             <div className="pt-2 border-t border-border">
               <LanguageSelector variant="default" />

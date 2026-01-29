@@ -19,6 +19,7 @@ import MessageItem from "@/components/communication/MessageItem";
 import { PresenceIndicator, TypingIndicator, MessageStatusBadge } from "@/components/communication/PresenceIndicator";
 import { ReplyBar } from "@/components/communication/EnhancedMessageBubble";
 import { usePresence } from "@/hooks/usePresence";
+import { useRealtimePresence } from "@/hooks/useRealtimePresence";
 import type { PresenceStatus, Message as MessageType } from "@/types/communication.types";
 
 interface Message {
@@ -75,7 +76,7 @@ export default function Messages() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const recipientIdParam = searchParams.get('recipientId');
-  
+
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [availableContacts, setAvailableContacts] = useState<Conversation[]>([]);
@@ -100,8 +101,8 @@ export default function Messages() {
   const [otherUserPresence, setOtherUserPresence] = useState<PresenceStatus>('offline');
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Hook de présence
+
+  // Hook de présence (legacy)
   const {
     updatePresence,
     getUserPresence,
@@ -111,6 +112,16 @@ export default function Messages() {
     typingUsers,
     presenceCache,
   } = usePresence();
+
+  // 🚀 Hook de présence temps réel ultra-rapide
+  const {
+    isOnline: isUserOnlineRealtime,
+    getPresence: getRealtimePresence,
+    startTyping: startTypingRealtime,
+    stopTyping: stopTypingRealtime,
+    typingUsers: realtimeTypingUsers,
+    isConnected: presenceConnected,
+  } = useRealtimePresence({ debug: false });
 
   useEffect(() => {
     loadCurrentUser();
@@ -173,50 +184,84 @@ export default function Messages() {
   useEffect(() => {
     if (!selectedConversation) return;
 
-    // Charger la présence initiale
-    getUserPresence(selectedConversation).then((presence) => {
+    // 🚀 Utiliser le hook temps réel pour une détection instantanée
+    const checkPresence = () => {
+      const isOnline = isUserOnlineRealtime(selectedConversation);
+      const presence = getRealtimePresence(selectedConversation);
+
       if (presence) {
         setOtherUserPresence(presence.status);
+      } else {
+        setOtherUserPresence(isOnline ? 'online' : 'offline');
       }
-    });
+    };
 
-    // S'abonner aux changements
+    // Vérifier immédiatement
+    checkPresence();
+
+    // Mettre à jour périodiquement (le hook gère le temps réel)
+    const interval = setInterval(checkPresence, 1000);
+
+    // S'abonner aussi aux changements legacy pour compatibilité
     const unsubscribe = subscribeToPresence(selectedConversation, (presence) => {
       setOtherUserPresence(presence.status);
     });
 
     return () => {
+      clearInterval(interval);
       unsubscribe();
     };
-  }, [selectedConversation, getUserPresence, subscribeToPresence]);
+  }, [selectedConversation, isUserOnlineRealtime, getRealtimePresence, subscribeToPresence]);
 
   // Subscription aux indicateurs de frappe
   useEffect(() => {
     if (!selectedConversation) return;
 
+    // 🚀 Vérifier les indicateurs temps réel
+    const checkTyping = () => {
+      const typingInConv = Array.from(realtimeTypingUsers.entries())
+        .filter(([_, convId]) => convId === selectedConversation)
+        .length > 0;
+
+      if (typingInConv) {
+        setIsTyping(true);
+        return;
+      }
+    };
+
+    checkTyping();
+    const interval = setInterval(checkTyping, 500);
+
+    // Fallback legacy
     const unsubscribe = subscribeToTyping(selectedConversation, (indicators) => {
       setIsTyping(indicators.length > 0);
     });
 
     return () => {
+      clearInterval(interval);
       unsubscribe();
     };
-  }, [selectedConversation, subscribeToTyping]);
+  }, [selectedConversation, subscribeToTyping, realtimeTypingUsers]);
 
   // Gérer l'indicateur de frappe lors de la saisie
   const handleTyping = useCallback(() => {
     if (!selectedConversation) return;
-    
+
+    // 🚀 Utiliser le système temps réel
+    startTypingRealtime(selectedConversation);
+
+    // Fallback legacy
     setTyping(selectedConversation, true);
-    
+
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
-    
+
     typingTimeoutRef.current = setTimeout(() => {
+      stopTypingRealtime();
       setTyping(selectedConversation, false);
     }, 3000);
-  }, [selectedConversation, setTyping]);
+  }, [selectedConversation, setTyping, startTypingRealtime, stopTypingRealtime]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -364,7 +409,7 @@ export default function Messages() {
     try {
       setSearchingUsers(true);
       const searchTerm = query.trim();
-      
+
       // Échapper les caractères spéciaux pour éviter les erreurs de requête
       const escapedTerm = searchTerm.replace(/[%_]/g, '\\$&');
       const searchPattern = `%${escapedTerm}%`;
@@ -380,7 +425,7 @@ export default function Messages() {
         .neq('id', currentUser?.id || '')
         .or(`public_id.ilike.${searchPattern},first_name.ilike.${searchPattern},last_name.ilike.${searchPattern},email.ilike.${searchPattern},phone.ilike.${searchPattern}`)
         .limit(20);
-      
+
       console.log('[Messages] 📊 Résultats recherche:', { profiles: profiles?.length, error });
 
       if (error) {
@@ -406,9 +451,9 @@ export default function Messages() {
 
           return {
             id: profile.id,
-            name: vendor?.business_name || 
-              (profile.first_name && profile.last_name 
-                ? `${profile.first_name} ${profile.last_name}` 
+            name: vendor?.business_name ||
+              (profile.first_name && profile.last_name
+                ? `${profile.first_name} ${profile.last_name}`
                 : profile.email || 'Utilisateur'),
             email: profile.email,
             avatar_url: profile.avatar_url,
@@ -457,7 +502,7 @@ export default function Messages() {
         setMessages([]);
         return;
       }
-      
+
       // Charger les messages de réponse séparément si reply_to_id existe
       const messagesWithReplies = await Promise.all((data || []).map(async (msg) => {
         let replyTo = null;
@@ -469,7 +514,7 @@ export default function Messages() {
             .single();
           replyTo = replyData;
         }
-        
+
         return {
           ...msg,
           status: msg.status as 'sending' | 'sent' | 'delivered' | 'read' | 'failed' | undefined,
@@ -477,17 +522,17 @@ export default function Messages() {
           reply_to: replyTo as Message | null,
         };
       }));
-      
+
       setMessages(messagesWithReplies);
 
       // Marquer les messages reçus comme lus immédiatement
       const unreadMessages = messagesWithReplies.filter(
         msg => msg.sender_id === otherUserId && !msg.read_at
       );
-      
+
       if (unreadMessages.length > 0) {
         console.log('[Messages] 📖 Marquage de', unreadMessages.length, 'messages comme lus');
-        
+
         // Marquer tous les messages non lus de cette conversation
         const { error: readError } = await supabase
           .from('messages')
@@ -495,7 +540,7 @@ export default function Messages() {
           .eq('sender_id', otherUserId)
           .eq('recipient_id', currentUser.id)
           .is('read_at', null);
-        
+
         if (readError) {
           console.warn('[Messages] Erreur marquage lu:', readError);
         } else {
@@ -506,7 +551,7 @@ export default function Messages() {
             .select('*')
             .or(`and(sender_id.eq.${currentUser.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${currentUser.id})`)
             .order('created_at', { ascending: true });
-          
+
           if (updatedData) {
             const updatedMessages = updatedData.map(msg => ({
               ...msg,
@@ -620,7 +665,7 @@ export default function Messages() {
       const safeExt = fileExt || 'bin';
       const contentType = file.type || inferMimeFromExt(safeExt) || 'application/octet-stream';
       const fileName = `${currentUser.id}/${Date.now()}.${safeExt}`;
-      
+
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('communication-files')
         .upload(fileName, file, {
@@ -712,7 +757,7 @@ export default function Messages() {
     const date = new Date(dateStr);
     const now = new Date();
     const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) {
       return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     } else if (diffDays === 1) {
@@ -822,12 +867,12 @@ export default function Messages() {
                             </p>
                           </div>
                           <div className="flex items-center gap-2 mt-1">
-                            <Badge 
-                              variant="secondary" 
+                            <Badge
+                              variant="secondary"
                               className={cn(
                                 "text-xs",
-                                contact.is_vendor 
-                                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" 
+                                contact.is_vendor
+                                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                                   : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                               )}
                             >
@@ -903,7 +948,7 @@ export default function Messages() {
                           {conv.other_user_name}
                         </p>
                       </div>
-                      <span 
+                      <span
                         className="text-xs text-muted-foreground flex-shrink-0 cursor-help"
                         title={formatDetailedTime(conv.last_message_time)}
                       >
@@ -911,12 +956,12 @@ export default function Messages() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge 
-                        variant="secondary" 
+                      <Badge
+                        variant="secondary"
                         className={cn(
                           "text-xs",
-                          conv.is_vendor 
-                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" 
+                          conv.is_vendor
+                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                             : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                         )}
                       >
@@ -948,15 +993,15 @@ export default function Messages() {
           <>
             {/* Header conversation */}
             <header className="bg-gradient-to-r from-card to-card/95 border-b border-border px-3 py-3 flex items-center gap-3 sticky top-0 z-40 shadow-sm backdrop-blur-sm">
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={handleBackToList}
                 className="md:hidden flex-shrink-0"
               >
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <div 
+              <div
                 className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={() => {
                   if (selectedConvData?.is_vendor && selectedConvData?.vendor_id) {
@@ -1025,18 +1070,18 @@ export default function Messages() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="text-muted-foreground"
                   onClick={() => setShowAudioCall(true)}
                   title="Appel audio"
                 >
                   <Phone className="w-5 h-5" />
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="text-muted-foreground"
                   onClick={() => setShowVideoCall(true)}
                   title="Appel vidéo"
@@ -1061,16 +1106,16 @@ export default function Messages() {
                       Envoyez votre premier message à {selectedConvData?.other_user_name}
                     </p>
                   </div>
-                  ) : (
-                    messages
-                      // Filtrer les messages supprimés pour l'utilisateur courant
-                      .filter(message => {
-                        const deletedFor = message.deleted_for || [];
-                        return !deletedFor.includes(currentUser?.id);
-                      })
-                      .map((message) => {
+                ) : (
+                  messages
+                    // Filtrer les messages supprimés pour l'utilisateur courant
+                    .filter(message => {
+                      const deletedFor = message.deleted_for || [];
+                      return !deletedFor.includes(currentUser?.id);
+                    })
+                    .map((message) => {
                       const isOwnMessage = message.sender_id === currentUser?.id;
-                      
+
                       // Calculer le statut correctement
                       let messageStatus: 'sending' | 'sent' | 'delivered' | 'read' | 'failed' = 'sent';
                       if (message.status) {
@@ -1087,7 +1132,7 @@ export default function Messages() {
                         message.type === 'call' || message.type === 'location'
                           ? 'text'
                           : (message.type as any) || 'text';
-                      
+
                       // Vérifier si le message est supprimé pour tout le monde
                       if (message.deleted_at) {
                         return (
@@ -1142,7 +1187,7 @@ export default function Messages() {
                           {/* Indicateur de statut pour les messages envoyés */}
                           {isOwnMessage && (
                             <div className="flex justify-end mt-0.5 pr-2">
-                              <MessageStatusBadge 
+                              <MessageStatusBadge
                                 status={messageStatus as any}
                                 readAt={message.read_at || undefined}
                               />
@@ -1151,7 +1196,7 @@ export default function Messages() {
                         </div>
                       );
                     })
-                  )}
+                )}
                 <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
@@ -1159,15 +1204,15 @@ export default function Messages() {
             {/* Indicateur de frappe */}
             {isTyping && (
               <div className="px-4 py-2 bg-muted/30">
-                <TypingIndicator 
-                  userNames={[selectedConvData?.other_user_name || 'Utilisateur']} 
+                <TypingIndicator
+                  userNames={[selectedConvData?.other_user_name || 'Utilisateur']}
                 />
               </div>
             )}
 
             {/* Barre de réponse */}
             {replyToMessage && (
-              <ReplyBar 
+              <ReplyBar
                 message={replyToMessage as any}
                 onCancel={cancelReply}
                 className="mx-3 mt-2"
@@ -1178,10 +1223,10 @@ export default function Messages() {
             <MessageInput
               onSendText={async (text) => {
                 if (!currentUser || !selectedConversation) return;
-                
+
                 // Arrêter l'indicateur de frappe
                 setTyping(selectedConversation, false);
-                
+
                 // Si c'est une réponse
                 if (replyToMessage) {
                   await universalCommunicationService.sendReplyMessage(
@@ -1234,14 +1279,14 @@ export default function Messages() {
             <DialogHeader>
               <DialogTitle>Appel Audio</DialogTitle>
             </DialogHeader>
-            <AgoraAudioCall 
+            <AgoraAudioCall
               channel={`audio_${selectedConversation}_${currentUser?.id}`}
               callerInfo={{
                 name: selectedConvData?.other_user_name || 'Utilisateur',
                 avatar: selectedConvData?.other_user_avatar,
                 userId: selectedConversation
               }}
-              onCallEnd={() => setShowAudioCall(false)} 
+              onCallEnd={() => setShowAudioCall(false)}
             />
           </DialogContent>
         </Dialog>
@@ -1253,14 +1298,14 @@ export default function Messages() {
             <DialogHeader>
               <DialogTitle>Appel Vidéo</DialogTitle>
             </DialogHeader>
-            <AgoraVideoCall 
+            <AgoraVideoCall
               channel={`video_${selectedConversation}_${currentUser?.id}`}
               callerInfo={{
                 name: selectedConvData?.other_user_name || 'Utilisateur',
                 avatar: selectedConvData?.other_user_avatar,
                 userId: selectedConversation
               }}
-              onCallEnd={() => setShowVideoCall(false)} 
+              onCallEnd={() => setShowVideoCall(false)}
             />
           </DialogContent>
         </Dialog>
@@ -1334,12 +1379,12 @@ export default function Messages() {
                           </p>
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <Badge 
-                            variant="secondary" 
+                          <Badge
+                            variant="secondary"
                             className={cn(
                               "text-xs",
-                              user.is_vendor 
-                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" 
+                              user.is_vendor
+                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                                 : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                             )}
                           >

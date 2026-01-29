@@ -86,22 +86,34 @@ export function usePresence(options: UsePresenceOptions = {}): UsePresenceReturn
       
       console.log('[Presence] 📡 Mise à jour présence:', { userId: user.id, status, device });
       
-      // Utiliser une requête SQL directe au lieu de rpc pour éviter les erreurs de type
-      const { error } = await supabase
-        .from('user_presence' as any)
-        .upsert({
-          user_id: user.id,
-          status,
-          current_device: device,
-          custom_status: customStatus || null,
-          last_seen: status === 'offline' ? new Date().toISOString() : undefined,
-          last_active: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id' });
+      // Utiliser la fonction RPC optimisée si disponible
+      // @ts-expect-error - RPC function may not be in generated types yet
+      const { error: rpcError } = await supabase.rpc('update_user_presence', {
+        p_user_id: user.id,
+        p_status: status,
+        p_device: device,
+        p_custom_status: customStatus || null
+      });
 
-      if (error) {
-        console.warn('[Presence] Error updating:', error);
-        return;
+      if (rpcError) {
+        console.log('[Presence] RPC non disponible, utilisation fallback');
+        // Fallback vers upsert direct
+        const { error } = await supabase
+          .from('user_presence' as any)
+          .upsert({
+            user_id: user.id,
+            status,
+            current_device: device,
+            custom_status: customStatus || null,
+            last_seen: status === 'offline' ? new Date().toISOString() : undefined,
+            last_active: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'user_id' });
+
+        if (error) {
+          console.warn('[Presence] Error updating:', error);
+          return;
+        }
       }
 
       console.log('[Presence] ✅ Présence mise à jour:', status);

@@ -5,19 +5,19 @@
 
 import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { toast } from 'sonner';
-import { 
-  Settings, 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Camera, 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  Star, 
-  Home, 
-  Building2, 
+import {
+  Settings,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Camera,
+  Plus,
+  Edit2,
+  Trash2,
+  Star,
+  Home,
+  Building2,
   Briefcase,
   Save,
   Loader2,
@@ -141,7 +141,7 @@ const ClientSettings: React.FC = () => {
 
   const loadProfile = async () => {
     if (!user?.id) return;
-    
+
     setProfileLoading(true);
     try {
       const { data, error } = await supabase
@@ -170,7 +170,7 @@ const ClientSettings: React.FC = () => {
 
   const loadAddresses = async () => {
     if (!user?.id) return;
-    
+
     setAddressesLoading(true);
     try {
       const { data, error } = await supabase
@@ -194,7 +194,7 @@ const ClientSettings: React.FC = () => {
   // Sauvegarder le profil
   const handleSaveProfile = async () => {
     if (!user?.id) return;
-    
+
     setProfileSaving(true);
     try {
       const { error } = await supabase
@@ -208,7 +208,7 @@ const ClientSettings: React.FC = () => {
         .eq('id', user.id);
 
       if (error) throw error;
-      
+
       toast.success('Profil mis à jour avec succès');
     } catch (error: any) {
       console.error('Erreur sauvegarde profil:', error);
@@ -364,7 +364,7 @@ const ClientSettings: React.FC = () => {
         .eq('id', addressId);
 
       if (error) throw error;
-      
+
       toast.success('Adresse supprimée');
       loadAddresses();
     } catch (error: any) {
@@ -376,7 +376,7 @@ const ClientSettings: React.FC = () => {
   // Définir comme adresse par défaut
   const setDefaultAddress = async (addressId: string) => {
     if (!user?.id) return;
-    
+
     try {
       // Retirer le statut par défaut de toutes les adresses
       await supabase
@@ -391,7 +391,7 @@ const ClientSettings: React.FC = () => {
         .eq('id', addressId);
 
       if (error) throw error;
-      
+
       toast.success('Adresse par défaut mise à jour');
       loadAddresses();
     } catch (error: any) {
@@ -558,8 +558,8 @@ const ClientSettings: React.FC = () => {
               </div>
 
               <div className="flex justify-end">
-                <Button 
-                  onClick={handleSaveProfile} 
+                <Button
+                  onClick={handleSaveProfile}
                   disabled={profileSaving}
                 >
                   {profileSaving ? (
@@ -666,7 +666,7 @@ const ClientSettings: React.FC = () => {
                             </AlertDialog>
                           </div>
                         </div>
-                        
+
                         <div className="space-y-1 text-sm">
                           <p className="font-medium">{address.recipient_name}</p>
                           <p className="text-muted-foreground">{address.phone}</p>
