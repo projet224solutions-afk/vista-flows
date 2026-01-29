@@ -52,27 +52,33 @@ export function useVoiceMessageWithTranslation() {
       let audioFormat = 'webm';
       let mimeType = 'audio/webm';
 
-      // 2. Upload vers Supabase Storage
+      // 2. Upload vers Supabase Storage - utiliser le bucket communication-files
       const fileName = `voice-${senderId}-${Date.now()}.${audioFormat}`;
-      const filePath = `voice-messages/${fileName}`;
+      const filePath = `audio/${fileName}`;
+
+      console.log('🎙️ Uploading voice message to storage...', { filePath, mimeType });
 
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('voice-messages')
+        .from('communication-files')
         .upload(filePath, audioToUpload, {
           contentType: mimeType,
           upsert: true
         });
 
       if (uploadError) {
+        console.error('❌ Storage upload failed:', uploadError);
         throw new Error(`Upload failed: ${uploadError.message}`);
       }
 
+      console.log('✅ Upload successful:', uploadData);
+
       // 3. Obtenir l'URL publique
       const { data: publicUrlData } = supabase.storage
-        .from('voice-messages')
+        .from('communication-files')
         .getPublicUrl(filePath);
       
       const audioUrl = publicUrlData.publicUrl;
+      console.log('🔗 Audio URL:', audioUrl);
 
       // 4. Vérifier si la traduction est nécessaire
       let needsTranslation = false;
@@ -84,25 +90,27 @@ export function useVoiceMessageWithTranslation() {
       }
 
       // 5. Insérer le message dans la base de données
-      // Le trigger SQL va automatiquement définir les langues et le statut de traduction
       const messageData: any = {
         sender_id: senderId,
+        recipient_id: recipientId || senderId, // recipient_id est requis
         type: 'audio',
+        content: '🎙️ Message vocal', // Content requis pour les messages
         file_url: audioUrl,
+        file_name: fileName,
         audio_format: audioFormat,
-        // Les colonnes suivantes seront définies par le trigger:
-        // - original_language (langue du sender)
-        // - target_language (langue du recipient)
-        // - audio_translation_status ('pending' si langues différentes)
+        audio_mime_type: mimeType,
+        status: 'sent',
         ...(conversationId && { conversation_id: conversationId }),
-        ...(recipientId && { receiver_id: recipientId }),
         ...additionalMetadata
       };
 
       // Si c'est un format iOS, définir aussi file_url_ios
       if (audioFormat === 'm4a' || audioFormat === 'mp4') {
         messageData.file_url_ios = audioUrl;
+        messageData.audio_format_ios = audioFormat;
       }
+
+      console.log('📝 Inserting message:', messageData);
 
       const { data: insertedMessage, error: insertError } = await supabase
         .from('messages')
@@ -111,8 +119,11 @@ export function useVoiceMessageWithTranslation() {
         .single();
 
       if (insertError) {
+        console.error('❌ Message insert failed:', insertError);
         throw new Error(`Message insert failed: ${insertError.message}`);
       }
+
+      console.log('✅ Message inserted:', insertedMessage);
 
       // 6. Le webhook va être déclenché automatiquement par le trigger SQL
       // si audio_translation_status = 'pending'

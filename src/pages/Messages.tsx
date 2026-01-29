@@ -629,17 +629,29 @@ export default function Messages() {
       }
 
       // Insérer message avec fichier directement
+      console.log('[Messages] Inserting file message:', { 
+        type: fileType, 
+        fileName: file.name, 
+        fileSize: file.size,
+        mimeType: file.type 
+      });
+
       const { error: messageError } = await supabase
         .from('messages')
         .insert([
           {
             sender_id: currentUser.id,
             recipient_id: selectedConversation,
-            content: file.name,
+            content: fileType === 'audio' ? '🎙️ Message vocal' : file.name,
             type: fileType,
             file_url: publicUrl,
             file_name: file.name,
             file_size: file.size,
+            status: 'sent',
+            ...(fileType === 'audio' && { 
+              audio_format: file.name.split('.').pop(),
+              audio_mime_type: file.type 
+            })
           },
         ]);
 
