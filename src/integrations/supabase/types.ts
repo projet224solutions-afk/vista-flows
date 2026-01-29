@@ -183,6 +183,314 @@ export type Database = {
           },
         ]
       }
+      affiliate_fraud_logs: {
+        Row: {
+          action_taken: string | null
+          agent_id: string | null
+          created_at: string | null
+          details: Json
+          device_fingerprint: string | null
+          fraud_type: string
+          id: string
+          ip_address: unknown
+          link_id: string | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          agent_id?: string | null
+          created_at?: string | null
+          details: Json
+          device_fingerprint?: string | null
+          fraud_type: string
+          id?: string
+          ip_address?: unknown
+          link_id?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          agent_id?: string | null
+          created_at?: string | null
+          details?: Json
+          device_fingerprint?: string | null
+          fraud_type?: string
+          id?: string
+          ip_address?: unknown
+          link_id?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_fraud_logs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents_management"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_fraud_logs_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "agent_affiliate_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_link_clicks: {
+        Row: {
+          city: string | null
+          clicked_at: string | null
+          country: string | null
+          device_type: string | null
+          fingerprint: string | null
+          id: string
+          ip_address: unknown
+          link_id: string
+          referrer: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          city?: string | null
+          clicked_at?: string | null
+          country?: string | null
+          device_type?: string | null
+          fingerprint?: string | null
+          id?: string
+          ip_address?: unknown
+          link_id: string
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          city?: string | null
+          clicked_at?: string | null
+          country?: string | null
+          device_type?: string | null
+          fingerprint?: string | null
+          id?: string
+          ip_address?: unknown
+          link_id?: string
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_link_clicks_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "agent_affiliate_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_affiliate_commissions: {
+        Row: {
+          affiliation_id: string | null
+          agent_id: string
+          commission_amount: number
+          commission_rate: number
+          created_at: string | null
+          currency: string | null
+          id: string
+          metadata: Json | null
+          notes: string | null
+          paid_at: string | null
+          paid_by: string | null
+          status: string | null
+          transaction_amount: number
+          transaction_id: string | null
+          transaction_type: string
+          updated_at: string | null
+          user_id: string
+          validation_date: string | null
+        }
+        Insert: {
+          affiliation_id?: string | null
+          agent_id: string
+          commission_amount: number
+          commission_rate: number
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
+          status?: string | null
+          transaction_amount: number
+          transaction_id?: string | null
+          transaction_type: string
+          updated_at?: string | null
+          user_id: string
+          validation_date?: string | null
+        }
+        Update: {
+          affiliation_id?: string | null
+          agent_id?: string
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
+          status?: string | null
+          transaction_amount?: number
+          transaction_id?: string | null
+          transaction_type?: string
+          updated_at?: string | null
+          user_id?: string
+          validation_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_affiliate_commissions_affiliation_id_fkey"
+            columns: ["affiliation_id"]
+            isOneToOne: false
+            referencedRelation: "user_agent_affiliations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_affiliate_commissions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents_management"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_affiliate_links: {
+        Row: {
+          agent_id: string
+          clicks_count: number | null
+          commission_override: number | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          metadata: Json | null
+          name: string | null
+          registrations_count: number | null
+          target_role: string | null
+          token: string
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id: string
+          clicks_count?: number | null
+          commission_override?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          name?: string | null
+          registrations_count?: number | null
+          target_role?: string | null
+          token: string
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string
+          clicks_count?: number | null
+          commission_override?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          name?: string | null
+          registrations_count?: number | null
+          target_role?: string | null
+          token?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_affiliate_links_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents_management"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_commission_rules: {
+        Row: {
+          created_at: string | null
+          default_rate: number
+          id: string
+          is_active: boolean | null
+          max_rate: number | null
+          min_rate: number | null
+          pdg_id: string
+          transaction_type: string
+          updated_at: string | null
+          validation_delay_hours: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          default_rate: number
+          id?: string
+          is_active?: boolean | null
+          max_rate?: number | null
+          min_rate?: number | null
+          pdg_id: string
+          transaction_type: string
+          updated_at?: string | null
+          validation_delay_hours?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          default_rate?: number
+          id?: string
+          is_active?: boolean | null
+          max_rate?: number | null
+          min_rate?: number | null
+          pdg_id?: string
+          transaction_type?: string
+          updated_at?: string | null
+          validation_delay_hours?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_commission_rules_pdg_id_fkey"
+            columns: ["pdg_id"]
+            isOneToOne: false
+            referencedRelation: "pdg_interface_stats"
+            referencedColumns: ["pdg_id"]
+          },
+          {
+            foreignKeyName: "agent_commission_rules_pdg_id_fkey"
+            columns: ["pdg_id"]
+            isOneToOne: false
+            referencedRelation: "pdg_management"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_commission_rules_pdg_id_fkey"
+            columns: ["pdg_id"]
+            isOneToOne: false
+            referencedRelation: "pdg_vehicle_security_overview"
+            referencedColumns: ["pdg_id"]
+          },
+        ]
+      }
       agent_commissions_log: {
         Row: {
           agent_id: string
@@ -19411,6 +19719,66 @@ export type Database = {
         }
         Relationships: []
       }
+      user_agent_affiliations: {
+        Row: {
+          affiliate_link_id: string | null
+          affiliate_token: string | null
+          agent_id: string
+          created_at: string | null
+          device_fingerprint: string | null
+          fraud_flags: Json | null
+          fraud_score: number | null
+          id: string
+          is_verified: boolean | null
+          registration_ip: unknown
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          affiliate_link_id?: string | null
+          affiliate_token?: string | null
+          agent_id: string
+          created_at?: string | null
+          device_fingerprint?: string | null
+          fraud_flags?: Json | null
+          fraud_score?: number | null
+          id?: string
+          is_verified?: boolean | null
+          registration_ip?: unknown
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          affiliate_link_id?: string | null
+          affiliate_token?: string | null
+          agent_id?: string
+          created_at?: string | null
+          device_fingerprint?: string | null
+          fraud_flags?: Json | null
+          fraud_score?: number | null
+          id?: string
+          is_verified?: boolean | null
+          registration_ip?: unknown
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_agent_affiliations_affiliate_link_id_fkey"
+            columns: ["affiliate_link_id"]
+            isOneToOne: false
+            referencedRelation: "agent_affiliate_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_agent_affiliations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents_management"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_analytics: {
         Row: {
           created_at: string | null
@@ -23805,16 +24173,26 @@ export type Database = {
         Returns: string
       }
       bureau_exists: { Args: { p_bureau_id: string }; Returns: boolean }
-      calculate_agent_commission: {
-        Args: {
-          p_agent_id: string
-          p_amount: number
-          p_related_user_id?: string
-          p_source_type: string
-          p_transaction_id?: string
-        }
-        Returns: Json
-      }
+      calculate_agent_commission:
+        | {
+            Args: {
+              p_agent_id: string
+              p_amount: number
+              p_related_user_id?: string
+              p_source_type: string
+              p_transaction_id?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_transaction_id?: string
+              p_transaction_type: string
+              p_user_id: string
+            }
+            Returns: string
+          }
       calculate_commission: {
         Args: {
           p_amount: number

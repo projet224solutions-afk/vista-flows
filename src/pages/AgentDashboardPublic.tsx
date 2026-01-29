@@ -30,6 +30,7 @@ import ManageProductsSection from '@/components/agent/ManageProductsSection';
 import { ViewReportsSection } from '@/components/agent/ViewReportsSection';
 import { ManageCommissionsSection } from '@/components/agent/ManageCommissionsSection';
 import AgentWalletManagement from '@/components/agent/AgentWalletManagement';
+import { AgentAffiliateLinksSection } from '@/components/agent/AgentAffiliateLinksSection';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 // Schéma de validation pour le sous-agent
@@ -71,7 +72,8 @@ const SECTION_TITLES: Record<string, string> = {
   'users': 'Gestion des Utilisateurs',
   'products': 'Gestion des Produits',
   'reports': 'Rapports & Statistiques',
-  'commissions': 'Gestion des Commissions'
+  'commissions': 'Gestion des Commissions',
+  'affiliate': 'Liens d\'Affiliation'
 };
 
 export default function AgentDashboardPublic() {
@@ -717,6 +719,9 @@ export default function AgentDashboardPublic() {
         ) : (
           <Card><CardContent className="py-12 text-center text-muted-foreground">Permission non accordée</CardContent></Card>
         );
+
+      case 'affiliate':
+        return <AgentAffiliateLinksSection agentId={agent.id} />;
 
       default:
         return null;
