@@ -12,9 +12,11 @@ import {
 } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, DollarSign, RefreshCw } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Eye, DollarSign, RefreshCw, User, Phone, Calendar } from 'lucide-react';
 import { DebtDetailsDialog } from './DebtDetailsDialog';
 import { RecordPaymentDialog } from './RecordPaymentDialog';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Debt {
   id: string;
@@ -41,6 +43,7 @@ export function DebtsList({ vendorId }: DebtsListProps) {
   const [selectedDebt, setSelectedDebt] = useState<Debt | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
+  const isMobile = useIsMobile();
 
   const loadDebts = async () => {
     setLoading(true);
@@ -55,7 +58,6 @@ export function DebtsList({ vendorId }: DebtsListProps) {
 
       setDebts(data || []);
     } catch (error: any) {
-      // Ignorer silencieusement les erreurs RLS ou réseau
       const errorMessage = error?.message?.toLowerCase() || '';
       const isRlsOrNetworkError = 
         error?.code === 'PGRST301' || 
@@ -77,7 +79,6 @@ export function DebtsList({ vendorId }: DebtsListProps) {
   useEffect(() => {
     loadDebts();
 
-    // S'abonner aux changements en temps réel
     const channel = supabase
       .channel('debts_changes')
       .on(
@@ -121,17 +122,125 @@ export function DebtsList({ vendorId }: DebtsListProps) {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Chargement des dettes...</div>;
+    return <div className="text-center py-8 text-sm">Chargement des dettes...</div>;
   }
 
   if (debts.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
+      <div className="text-center py-8 text-muted-foreground text-sm">
         Aucune dette enregistrée pour le moment
       </div>
     );
   }
 
+  // Mobile: Affichage en cartes
+  if (isMobile) {
+    return (
+      <>
+        <div className="flex justify-end mb-3">
+          <Button variant="outline" size="sm" onClick={loadDebts} className="text-xs">
+            <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+            Actualiser
+          </Button>
+        </div>
+
+        <div className="space-y-3">
+          {debts.map((debt) => (
+            <Card key={debt.id} className="overflow-hidden">
+              <CardContent className="p-3">
+                {/* Header: Nom client + Statut */}
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <User className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm truncate">{debt.customer_name}</p>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Phone className="w-3 h-3" />
+                        <span>{debt.customer_phone}</span>
+                      </div>
+                    </div>
+                  </div>
+                  {getStatusBadge(debt.status)}
+                </div>
+
+                {/* Montants */}
+                <div className="grid grid-cols-3 gap-2 mb-3 p-2 bg-muted/50 rounded-lg">
+                  <div className="text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase">Total</p>
+                    <p className="text-xs font-semibold">{formatAmount(debt.total_amount)}</p>
+                  </div>
+                  <div className="text-center border-x border-border">
+                    <p className="text-[10px] text-muted-foreground uppercase">Payé</p>
+                    <p className="text-xs font-semibold text-green-600">{formatAmount(debt.paid_amount)}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase">Restant</p>
+                    <p className="text-xs font-semibold text-orange-600">{formatAmount(debt.remaining_amount)}</p>
+                  </div>
+                </div>
+
+                {/* Date limite */}
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>Échéance: {formatDate(debt.due_date)}</span>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-xs h-9"
+                    onClick={() => {
+                      setSelectedDebt(debt);
+                      setShowDetails(true);
+                    }}
+                  >
+                    <Eye className="w-3.5 h-3.5 mr-1.5" />
+                    Détails
+                  </Button>
+                  {debt.status === 'in_progress' && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="flex-1 text-xs h-9"
+                      onClick={() => {
+                        setSelectedDebt(debt);
+                        setShowPayment(true);
+                      }}
+                    >
+                      <DollarSign className="w-3.5 h-3.5 mr-1.5" />
+                      Encaisser
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {selectedDebt && (
+          <>
+            <DebtDetailsDialog
+              debt={selectedDebt}
+              open={showDetails}
+              onOpenChange={setShowDetails}
+            />
+            <RecordPaymentDialog
+              debt={selectedDebt}
+              open={showPayment}
+              onOpenChange={setShowPayment}
+              onSuccess={loadDebts}
+            />
+          </>
+        )}
+      </>
+    );
+  }
+
+  // Desktop: Tableau classique
   return (
     <>
       <div className="flex justify-end mb-4">
