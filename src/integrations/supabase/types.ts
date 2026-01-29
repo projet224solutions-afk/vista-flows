@@ -147,6 +147,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "advanced_carts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
+          {
             foreignKeyName: "advanced_carts_variant_id_fkey"
             columns: ["variant_id"]
             isOneToOne: false
@@ -2081,6 +2088,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
           },
           {
             foreignKeyName: "carts_variant_id_fkey"
@@ -6247,6 +6261,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "dropship_products_original_product_id_fkey"
+            columns: ["original_product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
+          {
             foreignKeyName: "dropship_products_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
@@ -7517,6 +7538,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
           },
         ]
       }
@@ -9225,6 +9253,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "inventory_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
+          {
             foreignKeyName: "inventory_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
@@ -9291,6 +9326,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_alerts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
           },
           {
             foreignKeyName: "inventory_alerts_vendor_id_fkey"
@@ -9379,6 +9421,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
           },
           {
             foreignKeyName: "inventory_history_vendor_id_fkey"
@@ -9514,6 +9563,338 @@ export type Database = {
           },
           {
             foreignKeyName: "invoices_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      location_access: {
+        Row: {
+          can_adjust_stock: boolean | null
+          can_manage_staff: boolean | null
+          can_receive_stock: boolean | null
+          can_sell: boolean | null
+          can_transfer_in: boolean | null
+          can_transfer_out: boolean | null
+          can_view_reports: boolean | null
+          created_at: string | null
+          granted_by: string | null
+          id: string
+          is_active: boolean | null
+          location_id: string
+          role: string
+          updated_at: string | null
+          user_id: string
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          can_adjust_stock?: boolean | null
+          can_manage_staff?: boolean | null
+          can_receive_stock?: boolean | null
+          can_sell?: boolean | null
+          can_transfer_in?: boolean | null
+          can_transfer_out?: boolean | null
+          can_view_reports?: boolean | null
+          created_at?: string | null
+          granted_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          location_id: string
+          role: string
+          updated_at?: string | null
+          user_id: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          can_adjust_stock?: boolean | null
+          can_manage_staff?: boolean | null
+          can_receive_stock?: boolean | null
+          can_sell?: boolean | null
+          can_transfer_in?: boolean | null
+          can_transfer_out?: boolean | null
+          can_view_reports?: boolean | null
+          created_at?: string | null
+          granted_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          location_id?: string
+          role?: string
+          updated_at?: string | null
+          user_id?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_access_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      location_stock: {
+        Row: {
+          created_at: string | null
+          expiry_date: string | null
+          id: string
+          in_transit_quantity: number | null
+          last_counted_at: string | null
+          last_movement_at: string | null
+          location_id: string
+          lot_number: string | null
+          maximum_stock: number | null
+          minimum_stock: number | null
+          product_id: string
+          quantity: number
+          reorder_point: number | null
+          reserved_quantity: number | null
+          shelf_location: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          in_transit_quantity?: number | null
+          last_counted_at?: string | null
+          last_movement_at?: string | null
+          location_id: string
+          lot_number?: string | null
+          maximum_stock?: number | null
+          minimum_stock?: number | null
+          product_id: string
+          quantity?: number
+          reorder_point?: number | null
+          reserved_quantity?: number | null
+          shelf_location?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          in_transit_quantity?: number | null
+          last_counted_at?: string | null
+          last_movement_at?: string | null
+          location_id?: string
+          lot_number?: string | null
+          maximum_stock?: number | null
+          minimum_stock?: number | null
+          product_id?: string
+          quantity?: number
+          reorder_point?: number | null
+          reserved_quantity?: number | null
+          shelf_location?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_stock_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_stock_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_stock_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
+        ]
+      }
+      location_stock_movements: {
+        Row: {
+          created_at: string | null
+          id: string
+          location_id: string
+          movement_type: string
+          performed_by: string | null
+          product_id: string
+          quantity: number
+          quantity_after: number
+          quantity_before: number
+          reason: string | null
+          reference_id: string | null
+          reference_type: string | null
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          location_id: string
+          movement_type: string
+          performed_by?: string | null
+          product_id: string
+          quantity: number
+          quantity_after: number
+          quantity_before: number
+          reason?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          location_id?: string
+          movement_type?: string
+          performed_by?: string | null
+          product_id?: string
+          quantity?: number
+          quantity_after?: number
+          quantity_before?: number
+          reason?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_stock_movements_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_stock_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_stock_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "location_stock_movements_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "location_stock_movements_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "location_stock_movements_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          address: string | null
+          city: string | null
+          code: string | null
+          country: string | null
+          created_at: string | null
+          description: string | null
+          gps_coordinates: Json | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          is_pos_enabled: boolean | null
+          location_type: string
+          manager_email: string | null
+          manager_name: string | null
+          manager_phone: string | null
+          name: string
+          pos_name: string | null
+          region: string | null
+          settings: Json | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          code?: string | null
+          country?: string | null
+          created_at?: string | null
+          description?: string | null
+          gps_coordinates?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          is_pos_enabled?: boolean | null
+          location_type?: string
+          manager_email?: string | null
+          manager_name?: string | null
+          manager_phone?: string | null
+          name: string
+          pos_name?: string | null
+          region?: string | null
+          settings?: Json | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          code?: string | null
+          country?: string | null
+          created_at?: string | null
+          description?: string | null
+          gps_coordinates?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          is_pos_enabled?: boolean | null
+          location_type?: string
+          manager_email?: string | null
+          manager_name?: string | null
+          manager_phone?: string | null
+          name?: string
+          pos_name?: string | null
+          region?: string | null
+          settings?: Json | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "locations_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "locations_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "locations_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "vendors"
@@ -10206,6 +10587,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
           },
           {
             foreignKeyName: "order_items_variant_id_fkey"
@@ -11786,6 +12174,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
         ]
       }
       product_variants: {
@@ -11826,6 +12221,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
           },
         ]
       }
@@ -13886,6 +14288,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
+          {
             foreignKeyName: "reviews_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
@@ -14097,6 +14506,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
           },
           {
             foreignKeyName: "sales_vendor_id_fkey"
@@ -15717,6 +16133,133 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_losses: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          documented_by: string | null
+          id: string
+          location_id: string
+          loss_date: string | null
+          loss_number: string
+          loss_type: string
+          product_id: string
+          quantity: number
+          reason: string
+          status: string | null
+          total_loss_value: number | null
+          transfer_id: string | null
+          transfer_item_id: string | null
+          unit_cost: number | null
+          vendor_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          documented_by?: string | null
+          id?: string
+          location_id: string
+          loss_date?: string | null
+          loss_number: string
+          loss_type: string
+          product_id: string
+          quantity: number
+          reason: string
+          status?: string | null
+          total_loss_value?: number | null
+          transfer_id?: string | null
+          transfer_item_id?: string | null
+          unit_cost?: number | null
+          vendor_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          documented_by?: string | null
+          id?: string
+          location_id?: string
+          loss_date?: string | null
+          loss_number?: string
+          loss_type?: string
+          product_id?: string
+          quantity?: number
+          reason?: string
+          status?: string | null
+          total_loss_value?: number | null
+          transfer_id?: string | null
+          transfer_item_id?: string | null
+          unit_cost?: number | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_losses_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_losses_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_losses_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "stock_losses_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "stock_transfers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_losses_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_transfers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_losses_transfer_item_id_fkey"
+            columns: ["transfer_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_transfer_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_losses_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "stock_losses_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "stock_losses_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_movements: {
         Row: {
           created_at: string
@@ -15833,6 +16376,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "stock_purchase_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
+          {
             foreignKeyName: "stock_purchase_items_purchase_id_fkey"
             columns: ["purchase_id"]
             isOneToOne: false
@@ -15937,6 +16487,197 @@ export type Database = {
           vendor_id?: string
         }
         Relationships: []
+      }
+      stock_transfer_items: {
+        Row: {
+          created_at: string | null
+          expiry_date: string | null
+          id: string
+          loss_reason: string | null
+          lot_number: string | null
+          notes: string | null
+          product_id: string
+          quantity_lost: number | null
+          quantity_received: number | null
+          quantity_sent: number
+          transfer_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          loss_reason?: string | null
+          lot_number?: string | null
+          notes?: string | null
+          product_id: string
+          quantity_lost?: number | null
+          quantity_received?: number | null
+          quantity_sent: number
+          transfer_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          loss_reason?: string | null
+          lot_number?: string | null
+          notes?: string | null
+          product_id?: string
+          quantity_lost?: number | null
+          quantity_received?: number | null
+          quantity_sent?: number
+          transfer_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_transfer_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfer_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "stock_transfer_items_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "stock_transfers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfer_items_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_transfers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_transfers: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          destination_location_id: string
+          expected_arrival_at: string | null
+          id: string
+          notes: string | null
+          received_at: string | null
+          received_by: string | null
+          reception_notes: string | null
+          shipped_at: string | null
+          shipped_by: string | null
+          shipping_notes: string | null
+          source_location_id: string
+          status: string
+          total_items: number | null
+          total_quantity_lost: number | null
+          total_quantity_received: number | null
+          total_quantity_sent: number | null
+          transfer_number: string
+          transport_cost: number | null
+          transport_method: string | null
+          transport_reference: string | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          destination_location_id: string
+          expected_arrival_at?: string | null
+          id?: string
+          notes?: string | null
+          received_at?: string | null
+          received_by?: string | null
+          reception_notes?: string | null
+          shipped_at?: string | null
+          shipped_by?: string | null
+          shipping_notes?: string | null
+          source_location_id: string
+          status?: string
+          total_items?: number | null
+          total_quantity_lost?: number | null
+          total_quantity_received?: number | null
+          total_quantity_sent?: number | null
+          transfer_number: string
+          transport_cost?: number | null
+          transport_method?: string | null
+          transport_reference?: string | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          destination_location_id?: string
+          expected_arrival_at?: string | null
+          id?: string
+          notes?: string | null
+          received_at?: string | null
+          received_by?: string | null
+          reception_notes?: string | null
+          shipped_at?: string | null
+          shipped_by?: string | null
+          shipping_notes?: string | null
+          source_location_id?: string
+          status?: string
+          total_items?: number | null
+          total_quantity_lost?: number | null
+          total_quantity_received?: number | null
+          total_quantity_sent?: number | null
+          transfer_number?: string
+          transport_cost?: number | null
+          transport_method?: string | null
+          transport_reference?: string | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_transfers_destination_location_id_fkey"
+            columns: ["destination_location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfers_source_location_id_fkey"
+            columns: ["source_location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfers_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "stock_transfers_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "stock_transfers_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stripe_config: {
         Row: {
@@ -18850,6 +19591,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_product_interactions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
         ]
       }
       user_roles: {
@@ -20585,6 +21333,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "vendor_stock_ai_alerts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
+          {
             foreignKeyName: "vendor_stock_ai_alerts_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
@@ -20645,6 +21400,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_supplier_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
           },
           {
             foreignKeyName: "vendor_supplier_products_supplier_id_fkey"
@@ -21800,29 +22562,7 @@ export type Database = {
           name?: string
           vendor_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "warehouses_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "user_search_view"
-            referencedColumns: ["vendor_id"]
-          },
-          {
-            foreignKeyName: "warehouses_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_performance"
-            referencedColumns: ["vendor_id"]
-          },
-          {
-            foreignKeyName: "warehouses_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendors"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       webhook_audit_logs: {
         Row: {
@@ -21910,6 +22650,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wishlists_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
           },
         ]
       }
@@ -22459,6 +23206,266 @@ export type Database = {
           vendor_id: string | null
         }
         Relationships: []
+      }
+      v_active_transfers: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          destination_location_id: string | null
+          destination_name: string | null
+          expected_arrival_at: string | null
+          id: string | null
+          item_count: number | null
+          notes: string | null
+          received_at: string | null
+          received_by: string | null
+          reception_notes: string | null
+          shipped_at: string | null
+          shipped_by: string | null
+          shipping_notes: string | null
+          source_location_id: string | null
+          source_name: string | null
+          status: string | null
+          total_items: number | null
+          total_quantity_lost: number | null
+          total_quantity_received: number | null
+          total_quantity_sent: number | null
+          transfer_number: string | null
+          transport_cost: number | null
+          transport_method: string | null
+          transport_reference: string | null
+          updated_at: string | null
+          vendor_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_transfers_destination_location_id_fkey"
+            columns: ["destination_location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfers_source_location_id_fkey"
+            columns: ["source_location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfers_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "stock_transfers_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "stock_transfers_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_product_stock_summary: {
+        Row: {
+          location_count: number | null
+          product_id: string | null
+          product_name: string | null
+          sku: string | null
+          stock_by_location: Json | null
+          total_available: number | null
+          total_in_transit: number | null
+          total_quantity: number | null
+          total_reserved: number | null
+          vendor_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "products_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "products_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_recent_losses: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          documented_by: string | null
+          id: string | null
+          location_id: string | null
+          location_name: string | null
+          loss_date: string | null
+          loss_number: string | null
+          loss_type: string | null
+          product_id: string | null
+          product_name: string | null
+          quantity: number | null
+          reason: string | null
+          status: string | null
+          total_loss_value: number | null
+          transfer_id: string | null
+          transfer_item_id: string | null
+          transfer_number: string | null
+          unit_cost: number | null
+          vendor_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_losses_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_losses_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_losses_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "stock_losses_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "stock_transfers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_losses_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_transfers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_losses_transfer_item_id_fkey"
+            columns: ["transfer_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_transfer_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_losses_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "stock_losses_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "stock_losses_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_stock_by_location: {
+        Row: {
+          available_quantity: number | null
+          barcode: string | null
+          id: string | null
+          in_transit_quantity: number | null
+          is_pos_enabled: boolean | null
+          last_movement_at: string | null
+          location_id: string | null
+          location_name: string | null
+          location_type: string | null
+          minimum_stock: number | null
+          product_id: string | null
+          product_name: string | null
+          quantity: number | null
+          reserved_quantity: number | null
+          shelf_location: string | null
+          sku: string | null
+          vendor_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_stock_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_stock_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_stock_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "locations_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "locations_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "locations_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vendor_performance: {
         Row: {
@@ -23091,6 +24098,18 @@ export type Database = {
         }
         Returns: string
       }
+      create_stock_transfer: {
+        Args: {
+          p_created_by: string
+          p_destination_location_id: string
+          p_expected_arrival?: string
+          p_items: Json
+          p_notes?: string
+          p_source_location_id: string
+          p_vendor_id: string
+        }
+        Returns: string
+      }
       create_syndicate_worker_secure: {
         Args: {
           p_access_level?: string
@@ -23357,6 +24376,7 @@ export type Database = {
         }
         Returns: string
       }
+      generate_loss_number: { Args: { p_vendor_id: string }; Returns: string }
       generate_public_id: { Args: never; Returns: string }
       generate_random_digits: { Args: { length: number }; Returns: string }
       generate_random_letters: { Args: { length: number }; Returns: string }
@@ -23386,6 +24406,10 @@ export type Database = {
       generate_tracking_number: { Args: never; Returns: string }
       generate_transaction_custom_id: { Args: never; Returns: string }
       generate_transaction_id: { Args: never; Returns: string }
+      generate_transfer_number: {
+        Args: { p_vendor_id: string }
+        Returns: string
+      }
       generate_unique_agent_code: { Args: never; Returns: string }
       generate_unique_agent_token: { Args: never; Returns: string }
       generate_unique_barcode: { Args: never; Returns: string }
@@ -23539,6 +24563,10 @@ export type Database = {
         }[]
       }
       get_audio_format: { Args: { file_name: string }; Returns: string }
+      get_available_stock: {
+        Args: { p_location_id: string; p_product_id: string }
+        Returns: number
+      }
       get_bureau_realtime_stats: {
         Args: { p_bureau_id: string }
         Returns: {
@@ -23687,6 +24715,16 @@ export type Database = {
         Returns: Json
       }
       get_system_health_api: { Args: never; Returns: Json }
+      get_total_product_stock: {
+        Args: { p_product_id: string; p_vendor_id?: string }
+        Returns: {
+          location_count: number
+          total_available: number
+          total_in_transit: number
+          total_quantity: number
+          total_reserved: number
+        }[]
+      }
       get_transfer_fee_percent: { Args: never; Returns: number }
       get_trending_products: {
         Args: { p_days?: number; p_limit?: number }
@@ -23982,6 +25020,16 @@ export type Database = {
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
         | { Args: { use_typmod?: boolean }; Returns: string }
+      pos_sale_from_location: {
+        Args: {
+          p_location_id: string
+          p_order_id: string
+          p_performed_by: string
+          p_product_id: string
+          p_quantity: number
+        }
+        Returns: boolean
+      }
       postgis_constraint_dims: {
         Args: { geomcolumn: string; geomschema: string; geomtable: string }
         Returns: number
@@ -24197,6 +25245,25 @@ export type Database = {
             }
             Returns: Json
           }
+      purchase_to_location: {
+        Args: {
+          p_location_id: string
+          p_performed_by: string
+          p_product_id: string
+          p_purchase_id: string
+          p_quantity: number
+        }
+        Returns: boolean
+      }
+      receive_transfer: {
+        Args: {
+          p_items_received: Json
+          p_received_by: string
+          p_reception_notes?: string
+          p_transfer_id: string
+        }
+        Returns: boolean
+      }
       record_pdg_revenue: {
         Args: {
           p_amount: number
@@ -24320,6 +25387,16 @@ export type Database = {
           p_user_id: string
         }
         Returns: undefined
+      }
+      ship_transfer: {
+        Args: {
+          p_shipped_by: string
+          p_shipping_notes?: string
+          p_transfer_id: string
+          p_transport_method?: string
+          p_transport_reference?: string
+        }
+        Returns: boolean
       }
       soft_delete_message: {
         Args: {
