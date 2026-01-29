@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { 
   Wallet, Users, UserPlus, UserCog, BarChart3, 
   DollarSign, Package, Home, ChevronLeft, ChevronRight,
-  Key, LogOut, Shield, Menu
+  Key, LogOut, Shield, Menu, Link2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -100,6 +100,12 @@ export default function AgentSidebar({
       icon: DollarSign,
       permission: 'manage_commissions',
       gradient: 'from-yellow-500 to-orange-500'
+    },
+    { 
+      id: 'affiliate', 
+      label: 'Affiliation', 
+      icon: Link2,
+      gradient: 'from-pink-500 to-rose-500'
     }
   ];
 
