@@ -12,14 +12,21 @@ serve(async (req) => {
 
   try {
     const { address, lat, lng, type } = await req.json();
-    // Essayer GOOGLE_MAPS_API_KEY d'abord, puis GOOGLE_CLOUD_API_KEY en fallback
-    const API_KEY = Deno.env.get('GOOGLE_MAPS_API_KEY') || Deno.env.get('GOOGLE_CLOUD_API_KEY');
+    
+    // Utiliser GOOGLE_CLOUD_API_KEY en priorité (clé configurée et fonctionnelle)
+    const GOOGLE_CLOUD_KEY = Deno.env.get('GOOGLE_CLOUD_API_KEY');
+    const GOOGLE_MAPS_KEY = Deno.env.get('GOOGLE_MAPS_API_KEY');
+    
+    // Priorité à GOOGLE_CLOUD_API_KEY car GOOGLE_MAPS_API_KEY peut être invalide
+    const API_KEY = GOOGLE_CLOUD_KEY || GOOGLE_MAPS_KEY;
+
+    console.log('[geocode-address] GOOGLE_CLOUD_API_KEY:', GOOGLE_CLOUD_KEY ? 'Present' : 'Missing');
+    console.log('[geocode-address] GOOGLE_MAPS_API_KEY:', GOOGLE_MAPS_KEY ? 'Present' : 'Missing');
+    console.log('[geocode-address] Using key from:', GOOGLE_CLOUD_KEY ? 'GOOGLE_CLOUD_API_KEY' : 'GOOGLE_MAPS_API_KEY');
 
     if (!API_KEY) {
-      throw new Error('Google API key not configured (GOOGLE_MAPS_API_KEY or GOOGLE_CLOUD_API_KEY)');
+      throw new Error('Google API key not configured (GOOGLE_CLOUD_API_KEY or GOOGLE_MAPS_API_KEY)');
     }
-
-    console.log('[geocode-address] Using API key:', API_KEY ? 'Present' : 'Missing');
 
     // Validation des paramètres
     if (type === 'geocode') {
