@@ -600,15 +600,33 @@ export default function Messages() {
     }
 
     try {
+      const inferMimeFromExt = (ext?: string) => {
+        const e = (ext || '').toLowerCase();
+        if (e === 'm4a' || e === 'mp4') return 'audio/mp4';
+        if (e === 'webm') return 'audio/webm';
+        if (e === 'ogg') return 'audio/ogg';
+        if (e === 'wav') return 'audio/wav';
+        if (e === 'mp3') return 'audio/mpeg';
+        if (e === 'aac') return 'audio/aac';
+        if (e === 'png') return 'image/png';
+        if (e === 'jpg' || e === 'jpeg') return 'image/jpeg';
+        if (e === 'webp') return 'image/webp';
+        if (e === 'pdf') return 'application/pdf';
+        return undefined;
+      };
+
       // Upload fichier vers Supabase Storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
+      const fileExt = (file.name.split('.').pop() || '').toLowerCase();
+      const safeExt = fileExt || 'bin';
+      const contentType = file.type || inferMimeFromExt(safeExt) || 'application/octet-stream';
+      const fileName = `${currentUser.id}/${Date.now()}.${safeExt}`;
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('communication-files')
         .upload(fileName, file, {
           cacheControl: '3600',
-          upsert: false
+          upsert: false,
+          contentType,
         });
 
       if (uploadError) throw uploadError;
@@ -649,8 +667,8 @@ export default function Messages() {
             file_size: file.size,
             status: 'sent',
             ...(fileType === 'audio' && { 
-              audio_format: file.name.split('.').pop(),
-              audio_mime_type: file.type 
+              audio_format: safeExt,
+              audio_mime_type: contentType,
             })
           },
         ]);
