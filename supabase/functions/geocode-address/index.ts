@@ -87,8 +87,26 @@ serve(async (req) => {
       throw new Error(`Geocoding error: ${data.status}`);
     }
 
+    // Extraire les informations utiles du premier résultat
+    const result = data.results[0];
+    const location = result?.geometry?.location;
+
+    // Retourner un format simplifié pour le frontend
+    const formattedResponse = {
+      status: 'OK',
+      lat: location?.lat || null,
+      lng: location?.lng || null,
+      formatted_address: result?.formatted_address || null,
+      place_id: result?.place_id || null,
+      address_components: result?.address_components || [],
+      // Inclure les données brutes pour compatibilité
+      results: data.results
+    };
+
+    console.log(`[geocode-address] Success: lat=${formattedResponse.lat}, lng=${formattedResponse.lng}`);
+
     return new Response(
-      JSON.stringify(data),
+      JSON.stringify(formattedResponse),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
