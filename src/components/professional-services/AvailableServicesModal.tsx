@@ -312,64 +312,71 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
   );
 
   const renderServiceTypesList = () => (
-    <div className="space-y-4">
-      {/* Search bar */}
+    <div className="space-y-3">
+      {/* Search bar - compact on mobile */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           placeholder="Rechercher un type de service..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
+          className="pl-10 h-10 text-sm"
         />
       </div>
 
-      {/* Service types grid - landscape layout */}
-      <div className="max-h-[60vh] overflow-y-auto pr-1">
+      {/* Service types grid - optimized for mobile & landscape */}
+      <div className="max-h-[55vh] overflow-y-auto pr-1 -mx-1 px-1">
         {filteredServiceTypes.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground text-sm">
             Aucun service trouvé pour "{searchQuery}"
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 landscape:grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
             {filteredServiceTypes.map((serviceType) => (
               <Card
                 key={serviceType.id}
                 className={cn(
-                  'cursor-pointer transition-all duration-200',
-                  'hover:border-primary/50 hover:shadow-md hover:scale-[1.02]'
+                  'cursor-pointer transition-all duration-200 group',
+                  'hover:border-primary/50 hover:shadow-lg hover:scale-[1.02]',
+                  'border-2 border-transparent bg-gradient-to-br from-card to-muted/30'
                 )}
                 onClick={() => handleServiceTypeClick(serviceType)}
               >
-                <CardContent className="p-4">
-                  <div className="flex flex-col items-center text-center gap-3">
-                    {/* Icon with gradient */}
+                <CardContent className="p-2.5 sm:p-4">
+                  <div className="flex flex-col items-center text-center gap-2">
+                    {/* Icon with gradient - smaller on mobile */}
                     <div className={cn(
-                      'w-14 h-14 rounded-xl flex items-center justify-center',
+                      'w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center',
                       'bg-gradient-to-br text-white shadow-lg',
+                      'group-hover:scale-110 transition-transform duration-200',
                       getCategoryGradient(serviceType.category)
                     )}>
-                      {getIconComponent(serviceType.icon)}
+                      <div className="scale-75 sm:scale-100">
+                        {getIconComponent(serviceType.icon)}
+                      </div>
                     </div>
                     
-                    {/* Content */}
-                    <div className="space-y-1">
-                      <h4 className="font-semibold text-foreground text-sm">
+                    {/* Content - compact on mobile */}
+                    <div className="space-y-0.5 sm:space-y-1 min-w-0 w-full">
+                      <h4 className="font-semibold text-foreground text-xs sm:text-sm leading-tight line-clamp-2">
                         {serviceType.name}
                       </h4>
                       {serviceType.category && (
-                        <Badge variant="secondary" className="text-xs capitalize">
+                        <Badge 
+                          variant="secondary" 
+                          className="text-[10px] sm:text-xs capitalize px-1.5 py-0"
+                        >
                           {serviceType.category}
                         </Badge>
                       )}
                       {serviceType.description && (
-                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2 mt-0.5 hidden xs:block">
                           {serviceType.description}
                         </p>
                       )}
                       {(serviceType.services_count ?? 0) > 0 && (
-                        <p className="text-xs text-primary font-medium mt-1">
-                          {serviceType.services_count} service{(serviceType.services_count ?? 0) > 1 ? 's' : ''} actif{(serviceType.services_count ?? 0) > 1 ? 's' : ''}
+                        <p className="text-[10px] sm:text-xs text-primary font-medium">
+                          {serviceType.services_count} actif{(serviceType.services_count ?? 0) > 1 ? 's' : ''}
                         </p>
                       )}
                     </div>
@@ -385,15 +392,17 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-primary" />
+      <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-hidden p-3 sm:p-6">
+        <DialogHeader className="pb-2 sm:pb-4">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-primary to-primary/70 rounded-lg flex items-center justify-center shadow-md">
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
             </div>
-            {showCreateForm ? `Créer: ${selectedServiceType?.name}` : 'Types de services disponibles'}
+            <span className="truncate">
+              {showCreateForm ? `Créer: ${selectedServiceType?.name}` : 'Services disponibles'}
+            </span>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs sm:text-sm">
             {showCreateForm 
               ? 'Configurez votre nouveau service professionnel'
               : 'Choisissez le type de service que vous souhaitez créer'
@@ -401,10 +410,13 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-2">
+        <div className="mt-1">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <div className="flex items-center justify-center py-8 sm:py-12">
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-primary" />
+                <p className="text-xs text-muted-foreground">Chargement...</p>
+              </div>
             </div>
           ) : showCreateForm ? (
             renderCreateForm()
