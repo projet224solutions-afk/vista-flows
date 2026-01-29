@@ -62,6 +62,15 @@ export function VoiceRecorderWithTranslation({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Détecter iOS/Safari
+  const isIOSDevice = useCallback(() => {
+    return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  }, []);
+
+  const isSafariBrowser = useCallback(() => {
+    return /Safari/i.test(navigator.userAgent) && !/CriOS|FxiOS|Chrome/i.test(navigator.userAgent);
+  }, []);
+
   // Démarrer l'enregistrement
   const startRecording = useCallback(async () => {
     try {
@@ -77,12 +86,33 @@ export function VoiceRecorderWithTranslation({
       streamRef.current = stream;
       audioChunksRef.current = [];
 
-      // Choisir le format selon le navigateur
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-        ? 'audio/webm;codecs=opus'
-        : MediaRecorder.isTypeSupported('audio/mp4')
-          ? 'audio/mp4'
-          : 'audio/webm';
+      // iOS/Safari: utiliser mp4/aac en priorité
+      // Autres navigateurs: utiliser webm/opus
+      let mimeType: string;
+      
+      if (isIOSDevice() || isSafariBrowser()) {
+        // iOS Safari supporte uniquement mp4 ou wav
+        if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          mimeType = 'audio/mp4';
+        } else if (MediaRecorder.isTypeSupported('audio/aac')) {
+          mimeType = 'audio/aac';
+        } else if (MediaRecorder.isTypeSupported('audio/wav')) {
+          mimeType = 'audio/wav';
+        } else {
+          // Fallback - iOS peut ne pas supporter MediaRecorder du tout
+          console.warn('⚠️ MediaRecorder non supporté sur ce navigateur iOS');
+          mimeType = 'audio/mp4'; // Essayer quand même
+        }
+      } else {
+        // Chrome, Firefox, Edge, etc.
+        mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+          ? 'audio/webm;codecs=opus'
+          : MediaRecorder.isTypeSupported('audio/webm')
+            ? 'audio/webm'
+            : 'audio/mp4';
+      }
+
+      console.log('🎙️ Using MIME type:', mimeType, '| iOS:', isIOSDevice(), '| Safari:', isSafariBrowser());
 
       const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
@@ -114,7 +144,7 @@ export function VoiceRecorderWithTranslation({
     } catch (error) {
       console.error('Error starting recording:', error);
     }
-  }, []);
+  }, [isIOSDevice, isSafariBrowser]);
 
   // Arrêter l'enregistrement
   const stopRecording = useCallback(() => {

@@ -44,23 +44,37 @@ export function useVoiceMessageWithTranslation() {
     try {
       const { senderId, recipientId, conversationId, additionalMetadata } = options;
 
-      // 1. Vérifier si conversion pour iOS est nécessaire
-      console.log('🎙️ Checking audio compatibility...');
-      const needsConversion = needsConversionForIOS(undefined, 'audio.webm');
+      // 1. Détecter le format audio depuis le blob
+      const blobMimeType = audioBlob.type || 'audio/webm';
+      console.log('🎙️ Audio blob MIME type:', blobMimeType);
       
-      let audioToUpload = audioBlob;
+      // Déterminer le format et l'extension depuis le MIME type
       let audioFormat = 'webm';
-      let mimeType = 'audio/webm';
+      let mimeType = blobMimeType;
+      
+      if (blobMimeType.includes('mp4') || blobMimeType.includes('m4a')) {
+        audioFormat = 'mp4';
+        mimeType = 'audio/mp4';
+      } else if (blobMimeType.includes('aac')) {
+        audioFormat = 'aac';
+        mimeType = 'audio/aac';
+      } else if (blobMimeType.includes('wav')) {
+        audioFormat = 'wav';
+        mimeType = 'audio/wav';
+      } else if (blobMimeType.includes('webm') || blobMimeType.includes('opus')) {
+        audioFormat = 'webm';
+        mimeType = 'audio/webm';
+      }
 
       // 2. Upload vers Supabase Storage - utiliser le bucket communication-files
       const fileName = `voice-${senderId}-${Date.now()}.${audioFormat}`;
       const filePath = `audio/${fileName}`;
 
-      console.log('🎙️ Uploading voice message to storage...', { filePath, mimeType });
+      console.log('🎙️ Uploading voice message to storage...', { filePath, mimeType, audioFormat });
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('communication-files')
-        .upload(filePath, audioToUpload, {
+        .upload(filePath, audioBlob, {
           contentType: mimeType,
           upsert: true
         });
