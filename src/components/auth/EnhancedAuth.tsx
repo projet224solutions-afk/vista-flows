@@ -481,109 +481,106 @@ export default function EnhancedAuth() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary flex flex-col">
-      {/* Header Premium avec logo */}
-      <header className="w-full py-4 px-4 sm:px-6 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 sticky top-0 z-50">
-        <div className="flex items-center gap-3">
+      {/* Header compact */}
+      <header className="w-full py-2.5 px-3 sm:px-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 sticky top-0 z-50">
+        <div className="flex items-center gap-2">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={() => navigate('/')}
-            className="h-10 w-10 rounded-xl hover:bg-primary/10"
+            className="h-8 w-8 rounded-lg hover:bg-primary/10"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
-              <span className="text-primary-foreground font-bold text-lg">M</span>
+          <div className="flex items-center gap-1.5">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-md">
+              <span className="text-primary-foreground font-bold text-sm">M</span>
             </div>
-            <span className="font-bold text-lg sm:text-xl tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            <span className="font-bold text-base tracking-tight text-primary">
               224Solutions
             </span>
           </div>
         </div>
       </header>
 
-      {/* Contenu principal */}
-      <div className="flex-1 flex items-start sm:items-center justify-center px-4 py-6 sm:py-10 overflow-y-auto">
-        <div className="w-full max-w-md">
-          {/* Toggle Connexion / Inscription - Style Premium */}
-          <div className="mb-6">
+      {/* Contenu principal - espacement réduit */}
+      <div className="flex-1 flex items-start sm:items-center justify-center px-3 py-3 sm:py-6 overflow-y-auto">
+        <div className="w-full max-w-sm">
+          {/* Toggle compact */}
+          <div className="mb-3">
             <div className="flex items-center justify-center">
-              <div className="bg-muted/80 backdrop-blur-sm p-1 rounded-2xl inline-flex gap-1 shadow-inner border border-border/50">
+              <div className="bg-muted/60 p-0.5 rounded-lg inline-flex gap-0.5 border border-border/30">
                 <button
                   onClick={() => setShowSignupPanel(false)}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                     !showSignupPanel 
-                      ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-[1.02]' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-card/50'
+                      ? 'bg-primary text-primary-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <LogIn className="h-4 w-4" />
+                  <LogIn className="h-3 w-3" />
                   Connexion
                 </button>
                 <button
                   onClick={() => setShowSignupPanel(true)}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                     showSignupPanel 
-                      ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-green-500/25 scale-[1.02]' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-card/50'
+                      ? 'bg-emerald-500 text-white shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <UserPlus className="h-4 w-4" />
+                  <UserPlus className="h-3 w-3" />
                   Créer un compte
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Carte principale */}
-          <Card className="shadow-2xl border-0 overflow-hidden bg-card/95 backdrop-blur-xl">
-            {/* Header de la carte */}
-            <CardHeader className={`pb-4 pt-6 ${!showSignupPanel ? 'bg-gradient-to-br from-primary/10 via-primary/5 to-transparent' : 'bg-gradient-to-br from-emerald-50 via-green-50/50 to-transparent dark:from-emerald-900/20 dark:via-green-900/10'}`}>
-              <div className="text-center space-y-2">
-                <div className={`mx-auto w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${!showSignupPanel ? 'bg-gradient-to-br from-primary to-primary/70' : 'bg-gradient-to-br from-emerald-500 to-green-600'}`}>
+          {/* Carte principale - plus compacte */}
+          <Card className="shadow-xl border-0 overflow-hidden bg-card/95 backdrop-blur-xl">
+            {/* Header compact */}
+            <CardHeader className={`pb-2 pt-4 px-4 ${!showSignupPanel ? 'bg-gradient-to-br from-primary/10 via-primary/5 to-transparent' : 'bg-gradient-to-br from-emerald-50 via-green-50/50 to-transparent dark:from-emerald-900/20 dark:via-green-900/10'}`}>
+              <div className="text-center space-y-1.5">
+                <div className={`mx-auto w-10 h-10 rounded-xl flex items-center justify-center shadow-md ${!showSignupPanel ? 'bg-primary' : 'bg-emerald-500'}`}>
                   {!showSignupPanel ? (
-                    <LogIn className="h-7 w-7 text-white" />
+                    <LogIn className="h-5 w-5 text-white" />
                   ) : (
-                    <UserPlus className="h-7 w-7 text-white" />
+                    <UserPlus className="h-5 w-5 text-white" />
                   )}
                 </div>
-                <CardTitle className={`text-xl font-bold ${!showSignupPanel ? 'text-foreground' : 'text-emerald-700 dark:text-emerald-400'}`}>
-                  {!showSignupPanel ? 'Connectez-vous à votre espace' : 'Rejoignez 224Solutions'}
+                <CardTitle className={`text-base font-bold ${!showSignupPanel ? 'text-foreground' : 'text-emerald-700 dark:text-emerald-400'}`}>
+                  {!showSignupPanel ? 'Connectez-vous' : 'Créer un compte'}
                 </CardTitle>
-                <CardDescription className="text-sm max-w-xs mx-auto">
+                <CardDescription className="text-xs">
                   {!showSignupPanel 
-                    ? 'Accédez à vos services professionnels en toute sécurité' 
-                    : 'Créez votre compte et développez votre activité'
+                    ? 'Accédez à votre espace sécurisé' 
+                    : 'Rejoignez la plateforme'
                   }
                 </CardDescription>
               </div>
             </CardHeader>
 
-            <CardContent className="p-5 sm:p-6 space-y-5">
+            <CardContent className="p-3 sm:p-4 space-y-3">
               {/* ===== FORMULAIRE CONNEXION ===== */}
               {!showSignupPanel && (
-                <div className="space-y-5">
-                  {/* Info connexion intelligente - Premium style */}
-                  <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
-                        <UserCheck className="h-5 w-5 text-primary" />
+                <div className="space-y-3">
+                  {/* Info connexion intelligente - compact */}
+                  <div className="bg-primary/5 border border-primary/10 rounded-lg p-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <UserCheck className="h-3.5 w-3.5 text-primary" />
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold text-foreground">Connexion intelligente</p>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          Utilisez vos identifiants habituels. Le système reconnaîtra automatiquement votre type de compte.
-                        </p>
-                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-tight">
+                        Connexion intelligente - votre type de compte sera détecté automatiquement
+                      </p>
                     </div>
                   </div>
 
-                  {/* Formulaire de connexion */}
-                  <form onSubmit={handleEmailAuth} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="login-email" className="text-sm font-medium flex items-center gap-2">
-                        <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                  {/* Formulaire de connexion - compact */}
+                  <form onSubmit={handleEmailAuth} className="space-y-2.5">
+                    <div className="space-y-1">
+                      <Label htmlFor="login-email" className="text-xs font-medium flex items-center gap-1.5">
+                        <Mail className="h-3 w-3 text-muted-foreground" />
                         Email
                       </Label>
                       <Input
@@ -593,14 +590,14 @@ export default function EnhancedAuth() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         disabled={loading}
-                        className="h-12 rounded-xl border-border/50 bg-input/50 focus:bg-background focus:border-primary transition-all"
+                        className="h-9 text-sm rounded-lg border-border/50 bg-input/50 focus:bg-background focus:border-primary"
                         required
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="login-password" className="text-sm font-medium flex items-center gap-2">
-                        <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                    <div className="space-y-1">
+                      <Label htmlFor="login-password" className="text-xs font-medium flex items-center gap-1.5">
+                        <Lock className="h-3 w-3 text-muted-foreground" />
                         Mot de passe
                       </Label>
                       <div className="relative">
@@ -611,100 +608,98 @@ export default function EnhancedAuth() {
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           disabled={loading}
-                          className="h-12 rounded-xl border-border/50 bg-input/50 pr-12 focus:bg-background focus:border-primary transition-all"
+                          className="h-9 text-sm rounded-lg border-border/50 bg-input/50 pr-9 focus:bg-background focus:border-primary"
                           required
                           minLength={6}
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         >
-                          {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                          {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                         </button>
                       </div>
                     </div>
 
                     {error && mode === 'login' && (
-                      <Alert variant="destructive" className="rounded-xl">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription className="text-sm">{error}</AlertDescription>
+                      <Alert variant="destructive" className="rounded-lg py-2">
+                        <AlertCircle className="h-3.5 w-3.5" />
+                        <AlertDescription className="text-xs">{error}</AlertDescription>
                       </Alert>
                     )}
 
                     <Button
                       type="submit"
-                      className="w-full h-12 text-base font-semibold rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98]"
+                      className="w-full h-9 text-sm font-medium rounded-lg bg-primary hover:bg-primary/90 shadow-md"
                       disabled={loading}
                       onClick={() => setMode('login')}
                     >
                       {loading && mode === 'login' ? (
                         <>
-                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                          Connexion en cours...
+                          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                          Connexion...
                         </>
                       ) : (
                         <>
-                          <LogIn className="mr-2 h-5 w-5" />
+                          <LogIn className="mr-1.5 h-3.5 w-3.5" />
                           Se connecter
                         </>
                       )}
                     </Button>
                   </form>
 
-                  {/* Séparateur élégant */}
-                  <div className="relative py-3">
-                    <Separator className="bg-border/50" />
-                    <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      ou continuer avec
+                  {/* Séparateur compact */}
+                  <div className="relative py-2">
+                    <Separator className="bg-border/40" />
+                    <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-[10px] text-muted-foreground uppercase">
+                      ou
                     </span>
                   </div>
 
-                  {/* Connexion sociale - Design premium */}
-                  <div className="grid grid-cols-2 gap-3">
+                  {/* Connexion sociale - compact */}
+                  <div className="grid grid-cols-2 gap-2">
                     <Button
                       variant="outline"
-                      className="h-12 gap-2.5 rounded-xl border-2 border-border/50 hover:border-red-200 hover:bg-red-50/50 dark:hover:bg-red-950/20 transition-all group"
+                      className="h-9 gap-1.5 rounded-lg border border-border/50 hover:border-red-200 hover:bg-red-50/50 text-xs"
                       onClick={() => { setMode('login'); handleSocialLogin('google'); }}
                       disabled={socialLoading !== null}
                     >
                       {socialLoading === 'google' && mode === 'login' ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
-                        <svg className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24">
                           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                         </svg>
                       )}
-                      <span className="font-medium">Google</span>
+                      Google
                     </Button>
 
                     <Button
                       variant="outline"
-                      className="h-12 gap-2.5 rounded-xl border-2 border-border/50 hover:border-blue-200 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-all group"
+                      className="h-9 gap-1.5 rounded-lg border border-border/50 hover:border-blue-200 hover:bg-blue-50/50 text-xs"
                       onClick={() => { setMode('login'); handleSocialLogin('facebook'); }}
                       disabled={socialLoading !== null}
                     >
                       {socialLoading === 'facebook' && mode === 'login' ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
-                        <svg className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="#1877F2">
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="#1877F2">
                           <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                         </svg>
                       )}
-                      <span className="font-medium">Facebook</span>
+                      Facebook
                     </Button>
                   </div>
 
-                  {/* Note confirmation email */}
-                  <div className="bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/50 dark:border-amber-800/50 rounded-xl p-3.5">
-                    <p className="text-xs text-amber-700 dark:text-amber-400 flex items-start gap-2.5">
-                      <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-                      <span>
-                        <strong>Nouveau inscrit ?</strong> Confirmez votre email avant de vous connecter.
-                      </span>
+                  {/* Note email - compact */}
+                  <div className="bg-amber-50/60 border border-amber-200/30 rounded-lg p-2">
+                    <p className="text-[10px] text-amber-700 flex items-center gap-1.5">
+                      <AlertCircle className="h-3 w-3 shrink-0" />
+                      <span><strong>Nouveau ?</strong> Confirmez votre email avant connexion.</span>
                     </p>
                   </div>
                 </div>
@@ -712,13 +707,13 @@ export default function EnhancedAuth() {
 
               {/* ===== FORMULAIRE INSCRIPTION ===== */}
               {showSignupPanel && (
-                <div className="space-y-5">
-                  {/* Types de comptes - Design premium */}
-                  <div className="space-y-3">
-                    <p className="text-xs font-semibold text-center text-muted-foreground uppercase tracking-wider">
+                <div className="space-y-3">
+                  {/* Types de comptes - compact */}
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-medium text-center text-muted-foreground uppercase tracking-wide">
                       Choisissez votre profil
                     </p>
-                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                    <div className="grid grid-cols-5 gap-1.5">
                       {accountTypes.map((type) => {
                         const Icon = type.icon;
                         const isSelected = accountType === type.value;
@@ -726,20 +721,20 @@ export default function EnhancedAuth() {
                           <button
                             key={type.value}
                             onClick={() => { setAccountType(type.value); setMode('signup'); }}
-                            className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border-2 transition-all duration-300 ${
+                            className={`flex flex-col items-center gap-1 p-1.5 rounded-lg border transition-all ${
                               isSelected 
-                                ? 'border-primary bg-primary/10 shadow-md shadow-primary/20 scale-[1.02]' 
-                                : 'border-transparent bg-muted/50 hover:bg-muted hover:border-border'
+                                ? 'border-primary bg-primary/10 shadow-sm' 
+                                : 'border-transparent bg-muted/40 hover:bg-muted'
                             }`}
                           >
-                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
                               isSelected 
-                                ? 'bg-primary text-primary-foreground shadow-lg' 
+                                ? 'bg-primary text-primary-foreground' 
                                 : `bg-card ${type.color}`
                             }`}>
-                              <Icon className="h-4 w-4" />
+                              <Icon className="h-3.5 w-3.5" />
                             </div>
-                            <span className={`text-[10px] font-medium leading-tight text-center ${isSelected ? 'text-primary' : 'text-muted-foreground'}`}>
+                            <span className={`text-[9px] font-medium leading-tight text-center ${isSelected ? 'text-primary' : 'text-muted-foreground'}`}>
                               {type.label}
                             </span>
                           </button>
@@ -748,18 +743,18 @@ export default function EnhancedAuth() {
                     </div>
                   </div>
 
-                  {/* Formulaire d'inscription (visible si type sélectionné) */}
+                  {/* Formulaire d'inscription compact */}
                   {accountType && mode === 'signup' && (
                     <motion.div
                       key="signup-form"
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0, y: 5 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="space-y-4 pt-4 border-t border-border/50"
+                      className="space-y-2.5 pt-2.5 border-t border-border/30"
                     >
-                      <form onSubmit={handleEmailAuth} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="signup-name" className="text-sm font-medium flex items-center gap-2">
-                            <User className="h-3.5 w-3.5 text-muted-foreground" />
+                      <form onSubmit={handleEmailAuth} className="space-y-2">
+                        <div className="space-y-1">
+                          <Label htmlFor="signup-name" className="text-xs font-medium flex items-center gap-1.5">
+                            <User className="h-3 w-3 text-muted-foreground" />
                             Nom complet
                           </Label>
                           <Input
@@ -769,14 +764,14 @@ export default function EnhancedAuth() {
                             value={fullName}
                             onChange={(e) => setFullName(e.target.value)}
                             disabled={loading}
-                            className="h-11 rounded-xl border-border/50 bg-input/50 focus:bg-background focus:border-emerald-500 transition-all"
+                            className="h-9 text-sm rounded-lg border-border/50 bg-input/50 focus:bg-background focus:border-emerald-500"
                             required
                           />
                         </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="signup-email" className="text-sm font-medium flex items-center gap-2">
-                            <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                        <div className="space-y-1">
+                          <Label htmlFor="signup-email" className="text-xs font-medium flex items-center gap-1.5">
+                            <Mail className="h-3 w-3 text-muted-foreground" />
                             Email
                           </Label>
                           <Input
@@ -786,14 +781,14 @@ export default function EnhancedAuth() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             disabled={loading}
-                            className="h-11 rounded-xl border-border/50 bg-input/50 focus:bg-background focus:border-emerald-500 transition-all"
+                            className="h-9 text-sm rounded-lg border-border/50 bg-input/50 focus:bg-background focus:border-emerald-500"
                             required
                           />
                         </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="signup-password" className="text-sm font-medium flex items-center gap-2">
-                            <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                        <div className="space-y-1">
+                          <Label htmlFor="signup-password" className="text-xs font-medium flex items-center gap-1.5">
+                            <Lock className="h-3 w-3 text-muted-foreground" />
                             Mot de passe
                           </Label>
                           <div className="relative">
@@ -804,131 +799,120 @@ export default function EnhancedAuth() {
                               value={password}
                               onChange={(e) => setPassword(e.target.value)}
                               disabled={loading}
-                              className="h-11 rounded-xl border-border/50 bg-input/50 pr-12 focus:bg-background focus:border-emerald-500 transition-all"
+                              className="h-9 text-sm rounded-lg border-border/50 bg-input/50 pr-9 focus:bg-background focus:border-emerald-500"
                               required
                               minLength={6}
                             />
                             <button
                               type="button"
                               onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                             >
-                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                             </button>
                           </div>
                         </div>
 
                         {error && mode === 'signup' && (
-                          <Alert variant="destructive" className="rounded-xl">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertDescription className="text-sm">{error}</AlertDescription>
+                          <Alert variant="destructive" className="rounded-lg py-2">
+                            <AlertCircle className="h-3.5 w-3.5" />
+                            <AlertDescription className="text-xs">{error}</AlertDescription>
                           </Alert>
                         )}
 
                         <Button
                           type="submit"
-                          className="w-full h-11 text-base font-semibold rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-lg shadow-green-500/25 transition-all hover:shadow-xl active:scale-[0.98]"
+                          className="w-full h-9 text-sm font-medium rounded-lg bg-emerald-500 hover:bg-emerald-600 shadow-md"
                           disabled={loading}
                         >
                           {loading && mode === 'signup' ? (
                             <>
-                              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                               Inscription...
                             </>
                           ) : (
                             <>
-                              <UserPlus className="mr-2 h-5 w-5" />
-                              S'inscrire en tant que {accountTypes.find(t => t.value === accountType)?.label}
+                              <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+                              S'inscrire - {accountTypes.find(t => t.value === accountType)?.label}
                             </>
                           )}
                         </Button>
                       </form>
 
-                      {/* Ou s'inscrire avec Google/Facebook */}
-                      <div className="relative py-3">
-                        <Separator className="bg-border/50" />
-                        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {/* Séparateur compact */}
+                      <div className="relative py-2">
+                        <Separator className="bg-border/40" />
+                        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-[10px] text-muted-foreground uppercase">
                           ou
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-2">
                         <Button
                           variant="outline"
-                          className="h-11 gap-2 rounded-xl border-2 border-border/50 hover:border-red-200 hover:bg-red-50/50 transition-all"
+                          className="h-9 gap-1.5 rounded-lg border border-border/50 hover:border-red-200 hover:bg-red-50/50 text-xs"
                           onClick={() => handleSocialLogin('google')}
                           disabled={socialLoading !== null}
                         >
                           {socialLoading === 'google' && mode === 'signup' ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           ) : (
-                            <svg className="h-4 w-4" viewBox="0 0 24 24">
+                            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24">
                               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                             </svg>
                           )}
-                          <span className="text-sm font-medium">Google</span>
+                          Google
                         </Button>
 
                         <Button
                           variant="outline"
-                          className="h-11 gap-2 rounded-xl border-2 border-border/50 hover:border-blue-200 hover:bg-blue-50/50 transition-all"
+                          className="h-9 gap-1.5 rounded-lg border border-border/50 hover:border-blue-200 hover:bg-blue-50/50 text-xs"
                           onClick={() => handleSocialLogin('facebook')}
                           disabled={socialLoading !== null}
                         >
                           {socialLoading === 'facebook' && mode === 'signup' ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           ) : (
-                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="#1877F2">
+                            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="#1877F2">
                               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                             </svg>
                           )}
-                          <span className="text-sm font-medium">Facebook</span>
+                          Facebook
                         </Button>
                       </div>
                     </motion.div>
                   )}
 
-                  {/* Message si pas de type sélectionné */}
+                  {/* Message compact si pas de type sélectionné */}
                   {!accountType && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted/50 flex items-center justify-center">
-                        <UserPlus className="h-8 w-8 opacity-40" />
+                    <div className="text-center py-4 text-muted-foreground">
+                      <div className="w-10 h-10 mx-auto mb-2 rounded-lg bg-muted/50 flex items-center justify-center">
+                        <UserPlus className="h-5 w-5 opacity-40" />
                       </div>
-                      <p className="text-sm">Sélectionnez votre type de compte ci-dessus pour commencer</p>
+                      <p className="text-xs">Sélectionnez un type de compte</p>
                     </div>
                   )}
-
-                  {/* Note confirmation email */}
-                  <div className="bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/50 dark:border-emerald-800/50 rounded-xl p-3.5">
-                    <p className="text-xs text-emerald-700 dark:text-emerald-400 flex items-start gap-2.5">
-                      <Check className="h-4 w-4 mt-0.5 shrink-0" />
-                      <span>
-                        <strong>Inscription gratuite et sécurisée.</strong> Confirmez votre email après inscription.
-                      </span>
-                    </p>
-                  </div>
                 </div>
               )}
             </CardContent>
 
-            {/* Footer sécurité */}
-            <div className="px-5 sm:px-6 pb-5 sm:pb-6">
-              <div className="bg-gradient-to-r from-primary/5 to-transparent rounded-xl p-3.5 text-center border border-primary/10">
-                <p className="text-xs text-muted-foreground flex items-center justify-center gap-2">
-                  <Lock className="h-3.5 w-3.5 text-primary" />
-                  <span>Connexion sécurisée 256-bit SSL avec <span className="font-semibold text-foreground">224Solutions</span></span>
+            {/* Footer sécurité - compact */}
+            <div className="px-3 sm:px-4 pb-3 sm:pb-4">
+              <div className="bg-primary/5 rounded-lg p-2 text-center border border-primary/10">
+                <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1.5">
+                  <Lock className="h-3 w-3 text-primary" />
+                  <span>Sécurisé SSL 256-bit • <span className="font-medium text-primary">224Solutions</span></span>
                 </p>
               </div>
             </div>
           </Card>
 
-          {/* Texte légal en bas */}
-          {/* Texte légal en bas */}
-          <p className="text-center text-[10px] text-muted-foreground mt-4 px-4">
-            En continuant, vous acceptez nos <button className="underline hover:text-foreground">Conditions d'utilisation</button> et notre <button className="underline hover:text-foreground">Politique de confidentialité</button>
+          {/* Texte légal */}
+          <p className="text-center text-[9px] text-muted-foreground mt-2 px-2">
+            En continuant, vous acceptez nos <button className="underline hover:text-foreground">Conditions</button> et <button className="underline hover:text-foreground">Confidentialité</button>
           </p>
         </div>
       </div>
