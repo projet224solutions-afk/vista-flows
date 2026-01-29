@@ -315,7 +315,7 @@ export default function MessageInput({
           toast.success('Message vocal envoyé');
         } catch (error: any) {
           console.error('[Audio] Erreur envoi:', error);
-          toast.error("Erreur lors de l'envoi du message vocal");
+          toast.error(error?.message || "Erreur lors de l'envoi du message vocal");
         } finally {
           setIsSending(false);
         }
