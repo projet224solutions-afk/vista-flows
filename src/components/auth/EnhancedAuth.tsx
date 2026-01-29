@@ -480,106 +480,97 @@ export default function EnhancedAuth() {
   const [showSignupPanel, setShowSignupPanel] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary flex flex-col">
-      {/* Header compact */}
-      <header className="w-full py-2.5 px-3 sm:px-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 sticky top-0 z-50">
-        <div className="flex items-center gap-2">
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header ultra-compact professionnel */}
+      <header className="w-full py-1.5 px-3 flex items-center justify-between bg-card border-b border-border/30 sticky top-0 z-50">
+        <div className="flex items-center gap-1.5">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={() => navigate('/')}
-            className="h-8 w-8 rounded-lg hover:bg-primary/10"
+            className="h-7 w-7 rounded-md hover:bg-muted"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-3.5 w-3.5" />
           </Button>
-          <div className="flex items-center gap-1.5">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-md">
-              <span className="text-primary-foreground font-bold text-sm">M</span>
+          <div className="flex items-center gap-1">
+            <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-xs">M</span>
             </div>
-            <span className="font-bold text-base tracking-tight text-primary">
-              224Solutions
-            </span>
+            <span className="font-semibold text-sm text-foreground">224Solutions</span>
           </div>
         </div>
       </header>
 
-      {/* Contenu principal - espacement réduit */}
-      <div className="flex-1 flex items-start sm:items-center justify-center px-3 py-3 sm:py-6 overflow-y-auto">
-        <div className="w-full max-w-sm">
-          {/* Toggle compact */}
-          <div className="mb-3">
-            <div className="flex items-center justify-center">
-              <div className="bg-muted/60 p-0.5 rounded-lg inline-flex gap-0.5 border border-border/30">
-                <button
-                  onClick={() => setShowSignupPanel(false)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    !showSignupPanel 
-                      ? 'bg-primary text-primary-foreground shadow-sm' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <LogIn className="h-3 w-3" />
-                  Connexion
-                </button>
-                <button
-                  onClick={() => setShowSignupPanel(true)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    showSignupPanel 
-                      ? 'bg-emerald-500 text-white shadow-sm' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <UserPlus className="h-3 w-3" />
-                  Créer un compte
-                </button>
-              </div>
+      {/* Contenu principal - ultra compact */}
+      <div className="flex-1 flex items-start justify-center px-3 py-2 overflow-y-auto">
+        <div className="w-full max-w-[360px]">
+          {/* Toggle ultra compact */}
+          <div className="flex justify-center mb-2">
+            <div className="bg-muted/50 p-0.5 rounded-md inline-flex border border-border/20">
+              <button
+                onClick={() => setShowSignupPanel(false)}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-all ${
+                  !showSignupPanel 
+                    ? 'bg-primary text-primary-foreground shadow-sm' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <LogIn className="h-3 w-3" />
+                Connexion
+              </button>
+              <button
+                onClick={() => setShowSignupPanel(true)}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-all ${
+                  showSignupPanel 
+                    ? 'bg-emerald-500 text-white shadow-sm' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <UserPlus className="h-3 w-3" />
+                Inscription
+              </button>
             </div>
           </div>
 
-          {/* Carte principale - plus compacte */}
-          <Card className="shadow-xl border-0 overflow-hidden bg-card/95 backdrop-blur-xl">
-            {/* Header compact */}
-            <CardHeader className={`pb-2 pt-4 px-4 ${!showSignupPanel ? 'bg-gradient-to-br from-primary/10 via-primary/5 to-transparent' : 'bg-gradient-to-br from-emerald-50 via-green-50/50 to-transparent dark:from-emerald-900/20 dark:via-green-900/10'}`}>
-              <div className="text-center space-y-1.5">
-                <div className={`mx-auto w-10 h-10 rounded-xl flex items-center justify-center shadow-md ${!showSignupPanel ? 'bg-primary' : 'bg-emerald-500'}`}>
+          {/* Carte principale ultra compacte */}
+          <Card className="shadow-lg border border-border/40 overflow-hidden bg-card">
+            {/* Header minimal */}
+            <CardHeader className={`py-2.5 px-3 ${!showSignupPanel ? 'bg-primary/5' : 'bg-emerald-50 dark:bg-emerald-900/10'}`}>
+              <div className="flex items-center gap-2">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${!showSignupPanel ? 'bg-primary' : 'bg-emerald-500'}`}>
                   {!showSignupPanel ? (
-                    <LogIn className="h-5 w-5 text-white" />
+                    <LogIn className="h-4 w-4 text-white" />
                   ) : (
-                    <UserPlus className="h-5 w-5 text-white" />
+                    <UserPlus className="h-4 w-4 text-white" />
                   )}
                 </div>
-                <CardTitle className={`text-base font-bold ${!showSignupPanel ? 'text-foreground' : 'text-emerald-700 dark:text-emerald-400'}`}>
-                  {!showSignupPanel ? 'Connectez-vous' : 'Créer un compte'}
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  {!showSignupPanel 
-                    ? 'Accédez à votre espace sécurisé' 
-                    : 'Rejoignez la plateforme'
-                  }
-                </CardDescription>
+                <div>
+                  <CardTitle className={`text-sm font-semibold ${!showSignupPanel ? 'text-foreground' : 'text-emerald-700 dark:text-emerald-400'}`}>
+                    {!showSignupPanel ? 'Connexion' : 'Créer un compte'}
+                  </CardTitle>
+                  <CardDescription className="text-[10px]">
+                    {!showSignupPanel ? 'Accédez à votre espace' : 'Rejoignez la plateforme'}
+                  </CardDescription>
+                </div>
               </div>
             </CardHeader>
 
-            <CardContent className="p-3 sm:p-4 space-y-3">
+            <CardContent className="p-2.5 space-y-2">
               {/* ===== FORMULAIRE CONNEXION ===== */}
               {!showSignupPanel && (
-                <div className="space-y-3">
-                  {/* Info connexion intelligente - compact */}
-                  <div className="bg-primary/5 border border-primary/10 rounded-lg p-2.5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                        <UserCheck className="h-3.5 w-3.5 text-primary" />
-                      </div>
-                      <p className="text-[11px] text-muted-foreground leading-tight">
-                        Connexion intelligente - votre type de compte sera détecté automatiquement
-                      </p>
-                    </div>
+                <div className="space-y-2">
+                  {/* Info compact */}
+                  <div className="bg-primary/5 rounded-md p-2 flex items-center gap-2">
+                    <UserCheck className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <p className="text-[10px] text-muted-foreground">
+                      Connexion intelligente - détection automatique
+                    </p>
                   </div>
 
-                  {/* Formulaire de connexion - compact */}
-                  <form onSubmit={handleEmailAuth} className="space-y-2.5">
-                    <div className="space-y-1">
-                      <Label htmlFor="login-email" className="text-xs font-medium flex items-center gap-1.5">
+                  {/* Formulaire de connexion ultra-compact */}
+                  <form onSubmit={handleEmailAuth} className="space-y-2">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="login-email" className="text-[11px] font-medium flex items-center gap-1">
                         <Mail className="h-3 w-3 text-muted-foreground" />
                         Email
                       </Label>
@@ -590,13 +581,13 @@ export default function EnhancedAuth() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         disabled={loading}
-                        className="h-9 text-sm rounded-lg border-border/50 bg-input/50 focus:bg-background focus:border-primary"
+                        className="h-8 text-xs rounded-md"
                         required
                       />
                     </div>
 
-                    <div className="space-y-1">
-                      <Label htmlFor="login-password" className="text-xs font-medium flex items-center gap-1.5">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="login-password" className="text-[11px] font-medium flex items-center gap-1">
                         <Lock className="h-3 w-3 text-muted-foreground" />
                         Mot de passe
                       </Label>
@@ -608,41 +599,41 @@ export default function EnhancedAuth() {
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           disabled={loading}
-                          className="h-9 text-sm rounded-lg border-border/50 bg-input/50 pr-9 focus:bg-background focus:border-primary"
+                          className="h-8 text-xs rounded-md pr-8"
                           required
                           minLength={6}
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         >
-                          {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                          {showPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                         </button>
                       </div>
                     </div>
 
                     {error && mode === 'login' && (
-                      <Alert variant="destructive" className="rounded-lg py-2">
-                        <AlertCircle className="h-3.5 w-3.5" />
-                        <AlertDescription className="text-xs">{error}</AlertDescription>
+                      <Alert variant="destructive" className="rounded-md py-1.5 px-2">
+                        <AlertCircle className="h-3 w-3" />
+                        <AlertDescription className="text-[10px] ml-1">{error}</AlertDescription>
                       </Alert>
                     )}
 
                     <Button
                       type="submit"
-                      className="w-full h-9 text-sm font-medium rounded-lg bg-primary hover:bg-primary/90 shadow-md"
+                      className="w-full h-8 text-xs font-medium rounded-md bg-primary hover:bg-primary/90"
                       disabled={loading}
                       onClick={() => setMode('login')}
                     >
                       {loading && mode === 'login' ? (
                         <>
-                          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
                           Connexion...
                         </>
                       ) : (
                         <>
-                          <LogIn className="mr-1.5 h-3.5 w-3.5" />
+                          <LogIn className="mr-1 h-3 w-3" />
                           Se connecter
                         </>
                       )}
@@ -650,25 +641,25 @@ export default function EnhancedAuth() {
                   </form>
 
                   {/* Séparateur compact */}
-                  <div className="relative py-2">
-                    <Separator className="bg-border/40" />
-                    <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-[10px] text-muted-foreground uppercase">
+                  <div className="relative py-1.5">
+                    <Separator className="bg-border/30" />
+                    <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-1.5 text-[9px] text-muted-foreground uppercase">
                       ou
                     </span>
                   </div>
 
-                  {/* Connexion sociale - compact */}
-                  <div className="grid grid-cols-2 gap-2">
+                  {/* Connexion sociale compact */}
+                  <div className="grid grid-cols-2 gap-1.5">
                     <Button
                       variant="outline"
-                      className="h-9 gap-1.5 rounded-lg border border-border/50 hover:border-red-200 hover:bg-red-50/50 text-xs"
+                      className="h-8 gap-1 rounded-md border-border/50 text-[11px]"
                       onClick={() => { setMode('login'); handleSocialLogin('google'); }}
                       disabled={socialLoading !== null}
                     >
                       {socialLoading === 'google' && mode === 'login' ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <Loader2 className="h-3 w-3 animate-spin" />
                       ) : (
-                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24">
+                        <svg className="h-3 w-3" viewBox="0 0 24 24">
                           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -680,14 +671,14 @@ export default function EnhancedAuth() {
 
                     <Button
                       variant="outline"
-                      className="h-9 gap-1.5 rounded-lg border border-border/50 hover:border-blue-200 hover:bg-blue-50/50 text-xs"
+                      className="h-8 gap-1 rounded-md border-border/50 text-[11px]"
                       onClick={() => { setMode('login'); handleSocialLogin('facebook'); }}
                       disabled={socialLoading !== null}
                     >
                       {socialLoading === 'facebook' && mode === 'login' ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <Loader2 className="h-3 w-3 animate-spin" />
                       ) : (
-                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="#1877F2">
+                        <svg className="h-3 w-3" viewBox="0 0 24 24" fill="#1877F2">
                           <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                         </svg>
                       )}
@@ -695,10 +686,10 @@ export default function EnhancedAuth() {
                     </Button>
                   </div>
 
-                  {/* Note email - compact */}
-                  <div className="bg-amber-50/60 border border-amber-200/30 rounded-lg p-2">
-                    <p className="text-[10px] text-amber-700 flex items-center gap-1.5">
-                      <AlertCircle className="h-3 w-3 shrink-0" />
+                  {/* Note compact */}
+                  <div className="bg-amber-50/50 dark:bg-amber-900/10 rounded-md p-1.5">
+                    <p className="text-[9px] text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                      <AlertCircle className="h-2.5 w-2.5 shrink-0" />
                       <span><strong>Nouveau ?</strong> Confirmez votre email avant connexion.</span>
                     </p>
                   </div>
@@ -707,13 +698,13 @@ export default function EnhancedAuth() {
 
               {/* ===== FORMULAIRE INSCRIPTION ===== */}
               {showSignupPanel && (
-                <div className="space-y-3">
-                  {/* Types de comptes - compact */}
-                  <div className="space-y-2">
-                    <p className="text-[10px] font-medium text-center text-muted-foreground uppercase tracking-wide">
+                <div className="space-y-2">
+                  {/* Types de comptes ultra-compact */}
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-medium text-center text-muted-foreground uppercase tracking-wide">
                       Choisissez votre profil
                     </p>
-                    <div className="grid grid-cols-5 gap-1.5">
+                    <div className="grid grid-cols-5 gap-1">
                       {accountTypes.map((type) => {
                         const Icon = type.icon;
                         const isSelected = accountType === type.value;
@@ -721,20 +712,20 @@ export default function EnhancedAuth() {
                           <button
                             key={type.value}
                             onClick={() => { setAccountType(type.value); setMode('signup'); }}
-                            className={`flex flex-col items-center gap-1 p-1.5 rounded-lg border transition-all ${
+                            className={`flex flex-col items-center gap-0.5 p-1 rounded-md border transition-all ${
                               isSelected 
-                                ? 'border-primary bg-primary/10 shadow-sm' 
-                                : 'border-transparent bg-muted/40 hover:bg-muted'
+                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' 
+                                : 'border-transparent bg-muted/30 hover:bg-muted/60'
                             }`}
                           >
-                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                            <div className={`w-6 h-6 rounded-md flex items-center justify-center ${
                               isSelected 
-                                ? 'bg-primary text-primary-foreground' 
+                                ? 'bg-emerald-500 text-white' 
                                 : `bg-card ${type.color}`
                             }`}>
-                              <Icon className="h-3.5 w-3.5" />
+                              <Icon className="h-3 w-3" />
                             </div>
-                            <span className={`text-[9px] font-medium leading-tight text-center ${isSelected ? 'text-primary' : 'text-muted-foreground'}`}>
+                            <span className={`text-[8px] font-medium leading-tight text-center ${isSelected ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}>
                               {type.label}
                             </span>
                           </button>
@@ -747,13 +738,13 @@ export default function EnhancedAuth() {
                   {accountType && mode === 'signup' && (
                     <motion.div
                       key="signup-form"
-                      initial={{ opacity: 0, y: 5 }}
+                      initial={{ opacity: 0, y: 3 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="space-y-2.5 pt-2.5 border-t border-border/30"
+                      className="space-y-2 pt-2 border-t border-border/20"
                     >
-                      <form onSubmit={handleEmailAuth} className="space-y-2">
-                        <div className="space-y-1">
-                          <Label htmlFor="signup-name" className="text-xs font-medium flex items-center gap-1.5">
+                      <form onSubmit={handleEmailAuth} className="space-y-1.5">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="signup-name" className="text-[11px] font-medium flex items-center gap-1">
                             <User className="h-3 w-3 text-muted-foreground" />
                             Nom complet
                           </Label>
@@ -764,13 +755,13 @@ export default function EnhancedAuth() {
                             value={fullName}
                             onChange={(e) => setFullName(e.target.value)}
                             disabled={loading}
-                            className="h-9 text-sm rounded-lg border-border/50 bg-input/50 focus:bg-background focus:border-emerald-500"
+                            className="h-8 text-xs rounded-md"
                             required
                           />
                         </div>
 
-                        <div className="space-y-1">
-                          <Label htmlFor="signup-email" className="text-xs font-medium flex items-center gap-1.5">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="signup-email" className="text-[11px] font-medium flex items-center gap-1">
                             <Mail className="h-3 w-3 text-muted-foreground" />
                             Email
                           </Label>
@@ -781,13 +772,13 @@ export default function EnhancedAuth() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             disabled={loading}
-                            className="h-9 text-sm rounded-lg border-border/50 bg-input/50 focus:bg-background focus:border-emerald-500"
+                            className="h-8 text-xs rounded-md"
                             required
                           />
                         </div>
 
-                        <div className="space-y-1">
-                          <Label htmlFor="signup-password" className="text-xs font-medium flex items-center gap-1.5">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="signup-password" className="text-[11px] font-medium flex items-center gap-1">
                             <Lock className="h-3 w-3 text-muted-foreground" />
                             Mot de passe
                           </Label>
@@ -799,40 +790,40 @@ export default function EnhancedAuth() {
                               value={password}
                               onChange={(e) => setPassword(e.target.value)}
                               disabled={loading}
-                              className="h-9 text-sm rounded-lg border-border/50 bg-input/50 pr-9 focus:bg-background focus:border-emerald-500"
+                              className="h-8 text-xs rounded-md pr-8"
                               required
                               minLength={6}
                             />
                             <button
                               type="button"
                               onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                             >
-                              {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                              {showPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                             </button>
                           </div>
                         </div>
 
                         {error && mode === 'signup' && (
-                          <Alert variant="destructive" className="rounded-lg py-2">
-                            <AlertCircle className="h-3.5 w-3.5" />
-                            <AlertDescription className="text-xs">{error}</AlertDescription>
+                          <Alert variant="destructive" className="rounded-md py-1.5 px-2">
+                            <AlertCircle className="h-3 w-3" />
+                            <AlertDescription className="text-[10px] ml-1">{error}</AlertDescription>
                           </Alert>
                         )}
 
                         <Button
                           type="submit"
-                          className="w-full h-9 text-sm font-medium rounded-lg bg-emerald-500 hover:bg-emerald-600 shadow-md"
+                          className="w-full h-8 text-xs font-medium rounded-md bg-emerald-500 hover:bg-emerald-600"
                           disabled={loading}
                         >
                           {loading && mode === 'signup' ? (
                             <>
-                              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
                               Inscription...
                             </>
                           ) : (
                             <>
-                              <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+                              <UserPlus className="mr-1 h-3 w-3" />
                               S'inscrire - {accountTypes.find(t => t.value === accountType)?.label}
                             </>
                           )}
@@ -840,24 +831,24 @@ export default function EnhancedAuth() {
                       </form>
 
                       {/* Séparateur compact */}
-                      <div className="relative py-2">
-                        <Separator className="bg-border/40" />
-                        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-[10px] text-muted-foreground uppercase">
+                      <div className="relative py-1.5">
+                        <Separator className="bg-border/30" />
+                        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-1.5 text-[9px] text-muted-foreground uppercase">
                           ou
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-2 gap-1.5">
                         <Button
                           variant="outline"
-                          className="h-9 gap-1.5 rounded-lg border border-border/50 hover:border-red-200 hover:bg-red-50/50 text-xs"
+                          className="h-8 gap-1 rounded-md border-border/50 text-[11px]"
                           onClick={() => handleSocialLogin('google')}
                           disabled={socialLoading !== null}
                         >
                           {socialLoading === 'google' && mode === 'signup' ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            <Loader2 className="h-3 w-3 animate-spin" />
                           ) : (
-                            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24">
+                            <svg className="h-3 w-3" viewBox="0 0 24 24">
                               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -869,14 +860,14 @@ export default function EnhancedAuth() {
 
                         <Button
                           variant="outline"
-                          className="h-9 gap-1.5 rounded-lg border border-border/50 hover:border-blue-200 hover:bg-blue-50/50 text-xs"
+                          className="h-8 gap-1 rounded-md border-border/50 text-[11px]"
                           onClick={() => handleSocialLogin('facebook')}
                           disabled={socialLoading !== null}
                         >
                           {socialLoading === 'facebook' && mode === 'signup' ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            <Loader2 className="h-3 w-3 animate-spin" />
                           ) : (
-                            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="#1877F2">
+                            <svg className="h-3 w-3" viewBox="0 0 24 24" fill="#1877F2">
                               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                             </svg>
                           )}
@@ -886,13 +877,13 @@ export default function EnhancedAuth() {
                     </motion.div>
                   )}
 
-                  {/* Message compact si pas de type sélectionné */}
+                  {/* Message si pas de type sélectionné */}
                   {!accountType && (
-                    <div className="text-center py-4 text-muted-foreground">
-                      <div className="w-10 h-10 mx-auto mb-2 rounded-lg bg-muted/50 flex items-center justify-center">
-                        <UserPlus className="h-5 w-5 opacity-40" />
+                    <div className="text-center py-3 text-muted-foreground">
+                      <div className="w-8 h-8 mx-auto mb-1.5 rounded-md bg-muted/50 flex items-center justify-center">
+                        <UserPlus className="h-4 w-4 opacity-40" />
                       </div>
-                      <p className="text-xs">Sélectionnez un type de compte</p>
+                      <p className="text-[10px]">Sélectionnez un type de compte</p>
                     </div>
                   )}
                 </div>
