@@ -323,56 +323,59 @@ export default function VendeurDashboard() {
         <VendorAnalyticsDashboard />
 
       {/* Activité récente */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Wallet universel */}
         <div>
           <UniversalWalletTransactions />
         </div>
         
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('vendor.recentOrders')}</CardTitle>
-            <CardDescription>Vos 2 dernières commandes</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {(showAllOrders ? recentOrders : recentOrders.slice(0, 2)).map((o) => (
-                <div key={o.order_number} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Package className="w-5 h-5 text-blue-600" />
+        {/* Commandes + Notifications en 2 colonnes en paysage */}
+        <div className="grid grid-cols-1 landscape:grid-cols-2 md:grid-cols-2 lg:grid-cols-1 gap-4 lg:contents">
+          <Card>
+            <CardHeader className="pb-2 sm:pb-4">
+              <CardTitle className="text-base sm:text-lg">{t('vendor.recentOrders')}</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">Vos 2 dernières commandes</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="space-y-3 sm:space-y-4">
+                {(showAllOrders ? recentOrders : recentOrders.slice(0, 2)).map((o) => (
+                  <div key={o.order_number} className="flex items-center justify-between p-2 sm:p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Package className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm sm:text-base truncate">{t('vendor.orders')} #{o.order_number}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">{o.customer_label}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium">{t('vendor.orders')} #{o.order_number}</p>
-                      <p className="text-sm text-muted-foreground">{o.customer_label}</p>
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-2">
+                      <span className="text-xs sm:text-sm font-medium whitespace-nowrap">{o.total_amount.toLocaleString()} GNF</span>
+                      <Badge variant="secondary" className="text-[10px] sm:text-xs">{o.status}</Badge>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium">{o.total_amount.toLocaleString()} GNF</span>
-                    <Badge variant="secondary">{o.status}</Badge>
-                  </div>
-                </div>
-              ))}
-              {recentOrders.length === 0 && (
-                <div className="text-sm text-muted-foreground">{t('vendor.noRecentOrders')}</div>
-              )}
-              {recentOrders.length > 2 && (
-                <Button 
-                  variant="ghost" 
-                  className="w-full text-primary" 
-                  onClick={() => setShowAllOrders(!showAllOrders)}
-                >
-                  {showAllOrders ? 'Voir moins' : `Voir plus (${recentOrders.length - 2} autres)`}
-                  <ChevronRight className={`ml-1 h-4 w-4 transition-transform ${showAllOrders ? 'rotate-90' : ''}`} />
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+                {recentOrders.length === 0 && (
+                  <div className="text-xs sm:text-sm text-muted-foreground">{t('vendor.noRecentOrders')}</div>
+                )}
+                {recentOrders.length > 2 && (
+                  <Button 
+                    variant="ghost" 
+                    className="w-full text-primary text-xs sm:text-sm" 
+                    onClick={() => setShowAllOrders(!showAllOrders)}
+                  >
+                    {showAllOrders ? 'Voir moins' : `Voir plus (${recentOrders.length - 2} autres)`}
+                    <ChevronRight className={`ml-1 h-3 w-3 sm:h-4 sm:w-4 transition-transform ${showAllOrders ? 'rotate-90' : ''}`} />
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Notifications intégrées */}
-        <div>
-          <VendorNotificationsPanel />
+          {/* Notifications intégrées */}
+          <div>
+            <VendorNotificationsPanel />
+          </div>
         </div>
       </div>
 
