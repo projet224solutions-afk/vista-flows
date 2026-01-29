@@ -111,6 +111,31 @@ export default function ServiceDetail() {
     }
   }, [id, positionReady]);
 
+  // Géocoder une adresse pour obtenir les coordonnées
+  const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number } | null> => {
+    try {
+      console.log('[ServiceDetail] Géocodage de l\'adresse:', address);
+      const { data, error } = await supabase.functions.invoke('geocode-address', {
+        body: { address, type: 'geocode' }
+      });
+
+      if (error) {
+        console.warn('[ServiceDetail] Erreur géocodage:', error);
+        return null;
+      }
+
+      if (data?.lat && data?.lng) {
+        console.log('[ServiceDetail] Coordonnées trouvées:', data.lat, data.lng);
+        return { lat: data.lat, lng: data.lng };
+      }
+
+      return null;
+    } catch (err) {
+      console.warn('[ServiceDetail] Géocodage échoué:', err);
+      return null;
+    }
+  };
+
   const loadServiceDetails = async () => {
     try {
       setLoading(true);
@@ -151,6 +176,19 @@ export default function ServiceDetail() {
           sunday: "Fermé"
         };
 
+        // Coordonnées par défaut (Conakry)
+        let lat = 9.6412;
+        let lng = -13.5784;
+
+        // Si une adresse existe, tenter de la géocoder
+        if (proService.address) {
+          const coords = await geocodeAddress(proService.address);
+          if (coords) {
+            lat = coords.lat;
+            lng = coords.lng;
+          }
+        }
+
         const serviceData: ServiceDetail = {
           id: proService.id,
           name: proService.business_name,
@@ -164,8 +202,8 @@ export default function ServiceDetail() {
           is_open: true,
           image_url: proService.cover_image_url || proService.logo_url,
           features: [],
-          latitude: 9.6412,
-          longitude: -13.5784,
+          latitude: lat,
+          longitude: lng,
           opening_hours: openingHours,
           vendor_user_id: proService.user_id
         };
