@@ -115,69 +115,69 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Détails de la dette</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-base sm:text-lg">Détails de la dette</DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm">
             Informations complètes sur la dette et l'historique des paiements
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Informations client */}
-          <div className="border rounded-lg p-4 space-y-2">
-            <h3 className="font-semibold text-lg mb-3">Informations Client</h3>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="border rounded-lg p-3 sm:p-4 space-y-2">
+            <h3 className="font-semibold text-sm sm:text-lg mb-2 sm:mb-3">Informations Client</h3>
+            <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 text-sm">
               <div>
-                <span className="text-muted-foreground">Nom:</span>
-                <p className="font-medium">{debt.customer_name}</p>
+                <span className="text-xs text-muted-foreground">Nom:</span>
+                <p className="font-medium text-sm">{debt.customer_name}</p>
               </div>
               <div>
-                <span className="text-muted-foreground">Téléphone:</span>
-                <p className="font-medium">{debt.customer_phone}</p>
+                <span className="text-xs text-muted-foreground">Téléphone:</span>
+                <p className="font-medium text-sm">{debt.customer_phone}</p>
               </div>
               <div>
-                <span className="text-muted-foreground">Statut:</span>
+                <span className="text-xs text-muted-foreground">Statut:</span>
                 <div className="mt-1">{getStatusBadge(debt.status)}</div>
               </div>
               <div>
-                <span className="text-muted-foreground">Date de création:</span>
-                <p className="font-medium">{formatDate(debt.created_at)}</p>
+                <span className="text-xs text-muted-foreground">Date de création:</span>
+                <p className="font-medium text-xs sm:text-sm">{formatDate(debt.created_at)}</p>
               </div>
             </div>
             {debt.description && (
               <div className="pt-2">
-                <span className="text-muted-foreground">Description:</span>
-                <p className="text-sm mt-1">{debt.description}</p>
+                <span className="text-xs text-muted-foreground">Description:</span>
+                <p className="text-xs sm:text-sm mt-1">{debt.description}</p>
               </div>
             )}
           </div>
 
           {/* Informations financières */}
-          <div className="border rounded-lg p-4 space-y-3">
-            <h3 className="font-semibold text-lg mb-3">Informations Financières</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <p className="text-xs text-muted-foreground mb-1">Montant Total</p>
-                <p className="text-lg font-bold">{formatAmount(debt.total_amount)}</p>
+          <div className="border rounded-lg p-3 sm:p-4 space-y-3">
+            <h3 className="font-semibold text-sm sm:text-lg mb-2 sm:mb-3">Informations Financières</h3>
+            <div className="grid grid-cols-2 gap-2 sm:gap-4">
+              <div className="text-center p-2 sm:p-3 bg-muted rounded-lg">
+                <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Montant Total</p>
+                <p className="text-sm sm:text-lg font-bold break-all">{formatAmount(debt.total_amount)}</p>
               </div>
-              <div className="text-center p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
-                <p className="text-xs text-muted-foreground mb-1">Montant Payé</p>
-                <p className="text-lg font-bold text-green-600 dark:text-green-400">{formatAmount(debt.paid_amount)}</p>
+              <div className="text-center p-2 sm:p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
+                <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Montant Payé</p>
+                <p className="text-sm sm:text-lg font-bold text-green-600 dark:text-green-400 break-all">{formatAmount(debt.paid_amount)}</p>
               </div>
-              <div className="text-center p-3 bg-orange-50 dark:bg-orange-950/30 rounded-lg">
-                <p className="text-xs text-muted-foreground mb-1">Restant</p>
-                <p className="text-lg font-bold text-orange-600 dark:text-orange-400">{formatAmount(debt.remaining_amount)}</p>
+              <div className="text-center p-2 sm:p-3 bg-orange-50 dark:bg-orange-950/30 rounded-lg">
+                <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Restant</p>
+                <p className="text-sm sm:text-lg font-bold text-orange-600 dark:text-orange-400 break-all">{formatAmount(debt.remaining_amount)}</p>
               </div>
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <p className="text-xs text-muted-foreground mb-1">Tranche Min.</p>
-                <p className="text-lg font-bold">{formatAmount(debt.minimum_installment)}</p>
+              <div className="text-center p-2 sm:p-3 bg-muted rounded-lg">
+                <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Tranche Min.</p>
+                <p className="text-sm sm:text-lg font-bold break-all">{formatAmount(debt.minimum_installment)}</p>
               </div>
             </div>
             
             {/* Barre de progression */}
-            <div className="mt-4">
-              <div className="flex justify-between text-sm mb-1">
+            <div className="mt-3 sm:mt-4">
+              <div className="flex justify-between text-xs sm:text-sm mb-1">
                 <span className="text-muted-foreground">Progression</span>
                 <span className="font-medium">
                   {Math.round((debt.paid_amount / debt.total_amount) * 100)}%
@@ -193,55 +193,45 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
             
             {debt.due_date && (
               <div className="mt-3 text-center">
-                <span className="text-sm text-muted-foreground">Date limite: </span>
-                <span className="font-medium">{formatDate(debt.due_date)}</span>
+                <span className="text-xs sm:text-sm text-muted-foreground">Date limite: </span>
+                <span className="text-xs sm:text-sm font-medium">{formatDate(debt.due_date)}</span>
               </div>
             )}
           </div>
 
           {/* Historique des paiements */}
-          <div className="border rounded-lg p-4">
-            <h3 className="font-semibold text-lg mb-3">
+          <div className="border rounded-lg p-3 sm:p-4">
+            <h3 className="font-semibold text-sm sm:text-lg mb-2 sm:mb-3">
               Historique des Paiements ({payments.length})
             </h3>
             {loading ? (
-              <div className="text-center py-4 text-muted-foreground">
+              <div className="text-center py-4 text-muted-foreground text-sm">
                 Chargement...
               </div>
             ) : payments.length === 0 ? (
-              <div className="text-center py-4 text-muted-foreground">
+              <div className="text-center py-4 text-muted-foreground text-sm">
                 Aucun paiement enregistré
               </div>
             ) : (
-              <div className="border rounded-lg overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Montant</TableHead>
-                      <TableHead>Mode de Paiement</TableHead>
-                      <TableHead>Commentaire</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {payments.map((payment) => (
-                      <TableRow key={payment.id}>
-                        <TableCell>{formatDate(payment.created_at)}</TableCell>
-                        <TableCell className="font-medium text-green-600">
+              <div className="space-y-2">
+                {payments.map((payment) => (
+                  <div key={payment.id} className="p-2 sm:p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-muted-foreground">{formatDate(payment.created_at)}</p>
+                        <p className="font-semibold text-sm text-green-600 mt-0.5">
                           {formatAmount(payment.amount)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {getPaymentMethodLabel(payment.payment_method)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {payment.comment || '-'}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                        </p>
+                        {payment.comment && (
+                          <p className="text-xs text-muted-foreground mt-1 truncate">{payment.comment}</p>
+                        )}
+                      </div>
+                      <Badge variant="outline" className="text-[10px] sm:text-xs flex-shrink-0">
+                        {getPaymentMethodLabel(payment.payment_method)}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
