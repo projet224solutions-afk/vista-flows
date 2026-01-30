@@ -65,6 +65,28 @@ CREATE TABLE IF NOT EXISTS public.marketplace_rotation_history (
   metadata JSONB DEFAULT '{}'::JSONB
 );
 
+-- Ajouter les colonnes manquantes si la table existe déjà
+ALTER TABLE public.marketplace_rotation_history 
+ADD COLUMN IF NOT EXISTS rotation_timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+
+ALTER TABLE public.marketplace_rotation_history 
+ADD COLUMN IF NOT EXISTS products_rotated INTEGER DEFAULT 0;
+
+ALTER TABLE public.marketplace_rotation_history 
+ADD COLUMN IF NOT EXISTS batches_count INTEGER DEFAULT 0;
+
+ALTER TABLE public.marketplace_rotation_history 
+ADD COLUMN IF NOT EXISTS execution_time_ms INTEGER DEFAULT 0;
+
+ALTER TABLE public.marketplace_rotation_history 
+ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'completed';
+
+ALTER TABLE public.marketplace_rotation_history 
+ADD COLUMN IF NOT EXISTS error_message TEXT;
+
+ALTER TABLE public.marketplace_rotation_history 
+ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::JSONB;
+
 CREATE INDEX IF NOT EXISTS idx_rotation_history_timestamp 
 ON marketplace_rotation_history(rotation_timestamp DESC);
 
