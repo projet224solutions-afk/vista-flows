@@ -322,8 +322,21 @@ CREATE TABLE IF NOT EXISTS public.stock_losses (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Ajouter colonne calculée si elle n'existe pas (AVANT les index)
+-- Ajouter colonnes si elles n'existent pas (AVANT les index)
+ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS loss_number TEXT;
+ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS location_id UUID;
+ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS product_id UUID;
+ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS source_type TEXT;
+ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS source_reference_id UUID;
+ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS quantity INTEGER;
+ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS unit_cost DECIMAL(15,2) DEFAULT 0;
 ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS total_loss_value DECIMAL(15,2) DEFAULT 0;
+ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS reason TEXT;
+ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS is_validated BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS validated_by UUID;
+ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS validated_at TIMESTAMPTZ;
+ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS reported_by UUID;
+ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS reported_at TIMESTAMPTZ DEFAULT NOW();
 
 CREATE INDEX IF NOT EXISTS idx_stock_losses_vendor ON stock_losses(vendor_id);
 CREATE INDEX IF NOT EXISTS idx_stock_losses_location ON stock_losses(location_id);
