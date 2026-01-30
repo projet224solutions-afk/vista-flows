@@ -20,7 +20,8 @@ import {
   Zap,
   Sparkles,
   CreditCard,
-  ArrowUpRight
+  ArrowUpRight,
+  Link2
 } from 'lucide-react';
 import {
   Tooltip,
@@ -116,6 +117,13 @@ export function AgentLayoutProfessional({
       label: 'Analytics',
       icon: <BarChart3 className="w-5 h-5" />,
       gradient: 'from-pink-500 to-rose-500'
+    },
+    {
+      id: 'affiliate',
+      label: 'Affiliation',
+      icon: <Link2 className="w-5 h-5" />,
+      gradient: 'from-fuchsia-500 to-pink-500',
+      badge: 'Nouveau'
     },
     {
       id: 'settings',
