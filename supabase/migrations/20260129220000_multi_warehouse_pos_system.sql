@@ -110,11 +110,8 @@ CREATE INDEX IF NOT EXISTS idx_location_stock_product ON location_stock(product_
 CREATE INDEX IF NOT EXISTS idx_location_stock_low ON location_stock(quantity, minimum_stock) WHERE quantity <= minimum_stock;
 CREATE INDEX IF NOT EXISTS idx_location_stock_available ON location_stock(available_quantity);
 
--- Ajouter les colonnes calculées si elles n'existent pas
+-- Ajouter available_quantity si elle n'existe pas
 ALTER TABLE public.location_stock ADD COLUMN IF NOT EXISTS available_quantity INTEGER DEFAULT 0;
-ALTER TABLE public.stock_transfer_items ADD COLUMN IF NOT EXISTS quantity_missing INTEGER DEFAULT 0;
-ALTER TABLE public.stock_transfer_items ADD COLUMN IF NOT EXISTS total_value DECIMAL(15,2) DEFAULT 0;
-ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS total_loss_value DECIMAL(15,2) DEFAULT 0;
 
 -- ===========================================
 -- 3. SYSTÈME DE TRANSFERTS DE STOCK
@@ -212,6 +209,10 @@ CREATE TABLE IF NOT EXISTS public.stock_transfer_items (
 CREATE INDEX IF NOT EXISTS idx_transfer_items_transfer ON stock_transfer_items(transfer_id);
 CREATE INDEX IF NOT EXISTS idx_transfer_items_product ON stock_transfer_items(product_id);
 
+-- Ajouter colonnes calculées si elles n'existent pas
+ALTER TABLE public.stock_transfer_items ADD COLUMN IF NOT EXISTS quantity_missing INTEGER DEFAULT 0;
+ALTER TABLE public.stock_transfer_items ADD COLUMN IF NOT EXISTS total_value DECIMAL(15,2) DEFAULT 0;
+
 -- ===========================================
 -- 4. GESTION DES PERTES / MANQUANTS
 -- ===========================================
@@ -263,6 +264,9 @@ CREATE INDEX IF NOT EXISTS idx_stock_losses_location ON stock_losses(location_id
 CREATE INDEX IF NOT EXISTS idx_stock_losses_product ON stock_losses(product_id);
 CREATE INDEX IF NOT EXISTS idx_stock_losses_source ON stock_losses(source_type);
 CREATE INDEX IF NOT EXISTS idx_stock_losses_date ON stock_losses(reported_at DESC);
+
+-- Ajouter colonne calculée si elle n'existe pas
+ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS total_loss_value DECIMAL(15,2) DEFAULT 0;
 
 -- ===========================================
 -- 5. PERMISSIONS PAR LIEU (MULTI-VENDEURS POS)
