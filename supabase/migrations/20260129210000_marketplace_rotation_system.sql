@@ -115,18 +115,22 @@ BEGIN
     RETURNING * INTO v_config;
   END IF;
   
-  -- Réinitialiser toutes les positions pour les produits NON sponsorisés
-  -- Les produits sponsorisés gardent leurs positions négatives (en tête)
-  
   -- D'abord, assigner les positions aux produits sponsorisés (position négative = en tête)
-  UPDATE products
-  SET marketplace_position = -1 * (
-    ROW_NUMBER() OVER (ORDER BY sponsor_priority DESC, created_at ASC)
-  )::INTEGER,
+  -- Utiliser un CTE car les fonctions de fenêtrage ne sont pas autorisées dans UPDATE direct
+  WITH sponsored_ranked AS (
+    SELECT 
+      id,
+      ROW_NUMBER() OVER (ORDER BY sponsor_priority DESC, created_at ASC) as rn
+    FROM products
+    WHERE is_active = true 
+      AND is_sponsored = true 
+      AND (sponsor_expires_at IS NULL OR sponsor_expires_at > NOW())
+  )
+  UPDATE products p
+  SET marketplace_position = -1 * sr.rn::INTEGER,
       marketplace_batch = -1
-  WHERE is_active = true 
-    AND is_sponsored = true 
-    AND (sponsor_expires_at IS NULL OR sponsor_expires_at > NOW());
+  FROM sponsored_ranked sr
+  WHERE p.id = sr.id;
   
   -- Ensuite, assigner les positions aux produits normaux
   v_position := 0;
