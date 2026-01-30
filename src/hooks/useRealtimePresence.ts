@@ -583,8 +583,7 @@ export function useRealtimePresence(options: UseRealtimePresenceOptions = {}): U
     // Persister en DB via RPC pour les autres clients
     if (user?.id) {
       try {
-        // @ts-expect-error - RPC function may not be in generated types yet
-        await supabase.rpc('set_typing_indicator', {
+        await (supabase.rpc as any)('set_typing_indicator', {
           p_user_id: user.id,
           p_conversation_id: conversationId,
           p_is_typing: true
@@ -604,8 +603,7 @@ export function useRealtimePresence(options: UseRealtimePresenceOptions = {}): U
     // Persister en DB via RPC
     if (user?.id) {
       try {
-        // @ts-expect-error - RPC function may not be in generated types yet
-        await supabase.rpc('set_typing_indicator', {
+        await (supabase.rpc as any)('set_typing_indicator', {
           p_user_id: user.id,
           p_conversation_id: convId,
           p_is_typing: false
