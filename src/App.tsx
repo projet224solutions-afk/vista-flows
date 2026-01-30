@@ -8,7 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import OAuthPasswordGate from "@/components/auth/OAuthPasswordGate";
 import { ThemeProvider } from "next-themes";
-import { OfflineBanner } from "@/components/common/OfflineBanner";
+// OfflineBanner retiré du global - maintenant uniquement dans VendeurDashboard
 
 const MerchantOnboarding = lazyWithRetry(() => import("@/components/onboarding/MerchantOnboarding"));
 const WebRTCCallProvider = lazyWithRetry(() => import("@/components/communication/WebRTCCallProvider"));
@@ -91,6 +91,7 @@ const MigrateIds = lazyWithRetry(() => import("./pages/Admin/MigrateIds"));
 const Wallet = lazyWithRetry(() => import("./pages/Wallet"));
 const SubscriptionsPage = lazyWithRetry(() => import("./pages/SubscriptionsPage"));
 const AffiliateRedirect = lazyWithRetry(() => import("./pages/AffiliateRedirect"));
+const AgentAffiliateRegister = lazyWithRetry(() => import("./pages/AgentAffiliateRegister"));
 const DeliveryRequest = lazyWithRetry(() => import("./pages/DeliveryRequest"));
 const DeliveryClient = lazyWithRetry(() => import("./pages/DeliveryClient"));
 const BugBounty = lazyWithRetry(() => import("./pages/BugBounty"));
@@ -193,7 +194,7 @@ function App() {
                 <TooltipProvider>
                 <Toaster />
                 <Sonner />
-                <OfflineBanner />
+                {/* OfflineBanner retiré - uniquement dans VendeurDashboard */}
                 <InstallPromptBanner />
                 <DeepLinkInitializer />
                 <Suspense fallback={null}>
@@ -275,8 +276,12 @@ function App() {
               <Route path="/profil" element={<Profil />} />
               <Route path="/profile/:userId" element={<UserPublicProfile />} />
               
-              {/* Affiliate Routes */}
+              {/* Affiliate Routes - Vendeur */}
               <Route path="/ref/:vendorId" element={<AffiliateRedirect />} />
+              
+              {/* Affiliate Routes - Agent (inscription via lien d'affiliation) */}
+              <Route path="/register" element={<AgentAffiliateRegister />} />
+              <Route path="/r/:token" element={<AgentAffiliateRegister />} />
 
               {/* Dashboard Routes */}
               <Route
