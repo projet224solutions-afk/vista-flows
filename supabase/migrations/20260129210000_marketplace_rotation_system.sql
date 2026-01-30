@@ -44,14 +44,14 @@ CREATE TABLE IF NOT EXISTS public.marketplace_rotation_config (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Insérer la configuration par défaut
-INSERT INTO marketplace_rotation_config (batch_size, rotation_interval_minutes)
-VALUES (50, 30)
-ON CONFLICT DO NOTHING;
-
--- S'assurer qu'il n'y a qu'une seule configuration
+-- S'assurer qu'il n'y a qu'une seule configuration (créer l'index AVANT l'insert)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_marketplace_rotation_config_single 
 ON marketplace_rotation_config ((true));
+
+-- Insérer la configuration par défaut (seulement si la table est vide)
+INSERT INTO marketplace_rotation_config (batch_size, rotation_interval_minutes)
+SELECT 50, 30
+WHERE NOT EXISTS (SELECT 1 FROM marketplace_rotation_config);
 
 -- 4. Table d'historique des rotations (pour audit)
 CREATE TABLE IF NOT EXISTS public.marketplace_rotation_history (
