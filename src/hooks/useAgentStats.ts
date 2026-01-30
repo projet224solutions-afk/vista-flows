@@ -74,12 +74,34 @@ export const useAgentStats = (agentId: string | undefined) => {
 
       if (monthError) throw monthError;
 
-      // Calculer les commissions (TODO: implémenter quand le système de commission existe)
-      const totalCommissions = 0;
-      const commissionsThisMonth = 0;
+      // Calculer les commissions totales depuis agent_commissions_log
+      const { data: commissionsData, error: commissionsError } = await supabase
+        .from('agent_commissions_log')
+        .select('amount')
+        .eq('agent_id', agentId);
 
-      // Calculer la performance (TODO: implémenter selon les objectifs)
-      const performance = 100;
+      if (commissionsError) {
+        console.warn('[useAgentStats] Erreur chargement commissions:', commissionsError);
+      }
+
+      const totalCommissions = commissionsData?.reduce((sum, c) => sum + (c.amount || 0), 0) || 0;
+
+      // Calculer les commissions de ce mois
+      const { data: monthCommissionsData, error: monthCommissionsError } = await supabase
+        .from('agent_commissions_log')
+        .select('amount')
+        .eq('agent_id', agentId)
+        .gte('created_at', startOfMonth.toISOString());
+
+      if (monthCommissionsError) {
+        console.warn('[useAgentStats] Erreur chargement commissions mois:', monthCommissionsError);
+      }
+
+      const commissionsThisMonth = monthCommissionsData?.reduce((sum, c) => sum + (c.amount || 0), 0) || 0;
+
+      // Calculer la performance (basée sur objectif mensuel de 10 utilisateurs)
+      const monthlyTarget = 10;
+      const performance = Math.min(Math.round(((monthCount || 0) / monthlyTarget) * 100), 100);
 
       setStats({
         totalUsersCreated: totalCount || 0,

@@ -174,39 +174,54 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
     }
   };
 
-  const copyLink = async (url: string) => {
+  const copyLink = (url: string) => {
+    // Fallback avec textarea (fonctionne mieux en HTTP/localhost)
+    const textArea = document.createElement('textarea');
+    textArea.value = url;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '0';
+    textArea.style.top = '0';
+    textArea.style.opacity = '0';
+    textArea.style.pointerEvents = 'none';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
     try {
-      // Méthode moderne
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(url);
-        toast.success('Lien copié !', { description: url });
-        return;
-      }
-      
-      // Fallback pour les anciens navigateurs
-      const textArea = document.createElement('textarea');
-      textArea.value = url;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-9999px';
-      textArea.style.top = '-9999px';
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      
       const successful = document.execCommand('copy');
       document.body.removeChild(textArea);
       
       if (successful) {
         toast.success('Lien copié !', { description: url });
-      } else {
-        throw new Error('Copie échouée');
+        return;
       }
     } catch (err) {
-      console.error('Erreur copie:', err);
-      // Afficher le lien dans un prompt pour copie manuelle
-      toast.error('Copie automatique impossible', {
-        description: 'Copiez manuellement: ' + url,
-        duration: 10000
+      document.body.removeChild(textArea);
+    }
+
+    // Si execCommand échoue, essayer l'API moderne
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(url)
+        .then(() => toast.success('Lien copié !', { description: url }))
+        .catch(() => {
+          toast.info('Copiez ce lien:', {
+            description: url,
+            duration: 15000,
+            action: {
+              label: 'OK',
+              onClick: () => {}
+            }
+          });
+        });
+    } else {
+      // Dernier recours: afficher pour copie manuelle
+      toast.info('Copiez ce lien:', {
+        description: url,
+        duration: 15000,
+        action: {
+          label: 'OK',
+          onClick: () => {}
+        }
       });
     }
   };
