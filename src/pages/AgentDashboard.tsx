@@ -16,6 +16,7 @@ import { CreateUserForm } from '@/components/agent/CreateUserForm';
 import AgentWalletManagement from '@/components/agent/AgentWalletManagement';
 import AgentSubAgentsManagement from '@/components/agent/AgentSubAgentsManagement';
 import { ViewReportsSection } from '@/components/agent/ViewReportsSection';
+import { AgentAffiliateLinksSection } from '@/components/agent/AgentAffiliateLinksSection';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 import { useAgentStats } from '@/hooks/useAgentStats';
 import { AgentCreatedUsersList } from '@/components/agent/AgentCreatedUsersList';
@@ -339,6 +340,9 @@ export default function AgentDashboard() {
             }}
           />
         );
+      
+      case 'affiliate':
+        return <AgentAffiliateLinksSection agentId={agent.id} agentToken={agent.access_token} />;
       
       case 'settings':
         return (
