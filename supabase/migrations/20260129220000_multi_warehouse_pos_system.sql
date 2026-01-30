@@ -11,12 +11,42 @@
 -- ===========================================
 -- Supprimer les triggers AVANT de modifier les tables
 -- pour éviter les erreurs de colonnes manquantes
-DROP TRIGGER IF EXISTS trigger_location_stock_available ON location_stock;
-DROP TRIGGER IF EXISTS trigger_transfer_item_values ON stock_transfer_items;
-DROP TRIGGER IF EXISTS trigger_loss_value ON stock_losses;
-DROP TRIGGER IF EXISTS trigger_vendor_locations_updated ON vendor_locations;
-DROP TRIGGER IF EXISTS trigger_location_stock_updated ON location_stock;
-DROP TRIGGER IF EXISTS trigger_stock_transfers_updated ON stock_transfers;
+-- Encapsulé dans un bloc DO pour ignorer si les tables n'existent pas
+DO $$ 
+BEGIN
+  DROP TRIGGER IF EXISTS trigger_location_stock_available ON location_stock;
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
+
+DO $$ 
+BEGIN
+  DROP TRIGGER IF EXISTS trigger_transfer_item_values ON stock_transfer_items;
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
+
+DO $$ 
+BEGIN
+  DROP TRIGGER IF EXISTS trigger_loss_value ON stock_losses;
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
+
+DO $$ 
+BEGIN
+  DROP TRIGGER IF EXISTS trigger_vendor_locations_updated ON vendor_locations;
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
+
+DO $$ 
+BEGIN
+  DROP TRIGGER IF EXISTS trigger_location_stock_updated ON location_stock;
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
+
+DO $$ 
+BEGIN
+  DROP TRIGGER IF EXISTS trigger_stock_transfers_updated ON stock_transfers;
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
 
 -- ===========================================
 -- 1. TABLE DES LIEUX (LOCATIONS) - CONCEPT UNIFIÉ
