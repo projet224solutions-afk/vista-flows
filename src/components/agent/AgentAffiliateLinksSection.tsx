@@ -114,7 +114,14 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
       // Charger les liens
       const linksResponse = await invokeWithAgentAuth('list');
       if (linksResponse.data?.links) {
-        setLinks(linksResponse.data.links);
+        // Générer les URLs côté client pour s'assurer qu'elles correspondent au domaine actuel
+        const baseUrl = window.location.origin;
+        const linksWithCorrectUrls = linksResponse.data.links.map((link: AffiliateLink) => ({
+          ...link,
+          url: `${baseUrl}/r/${link.token}`,
+          short_url: `${baseUrl}/r/${link.token}`
+        }));
+        setLinks(linksWithCorrectUrls);
       } else if (linksResponse.error) {
         console.error('Erreur chargement liens:', linksResponse.error);
       }
@@ -169,10 +176,38 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
 
   const copyLink = async (url: string) => {
     try {
-      await navigator.clipboard.writeText(url);
-      toast.success('Lien copié !');
-    } catch {
-      toast.error('Impossible de copier le lien');
+      // Méthode moderne
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(url);
+        toast.success('Lien copié !', { description: url });
+        return;
+      }
+      
+      // Fallback pour les anciens navigateurs
+      const textArea = document.createElement('textarea');
+      textArea.value = url;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      textArea.style.top = '-9999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      if (successful) {
+        toast.success('Lien copié !', { description: url });
+      } else {
+        throw new Error('Copie échouée');
+      }
+    } catch (err) {
+      console.error('Erreur copie:', err);
+      // Afficher le lien dans un prompt pour copie manuelle
+      toast.error('Copie automatique impossible', {
+        description: 'Copiez manuellement: ' + url,
+        duration: 10000
+      });
     }
   };
 
