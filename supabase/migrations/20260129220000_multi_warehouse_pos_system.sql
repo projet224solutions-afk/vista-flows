@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS public.location_stock (
   -- Quantités
   quantity INTEGER NOT NULL DEFAULT 0,
   reserved_quantity INTEGER DEFAULT 0, -- Stock réservé pour commandes en cours
-  available_quantity INTEGER GENERATED ALWAYS AS (quantity - COALESCE(reserved_quantity, 0)) STORED,
+  available_quantity INTEGER DEFAULT 0, -- Calculé par trigger
   
   -- Seuils d'alerte
   minimum_stock INTEGER DEFAULT 5,
@@ -109,6 +109,12 @@ CREATE INDEX IF NOT EXISTS idx_location_stock_location ON location_stock(locatio
 CREATE INDEX IF NOT EXISTS idx_location_stock_product ON location_stock(product_id);
 CREATE INDEX IF NOT EXISTS idx_location_stock_low ON location_stock(quantity, minimum_stock) WHERE quantity <= minimum_stock;
 CREATE INDEX IF NOT EXISTS idx_location_stock_available ON location_stock(available_quantity);
+
+-- Ajouter les colonnes calculées si elles n'existent pas
+ALTER TABLE public.location_stock ADD COLUMN IF NOT EXISTS available_quantity INTEGER DEFAULT 0;
+ALTER TABLE public.stock_transfer_items ADD COLUMN IF NOT EXISTS quantity_missing INTEGER DEFAULT 0;
+ALTER TABLE public.stock_transfer_items ADD COLUMN IF NOT EXISTS total_value DECIMAL(15,2) DEFAULT 0;
+ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS total_loss_value DECIMAL(15,2) DEFAULT 0;
 
 -- ===========================================
 -- 3. SYSTÈME DE TRANSFERTS DE STOCK
@@ -184,11 +190,11 @@ CREATE TABLE IF NOT EXISTS public.stock_transfer_items (
   -- Quantités
   quantity_sent INTEGER NOT NULL,
   quantity_received INTEGER DEFAULT 0,
-  quantity_missing INTEGER GENERATED ALWAYS AS (quantity_sent - COALESCE(quantity_received, 0)) STORED,
+  quantity_missing INTEGER DEFAULT 0, -- Calculé par trigger
   
   -- Prix unitaire au moment du transfert
   unit_cost DECIMAL(15,2) DEFAULT 0,
-  total_value DECIMAL(15,2) GENERATED ALWAYS AS (quantity_sent * COALESCE(unit_cost, 0)) STORED,
+  total_value DECIMAL(15,2) DEFAULT 0, -- Calculé par trigger
   
   -- Notes spécifiques à l'item
   notes TEXT,
@@ -235,7 +241,7 @@ CREATE TABLE IF NOT EXISTS public.stock_losses (
   -- Quantité et valeur
   quantity INTEGER NOT NULL,
   unit_cost DECIMAL(15,2) DEFAULT 0,
-  total_loss_value DECIMAL(15,2) GENERATED ALWAYS AS (quantity * COALESCE(unit_cost, 0)) STORED,
+  total_loss_value DECIMAL(15,2) DEFAULT 0, -- Calculé par trigger
   
   -- Détails
   reason TEXT,
@@ -812,6 +818,58 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+-- Trigger pour calculer available_quantity dans location_stock
+CREATE OR REPLACE FUNCTION calculate_available_quantity()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.available_quantity := NEW.quantity - COALESCE(NEW.reserved_quantity, 0);
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trigger_location_stock_available ON location_stock;
+CREATE TRIGGER trigger_location_stock_available
+  BEFORE INSERT OR UPDATE OF quantity, reserved_quantity ON location_stock
+  FOR EACH ROW
+  EXECUTE FUNCTION calculate_available_quantity();
+
+-- Trigger pour calculer quantity_missing et total_value dans stock_transfer_items
+CREATE OR REPLACE FUNCTION calculate_transfer_item_values()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.quantity_missing := NEW.quantity_sent - COALESCE(NEW.quantity_received, 0);
+  NEW.total_value := NEW.quantity_sent * COALESCE(NEW.unit_cost, 0);
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trigger_transfer_item_values ON stock_transfer_items;
+CREATE TRIGGER trigger_transfer_item_values
+  BEFORE INSERT OR UPDATE OF quantity_sent, quantity_received, unit_cost ON stock_transfer_items
+  FOR EACH ROW
+  EXECUTE FUNCTION calculate_transfer_item_values();
+
+-- Trigger pour calculer total_loss_value dans stock_losses
+CREATE OR REPLACE FUNCTION calculate_loss_value()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.total_loss_value := NEW.quantity * COALESCE(NEW.unit_cost, 0);
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trigger_loss_value ON stock_losses;
+CREATE TRIGGER trigger_loss_value
+  BEFORE INSERT OR UPDATE OF quantity, unit_cost ON stock_losses
+  FOR EACH ROW
+  EXECUTE FUNCTION calculate_loss_value();
 
 DROP TRIGGER IF EXISTS trigger_vendor_locations_updated ON vendor_locations;
 CREATE TRIGGER trigger_vendor_locations_updated
