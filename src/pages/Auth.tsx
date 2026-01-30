@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,7 @@ type UserRole = 'client' | 'vendeur' | 'livreur' | 'taxi' | 'syndicat' | 'transi
 export default function Auth() {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const location = useLocation();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -53,6 +54,46 @@ export default function Auth() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const navigate = useNavigate();
+  
+  // === AFFILIATION AGENT ===
+  // Lire le token d'affiliation depuis localStorage (stocké par AgentAffiliateRedirect)
+  const [affiliateData, setAffiliateData] = useState<{
+    token: string | null;
+    agentName: string | null;
+    targetRole: string | null;
+  }>({ token: null, agentName: null, targetRole: null });
+  
+  // Charger les données d'affiliation au montage
+  useEffect(() => {
+    const token = localStorage.getItem('affiliate_token');
+    const agentName = localStorage.getItem('affiliate_agent_name');
+    const targetRole = localStorage.getItem('affiliate_target_role');
+    const timestamp = localStorage.getItem('affiliate_timestamp');
+    
+    // Vérifier si le token est encore valide (max 24h)
+    const isValid = timestamp && (Date.now() - parseInt(timestamp)) < 24 * 60 * 60 * 1000;
+    
+    if (token && isValid) {
+      setAffiliateData({ token, agentName, targetRole });
+      // Afficher un message si venant d'un lien d'affiliation
+      const locationState = location.state as { fromAffiliate?: boolean } | null;
+      if (locationState?.fromAffiliate) {
+        toast({
+          title: `Bienvenue !`,
+          description: `Vous avez été invité par ${agentName || 'un agent'}. Créez votre compte pour continuer.`,
+        });
+        // Passer automatiquement en mode inscription
+        setShowSignup(true);
+      }
+    } else {
+      // Nettoyer les données expirées
+      localStorage.removeItem('affiliate_token');
+      localStorage.removeItem('affiliate_agent_name');
+      localStorage.removeItem('affiliate_agent_id');
+      localStorage.removeItem('affiliate_target_role');
+      localStorage.removeItem('affiliate_timestamp');
+    }
+  }, [location.state, toast]);
 
   // Form data - MUST be declared before trackOAuthEvent uses them
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
@@ -1159,6 +1200,43 @@ export default function Auth() {
             throw new Error('❌ Cet email est déjà utilisé. Veuillez vous connecter ou utiliser un autre email.');
           } else {
             throw error;
+          }
+        }
+        
+        // === AFFILIATION AGENT: Enregistrer le parrainage si token présent ===
+        if (authData.user && affiliateData.token) {
+          try {
+            console.log('🔗 [Affiliation] Enregistrement du parrainage...');
+            const { data: affiliateResult, error: affiliateError } = await supabase.functions.invoke('register-with-affiliate', {
+              body: {
+                user_id: authData.user.id,
+                email: validatedData.email,
+                phone: `${phoneCode} ${formData.phone}`,
+                first_name: validatedData.firstName,
+                last_name: validatedData.lastName,
+                role: validatedData.role,
+                affiliate_token: affiliateData.token
+              }
+            });
+            
+            if (affiliateError) {
+              console.error('⚠️ [Affiliation] Erreur:', affiliateError);
+            } else if (affiliateResult?.success) {
+              console.log('✅ [Affiliation] Parrainage enregistré avec succès');
+              toast({
+                title: "Parrainage enregistré !",
+                description: `Vous avez été parrainé par ${affiliateData.agentName || 'un agent'}.`,
+              });
+            }
+            
+            // Nettoyer les données d'affiliation de localStorage
+            localStorage.removeItem('affiliate_token');
+            localStorage.removeItem('affiliate_agent_name');
+            localStorage.removeItem('affiliate_agent_id');
+            localStorage.removeItem('affiliate_target_role');
+            localStorage.removeItem('affiliate_timestamp');
+          } catch (affiliateErr) {
+            console.error('⚠️ [Affiliation] Erreur inattendue:', affiliateErr);
           }
         }
         

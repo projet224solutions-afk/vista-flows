@@ -91,7 +91,7 @@ const MigrateIds = lazyWithRetry(() => import("./pages/Admin/MigrateIds"));
 const Wallet = lazyWithRetry(() => import("./pages/Wallet"));
 const SubscriptionsPage = lazyWithRetry(() => import("./pages/SubscriptionsPage"));
 const AffiliateRedirect = lazyWithRetry(() => import("./pages/AffiliateRedirect"));
-const AgentAffiliateRegister = lazyWithRetry(() => import("./pages/AgentAffiliateRegister"));
+const AgentAffiliateRedirect = lazyWithRetry(() => import("./pages/AgentAffiliateRedirect"));
 const DeliveryRequest = lazyWithRetry(() => import("./pages/DeliveryRequest"));
 const DeliveryClient = lazyWithRetry(() => import("./pages/DeliveryClient"));
 const BugBounty = lazyWithRetry(() => import("./pages/BugBounty"));
@@ -279,9 +279,9 @@ function App() {
               {/* Affiliate Routes - Vendeur */}
               <Route path="/ref/:vendorId" element={<AffiliateRedirect />} />
               
-              {/* Affiliate Routes - Agent (inscription via lien d'affiliation) */}
-              <Route path="/register" element={<AgentAffiliateRegister />} />
-              <Route path="/r/:token" element={<AgentAffiliateRegister />} />
+              {/* Affiliate Routes - Agent (redirection vers page de connexion) */}
+              <Route path="/register" element={<AgentAffiliateRedirect />} />
+              <Route path="/r/:token" element={<AgentAffiliateRedirect />} />
 
               {/* Dashboard Routes */}
               <Route
