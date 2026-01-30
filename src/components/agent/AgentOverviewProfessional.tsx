@@ -22,7 +22,8 @@ import {
   ChevronRight,
   Sparkles,
   CreditCard,
-  PieChart
+  PieChart,
+  Link2
 } from 'lucide-react';
 
 interface AgentOverviewProfessionalProps {
@@ -76,6 +77,14 @@ export function AgentOverviewProfessional({
       gradient: 'from-blue-500 to-cyan-500',
       shadowColor: 'shadow-blue-500/25',
       tab: 'create-user'
+    },
+    {
+      icon: <Link2 className="w-5 h-5" />,
+      label: 'Affiliation',
+      description: 'Gérer vos liens',
+      gradient: 'from-fuchsia-500 to-pink-500',
+      shadowColor: 'shadow-fuchsia-500/25',
+      tab: 'affiliate'
     },
     {
       icon: <Wallet className="w-5 h-5" />,
@@ -241,7 +250,7 @@ export function AgentOverviewProfessional({
           <h2 className="font-semibold text-slate-900">Actions Rapides</h2>
         </div>
         
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           {quickActions.map((action, index) => (
             <Card 
               key={index}

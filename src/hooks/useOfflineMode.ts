@@ -92,6 +92,8 @@ export function useOfflineMode(): UseOfflineModeResult {
 
   const offlineStartRef = useRef<Date | null>(null);
   const syncUnsubscribeRef = useRef<(() => void) | null>(null);
+  // Track toast state to avoid duplicates
+  const toastShownRef = useRef<{ online: boolean; offline: boolean }>({ online: false, offline: false });
 
   // Mettre à jour le statut de la file
   const updateQueueStatus = useCallback(async () => {
@@ -151,8 +153,10 @@ export function useOfflineMode(): UseOfflineModeResult {
     setShowOfflineBanner(false);
     setBannerDismissed(false);
 
-    // Toast de retour online
-    if (duration && duration > 5) {
+    // Toast de retour online - only show once to avoid duplicates
+    if (duration && duration > 5 && !toastShownRef.current.online) {
+      toastShownRef.current.online = true;
+      toastShownRef.current.offline = false;
       toast.success('Connexion rétablie!', {
         description: `Vous étiez hors ligne pendant ${formatDuration(duration)}`
       });
@@ -182,9 +186,14 @@ export function useOfflineMode(): UseOfflineModeResult {
       setShowOfflineBanner(true);
     }
 
-    toast.warning('Mode hors ligne', {
-      description: 'Vos actions seront synchronisées dès que la connexion sera rétablie'
-    });
+    // Toast only show once to avoid duplicates
+    if (!toastShownRef.current.offline) {
+      toastShownRef.current.offline = true;
+      toastShownRef.current.online = false;
+      toast.warning('Mode hors ligne', {
+        description: 'Vos actions seront synchronisées dès que la connexion sera rétablie'
+      });
+    }
   }, [bannerDismissed]);
 
   // Setup des listeners de connectivité

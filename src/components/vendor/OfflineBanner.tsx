@@ -17,21 +17,33 @@ export default function OfflineBanner({ showSyncInfo = true }: OfflineBannerProp
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isDismissed, setIsDismissed] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  // Track if we've shown the toast to avoid duplicates
+  const toastShownRef = React.useRef<{ online: boolean; offline: boolean }>({ online: false, offline: false });
 
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
-      toast.success('🌐 Connexion rétablie !', {
-        description: 'Synchronisation automatique en cours...'
-      });
+      // Show toast only once per session and only if we were offline
+      if (!toastShownRef.current.online) {
+        toastShownRef.current.online = true;
+        toastShownRef.current.offline = false; // Reset offline flag
+        toast.success('🌐 Connexion rétablie !', {
+          description: 'Synchronisation automatique en cours...'
+        });
+      }
     };
 
     const handleOffline = () => {
       setIsOnline(false);
       setIsDismissed(false); // Réafficher la bannière
-      toast.info('📡 Mode hors-ligne activé', {
-        description: 'Vos données seront synchronisées à la reconnexion'
-      });
+      // Show toast only once per session
+      if (!toastShownRef.current.offline) {
+        toastShownRef.current.offline = true;
+        toastShownRef.current.online = false; // Reset online flag
+        toast.info('📡 Mode hors-ligne activé', {
+          description: 'Vos données seront synchronisées à la reconnexion'
+        });
+      }
     };
 
     window.addEventListener('online', handleOnline);

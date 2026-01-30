@@ -33,6 +33,8 @@ export function useBureauOfflineSync(bureauId?: string) {
   
   const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isInitialized = useRef(false);
+  // Track toast state to avoid duplicates
+  const toastShownRef = useRef<{ online: boolean; offline: boolean }>({ online: false, offline: false });
 
   /**
    * Met à jour les statistiques de synchronisation
@@ -304,13 +306,23 @@ export function useBureauOfflineSync(bureauId?: string) {
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
-      toast.success('🌐 Connexion rétablie - synchronisation en cours...');
+      // Show toast only once per session to avoid duplicates
+      if (!toastShownRef.current.online) {
+        toastShownRef.current.online = true;
+        toastShownRef.current.offline = false;
+        toast.success('🌐 Connexion rétablie - synchronisation en cours...');
+      }
       syncAllPendingEvents();
     };
 
     const handleOffline = () => {
       setIsOnline(false);
-      toast.warning('📴 Mode hors ligne activé');
+      // Show toast only once per session to avoid duplicates
+      if (!toastShownRef.current.offline) {
+        toastShownRef.current.offline = true;
+        toastShownRef.current.online = false;
+        toast.warning('📴 Mode hors ligne activé');
+      }
     };
 
     window.addEventListener('online', handleOnline);
