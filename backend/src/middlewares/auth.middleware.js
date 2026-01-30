@@ -31,23 +31,11 @@ export async function verifyJWT(req, res, next) {
       });
     }
 
-    // Décoder et vérifier le token JWT
-    const decoded = jwt.decode(token);
-    
-    if (!decoded) {
-      logger.warn(`Invalid token format attempt`);
-      return res.status(403).json({
-        success: false,
-        error: 'Token invalide',
-        message: 'Le token n\'est pas valide'
-      });
-    }
-
-    // Vérifier le token avec Supabase
+    // Vérifier le token avec Supabase (vérifie signature + expiration)
     const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (error || !user) {
-      logger.warn(`Invalid token attempt: ${error?.message}`);
+      logger.warn(`Invalid token attempt: ${error?.message || 'Unknown error'}`);
       return res.status(403).json({
         success: false,
         error: 'Token expiré ou invalide',
@@ -61,7 +49,10 @@ export async function verifyJWT(req, res, next) {
       sub: user.id,  // Pour compatibilité
       email: user.email,
       email_confirmed_at: user.email_confirmed_at,
-      aud: decoded.aud || 'authenticated'
+      phone: user.phone,
+      user_metadata: user.user_metadata,
+      aud: user.aud || 'authenticated',
+      role: user.role || user.user_metadata?.role
     };
 
     logger.info(`Authenticated user: ${user.id} (${user.email})`);

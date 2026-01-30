@@ -339,14 +339,22 @@ export const encryptSensitiveResponse = (encryptionKey) => {
     
     res.json = function (data) {
       if (req.query.encrypted === 'true' && data.sensitive) {
-        const cipher = crypto.createCipher('aes-256-cbc', encryptionKey);
+        // Générer un IV aléatoire (16 bytes pour AES)
+        const iv = crypto.randomBytes(16);
+
+        // Créer une clé de 32 bytes depuis encryptionKey
+        const key = crypto.createHash('sha256').update(encryptionKey).digest();
+
+        // Utiliser createCipheriv (sécurisé) au lieu de createCipher (dépréciée)
+        const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
         let encrypted = cipher.update(JSON.stringify(data.sensitive), 'utf8', 'hex');
         encrypted += cipher.final('hex');
-        
-        data.sensitive = encrypted;
+
+        // Préfixer avec l'IV pour pouvoir déchiffrer plus tard
+        data.sensitive = iv.toString('hex') + ':' + encrypted;
         data.encrypted = true;
       }
-      
+
       return originalJson(data);
     };
     

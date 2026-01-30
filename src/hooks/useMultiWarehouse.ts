@@ -67,12 +67,9 @@ export interface StockTransfer {
   id: string;
   vendor_id: string;
   transfer_number: string;
-  // Noms de colonnes Supabase
+  // Noms de colonnes Supabase (actuels dans la DB d'après types.ts)
   source_location_id: string;
   destination_location_id: string;
-  // Alias pour compatibilité
-  from_location_id?: string;
-  to_location_id?: string;
   status: 'pending' | 'in_transit' | 'shipped' | 'delivered' | 'completed' | 'partial' | 'cancelled';
   created_at: string;
   shipped_at: string | null;
@@ -219,7 +216,7 @@ export function useMultiWarehouse() {
 
     try {
       const { data, error } = await supabase
-        .from('locations')
+        .from('vendor_locations')
         .select('*')
         .eq('vendor_id', vendorId)
         .order('is_default', { ascending: false })
@@ -250,7 +247,7 @@ export function useMultiWarehouse() {
           
           return {
             ...loc,
-            coordinates: loc.gps_coordinates,
+            coordinates: loc.coordinates,
             stats
           };
         })
@@ -271,8 +268,8 @@ export function useMultiWarehouse() {
         .from('stock_transfers')
         .select(`
           *,
-          from_location:locations!stock_transfers_source_location_id_fkey(id, name, location_type),
-          to_location:locations!stock_transfers_destination_location_id_fkey(id, name, location_type),
+          from_location:vendor_locations!stock_transfers_source_location_id_fkey(id, name, location_type),
+          to_location:vendor_locations!stock_transfers_destination_location_id_fkey(id, name, location_type),
           items:stock_transfer_items(
             *,
             product:products(id, name, sku, images)
@@ -303,7 +300,7 @@ export function useMultiWarehouse() {
         .from('stock_losses')
         .select(`
           *,
-          location:locations(id, name),
+          location:vendor_locations(id, name),
           product:products(id, name)
         `)
         .eq('vendor_id', vendorId)
@@ -330,7 +327,7 @@ export function useMultiWarehouse() {
 
     try {
       const { data, error } = await supabase
-        .from('locations')
+        .from('vendor_locations')
         .insert({
           vendor_id: vendorId,
           ...input,
@@ -354,7 +351,7 @@ export function useMultiWarehouse() {
   const updateLocation = async (locationId: string, updates: Partial<CreateLocationInput>): Promise<boolean> => {
     try {
       const { error } = await supabase
-        .from('locations')
+        .from('vendor_locations')
         .update(updates)
         .eq('id', locationId);
 
@@ -373,8 +370,8 @@ export function useMultiWarehouse() {
   const togglePOS = async (locationId: string, enable: boolean): Promise<boolean> => {
     try {
       const { error } = await supabase
-        .from('locations')
-        .update({ 
+        .from('vendor_locations')
+        .update({
           is_pos_enabled: enable,
           location_type: enable ? 'pos' : 'warehouse'
         })
@@ -398,13 +395,13 @@ export function useMultiWarehouse() {
     try {
       // Retirer le défaut de tous les autres
       await supabase
-        .from('locations')
+        .from('vendor_locations')
         .update({ is_default: false })
         .eq('vendor_id', vendorId);
 
       // Mettre ce lieu par défaut
       const { error } = await supabase
-        .from('locations')
+        .from('vendor_locations')
         .update({ is_default: true })
         .eq('id', locationId);
 
@@ -436,7 +433,7 @@ export function useMultiWarehouse() {
       }
 
       const { error } = await supabase
-        .from('locations')
+        .from('vendor_locations')
         .delete()
         .eq('id', locationId);
 
@@ -484,15 +481,15 @@ export function useMultiWarehouse() {
         .from('location_stock')
         .select(`
           *,
-          location:locations(id, name, location_type, is_pos_enabled)
+          location:vendor_locations(id, name, location_type, is_pos_enabled, vendor_id)
         `)
         .eq('product_id', productId);
 
       if (stockError) throw stockError;
 
       // Filtrer par vendeur (via les locations)
-      const filteredData = (stockData || []).filter(s => 
-        s.location?.vendor_id === vendorId || true // On garde tout pour l'instant
+      const filteredData = (stockData || []).filter(s =>
+        s.location?.vendor_id === vendorId
       );
 
       const result: ProductStockByLocations = {

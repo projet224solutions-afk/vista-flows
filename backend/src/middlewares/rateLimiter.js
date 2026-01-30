@@ -8,11 +8,12 @@ import { logger } from '../config/logger.js';
 
 /**
  * Rate limiter global
- * 100 requêtes par 15 minutes par IP
+ * 10,000 requêtes par minute par IP (166 req/sec)
+ * Augmenté pour supporter 2,000-3,000 utilisateurs simultanés
  */
 export const rateLimiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 60 * 1000, // 1 minute
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 10000, // 10,000 req/min
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -23,12 +24,13 @@ export const rateLimiter = rateLimit({
     logger.warn(`Rate limit exceeded for IP: ${req.ip}`);
     res.status(429).json({
       success: false,
-      error: 'Too many requests, please try again later'
+      error: 'Trop de requêtes. Veuillez réessayer dans une minute.',
+      retryAfter: 60
     });
   },
   skip: (req) => {
-    // Skip rate limiting pour health check
-    return req.path === '/health';
+    // Skip rate limiting pour health check et static assets
+    return req.path === '/health' || req.path.startsWith('/assets');
   }
 });
 

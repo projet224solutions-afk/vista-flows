@@ -296,44 +296,68 @@ export default function WarehouseStockManagement() {
 
       if (movementError) throw movementError;
 
-      // Update source warehouse stock
-      const { data: fromStock } = await supabase
+      // WARNING: Ce code utilise l'ancien système avec une condition de course potentielle
+      // TODO: Migrer vers useMultiWarehouse qui utilise des RPC atomiques
+      // Pour une vraie solution, utiliser une fonction RPC PostgreSQL pour les updates atomiques
+
+      // Update source warehouse stock - RISK: Race condition possible
+      const { data: fromStock, error: fromStockError } = await supabase
         .from('warehouse_stocks')
         .select('quantity')
         .eq('warehouse_id', transferData.from_warehouse_id)
         .eq('product_id', transferData.product_id)
         .single();
 
-      if (fromStock) {
-        await supabase
-          .from('warehouse_stocks')
-          .update({ quantity: Math.max(0, fromStock.quantity - transferData.quantity) })
-          .eq('warehouse_id', transferData.from_warehouse_id)
-          .eq('product_id', transferData.product_id);
+      if (fromStockError && fromStockError.code !== 'PGRST116') {
+        throw fromStockError;
       }
 
-      // Update destination warehouse stock
-      const { data: toStock } = await supabase
+      if (fromStock) {
+        const newQuantity = Math.max(0, fromStock.quantity - transferData.quantity);
+        const { error: updateError } = await supabase
+          .from('warehouse_stocks')
+          .update({ quantity: newQuantity, updated_at: new Date().toISOString() })
+          .eq('warehouse_id', transferData.from_warehouse_id)
+          .eq('product_id', transferData.product_id);
+
+        if (updateError) throw updateError;
+      }
+
+      // Update destination warehouse stock - RISK: Race condition possible
+      const { data: toStock, error: toStockError } = await supabase
         .from('warehouse_stocks')
         .select('quantity')
         .eq('warehouse_id', transferData.to_warehouse_id)
         .eq('product_id', transferData.product_id)
         .single();
 
+      if (toStockError && toStockError.code !== 'PGRST116') {
+        throw toStockError;
+      }
+
       if (toStock) {
-        await supabase
+        const { error: updateError } = await supabase
           .from('warehouse_stocks')
-          .update({ quantity: toStock.quantity + transferData.quantity })
+          .update({
+            quantity: toStock.quantity + transferData.quantity,
+            updated_at: new Date().toISOString()
+          })
           .eq('warehouse_id', transferData.to_warehouse_id)
           .eq('product_id', transferData.product_id);
+
+        if (updateError) throw updateError;
       } else {
-        await supabase
+        const { error: insertError } = await supabase
           .from('warehouse_stocks')
           .insert({
             warehouse_id: transferData.to_warehouse_id,
             product_id: transferData.product_id,
-            quantity: transferData.quantity
+            quantity: transferData.quantity,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           });
+
+        if (insertError) throw insertError;
       }
 
       toast({ title: '✅ Transfert effectué avec succès' });
