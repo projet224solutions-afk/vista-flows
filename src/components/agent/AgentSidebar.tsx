@@ -105,7 +105,8 @@ export default function AgentSidebar({
       id: 'affiliate', 
       label: 'Affiliation', 
       icon: Link2,
-      gradient: 'from-pink-500 to-rose-500'
+      gradient: 'from-pink-500 to-rose-500',
+      badge: 'Nouveau'
     }
   ];
 
