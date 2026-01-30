@@ -44,6 +44,34 @@ CREATE TABLE IF NOT EXISTS public.marketplace_rotation_config (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Ajouter les colonnes manquantes si la table existe déjà
+ALTER TABLE public.marketplace_rotation_config 
+ADD COLUMN IF NOT EXISTS batch_size INTEGER NOT NULL DEFAULT 50;
+
+ALTER TABLE public.marketplace_rotation_config 
+ADD COLUMN IF NOT EXISTS rotation_interval_minutes INTEGER NOT NULL DEFAULT 30;
+
+ALTER TABLE public.marketplace_rotation_config 
+ADD COLUMN IF NOT EXISTS last_rotation_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+
+ALTER TABLE public.marketplace_rotation_config 
+ADD COLUMN IF NOT EXISTS next_rotation_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() + INTERVAL '30 minutes';
+
+ALTER TABLE public.marketplace_rotation_config 
+ADD COLUMN IF NOT EXISTS total_batches INTEGER DEFAULT 0;
+
+ALTER TABLE public.marketplace_rotation_config 
+ADD COLUMN IF NOT EXISTS current_batch INTEGER DEFAULT 0;
+
+ALTER TABLE public.marketplace_rotation_config 
+ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+
+ALTER TABLE public.marketplace_rotation_config 
+ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+
+ALTER TABLE public.marketplace_rotation_config 
+ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+
 -- S'assurer qu'il n'y a qu'une seule configuration (créer l'index AVANT l'insert)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_marketplace_rotation_config_single 
 ON marketplace_rotation_config ((true));
