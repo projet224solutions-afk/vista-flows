@@ -213,7 +213,28 @@ CREATE TABLE IF NOT EXISTS public.stock_transfers (
   CHECK (from_location_id != to_location_id)
 );
 
--- Index
+-- Ajouter colonnes si elles n'existent pas (AVANT les index)
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS from_location_id UUID REFERENCES public.vendor_locations(id);
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS to_location_id UUID REFERENCES public.vendor_locations(id);
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS transfer_number TEXT;
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending';
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS initiated_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS shipped_at TIMESTAMPTZ;
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMPTZ;
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS confirmed_at TIMESTAMPTZ;
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS initiated_by UUID;
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS shipped_by UUID;
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS received_by UUID;
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS confirmed_by UUID;
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS shipping_notes TEXT;
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS reception_notes TEXT;
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS total_items_sent INTEGER DEFAULT 0;
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS total_items_received INTEGER DEFAULT 0;
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS total_items_missing INTEGER DEFAULT 0;
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS total_value DECIMAL(15,2) DEFAULT 0;
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}';
+
+-- Index (APRÈS les colonnes)
 CREATE INDEX IF NOT EXISTS idx_stock_transfers_vendor ON stock_transfers(vendor_id);
 CREATE INDEX IF NOT EXISTS idx_stock_transfers_status ON stock_transfers(status);
 CREATE INDEX IF NOT EXISTS idx_stock_transfers_from ON stock_transfers(from_location_id);
