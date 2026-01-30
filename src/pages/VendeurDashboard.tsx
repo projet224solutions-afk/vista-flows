@@ -36,7 +36,7 @@ const InventoryManagement = lazy(() => import("@/components/vendor/InventoryMana
 const MarketingManagement = lazy(() => import("@/components/vendor/MarketingManagement"));
 const ProspectManagement = lazy(() => import("@/components/vendor/ProspectManagement"));
 const SupportTickets = lazy(() => import("@/components/vendor/SupportTickets"));
-const WarehouseManagement = lazy(() => import("@/components/vendor/WarehouseManagement"));
+const MultiWarehouseManagement = lazy(() => import("@/components/vendor/MultiWarehouseManagement"));
 const POSSystemWrapper = lazy(() => import("@/components/vendor/POSSystemWrapper"));
 const PaymentManagement = lazy(() => import("@/components/vendor/PaymentManagement"));
 const VendorDebtManagement = lazy(() => import("@/components/vendor/debts/VendorDebtManagement").then(m => ({ default: m.VendorDebtManagement })));
@@ -614,7 +614,7 @@ export default function VendeurDashboard() {
               {/* Entrepôts - Business+ */}
               <Route path="warehouse" element={
                 <ProtectedRoute feature="multi_warehouse">
-                  <WarehouseManagement />
+                  <MultiWarehouseManagement />
                 </ProtectedRoute>
               } />
               {/* Fournisseurs - Business+ */}

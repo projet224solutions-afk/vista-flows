@@ -22,7 +22,7 @@ import POSSystemWrapper from '@/components/vendor/POSSystemWrapper';
 import { VendorAgentWalletView } from '@/components/vendor/VendorAgentWalletView';
 import { VendorAnalyticsDashboard } from '@/components/vendor/VendorAnalyticsDashboard';
 import InventoryManagement from '@/components/vendor/InventoryManagement';
-import WarehouseManagement from '@/components/vendor/WarehouseManagement';
+import MultiWarehouseManagement from '@/components/vendor/MultiWarehouseManagement';
 import ClientManagement from '@/components/vendor/ClientManagement';
 import { VendorDeliveriesPanel } from '@/components/vendor/VendorDeliveriesPanel';
 import PaymentManagement from '@/components/vendor/PaymentManagement';
@@ -639,7 +639,7 @@ export default function VendorAgentInterface() {
           {hasPermission('manage_warehouse') && (
             <TabsContent value="warehouse">
               <AgentModuleWrapper>
-                <WarehouseManagement />
+                <MultiWarehouseManagement />
               </AgentModuleWrapper>
             </TabsContent>
           )}
