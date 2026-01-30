@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import { 
   Star, 
   ShoppingCart, 
-  Download
+  Download,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MarketplaceItem } from '@/hooks/useMarketplaceUniversal';
@@ -131,9 +132,25 @@ export function UniversalMarketplaceCard({
         {/* Badge type */}
         {getTypeBadge()}
 
-        {/* Rating badge (si présent) */}
-        {item.rating > 0 && (
+        {/* Badge Sponsorisé */}
+        {item.is_sponsored && (
+          <Badge className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white border-0 z-20 shadow-lg">
+            <Sparkles className="w-3 h-3 mr-1" />
+            Sponsorisé
+          </Badge>
+        )}
+
+        {/* Rating badge (si présent et pas sponsorisé pour éviter le chevauchement) */}
+        {item.rating > 0 && !item.is_sponsored && (
           <Badge className="absolute top-2 right-2 bg-white/90 text-gray-900 z-20">
+            <Star className="w-3 h-3 mr-1 fill-yellow-400 text-yellow-400" />
+            {item.rating.toFixed(1)}
+          </Badge>
+        )}
+
+        {/* Rating en bas si produit sponsorisé */}
+        {item.rating > 0 && item.is_sponsored && (
+          <Badge className="absolute top-10 right-2 bg-white/90 text-gray-900 z-20">
             <Star className="w-3 h-3 mr-1 fill-yellow-400 text-yellow-400" />
             {item.rating.toFixed(1)}
           </Badge>

@@ -75,7 +75,7 @@ export default function Marketplace() {
   const [selectedItemType, setSelectedItemType] = useState<'all' | 'product' | 'professional_service' | 'digital_product'>('all');
   const [selectedDigitalCategory, setSelectedDigitalCategory] = useState<string>("all");
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sortBy, setSortBy] = useState<'popular' | 'price_asc' | 'price_desc' | 'rating' | 'newest'>("newest");
+  const [sortBy, setSortBy] = useState<'popular' | 'price_asc' | 'price_desc' | 'rating' | 'newest' | 'position'>("position");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({ minPrice: 0, maxPrice: 0, minRating: 0 });
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
@@ -511,6 +511,7 @@ export default function Marketplace() {
               <span className="truncate"><SelectValue /></span>
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="position">Équitable</SelectItem>
               <SelectItem value="newest">Plus récents</SelectItem>
               <SelectItem value="popular">Popularité</SelectItem>
               <SelectItem value="price_asc">Prix ↑</SelectItem>
