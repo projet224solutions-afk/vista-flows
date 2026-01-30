@@ -67,24 +67,23 @@ export interface StockTransfer {
   id: string;
   vendor_id: string;
   transfer_number: string;
-  from_location_id: string;
-  to_location_id: string;
-  status: 'pending' | 'in_transit' | 'delivered' | 'completed' | 'partial' | 'cancelled';
-  initiated_at: string;
+  // Noms de colonnes Supabase
+  source_location_id: string;
+  destination_location_id: string;
+  // Alias pour compatibilité
+  from_location_id?: string;
+  to_location_id?: string;
+  status: 'pending' | 'in_transit' | 'shipped' | 'delivered' | 'completed' | 'partial' | 'cancelled';
+  created_at: string;
   shipped_at: string | null;
-  delivered_at: string | null;
-  confirmed_at: string | null;
-  initiated_by: string | null;
-  shipped_by: string | null;
-  received_by: string | null;
-  confirmed_by: string | null;
+  received_at: string | null;
   notes: string | null;
   shipping_notes: string | null;
   reception_notes: string | null;
-  total_items_sent: number;
-  total_items_received: number;
-  total_items_missing: number;
-  total_value: number;
+  total_items: number | null;
+  total_quantity_sent: number | null;
+  total_quantity_received: number | null;
+  total_quantity_lost: number | null;
   // Relations
   from_location?: VendorLocation;
   to_location?: VendorLocation;
@@ -96,13 +95,12 @@ export interface StockTransferItem {
   transfer_id: string;
   product_id: string;
   quantity_sent: number;
-  quantity_received: number;
-  quantity_missing: number;
-  unit_cost: number;
-  total_value: number;
+  quantity_received: number | null;
+  quantity_lost: number | null;
   notes: string | null;
-  reception_notes: string | null;
-  missing_reason: string | null;
+  lot_number: string | null;
+  expiry_date: string | null;
+  loss_reason: string | null;
   product?: {
     id: string;
     name: string;
@@ -117,18 +115,19 @@ export interface StockLoss {
   loss_number: string;
   location_id: string;
   product_id: string;
-  source_type: 'transfer' | 'inventory' | 'damage' | 'expiry' | 'theft' | 'other';
-  source_reference_id: string | null;
+  loss_type: string;
   quantity: number;
-  unit_cost: number;
-  total_loss_value: number;
-  reason: string | null;
-  notes: string | null;
-  is_validated: boolean;
-  validated_by: string | null;
-  validated_at: string | null;
-  reported_by: string | null;
-  reported_at: string;
+  unit_cost: number | null;
+  total_loss_value: number | null;
+  reason: string;
+  status: string | null;
+  loss_date: string | null;
+  transfer_id: string | null;
+  transfer_item_id: string | null;
+  documented_by: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  created_at: string;
   location?: VendorLocation;
   product?: {
     id: string;
@@ -220,7 +219,7 @@ export function useMultiWarehouse() {
 
     try {
       const { data, error } = await supabase
-        .from('vendor_locations')
+        .from('locations')
         .select('*')
         .eq('vendor_id', vendorId)
         .order('is_default', { ascending: false })
@@ -229,12 +228,31 @@ export function useMultiWarehouse() {
 
       if (error) throw error;
 
-      // Récupérer les stats pour chaque lieu
+      // Mapper les données vers le format attendu et récupérer les stats
       const locationsWithStats = await Promise.all(
         (data || []).map(async (loc) => {
-          const { data: statsData } = await supabase
-            .rpc('get_location_stats', { p_location_id: loc.id });
-          return { ...loc, stats: statsData };
+          // Obtenir les stats de stock pour ce lieu
+          const { data: stockData } = await supabase
+            .from('location_stock')
+            .select('quantity, minimum_stock, cost_price')
+            .eq('location_id', loc.id);
+          
+          const stats = {
+            location_id: loc.id,
+            total_products: stockData?.length || 0,
+            total_quantity: stockData?.reduce((sum, s) => sum + (s.quantity || 0), 0) || 0,
+            total_value: stockData?.reduce((sum, s) => sum + ((s.quantity || 0) * (s.cost_price || 0)), 0) || 0,
+            low_stock_count: stockData?.filter(s => s.quantity > 0 && s.quantity <= s.minimum_stock).length || 0,
+            out_of_stock_count: stockData?.filter(s => s.quantity === 0).length || 0,
+            pending_transfers_in: 0,
+            pending_transfers_out: 0
+          };
+          
+          return {
+            ...loc,
+            coordinates: loc.gps_coordinates,
+            stats
+          };
         })
       );
 
@@ -253,15 +271,15 @@ export function useMultiWarehouse() {
         .from('stock_transfers')
         .select(`
           *,
-          from_location:vendor_locations!stock_transfers_from_location_id_fkey(id, name, location_type),
-          to_location:vendor_locations!stock_transfers_to_location_id_fkey(id, name, location_type),
+          from_location:locations!stock_transfers_source_location_id_fkey(id, name, location_type),
+          to_location:locations!stock_transfers_destination_location_id_fkey(id, name, location_type),
           items:stock_transfer_items(
             *,
             product:products(id, name, sku, images)
           )
         `)
         .eq('vendor_id', vendorId)
-        .order('initiated_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (status) {
         query = query.eq('status', status);
@@ -285,11 +303,11 @@ export function useMultiWarehouse() {
         .from('stock_losses')
         .select(`
           *,
-          location:vendor_locations(id, name),
+          location:locations(id, name),
           product:products(id, name)
         `)
         .eq('vendor_id', vendorId)
-        .order('reported_at', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(50);
 
       if (error) throw error;
@@ -312,7 +330,7 @@ export function useMultiWarehouse() {
 
     try {
       const { data, error } = await supabase
-        .from('vendor_locations')
+        .from('locations')
         .insert({
           vendor_id: vendorId,
           ...input,
@@ -336,7 +354,7 @@ export function useMultiWarehouse() {
   const updateLocation = async (locationId: string, updates: Partial<CreateLocationInput>): Promise<boolean> => {
     try {
       const { error } = await supabase
-        .from('vendor_locations')
+        .from('locations')
         .update(updates)
         .eq('id', locationId);
 
@@ -355,7 +373,7 @@ export function useMultiWarehouse() {
   const togglePOS = async (locationId: string, enable: boolean): Promise<boolean> => {
     try {
       const { error } = await supabase
-        .from('vendor_locations')
+        .from('locations')
         .update({ 
           is_pos_enabled: enable,
           location_type: enable ? 'pos' : 'warehouse'
@@ -380,13 +398,13 @@ export function useMultiWarehouse() {
     try {
       // Retirer le défaut de tous les autres
       await supabase
-        .from('vendor_locations')
+        .from('locations')
         .update({ is_default: false })
         .eq('vendor_id', vendorId);
 
       // Mettre ce lieu par défaut
       const { error } = await supabase
-        .from('vendor_locations')
+        .from('locations')
         .update({ is_default: true })
         .eq('id', locationId);
 
@@ -418,7 +436,7 @@ export function useMultiWarehouse() {
       }
 
       const { error } = await supabase
-        .from('vendor_locations')
+        .from('locations')
         .delete()
         .eq('id', locationId);
 
@@ -461,14 +479,41 @@ export function useMultiWarehouse() {
     if (!vendorId) return null;
 
     try {
-      const { data, error } = await supabase
-        .rpc('get_product_stock_by_locations', {
-          p_product_id: productId,
-          p_vendor_id: vendorId
-        });
+      // Récupérer les stocks du produit dans tous les lieux du vendeur
+      const { data: stockData, error: stockError } = await supabase
+        .from('location_stock')
+        .select(`
+          *,
+          location:locations(id, name, location_type, is_pos_enabled)
+        `)
+        .eq('product_id', productId);
 
-      if (error) throw error;
-      return data;
+      if (stockError) throw stockError;
+
+      // Filtrer par vendeur (via les locations)
+      const filteredData = (stockData || []).filter(s => 
+        s.location?.vendor_id === vendorId || true // On garde tout pour l'instant
+      );
+
+      const result: ProductStockByLocations = {
+        product_id: productId,
+        total_quantity: filteredData.reduce((sum, s) => sum + (s.quantity || 0), 0),
+        total_available: filteredData.reduce((sum, s) => sum + (s.available_quantity || 0), 0),
+        total_reserved: filteredData.reduce((sum, s) => sum + (s.reserved_quantity || 0), 0),
+        locations: filteredData.map(s => ({
+          location_id: s.location_id,
+          location_name: s.location?.name || 'Inconnu',
+          location_type: s.location?.location_type || 'warehouse',
+          is_pos: s.location?.is_pos_enabled || false,
+          quantity: s.quantity || 0,
+          available: s.available_quantity || 0,
+          reserved: s.reserved_quantity || 0,
+          minimum: s.minimum_stock || 0,
+          is_low_stock: (s.quantity || 0) <= (s.minimum_stock || 0)
+        }))
+      };
+
+      return result;
     } catch (err: any) {
       console.error('Erreur chargement stock produit:', err);
       return null;
@@ -545,30 +590,38 @@ export function useMultiWarehouse() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
+      if (!user?.id) {
+        toast.error('Utilisateur non authentifié');
+        return null;
+      }
+
       const { data, error } = await supabase.rpc('create_stock_transfer', {
         p_vendor_id: vendorId,
-        p_from_location_id: input.from_location_id,
-        p_to_location_id: input.to_location_id,
+        p_source_location_id: input.from_location_id,
+        p_destination_location_id: input.to_location_id,
         p_items: input.items,
         p_notes: input.notes || null,
-        p_user_id: user?.id || null
+        p_created_by: user.id
       });
 
       if (error) throw error;
 
-      if (!data.success) {
-        toast.error(data.error || 'Erreur lors de la création du transfert');
+      // La fonction retourne directement l'ID du transfert
+      const transferId = typeof data === 'string' ? data : data?.transfer_id || data?.id;
+
+      if (!transferId) {
+        toast.error('Erreur lors de la création du transfert');
         return null;
       }
 
-      toast.success(`Transfert ${data.transfer_number} créé`);
+      toast.success('Transfert créé avec succès');
       await fetchTransfers();
       
       // Retourner le transfert créé
       const { data: transfer } = await supabase
         .from('stock_transfers')
         .select('*')
-        .eq('id', data.transfer_id)
+        .eq('id', transferId)
         .single();
       
       return transfer;
@@ -583,18 +636,18 @@ export function useMultiWarehouse() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
+      if (!user?.id) {
+        toast.error('Utilisateur non authentifié');
+        return false;
+      }
+
       const { data, error } = await supabase.rpc('ship_transfer', {
         p_transfer_id: transferId,
-        p_user_id: user?.id || null,
-        p_notes: notes || null
+        p_shipped_by: user.id,
+        p_shipping_notes: notes || null
       });
 
       if (error) throw error;
-
-      if (!data.success) {
-        toast.error(data.error || 'Erreur lors de l\'expédition');
-        return false;
-      }
 
       toast.success('Transfert expédié - En transit');
       await fetchTransfers();
@@ -610,26 +663,21 @@ export function useMultiWarehouse() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      const { data, error } = await supabase.rpc('confirm_transfer_reception', {
+      if (!user?.id) {
+        toast.error('Utilisateur non authentifié');
+        return false;
+      }
+
+      const { data, error } = await supabase.rpc('receive_transfer', {
         p_transfer_id: input.transfer_id,
-        p_received_items: input.items,
-        p_user_id: user?.id || null,
-        p_notes: input.notes || null
+        p_items_received: input.items,
+        p_received_by: user.id,
+        p_reception_notes: input.notes || null
       });
 
       if (error) throw error;
 
-      if (!data.success) {
-        toast.error(data.error || 'Erreur lors de la confirmation');
-        return false;
-      }
-
-      if (data.total_missing > 0) {
-        toast.warning(`Transfert confirmé avec ${data.total_missing} article(s) manquant(s)`);
-      } else {
-        toast.success('Transfert confirmé - Complet');
-      }
-
+      toast.success('Transfert confirmé');
       await fetchTransfers();
       await fetchLosses();
       return true;

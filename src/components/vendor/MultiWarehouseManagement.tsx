@@ -578,9 +578,9 @@ export default function MultiWarehouseManagement() {
 
                         <div className="flex items-center gap-3">
                           <div className="text-right">
-                            <p className="font-medium">{transfer.total_items_sent} article(s)</p>
+                            <p className="font-medium">{transfer.total_items || transfer.total_quantity_sent || 0} article(s)</p>
                             <p className="text-xs text-muted-foreground">
-                              {format(new Date(transfer.initiated_at), 'dd MMM yyyy HH:mm', { locale: fr })}
+                              {format(new Date(transfer.created_at), 'dd MMM yyyy HH:mm', { locale: fr })}
                             </p>
                           </div>
                           <TransferStatusBadge status={transfer.status} />
