@@ -93,15 +93,19 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
 
   const invokeWithAgentAuth = async (action: string, body?: any) => {
     const token = getAgentToken();
-    
+
     // Préparer les headers
     const headers: Record<string, string> = {};
     if (token) {
       headers['X-Agent-Token'] = token;
     }
 
-    const response = await supabase.functions.invoke(`agent-affiliate-link?action=${action}`, {
-      body: body || {},
+    // CORRECT: passer l'action dans le body au lieu de l'URL
+    const response = await supabase.functions.invoke('agent-affiliate-link', {
+      body: {
+        action,
+        ...(body || {})
+      },
       headers
     });
 

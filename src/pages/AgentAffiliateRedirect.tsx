@@ -33,19 +33,34 @@ export default function AgentAffiliateRedirect() {
 
   const validateAndRedirect = async () => {
     try {
-      // Valider le token auprès de la Edge Function
-      const { data, error } = await supabase.functions.invoke('agent-affiliate-link?action=validate-token&token=' + affiliateToken, {
-        method: 'GET'
-      });
+      // Valider que le token existe
+      if (!affiliateToken || affiliateToken.trim() === '') {
+        throw new Error('Token d\'affiliation manquant');
+      }
 
-      if (error) throw error;
+      // Valider le token auprès de la Edge Function
+      // CORRECT: utiliser le chemin avec query params dans l'URL de invoke
+      const { data, error } = await supabase.functions.invoke(
+        'agent-affiliate-link',
+        {
+          body: {
+            action: 'validate-token',
+            token: affiliateToken
+          }
+        }
+      );
+
+      if (error) {
+        console.error('Erreur Edge Function:', error);
+        throw error;
+      }
 
       if (data?.valid) {
         setStatus('valid');
         setAgentName(data.agent_name || 'Agent');
-        
+
         // Stocker le token d'affiliation dans localStorage
-        localStorage.setItem('affiliate_token', affiliateToken!);
+        localStorage.setItem('affiliate_token', affiliateToken);
         localStorage.setItem('affiliate_agent_name', data.agent_name || 'Agent');
         localStorage.setItem('affiliate_agent_id', data.agent_id || '');
         localStorage.setItem('affiliate_target_role', data.target_role || 'all');
@@ -53,9 +68,15 @@ export default function AgentAffiliateRedirect() {
 
         // Enregistrer le clic
         try {
-          await supabase.functions.invoke('agent-affiliate-link?action=track-click', {
-            body: { token: affiliateToken }
-          });
+          await supabase.functions.invoke(
+            'agent-affiliate-link',
+            {
+              body: {
+                action: 'track-click',
+                token: affiliateToken
+              }
+            }
+          );
         } catch (e) {
           console.warn('Erreur tracking clic:', e);
         }

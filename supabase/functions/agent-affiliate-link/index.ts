@@ -21,7 +21,19 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const action = url.searchParams.get('action') || 'create';
+
+    // Lire le body si présent (POST/PUT)
+    let body: any = {};
+    if (req.method === 'POST' || req.method === 'PUT') {
+      try {
+        body = await req.json();
+      } catch {
+        body = {};
+      }
+    }
+
+    // Action: priorité au body, sinon URL query params
+    const action = body.action || url.searchParams.get('action') || 'create';
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -31,12 +43,12 @@ serve(async (req) => {
 
     // Actions publiques (sans auth)
     if (action === 'track-click') {
-      const body = await req.json();
       return await trackClick(supabaseAdmin, body, req);
     }
 
     if (action === 'validate-token') {
-      const token = url.searchParams.get('token');
+      // Token depuis body (nouveau) ou URL query params (ancien)
+      const token = body.token || url.searchParams.get('token');
       return await validateToken(supabaseAdmin, token);
     }
 
@@ -110,9 +122,7 @@ serve(async (req) => {
 
     console.log('✅ Agent authentifié:', agent.agent_code);
 
-    const body = req.method === 'POST' || req.method === 'PUT' 
-      ? await req.json() 
-      : {};
+    // Body déjà lu plus haut, pas besoin de le relire
 
     switch (action) {
       case 'create':
