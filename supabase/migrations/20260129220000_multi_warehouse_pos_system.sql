@@ -91,19 +91,19 @@ CREATE TABLE IF NOT EXISTS public.vendor_locations (
   UNIQUE(vendor_id, code)
 );
 
--- Index pour performance
-CREATE INDEX IF NOT EXISTS idx_vendor_locations_vendor ON vendor_locations(vendor_id);
-CREATE INDEX IF NOT EXISTS idx_vendor_locations_type ON vendor_locations(location_type);
-CREATE INDEX IF NOT EXISTS idx_vendor_locations_active ON vendor_locations(is_active) WHERE is_active = TRUE;
-CREATE INDEX IF NOT EXISTS idx_vendor_locations_pos ON vendor_locations(is_pos_enabled) WHERE is_pos_enabled = TRUE;
-
--- Ajouter colonnes manquantes si la table existe déjà
+-- Ajouter colonnes manquantes si la table existe déjà (AVANT les index)
 ALTER TABLE public.vendor_locations ADD COLUMN IF NOT EXISTS code TEXT;
 ALTER TABLE public.vendor_locations ADD COLUMN IF NOT EXISTS location_type TEXT DEFAULT 'warehouse';
 ALTER TABLE public.vendor_locations ADD COLUMN IF NOT EXISTS is_pos_enabled BOOLEAN DEFAULT FALSE;
 ALTER TABLE public.vendor_locations ADD COLUMN IF NOT EXISTS is_default BOOLEAN DEFAULT FALSE;
 ALTER TABLE public.vendor_locations ADD COLUMN IF NOT EXISTS coordinates JSONB;
 ALTER TABLE public.vendor_locations ADD COLUMN IF NOT EXISTS settings JSONB DEFAULT '{}';
+
+-- Index pour performance (APRÈS les colonnes)
+CREATE INDEX IF NOT EXISTS idx_vendor_locations_vendor ON vendor_locations(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_vendor_locations_type ON vendor_locations(location_type);
+CREATE INDEX IF NOT EXISTS idx_vendor_locations_active ON vendor_locations(is_active) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_vendor_locations_pos ON vendor_locations(is_pos_enabled) WHERE is_pos_enabled = TRUE;
 
 -- ===========================================
 -- 2. STOCK PAR LIEU (LOCATION_STOCK)
@@ -146,14 +146,14 @@ CREATE TABLE IF NOT EXISTS public.location_stock (
   UNIQUE(location_id, product_id)
 );
 
--- Index pour performance
+-- Ajouter available_quantity si elle n'existe pas (AVANT les index)
+ALTER TABLE public.location_stock ADD COLUMN IF NOT EXISTS available_quantity INTEGER DEFAULT 0;
+
+-- Index pour performance (APRÈS les colonnes)
 CREATE INDEX IF NOT EXISTS idx_location_stock_location ON location_stock(location_id);
 CREATE INDEX IF NOT EXISTS idx_location_stock_product ON location_stock(product_id);
 CREATE INDEX IF NOT EXISTS idx_location_stock_low ON location_stock(quantity, minimum_stock) WHERE quantity <= minimum_stock;
 CREATE INDEX IF NOT EXISTS idx_location_stock_available ON location_stock(available_quantity);
-
--- Ajouter available_quantity si elle n'existe pas
-ALTER TABLE public.location_stock ADD COLUMN IF NOT EXISTS available_quantity INTEGER DEFAULT 0;
 
 -- ===========================================
 -- 3. SYSTÈME DE TRANSFERTS DE STOCK
@@ -248,12 +248,12 @@ CREATE TABLE IF NOT EXISTS public.stock_transfer_items (
   UNIQUE(transfer_id, product_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_transfer_items_transfer ON stock_transfer_items(transfer_id);
-CREATE INDEX IF NOT EXISTS idx_transfer_items_product ON stock_transfer_items(product_id);
-
--- Ajouter colonnes calculées si elles n'existent pas
+-- Ajouter colonnes calculées si elles n'existent pas (AVANT les index)
 ALTER TABLE public.stock_transfer_items ADD COLUMN IF NOT EXISTS quantity_missing INTEGER DEFAULT 0;
 ALTER TABLE public.stock_transfer_items ADD COLUMN IF NOT EXISTS total_value DECIMAL(15,2) DEFAULT 0;
+
+CREATE INDEX IF NOT EXISTS idx_transfer_items_transfer ON stock_transfer_items(transfer_id);
+CREATE INDEX IF NOT EXISTS idx_transfer_items_product ON stock_transfer_items(product_id);
 
 -- ===========================================
 -- 4. GESTION DES PERTES / MANQUANTS
@@ -301,14 +301,14 @@ CREATE TABLE IF NOT EXISTS public.stock_losses (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Ajouter colonne calculée si elle n'existe pas (AVANT les index)
+ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS total_loss_value DECIMAL(15,2) DEFAULT 0;
+
 CREATE INDEX IF NOT EXISTS idx_stock_losses_vendor ON stock_losses(vendor_id);
 CREATE INDEX IF NOT EXISTS idx_stock_losses_location ON stock_losses(location_id);
 CREATE INDEX IF NOT EXISTS idx_stock_losses_product ON stock_losses(product_id);
 CREATE INDEX IF NOT EXISTS idx_stock_losses_source ON stock_losses(source_type);
 CREATE INDEX IF NOT EXISTS idx_stock_losses_date ON stock_losses(reported_at DESC);
-
--- Ajouter colonne calculée si elle n'existe pas
-ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS total_loss_value DECIMAL(15,2) DEFAULT 0;
 
 -- ===========================================
 -- 5. PERMISSIONS PAR LIEU (MULTI-VENDEURS POS)
