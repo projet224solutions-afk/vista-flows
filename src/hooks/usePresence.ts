@@ -87,8 +87,7 @@ export function usePresence(options: UsePresenceOptions = {}): UsePresenceReturn
       console.log('[Presence] 📡 Mise à jour présence:', { userId: user.id, status, device });
       
       // Utiliser la fonction RPC optimisée si disponible
-      // @ts-expect-error - RPC function may not be in generated types yet
-      const { error: rpcError } = await supabase.rpc('update_user_presence', {
+      const { error: rpcError } = await (supabase.rpc as any)('update_user_presence', {
         p_user_id: user.id,
         p_status: status,
         p_device: device,

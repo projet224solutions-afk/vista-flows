@@ -118,33 +118,26 @@ export default function ProductPaymentModal({
     try {
       // CORRIGÉ: Lire depuis system_settings via la fonction RPC
       // Cela utilise les taux modifiables par le PDG dans la section Finance
-      const { data, error } = await supabase.rpc('get_pdg_commission_config');
+      // Lire directement depuis system_settings
+      const { data: settingsData, error } = await supabase
+        .from('system_settings')
+        .select('setting_value')
+        .eq('setting_key', 'purchase_fee_percent')
+        .single();
 
       if (error) {
-        console.error('[ProductPayment] RPC error, falling back to system_settings:', error);
-        // Fallback: lire directement depuis system_settings
-        const { data: settingsData } = await supabase
-          .from('system_settings')
-          .select('setting_value')
-          .eq('setting_key', 'purchase_fee_percent')
-          .single();
-
-        if (settingsData?.setting_value) {
-          setCommissionConfig({
-            commission_type: 'percentage',
-            commission_value: Number(settingsData.setting_value)
-          });
-          console.log('[ProductPayment] Commission from system_settings:', settingsData.setting_value);
-        } else {
-          throw new Error('No commission config found');
-        }
-      } else if (data && data.length > 0) {
-        // Utiliser purchase_fee_percent retourné par la fonction RPC
+        console.error('[ProductPayment] Error loading commission:', error);
+        // Fallback: 10% par défaut
         setCommissionConfig({
           commission_type: 'percentage',
-          commission_value: Number(data[0].purchase_fee_percent)
+          commission_value: 10
         });
-        console.log('[ProductPayment] Commission config from PDG settings:', data[0].purchase_fee_percent + '%');
+      } else if (settingsData?.setting_value) {
+        setCommissionConfig({
+          commission_type: 'percentage',
+          commission_value: Number(settingsData.setting_value)
+        });
+        console.log('[ProductPayment] Commission from system_settings:', settingsData.setting_value);
       } else {
         // Fallback: 10% par défaut (taux standard marketplace)
         setCommissionConfig({
