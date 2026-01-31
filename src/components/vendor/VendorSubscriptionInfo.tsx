@@ -35,11 +35,11 @@ export function VendorSubscriptionInfo() {
   };
 
   const handleCancelSubscription = async () => {
-    if (!subscription?.subscription_id) return;
+    if (!subscription?.id) return;
 
     try {
       setCancelling(true);
-      const success = await SubscriptionService.cancelSubscription(subscription.subscription_id);
+      const success = await SubscriptionService.cancelSubscription(subscription.id);
       
       if (success) {
         toast.success("Abonnement annulé avec succès", {
