@@ -116,38 +116,49 @@ export default function ProductPaymentModal({
   const loadCommissionConfig = async () => {
     setLoadingCommission(true);
     try {
-      // Chercher la config de commission pour marketplace/ecommerce
-      const { data, error } = await supabase
-        .from('commission_config')
-        .select('commission_type, commission_value, min_amount')
-        .in('service_name', ['marketplace', 'ecommerce'])
-        .eq('is_active', true)
-        .order('service_name', { ascending: true }) // marketplace en premier
-        .limit(1);
+      // CORRIGÉ: Lire depuis system_settings via la fonction RPC
+      // Cela utilise les taux modifiables par le PDG dans la section Finance
+      const { data, error } = await supabase.rpc('get_pdg_commission_config');
 
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        setCommissionConfig({
-          commission_type: data[0].commission_type as 'percentage' | 'fixed',
-          commission_value: Number(data[0].commission_value),
-          min_amount: data[0].min_amount ? Number(data[0].min_amount) : undefined
-        });
-        console.log('[ProductPayment] Commission config loaded:', data[0]);
-      } else {
-        // Fallback: 1.5% par défaut
+      if (error) {
+        console.error('[ProductPayment] RPC error, falling back to system_settings:', error);
+        // Fallback: lire directement depuis system_settings
+        const { data: settingsData } = await supabase
+          .from('system_settings')
+          .select('setting_value')
+          .eq('setting_key', 'purchase_fee_percent')
+          .single();
+
+        if (settingsData?.setting_value) {
+          setCommissionConfig({
+            commission_type: 'percentage',
+            commission_value: Number(settingsData.setting_value)
+          });
+          console.log('[ProductPayment] Commission from system_settings:', settingsData.setting_value);
+        } else {
+          throw new Error('No commission config found');
+        }
+      } else if (data && data.length > 0) {
+        // Utiliser purchase_fee_percent retourné par la fonction RPC
         setCommissionConfig({
           commission_type: 'percentage',
-          commission_value: 1.5
+          commission_value: Number(data[0].purchase_fee_percent)
         });
-        console.log('[ProductPayment] Using default commission: 1.5%');
+        console.log('[ProductPayment] Commission config from PDG settings:', data[0].purchase_fee_percent + '%');
+      } else {
+        // Fallback: 10% par défaut (taux standard marketplace)
+        setCommissionConfig({
+          commission_type: 'percentage',
+          commission_value: 10
+        });
+        console.log('[ProductPayment] Using default commission: 10%');
       }
     } catch (error) {
       console.error('[ProductPayment] Error loading commission config:', error);
       // Fallback en cas d'erreur
       setCommissionConfig({
         commission_type: 'percentage',
-        commission_value: 1.5
+        commission_value: 10
       });
     } finally {
       setLoadingCommission(false);
@@ -445,10 +456,10 @@ export default function ProductPaymentModal({
               description: `Achat produits (${items.length} articles)`,
               product_total: vendorProductTotal,
               commission_fee: commissionPerVendor,
-              commission_percent: commissionConfig?.commission_value || 1.5
+              commission_percent: commissionConfig?.commission_value || 10
             },
             escrow_options: {
-              commission_percent: commissionConfig?.commission_value || 1.5
+              commission_percent: commissionConfig?.commission_value || 10
             }
           });
 
@@ -466,12 +477,12 @@ export default function ProductPaymentModal({
           // Mettre à jour la commande avec l'escrow_transaction_id et les infos de commission
           const { error: updateError } = await supabase
             .from('orders')
-            .update({ 
-              metadata: { 
+            .update({
+              metadata: {
                 escrow_transaction_id: escrowId,
                 commission_fee: commissionPerVendor,
                 product_total: vendorProductTotal,
-                commission_percent: commissionConfig?.commission_value || 1.5
+                commission_percent: commissionConfig?.commission_value || 10
               },
               payment_status: 'paid'
             })
@@ -479,6 +490,29 @@ export default function ProductPaymentModal({
 
           if (updateError) {
             console.error('[ProductPayment] Failed to update order with escrow ID:', updateError);
+          }
+
+          // Enregistrer le revenu PDG (commission sur achat)
+          if (commissionPerVendor > 0) {
+            const { error: revenueError } = await supabase.rpc('record_pdg_revenue', {
+              p_source_type: 'frais_achat_commande',
+              p_amount: commissionPerVendor,
+              p_percentage: commissionConfig?.commission_value || 10,
+              p_transaction_id: escrowId,
+              p_user_id: userId,
+              p_metadata: {
+                order_id: orderId,
+                order_number: orderNumber,
+                vendor_id: vendorId,
+                product_total: vendorProductTotal
+              }
+            });
+
+            if (revenueError) {
+              console.error('[ProductPayment] Failed to record PDG revenue:', revenueError);
+            } else {
+              console.log('✅ PDG revenue recorded:', commissionPerVendor, 'GNF');
+            }
           }
         }
       }

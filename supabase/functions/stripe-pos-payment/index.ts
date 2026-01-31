@@ -23,32 +23,38 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[STRIPE-POS] ${step}${detailsStr}`);
 };
 
-// Taux de commission par défaut (2.5%) - utilisé si commission_config est vide
-const DEFAULT_COMMISSION_RATE = 2.5;
+// Taux de commission par défaut (10%) - utilisé si system_settings est vide
+const DEFAULT_COMMISSION_RATE = 10;
 
-// Récupérer le taux de commission actif depuis la base de données
+// Récupérer le taux de commission actif depuis system_settings (modifiable par le PDG)
 async function getActiveCommissionRate(supabaseAdmin: any): Promise<number> {
   try {
-    const { data, error } = await supabaseAdmin
-      .from('commission_config')
-      .select('commission_type, commission_value')
-      .in('service_name', ['marketplace', 'ecommerce', 'pos'])
-      .eq('is_active', true)
-      .order('service_name', { ascending: true })
-      .limit(1);
+    // CORRIGÉ: Utiliser la fonction RPC qui lit depuis system_settings
+    // Les taux sont modifiables par le PDG dans la section Finance
+    const { data, error } = await supabaseAdmin.rpc('get_purchase_commission_percent');
 
-    if (error || !data || data.length === 0) {
-      console.log('[STRIPE-POS] No active commission config found, using default:', DEFAULT_COMMISSION_RATE);
+    if (error) {
+      console.log('[STRIPE-POS] RPC error, falling back to system_settings:', error.message);
+      // Fallback: lire directement depuis system_settings
+      const { data: settingsData } = await supabaseAdmin
+        .from('system_settings')
+        .select('setting_value')
+        .eq('setting_key', 'purchase_fee_percent')
+        .single();
+
+      if (settingsData?.setting_value) {
+        const rate = Number(settingsData.setting_value);
+        console.log('[STRIPE-POS] Using commission rate from system_settings:', rate);
+        return rate;
+      }
       return DEFAULT_COMMISSION_RATE;
     }
 
-    const config = data[0];
-    if (config.commission_type === 'percentage') {
-      console.log('[STRIPE-POS] Using commission rate from config:', config.commission_value);
-      return Number(config.commission_value);
+    if (data !== null && data !== undefined) {
+      console.log('[STRIPE-POS] Using commission rate from PDG settings:', data);
+      return Number(data);
     }
-    
-    // Si c'est un montant fixe, on retourne le défaut (le calcul sera différent)
+
     return DEFAULT_COMMISSION_RATE;
   } catch (err) {
     console.error('[STRIPE-POS] Error fetching commission config:', err);
