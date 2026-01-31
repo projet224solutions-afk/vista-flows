@@ -34,6 +34,7 @@ export default function PDGUsers() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [userServices, setUserServices] = useState<Record<string, any[]>>({});
+  const [vendorCodes, setVendorCodes] = useState<Record<string, string>>({});
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -51,14 +52,28 @@ export default function PDGUsers() {
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, email, role, is_active, status, public_id, created_at')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false});
 
       if (error) throw error;
       setUsers(profiles || []);
 
-      // Charger les services professionnels pour chaque vendeur
+      // Charger les vendor_codes et services pour chaque vendeur
       const vendorIds = profiles?.filter(p => p.role === 'vendeur').map(p => p.id) || [];
       if (vendorIds.length > 0) {
+        // Charger les vendor_codes depuis la table vendors
+        const { data: vendors } = await supabase
+          .from('vendors')
+          .select('user_id, vendor_code')
+          .in('user_id', vendorIds);
+
+        // Créer un map user_id -> vendor_code
+        const codesMap: Record<string, string> = {};
+        vendors?.forEach(vendor => {
+          codesMap[vendor.user_id] = vendor.vendor_code;
+        });
+        setVendorCodes(codesMap);
+
+        // Charger les services professionnels
         const { data: services } = await supabase
           .from('professional_services')
           .select(`
@@ -319,7 +334,13 @@ export default function PDGUsers() {
                     </div>
                     <p className="text-sm text-muted-foreground">{user.email}</p>
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {user.public_id && (
+                      {/* Afficher vendor_code pour les vendeurs, sinon public_id */}
+                      {user.role === 'vendeur' && vendorCodes[user.id] ? (
+                        <Badge variant="outline" className="font-mono bg-primary/10 text-primary border-primary/30">
+                          <Store className="w-3 h-3 mr-1" />
+                          {vendorCodes[user.id]}
+                        </Badge>
+                      ) : user.public_id && (
                         <Badge variant="outline" className="font-mono bg-primary/10 text-primary border-primary/30">
                           {user.public_id}
                         </Badge>
