@@ -410,7 +410,7 @@ export function NewPurchaseDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="max-w-4xl w-[95vw] sm:w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col p-0">
+      <DialogContent className="max-w-4xl w-[95vw] sm:w-full max-h-[96vh] sm:max-h-[90vh] overflow-hidden flex flex-col p-0">
         <DialogHeader className="p-3 sm:p-6 pb-3 sm:pb-4 border-b flex-shrink-0">
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -428,14 +428,14 @@ export function NewPurchaseDialog({
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2 mt-3 sm:mt-4">
+          <div className="flex items-center gap-2 mt-4">
             <div className={cn(
-              "flex-1 h-1.5 sm:h-2 rounded-full transition-colors",
-              step >= 1 ? "bg-primary" : "bg-muted"
+              "flex-1 h-2 md:h-1.5 rounded-full transition-all duration-300",
+              step >= 1 ? "bg-primary shadow-sm" : "bg-muted"
             )} />
             <div className={cn(
-              "flex-1 h-1.5 sm:h-2 rounded-full transition-colors",
-              step >= 2 ? "bg-primary" : "bg-muted"
+              "flex-1 h-2 md:h-1.5 rounded-full transition-all duration-300",
+              step >= 2 ? "bg-primary shadow-sm" : "bg-muted"
             )} />
           </div>
         </DialogHeader>
@@ -444,12 +444,12 @@ export function NewPurchaseDialog({
         {step === 1 && (
           <div className="flex-1 min-h-0 p-3 sm:p-6 space-y-3 sm:space-y-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 md:h-4 md:w-4 text-muted-foreground" />
               <Input
                 placeholder="Rechercher un fournisseur..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-10 sm:h-11 text-sm"
+                className="pl-10 md:pl-9 h-12 md:h-10 text-base md:text-sm"
               />
             </div>
 
@@ -483,9 +483,9 @@ export function NewPurchaseDialog({
                           key={supplier.id}
                           onClick={() => setSelectedSupplier(supplier)}
                           className={cn(
-                            "p-3 sm:p-4 rounded-lg border-2 cursor-pointer transition-all",
+                            "p-4 md:p-3 rounded-lg border-2 cursor-pointer transition-all active:scale-[0.98]",
                             isSelected
-                              ? "border-primary bg-primary/5"
+                              ? "border-primary bg-primary/5 shadow-sm"
                               : "border-transparent bg-muted/30 hover:bg-accent active:bg-accent/80"
                           )}
                         >

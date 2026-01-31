@@ -67,12 +67,12 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
   return (
     <div className="space-y-4">
       {/* Header avec stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
         <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-          <CardContent className="p-4">
+          <CardContent className="p-5 md:p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/20">
-                <Building2 className="h-5 w-5 text-primary" />
+              <div className="p-3 md:p-2 rounded-lg bg-primary/20">
+                <Building2 className="h-6 w-6 md:h-5 md:w-5 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats?.suppliersCount || 0}</p>
@@ -83,14 +83,14 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
         </Card>
 
         {/* Carte Achats cliquable */}
-        <Card 
-          className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 cursor-pointer hover:border-green-500/40 hover:shadow-md transition-all"
+        <Card
+          className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 cursor-pointer hover:border-green-500/40 hover:shadow-md transition-all active:scale-95"
           onClick={() => setIsValidatedSheetOpen(true)}
         >
-          <CardContent className="p-4">
+          <CardContent className="p-5 md:p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/20">
-                <ShoppingCart className="h-5 w-5 text-green-500" />
+              <div className="p-3 md:p-2 rounded-lg bg-green-500/20">
+                <ShoppingCart className="h-6 w-6 md:h-5 md:w-5 text-green-500" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats?.validatedPurchasesCount || 0}</p>
@@ -101,14 +101,14 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
         </Card>
 
         {/* Carte Brouillons cliquable */}
-        <Card 
-          className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/20 cursor-pointer hover:border-orange-500/40 hover:shadow-md transition-all"
+        <Card
+          className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/20 cursor-pointer hover:border-orange-500/40 hover:shadow-md transition-all active:scale-95"
           onClick={() => setIsDraftSheetOpen(true)}
         >
-          <CardContent className="p-4">
+          <CardContent className="p-5 md:p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-orange-500/20">
-                <Package className="h-5 w-5 text-orange-500" />
+              <div className="p-3 md:p-2 rounded-lg bg-orange-500/20">
+                <Package className="h-6 w-6 md:h-5 md:w-5 text-orange-500" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats?.draftPurchasesCount || 0}</p>
@@ -119,10 +119,10 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
         </Card>
 
         <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
-          <CardContent className="p-4">
+          <CardContent className="p-5 md:p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-500/20">
-                <TrendingUp className="h-5 w-5 text-purple-500" />
+              <div className="p-3 md:p-2 rounded-lg bg-purple-500/20">
+                <TrendingUp className="h-6 w-6 md:h-5 md:w-5 text-purple-500" />
               </div>
               <div>
                 <p className="text-2xl font-bold">ERP</p>
@@ -143,14 +143,14 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="purchases" className="flex items-center gap-2">
-                <ShoppingCart className="w-4 h-4" />
-                Achats
+            <TabsList className="grid w-full grid-cols-2 mb-4 h-12 md:h-10">
+              <TabsTrigger value="purchases" className="flex items-center gap-2 text-sm md:text-xs">
+                <ShoppingCart className="w-5 h-5 md:w-4 md:h-4" />
+                <span>Achats</span>
               </TabsTrigger>
-              <TabsTrigger value="suppliers" className="flex items-center gap-2">
-                <Building2 className="w-4 h-4" />
-                Fournisseurs
+              <TabsTrigger value="suppliers" className="flex items-center gap-2 text-sm md:text-xs">
+                <Building2 className="w-5 h-5 md:w-4 md:h-4" />
+                <span>Fournisseurs</span>
                 {stats?.suppliersCount ? (
                   <Badge variant="outline" className="ml-1 text-xs">
                     {stats.suppliersCount}

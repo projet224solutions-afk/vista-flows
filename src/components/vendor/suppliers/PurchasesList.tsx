@@ -251,20 +251,20 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
       {/* Header actions */}
       <div className="flex flex-col sm:flex-row gap-3 justify-between">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 md:h-4 md:w-4 text-muted-foreground" />
           <Input
             placeholder="Rechercher un achat..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
+            className="pl-10 md:pl-9 text-base md:text-sm h-11 md:h-10"
           />
         </div>
         <Button
           onClick={() => setIsNewPurchaseDialogOpen(true)}
-          className="gap-2"
+          className="gap-2 h-11 md:h-10"
         >
-          <Plus className="h-4 w-4" />
-          Nouvel achat
+          <Plus className="h-5 w-5 md:h-4 md:w-4" />
+          <span className="text-base md:text-sm">Nouvel achat</span>
         </Button>
       </div>
 
@@ -287,14 +287,14 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
             return (
               <Card
                 key={purchase.id}
-                className="hover:shadow-md transition-shadow cursor-pointer"
+                className="hover:shadow-md transition-shadow cursor-pointer active:scale-[0.98]"
                 onClick={() => handleOpenPurchase(purchase)}
               >
-                <CardContent className="p-4">
+                <CardContent className="p-5 md:p-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg bg-muted ${config.color}`}>
-                        <StatusIcon className="h-5 w-5" />
+                      <div className={`p-3 md:p-2 rounded-lg bg-muted ${config.color}`}>
+                        <StatusIcon className="h-6 w-6 md:h-5 md:w-5" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
@@ -323,8 +323,8 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
                         </p>
                       </div>
                       <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" title="Voir les détails">
-                          <Eye className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" title="Voir les détails" className="h-10 w-10 md:h-9 md:w-9">
+                          <Eye className="h-5 w-5 md:h-4 md:w-4" />
                         </Button>
                         {!purchase.is_locked && purchase.status !== 'validated' && (
                           <Button
@@ -332,8 +332,9 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
                             size="icon"
                             title="Modifier l'achat"
                             onClick={() => handleOpenPurchase(purchase)}
+                            className="h-10 w-10 md:h-9 md:w-9"
                           >
-                            <Pencil className="h-4 w-4 text-primary" />
+                            <Pencil className="h-5 w-5 md:h-4 md:w-4 text-primary" />
                           </Button>
                         )}
                         <Button
@@ -341,8 +342,9 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
                           size="icon"
                           title="Supprimer l'achat"
                           onClick={() => setDeletePurchase(purchase)}
+                          className="h-10 w-10 md:h-9 md:w-9"
                         >
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                          <Trash2 className="h-5 w-5 md:h-4 md:w-4 text-destructive" />
                         </Button>
                       </div>
                     </div>

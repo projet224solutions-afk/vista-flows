@@ -253,17 +253,17 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
       {/* Header actions */}
       <div className="flex flex-col sm:flex-row gap-3 justify-between">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 md:h-4 md:w-4 text-muted-foreground" />
           <Input
             placeholder="Rechercher un fournisseur..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
+            className="pl-10 md:pl-9 text-base md:text-sm h-11 md:h-10"
           />
         </div>
-        <Button onClick={handleOpenCreate} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nouveau fournisseur
+        <Button onClick={handleOpenCreate} className="gap-2 h-11 md:h-10">
+          <Plus className="h-5 w-5 md:h-4 md:w-4" />
+          <span className="text-base md:text-sm">Nouveau fournisseur</span>
         </Button>
       </div>
 
@@ -275,10 +275,10 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
             : 'Aucun fournisseur. Créez-en un pour commencer.'}
         </div>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
           {filteredSuppliers.map((supplier) => (
-            <Card key={supplier.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
+            <Card key={supplier.id} className="hover:shadow-md transition-shadow active:scale-[0.98]">
+              <CardContent className="p-5 md:p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -312,16 +312,18 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
                       variant="ghost"
                       size="icon"
                       onClick={() => handleOpenEdit(supplier)}
+                      className="h-10 w-10 md:h-9 md:w-9"
                     >
-                      <Edit className="h-4 w-4" />
+                      <Edit className="h-5 w-5 md:h-4 md:w-4" />
                     </Button>
                     {!supplier.has_validated_purchases && (
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => setDeleteSupplier(supplier)}
+                        className="h-10 w-10 md:h-9 md:w-9"
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <Trash2 className="h-5 w-5 md:h-4 md:w-4 text-destructive" />
                       </Button>
                     )}
                   </div>

@@ -155,13 +155,13 @@ export function PurchaseInputKeypad({
           </div>
 
           {/* Numeric keypad - 4 columns for better mobile UX */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-2.5">
             {['7', '8', '9', '4', '5', '6', '1', '2', '3'].map((num) => (
               <Button
                 key={num}
                 variant="outline"
                 onClick={() => handleInput(num)}
-                className="h-14 text-2xl font-bold bg-card hover:bg-accent hover:scale-[1.02] active:scale-95 transition-all duration-150 shadow-sm rounded-xl border-2"
+                className="h-16 md:h-14 text-2xl font-bold bg-card hover:bg-accent hover:scale-[1.02] active:scale-95 transition-all duration-150 shadow-sm rounded-xl border-2"
               >
                 {num}
               </Button>
@@ -169,11 +169,11 @@ export function PurchaseInputKeypad({
           </div>
 
           {/* Bottom row: 0, 00/., backspace */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-2.5">
             <Button
               variant="outline"
               onClick={() => handleInput('0')}
-              className="h-14 text-2xl font-bold bg-card hover:bg-accent hover:scale-[1.02] active:scale-95 transition-all duration-150 shadow-sm rounded-xl border-2"
+              className="h-16 md:h-14 text-2xl font-bold bg-card hover:bg-accent hover:scale-[1.02] active:scale-95 transition-all duration-150 shadow-sm rounded-xl border-2"
             >
               0
             </Button>
@@ -181,7 +181,7 @@ export function PurchaseInputKeypad({
               <Button
                 variant="outline"
                 onClick={() => handleInput('.')}
-                className="h-14 text-2xl font-bold bg-card hover:bg-accent hover:scale-[1.02] active:scale-95 transition-all duration-150 shadow-sm rounded-xl border-2"
+                className="h-16 md:h-14 text-2xl font-bold bg-card hover:bg-accent hover:scale-[1.02] active:scale-95 transition-all duration-150 shadow-sm rounded-xl border-2"
               >
                 •
               </Button>
@@ -189,7 +189,7 @@ export function PurchaseInputKeypad({
               <Button
                 variant="outline"
                 onClick={() => handleInput('00')}
-                className="h-14 text-xl font-bold bg-card hover:bg-accent hover:scale-[1.02] active:scale-95 transition-all duration-150 shadow-sm rounded-xl border-2"
+                className="h-16 md:h-14 text-xl font-bold bg-card hover:bg-accent hover:scale-[1.02] active:scale-95 transition-all duration-150 shadow-sm rounded-xl border-2"
               >
                 00
               </Button>
@@ -197,7 +197,7 @@ export function PurchaseInputKeypad({
             <Button
               variant="outline"
               onClick={() => handleInput('backspace')}
-              className="h-14 text-lg font-bold bg-card hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive hover:scale-[1.02] active:scale-95 transition-all duration-150 shadow-sm rounded-xl border-2"
+              className="h-16 md:h-14 text-lg font-bold bg-card hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive hover:scale-[1.02] active:scale-95 transition-all duration-150 shadow-sm rounded-xl border-2"
             >
               ⌫
             </Button>
@@ -254,14 +254,14 @@ export function PurchaseInputKeypad({
             <Button
               variant="outline"
               onClick={() => handleInput('clear')}
-              className="h-14 font-semibold text-base border-destructive/40 text-destructive hover:bg-destructive/10 hover:border-destructive rounded-xl transition-all"
+              className="h-14 md:h-12 font-semibold text-base border-destructive/40 text-destructive hover:bg-destructive/10 hover:border-destructive rounded-xl transition-all active:scale-95"
             >
               <Trash2 className="h-5 w-5 mr-2" />
               Effacer
             </Button>
             <Button
               onClick={() => handleInput('enter')}
-              className={`h-14 font-semibold text-base ${config.buttonColor} text-white shadow-lg hover:shadow-xl rounded-xl transition-all`}
+              className={`h-14 md:h-12 font-semibold text-base ${config.buttonColor} text-white shadow-lg hover:shadow-xl rounded-xl transition-all active:scale-95`}
             >
               <CheckSquare className="h-5 w-5 mr-2" />
               Confirmer
