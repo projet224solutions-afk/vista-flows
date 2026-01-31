@@ -1302,7 +1302,7 @@ export function POSSystem() {
           tax_amount: tax,
           discount_amount: discountValue,
           payment_status: 'paid',
-          status: 'completed', // POS cash sales are completed immediately (no delivery)
+          status: 'pending', // Créer avec 'pending' pour que le trigger se déclenche lors de l'UPDATE
           payment_method: paymentMethod,
           shipping_address: { address: 'Point de vente' },
           notes: `Paiement POS - Espèces`,
@@ -1329,10 +1329,15 @@ export function POSSystem() {
 
       if (itemsError) throw itemsError;
 
-      // IMPORTANT: laisser la BDD faire le décrément du stock exactement 1 fois.
-      // Le trigger update_inventory_on_order_trigger (AFTER INSERT ON order_items) décrémente inventory
-      // - Trigger `sync_inventory_to_products_trigger` synchronise products.stock_quantity.
-      // NOTE: POS orders are already created with status 'completed', no need to update again
+      // 4. Mettre à jour le statut vers 'completed' pour déclencher le trigger de décrément de stock
+      // Le trigger update_inventory_on_order_completion (AFTER UPDATE OF status ON orders) décrémente inventory
+      // et synchronise products.stock_quantity
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({ status: 'completed' })
+        .eq('id', order.id);
+
+      if (updateError) throw updateError;
 
 
       setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
