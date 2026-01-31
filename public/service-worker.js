@@ -1,5 +1,6 @@
-// Service Worker v9 - PWA + Firebase Cloud Messaging + Mode Offline Desktop & Mobile
-const CACHE_VERSION = "v9";
+// Service Worker v10 - PWA + Firebase Cloud Messaging + Mode Offline Desktop & Mobile
+// v10: Fix SPA routing - toujours servir /index.html pour les routes de navigation
+const CACHE_VERSION = "v10";
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
 const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
@@ -282,43 +283,46 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Navigation (HTML) - Network First avec fallback app shell
+  // IMPORTANT: Pour les SPAs, on doit TOUJOURS servir /index.html et laisser React Router gérer l'URL
   if (event.request.mode === "navigate") {
     event.respondWith(
       (async () => {
         try {
-          // Essayer le réseau d'abord
-          const networkResponse = await fetch(event.request, { 
+          // Pour les routes SPA, fetch /index.html au lieu de l'URL complète
+          // Cela évite de cacher des pages spécifiques qui causent des problèmes de routing
+          const requestUrl = event.request.url;
+          const isRootOrIndex = url.pathname === '/' || url.pathname === '/index.html';
+
+          // Fetch request - toujours /index.html pour les routes SPA
+          const fetchRequest = isRootOrIndex
+            ? event.request
+            : new Request('/', {
+                method: 'GET',
+                headers: event.request.headers,
+                credentials: 'same-origin'
+              });
+
+          const networkResponse = await fetch(fetchRequest, {
             cache: 'no-cache',
             credentials: 'same-origin'
           });
-          
+
           if (networkResponse && networkResponse.ok) {
-            // Mettre en cache pour usage offline
+            // Mettre en cache SEULEMENT /index.html, pas les routes individuelles
             const cache = await caches.open(DYNAMIC_CACHE);
-            cache.put(event.request, networkResponse.clone());
-            
-            // Aussi mettre en cache l'URL canonique pour les routes SPA
-            if (url.pathname.startsWith('/vendeur')) {
-              cache.put(url.pathname, networkResponse.clone());
-            }
+            cache.put('/', networkResponse.clone());
+            cache.put('/index.html', networkResponse.clone());
           }
           return networkResponse;
         } catch (error) {
           console.log("[SW] Mode offline - Récupération depuis cache pour:", url.pathname);
-          
-          // 1. Essayer le cache exact
-          const exactMatch = await caches.match(event.request);
-          if (exactMatch) return exactMatch;
-          
-          // 2. Essayer le chemin seul (sans query string)
-          const pathMatch = await caches.match(url.pathname);
-          if (pathMatch) return pathMatch;
-          
-          // 3. Pour les routes SPA, servir l'app shell (index.html)
-          const appShell = await caches.match('/') || 
+
+          // En mode offline, servir l'app shell (/index.html) pour TOUTES les routes SPA
+          // React Router gérera l'URL correcte une fois l'app chargée
+          const appShell = await caches.match('/') ||
                           await caches.match('/index.html') ||
                           await caches.open(APP_SHELL_CACHE).then(c => c.match('/'));
-          
+
           if (appShell) {
             console.log("[SW] Serving app shell for offline SPA route:", url.pathname);
             return appShell;
