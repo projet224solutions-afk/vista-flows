@@ -162,12 +162,17 @@ const queryClient = new QueryClient({
 function App() {
   // Debug log immédiat
   console.log('🎯 App component rendering...');
+  console.log('📍 Current URL:', window.location.href);
+  console.log('📍 Pathname:', window.location.pathname);
+
   useEffect(() => {
     console.log('✅ App component mounted successfully');
+    console.log('📍 Final URL after mount:', window.location.href);
 
     // Important: éviter la perte de session OAuth entre http/https sur le domaine production
     if (window.location.hostname.includes('224solution.net') && window.location.protocol === 'http:') {
       const httpsUrl = `https://${window.location.host}${window.location.pathname}${window.location.search}${window.location.hash}`;
+      console.log('🔄 Redirecting to HTTPS:', httpsUrl);
       window.location.replace(httpsUrl);
     }
 
@@ -229,12 +234,18 @@ function App() {
               {/* Main App Routes */}
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/marketplace/visual-search" element={<VisualSearch />} />
+              <Route path="/marketplace/product/:id" element={<ProductDetail />} />
               <Route path="/marketplace/product/:id/*" element={<ProductDetail />} />
+              <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/product/:id/*" element={<ProductDetail />} />
+              <Route path="/produit/:id" element={<ProductDetail />} />
               <Route path="/produit/:id/*" element={<ProductDetail />} />
               {/* Short URL redirect - must be before shop/boutique routes */}
+              <Route path="/s/:shortCode" element={<ShortLinkRedirect />} />
               <Route path="/s/:shortCode/*" element={<ShortLinkRedirect />} />
+              <Route path="/shop/:vendorId" element={<VendorShop />} />
               <Route path="/shop/:vendorId/*" element={<VendorShop />} />
+              <Route path="/boutique/:slug" element={<VendorShop />} />
               <Route path="/boutique/:slug/*" element={<VendorShop />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/messages" element={<Messages />} />

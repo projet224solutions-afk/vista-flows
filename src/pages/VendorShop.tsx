@@ -66,9 +66,23 @@ export default function VendorShop() {
   // Le paramètre peut être 'slug' ou 'vendorId' selon la route utilisée
   const identifier = params.slug || params.vendorId;
 
+  // Debug: Log quand le composant se charge
+  useEffect(() => {
+    console.log('🏪 [VendorShop] Component mounted with:', {
+      vendorId: params.vendorId,
+      slug: params.slug,
+      identifier,
+      pathname: window.location.pathname,
+      fullUrl: window.location.href
+    });
+  }, []);
+
   useEffect(() => {
     if (identifier) {
+      console.log('🏪 [VendorShop] Loading vendor data for identifier:', identifier);
       loadVendorData();
+    } else {
+      console.error('🏪 [VendorShop] No identifier found! This should not happen.');
     }
   }, [identifier, user?.id]);
 
