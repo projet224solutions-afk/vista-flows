@@ -254,8 +254,8 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
       console.log(`🤖 Calling ${functionName} for ${userRole}...`);
 
       // Appel à l'edge function avec streaming
-      const functionsBaseUrl = 'https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1';
-      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
+      const functionsBaseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
       // Préparer l'historique (15 derniers messages max pour le contexte)
       // Exclure le message de bienvenue initial (id='welcome')
