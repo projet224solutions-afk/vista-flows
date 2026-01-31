@@ -65,7 +65,7 @@ export default function PdgCommandCenter() {
     loadMonitoringData();
   };
 
-  // Charger les erreurs récentes
+  // Charger les erreurs récentes - uniquement au montage du composant
   useEffect(() => {
     const loadRecentErrors = async () => {
       const { data } = await supabase
@@ -74,13 +74,14 @@ export default function PdgCommandCenter() {
         .neq('status', 'fixed')
         .order('created_at', { ascending: false })
         .limit(100);
-      
+
       if (data) {
         setRecentErrors(data);
       }
     };
     loadRecentErrors();
-  }, [stats]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Charger une seule fois au montage
 
   const getStatusColor = (status: string) => {
     switch (status) {

@@ -72,10 +72,19 @@ export function usePdgMonitoring() {
   
   const [loading, setLoading] = useState(false);
   const [realTimeEnabled, setRealTimeEnabled] = useState(true);
+  const [lastLoadTime, setLastLoadTime] = useState<number>(0);
 
   // Charger les données de monitoring
-  const loadMonitoringData = useCallback(async () => {
+  const loadMonitoringData = useCallback(async (force: boolean = false) => {
+    // Éviter les rechargements trop fréquents (moins de 5 secondes)
+    const now = Date.now();
+    if (!force && now - lastLoadTime < 5000) {
+      console.log('⏭️ [PDG] Rechargement ignoré (trop récent)');
+      return;
+    }
+
     setLoading(true);
+    setLastLoadTime(now);
     try {
       // Charger les stats globales via la fonction RPC sécurisée
       const globalStats = await InterfaceMetricsService.getGlobalStats();
@@ -183,16 +192,19 @@ export function usePdgMonitoring() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [lastLoadTime]);
 
   // Activer la surveillance en temps réel
   useEffect(() => {
     if (!realTimeEnabled) return;
 
-    loadMonitoringData();
-    const interval = setInterval(loadMonitoringData, 30000); // Rafraîchir toutes les 30s
+    // Charger les données initiales (sans forcer si chargées récemment)
+    loadMonitoringData(false);
 
-    // Écouter les changements en temps réel
+    // Intervalle de 30s - forcer le rechargement
+    const interval = setInterval(() => loadMonitoringData(true), 30000);
+
+    // Écouter les changements en temps réel - forcer le rechargement
     const errorsChannel = supabase
       .channel('system-errors-changes')
       .on('postgres_changes', {
@@ -200,7 +212,7 @@ export function usePdgMonitoring() {
         schema: 'public',
         table: 'system_errors'
       }, () => {
-        loadMonitoringData();
+        loadMonitoringData(true);
       })
       .subscribe();
 
@@ -211,7 +223,7 @@ export function usePdgMonitoring() {
         schema: 'public',
         table: 'system_health'
       }, () => {
-        loadMonitoringData();
+        loadMonitoringData(true);
       })
       .subscribe();
 
