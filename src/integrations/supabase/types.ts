@@ -237,6 +237,13 @@ export type Database = {
             foreignKeyName: "affiliate_fraud_logs_agent_id_fkey"
             columns: ["agent_id"]
             isOneToOne: false
+            referencedRelation: "agent_commission_stats"
+            referencedColumns: ["agent_id"]
+          },
+          {
+            foreignKeyName: "affiliate_fraud_logs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
             referencedRelation: "agents_management"
             referencedColumns: ["id"]
           },
@@ -369,6 +376,13 @@ export type Database = {
             foreignKeyName: "agent_affiliate_commissions_agent_id_fkey"
             columns: ["agent_id"]
             isOneToOne: false
+            referencedRelation: "agent_commission_stats"
+            referencedColumns: ["agent_id"]
+          },
+          {
+            foreignKeyName: "agent_affiliate_commissions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
             referencedRelation: "agents_management"
             referencedColumns: ["id"]
           },
@@ -421,6 +435,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "agent_affiliate_links_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_commission_stats"
+            referencedColumns: ["agent_id"]
+          },
           {
             foreignKeyName: "agent_affiliate_links_agent_id_fkey"
             columns: ["agent_id"]
@@ -527,6 +548,13 @@ export type Database = {
             foreignKeyName: "agent_commissions_log_agent_id_fkey"
             columns: ["agent_id"]
             isOneToOne: false
+            referencedRelation: "agent_commission_stats"
+            referencedColumns: ["agent_id"]
+          },
+          {
+            foreignKeyName: "agent_commissions_log_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
             referencedRelation: "agents_management"
             referencedColumns: ["id"]
           },
@@ -555,6 +583,13 @@ export type Database = {
           user_role?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "agent_created_users_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_commission_stats"
+            referencedColumns: ["agent_id"]
+          },
           {
             foreignKeyName: "agent_created_users_agent_id_fkey"
             columns: ["agent_id"]
@@ -605,6 +640,13 @@ export type Database = {
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "agent_invitations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_commission_stats"
+            referencedColumns: ["agent_id"]
+          },
           {
             foreignKeyName: "agent_invitations_agent_id_fkey"
             columns: ["agent_id"]
@@ -665,6 +707,13 @@ export type Database = {
             foreignKeyName: "agent_permissions_agent_id_fkey"
             columns: ["agent_id"]
             isOneToOne: false
+            referencedRelation: "agent_commission_stats"
+            referencedColumns: ["agent_id"]
+          },
+          {
+            foreignKeyName: "agent_permissions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
             referencedRelation: "agents_management"
             referencedColumns: ["id"]
           },
@@ -711,6 +760,13 @@ export type Database = {
           wallet_status?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "agent_wallets_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: true
+            referencedRelation: "agent_commission_stats"
+            referencedColumns: ["agent_id"]
+          },
           {
             foreignKeyName: "agent_wallets_agent_id_fkey"
             columns: ["agent_id"]
@@ -856,6 +912,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "agents_management_parent_agent_id_fkey"
+            columns: ["parent_agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_commission_stats"
+            referencedColumns: ["agent_id"]
+          },
           {
             foreignKeyName: "agents_management_parent_agent_id_fkey"
             columns: ["parent_agent_id"]
@@ -4826,6 +4889,7 @@ export type Database = {
           is_featured: boolean | null
           is_premium: boolean | null
           is_sponsored: boolean | null
+          marketplace_batch: number | null
           marketplace_position: number | null
           merchant_id: string | null
           metadata: Json | null
@@ -4840,6 +4904,8 @@ export type Database = {
           short_description: string | null
           source_platform: string | null
           source_url: string | null
+          sponsor_expires_at: string | null
+          sponsor_priority: number | null
           sponsored_until: string | null
           status: string
           tags: string[] | null
@@ -4864,6 +4930,7 @@ export type Database = {
           is_featured?: boolean | null
           is_premium?: boolean | null
           is_sponsored?: boolean | null
+          marketplace_batch?: number | null
           marketplace_position?: number | null
           merchant_id?: string | null
           metadata?: Json | null
@@ -4878,6 +4945,8 @@ export type Database = {
           short_description?: string | null
           source_platform?: string | null
           source_url?: string | null
+          sponsor_expires_at?: string | null
+          sponsor_priority?: number | null
           sponsored_until?: string | null
           status?: string
           tags?: string[] | null
@@ -4902,6 +4971,7 @@ export type Database = {
           is_featured?: boolean | null
           is_premium?: boolean | null
           is_sponsored?: boolean | null
+          marketplace_batch?: number | null
           marketplace_position?: number | null
           merchant_id?: string | null
           metadata?: Json | null
@@ -4916,6 +4986,8 @@ export type Database = {
           short_description?: string | null
           source_platform?: string | null
           source_url?: string | null
+          sponsor_expires_at?: string | null
+          sponsor_priority?: number | null
           sponsored_until?: string | null
           status?: string
           tags?: string[] | null
@@ -10290,10 +10362,12 @@ export type Database = {
         Row: {
           batch_size: number
           created_at: string
+          current_batch: number | null
           current_batch_offset: number
           id: string
           is_active: boolean
           last_rotation_at: string
+          next_rotation_at: string | null
           rotation_interval_minutes: number
           total_batches: number
           updated_at: string
@@ -10301,10 +10375,12 @@ export type Database = {
         Insert: {
           batch_size?: number
           created_at?: string
+          current_batch?: number | null
           current_batch_offset?: number
           id?: string
           is_active?: boolean
           last_rotation_at?: string
+          next_rotation_at?: string | null
           rotation_interval_minutes?: number
           total_batches?: number
           updated_at?: string
@@ -10312,10 +10388,12 @@ export type Database = {
         Update: {
           batch_size?: number
           created_at?: string
+          current_batch?: number | null
           current_batch_offset?: number
           id?: string
           is_active?: boolean
           last_rotation_at?: string
+          next_rotation_at?: string | null
           rotation_interval_minutes?: number
           total_batches?: number
           updated_at?: string
@@ -10326,32 +10404,50 @@ export type Database = {
         Row: {
           batch_offset_after: number
           batch_offset_before: number
+          batches_count: number | null
           created_at: string
           digital_products_rotated: number
           duration_ms: number | null
+          error_message: string | null
+          execution_time_ms: number | null
           id: string
+          metadata: Json | null
           products_rotated: number
           rotation_at: string
+          rotation_timestamp: string | null
+          status: string | null
         }
         Insert: {
           batch_offset_after: number
           batch_offset_before: number
+          batches_count?: number | null
           created_at?: string
           digital_products_rotated?: number
           duration_ms?: number | null
+          error_message?: string | null
+          execution_time_ms?: number | null
           id?: string
+          metadata?: Json | null
           products_rotated?: number
           rotation_at?: string
+          rotation_timestamp?: string | null
+          status?: string | null
         }
         Update: {
           batch_offset_after?: number
           batch_offset_before?: number
+          batches_count?: number | null
           created_at?: string
           digital_products_rotated?: number
           duration_ms?: number | null
+          error_message?: string | null
+          execution_time_ms?: number | null
           id?: string
+          metadata?: Json | null
           products_rotated?: number
           rotation_at?: string
+          rotation_timestamp?: string | null
+          status?: string | null
         }
         Relationships: []
       }
@@ -12724,6 +12820,7 @@ export type Database = {
           is_hot: boolean | null
           is_sponsored: boolean | null
           low_stock_threshold: number | null
+          marketplace_batch: number | null
           marketplace_position: number | null
           name: string
           price: number
@@ -12737,6 +12834,8 @@ export type Database = {
           seo_description: string | null
           seo_title: string | null
           sku: string | null
+          sponsor_expires_at: string | null
+          sponsor_priority: number | null
           sponsored_until: string | null
           stock_quantity: number | null
           tags: string[] | null
@@ -12764,6 +12863,7 @@ export type Database = {
           is_hot?: boolean | null
           is_sponsored?: boolean | null
           low_stock_threshold?: number | null
+          marketplace_batch?: number | null
           marketplace_position?: number | null
           name: string
           price: number
@@ -12777,6 +12877,8 @@ export type Database = {
           seo_description?: string | null
           seo_title?: string | null
           sku?: string | null
+          sponsor_expires_at?: string | null
+          sponsor_priority?: number | null
           sponsored_until?: string | null
           stock_quantity?: number | null
           tags?: string[] | null
@@ -12804,6 +12906,7 @@ export type Database = {
           is_hot?: boolean | null
           is_sponsored?: boolean | null
           low_stock_threshold?: number | null
+          marketplace_batch?: number | null
           marketplace_position?: number | null
           name?: string
           price?: number
@@ -12817,6 +12920,8 @@ export type Database = {
           seo_description?: string | null
           seo_title?: string | null
           sku?: string | null
+          sponsor_expires_at?: string | null
+          sponsor_priority?: number | null
           sponsored_until?: string | null
           stock_quantity?: number | null
           tags?: string[] | null
@@ -16535,6 +16640,7 @@ export type Database = {
           created_at: string | null
           documented_by: string | null
           id: string
+          is_validated: boolean | null
           location_id: string
           loss_date: string | null
           loss_number: string
@@ -16542,11 +16648,17 @@ export type Database = {
           product_id: string
           quantity: number
           reason: string
+          reported_at: string | null
+          reported_by: string | null
+          source_reference_id: string | null
+          source_type: string | null
           status: string | null
           total_loss_value: number | null
           transfer_id: string | null
           transfer_item_id: string | null
           unit_cost: number | null
+          validated_at: string | null
+          validated_by: string | null
           vendor_id: string
         }
         Insert: {
@@ -16555,6 +16667,7 @@ export type Database = {
           created_at?: string | null
           documented_by?: string | null
           id?: string
+          is_validated?: boolean | null
           location_id: string
           loss_date?: string | null
           loss_number: string
@@ -16562,11 +16675,17 @@ export type Database = {
           product_id: string
           quantity: number
           reason: string
+          reported_at?: string | null
+          reported_by?: string | null
+          source_reference_id?: string | null
+          source_type?: string | null
           status?: string | null
           total_loss_value?: number | null
           transfer_id?: string | null
           transfer_item_id?: string | null
           unit_cost?: number | null
+          validated_at?: string | null
+          validated_by?: string | null
           vendor_id: string
         }
         Update: {
@@ -16575,6 +16694,7 @@ export type Database = {
           created_at?: string | null
           documented_by?: string | null
           id?: string
+          is_validated?: boolean | null
           location_id?: string
           loss_date?: string | null
           loss_number?: string
@@ -16582,11 +16702,17 @@ export type Database = {
           product_id?: string
           quantity?: number
           reason?: string
+          reported_at?: string | null
+          reported_by?: string | null
+          source_reference_id?: string | null
+          source_type?: string | null
           status?: string | null
           total_loss_value?: number | null
           transfer_id?: string | null
           transfer_item_id?: string | null
           unit_cost?: number | null
+          validated_at?: string | null
+          validated_by?: string | null
           vendor_id?: string
         }
         Relationships: [
@@ -19856,6 +19982,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "agent_affiliate_links"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_agent_affiliations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_commission_stats"
+            referencedColumns: ["agent_id"]
           },
           {
             foreignKeyName: "user_agent_affiliations_agent_id_fkey"
@@ -23343,6 +23476,20 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_commission_stats: {
+        Row: {
+          affiliated_users: number | null
+          agent_code: string | null
+          agent_id: string | null
+          agent_name: string | null
+          commissions_this_month: number | null
+          direct_users: number | null
+          pending_commissions: number | null
+          total_commissions_earned: number | null
+          wallet_balance: number | null
+        }
+        Relationships: []
+      }
       agent_type_statistics: {
         Row: {
           active_agents: number | null
@@ -23601,6 +23748,15 @@ export type Database = {
           pdg_name: string | null
           stolen_vehicles: number | null
           total_vehicles: number | null
+        }
+        Relationships: []
+      }
+      presence_stats: {
+        Row: {
+          count: number | null
+          current_device: string | null
+          most_recent_activity: string | null
+          status: Database["public"]["Enums"]["user_presence_status"] | null
         }
         Relationships: []
       }
@@ -24242,6 +24398,7 @@ export type Database = {
           escalated_count: number
         }[]
       }
+      auto_mark_offline: { Args: never; Returns: undefined }
       auto_release_escrows: {
         Args: never
         Returns: {
@@ -24345,6 +24502,14 @@ export type Database = {
         }
         Returns: Json
       }
+      calculate_purchase_commission: {
+        Args: { p_amount: number }
+        Returns: {
+          amount_after_commission: number
+          commission_amount: number
+          commission_percent: number
+        }[]
+      }
       calculate_recommendation_score: {
         Args: { p_product_id: string; p_user_id: string }
         Returns: number
@@ -24445,6 +24610,7 @@ export type Database = {
       }
       check_service_owner: { Args: { service_id: string }; Returns: boolean }
       clean_old_errors: { Args: never; Returns: undefined }
+      cleanup_expired_sponsorships: { Args: never; Returns: Json }
       cleanup_expired_tokens: { Args: never; Returns: undefined }
       cleanup_old_analytics_data: { Args: never; Returns: number }
       cleanup_old_errors: { Args: never; Returns: undefined }
@@ -25016,7 +25182,30 @@ export type Database = {
           type: string
         }[]
       }
-      get_active_subscription: { Args: { p_user_id: string }; Returns: Json }
+      get_active_subscription: {
+        Args: { p_user_id: string }
+        Returns: {
+          analytics_access: boolean
+          api_access: boolean
+          auto_renew: boolean
+          billing_cycle: string
+          current_period_end: string
+          custom_branding: boolean
+          duration_days: number
+          featured_products: boolean
+          features: Json
+          max_images_per_product: number
+          max_products: number
+          plan_display_name: string
+          plan_id: string
+          plan_name: string
+          price_paid: number
+          priority_support: boolean
+          status: string
+          subscription_id: string
+          user_role: string
+        }[]
+      }
       get_agent_permissions: { Args: { p_agent_id: string }; Returns: Json }
       get_audio_for_user: {
         Args: { p_message_id: string; p_user_id: string }
@@ -25073,6 +25262,19 @@ export type Database = {
         }[]
       }
       get_inventory_stats: { Args: { p_vendor_id: string }; Returns: Json }
+      get_marketplace_rotation_info: { Args: never; Returns: Json }
+      get_online_users: {
+        Args: { p_user_ids?: string[] }
+        Returns: {
+          current_device: string
+          custom_status: string
+          is_online: boolean
+          last_active: string
+          last_seen: string
+          status: string
+          user_id: string
+        }[]
+      }
       get_or_create_wallet: {
         Args: { p_currency?: string; p_user_id: string }
         Returns: string
@@ -25086,6 +25288,14 @@ export type Database = {
           id: string
           status: string
           updated_at: string
+        }[]
+      }
+      get_pdg_commission_config: {
+        Args: never
+        Returns: {
+          purchase_fee_percent: number
+          service_fee_percent: number
+          transfer_fee_percent: number
         }[]
       }
       get_pdg_dashboard_stats: { Args: never; Returns: Json }
@@ -25143,7 +25353,9 @@ export type Database = {
         }[]
       }
       get_public_setting: { Args: { setting_key: string }; Returns: string }
+      get_purchase_commission_percent: { Args: never; Returns: number }
       get_role_prefix: { Args: { user_role: string }; Returns: string }
+      get_service_commission_percent: { Args: never; Returns: number }
       get_service_subscription: {
         Args: { p_service_id: string }
         Returns: {
@@ -25180,6 +25392,7 @@ export type Database = {
         Returns: Json
       }
       get_system_health_api: { Args: never; Returns: Json }
+      get_system_transfer_fee_percent: { Args: never; Returns: number }
       get_total_product_stock: {
         Args: { p_product_id: string; p_vendor_id?: string }
         Returns: {
@@ -25200,6 +25413,17 @@ export type Database = {
           trend_score: number
           view_count: number
           wishlist_count: number
+        }[]
+      }
+      get_user_agent: {
+        Args: { p_user_id: string }
+        Returns: {
+          agent_id: string
+          agent_name: string
+          agent_type: string
+          commission_rate: number
+          parent_agent_id: string
+          source: string
         }[]
       }
       get_user_code: { Args: { p_user_id: string }; Returns: string }
@@ -25288,6 +25512,7 @@ export type Database = {
         Args: { bureau_uuid: string }
         Returns: boolean
       }
+      has_active_subscription: { Args: { p_user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["user_role"]
@@ -25320,6 +25545,7 @@ export type Database = {
               error: true
             } & "Could not choose the best candidate function between: public.increment_shared_link_views(p_short_code => text), public.increment_shared_link_views(p_short_code => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
           }
+      initialize_marketplace_positions: { Args: never; Returns: Json }
       initialize_user_wallet: { Args: { p_user_id: string }; Returns: Json }
       initiate_escrow:
         | {
@@ -25374,6 +25600,7 @@ export type Database = {
         Args: { _payment_link_id: string; _vendor_user_id: string }
         Returns: boolean
       }
+      is_pdg_user: { Args: never; Returns: boolean }
       is_real_user: { Args: { p_user_id: string }; Returns: boolean }
       is_vehicle_blocked: { Args: { p_vehicle_id: string }; Returns: boolean }
       lock_expense_for_purchase: {
@@ -25532,6 +25759,7 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
+      presence_heartbeat: { Args: { p_user_id: string }; Returns: undefined }
       preview_next_id: { Args: { p_prefix: string }; Returns: string }
       preview_wallet_transfer: {
         Args: { p_amount: number; p_receiver_id: string; p_sender_id: string }
@@ -25581,6 +25809,7 @@ export type Database = {
         Args: { p_transaction_id: string }
         Returns: Json
       }
+      process_pending_affiliate_commissions: { Args: never; Returns: Json }
       process_pending_audio_translations: {
         Args: { max_messages?: number }
         Returns: {
@@ -25871,6 +26100,14 @@ export type Database = {
           p_user_id: string
         }
         Returns: boolean
+      }
+      sponsor_product: {
+        Args: {
+          p_duration_days?: number
+          p_priority?: number
+          p_product_id: string
+        }
+        Returns: Json
       }
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown }
@@ -26473,6 +26710,16 @@ export type Database = {
             }
             Returns: string
           }
+      subscribe_user: {
+        Args: {
+          p_billing_cycle?: string
+          p_payment_method?: string
+          p_plan_id: string
+          p_transaction_id?: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       sync_missing_profiles: {
         Args: never
         Returns: {
@@ -26584,6 +26831,7 @@ export type Database = {
         }[]
       }
       unlockrows: { Args: { "": string }; Returns: number }
+      unsponsor_product: { Args: { p_product_id: string }; Returns: Json }
       update_agent: {
         Args: {
           p_agent_id: string
@@ -26611,6 +26859,15 @@ export type Database = {
           p_prenom?: string
           p_telephone?: string
           p_worker_id: string
+        }
+        Returns: undefined
+      }
+      update_user_presence: {
+        Args: {
+          p_custom_status?: string
+          p_device?: string
+          p_status?: string
+          p_user_id: string
         }
         Returns: undefined
       }

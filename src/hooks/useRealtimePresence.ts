@@ -182,8 +182,7 @@ export function useRealtimePresence(options: UseRealtimePresenceOptions = {}): U
 
     try {
       // Utiliser la fonction RPC optimisée update_user_presence
-      // @ts-expect-error - RPC function may not be in generated types yet
-      const { error } = await supabase.rpc('update_user_presence', {
+      const { error } = await (supabase.rpc as any)('update_user_presence', {
         p_user_id: user.id,
         p_status: status,
         p_device: device,
@@ -455,8 +454,7 @@ export function useRealtimePresence(options: UseRealtimePresenceOptions = {}): U
         
         // Utiliser la fonction RPC presence_heartbeat (ultra-léger)
         try {
-          // @ts-expect-error - RPC function may not be in generated types yet
-          await supabase.rpc('presence_heartbeat', { p_user_id: user.id });
+          await (supabase.rpc as any)('presence_heartbeat', { p_user_id: user.id });
         } catch {
           // Ignore silently - le broadcast suffit
         }
