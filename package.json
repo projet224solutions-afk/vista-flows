@@ -21,6 +21,7 @@
     "e2e:wallet": "node scripts/e2e_test_wallet_communication.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.72.1",
     "@capacitor/android": "^7.4.3",
     "@capacitor/cli": "^8.0.1",
     "@capacitor/core": "^7.4.3",
