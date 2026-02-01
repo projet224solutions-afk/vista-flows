@@ -9587,6 +9587,7 @@ export type Database = {
           reserved_quantity: number | null
           sku: string | null
           supplier_id: string | null
+          updated_at: string | null
           variant_id: string | null
           warehouse_id: string | null
           warehouse_location: string | null
@@ -9608,6 +9609,7 @@ export type Database = {
           reserved_quantity?: number | null
           sku?: string | null
           supplier_id?: string | null
+          updated_at?: string | null
           variant_id?: string | null
           warehouse_id?: string | null
           warehouse_location?: string | null
@@ -9629,6 +9631,7 @@ export type Database = {
           reserved_quantity?: number | null
           sku?: string | null
           supplier_id?: string | null
+          updated_at?: string | null
           variant_id?: string | null
           warehouse_id?: string | null
           warehouse_location?: string | null
