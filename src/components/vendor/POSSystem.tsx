@@ -304,11 +304,15 @@ export function POSSystem() {
             }
             
             if (!customerId) continue;
-            
+
+            // Utiliser le order_number de la vente offline ou en générer un nouveau
+            const syncOrderNumber = saleData.order_number || `POS-SYNC-${Date.now().toString(36).toUpperCase()}`;
+
             // Créer la commande
             const { data: order, error: orderError } = await supabase
               .from('orders')
               .insert({
+                order_number: syncOrderNumber,
                 vendor_id: vendorId,
                 customer_id: customerId,
                 total_amount: saleData.total_amount,
@@ -319,7 +323,7 @@ export function POSSystem() {
                 status: 'confirmed',
                 payment_method: 'cash',
                 shipping_address: { address: 'Point de vente' },
-                notes: `Vente offline synchronisée - ${saleData.order_number}`,
+                notes: `Vente offline synchronisée - ${syncOrderNumber}`,
                 source: 'pos_offline_synced',
                 created_at: saleData.sale_date
               })
@@ -1018,9 +1022,13 @@ export function POSSystem() {
           return;
         }
 
+        // Générer un numéro de commande unique
+        const mobileOrderNumber = `POS-MM-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
         const { data: order, error: orderError } = await supabase
           .from('orders')
           .insert({
+            order_number: mobileOrderNumber,
             vendor_id: vendorId,
             customer_id: customerId,
             total_amount: total,
@@ -1028,7 +1036,7 @@ export function POSSystem() {
             tax_amount: tax,
             discount_amount: discountValue,
             payment_status: 'pending',
-            status: 'processing', // POS orders start as processing, not pending
+            status: 'processing',
             payment_method: paymentMethod,
             shipping_address: { address: 'Point de vente' },
             notes: `Paiement Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange Money' : 'MTN MoMo'}) - ${mobileMoneyPhone}`,
@@ -1139,10 +1147,14 @@ export function POSSystem() {
             return;
           }
 
+          // Générer un numéro de commande unique
+          const cardOrderNumber = `POS-CB-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
           // Créer la commande - POS orders start as processing (awaiting payment confirmation)
           const { data: order, error: orderError } = await supabase
             .from('orders')
             .insert({
+              order_number: cardOrderNumber,
               vendor_id: vendorId,
               customer_id: customerId,
               total_amount: total,
@@ -1150,7 +1162,7 @@ export function POSSystem() {
               tax_amount: tax,
               discount_amount: discountValue,
               payment_status: 'pending',
-              status: 'processing', // POS orders don't need delivery workflow
+              status: 'processing',
               payment_method: 'card',
               shipping_address: { address: 'Point de vente' },
               notes: 'Paiement par carte bancaire - En attente',
@@ -1298,9 +1310,12 @@ export function POSSystem() {
       }
       console.log('✅ [POS] Customer ID obtenu:', customerId);
 
-      // Vérification des données avant insertion
+      // Générer un numéro de commande unique (OBLIGATOIRE selon le schéma)
+      const orderNumber = `POS-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
       console.log('🔄 [POS] Étape 2: Création de la commande...');
       console.log('📊 [POS] Données commande:', {
+        order_number: orderNumber,
         vendor_id: vendorId,
         customer_id: customerId,
         total_amount: total,
@@ -1314,6 +1329,7 @@ export function POSSystem() {
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
+          order_number: orderNumber,
           vendor_id: vendorId,
           customer_id: customerId,
           total_amount: total,
