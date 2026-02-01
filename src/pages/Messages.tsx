@@ -607,6 +607,9 @@ export default function Messages() {
             }));
             setMessages(updatedMessages);
           }
+          
+          // ✅ Forcer le rechargement des conversations pour mettre à jour les badges
+          loadConversations();
         }
       }
 
