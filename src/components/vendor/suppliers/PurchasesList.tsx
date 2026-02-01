@@ -192,6 +192,15 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
   // Delete purchase
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      // 1. Supprimer les items d'abord (contrainte de clé étrangère)
+      const { error: itemsError } = await supabase
+        .from('stock_purchase_items')
+        .delete()
+        .eq('purchase_id', id);
+      
+      if (itemsError) throw itemsError;
+
+      // 2. Supprimer l'achat
       const { error } = await supabase
         .from('stock_purchases')
         .delete()
@@ -199,7 +208,7 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['stock-purchases', vendorId] });
+      queryClient.invalidateQueries({ queryKey: ['stock-purchases-validated', vendorId] });
       queryClient.invalidateQueries({ queryKey: ['supplier-purchase-stats', vendorId] });
       toast.success('Achat supprimé');
       setDeletePurchase(null);
