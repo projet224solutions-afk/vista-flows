@@ -69,7 +69,7 @@ interface OfflinePOSSchema extends DBSchema {
     indexes: {
       'by-vendor': string;
       'by-date': string;
-      'by-sync-status': boolean;
+      'by-sync-status': number;
       'by-receipt': string;
     };
   };

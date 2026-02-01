@@ -110,7 +110,7 @@ export async function deriveEncryptionKey(
   const derivedKey = await crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt,
+      salt: salt.buffer as ArrayBuffer,
       iterations,
       hash: 'SHA-256'
     },
@@ -159,7 +159,7 @@ export async function encryptWithPassword(
     const ciphertextBuffer = await crypto.subtle.encrypt(
       {
         name: 'AES-GCM',
-        iv
+        iv: iv.buffer as ArrayBuffer
       },
       key,
       dataBuffer
@@ -168,8 +168,8 @@ export async function encryptWithPassword(
     // Construire le résultat
     const encrypted: EncryptedData = {
       ciphertext: arrayBufferToBase64(ciphertextBuffer),
-      salt: arrayBufferToBase64(salt),
-      iv: arrayBufferToBase64(iv),
+      salt: arrayBufferToBase64(salt.buffer as ArrayBuffer),
+      iv: arrayBufferToBase64(iv.buffer as ArrayBuffer),
       algorithm: DEFAULT_CONFIG.algorithm,
       iterations: DEFAULT_CONFIG.iterations,
       timestamp: new Date().toISOString()
@@ -208,10 +208,10 @@ export async function decryptWithPassword<T = any>(
     const decryptedBuffer = await crypto.subtle.decrypt(
       {
         name: 'AES-GCM',
-        iv
+        iv: iv.buffer as ArrayBuffer
       },
       key,
-      ciphertextBuffer
+      ciphertextBuffer.buffer as ArrayBuffer
     );
 
     // Désérialiser

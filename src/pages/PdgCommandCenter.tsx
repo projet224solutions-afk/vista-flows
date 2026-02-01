@@ -152,7 +152,7 @@ export default function PdgCommandCenter() {
             <Button
               variant="outline"
               size="sm"
-              onClick={loadMonitoringData}
+              onClick={() => loadMonitoringData()}
               disabled={loading}
               className="h-9 w-9 p-0"
             >

@@ -57,7 +57,7 @@ interface CatalogCacheSchema extends DBSchema {
       'by-vendor': string;
       'by-category': string;
       'by-name': string;
-      'by-active': boolean;
+      'by-active': number;
     };
   };
   categories: {
@@ -92,7 +92,7 @@ const fuseInstances: Map<string, Fuse<CachedProduct>> = new Map();
 /**
  * Options de recherche Fuse.js
  */
-const FUSE_OPTIONS: Fuse.IFuseOptions<CachedProduct> = {
+const FUSE_OPTIONS = {
   keys: [
     { name: 'name', weight: 2 },
     { name: 'description', weight: 1 },
