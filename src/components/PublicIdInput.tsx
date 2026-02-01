@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { AlertCircle, Check } from 'lucide-react';
 import { validatePublicId, formatPublicId } from '@/utils/publicIdFormatter';
 import { cn } from '@/lib/utils';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface PublicIdInputProps {
   value: string;

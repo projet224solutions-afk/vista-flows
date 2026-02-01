@@ -6,11 +6,6 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Settings, Save, RefreshCw, TrendingUp } from "lucide-react";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
 
 export default function TransferFeeSettings() {
   const [currentFee, setCurrentFee] = useState<number>(1.5);
