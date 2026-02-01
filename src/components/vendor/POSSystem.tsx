@@ -1390,8 +1390,10 @@ export function POSSystem() {
 
       await loadVendorProducts();
     } catch (error: any) {
-      console.error('Erreur paiement:', error);
-      
+      console.error('❌ [POS] Erreur paiement complète:', error);
+      console.error('❌ [POS] Error message:', error?.message);
+      console.error('❌ [POS] Error details:', JSON.stringify(error, null, 2));
+
       // ✨ NOUVEAU: Si erreur réseau, proposer le mode offline
       if (error.message?.includes('fetch') || error.message?.includes('network') || error.message?.includes('Failed')) {
         toast.error('Connexion perdue', {
@@ -1399,8 +1401,16 @@ export function POSSystem() {
           duration: 5000
         });
       } else {
+        // Extraire le message d'erreur le plus détaillé possible
+        const errorMessage = error?.message
+          || error?.error_description
+          || error?.details
+          || error?.hint
+          || JSON.stringify(error);
+
         toast.error('Erreur lors du paiement', {
-          description: error.message || 'Une erreur est survenue'
+          description: errorMessage,
+          duration: 10000 // Augmenté pour avoir le temps de lire
         });
       }
     } finally {
