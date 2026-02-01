@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { useVendorAnalytics } from '@/hooks/useVendorAnalytics';
-import { TrendingUp, ShoppingCart, Target, Package, Store, Globe } from 'lucide-react';
+import { TrendingUp, Target, Package } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export function VendorAnalyticsDashboard() {
@@ -36,37 +36,17 @@ export function VendorAnalyticsDashboard() {
     <div className="space-y-6">
       {/* Carte Ventes principale avec répartition */}
       <Card className="p-4 sm:p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">Ventes Aujourd'hui</p>
             <p className="text-3xl font-bold mt-1 text-green-600">
               {analytics.today.totalSales.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} GNF
             </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              POS: {analytics.today.posOrders} • En ligne: {analytics.today.onlineOrders}
+            </p>
           </div>
           <TrendingUp className="h-10 w-10 text-green-600" />
-        </div>
-        
-        {/* Répartition POS / En ligne */}
-        <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border">
-          <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-            <div className="flex items-center justify-center w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-full">
-              <Store className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Ventes POS</p>
-              <p className="text-lg font-bold text-blue-600">{analytics.today.posOrders}</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3 p-3 bg-cyan-50 dark:bg-cyan-950/30 rounded-lg">
-            <div className="flex items-center justify-center w-10 h-10 bg-cyan-100 dark:bg-cyan-900/50 rounded-full">
-              <Globe className="h-5 w-5 text-cyan-600" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">En ligne</p>
-              <p className="text-lg font-bold text-cyan-600">{analytics.today.onlineOrders}</p>
-            </div>
-          </div>
         </div>
       </Card>
 
