@@ -1014,6 +1014,7 @@ export function POSSystem() {
         const customerId = await getOrCreateCustomerId();
         if (!customerId) {
           toast.dismiss();
+          setIsProcessingPayment(false);
           return;
         }
 
@@ -1134,6 +1135,7 @@ export function POSSystem() {
         try {
           const customerId = await getOrCreateCustomerId();
           if (!customerId) {
+            setIsProcessingPayment(false);
             return;
           }
 
@@ -1288,7 +1290,10 @@ export function POSSystem() {
       
       // Mode ONLINE: procéder normalement avec Supabase
       const customerId = await getOrCreateCustomerId();
-      if (!customerId) return;
+      if (!customerId) {
+        setIsProcessingPayment(false);
+        return;
+      }
 
       const { data: order, error: orderError } = await supabase
         .from('orders')
