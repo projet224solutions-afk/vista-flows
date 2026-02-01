@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { useVendorAnalytics } from '@/hooks/useVendorAnalytics';
-import { TrendingUp, Target, Package } from 'lucide-react';
+import { TrendingUp, Store, Globe, Target, Package } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export function VendorAnalyticsDashboard() {
@@ -16,8 +16,26 @@ export function VendorAnalyticsDashboard() {
 
   if (!analytics) return null;
 
-  // Stats secondaires (sans la carte Ventes principales)
-  const secondaryStats = [
+  const stats = [
+    {
+      title: "Ventes Aujourd'hui",
+      value: `${analytics.today.totalSales.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} GNF`,
+      subtitle: `POS: ${analytics.today.posOrders} • En ligne: ${analytics.today.onlineOrders}`,
+      icon: TrendingUp,
+      color: 'text-green-600'
+    },
+    {
+      title: "Ventes POS",
+      value: analytics.today.posOrders,
+      icon: Store,
+      color: 'text-blue-600'
+    },
+    {
+      title: "Commandes en ligne",
+      value: analytics.today.onlineOrders,
+      icon: Globe,
+      color: 'text-cyan-600'
+    },
     {
       title: "Taux de Conversion",
       value: `${analytics.today.conversionRate.toFixed(1)}%`,
@@ -34,32 +52,19 @@ export function VendorAnalyticsDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Carte Ventes principale avec répartition */}
-      <Card className="p-4 sm:p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">Ventes Aujourd'hui</p>
-            <p className="text-3xl font-bold mt-1 text-green-600">
-              {analytics.today.totalSales.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} GNF
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              POS: {analytics.today.posOrders} • En ligne: {analytics.today.onlineOrders}
-            </p>
-          </div>
-          <TrendingUp className="h-10 w-10 text-green-600" />
-        </div>
-      </Card>
-
-      {/* KPIs secondaires */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4">
-        {secondaryStats.map((stat) => (
-          <Card key={stat.title} className="p-4 sm:p-6">
+      {/* KPIs - grille responsive */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+        {stats.map((stat) => (
+          <Card key={stat.title} className="p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{stat.title}</p>
-                <p className="text-xl sm:text-2xl font-bold mt-1">{stat.value}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-muted-foreground truncate">{stat.title}</p>
+                <p className="text-lg font-bold mt-1 truncate">{stat.value}</p>
+                {'subtitle' in stat && stat.subtitle && (
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{stat.subtitle}</p>
+                )}
               </div>
-              <stat.icon className={`h-7 w-7 sm:h-8 sm:w-8 ${stat.color}`} />
+              <stat.icon className={`h-6 w-6 flex-shrink-0 ml-2 ${stat.color}`} />
             </div>
           </Card>
         ))}
