@@ -3,12 +3,15 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
+import { Badge } from "@/components/ui/badge";
 
 export default function QuickFooter() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, profile } = useAuth();
   const { t } = useTranslation();
+  const { unreadCount } = useUnreadMessages();
 
   // Navigation principale
   const navigationItems = [
@@ -18,30 +21,35 @@ export default function QuickFooter() {
       icon: Home,
       // IMPORTANT: Accueil doit toujours aller vers /home (page services)
       path: '/home',
+      badge: 0,
     },
     {
       id: 'marketplace',
       labelKey: 'nav.marketplace',
       icon: ShoppingBag,
       path: '/marketplace',
+      badge: 0,
     },
     {
       id: 'proximite',
       labelKey: 'nav.proximite',
       icon: MapPin,
       path: '/proximite',
+      badge: 0,
     },
     {
       id: 'messages',
       labelKey: 'nav.messages',
       icon: MessageSquare,
       path: '/messages',
+      badge: unreadCount,
     },
     {
       id: 'profil',
       labelKey: 'nav.profile',
       icon: User,
       path: user ? '/profil' : '/auth',
+      badge: 0,
     },
   ];
 
@@ -70,19 +78,28 @@ export default function QuickFooter() {
               key={item.id}
               onClick={() => navigate(item.path)}
               className={cn(
-                "flex flex-col items-center justify-center p-1.5 rounded-lg transition-all duration-300 min-w-[56px] group",
+                "flex flex-col items-center justify-center p-1.5 rounded-lg transition-all duration-300 min-w-[56px] group relative",
                 isActive
                   ? "text-primary bg-accent scale-105"
                   : "text-muted-foreground hover:text-primary hover:bg-accent/50 hover:scale-105"
               )}
             >
               <div className={cn(
-                "p-1.5 rounded-full transition-all duration-300",
+                "p-1.5 rounded-full transition-all duration-300 relative",
                 isActive
                   ? "bg-primary text-primary-foreground shadow-glow"
                   : "bg-muted group-hover:bg-accent group-hover:text-primary"
               )}>
                 <Icon size={18} />
+                {/* Badge de notification */}
+                {item.badge > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-2 -right-2 h-5 min-w-5 px-1 flex items-center justify-center text-[10px] font-bold animate-pulse"
+                  >
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </Badge>
+                )}
               </div>
               <span className={cn(
                 "text-[10px] font-medium mt-0.5 leading-tight",
