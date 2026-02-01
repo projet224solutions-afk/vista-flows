@@ -323,14 +323,7 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
                               size="sm"
                               className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
                               onClick={() => setPurchaseToDelete(purchase)}
-                              disabled={purchase.is_locked || purchase.status !== 'draft' || deletingId === purchase.id}
-                              title={
-                                purchase.is_locked
-                                  ? 'Achat verrouillé'
-                                  : purchase.status !== 'draft'
-                                    ? 'Suppression autorisée uniquement pour les brouillons'
-                                    : 'Supprimer'
-                              }
+                              disabled={deletingId === purchase.id}
                             >
                               {deletingId === purchase.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
