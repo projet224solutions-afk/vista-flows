@@ -1107,7 +1107,6 @@ export function POSSystem() {
             setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
             setShowOrderSummary(false);
             setShowReceipt(true);
-            clearCart();
             await loadVendorProducts();
           } else if (finalStatus?.status === 'failed' || finalStatus?.status === 'cancelled' || finalStatus?.status === 'expired') {
             toast.error('Paiement échoué, annulé ou expiré');
@@ -1256,13 +1255,12 @@ export function POSSystem() {
           setLastOrderNumber(offlineOrderNumber);
           setShowOrderSummary(false);
           setShowReceipt(true);
-          
+
           toast.success('✅ Vente enregistrée (mode hors-ligne)', {
             description: `N° ${offlineOrderNumber} - Sera synchronisée à la reconnexion.`,
             duration: 5000
           });
-          
-          clearCart();
+
           setIsProcessingPayment(false);
           return;
           
@@ -1382,9 +1380,6 @@ export function POSSystem() {
 
       setShowOrderSummary(false);
       setShowReceipt(true);
-      clearCart(); // ✅ FIX: Vider le panier après vente cash réussie
-      setReceivedAmount(0); // Réinitialiser le montant reçu
-      setDiscountPercent(0); // Réinitialiser la remise
 
       toast.success('Paiement effectué avec succès!');
 
