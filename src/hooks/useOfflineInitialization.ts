@@ -13,6 +13,7 @@ import { loadInitialStock, getStockStats } from '@/lib/offline/localStockManager
 import { startScheduledSync, stopScheduledSync } from '@/lib/offline/sync/syncScheduler';
 import { registerServiceWorker } from '@/lib/serviceWorkerRegistration';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface OfflineInitStatus {
   isInitialized: boolean;
@@ -195,32 +196,63 @@ export function useOfflineInitialization() {
 }
 
 /**
- * Fonctions de fetch simulées
- * À REMPLACER par vos vraies fonctions de fetch depuis Supabase
+ * Récupérer les produits du vendeur depuis Supabase
  */
 async function fetchVendorProducts(vendorId: string): Promise<any[]> {
-  // TODO: Remplacer par votre logique réelle
-  // Exemple avec Supabase:
-  // const { data } = await supabase
-  //   .from('products')
-  //   .select('*')
-  //   .eq('vendor_id', vendorId);
-  // return data || [];
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select(`
+        id,
+        name,
+        price,
+        stock_quantity,
+        barcode,
+        barcode_value,
+        barcode_format,
+        sku,
+        images,
+        category_id,
+        section,
+        categories(id, name),
+        sell_by_carton,
+        units_per_carton,
+        price_carton,
+        description
+      `)
+      .eq('vendor_id', vendorId)
+      .eq('is_active', true)
+      .order('name');
 
-  console.warn('[OfflineInit] fetchVendorProducts - À implémenter avec Supabase');
-  return [];
+    if (error) throw error;
+
+    console.log(`[OfflineInit] ${data?.length || 0} produits récupérés pour le vendeur ${vendorId}`);
+    return data || [];
+  } catch (error) {
+    console.error('[OfflineInit] Erreur fetch produits:', error);
+    throw error;
+  }
 }
 
+/**
+ * Récupérer toutes les catégories depuis Supabase
+ */
 async function fetchCategories(): Promise<any[]> {
-  // TODO: Remplacer par votre logique réelle
-  // Exemple avec Supabase:
-  // const { data } = await supabase
-  //   .from('categories')
-  //   .select('*');
-  // return data || [];
+  try {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .eq('is_active', true)
+      .order('name');
 
-  console.warn('[OfflineInit] fetchCategories - À implémenter avec Supabase');
-  return [];
+    if (error) throw error;
+
+    console.log(`[OfflineInit] ${data?.length || 0} catégories récupérées`);
+    return data || [];
+  } catch (error) {
+    console.error('[OfflineInit] Erreur fetch catégories:', error);
+    throw error;
+  }
 }
 
 export default useOfflineInitialization;
