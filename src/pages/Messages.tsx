@@ -16,10 +16,11 @@ import AgoraVideoCall from "@/components/communication/AgoraVideoCall";
 import AgoraAudioCall from "@/components/communication/AgoraAudioCall";
 import MessageInput from "@/components/communication/MessageInput";
 import MessageItem from "@/components/communication/MessageItem";
-import { PresenceIndicator, TypingIndicator, MessageStatusBadge } from "@/components/communication/PresenceIndicator";
+import { PresenceIndicator, PresenceBadge, TypingIndicator, MessageStatusBadge } from "@/components/communication/PresenceIndicator";
 import { ReplyBar } from "@/components/communication/EnhancedMessageBubble";
 import { usePresence } from "@/hooks/usePresence";
 import { useRealtimePresence } from "@/hooks/useRealtimePresence";
+import { useConversationPresence } from "@/hooks/useConversationPresence";
 import type { PresenceStatus, Message as MessageType } from "@/types/communication.types";
 
 interface Message {
@@ -123,6 +124,14 @@ export default function Messages() {
     isConnected: presenceConnected,
   } = useRealtimePresence({ debug: false });
 
+  // 🟢 Hook de présence pour la liste des conversations
+  const {
+    isOnline: isContactOnline,
+    getStatus: getContactStatus,
+    getLastSeenText,
+    loadPresences,
+  } = useConversationPresence();
+
   useEffect(() => {
     loadCurrentUser();
   }, []);
@@ -133,6 +142,14 @@ export default function Messages() {
       loadAvailableContacts();
     }
   }, [currentUser]);
+
+  // Charger les présences quand les conversations changent
+  useEffect(() => {
+    if (conversations.length > 0) {
+      const userIds = conversations.map(c => c.other_user_id);
+      loadPresences(userIds);
+    }
+  }, [conversations, loadPresences]);
 
   useEffect(() => {
     if (selectedConversation && currentUser) {
@@ -995,7 +1012,15 @@ export default function Messages() {
                         {conv.other_user_name.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    {conv.is_certified && (
+                    {/* Indicateur de présence en ligne */}
+                    {isContactOnline(conv.other_user_id) && (
+                      <PresenceBadge 
+                        status={getContactStatus(conv.other_user_id)} 
+                        size="md"
+                        position="bottom-right"
+                      />
+                    )}
+                    {conv.is_certified && !isContactOnline(conv.other_user_id) && (
                       <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-0.5">
                         <Shield className="w-3 h-3 text-primary-foreground" />
                       </div>
@@ -1020,12 +1045,23 @@ export default function Messages() {
                           )}
                         </div>
                       </div>
-                      <span
-                        className="text-xs text-muted-foreground flex-shrink-0 cursor-help"
-                        title={formatDetailedTime(conv.last_message_time)}
-                      >
-                        {formatTime(conv.last_message_time)}
-                      </span>
+                      <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                        <span
+                          className="text-xs text-muted-foreground cursor-help"
+                          title={formatDetailedTime(conv.last_message_time)}
+                        >
+                          {formatTime(conv.last_message_time)}
+                        </span>
+                        {/* Statut en ligne ou dernière connexion */}
+                        <span className={cn(
+                          "text-[10px]",
+                          isContactOnline(conv.other_user_id) 
+                            ? "text-emerald-600 dark:text-emerald-400 font-medium" 
+                            : "text-muted-foreground"
+                        )}>
+                          {getLastSeenText(conv.other_user_id)}
+                        </span>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge

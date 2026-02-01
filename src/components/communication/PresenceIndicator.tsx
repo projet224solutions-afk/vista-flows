@@ -1,57 +1,75 @@
 /**
- * Composant d'indicateur de présence en ligne
+ * Composant d'indicateur de présence en ligne - Amélioré
  * Affiche un point coloré selon le statut de l'utilisateur
+ * Avec animations et tooltip détaillé
  */
 
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Wifi, WifiOff, Clock, Phone } from 'lucide-react';
 import type { PresenceStatus } from '@/types/communication.types';
 
 interface PresenceIndicatorProps {
   status: PresenceStatus;
   lastSeen?: string;
   showLabel?: boolean;
-  size?: 'sm' | 'md' | 'lg';
+  showLastSeen?: boolean;
+  size?: 'xs' | 'sm' | 'md' | 'lg';
+  variant?: 'dot' | 'badge' | 'inline';
   className?: string;
 }
 
-const statusConfig: Record<PresenceStatus, { color: string; label: string; animation?: string }> = {
+const statusConfig: Record<PresenceStatus, { 
+  color: string; 
+  bgColor: string;
+  label: string; 
+  animation?: string;
+  icon?: React.ComponentType<{ className?: string }>;
+}> = {
   online: {
-    color: 'bg-green-500',
+    color: 'bg-emerald-500',
+    bgColor: 'bg-emerald-500/20',
     label: 'En ligne',
     animation: 'animate-pulse',
   },
   offline: {
-    color: 'bg-gray-400',
+    color: 'bg-muted-foreground/50',
+    bgColor: 'bg-muted/50',
     label: 'Hors ligne',
   },
   away: {
-    color: 'bg-yellow-500',
+    color: 'bg-amber-500',
+    bgColor: 'bg-amber-500/20',
     label: 'Absent',
   },
   busy: {
     color: 'bg-red-500',
+    bgColor: 'bg-red-500/20',
     label: 'Occupé',
   },
   in_call: {
-    color: 'bg-purple-500',
+    color: 'bg-violet-500',
+    bgColor: 'bg-violet-500/20',
     label: 'En appel',
     animation: 'animate-pulse',
   },
 };
 
 const sizeConfig = {
+  xs: 'w-1.5 h-1.5',
   sm: 'w-2 h-2',
-  md: 'w-3 h-3',
-  lg: 'w-4 h-4',
+  md: 'w-2.5 h-2.5',
+  lg: 'w-3 h-3',
 };
 
 export function PresenceIndicator({
   status,
   lastSeen,
   showLabel = false,
+  showLastSeen = false,
   size = 'md',
+  variant = 'dot',
   className,
 }: PresenceIndicatorProps) {
   const config = statusConfig[status] || statusConfig.offline;
@@ -67,22 +85,88 @@ export function PresenceIndicator({
     const diffDays = Math.floor(diffHours / 24);
     
     if (diffMins < 1) return 'À l\'instant';
-    if (diffMins < 60) return `Il y a ${diffMins} min`;
-    if (diffHours < 24) return `Il y a ${diffHours}h`;
-    if (diffDays < 7) return `Il y a ${diffDays}j`;
+    if (diffMins < 60) return `${diffMins} min`;
+    if (diffHours < 24) return `${diffHours}h`;
+    if (diffDays < 7) return `${diffDays}j`;
     
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
   };
 
+  const lastSeenFormatted = formatLastSeen(lastSeen);
   const tooltipContent = status === 'offline' && lastSeen
-    ? `${config.label} • ${formatLastSeen(lastSeen)}`
+    ? `Vu ${lastSeenFormatted}`
     : config.label;
 
+  // Variante badge (plus visible)
+  if (variant === 'badge') {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className={cn(
+              'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium',
+              config.bgColor,
+              className
+            )}>
+              <span className={cn(
+                'rounded-full',
+                config.color,
+                config.animation,
+                sizeConfig[size]
+              )} />
+              {showLabel && (
+                <span className={cn(
+                  'text-xs',
+                  status === 'online' ? 'text-emerald-700 dark:text-emerald-300' :
+                  status === 'away' ? 'text-amber-700 dark:text-amber-300' :
+                  status === 'busy' ? 'text-red-700 dark:text-red-300' :
+                  status === 'in_call' ? 'text-violet-700 dark:text-violet-300' :
+                  'text-muted-foreground'
+                )}>
+                  {showLastSeen && status === 'offline' && lastSeen 
+                    ? `Vu ${lastSeenFormatted}` 
+                    : config.label}
+                </span>
+              )}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-xs">
+            {tooltipContent}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  // Variante inline (texte avec indicateur)
+  if (variant === 'inline') {
+    return (
+      <div className={cn('inline-flex items-center gap-1.5', className)}>
+        <span className={cn(
+          'rounded-full ring-2 ring-background shadow-sm',
+          config.color,
+          config.animation,
+          sizeConfig[size]
+        )} />
+        <span className={cn(
+          'text-xs',
+          status === 'online' ? 'text-emerald-600 dark:text-emerald-400 font-medium' :
+          'text-muted-foreground'
+        )}>
+          {showLastSeen && status === 'offline' && lastSeen 
+            ? `Vu ${lastSeenFormatted}` 
+            : config.label}
+        </span>
+      </div>
+    );
+  }
+
+  // Variante dot par défaut
   const indicator = (
     <div className={cn('flex items-center gap-1.5', className)}>
       <span
         className={cn(
-          'rounded-full ring-2 ring-background',
+          'rounded-full ring-2 ring-background shadow-sm',
           config.color,
           config.animation,
           sizeConfig[size]
@@ -112,6 +196,55 @@ export function PresenceIndicator({
   }
 
   return indicator;
+}
+
+/**
+ * Badge de présence pour les avatars (positionné en overlay)
+ */
+interface PresenceBadgeProps {
+  status: PresenceStatus;
+  size?: 'sm' | 'md' | 'lg';
+  position?: 'bottom-right' | 'top-right' | 'bottom-left';
+  className?: string;
+}
+
+export function PresenceBadge({ 
+  status, 
+  size = 'md',
+  position = 'bottom-right',
+  className 
+}: PresenceBadgeProps) {
+  const config = statusConfig[status] || statusConfig.offline;
+  
+  const positionClasses = {
+    'bottom-right': '-bottom-0.5 -right-0.5',
+    'top-right': '-top-0.5 -right-0.5',
+    'bottom-left': '-bottom-0.5 -left-0.5',
+  };
+
+  const sizeClasses = {
+    sm: 'w-2 h-2 ring-1',
+    md: 'w-2.5 h-2.5 ring-2',
+    lg: 'w-3 h-3 ring-2',
+  };
+
+  // Ne pas afficher pour offline dans certains cas
+  if (status === 'offline') {
+    return null;
+  }
+
+  return (
+    <span
+      className={cn(
+        'absolute rounded-full ring-background',
+        config.color,
+        config.animation,
+        positionClasses[position],
+        sizeClasses[size],
+        className
+      )}
+    />
+  );
 }
 
 /**
