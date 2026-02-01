@@ -216,10 +216,8 @@ export async function syncOfflineSales(): Promise<{
 
       if (itemsError) throw itemsError;
 
-      // Mettre à jour le stock en ligne
-      for (const item of sale.items) {
-        await updateOnlineStock(item.productId, -item.quantity);
-      }
+      // Stock: géré côté base de données lors de l'insertion des order_items
+      // (ne pas décrémenter ici sinon double décrément possible)
 
       // Marquer comme synchronisé
       sale.synced = true;
@@ -287,47 +285,7 @@ async function updateLocalStock(items: Array<{ productId: string; quantity: numb
   }
 }
 
-// Mettre à jour le stock en ligne
-async function updateOnlineStock(productId: string, quantityChange: number) {
-  try {
-    // Mise à jour dans products
-    const { data: product } = await supabase
-      .from('products')
-      .select('stock_quantity')
-      .eq('id', productId)
-      .single();
 
-    if (product) {
-      const newStock = Math.max(0, (product.stock_quantity || 0) + quantityChange);
-      await supabase
-        .from('products')
-        .update({ 
-          stock_quantity: newStock,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', productId);
-      
-      console.log(`✅ Stock online mis à jour: ${productId} -> ${newStock}`);
-    }
-
-    // Mise à jour dans inventory si existe
-    const { data: inventoryItem } = await supabase
-      .from('inventory')
-      .select('id, quantity')
-      .eq('product_id', productId)
-      .maybeSingle();
-
-    if (inventoryItem) {
-      const newQuantity = Math.max(0, inventoryItem.quantity + quantityChange);
-      await supabase
-        .from('inventory')
-        .update({ quantity: newQuantity })
-        .eq('id', inventoryItem.id);
-    }
-  } catch (error) {
-    console.error('❌ Erreur mise à jour stock online:', error);
-  }
-}
 
 // Synchroniser l'inventaire depuis Supabase vers cache local
 export async function syncInventory(vendorId: string): Promise<void> {

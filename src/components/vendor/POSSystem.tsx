@@ -1386,46 +1386,10 @@ export function POSSystem() {
       }
       console.log('✅ [POS] Statut mis à jour');
 
-      // 5. Décrémenter explicitement le stock pour chaque produit vendu
-      // Important: Ne pas se fier uniquement aux triggers qui peuvent échouer
-      console.log('💡 [POS] Décrément explicite du stock pour', cart.length, 'produits');
-
-      for (const item of cart) {
-        try {
-          // Utiliser une requête SQL brute pour décrémenter le stock de manière atomique
-          const { error: stockError } = await supabase
-            .rpc('exec_sql', {
-              query: `UPDATE products SET stock_quantity = GREATEST(0, stock_quantity - $1), updated_at = NOW() WHERE id = $2`,
-              params: [item.quantity, item.id]
-            })
-            .catch(async () => {
-              // Fallback: si exec_sql n'existe pas, faire une mise à jour directe
-              // Note: Ceci n'est pas atomique mais mieux que rien
-              const { data: currentProduct } = await supabase
-                .from('products')
-                .select('stock_quantity')
-                .eq('id', item.id)
-                .single();
-
-              if (currentProduct) {
-                const newStock = Math.max(0, (currentProduct.stock_quantity || 0) - item.quantity);
-                return await supabase
-                  .from('products')
-                  .update({ stock_quantity: newStock, updated_at: new Date().toISOString() })
-                  .eq('id', item.id);
-              }
-              return { error: null };
-            });
-
-          if (stockError) {
-            console.error(`❌ Erreur décrément stock pour ${item.name}:`, stockError);
-          } else {
-            console.log(`✅ Stock décrémenté: ${item.name} (-${item.quantity})`);
-          }
-        } catch (err) {
-          console.error(`❌ Exception décrément stock pour ${item.name}:`, err);
-        }
-      }
+      // 5. Stock: géré côté base de données
+      // - décrément via trigger sur order_items
+      // - synchronisation bidirectionnelle products.stock_quantity <-> inventory.quantity
+      // IMPORTANT: ne pas décrémenter côté client, sinon on obtient des doubles décréments (-2).
 
       setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
 
