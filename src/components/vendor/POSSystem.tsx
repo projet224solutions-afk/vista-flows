@@ -1379,12 +1379,15 @@ export function POSSystem() {
       }
 
       setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
-      
+
       setShowOrderSummary(false);
       setShowReceipt(true);
-      
+      clearCart(); // ✅ FIX: Vider le panier après vente cash réussie
+      setReceivedAmount(0); // Réinitialiser le montant reçu
+      setDiscountPercent(0); // Réinitialiser la remise
+
       toast.success('Paiement effectué avec succès!');
-      
+
       await loadVendorProducts();
     } catch (error: any) {
       console.error('Erreur paiement:', error);
