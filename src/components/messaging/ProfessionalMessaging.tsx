@@ -120,7 +120,7 @@ export default function ProfessionalMessaging() {
         .from('conversation_participants')
         .select(`
           conversation_id,
-          conversations!inner(id, name, last_message, last_message_at, unread_count, type)
+          conversations!inner(id, name, last_message, last_message_at, type)
         `)
         .eq('user_id', user.id)
         .order('conversations(last_message_at)', { ascending: false });
@@ -136,9 +136,17 @@ export default function ProfessionalMessaging() {
             .select(`user_id, profiles!inner(first_name, last_name, avatar_url)`)
             .eq('conversation_id', conv.id)
             .neq('user_id', user.id)
-            .single();
+            .maybeSingle();
 
           const otherProfile = otherParticipant?.profiles as any;
+          
+          // ✅ Calculer le nombre réel de messages non lus
+          const { count: unreadCount } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('conversation_id', conv.id)
+            .neq('sender_id', user.id)
+            .is('read_at', null);
           
           return {
             id: conv.id,
@@ -148,7 +156,7 @@ export default function ProfessionalMessaging() {
             avatar: otherProfile?.avatar_url,
             lastMessage: conv.last_message || '',
             lastMessageTime: conv.last_message_at,
-            unreadCount: conv.unread_count || 0,
+            unreadCount: unreadCount || 0,
             isOnline: false,
             participantId: otherParticipant?.user_id
           };
@@ -423,6 +431,43 @@ export default function ProfessionalMessaging() {
     loadConversations();
   }, [loadConversations]);
 
+  // 🔔 Real-time subscription pour synchroniser les badges
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('professional-messaging-unread-sync')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages'
+        },
+        () => {
+          console.log('[ProfessionalMessaging] 📩 Nouveau message - rechargement conversations');
+          loadConversations();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages'
+        },
+        () => {
+          console.log('[ProfessionalMessaging] ✅ Message mis à jour - rechargement conversations');
+          loadConversations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, loadConversations]);
+
   useEffect(() => {
     if (activeConversation?.id) {
       loadMessages(activeConversation.id);
@@ -496,23 +541,23 @@ export default function ProfessionalMessaging() {
                   
                   <div className="flex-1 min-w-0 text-left">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium truncate">{conv.name}</span>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-medium truncate">{conv.name}</span>
+                        {conv.unreadCount > 0 && (
+                          <span className="bg-destructive text-destructive-foreground rounded-full min-w-5 h-5 flex items-center justify-center text-xs font-bold px-1 animate-pulse shadow-sm flex-shrink-0">
+                            {conv.unreadCount > 99 ? '99+' : conv.unreadCount}
+                          </span>
+                        )}
+                      </div>
                       {conv.lastMessageTime && (
                         <span className="text-xs text-muted-foreground flex-shrink-0">
                           {formatConversationTime(conv.lastMessageTime)}
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center justify-between gap-2 mt-0.5">
-                      <span className="text-sm text-muted-foreground truncate">
-                        {conv.lastMessage || 'Aucun message'}
-                      </span>
-                      {conv.unreadCount > 0 && (
-                        <Badge variant="default" className="h-5 min-w-5 px-1.5 text-xs flex-shrink-0">
-                          {conv.unreadCount}
-                        </Badge>
-                      )}
-                    </div>
+                    <p className="text-sm text-muted-foreground truncate mt-0.5">
+                      {conv.lastMessage || 'Aucun message'}
+                    </p>
                   </div>
                 </button>
               ))

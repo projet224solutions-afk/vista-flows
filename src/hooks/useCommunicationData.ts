@@ -96,9 +96,17 @@ export function useCommunicationData() {
             `)
             .eq('conversation_id', conv.id)
             .neq('user_id', userId)
-            .single();
+            .maybeSingle();
 
           const profile = otherParticipant ? (otherParticipant as any).profiles : null;
+          
+          // ✅ Calculer le nombre réel de messages non lus
+          const { count: unreadCount } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('conversation_id', conv.id)
+            .neq('sender_id', userId)
+            .is('read_at', null);
           
           return {
             id: conv.id,
@@ -108,7 +116,7 @@ export function useCommunicationData() {
               hour: '2-digit',
               minute: '2-digit'
             }),
-            unreadCount: conv.unread_count || 0,
+            unreadCount: unreadCount || 0,
             status: 'offline',
             avatar: profile?.avatar_url
           };
