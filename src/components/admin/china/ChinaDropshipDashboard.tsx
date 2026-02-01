@@ -8,8 +8,7 @@
  * @version 1.0.0
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -18,7 +17,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -33,12 +31,10 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import {
   Dialog,
   DialogContent,
@@ -84,21 +80,15 @@ import {
   ShieldCheck,
   ShieldAlert,
   TrendingUp,
-  TrendingDown,
-  Clock,
   Search,
-  Filter,
   RefreshCw,
   Download,
   Eye,
   Ban,
   CheckSquare,
   Loader2,
-  ArrowUpRight,
-  ArrowDownRight,
   BarChart3,
   Users,
-  DollarSign,
   AlertCircle,
   Ship,
   Plane,
@@ -108,8 +98,6 @@ import {
 // Types
 import type { 
   ChinaSupplierExtension, 
-  ChinaSupplierOrder,
-  ChinaDropshipReport,
   ChinaPlatformType,
   SupplierScoreLevel
 } from '@/types/china-dropshipping';
@@ -228,8 +216,8 @@ const getRiskBadgeColor = (level: string): string => {
 // MAIN COMPONENT
 // ============================================================================
 
+
 export const ChinaDropshipDashboard: React.FC = () => {
-  const navigate = useNavigate();
   
   // State
   const [loading, setLoading] = useState(true);

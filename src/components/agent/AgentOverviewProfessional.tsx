@@ -7,13 +7,10 @@ import { cn } from '@/lib/utils';
 import {
   Users,
   Wallet,
-  TrendingUp,
   UserPlus,
   DollarSign,
   Activity,
   ArrowUpRight,
-  Clock,
-  CheckCircle2,
   BarChart3,
   Calendar,
   Zap,

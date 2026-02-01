@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -12,7 +11,6 @@ import {
   TrendingUp,
   TrendingDown
 } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface AgentWalletInfo {
   id: string;
@@ -21,7 +19,7 @@ interface AgentWalletInfo {
   currency: string;
 }
 
-interface AgentTransaction {
+interface _AgentTransaction {
   id: string;
   agent_id: string;
   transaction_type: string;
@@ -40,7 +38,6 @@ interface AgentWalletTransactionsProps {
 
 export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTransactionsProps) {
   const [wallet, setWallet] = useState<AgentWalletInfo | null>(null);
-  const [transactions, setTransactions] = useState<AgentTransaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -91,7 +88,7 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
     try {
       // Pour l'instant, pas de table de transactions pour les agents
       // Cette fonctionnalité sera ajoutée plus tard
-      setTransactions([]);
+      console.log('Transactions cleared');
     } catch (error) {
       console.error('Erreur chargement transactions:', error);
     }

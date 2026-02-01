@@ -3,7 +3,7 @@
  * 224SOLUTIONS - Système de déblocage intelligent des fonds
  */
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Card, 

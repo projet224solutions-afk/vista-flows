@@ -24,7 +24,7 @@ const Index = lazyWithRetry(() => import("./pages/Index"));
 const QuickFooter = lazyWithRetry(() => import("@/components/QuickFooter"));
 const CommunicationWidget = lazyWithRetry(() => import("@/components/communication/CommunicationWidget"));
 const DeepLinkInitializer = lazyWithRetry(() => import("@/components/DeepLinkInitializer"));
-const PWAInstallPrompt = lazyWithRetry(() => import("@/components/pwa/PWAInstallPrompt"));
+const _PWAInstallPrompt = lazyWithRetry(() => import("@/components/pwa/PWAInstallPrompt"));
 const InstallPromptBanner = lazyWithRetry(() =>
   import("@/components/pwa/InstallPromptBanner").then((m) => ({ default: m.InstallPromptBanner }))
 );
@@ -97,7 +97,7 @@ const DeliveryClient = lazyWithRetry(() => import("./pages/DeliveryClient"));
 const BugBounty = lazyWithRetry(() => import("./pages/BugBounty"));
 const Cart = lazyWithRetry(() => import("./pages/Cart"));
 const VendorAgentInterface = lazyWithRetry(() => import("./pages/VendorAgentInterface"));
-const VendorContracts = lazyWithRetry(() => import("./pages/VendorContracts"));
+const _VendorContracts = lazyWithRetry(() => import("./pages/VendorContracts"));
 const ClientContracts = lazyWithRetry(() => import("./pages/ClientContracts"));
 const ServiceDetail = lazyWithRetry(() => import("./pages/ServiceDetail"));
 const ServiceRedirect = lazyWithRetry(() => import("./pages/ServiceRedirect"));

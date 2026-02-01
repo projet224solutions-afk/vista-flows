@@ -1,9 +1,8 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RefreshCw, AlertCircle, Shield } from "lucide-react";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import AgentWalletDiagnosticTool from "./AgentWalletDiagnosticTool";
 import UniversalWalletDashboard from "@/components/wallet/UniversalWalletDashboard";

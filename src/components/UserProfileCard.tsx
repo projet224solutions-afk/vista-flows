@@ -27,8 +27,6 @@ import {
   Eye, 
   EyeOff, 
   Copy,
-  User,
-  IdCard,
   ArrowDownToLine,
   ArrowUpFromLine,
   Send,

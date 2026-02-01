@@ -31,7 +31,7 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
       setDiagnosticStatus(prev => ({ ...prev, checking: true }));
 
       // Vérifier si l'agent existe
-      const { data: agent, error: agentError } = await supabase
+      const { error: agentError } = await supabase
         .from('agents_management')
         .select('id, agent_code')
         .eq('id', agentId)
