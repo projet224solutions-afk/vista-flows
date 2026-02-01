@@ -74,7 +74,7 @@ interface LocalStockSchema extends DBSchema {
     value: LocalStockItem;
     indexes: {
       'by-vendor': string;
-      'by-sync-status': boolean;
+      'by-sync-status': number;
       'by-low-stock': number;
     };
   };
@@ -86,7 +86,7 @@ interface LocalStockSchema extends DBSchema {
       'by-vendor': string;
       'by-type': string;
       'by-date': string;
-      'by-sync-status': boolean;
+      'by-sync-status': number;
     };
   };
   stock_alerts: {
@@ -95,7 +95,7 @@ interface LocalStockSchema extends DBSchema {
     indexes: {
       'by-product': string;
       'by-severity': string;
-      'by-acknowledged': boolean;
+      'by-acknowledged': number;
     };
   };
 }
@@ -444,13 +444,15 @@ async function checkAndCreateAlert(item: LocalStockItem): Promise<void> {
  */
 export async function getActiveAlerts(vendorId: string): Promise<StockAlert[]> {
   const db = await initStockDB();
-  const allAlerts = await db.getAllFromIndex('stock_alerts', 'by-acknowledged', false);
+  // Get all alerts and filter by acknowledged=false (index expects number since boolean index was changed)
+  const allAlerts = await db.getAll('stock_alerts');
+  const nonAcknowledgedAlerts = allAlerts.filter(a => !a.acknowledged);
 
   // Filtrer par vendeur (en vérifiant le produit)
   const stockItems = await getVendorStock(vendorId);
   const vendorProductIds = new Set(stockItems.map(s => s.product_id));
 
-  const vendorAlerts = allAlerts.filter(a => vendorProductIds.has(a.product_id));
+  const vendorAlerts = nonAcknowledgedAlerts.filter(a => vendorProductIds.has(a.product_id));
 
   // Trier par sévérité (out_of_stock > critical > warning)
   const severityOrder = { out_of_stock: 0, critical: 1, warning: 2 };

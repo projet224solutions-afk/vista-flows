@@ -222,9 +222,9 @@ export async function resolve3WayMerge<T extends Record<string, any>>(
 
   // Pour chaque champ, déterminer quelle version garder
   Object.keys({ ...localData, ...serverData }).forEach(key => {
-    const localValue = localData[key];
-    const serverValue = serverData[key];
-    const baseValue = baseData[key];
+    const localValue = (localData as Record<string, unknown>)[key];
+    const serverValue = (serverData as Record<string, unknown>)[key];
+    const baseValue = (baseData as Record<string, unknown>)[key];
 
     // Si les deux ont changé différemment par rapport à la base: conflit
     const localChanged = JSON.stringify(localValue) !== JSON.stringify(baseValue);
@@ -232,16 +232,16 @@ export async function resolve3WayMerge<T extends Record<string, any>>(
 
     if (localChanged && serverChanged && JSON.stringify(localValue) !== JSON.stringify(serverValue)) {
       // Conflit réel: prendre la valeur serveur par défaut
-      mergedData[key] = serverValue;
+      (mergedData as Record<string, unknown>)[key] = serverValue;
       changes.push(`${key}: conflit résolu (serveur)`);
     } else if (localChanged) {
-      mergedData[key] = localValue;
+      (mergedData as Record<string, unknown>)[key] = localValue;
       changes.push(`${key}: changement local`);
     } else if (serverChanged) {
-      mergedData[key] = serverValue;
+      (mergedData as Record<string, unknown>)[key] = serverValue;
       changes.push(`${key}: changement serveur`);
     } else {
-      mergedData[key] = baseValue;
+      (mergedData as Record<string, unknown>)[key] = baseValue;
     }
   });
 
@@ -275,15 +275,15 @@ export async function resolveSimpleMerge<T extends Record<string, any>>(
   const allKeys = new Set([...Object.keys(localData), ...Object.keys(serverData)]);
 
   allKeys.forEach(key => {
-    const localValue = localData[key];
-    const serverValue = serverData[key];
+    const localValue = (localData as Record<string, unknown>)[key];
+    const serverValue = (serverData as Record<string, unknown>)[key];
 
     if (JSON.stringify(localValue) === JSON.stringify(serverValue)) {
-      mergedData[key] = localValue;
+      (mergedData as Record<string, unknown>)[key] = localValue;
     } else {
       // Conflit: prendre la version la plus récente
       const useLocal = localModified > serverModified;
-      mergedData[key] = useLocal ? localValue : serverValue;
+      (mergedData as Record<string, unknown>)[key] = useLocal ? localValue : serverValue;
       changes.push(`${key}: ${useLocal ? 'local' : 'serveur'} (plus récent)`);
     }
   });
@@ -335,9 +335,9 @@ export async function resolveConflict<T = any>(
 
     default:
       // Par défaut: 3-way merge si possible, sinon simple merge
-      return context.baseData
+      return (context.baseData
         ? resolve3WayMerge(context as ConflictContext<Record<string, any>>)
-        : resolveSimpleMerge(context as ConflictContext<Record<string, any>>);
+        : resolveSimpleMerge(context as ConflictContext<Record<string, any>>)) as Promise<ConflictResolution<T>>;
   }
 }
 

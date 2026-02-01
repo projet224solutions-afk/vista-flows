@@ -9,7 +9,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { PINPrompt } from '@/components/vendor/OfflineAuth/PINPrompt';
 import {
   checkSession,
-  getUserSession,
+  getActiveSession,
   isPINConfigured,
   logout as logoutOffline
 } from '@/lib/offline/auth/offlineAuth';
@@ -49,11 +49,11 @@ export function OfflineAuthProvider({ children }: { children: React.ReactNode })
     if (!user?.id) return;
 
     try {
-      const session = await getUserSession(user.id);
-      if (session) {
-        const isValid = await checkSession(session.session_id);
+      const sessionId = await getActiveSession(user.id);
+      if (sessionId) {
+        const isValid = await checkSession(sessionId);
         if (isValid) {
-          setSessionId(session.session_id);
+          setSessionId(sessionId);
           console.log('[OfflineAuth] Session existante restaurée');
         }
       }

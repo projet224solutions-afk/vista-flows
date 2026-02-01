@@ -135,9 +135,9 @@ export const useProducts = (vendorId?: string) => {
       }
 
       const result = await query;
-      if (result?.data) {
+      if (result?.data && Array.isArray(result.data)) {
         // Normaliser le stock pour la consommation UI
-        result.data = result.data.map((p) => ({
+        result.data = result.data.map((p: any) => ({
           ...p,
           stock_quantity: (p?.inventory?.quantity ?? p?.stock_quantity ?? 0)
         }));
