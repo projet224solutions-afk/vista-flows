@@ -489,7 +489,8 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
   const isLocked = purchase.is_locked || purchase.status === 'validated';
 
   return (
-    <div className="space-y-4">
+    <ScrollArea className="h-[calc(100vh-120px)] pr-4">
+      <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -1029,6 +1030,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </div>
+    </ScrollArea>
   );
 }
