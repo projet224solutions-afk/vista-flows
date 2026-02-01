@@ -419,7 +419,22 @@ export default function Messages() {
         })
       );
 
-      setConversations(enrichedConversations);
+      // ✅ Trier: messages non lus en premier (par nombre décroissant), puis par date
+      const sortedConversations = enrichedConversations.sort((a, b) => {
+        // D'abord, ceux avec des messages non lus
+        if (a.unread_count > 0 && b.unread_count === 0) return -1;
+        if (a.unread_count === 0 && b.unread_count > 0) return 1;
+        
+        // Si les deux ont des messages non lus, trier par nombre décroissant
+        if (a.unread_count > 0 && b.unread_count > 0) {
+          return b.unread_count - a.unread_count;
+        }
+        
+        // Sinon, trier par date du dernier message (plus récent en premier)
+        return new Date(b.last_message_time).getTime() - new Date(a.last_message_time).getTime();
+      });
+
+      setConversations(sortedConversations);
     } catch (error) {
       console.error('Erreur chargement conversations:', error);
       toast.error('Erreur lors du chargement des conversations');
