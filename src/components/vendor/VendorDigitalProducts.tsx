@@ -190,7 +190,7 @@ export default function VendorDigitalProducts() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 landscape:grid-cols-2 lg:grid-cols-2 gap-3">
           {products.map((product) => {
             const CategoryIcon = categoryIcons[product.category] || Package;
             const mainImage = product.images?.[0] || '/placeholder.svg';
