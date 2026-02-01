@@ -83,13 +83,14 @@ export function useUnreadMessages(): UnreadMessagesState {
           filter: `recipient_id=eq.${user.id}`
         },
         (payload) => {
-          // Si un message vient d'être lu, décrémenter
+          // Quand un message est mis à jour, recompter pour éviter les erreurs de sync
           const newRecord = payload.new as any;
           const oldRecord = payload.old as any;
           
           if (!oldRecord.read_at && newRecord.read_at) {
-            console.log('[useUnreadMessages] ✅ Message marqué lu');
-            setUnreadCount(prev => Math.max(0, prev - 1));
+            console.log('[useUnreadMessages] ✅ Message marqué lu - recalcul du compteur');
+            // Recharger le compteur complet pour assurer la cohérence
+            fetchUnreadCount();
           }
         }
       )
