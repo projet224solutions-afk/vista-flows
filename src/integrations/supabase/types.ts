@@ -11092,6 +11092,7 @@ export type Database = {
           created_at: string | null
           customer_id: string
           discount_amount: number | null
+          full_name: string | null
           id: string
           is_archived: boolean | null
           metadata: Json | null
@@ -11115,6 +11116,7 @@ export type Database = {
           created_at?: string | null
           customer_id: string
           discount_amount?: number | null
+          full_name?: string | null
           id?: string
           is_archived?: boolean | null
           metadata?: Json | null
@@ -11138,6 +11140,7 @@ export type Database = {
           created_at?: string | null
           customer_id?: string
           discount_amount?: number | null
+          full_name?: string | null
           id?: string
           is_archived?: boolean | null
           metadata?: Json | null
