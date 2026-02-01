@@ -1289,11 +1289,27 @@ export function POSSystem() {
       }
       
       // Mode ONLINE: procéder normalement avec Supabase
+      console.log('🔄 [POS] Étape 1: Obtention du customer ID...');
       const customerId = await getOrCreateCustomerId();
       if (!customerId) {
+        console.error('❌ [POS] Échec: Pas de customer ID');
         setIsProcessingPayment(false);
         return;
       }
+      console.log('✅ [POS] Customer ID obtenu:', customerId);
+
+      // Vérification des données avant insertion
+      console.log('🔄 [POS] Étape 2: Création de la commande...');
+      console.log('📊 [POS] Données commande:', {
+        vendor_id: vendorId,
+        customer_id: customerId,
+        total_amount: total,
+        subtotal: subtotal,
+        tax_amount: tax,
+        discount_amount: discountValue,
+        payment_method: paymentMethod,
+        cart_length: cart.length
+      });
 
       const { data: order, error: orderError } = await supabase
         .from('orders')
@@ -1305,7 +1321,7 @@ export function POSSystem() {
           tax_amount: tax,
           discount_amount: discountValue,
           payment_status: 'paid',
-          status: 'pending', // Créer avec 'pending' pour que le trigger se déclenche lors de l'UPDATE
+          status: 'pending',
           payment_method: paymentMethod,
           shipping_address: { address: 'Point de vente' },
           notes: `Paiement POS - Espèces`,
@@ -1314,10 +1330,14 @@ export function POSSystem() {
         .select('id, order_number')
         .single();
 
-      if (orderError) throw orderError;
+      if (orderError) {
+        console.error('❌ [POS] Erreur création commande:', orderError);
+        throw orderError;
+      }
+      console.log('✅ [POS] Commande créée:', order.id, order.order_number);
 
       // 3. Créer les items de commande
-      // Calcul du vrai prix unitaire (important pour ventes carton: total/quantity)
+      console.log('🔄 [POS] Étape 3: Création des items...');
       const orderItems = cart.map(item => ({
         order_id: order.id,
         product_id: item.id,
@@ -1325,20 +1345,30 @@ export function POSSystem() {
         unit_price: item.quantity > 0 ? item.total / item.quantity : item.price,
         total_price: item.total
       }));
+      console.log('📊 [POS] Items à insérer:', orderItems);
 
       const { error: itemsError } = await supabase
         .from('order_items')
         .insert(orderItems);
 
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        console.error('❌ [POS] Erreur création items:', itemsError);
+        throw itemsError;
+      }
+      console.log('✅ [POS] Items créés');
 
       // 4. Mettre à jour le statut vers 'completed'
+      console.log('🔄 [POS] Étape 4: Mise à jour statut...');
       const { error: updateError } = await supabase
         .from('orders')
         .update({ status: 'completed' })
         .eq('id', order.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('❌ [POS] Erreur mise à jour statut:', updateError);
+        throw updateError;
+      }
+      console.log('✅ [POS] Statut mis à jour');
 
       // 5. Décrémenter explicitement le stock pour chaque produit vendu
       // Important: Ne pas se fier uniquement aux triggers qui peuvent échouer
@@ -1421,27 +1451,49 @@ export function POSSystem() {
   // Helper function pour obtenir ou créer un customer
   const getOrCreateCustomerId = async (): Promise<string | null> => {
     try {
-      const { data: existingCustomer } = await supabase
+      // Vérification que user existe
+      if (!user?.id) {
+        console.error('❌ [POS] getOrCreateCustomerId: user.id est undefined');
+        toast.error('Utilisateur non connecté');
+        return null;
+      }
+
+      console.log('🔄 [POS] Recherche customer existant pour user:', user.id);
+      const { data: existingCustomer, error: searchError } = await supabase
         .from('customers')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
 
+      if (searchError) {
+        console.error('❌ [POS] Erreur recherche customer:', searchError);
+        throw searchError;
+      }
+
       if (existingCustomer) {
+        console.log('✅ [POS] Customer existant trouvé:', existingCustomer.id);
         return existingCustomer.id;
       }
 
+      console.log('🔄 [POS] Création nouveau customer...');
       const { data: newCustomer, error: customerError } = await supabase
         .from('customers')
         .insert({ user_id: user.id })
         .select('id')
         .single();
 
-      if (customerError) throw customerError;
+      if (customerError) {
+        console.error('❌ [POS] Erreur création customer:', customerError);
+        throw customerError;
+      }
+
+      console.log('✅ [POS] Nouveau customer créé:', newCustomer.id);
       return newCustomer.id;
     } catch (error: any) {
-      console.error('Erreur création customer:', error);
-      toast.error('Erreur lors de la création du client');
+      console.error('❌ [POS] Exception getOrCreateCustomerId:', error);
+      toast.error('Erreur lors de la création du client', {
+        description: error?.message || 'Vérifiez la console pour plus de détails'
+      });
       return null;
     }
   };
