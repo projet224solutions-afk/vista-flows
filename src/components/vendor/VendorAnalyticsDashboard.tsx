@@ -24,10 +24,16 @@ export function VendorAnalyticsDashboard() {
       color: 'text-green-600'
     },
     {
-      title: "Commandes Aujourd'hui",
-      value: analytics.today.totalOrders,
+      title: "Ventes POS",
+      value: analytics.today.posOrders,
       icon: ShoppingCart,
       color: 'text-blue-600'
+    },
+    {
+      title: "Commandes en ligne",
+      value: analytics.today.onlineOrders,
+      icon: ShoppingCart,
+      color: 'text-cyan-600'
     },
     {
       title: "Taux de Conversion",

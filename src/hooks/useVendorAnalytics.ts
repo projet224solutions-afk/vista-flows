@@ -6,6 +6,8 @@ export interface VendorAnalytics {
   date: string;
   totalSales: number;
   totalOrders: number;
+  posOrders: number;
+  onlineOrders: number;
   conversionRate: number;
 }
 
@@ -48,7 +50,7 @@ export const useVendorAnalytics = () => {
       // Récupérer les ventes d'aujourd'hui directement depuis orders
       const { data: todayOrders, error: todayError } = await supabase
         .from('orders')
-        .select('id, total_amount, payment_status')
+        .select('id, total_amount, payment_status, source')
         .eq('vendor_id', vendorId)
         .gte('created_at', `${today}T00:00:00`)
         .lt('created_at', `${today}T23:59:59`);
@@ -58,6 +60,8 @@ export const useVendorAnalytics = () => {
       const todaySales = todayOrders?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0;
       const paidOrders = todayOrders?.filter(o => o.payment_status === 'paid').length || 0;
       const todayOrdersCount = todayOrders?.length || 0;
+      const posOrders = todayOrders?.filter(o => o.source === 'pos').length || 0;
+      const onlineOrders = todayOrders?.filter(o => o.source !== 'pos').length || 0;
       // Taux de conversion = commandes payées / commandes totales
       const conversionRate = todayOrdersCount > 0 
         ? (paidOrders / todayOrdersCount) * 100 
@@ -167,6 +171,8 @@ export const useVendorAnalytics = () => {
         date: today,
         totalSales: todaySales,
         totalOrders: todayOrdersCount,
+        posOrders,
+        onlineOrders,
         conversionRate: conversionRate
       };
 
