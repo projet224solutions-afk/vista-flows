@@ -1,17 +1,16 @@
 /**
  * Page Produits Numériques & Marketplace
- * Modules: Voyage, Logiciel, Formation, Livres, Produit custom
- * Note: Dropshipping retiré de l'UI mais authentification conservée
+ * Modules: Voyage, Logiciel, Formation, Livres, Dropshipping, Produit custom
  */
 
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Package, 
-  Plane, 
-  Monitor, 
-  GraduationCap, 
-  BookOpen, 
+import {
+  Package,
+  Plane,
+  Monitor,
+  GraduationCap,
+  BookOpen,
   ArrowLeft,
   Store,
   ShoppingBag,
@@ -20,7 +19,8 @@ import {
   Eye,
   ExternalLink,
   Star,
-  ShoppingCart
+  ShoppingCart,
+  Box
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -46,8 +46,15 @@ interface ProductModule {
   category: 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom' | 'ai' | 'physique_affilie';
 }
 
-// Dropshipping retiré de l'affichage mais catégorie conservée pour l'auth
 const productModules: ProductModule[] = [
+  {
+    id: 'dropshipping',
+    icon: <Box className="w-7 h-7" />,
+    titleKey: 'digital.modules.dropshipping',
+    descriptionKey: 'digital.modules.dropshippingDesc',
+    gradient: 'from-indigo-500 to-purple-600',
+    category: 'dropshipping'
+  },
   {
     id: 'voyage',
     icon: <Plane className="w-7 h-7" />,

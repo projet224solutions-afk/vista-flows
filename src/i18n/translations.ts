@@ -642,7 +642,9 @@ export const translations: Record<string, Record<string, string>> = {
     "digital.modules.aiDesc": "Outils et services IA",
     "digital.modules.physicalAffiliate": "Physique Affilié",
     "digital.modules.physicalAffiliateDesc": "Produits physiques en affiliation",
-    
+    "digital.modules.dropshipping": "Dropshipping",
+    "digital.modules.dropshippingDesc": "Amazon, AliExpress, fournisseurs Chine",
+
     // Travel Module
     "travel.title": "Vol / Hôtel",
     "travel.configuration": "Configuration",
@@ -1298,7 +1300,9 @@ export const translations: Record<string, Record<string, string>> = {
     "digital.modules.aiDesc": "AI tools and services",
     "digital.modules.physicalAffiliate": "Physical Affiliate",
     "digital.modules.physicalAffiliateDesc": "Physical products in affiliation",
-    
+    "digital.modules.dropshipping": "Dropshipping",
+    "digital.modules.dropshippingDesc": "Amazon, AliExpress, China suppliers",
+
     // Travel Module
     "travel.title": "Flights / Hotels",
     "travel.configuration": "Configuration",
@@ -1449,6 +1453,8 @@ export const translations: Record<string, Record<string, string>> = {
     "digital.modules.aiDesc": "Herramientas y servicios de IA",
     "digital.modules.physicalAffiliate": "Físico Afiliado",
     "digital.modules.physicalAffiliateDesc": "Productos físicos en afiliación",
+    "digital.modules.dropshipping": "Dropshipping",
+    "digital.modules.dropshippingDesc": "Amazon, AliExpress, proveedores de China",
     "travel.title": "Vuelos / Hoteles",
     "travel.configuration": "Configuración",
     "travel.realtimeBooking": "Reserva en tiempo real",
@@ -1598,6 +1604,8 @@ export const translations: Record<string, Record<string, string>> = {
     "digital.modules.aiDesc": "Ferramentas e serviços de IA",
     "digital.modules.physicalAffiliate": "Físico Afiliado",
     "digital.modules.physicalAffiliateDesc": "Produtos físicos em afiliação",
+    "digital.modules.dropshipping": "Dropshipping",
+    "digital.modules.dropshippingDesc": "Amazon, AliExpress, fornecedores da China",
     "travel.title": "Voos / Hotéis",
     "travel.configuration": "Configuração",
     "travel.realtimeBooking": "Reserva em tempo real",
@@ -1747,6 +1755,8 @@ export const translations: Record<string, Record<string, string>> = {
     "digital.modules.aiDesc": "أدوات وخدمات الذكاء الاصطناعي",
     "digital.modules.physicalAffiliate": "منتج مادي بالعمولة",
     "digital.modules.physicalAffiliateDesc": "منتجات مادية بالتسويق بالعمولة",
+    "digital.modules.dropshipping": "دروبشيبينغ",
+    "digital.modules.dropshippingDesc": "أمازون، علي إكسبريس، موردون صينيون",
     "travel.title": "رحلات / فنادق",
     "travel.configuration": "الإعدادات",
     "travel.realtimeBooking": "حجز فوري",
@@ -1894,6 +1904,8 @@ export const translations: Record<string, Record<string, string>> = {
     "digital.modules.aiDesc": "AI工具和服务",
     "digital.modules.physicalAffiliate": "实物联盟",
     "digital.modules.physicalAffiliateDesc": "联盟实物产品",
+    "digital.modules.dropshipping": "代发货",
+    "digital.modules.dropshippingDesc": "亚马逊、速卖通、中国供应商",
     "travel.title": "机票 / 酒店",
     "travel.configuration": "配置",
     "travel.realtimeBooking": "实时预订",
@@ -2688,6 +2700,8 @@ export const translations: Record<string, Record<string, string>> = {
     "digital.modules.aiDesc": "AI-tools en -diensten",
     "digital.modules.physicalAffiliate": "Fysieke Affiliate",
     "digital.modules.physicalAffiliateDesc": "Fysieke producten in affiliate",
+    "digital.modules.dropshipping": "Dropshipping",
+    "digital.modules.dropshippingDesc": "Amazon, AliExpress, Chinese leveranciers",
     "travel.title": "Vluchten / Hotels",
     "travel.configuration": "Configuratie",
     "travel.realtimeBooking": "Realtime boeken",

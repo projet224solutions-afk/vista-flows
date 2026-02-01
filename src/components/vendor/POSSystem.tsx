@@ -941,6 +941,36 @@ export function POSSystem() {
     setShowOrderSummary(true);
   };
 
+  // Mettre à jour le statut de commande POS avec fallback si l'enum n'est pas à jour
+  const updatePosOrderStatus = async (
+    orderId: string,
+    updates: Record<string, any>
+  ): Promise<{ error: any | null }> => {
+    const primaryUpdate = await supabase
+      .from('orders')
+      .update({ ...updates, status: 'completed' })
+      .eq('id', orderId);
+
+    if (!primaryUpdate.error) {
+      return { error: null };
+    }
+
+    const errorMessage = primaryUpdate.error?.message || '';
+    const isEnumError =
+      errorMessage.includes('order_status') ||
+      errorMessage.includes('invalid input value for enum');
+
+    if (isEnumError) {
+      const fallbackUpdate = await supabase
+        .from('orders')
+        .update({ ...updates, status: 'confirmed' })
+        .eq('id', orderId);
+      return { error: fallbackUpdate.error || null };
+    }
+
+    return { error: primaryUpdate.error };
+  };
+
   const processPayment = async () => {
     // Note: Le montant reçu n'est plus obligatoire pour valider
 
@@ -1109,9 +1139,10 @@ export function POSSystem() {
             toast.success('🎉 Paiement confirmé !');
             
             // Mettre à jour la commande - POS orders are completed immediately (no delivery needed)
-            await supabase.from('orders')
-              .update({ payment_status: 'paid', status: 'completed' })
-              .eq('id', order.id);
+            const { error: updateError } = await updatePosOrderStatus(order.id, {
+              payment_status: 'paid'
+            });
+            if (updateError) throw updateError;
             
             setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
             setShowOrderSummary(false);
@@ -1300,85 +1331,40 @@ export function POSSystem() {
         }
       }
       
-      // Mode ONLINE: procéder normalement avec Supabase
-      console.log('🔄 [POS] Étape 1: Obtention du customer ID...');
-      const customerId = await getOrCreateCustomerId();
-      if (!customerId) {
-        console.error('❌ [POS] Échec: Pas de customer ID');
-        setIsProcessingPayment(false);
-        return;
-      }
-      console.log('✅ [POS] Customer ID obtenu:', customerId);
+      // Mode ONLINE: procéder via RPC sécurisée (évite erreurs RLS/Items)
+      console.log('🔄 [POS] Création de commande via RPC create_online_order...');
 
-      // Générer un numéro de commande unique (OBLIGATOIRE selon le schéma)
-      const orderNumber = `POS-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-
-      console.log('🔄 [POS] Étape 2: Création de la commande...');
-      console.log('📊 [POS] Données commande:', {
-        order_number: orderNumber,
-        vendor_id: vendorId,
-        customer_id: customerId,
-        total_amount: total,
-        subtotal: subtotal,
-        tax_amount: tax,
-        discount_amount: discountValue,
-        payment_method: paymentMethod,
-        cart_length: cart.length
+      const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
+        p_user_id: user.id,
+        p_vendor_id: vendorId,
+        p_items: cart.map(item => ({
+          product_id: item.id,
+          quantity: item.quantity,
+          price: item.quantity > 0 ? item.total / item.quantity : item.price
+        })),
+        p_total_amount: total,
+        p_payment_method: 'cash',
+        p_shipping_address: { address: 'Point de vente' }
       });
 
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          order_number: orderNumber,
-          vendor_id: vendorId,
-          customer_id: customerId,
-          total_amount: total,
-          subtotal: subtotal,
-          tax_amount: tax,
-          discount_amount: discountValue,
-          payment_status: 'paid',
-          status: 'pending',
-          payment_method: paymentMethod,
-          shipping_address: { address: 'Point de vente' },
-          notes: `Paiement POS - Espèces`,
-          source: 'pos'
-        })
-        .select('id, order_number')
-        .single();
-
-      if (orderError) {
-        console.error('❌ [POS] Erreur création commande:', orderError);
-        throw orderError;
+      if (orderError || !orderResult || orderResult.length === 0) {
+        console.error('❌ [POS] RPC create_online_order failed:', orderError);
+        throw orderError || new Error('Impossible de créer la commande (RPC)');
       }
-      console.log('✅ [POS] Commande créée:', order.id, order.order_number);
 
-      // 3. Créer les items de commande
-      console.log('🔄 [POS] Étape 3: Création des items...');
-      const orderItems = cart.map(item => ({
-        order_id: order.id,
-        product_id: item.id,
-        quantity: item.quantity,
-        unit_price: item.quantity > 0 ? item.total / item.quantity : item.price,
-        total_price: item.total
-      }));
-      console.log('📊 [POS] Items à insérer:', orderItems);
+      const order = {
+        id: orderResult[0].order_id,
+        order_number: orderResult[0].order_number
+      };
 
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
+      console.log('✅ [POS] Commande créée via RPC:', order.id, order.order_number);
 
-      if (itemsError) {
-        console.error('❌ [POS] Erreur création items:', itemsError);
-        throw itemsError;
-      }
-      console.log('✅ [POS] Items créés');
-
-      // 4. Mettre à jour le statut vers 'completed'
-      console.log('🔄 [POS] Étape 4: Mise à jour statut...');
-      const { error: updateError } = await supabase
-        .from('orders')
-        .update({ status: 'completed' })
-        .eq('id', order.id);
+      // Mettre à jour pour POS (source + paiement payé + statut)
+      const { error: updateError } = await updatePosOrderStatus(order.id, {
+        payment_status: 'paid',
+        source: 'pos',
+        notes: 'Paiement POS - Espèces'
+      });
 
       if (updateError) {
         console.error('❌ [POS] Erreur mise à jour statut:', updateError);
@@ -1392,12 +1378,9 @@ export function POSSystem() {
       // IMPORTANT: ne pas décrémenter côté client, sinon on obtient des doubles décréments (-2).
 
       setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
-
       setShowOrderSummary(false);
       setShowReceipt(true);
-
       toast.success('Paiement effectué avec succès!');
-
       await loadVendorProducts();
     } catch (error: any) {
       console.error('❌ [POS] Erreur paiement complète:', error);
@@ -2535,22 +2518,27 @@ export function POSSystem() {
           onSuccess={async (paymentIntentId) => {
             // Paiement réussi - POS orders are completed immediately (no delivery needed)
             console.log('✅ Paiement Stripe réussi:', paymentIntentId);
-            
-            // Marquer comme payé et complété - POS n'a pas besoin de workflow de livraison
-            await supabase.from('orders')
-              .update({ 
+
+            try {
+              // Marquer comme payé et complété - POS n'a pas besoin de workflow de livraison
+              const { error: updateError } = await updatePosOrderStatus(pendingStripeOrder.id, {
                 payment_status: 'paid',
-                status: 'completed', // POS orders are completed immediately
                 notes: `Paiement Stripe confirmé - Intent: ${paymentIntentId}`
-              })
-              .eq('id', pendingStripeOrder.id);
-            
-            setLastOrderNumber(pendingStripeOrder.order_number);
-            setShowStripeModal(false);
-            setPendingStripeOrder(null);
-            setShowReceipt(true);
-            clearCart();
-            await loadVendorProducts();
+              });
+              if (updateError) throw updateError;
+
+              setLastOrderNumber(pendingStripeOrder.order_number);
+              setShowStripeModal(false);
+              setPendingStripeOrder(null);
+              setShowReceipt(true);
+              clearCart();
+              await loadVendorProducts();
+            } catch (error: any) {
+              console.error('❌ Erreur mise à jour commande Stripe:', error);
+              toast.error('Erreur lors de la finalisation du paiement', {
+                description: error?.message || 'Veuillez réessayer'
+              });
+            }
           }}
           onError={(error) => {
             console.error('❌ Erreur paiement Stripe:', error);
