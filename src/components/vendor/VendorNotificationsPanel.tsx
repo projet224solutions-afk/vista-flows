@@ -1,12 +1,13 @@
+import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useVendorNotifications } from '@/hooks/useVendorNotifications';
-import { Bell, CheckCheck, Package, CreditCard, MessageSquare, Shield, AlertTriangle } from 'lucide-react';
+import { Bell, CheckCheck, Package, CreditCard, MessageSquare, Shield, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
-const notificationIcons = {
+const notificationIcons: Record<string, any> = {
   order: Package,
   payment: CreditCard,
   message: MessageSquare,
@@ -14,7 +15,7 @@ const notificationIcons = {
   stock: AlertTriangle
 };
 
-const notificationColors = {
+const notificationColors: Record<string, string> = {
   order: 'text-blue-600',
   payment: 'text-green-600',
   message: 'text-purple-600',
@@ -22,8 +23,11 @@ const notificationColors = {
   stock: 'text-orange-600'
 };
 
+const INITIAL_VISIBLE_COUNT = 3;
+
 export function VendorNotificationsPanel() {
   const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useVendorNotifications();
+  const [showAll, setShowAll] = useState(false);
 
   if (loading) {
     return (
@@ -32,6 +36,12 @@ export function VendorNotificationsPanel() {
       </div>
     );
   }
+
+  const visibleNotifications = showAll 
+    ? notifications 
+    : notifications.slice(0, INITIAL_VISIBLE_COUNT);
+  
+  const hiddenCount = notifications.length - INITIAL_VISIBLE_COUNT;
 
   return (
     <div className="space-y-4">
@@ -52,9 +62,9 @@ export function VendorNotificationsPanel() {
       </div>
 
       <div className="space-y-2">
-        {notifications.map((notification) => {
-          const Icon = notificationIcons[notification.type];
-          const colorClass = notificationColors[notification.type];
+        {visibleNotifications.map((notification) => {
+          const Icon = notificationIcons[notification.type] || Bell;
+          const colorClass = notificationColors[notification.type] || 'text-muted-foreground';
 
           return (
             <Card 
@@ -91,6 +101,27 @@ export function VendorNotificationsPanel() {
             <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">Aucune notification</p>
           </Card>
+        )}
+
+        {/* Bouton pour afficher plus / moins */}
+        {hiddenCount > 0 && (
+          <Button 
+            variant="ghost" 
+            className="w-full mt-2" 
+            onClick={() => setShowAll(!showAll)}
+          >
+            {showAll ? (
+              <>
+                <ChevronUp className="h-4 w-4 mr-2" />
+                Afficher moins
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4 mr-2" />
+                Voir {hiddenCount} autres notifications
+              </>
+            )}
+          </Button>
         )}
       </div>
     </div>
