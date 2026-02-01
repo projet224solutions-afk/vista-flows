@@ -233,8 +233,7 @@ export function UnifiedTransferDialog({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button variant={variant} size={size} className={className}>
-            <Send className="w-4 h-4" />
-            {showText && <span className="ml-2">Transfert rapide</span>}
+            {showText && <span>Transfert rapide</span>}
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[500px]">
