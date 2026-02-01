@@ -9,7 +9,6 @@ import {
   ArrowUp, 
   ArrowDown, 
   Clock, 
-  CheckCircle, 
   XCircle,
   RefreshCw,
   History

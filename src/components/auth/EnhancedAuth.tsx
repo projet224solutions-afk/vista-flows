@@ -6,7 +6,7 @@
  * - Vérification email existant AVANT OAuth
  */
 
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -23,9 +23,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { 
-  UserCheck, Store, Truck, Bike, Ship, ArrowLeft, ArrowRight,
-  Lock, Mail, Phone, Loader2, Eye, EyeOff, AlertCircle, Check,
-  ChevronRight, User, LogIn, UserPlus
+  UserCheck, Store, Truck, Bike, Ship, ArrowLeft,
+  Lock, Mail, Loader2, Eye, EyeOff, AlertCircle,
+  User, LogIn, UserPlus
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -36,7 +36,7 @@ const motion = {
   div: (props: any) => <div {...props} />,
   button: (props: any) => <button {...props} />
 };
-const AnimatePresence = ({ children }: any) => <>{children}</>;
+const _AnimatePresence = ({ children }: any) => <>{children}</>;
 
 type AccountType = 'client' | 'marchand' | 'livreur' | 'taxi_moto' | 'transitaire';
 type AuthMode = 'login' | 'signup';

@@ -1,5 +1,4 @@
 import { ReactNode, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -19,12 +18,9 @@ import {
   Bell,
   Menu,
   X,
-  Key,
-  TrendingUp,
   FileText
 } from 'lucide-react';
 import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
-import { toast } from 'sonner';
 
 interface AgentLayoutProps {
   children: ReactNode;

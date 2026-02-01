@@ -9,10 +9,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { 
-  ShoppingCart, Search, Eye, Package, Clock, 
+  ShoppingCart, Search, Package, Clock, 
   CheckCircle, XCircle, Truck, User, MapPin, 
   RefreshCw, Calendar, TrendingUp, AlertCircle,
-  Filter, Shield, Banknote, ArrowRight
+  Filter, Shield, Banknote
 } from "lucide-react";
 import {
   Select,

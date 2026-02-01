@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { 
   Link2, Copy, ExternalLink, Plus, BarChart3, 
   Users, MousePointer, TrendingUp, Loader2, RefreshCw,
-  Calendar, Trash2
+  Calendar
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
