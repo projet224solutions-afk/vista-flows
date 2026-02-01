@@ -56,8 +56,12 @@ export const useVendorAnalytics = () => {
       if (todayError) console.error('Error loading today orders:', todayError);
 
       const todaySales = todayOrders?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0;
+      const paidOrders = todayOrders?.filter(o => o.payment_status === 'paid').length || 0;
       const todayOrdersCount = todayOrders?.length || 0;
-
+      // Taux de conversion = commandes payées / commandes totales
+      const conversionRate = todayOrdersCount > 0 
+        ? (paidOrders / todayOrdersCount) * 100 
+        : 0;
       // Récupérer les ventes des 7 derniers jours groupées par jour
       const { data: weekOrders, error: weekError } = await supabase
         .from('orders')
@@ -163,7 +167,7 @@ export const useVendorAnalytics = () => {
         date: today,
         totalSales: todaySales,
         totalOrders: todayOrdersCount,
-        conversionRate: 0
+        conversionRate: conversionRate
       };
 
       console.log('📊 Analytics loaded:', {
