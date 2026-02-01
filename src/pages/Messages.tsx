@@ -930,11 +930,6 @@ export default function Messages() {
                         {conv.other_user_name.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    {conv.unread_count > 0 && (
-                      <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full min-w-5 h-5 flex items-center justify-center text-xs font-bold px-1 animate-pulse shadow-md">
-                        {conv.unread_count > 99 ? '99+' : conv.unread_count}
-                      </div>
-                    )}
                     {conv.is_certified && (
                       <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-0.5">
                         <Shield className="w-3 h-3 text-primary-foreground" />
@@ -949,9 +944,16 @@ export default function Messages() {
                             {conv.other_user_public_id}
                           </span>
                         )}
-                        <p className="font-medium text-foreground truncate">
-                          {conv.other_user_name}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-foreground truncate">
+                            {conv.other_user_name}
+                          </p>
+                          {conv.unread_count > 0 && (
+                            <span className="bg-destructive text-destructive-foreground rounded-full min-w-5 h-5 flex items-center justify-center text-xs font-bold px-1 animate-pulse shadow-sm">
+                              {conv.unread_count > 99 ? '99+' : conv.unread_count}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <span
                         className="text-xs text-muted-foreground flex-shrink-0 cursor-help"
