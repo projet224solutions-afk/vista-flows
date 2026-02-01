@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -82,6 +83,43 @@ export default function UniversalCommunicationHub({
       loadNotifications();
     }
   }, [user, refreshTrigger]);
+
+  // 🔔 Real-time subscription pour synchroniser les badges
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('hub-unread-sync')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages'
+        },
+        () => {
+          console.log('[Hub] 📩 Nouveau message - rechargement conversations');
+          loadConversations();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages'
+        },
+        () => {
+          console.log('[Hub] ✅ Message mis à jour - rechargement conversations');
+          loadConversations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
 
   // Sélectionner automatiquement une conversation
   useEffect(() => {
@@ -633,10 +671,15 @@ export default function UniversalCommunicationHub({
                       
                       <div className="flex-1 min-w-0 text-left">
                         <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 min-w-0">
                             <span className="font-medium truncate text-sm">{name}</span>
+                            {(conv.unread_count ?? 0) > 0 && (
+                              <span className="bg-destructive text-destructive-foreground rounded-full min-w-5 h-5 flex items-center justify-center text-xs font-bold px-1 animate-pulse shadow-sm flex-shrink-0">
+                                {(conv.unread_count ?? 0) > 99 ? '99+' : conv.unread_count}
+                              </span>
+                            )}
                             {isOnline && (
-                              <span className="text-[10px] text-green-500 font-medium">En ligne</span>
+                              <span className="text-[10px] text-green-500 font-medium flex-shrink-0">En ligne</span>
                             )}
                           </div>
                           {conv.last_message_at && (
@@ -645,16 +688,9 @@ export default function UniversalCommunicationHub({
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center justify-between gap-2 mt-0.5">
-                          <span className="text-xs text-muted-foreground truncate">
-                            {conv.last_message_preview || 'Aucun message'}
-                          </span>
-                          {(conv.unread_count ?? 0) > 0 && (
-                            <Badge variant="default" className="h-5 min-w-5 px-1.5 text-xs flex-shrink-0">
-                              {conv.unread_count}
-                            </Badge>
-                          )}
-                        </div>
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">
+                          {conv.last_message_preview || 'Aucun message'}
+                        </p>
                       </div>
                     </button>
                   );
