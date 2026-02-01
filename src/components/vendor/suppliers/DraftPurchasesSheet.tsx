@@ -24,9 +24,19 @@ import {
   FileText,
   AlertTriangle,
   Pencil,
-  CheckCircle,
+  Trash2,
   Loader2
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { PurchaseEditor } from './PurchaseEditor';
@@ -75,6 +85,8 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [validatingId, setValidatingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [purchaseToDelete, setPurchaseToDelete] = useState<Purchase | null>(null);
 
   const { data: purchases = [], isLoading, refetch } = useQuery({
     queryKey: ['draft-purchases', vendorId],
@@ -115,6 +127,38 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
     refetch();
     queryClient.invalidateQueries({ queryKey: ['supplier-purchase-stats', vendorId] });
     queryClient.invalidateQueries({ queryKey: ['stock-purchases-validated', vendorId] });
+  };
+
+  const handleDeletePurchase = async () => {
+    if (!purchaseToDelete) return;
+    setDeletingId(purchaseToDelete.id);
+    try {
+      // 1. Supprimer les items d'abord
+      const { error: itemsError } = await supabase
+        .from('stock_purchase_items')
+        .delete()
+        .eq('purchase_id', purchaseToDelete.id);
+
+      if (itemsError) throw itemsError;
+
+      // 2. Supprimer l'achat
+      const { error } = await supabase
+        .from('stock_purchases')
+        .delete()
+        .eq('id', purchaseToDelete.id);
+
+      if (error) throw error;
+
+      toast.success('Achat supprimé avec succès');
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ['supplier-purchase-stats', vendorId] });
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      toast.error(`Erreur de suppression: ${error.message}`);
+    } finally {
+      setDeletingId(null);
+      setPurchaseToDelete(null);
+    }
   };
 
   const handleValidatePurchase = async (purchase: Purchase) => {
@@ -274,6 +318,19 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
                               <Pencil className="h-4 w-4" />
                               Modifier
                             </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => setPurchaseToDelete(purchase)}
+                              disabled={purchase.is_locked || deletingId === purchase.id}
+                            >
+                              {deletingId === purchase.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </Button>
                           </div>
                         </div>
                       </CardContent>
@@ -284,6 +341,28 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
             )}
           </ScrollArea>
         </div>
+
+        {/* Dialog de confirmation de suppression */}
+        <AlertDialog open={!!purchaseToDelete} onOpenChange={() => setPurchaseToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer cet achat ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Êtes-vous sûr de vouloir supprimer l'achat <strong>{purchaseToDelete?.purchase_number}</strong> ?
+                Cette action est irréversible.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeletePurchase}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Supprimer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </SheetContent>
     </Sheet>
   );
