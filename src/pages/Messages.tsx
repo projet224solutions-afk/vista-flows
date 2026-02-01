@@ -180,6 +180,45 @@ export default function Messages() {
     };
   }, [selectedConversation, currentUser]);
 
+  // 🔔 Real-time subscription for unread count synchronization
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const channel = supabase
+      .channel('unread-sync-conversations')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `recipient_id=eq.${currentUser.id}`
+        },
+        () => {
+          console.log('[Messages] 📩 Nouveau message reçu - rechargement conversations');
+          loadConversations();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `recipient_id=eq.${currentUser.id}`
+        },
+        () => {
+          console.log('[Messages] ✅ Message mis à jour - rechargement conversations');
+          loadConversations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser]);
+
   // Subscription à la présence de l'autre utilisateur
   useEffect(() => {
     if (!selectedConversation) return;
@@ -346,6 +385,14 @@ export default function Messages() {
             .eq('vendor_id', conv.other_user_id)
             .maybeSingle();
 
+          // ✅ Calculer le nombre de messages non lus pour cette conversation
+          const { count: unreadCount } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('sender_id', conv.other_user_id)
+            .eq('recipient_id', currentUser.id)
+            .is('read_at', null);
+
           const isVendor = !!vendor;
           const isCertified = cert?.status === 'CERTIFIE';
           const userName = vendor?.business_name ||
@@ -362,7 +409,7 @@ export default function Messages() {
             other_user_public_id: (profile as any)?.public_id || null,
             last_message: conv.last_message || 'Nouvelle conversation',
             last_message_time: conv.last_message_time,
-            unread_count: 0,
+            unread_count: unreadCount || 0,
             is_vendor: isVendor,
             is_certified: isCertified,
             vendor_phone: vendor?.phone,
