@@ -62,6 +62,7 @@ export function BarcodeScannerModal({
   const [saleType, setSaleType] = useState<'unit' | 'carton'>('unit');
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [cameraToastShown, setCameraToastShown] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const externalInputRef = useRef<HTMLInputElement>(null);
@@ -83,6 +84,7 @@ export function BarcodeScannerModal({
     setQuantity(1);
     setSaleType('unit');
     setIsProcessing(false);
+    setCameraToastShown(false);
   };
 
   const stopCamera = useCallback(() => {
@@ -184,9 +186,14 @@ export function BarcodeScannerModal({
         videoRef.current.play();
       }
       
-      toast.info('Caméra activée', {
-        description: 'Pointez vers le code-barres du produit'
-      });
+      // Éviter les toasts dupliqués
+      if (!cameraToastShown) {
+        setCameraToastShown(true);
+        toast.info('Caméra activée', {
+          description: 'Pointez vers le code-barres du produit',
+          id: 'camera-activated' // ID unique pour éviter les doublons
+        });
+      }
     } catch (error) {
       console.error('Erreur accès caméra:', error);
       toast.error('Impossible d\'accéder à la caméra');
@@ -382,16 +389,17 @@ export function BarcodeScannerModal({
                 Positionnez le code-barres dans le cadre
               </p>
               
-              <div className="flex gap-2 justify-center">
+              <div className="flex gap-2 justify-center items-center">
                 <Input
-                  placeholder="Ou saisissez le code manuellement"
+                  placeholder="Ou saisissez le code"
                   value={barcodeInput}
                   onChange={(e) => setBarcodeInput(e.target.value)}
-                  className="max-w-[200px] text-center font-mono"
+                  className="flex-1 min-w-0 max-w-[180px] text-center font-mono text-sm"
                 />
                 <Button 
                   onClick={() => handleExternalScan(barcodeInput)}
                   disabled={!barcodeInput.trim()}
+                  className="shrink-0"
                 >
                   Rechercher
                 </Button>
