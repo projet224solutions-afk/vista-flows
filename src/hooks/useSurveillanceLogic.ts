@@ -47,8 +47,8 @@ export function useSurveillanceLogic() {
   const [loading, setLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
-  // Vérifier les permissions
-  const isPDG = profile?.role === 'pdg';
+  // Vérifier les permissions (PDG = admin ou ceo role)
+  const isPDG = profile?.role === 'admin' || profile?.role === 'ceo';
 
   // Charger les anomalies
   const loadAnomalies = useCallback(async () => {
@@ -63,7 +63,14 @@ export function useSurveillanceLogic() {
         .limit(100);
 
       if (error) throw error;
-      setAnomalies(data || []);
+      // Cast les données pour correspondre au type LogicAnomaly
+      setAnomalies((data || []).map((item: any) => ({
+        ...item,
+        severity: item.severity as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW',
+        expected_value: item.expected_value || {},
+        actual_value: item.actual_value || {},
+        affected_entities: item.affected_entities || []
+      })));
     } catch (error: any) {
       console.error('Erreur chargement anomalies:', error);
       toast.error('Impossible de charger les anomalies');
@@ -81,7 +88,16 @@ export function useSurveillanceLogic() {
 
       if (error) throw error;
       if (data && data.length > 0) {
-        setSystemHealth(data[0]);
+        // Cast pour correspondre au type SystemHealth
+        const healthData = data[0] as any;
+        setSystemHealth({
+          overall_status: healthData.overall_status as 'OK' | 'WARNING' | 'CRITICAL',
+          total_rules: healthData.total_rules || 0,
+          total_anomalies: healthData.total_anomalies || 0,
+          critical_anomalies: healthData.critical_anomalies || 0,
+          recent_anomalies_24h: healthData.recent_anomalies_24h || 0,
+          resolution_rate: healthData.resolution_rate || 0
+        });
       }
     } catch (error: any) {
       console.error('Erreur santé système:', error);

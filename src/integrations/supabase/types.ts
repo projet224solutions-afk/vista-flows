@@ -10298,50 +10298,83 @@ export type Database = {
         Row: {
           acknowledged_at: string | null
           acknowledged_by: string | null
+          action_type: string | null
           actual_value: Json
           affected_entities: Json | null
+          corrected_at: string | null
+          corrected_by: string | null
+          correction_type: string | null
           created_at: string | null
           detected_at: string
+          detected_by: string | null
           difference: Json | null
           domain: string
+          entity_id: string | null
+          entity_type: string | null
           expected_value: Json
           id: string
+          notes: string | null
           resolution_type: string | null
           resolved_at: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           rule_id: string
           severity: string
+          status: string | null
         }
         Insert: {
           acknowledged_at?: string | null
           acknowledged_by?: string | null
+          action_type?: string | null
           actual_value: Json
           affected_entities?: Json | null
+          corrected_at?: string | null
+          corrected_by?: string | null
+          correction_type?: string | null
           created_at?: string | null
           detected_at: string
+          detected_by?: string | null
           difference?: Json | null
           domain: string
+          entity_id?: string | null
+          entity_type?: string | null
           expected_value: Json
           id?: string
+          notes?: string | null
           resolution_type?: string | null
           resolved_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           rule_id: string
           severity: string
+          status?: string | null
         }
         Update: {
           acknowledged_at?: string | null
           acknowledged_by?: string | null
+          action_type?: string | null
           actual_value?: Json
           affected_entities?: Json | null
+          corrected_at?: string | null
+          corrected_by?: string | null
+          correction_type?: string | null
           created_at?: string | null
           detected_at?: string
+          detected_by?: string | null
           difference?: Json | null
           domain?: string
+          entity_id?: string | null
+          entity_type?: string | null
           expected_value?: Json
           id?: string
+          notes?: string | null
           resolution_type?: string | null
           resolved_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           rule_id?: string
           severity?: string
+          status?: string | null
         }
         Relationships: [
           {
@@ -10351,7 +10384,105 @@ export type Database = {
             referencedRelation: "logic_rules"
             referencedColumns: ["rule_id"]
           },
+          {
+            foreignKeyName: "logic_anomalies_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "logic_validation_rules"
+            referencedColumns: ["rule_code"]
+          },
+          {
+            foreignKeyName: "logic_anomalies_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "mv_rules_statistics"
+            referencedColumns: ["rule_id"]
+          },
         ]
+      }
+      logic_anomalies_archive: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          action_type: string | null
+          actual_value: Json
+          affected_entities: Json | null
+          corrected_at: string | null
+          corrected_by: string | null
+          correction_type: string | null
+          created_at: string | null
+          detected_at: string
+          detected_by: string | null
+          difference: Json | null
+          domain: string
+          entity_id: string | null
+          entity_type: string | null
+          expected_value: Json
+          id: string
+          notes: string | null
+          resolution_type: string | null
+          resolved_at: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          rule_id: string
+          severity: string
+          status: string | null
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          action_type?: string | null
+          actual_value: Json
+          affected_entities?: Json | null
+          corrected_at?: string | null
+          corrected_by?: string | null
+          correction_type?: string | null
+          created_at?: string | null
+          detected_at: string
+          detected_by?: string | null
+          difference?: Json | null
+          domain: string
+          entity_id?: string | null
+          entity_type?: string | null
+          expected_value: Json
+          id?: string
+          notes?: string | null
+          resolution_type?: string | null
+          resolved_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rule_id: string
+          severity: string
+          status?: string | null
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          action_type?: string | null
+          actual_value?: Json
+          affected_entities?: Json | null
+          corrected_at?: string | null
+          corrected_by?: string | null
+          correction_type?: string | null
+          created_at?: string | null
+          detected_at?: string
+          detected_by?: string | null
+          difference?: Json | null
+          domain?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          expected_value?: Json
+          id?: string
+          notes?: string | null
+          resolution_type?: string | null
+          resolved_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rule_id?: string
+          severity?: string
+          status?: string | null
+        }
+        Relationships: []
       }
       logic_audit: {
         Row: {
@@ -10458,7 +10589,48 @@ export type Database = {
             referencedRelation: "logic_rules"
             referencedColumns: ["rule_id"]
           },
+          {
+            foreignKeyName: "logic_corrections_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "logic_validation_rules"
+            referencedColumns: ["rule_code"]
+          },
+          {
+            foreignKeyName: "logic_corrections_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "mv_rules_statistics"
+            referencedColumns: ["rule_id"]
+          },
         ]
+      }
+      logic_performance_metrics: {
+        Row: {
+          context: Json | null
+          id: string
+          metric_name: string
+          metric_unit: string | null
+          metric_value: number
+          recorded_at: string | null
+        }
+        Insert: {
+          context?: Json | null
+          id?: string
+          metric_name: string
+          metric_unit?: string | null
+          metric_value: number
+          recorded_at?: string | null
+        }
+        Update: {
+          context?: Json | null
+          id?: string
+          metric_name?: string
+          metric_unit?: string | null
+          metric_value?: number
+          recorded_at?: string | null
+        }
+        Relationships: []
       }
       logic_results: {
         Row: {
@@ -10500,6 +10672,20 @@ export type Database = {
             columns: ["rule_id"]
             isOneToOne: false
             referencedRelation: "logic_rules"
+            referencedColumns: ["rule_id"]
+          },
+          {
+            foreignKeyName: "logic_results_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "logic_validation_rules"
+            referencedColumns: ["rule_code"]
+          },
+          {
+            foreignKeyName: "logic_results_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "mv_rules_statistics"
             referencedColumns: ["rule_id"]
           },
         ]
@@ -10549,6 +10735,48 @@ export type Database = {
           rule_id?: string
           severity?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      logic_validation_snapshots: {
+        Row: {
+          anomalies_detected: number | null
+          completed_at: string | null
+          created_at: string | null
+          details: Json | null
+          failed_checks: number | null
+          id: string
+          passed_checks: number | null
+          snapshot_type: string
+          started_at: string
+          total_checks: number | null
+          triggered_by: string | null
+        }
+        Insert: {
+          anomalies_detected?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          details?: Json | null
+          failed_checks?: number | null
+          id?: string
+          passed_checks?: number | null
+          snapshot_type?: string
+          started_at?: string
+          total_checks?: number | null
+          triggered_by?: string | null
+        }
+        Update: {
+          anomalies_detected?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          details?: Json | null
+          failed_checks?: number | null
+          id?: string
+          passed_checks?: number | null
+          snapshot_type?: string
+          started_at?: string
+          total_checks?: number | null
+          triggered_by?: string | null
         }
         Relationships: []
       }
@@ -12281,6 +12509,80 @@ export type Database = {
           },
         ]
       }
+      pdg_access_permissions: {
+        Row: {
+          agent_id: string
+          created_at: string | null
+          expires_at: string | null
+          granted_at: string | null
+          id: string
+          is_active: boolean | null
+          pdg_id: string
+          permission_key: string
+          permission_name: string | null
+          revoked_at: string | null
+          revoked_reason: string | null
+          scope: Json | null
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string | null
+          expires_at?: string | null
+          granted_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          pdg_id: string
+          permission_key: string
+          permission_name?: string | null
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          scope?: Json | null
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string | null
+          expires_at?: string | null
+          granted_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          pdg_id?: string
+          permission_key?: string
+          permission_name?: string | null
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          scope?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdg_access_permissions_pdg_id_fkey"
+            columns: ["pdg_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pdg_access_permissions_pdg_id_fkey"
+            columns: ["pdg_id"]
+            isOneToOne: false
+            referencedRelation: "user_codes_unified"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "pdg_access_permissions_pdg_id_fkey"
+            columns: ["pdg_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pdg_access_permissions_permission_key_fkey"
+            columns: ["permission_key"]
+            isOneToOne: false
+            referencedRelation: "pdg_permission_catalog"
+            referencedColumns: ["permission_key"]
+          },
+        ]
+      }
       pdg_financial_alerts: {
         Row: {
           alert_type: string
@@ -12449,6 +12751,42 @@ export type Database = {
           phone?: string | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      pdg_permission_catalog: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          permission_key: string
+          permission_name: string
+          requires_2fa: boolean | null
+          requires_audit: boolean | null
+          risk_level: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          permission_key: string
+          permission_name: string
+          requires_2fa?: boolean | null
+          requires_audit?: boolean | null
+          risk_level?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          permission_key?: string
+          permission_name?: string
+          requires_2fa?: boolean | null
+          requires_audit?: boolean | null
+          risk_level?: string
         }
         Relationships: []
       }
@@ -23971,6 +24309,83 @@ export type Database = {
         }
         Relationships: []
       }
+      logic_validation_rules: {
+        Row: {
+          auto_correct_enabled: boolean | null
+          created_at: string | null
+          description: string | null
+          domain: string | null
+          id: string | null
+          is_active: boolean | null
+          rule_code: string | null
+          rule_name: string | null
+          severity: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_correct_enabled?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          domain?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          rule_code?: string | null
+          rule_name?: string | null
+          severity?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_correct_enabled?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          domain?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          rule_code?: string | null
+          rule_name?: string | null
+          severity?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      mv_anomalies_summary: {
+        Row: {
+          domain: string | null
+          last_detected: string | null
+          oldest_pending: string | null
+          pending_count: number | null
+          resolved_count: number | null
+          severity: string | null
+          total_count: number | null
+        }
+        Relationships: []
+      }
+      mv_rules_statistics: {
+        Row: {
+          auto_corrected: number | null
+          domain: string | null
+          last_anomaly_date: string | null
+          name: string | null
+          pending_anomalies: number | null
+          rule_id: string | null
+          severity: string | null
+          total_anomalies: number | null
+        }
+        Relationships: []
+      }
+      mv_system_health: {
+        Row: {
+          critical_anomalies: number | null
+          last_refresh: string | null
+          overall_status: string | null
+          pending_anomalies: number | null
+          resolved_anomalies: number | null
+          total_domains: number | null
+          total_rules: number | null
+          validations_24h: number | null
+        }
+        Relationships: []
+      }
       payment_core_view: {
         Row: {
           amount: number | null
@@ -24652,6 +25067,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      agent_has_permission: {
+        Args: { p_agent_id: string; p_permission_key: string }
+        Returns: boolean
+      }
       aggregate_daily_analytics: {
         Args: { p_date?: string }
         Returns: undefined
@@ -24668,6 +25087,39 @@ export type Database = {
           message: string
           success: boolean
         }[]
+      }
+      auto_correct_negative_stock: {
+        Args: never
+        Returns: {
+          correction_status: string
+          new_stock: number
+          old_stock: number
+          product_id: string
+          product_name: string
+        }[]
+      }
+      auto_correct_negative_wallets: {
+        Args: never
+        Returns: {
+          action_taken: string
+          current_balance: number
+          user_id: string
+          wallet_id: string
+        }[]
+      }
+      auto_correct_order_totals: {
+        Args: never
+        Returns: {
+          calculated_total: number
+          correction_status: string
+          old_total: number
+          order_id: string
+          order_number: string
+        }[]
+      }
+      auto_correct_stock_anomaly: {
+        Args: { p_anomaly_id: string; p_corrected_by: string }
+        Returns: boolean
       }
       auto_escalate_disputes: {
         Args: never
@@ -24866,6 +25318,17 @@ export type Database = {
         Returns: boolean
       }
       check_overdue_debts: { Args: never; Returns: undefined }
+      check_pdg_surveillance_access: {
+        Args: { p_user_id: string }
+        Returns: {
+          has_anomaly_access: boolean
+          has_auto_correct_access: boolean
+          has_debug_access: boolean
+          has_surveillance_access: boolean
+          has_validation_access: boolean
+          user_role: string
+        }[]
+      }
       check_product_limit: { Args: { p_user_id: string }; Returns: Json }
       check_rate_limit: {
         Args: {
@@ -24886,6 +25349,10 @@ export type Database = {
         }[]
       }
       check_service_owner: { Args: { service_id: string }; Returns: boolean }
+      check_user_permission: {
+        Args: { p_action: string; p_user_id: string }
+        Returns: boolean
+      }
       clean_old_errors: { Args: never; Returns: undefined }
       cleanup_expired_sponsorships: { Args: never; Returns: Json }
       cleanup_expired_tokens: { Args: never; Returns: undefined }
@@ -24893,6 +25360,15 @@ export type Database = {
       cleanup_old_errors: { Args: never; Returns: undefined }
       cleanup_old_product_views: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
+      cleanup_old_surveillance_data: {
+        Args: { p_archive_days?: number; p_delete_days?: number }
+        Returns: {
+          archived_anomalies: number
+          deleted_anomalies: number
+          deleted_results: number
+          deleted_snapshots: number
+        }[]
+      }
       cleanup_old_system_errors: { Args: never; Returns: Json }
       cleanup_realtime_events: { Args: never; Returns: number }
       cleanup_typing_indicators: { Args: never; Returns: number }
@@ -25151,6 +25627,17 @@ export type Database = {
           status: string
         }[]
       }
+      detect_all_anomalies_optimized: {
+        Args: { p_domain?: string }
+        Returns: {
+          anomaly_type: string
+          details: Json
+          detected_at: string
+          domain: string
+          entity_id: string
+          severity: string
+        }[]
+      }
       detect_expense_anomalies: { Args: { p_vendor_id: string }; Returns: Json }
       detect_fraud: {
         Args: {
@@ -25159,6 +25646,29 @@ export type Database = {
           p_user_id: string
         }
         Returns: Json
+      }
+      detect_stock_anomalies: {
+        Args: never
+        Returns: {
+          difference: number
+          inventory_quantity: number
+          product_id: string
+          product_name: string
+          products_stock: number
+          severity: string
+        }[]
+      }
+      detect_stock_anomalies_advanced: {
+        Args: { p_critical_threshold?: number; p_warning_threshold?: number }
+        Returns: {
+          current_stock: number
+          product_id: string
+          product_name: string
+          recommendation: string
+          severity: string
+          threshold_level: string
+          vendor_id: string
+        }[]
       }
       detect_wallet_anomalies: {
         Args: never
@@ -25170,6 +25680,18 @@ export type Database = {
           stored_balance: number
           wallet_id: string
           wallet_type: string
+        }[]
+      }
+      detect_wallet_anomalies_advanced: {
+        Args: never
+        Returns: {
+          anomaly_type: string
+          current_balance: number
+          last_transaction_date: string
+          severity: string
+          transaction_count_24h: number
+          user_id: string
+          wallet_id: string
         }[]
       }
       disablelongtransactions: { Args: never; Returns: string }
@@ -25504,6 +26026,13 @@ export type Database = {
           user_role: string
         }[]
       }
+      get_agent_all_permissions: {
+        Args: { p_agent_id: string }
+        Returns: {
+          permission_key: string
+          permission_value: boolean
+        }[]
+      }
       get_agent_permissions: { Args: { p_agent_id: string }; Returns: Json }
       get_audio_for_user: {
         Args: { p_message_id: string; p_user_id: string }
@@ -25560,6 +26089,7 @@ export type Database = {
         }[]
       }
       get_inventory_stats: { Args: { p_vendor_id: string }; Returns: Json }
+      get_logic_surveillance_dashboard: { Args: never; Returns: Json }
       get_marketplace_rotation_info: { Args: never; Returns: Json }
       get_online_users: {
         Args: { p_user_ids?: string[] }
@@ -25685,6 +26215,22 @@ export type Database = {
           total_subscriptions: number
         }[]
       }
+      get_surveillance_dashboard_fast: {
+        Args: never
+        Returns: {
+          anomalies_by_domain: Json
+          critical_anomalies: number
+          last_validation: string
+          overall_status: string
+          pending_anomalies: number
+          performance_score: number
+          recent_anomalies: Json
+          resolved_today: number
+          total_domains: number
+          total_rules: number
+          validations_24h: number
+        }[]
+      }
       get_syndicate_worker_permissions: {
         Args: { p_worker_id: string }
         Returns: Json
@@ -25766,6 +26312,14 @@ export type Database = {
           unread_count: number
         }[]
       }
+      get_user_permissions: {
+        Args: { p_user_id: string }
+        Returns: {
+          action: string
+          allowed: boolean
+          role_name: string
+        }[]
+      }
       get_user_presence: {
         Args: { p_user_id: string }
         Returns: {
@@ -25813,6 +26367,19 @@ export type Database = {
         Returns: Json
       }
       gettransactionid: { Args: never; Returns: unknown }
+      grant_pdg_permission_to_agent: {
+        Args: {
+          p_agent_id: string
+          p_expires_in_days?: number
+          p_pdg_id: string
+          p_permission_key: string
+          p_scope?: Json
+        }
+        Returns: {
+          message: string
+          success: boolean
+        }[]
+      }
       has_active_driver_subscription: {
         Args: { p_user_id: string }
         Returns: boolean
@@ -26323,6 +26890,8 @@ export type Database = {
         }
         Returns: string
       }
+      record_surveillance_metrics: { Args: never; Returns: undefined }
+      refresh_surveillance_views: { Args: never; Returns: undefined }
       refund_escrow: {
         Args: { p_escrow_id: string; p_reason?: string }
         Returns: boolean
@@ -26369,11 +26938,43 @@ export type Database = {
         Args: { p_identifier: string }
         Returns: string
       }
+      revoke_pdg_permission_from_agent: {
+        Args: {
+          p_agent_id: string
+          p_pdg_id: string
+          p_permission_key: string
+          p_reason?: string
+        }
+        Returns: {
+          message: string
+          success: boolean
+        }[]
+      }
       rotate_marketplace_products: { Args: never; Returns: Json }
+      run_auto_corrections: {
+        Args: never
+        Returns: {
+          correction_type: string
+          details: Json
+          items_alerted: number
+          items_corrected: number
+        }[]
+      }
       run_daily_wallet_audit: { Args: never; Returns: Json }
       run_full_system_validation: {
         Args: { p_triggered_by?: string }
         Returns: string
+      }
+      run_full_system_validation_v2: {
+        Args: { p_triggered_by?: string }
+        Returns: {
+          anomalies_found: number
+          details: Json
+          duration_ms: number
+          snapshot_id: string
+          status: string
+          total_checks: number
+        }[]
       }
       schedule_funds_release: {
         Args: {

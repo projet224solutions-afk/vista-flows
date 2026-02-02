@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,12 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Lock, Shield, AlertTriangle, Loader2, Trash2, Plus } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Lock, Shield, AlertTriangle, Loader2, Trash2, Plus, ChevronDown } from 'lucide-react';
 import { usePDGAgentPermissions } from '@/hooks/usePDGAgentPermissions';
 import { usePDGAgentsData } from '@/hooks/usePDGAgentsData';
+import { PERMISSION_CATEGORIES, getPermissionLabel } from '@/constants/agentPermissionCategories';
 
 interface PermissionManagerProps {
   pdgId: string;
@@ -32,13 +32,29 @@ interface PermissionManagerProps {
 
 export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
   const { permissions, permissionCatalog, loading, grantPermission, revokePermission, loadPermissions } = usePDGAgentPermissions(pdgId);
-  const { agents, loading: agentsLoading } = usePDGAgentsData(pdgId);
+  const { agents, loading: agentsLoading } = usePDGAgentsData();
   
   const [selectedAgent, setSelectedAgent] = useState<string>('');
   const [selectedPermissions, setSelectedPermissions] = useState<Set<string>>(new Set());
-  const [expiresInDays, setExpiresInDays] = useState<string>('');
   const [grantingPermissions, setGrantingPermissions] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
+  const [openCategories, setOpenCategories] = useState<Set<string>>(new Set(['Finance', 'Gestion']));
+
+  useEffect(() => {
+    if (pdgId) {
+      loadPermissions();
+    }
+  }, [pdgId, loadPermissions]);
+
+  const toggleCategory = (category: string) => {
+    const newOpen = new Set(openCategories);
+    if (newOpen.has(category)) {
+      newOpen.delete(category);
+    } else {
+      newOpen.add(category);
+    }
+    setOpenCategories(newOpen);
+  };
 
   const handleTogglePermission = (key: string) => {
     const newSet = new Set(selectedPermissions);
@@ -57,25 +73,20 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
     let successCount = 0;
     
     for (const permKey of selectedPermissions) {
-      const success = await grantPermission(
-        selectedAgent,
-        permKey,
-        expiresInDays ? parseInt(expiresInDays) : undefined
-      );
+      const success = await grantPermission(selectedAgent, permKey);
       if (success) successCount++;
     }
 
     setGrantingPermissions(false);
     if (successCount > 0) {
       setSelectedPermissions(new Set());
-      setSelectedAgent('');
-      setExpiresInDays('');
       setShowDialog(false);
       await loadPermissions();
     }
   };
 
   const handleRevokePermission = async (permissionKey: string) => {
+    if (!selectedAgent) return;
     const success = await revokePermission(selectedAgent, permissionKey, 'Révocation manuelle');
     if (success) {
       await loadPermissions();
@@ -91,12 +102,6 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
-
-  const permissionsByCategory = permissionCatalog.reduce((acc, perm) => {
-    if (!acc[perm.category]) acc[perm.category] = [];
-    acc[perm.category].push(perm);
-    return acc;
-  }, {} as Record<string, typeof permissionCatalog>);
 
   const agentPermissions = permissions.filter(p => p.agent_id === selectedAgent);
 
@@ -152,19 +157,14 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
                           <div className="flex-1">
                             <div className="font-semibold text-sm">{perm.permission_name}</div>
                             <div className="text-xs text-gray-500 mt-1">
-                              {perm.pdg_permission_catalog?.category}
+                              {perm.category}
                             </div>
-                            {perm.expires_at && (
-                              <div className="text-xs text-orange-600 mt-1">
-                                Expire: {new Date(perm.expires_at).toLocaleDateString()}
-                              </div>
-                            )}
                             <div className="flex gap-1 mt-2">
                               <Badge 
                                 variant="outline"
-                                className={getRiskColor(perm.pdg_permission_catalog?.risk_level || 'medium')}
+                                className={getRiskColor(perm.risk_level || 'medium')}
                               >
-                                {perm.pdg_permission_catalog?.risk_level}
+                                {perm.risk_level}
                               </Badge>
                             </div>
                           </div>
@@ -189,7 +189,7 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
               </div>
 
               {/* Avertissement pour permissions critiques */}
-              {agentPermissions.some(p => p.pdg_permission_catalog?.risk_level === 'critical') && (
+              {agentPermissions.some(p => p.risk_level === 'critical') && (
                 <Alert variant="destructive">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
@@ -212,76 +212,58 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 flex-1 overflow-hidden">
-            {/* Durée d'expiration */}
-            <div className="space-y-2">
-              <Label>Durée de validité (jours)</Label>
-              <Input
-                type="number"
-                placeholder="Laisser vide pour sans expiration"
-                value={expiresInDays}
-                onChange={(e) => setExpiresInDays(e.target.value)}
-                min="1"
-                max="365"
-              />
-              <p className="text-xs text-gray-500">
-                Durée avant expiration automatique. Laisser vide = sans limite de temps.
-              </p>
-            </div>
-
-            {/* Permissions par catégorie */}
-            <ScrollArea className="flex-1">
-              <Tabs defaultValue={Object.keys(permissionsByCategory)[0] || 'users'}>
-                <TabsList className="grid grid-cols-4">
-                  {Object.keys(permissionsByCategory).map(category => (
-                    <TabsTrigger key={category} value={category} className="text-xs">
-                      {category}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-
-                {Object.entries(permissionsByCategory).map(([category, perms]) => (
-                  <TabsContent key={category} value={category} className="space-y-3 pr-4">
-                    {perms.map(perm => (
-                      <div key={perm.permission_key} className="flex items-start space-x-2 p-2 border rounded-md">
-                        <Checkbox
-                          id={perm.permission_key}
-                          checked={selectedPermissions.has(perm.permission_key)}
-                          onCheckedChange={() => handleTogglePermission(perm.permission_key)}
-                          disabled={grantingPermissions}
-                        />
-                        <div className="flex-1">
-                          <Label 
-                            htmlFor={perm.permission_key}
-                            className="font-semibold cursor-pointer text-sm"
-                          >
-                            {perm.permission_name}
-                          </Label>
-                          <p className="text-xs text-gray-600 mt-1">
-                            {perm.description}
-                          </p>
-                          <div className="flex gap-1 mt-2">
-                            {perm.requires_2fa && (
-                              <Badge variant="outline" className="text-xs">
-                                <Lock className="h-3 w-3 mr-1" />
-                                2FA requis
-                              </Badge>
-                            )}
-                            <Badge 
-                              variant="outline"
-                              className={`text-xs ${getRiskColor(perm.risk_level)}`}
+          <ScrollArea className="flex-1 max-h-[50vh]">
+            <div className="space-y-2 pr-4">
+              {PERMISSION_CATEGORIES.map((category) => (
+                <Collapsible 
+                  key={category.key}
+                  open={openCategories.has(category.label)}
+                  onOpenChange={() => toggleCategory(category.label)}
+                >
+                  <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                    <span className="font-medium text-sm">{category.label}</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${openCategories.has(category.label) ? 'rotate-180' : ''}`} />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="space-y-2 pl-4 pt-2 pb-1 border-l-2 border-muted ml-2">
+                      {category.permissions.map((permKey) => (
+                        <div key={permKey} className="flex items-start space-x-2 p-2 border rounded-md">
+                          <Checkbox
+                            id={permKey}
+                            checked={selectedPermissions.has(permKey)}
+                            onCheckedChange={() => handleTogglePermission(permKey)}
+                            disabled={grantingPermissions}
+                          />
+                          <div className="flex-1">
+                            <Label 
+                              htmlFor={permKey}
+                              className="font-semibold cursor-pointer text-sm"
                             >
-                              {perm.risk_level}
-                            </Badge>
+                              {getPermissionLabel(permKey)}
+                            </Label>
+                            <div className="flex gap-1 mt-2">
+                              {permKey.startsWith('manage_') && (
+                                <Badge variant="outline" className="text-xs">
+                                  <Lock className="h-3 w-3 mr-1" />
+                                  Écriture
+                                </Badge>
+                              )}
+                              <Badge 
+                                variant="outline"
+                                className={`text-xs ${getRiskColor(permKey.startsWith('manage_') ? 'high' : 'low')}`}
+                              >
+                                {permKey.startsWith('manage_') ? 'high' : 'low'}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </TabsContent>
-                ))}
-              </Tabs>
-            </ScrollArea>
-          </div>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              ))}
+            </div>
+          </ScrollArea>
 
           {/* Boutons d'action */}
           <div className="flex gap-2 justify-end pt-4 border-t">

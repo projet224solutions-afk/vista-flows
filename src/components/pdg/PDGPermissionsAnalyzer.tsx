@@ -19,27 +19,20 @@ interface AnalysisResult {
 export function PDGPermissionsAnalyzer() {
   const [analysis, setAnalysis] = useState<Record<string, AnalysisResult[]>>({});
   const [loading, setLoading] = useState(false);
-  const [rawData, setRawData] = useState<any>(null);
 
   const runAnalysis = async () => {
     setLoading(true);
     const results: Record<string, AnalysisResult[]> = {};
 
     try {
-      // 1. Vérifier les tables
+      // 1. Vérifier les tables principales
       results['Tables'] = await checkTables();
       
-      // 2. Vérifier les fonctions
-      results['Fonctions'] = await checkFunctions();
+      // 2. Vérifier les agents
+      results['Agents'] = await checkAgents();
       
-      // 3. Vérifier les politiques RLS
-      results['Politiques RLS'] = await checkPolicies();
-      
-      // 4. Vérifier les permissions du catalogue
-      results['Catalogue'] = await checkCatalog();
-      
-      // 5. Vérifier les permissions déléguées
-      results['Permissions déléguées'] = await checkDelegatedPermissions();
+      // 3. Vérifier les permissions
+      results['Permissions'] = await checkPermissions();
       
       setAnalysis(results);
     } catch (error) {
@@ -52,14 +45,14 @@ export function PDGPermissionsAnalyzer() {
 
   const checkTables = async (): Promise<AnalysisResult[]> => {
     const results: AnalysisResult[] = [];
-    const tables = ['pdg_access_permissions', 'pdg_permissions_audit', 'pdg_permission_catalog'];
+    const tables = ['agents_management', 'agent_permissions', 'agent_wallets'];
 
     for (const table of tables) {
       try {
-        const { error, data } = await supabase
+        const { error } = await supabase
           .from(table as any)
-          .select('count')
-          .limit(0);
+          .select('id')
+          .limit(1);
 
         if (error?.message?.includes('does not exist')) {
           results.push({
@@ -91,111 +84,40 @@ export function PDGPermissionsAnalyzer() {
     return results;
   };
 
-  const checkFunctions = async (): Promise<AnalysisResult[]> => {
-    const results: AnalysisResult[] = [];
-    const functions = [
-      'grant_pdg_permission_to_agent',
-      'revoke_pdg_permission_from_agent',
-      'agent_has_permission'
-    ];
-
-    for (const fn of functions) {
-      try {
-        const { error } = await supabase.rpc(fn as any, {});
-        
-        if (error?.message?.includes('does not exist')) {
-          results.push({
-            status: 'error',
-            message: `Fonction '${fn}' manquante`,
-            severity: 'critical'
-          });
-        } else {
-          results.push({
-            status: 'ok',
-            message: `Fonction '${fn}' disponible`
-          });
-        }
-      } catch (err) {
-        results.push({
-          status: 'ok',
-          message: `Fonction '${fn}' existe (erreur d'exécution attendue)`
-        });
-      }
-    }
-
-    return results;
-  };
-
-  const checkPolicies = async (): Promise<AnalysisResult[]> => {
-    const results: AnalysisResult[] = [];
-    
-    // Vérifier si on peut accéder aux politiques via information_schema
-    try {
-      const { data, error } = await supabase
-        .from('information_schema.policies' as any)
-        .select('policyname')
-        .filter('tablename', 'eq', 'pdg_access_permissions');
-
-      if (error?.message?.includes('does not exist')) {
-        results.push({
-          status: 'warning',
-          message: 'Impossible de vérifier les politiques RLS (information_schema non accessible)',
-          severity: 'low'
-        });
-      } else {
-        results.push({
-          status: 'ok',
-          message: 'Politiques RLS vérifiées'
-        });
-      }
-    } catch (err) {
-      results.push({
-        status: 'warning',
-        message: 'Vérification des politiques RLS non possible',
-        severity: 'low'
-      });
-    }
-
-    return results;
-  };
-
-  const checkCatalog = async (): Promise<AnalysisResult[]> => {
+  const checkAgents = async (): Promise<AnalysisResult[]> => {
     const results: AnalysisResult[] = [];
 
     try {
       const { data, error, count } = await supabase
-        .from('pdg_permission_catalog')
+        .from('agents_management')
         .select('*', { count: 'exact' });
 
       if (error) {
         results.push({
           status: 'error',
-          message: 'Erreur accès catalogue permissions',
-          severity: 'high'
-        });
-      } else if (!count || count === 0) {
-        results.push({
-          status: 'warning',
-          message: 'Catalogue permissions vide',
+          message: 'Erreur accès table agents',
           severity: 'high'
         });
       } else {
         results.push({
           status: 'ok',
-          message: `Catalogue permissions: ${count} entrées`
+          message: `${count || 0} agents trouvés`
         });
 
-        // Vérifier la diversité des catégories
-        const categories = new Set(data?.map((p: any) => p.category) || []);
-        results.push({
-          status: 'ok',
-          message: `Catégories de permissions: ${Array.from(categories).join(', ')}`
-        });
+        // Vérifier les agents inactifs
+        const inactive = data?.filter(a => !a.is_active) || [];
+        if (inactive.length > 0) {
+          results.push({
+            status: 'warning',
+            message: `${inactive.length} agents inactifs`,
+            severity: 'low'
+          });
+        }
       }
     } catch (err) {
       results.push({
         status: 'error',
-        message: 'Erreur vérification catalogue',
+        message: 'Erreur vérification agents',
         severity: 'high'
       });
     }
@@ -203,41 +125,45 @@ export function PDGPermissionsAnalyzer() {
     return results;
   };
 
-  const checkDelegatedPermissions = async (): Promise<AnalysisResult[]> => {
+  const checkPermissions = async (): Promise<AnalysisResult[]> => {
     const results: AnalysisResult[] = [];
 
     try {
       const { data, error, count } = await supabase
-        .from('pdg_access_permissions')
+        .from('agent_permissions')
         .select('*', { count: 'exact' });
 
       if (error) {
         results.push({
           status: 'error',
-          message: 'Erreur accès permissions déléguées',
+          message: 'Erreur accès permissions agents',
           severity: 'high'
         });
       } else {
+        const activePerms = data?.filter(p => p.permission_value) || [];
         results.push({
           status: 'ok',
-          message: `Permissions déléguées: ${count || 0} enregistrements`
+          message: `${activePerms.length} permissions actives (${count || 0} total)`
         });
 
-        if (data && data.length > 0) {
-          const expired = data.filter((p: any) => p.expires_at && new Date(p.expires_at) < new Date());
-          if (expired.length > 0) {
-            results.push({
-              status: 'warning',
-              message: `${expired.length} permissions expirées détectées`,
-              severity: 'medium'
-            });
-          }
+        // Compter les permissions par type
+        const byType: Record<string, number> = {};
+        for (const perm of activePerms) {
+          const type = perm.permission_key?.startsWith('manage_') ? 'Écriture' : 'Lecture';
+          byType[type] = (byType[type] || 0) + 1;
+        }
+
+        for (const [type, count] of Object.entries(byType)) {
+          results.push({
+            status: 'ok',
+            message: `${count} permissions de type ${type}`
+          });
         }
       }
     } catch (err) {
       results.push({
         status: 'error',
-        message: 'Erreur vérification permissions déléguées',
+        message: 'Erreur vérification permissions',
         severity: 'high'
       });
     }
@@ -286,7 +212,7 @@ export function PDGPermissionsAnalyzer() {
             <div>
               <CardTitle>Analyseur de Permissions PDG</CardTitle>
               <CardDescription>
-                Vérifie l'intégrité du système de permissions déléguées
+                Vérifie l'intégrité du système de permissions agents
               </CardDescription>
             </div>
             <Button 
