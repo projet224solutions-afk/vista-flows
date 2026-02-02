@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,13 +7,15 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp, Activity, ExternalLink, Copy, Eye, UserCog, Shield, KeyRound } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp, Activity, ExternalLink, Copy, Eye, UserCog, KeyRound, Settings, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePDGAgentsData, type Agent } from '@/hooks/usePDGAgentsData';
 import { usePDGActions } from '@/hooks/usePDGActions';
 import { supabase } from '@/integrations/supabase/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AgentPermissionsDialog } from './AgentPermissionsDialog';
+import { AgentPermissionsSection } from './AgentPermissionsSection';
+import { useAgentPermissions, AVAILABLE_PERMISSIONS } from '@/hooks/useAgentPermissions';
 
 interface AgentUser {
   id: string;
@@ -67,12 +69,12 @@ export default function PDGAgentsManagement() {
   const [agentSubAgentsMap, setAgentSubAgentsMap] = useState<Record<string, SubAgent[]>>({});
   const [loadingUsersMap, setLoadingUsersMap] = useState<Record<string, boolean>>({});
   const [loadingSubAgentsMap, setLoadingSubAgentsMap] = useState<Record<string, boolean>>({});
-  const [permissionsDialogAgent, setPermissionsDialogAgent] = useState<Agent | null>(null);
-  const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const [resetPasswordAgent, setResetPasswordAgent] = useState<Agent | null>(null);
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [advancedPermissions, setAdvancedPermissions] = useState<Record<string, boolean>>({});
+  const [loadingAdvancedPermissions, setLoadingAdvancedPermissions] = useState(false);
   // Email change state
   const [changeEmailAgent, setChangeEmailAgent] = useState<Agent | null>(null);
   const [isChangeEmailDialogOpen, setIsChangeEmailDialogOpen] = useState(false);
@@ -154,6 +156,19 @@ export default function PDGAgentsManagement() {
           commission_rate: formData.commission_rate,
           can_create_sub_agent: formData.permissions.create_sub_agents,
         });
+
+        // Sauvegarder les permissions avancées
+        if (Object.keys(advancedPermissions).length > 0) {
+          const { error: permError } = await supabase
+            .rpc('set_agent_permissions' as any, {
+              p_agent_id: editingAgent.id,
+              p_permissions: advancedPermissions
+            });
+          
+          if (permError) {
+            console.error('Erreur sauvegarde permissions avancées:', permError);
+          }
+        }
       } else {
         // Mode création
         await createAgentAction({
@@ -195,7 +210,7 @@ export default function PDGAgentsManagement() {
     }
   };
 
-  const handleEditAgent = (agent: Agent) => {
+  const handleEditAgent = async (agent: Agent) => {
     setEditingAgent(agent);
 
     // Robust: certaines anciennes données stockent "create_sub_agents" uniquement dans le tableau permissions
@@ -217,13 +232,32 @@ export default function PDGAgentsManagement() {
         manage_products: agent.permissions.includes('manage_products')
       }
     });
+
+    // Charger les permissions avancées
+    setLoadingAdvancedPermissions(true);
+    try {
+      const { data, error } = await supabase
+        .rpc('get_agent_permissions' as any, { p_agent_id: agent.id });
+      
+      if (error) throw error;
+      setAdvancedPermissions((data as Record<string, boolean>) || {});
+    } catch (error) {
+      console.error('Erreur chargement permissions avancées:', error);
+      setAdvancedPermissions({});
+    } finally {
+      setLoadingAdvancedPermissions(false);
+    }
+
     setIsDialogOpen(true);
   };
 
-  const handleManagePermissions = (agent: Agent) => {
-    setPermissionsDialogAgent(agent);
-    setIsPermissionsDialogOpen(true);
+  const handleAdvancedPermissionChange = (key: string, value: boolean) => {
+    setAdvancedPermissions(prev => ({
+      ...prev,
+      [key]: value
+    }));
   };
+
 
   const handleResetPassword = (agent: Agent) => {
     setResetPasswordAgent(agent);
@@ -501,188 +535,343 @@ export default function PDGAgentsManagement() {
               Nouvel Agent
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh]">
+          <DialogContent className="max-w-3xl max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>
-                {editingAgent ? 'Modifier l\'Agent' : 'Créer un Nouvel Agent'}
+                {editingAgent ? 'Modifier l\'Agent & Permissions' : 'Créer un Nouvel Agent'}
               </DialogTitle>
             </DialogHeader>
-            <ScrollArea className="max-h-[70vh] pr-4">
-              <form onSubmit={handleCreateAgent} className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nom Complet *</Label>
-                  <Input
-                    id="name"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Ex: Jean Dupont"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Téléphone *</Label>
-                  <Input
-                    id="phone"
-                    required
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="Ex: 622123456"
-                  />
-                </div>
-              </div>
+            <form onSubmit={handleCreateAgent}>
+              {editingAgent ? (
+                <Tabs defaultValue="general" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="general">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Informations
+                    </TabsTrigger>
+                    <TabsTrigger value="permissions">
+                      <Shield className="w-4 h-4 mr-2" />
+                      Permissions Avancées
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="general" className="mt-4">
+                    <ScrollArea className="max-h-[50vh] pr-4">
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="name">Nom Complet *</Label>
+                            <Input
+                              id="name"
+                              required
+                              value={formData.name}
+                              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                              placeholder="Ex: Jean Dupont"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="phone">Téléphone *</Label>
+                            <Input
+                              id="phone"
+                              required
+                              value={formData.phone}
+                              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                              placeholder="Ex: 622123456"
+                            />
+                          </div>
+                        </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="Ex: agent@224solutions.com"
-                />
-              </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="email">Email *</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            required
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            placeholder="Ex: agent@224solutions.com"
+                          />
+                        </div>
 
-              {!editingAgent && (
-                <div className="space-y-2">
-                  <Label htmlFor="password">Mot de passe * (min. 8 caractères)</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    required
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="••••••••"
-                  />
-                </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="type_agent">Type d'agent</Label>
+                            <Input
+                              id="type_agent"
+                              value={formData.type_agent}
+                              onChange={(e) => setFormData({ ...formData, type_agent: e.target.value })}
+                              placeholder="Ex: Agent Principal..."
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="commission">Taux Commission (%)</Label>
+                            <Input
+                              id="commission"
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={formData.commission_rate}
+                              onChange={(e) => setFormData({ ...formData, commission_rate: Number(e.target.value) })}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-3 border-t pt-4">
+                          <Label>Permissions de base</Label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox 
+                                id="create_users"
+                                checked={formData.permissions.create_users}
+                                onCheckedChange={(checked) =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    permissions: { ...prev.permissions, create_users: checked === true },
+                                  }))
+                                }
+                              />
+                              <label htmlFor="create_users" className="text-sm">Créer des utilisateurs</label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox 
+                                id="create_sub_agents"
+                                checked={formData.permissions.create_sub_agents}
+                                onCheckedChange={(checked) =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    permissions: { ...prev.permissions, create_sub_agents: checked === true },
+                                  }))
+                                }
+                              />
+                              <label htmlFor="create_sub_agents" className="text-sm">Créer des sous-agents</label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox 
+                                id="view_reports"
+                                checked={formData.permissions.view_reports}
+                                onCheckedChange={(checked) =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    permissions: { ...prev.permissions, view_reports: checked === true },
+                                  }))
+                                }
+                              />
+                              <label htmlFor="view_reports" className="text-sm">Voir les rapports</label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox 
+                                id="manage_commissions"
+                                checked={formData.permissions.manage_commissions}
+                                onCheckedChange={(checked) =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    permissions: { ...prev.permissions, manage_commissions: checked === true },
+                                  }))
+                                }
+                              />
+                              <label htmlFor="manage_commissions" className="text-sm">Gérer les commissions</label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox 
+                                id="manage_users"
+                                checked={formData.permissions.manage_users}
+                                onCheckedChange={(checked) =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    permissions: { ...prev.permissions, manage_users: checked === true },
+                                  }))
+                                }
+                              />
+                              <label htmlFor="manage_users" className="text-sm">Gérer les utilisateurs</label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox 
+                                id="manage_products"
+                                checked={formData.permissions.manage_products}
+                                onCheckedChange={(checked) =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    permissions: { ...prev.permissions, manage_products: checked === true },
+                                  }))
+                                }
+                              />
+                              <label htmlFor="manage_products" className="text-sm">Gérer les produits</label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </ScrollArea>
+                  </TabsContent>
+
+                  <TabsContent value="permissions" className="mt-4">
+                    <AgentPermissionsSection
+                      permissions={advancedPermissions}
+                      onPermissionChange={handleAdvancedPermissionChange}
+                      loading={loadingAdvancedPermissions}
+                    />
+                  </TabsContent>
+                </Tabs>
+              ) : (
+                <ScrollArea className="max-h-[60vh] pr-4 mt-4">
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Nom Complet *</Label>
+                        <Input
+                          id="name"
+                          required
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          placeholder="Ex: Jean Dupont"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Téléphone *</Label>
+                        <Input
+                          id="phone"
+                          required
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          placeholder="Ex: 622123456"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="Ex: agent@224solutions.com"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Mot de passe * (min. 8 caractères)</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        required
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        placeholder="••••••••"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="type_agent">Type d'agent</Label>
+                        <Input
+                          id="type_agent"
+                          value={formData.type_agent}
+                          onChange={(e) => setFormData({ ...formData, type_agent: e.target.value })}
+                          placeholder="Ex: Agent Principal..."
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="commission">Taux Commission (%)</Label>
+                        <Input
+                          id="commission"
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={formData.commission_rate}
+                          onChange={(e) => setFormData({ ...formData, commission_rate: Number(e.target.value) })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 border-t pt-4">
+                      <Label>Permissions de base</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="create_users_new"
+                            checked={formData.permissions.create_users}
+                            onCheckedChange={(checked) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                permissions: { ...prev.permissions, create_users: checked === true },
+                              }))
+                            }
+                          />
+                          <label htmlFor="create_users_new" className="text-sm">Créer des utilisateurs</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="create_sub_agents_new"
+                            checked={formData.permissions.create_sub_agents}
+                            onCheckedChange={(checked) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                permissions: { ...prev.permissions, create_sub_agents: checked === true },
+                              }))
+                            }
+                          />
+                          <label htmlFor="create_sub_agents_new" className="text-sm">Créer des sous-agents</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="view_reports_new"
+                            checked={formData.permissions.view_reports}
+                            onCheckedChange={(checked) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                permissions: { ...prev.permissions, view_reports: checked === true },
+                              }))
+                            }
+                          />
+                          <label htmlFor="view_reports_new" className="text-sm">Voir les rapports</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="manage_commissions_new"
+                            checked={formData.permissions.manage_commissions}
+                            onCheckedChange={(checked) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                permissions: { ...prev.permissions, manage_commissions: checked === true },
+                              }))
+                            }
+                          />
+                          <label htmlFor="manage_commissions_new" className="text-sm">Gérer les commissions</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="manage_users_new"
+                            checked={formData.permissions.manage_users}
+                            onCheckedChange={(checked) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                permissions: { ...prev.permissions, manage_users: checked === true },
+                              }))
+                            }
+                          />
+                          <label htmlFor="manage_users_new" className="text-sm">Gérer les utilisateurs</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="manage_products_new"
+                            checked={formData.permissions.manage_products}
+                            onCheckedChange={(checked) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                permissions: { ...prev.permissions, manage_products: checked === true },
+                              }))
+                            }
+                          />
+                          <label htmlFor="manage_products_new" className="text-sm">Gérer les produits</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </ScrollArea>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="type_agent">Type d'agent</Label>
-                <Input
-                  id="type_agent"
-                  value={formData.type_agent}
-                  onChange={(e) => setFormData({ ...formData, type_agent: e.target.value })}
-                  placeholder="Ex: Agent Principal, Sous-agent, Agent Commercial..."
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="commission">Taux Commission (%)</Label>
-                <Input
-                  id="commission"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={formData.commission_rate}
-                  onChange={(e) => setFormData({ ...formData, commission_rate: Number(e.target.value) })}
-                />
-              </div>
-
-              <div className="space-y-3 border-t pt-4">
-                <Label>Permissions</Label>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="create_users"
-                      checked={formData.permissions.create_users}
-                      onCheckedChange={(checked) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          permissions: {
-                            ...prev.permissions,
-                            create_users: checked === true,
-                          },
-                        }))
-                      }
-                    />
-                    <label htmlFor="create_users" className="text-sm">Créer des utilisateurs</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="create_sub_agents"
-                      checked={formData.permissions.create_sub_agents}
-                      onCheckedChange={(checked) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          permissions: {
-                            ...prev.permissions,
-                            create_sub_agents: checked === true,
-                          },
-                        }))
-                      }
-                    />
-                    <label htmlFor="create_sub_agents" className="text-sm">Créer des sous-agents</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="view_reports"
-                      checked={formData.permissions.view_reports}
-                      onCheckedChange={(checked) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          permissions: {
-                            ...prev.permissions,
-                            view_reports: checked === true,
-                          },
-                        }))
-                      }
-                    />
-                    <label htmlFor="view_reports" className="text-sm">Voir les rapports</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="manage_commissions"
-                      checked={formData.permissions.manage_commissions}
-                      onCheckedChange={(checked) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          permissions: {
-                            ...prev.permissions,
-                            manage_commissions: checked === true,
-                          },
-                        }))
-                      }
-                    />
-                    <label htmlFor="manage_commissions" className="text-sm">Gérer les commissions</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="manage_users"
-                      checked={formData.permissions.manage_users}
-                      onCheckedChange={(checked) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          permissions: {
-                            ...prev.permissions,
-                            manage_users: checked === true,
-                          },
-                        }))
-                      }
-                    />
-                    <label htmlFor="manage_users" className="text-sm">Gérer les utilisateurs</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="manage_products"
-                      checked={formData.permissions.manage_products}
-                      onCheckedChange={(checked) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          permissions: {
-                            ...prev.permissions,
-                            manage_products: checked === true,
-                          },
-                        }))
-                      }
-                    />
-                    <label htmlFor="manage_products" className="text-sm">Gérer les produits</label>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-4">
+              <div className="flex justify-end gap-2 pt-4 border-t mt-4">
                 <Button 
                   type="button" 
                   variant="outline" 
@@ -700,7 +889,7 @@ export default function PDGAgentsManagement() {
                   ) : editingAgent ? (
                     <>
                       <Edit className="w-4 h-4 mr-2" />
-                      Modifier l'Agent
+                      Enregistrer les modifications
                     </>
                   ) : (
                     <>
@@ -710,8 +899,7 @@ export default function PDGAgentsManagement() {
                   )}
                 </Button>
               </div>
-              </form>
-            </ScrollArea>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
@@ -1016,20 +1204,11 @@ export default function PDGAgentsManagement() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleManagePermissions(agent)}
-                    className="flex-1"
-                  >
-                    <Shield className="w-4 h-4 mr-1" />
-                    Permissions
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
                     onClick={() => handleEditAgent(agent)}
                     className="flex-1"
                   >
-                    <Edit className="w-4 h-4 mr-1" />
-                    Modifier
+                    <Settings className="w-4 h-4 mr-1" />
+                    Modifier & Permissions
                   </Button>
                   <Button
                     size="sm"
@@ -1095,12 +1274,6 @@ export default function PDGAgentsManagement() {
         </Card>
       )}
 
-      {/* Dialogue de gestion des permissions */}
-      <AgentPermissionsDialog
-        agent={permissionsDialogAgent}
-        open={isPermissionsDialogOpen}
-        onOpenChange={setIsPermissionsDialogOpen}
-      />
 
       {/* Dialogue de réinitialisation du mot de passe */}
       <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
