@@ -145,15 +145,48 @@ export function useAgentPermissionsUnified(agentId: string | undefined): Unified
       if (permissions[manageKey] === true) return true;
     }
     
-    // Alias spécifiques pour certaines permissions
+    // Alias spécifiques pour certaines permissions (héritage complet)
     const permissionAliases: Record<string, string[]> = {
+      // Gestion
       'view_users': ['manage_users', 'create_users'],
       'create_users': ['manage_users'],
-      'view_reports': ['manage_reports', 'view_analytics', 'view_finance', 'manage_finance'],
-      'create_sub_agents': ['manage_agents'],
+      'view_kyc': ['manage_kyc', 'manage_vendor_kyc'],
+      'view_vendor_kyc': ['manage_vendor_kyc', 'manage_kyc'],
+      'view_products': ['manage_products'],
+      'view_transfer_fees': ['manage_transfer_fees'],
+      'view_service_subscriptions': ['manage_service_subscriptions'],
+      // Finance
+      'view_finance': ['manage_finance'],
+      'view_banking': ['manage_banking', 'manage_finance'],
+      'view_payments': ['manage_payments', 'manage_finance'],
       'view_financial_module': ['manage_finance', 'view_finance'],
+      'manage_wallet_transactions': ['manage_finance', 'manage_banking'],
+      // Opérations
+      'view_agents': ['manage_agents'],
+      'create_sub_agents': ['manage_agents'],
+      'view_syndicat': ['manage_syndicat'],
+      'view_bureau_monitoring': ['manage_bureau_monitoring'],
+      'view_driver_subscriptions': ['manage_driver_subscriptions'],
+      'view_stolen_vehicles': ['manage_stolen_vehicles'],
+      'view_orders': ['manage_orders'],
+      'view_vendors': ['manage_vendors', 'manage_vendor_kyc'],
+      'view_vendor_certification': ['manage_vendor_certification'],
+      'view_drivers': ['manage_drivers'],
+      'view_quotes_invoices': ['manage_quotes_invoices'],
       'access_communication': ['manage_communication'],
+      'view_agent_wallet_audit': ['manage_agent_wallet_audit'],
+      // Système
+      'view_security': ['manage_security'],
+      'view_id_normalization': ['manage_id_normalization'],
+      'view_bug_bounty': ['manage_bug_bounty'],
+      'view_config': ['manage_config'],
+      'view_maintenance': ['manage_maintenance'],
+      'view_api': ['manage_api'],
+      'view_debug': ['manage_debug'],
+      // Intelligence
+      'view_reports': ['manage_reports', 'view_analytics', 'view_finance', 'manage_finance'],
       'view_copilot_audit': ['access_copilot'],
+      'view_analytics': ['manage_analytics', 'view_reports', 'manage_reports'],
     };
     
     const aliases = permissionAliases[key];
