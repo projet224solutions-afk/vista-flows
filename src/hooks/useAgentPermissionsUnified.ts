@@ -31,16 +31,43 @@ export function useAgentPermissionsUnified(agentId: string | undefined): Unified
       setLoading(true);
       console.log('📋 [Permissions] Chargement pour agent:', agentId);
 
-      // Charger les permissions depuis la table agent_permissions
-      const { data: permissionsData, error: permError } = await supabase
-        .from('agent_permissions')
-        .select('permission_key, permission_value')
-        .eq('agent_id', agentId);
+      /**
+       * IMPORTANT:
+       * Dans l'interface Agent (publique via access_token), on n'a souvent PAS de session Supabase Auth.
+       * Si la table agent_permissions est protégée par RLS, un SELECT direct peut renvoyer un tableau vide
+       * (sans erreur). On privilégie donc la RPC get_agent_permissions (security definer côté DB).
+       */
+      let permissionsFromRpc: Record<string, boolean> | null = null;
+      try {
+        const { data: rpcData, error: rpcError } = await supabase.rpc('get_agent_permissions', {
+          p_agent_id: agentId,
+        });
 
-      if (permError) {
-        console.error('❌ Erreur chargement agent_permissions:', permError);
-      } else {
-        console.log('📋 [Permissions] Données table agent_permissions:', permissionsData);
+        if (rpcError) {
+          console.warn('⚠️ [Permissions] RPC get_agent_permissions en erreur, fallback SELECT:', rpcError);
+        } else if (rpcData && typeof rpcData === 'object') {
+          permissionsFromRpc = rpcData as Record<string, boolean>;
+          console.log('📋 [Permissions] Données RPC get_agent_permissions:', permissionsFromRpc);
+        }
+      } catch (e) {
+        console.warn('⚠️ [Permissions] Exception RPC get_agent_permissions, fallback SELECT:', e);
+      }
+
+      // Fallback: Charger les permissions depuis la table agent_permissions
+      // (utile si la RPC n'existe pas / est désactivée dans un environnement)
+      let permissionsData: Array<{ permission_key: string; permission_value: boolean | null }> = [];
+      if (!permissionsFromRpc) {
+        const { data, error: permError } = await supabase
+          .from('agent_permissions')
+          .select('permission_key, permission_value')
+          .eq('agent_id', agentId);
+
+        if (permError) {
+          console.error('❌ Erreur chargement agent_permissions (fallback):', permError);
+        } else {
+          permissionsData = (data || []) as any;
+          console.log('📋 [Permissions] Données table agent_permissions (fallback):', permissionsData);
+        }
       }
 
       // Charger aussi les permissions legacy du JSON dans agents_management
@@ -60,7 +87,12 @@ export function useAgentPermissionsUnified(agentId: string | undefined): Unified
       const mergedPermissions: Record<string, boolean> = {};
 
       // D'abord, les permissions de la nouvelle table (prioritaires)
-      if (permissionsData && permissionsData.length > 0) {
+      if (permissionsFromRpc) {
+        Object.entries(permissionsFromRpc).forEach(([key, value]) => {
+          mergedPermissions[key] = value === true;
+        });
+        console.log('📋 [Permissions] Après ajout RPC:', mergedPermissions);
+      } else if (permissionsData && permissionsData.length > 0) {
         permissionsData.forEach(p => {
           mergedPermissions[p.permission_key] = p.permission_value ?? false;
         });
