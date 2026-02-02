@@ -22,7 +22,8 @@ import {
   ArrowUpRight,
   Link2,
   DollarSign,
-  FileCheck
+  FileCheck,
+  Sparkles
 } from 'lucide-react';
 import {
   Tooltip,
@@ -237,6 +238,14 @@ export function AgentLayoutProfessional({
       icon: <ArrowUpRight className="w-5 h-5" />,
       gradient: 'from-orange-500 to-red-500',
       permission: 'view_orders'
+    },
+    {
+      id: 'service-subscriptions',
+      label: 'Abonnements Services',
+      icon: <Sparkles className="w-5 h-5" />,
+      gradient: 'from-yellow-500 to-amber-500',
+      permission: 'view_service_subscriptions',
+      badge: 'Nouveau'
     },
     // --- Fin nouvelles fonctionnalités ---
     {
