@@ -596,7 +596,10 @@ export function UserActivitySearch() {
                       {activityData.transactions.length === 0 ? (
                         <p className="text-center text-muted-foreground py-8">Aucune transaction</p>
                       ) : (
-                        activityData.transactions.map((tx) => (
+                        // Sécuriser l'affichage: certains backends peuvent renvoyer des doublons (même id)
+                        activityData.transactions
+                          .filter((tx, idx, arr) => arr.findIndex(t => t.id === tx.id) === idx)
+                          .map((tx) => (
                           <div key={tx.id} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
                             <div className={`p-2 rounded-full ${
                               tx.direction === 'sent' 
