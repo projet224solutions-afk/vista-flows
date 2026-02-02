@@ -8,7 +8,7 @@
 
 DO $$
 DECLARE
-  v_email TEXT := 'votre-email@example.com'; -- ⚠️ REMPLACER ICI
+  v_email TEXT := 'projet224solutions@gmail.com'; -- ⚠️ REMPLACER ICI
   v_user_id UUID;
   v_custom_id TEXT;
 BEGIN

@@ -15,9 +15,14 @@ import {
   handleGetVendorAnalytics,
   handleGetProductsAnalytics
 } from '../controllers/analytics.controller.js';
-import { verifyJWT, optionalJWT } from '../middlewares/auth.middleware.js';
-import { trackingRateLimiter, analyticsRateLimiter } from '../middlewares/analytics.middleware.js';
-import { validateTrackingRequest, validateAnalyticsRequest } from '../middlewares/analytics.middleware.js';
+import { verifyJWT } from '../middlewares/auth.middleware.js';
+import {
+  trackingRateLimiter,
+  analyticsRateLimiter,
+  validateTrackingRequest,
+  validateAnalyticsRequest,
+  optionalJWT
+} from '../middlewares/analytics.middleware.js';
 
 const router = Router();
 
