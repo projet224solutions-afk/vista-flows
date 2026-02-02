@@ -151,46 +151,89 @@ export function VendorKYCReview() {
 
     setSubmitting(true);
     try {
+      const newStatus = dialogAction === 'APPROVE' ? 'verified' : 'rejected';
+      const now = new Date().toISOString();
+      
       const updateData: any = {
-        status: dialogAction === 'APPROVE' ? 'verified' : 'rejected',
-        updated_at: new Date().toISOString()
+        status: newStatus,
+        updated_at: now
       };
 
       if (dialogAction === 'APPROVE') {
-        updateData.verified_at = new Date().toISOString();
+        updateData.verified_at = now;
         updateData.rejection_reason = null;
       } else {
         updateData.rejection_reason = rejectionReason;
       }
 
+      // Update vendor_kyc table
       const { error: kycError } = await supabase
         .from('vendor_kyc')
         .update(updateData)
         .eq('id', selectedKYC.id);
 
-      if (kycError) throw kycError;
-
-      // Update vendors table kyc_status
-      const { error: vendorError } = await supabase
-        .from('vendors')
-        .update({ kyc_status: updateData.status })
-        .eq('user_id', selectedKYC.vendor_id);
-
-      if (vendorError) {
-        console.warn('Warning updating vendors table:', vendorError);
+      if (kycError) {
+        console.error('Error updating vendor_kyc:', kycError);
+        throw new Error(`Erreur mise à jour KYC: ${kycError.message}`);
       }
 
-      // Update vendor_certifications kyc_status
-      const { error: certError } = await supabase
-        .from('vendor_certifications')
-        .update({
-          kyc_status: updateData.status,
-          kyc_verified_at: updateData.verified_at || null
-        })
-        .eq('vendor_id', selectedKYC.vendor_id);
+      // Update vendors table kyc_status (use upsert pattern)
+      try {
+        const { error: vendorError } = await supabase
+          .from('vendors')
+          .update({ kyc_status: newStatus })
+          .eq('user_id', selectedKYC.vendor_id);
 
-      if (certError) {
-        console.warn('Warning updating certifications:', certError);
+        if (vendorError) {
+          console.warn('Warning updating vendors table:', vendorError);
+        }
+      } catch (vendorErr) {
+        console.warn('Could not update vendors table:', vendorErr);
+      }
+
+      // UPSERT vendor_certifications (create if doesn't exist, update if exists)
+      try {
+        // First try to update
+        const { data: existingCert, error: checkError } = await supabase
+          .from('vendor_certifications')
+          .select('id')
+          .eq('vendor_id', selectedKYC.vendor_id)
+          .maybeSingle();
+
+        if (existingCert) {
+          // Update existing certification
+          const { error: certError } = await supabase
+            .from('vendor_certifications')
+            .update({
+              kyc_status: newStatus,
+              kyc_verified_at: dialogAction === 'APPROVE' ? now : null,
+              updated_at: now
+            })
+            .eq('vendor_id', selectedKYC.vendor_id);
+
+          if (certError) {
+            console.warn('Warning updating certifications:', certError);
+          }
+        } else {
+          // Insert new certification record
+          const { error: insertError } = await supabase
+            .from('vendor_certifications')
+            .insert({
+              vendor_id: selectedKYC.vendor_id,
+              status: 'NON_CERTIFIE',
+              kyc_status: newStatus,
+              kyc_verified_at: dialogAction === 'APPROVE' ? now : null,
+              last_status_change: now,
+              created_at: now,
+              updated_at: now
+            });
+
+          if (insertError) {
+            console.warn('Warning inserting certification:', insertError);
+          }
+        }
+      } catch (certErr) {
+        console.warn('Could not update/create certification:', certErr);
       }
 
       toast.success(
@@ -209,7 +252,7 @@ export function VendorKYCReview() {
 
     } catch (error: any) {
       console.error('Error updating KYC:', error);
-      toast.error(error.message || 'Erreur lors de la mise à jour');
+      toast.error(error.message || 'Erreur lors de la sauvegarde');
     } finally {
       setSubmitting(false);
     }
