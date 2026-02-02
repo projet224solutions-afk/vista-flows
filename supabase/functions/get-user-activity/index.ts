@@ -19,6 +19,8 @@ function getRoleTypeFromCustomId(customId: string): string | null {
     'VND': 'vendor',
     'CLT': 'client',
     'DRV': 'driver',
+    'TAX': 'taxi',      // AJOUTÉ: Taxi
+    'LIV': 'livreur',   // AJOUTÉ: Livreur
     'AGT': 'agent',
     'PDG': 'pdg',
     'TRS': 'transitaire',
