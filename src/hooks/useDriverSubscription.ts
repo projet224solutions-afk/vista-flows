@@ -45,8 +45,8 @@ interface UseDriverSubscriptionResult {
 }
 
 const DEFAULT_CONFIG: SubscriptionConfig = {
-  price: 150000, // 150,000 GNF par mois
-  yearly_price: 1710000, // 12 mois * 150,000 * 0.95
+  price: 50000, // 50,000 GNF par mois (harmonisé avec service et migration)
+  yearly_price: 570000, // 12 mois * 50,000 * 0.95
   yearly_discount_percentage: 5,
 };
 
@@ -111,7 +111,7 @@ export function useDriverSubscription(): UseDriverSubscriptionResult {
         isExpired: false,
         isExpiringSoon: false,
         daysRemaining: 0,
-        hasAccess: true, // Par défaut, accès accordé si pas d'abonnement trouvé
+        hasAccess: false, // PAS d'accès si pas d'abonnement actif
         expiryDate: null,
       };
     }
@@ -129,7 +129,7 @@ export function useDriverSubscription(): UseDriverSubscriptionResult {
       isExpired: expired,
       isExpiringSoon: expiringSoon,
       daysRemaining: Math.max(0, diffDays),
-      hasAccess: access || !subscription, // Accès si actif ou pas d'abonnement requis
+      hasAccess: access, // Accès UNIQUEMENT si abonnement actif
       expiryDate: endDate,
     };
   }, [subscription]);
@@ -145,38 +145,49 @@ export function useDriverSubscription(): UseDriverSubscriptionResult {
       return;
     }
 
-    try {
-      const price = billingCycle === 'yearly' ? DEFAULT_CONFIG.yearly_price : DEFAULT_CONFIG.price;
-      const days = billingCycle === 'yearly' ? 365 : 30;
-      const startDate = new Date();
-      const endDate = new Date(startDate.getTime() + days * 24 * 60 * 60 * 1000);
+    if (!profile?.role || !['taxi', 'livreur'].includes(profile.role)) {
+      toast.error('Seuls les chauffeurs taxi/livreur peuvent souscrire');
+      return;
+    }
 
-      const { error } = await supabase
-        .from('driver_subscriptions')
-        .insert({
-          user_id: user.id,
-          type: 'driver_subscription',
-          status: 'active',
-          start_date: startDate.toISOString(),
-          end_date: endDate.toISOString(),
-          billing_cycle: billingCycle,
-          payment_method: paymentMethod,
-          price: price,
-        });
+    try {
+      // Utiliser la fonction RPC subscribe_driver pour le débit wallet
+      const { data, error } = await supabase.rpc('subscribe_driver', {
+        p_user_id: user.id,
+        p_type: profile.role, // 'taxi' ou 'livreur' selon le rôle
+        p_payment_method: paymentMethod,
+        p_billing_cycle: billingCycle
+      });
 
       if (error) {
         console.error('[useDriverSubscription] Error subscribing:', error);
-        toast.error('Erreur lors de la souscription');
+
+        // Message d'erreur détaillé
+        if (error.message?.includes('Solde insuffisant')) {
+          toast.error('Solde insuffisant', {
+            description: 'Rechargez votre wallet pour souscrire'
+          });
+        } else if (error.message?.includes('Configuration')) {
+          toast.error('Configuration manquante', {
+            description: 'Contactez le support'
+          });
+        } else {
+          toast.error('Erreur lors de la souscription', {
+            description: error.message
+          });
+        }
         return;
       }
 
       toast.success('Abonnement activé avec succès !');
       await fetchSubscription();
-    } catch (error) {
+    } catch (error: any) {
       console.error('[useDriverSubscription] Error:', error);
-      toast.error('Erreur lors de la souscription');
+      toast.error('Erreur lors de la souscription', {
+        description: error.message
+      });
     }
-  }, [user, fetchSubscription]);
+  }, [user, profile, fetchSubscription]);
 
   return {
     subscription,

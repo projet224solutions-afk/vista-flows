@@ -10,7 +10,7 @@ DECLARE
   v_email TEXT := 'abconte2008@gmail.com';
   v_user_id UUID;
   v_old_role TEXT;
-  v_vendor_code TEXT;
+  v_public_id TEXT;
   v_custom_id TEXT;
   v_products_count INT;
   v_orders_count INT;
@@ -22,7 +22,7 @@ BEGIN
   RAISE NOTICE '';
 
   -- 1. Trouver l'utilisateur et vérifier son état actuel
-  SELECT id, role, vendor_code INTO v_user_id, v_old_role, v_vendor_code
+  SELECT id, role, public_id, custom_id INTO v_user_id, v_old_role, v_public_id, v_custom_id
   FROM profiles
   WHERE email = v_email;
 
@@ -33,7 +33,8 @@ BEGIN
   RAISE NOTICE '📧 Email: %', v_email;
   RAISE NOTICE '🆔 UUID: %', v_user_id;
   RAISE NOTICE '📌 Rôle actuel: %', v_old_role;
-  RAISE NOTICE '🏪 Code vendeur existant: %', COALESCE(v_vendor_code, 'AUCUN');
+  RAISE NOTICE '🎫 Public ID: %', COALESCE(v_public_id, 'AUCUN');
+  RAISE NOTICE '🎫 Custom ID: %', COALESCE(v_custom_id, 'AUCUN');
   RAISE NOTICE '';
 
   -- 2. Vérifier les données vendeur existantes
@@ -58,57 +59,67 @@ BEGIN
 
   RAISE NOTICE '✅ Rôle restauré vers: vendeur';
 
-  -- 4. Générer un nouveau vendor_code si nécessaire
-  IF v_vendor_code IS NULL OR v_vendor_code = '' THEN
-    v_vendor_code := 'VND-' || UPPER(SUBSTRING(MD5(v_user_id::TEXT || NOW()::TEXT) FROM 1 FOR 8));
-
-    UPDATE profiles
-    SET vendor_code = v_vendor_code
-    WHERE id = v_user_id;
-
-    RAISE NOTICE '✅ Nouveau code vendeur généré: %', v_vendor_code;
-  ELSE
-    RAISE NOTICE '✅ Code vendeur conservé: %', v_vendor_code;
-  END IF;
-
-  -- 5. Mettre à jour l'ID personnalisé vers format vendeur
+  -- 4. Mettre à jour l'ID personnalisé vers format vendeur si nécessaire
   BEGIN
     -- Essayer avec la fonction existante
     SELECT generate_custom_id_with_role('vendeur') INTO v_custom_id;
 
-    UPDATE user_ids
+    UPDATE profiles
     SET custom_id = v_custom_id,
         updated_at = NOW()
-    WHERE user_id = v_user_id;
+    WHERE id = v_user_id;
+
+    -- Aussi mettre à jour dans user_ids si la table existe
+    BEGIN
+      UPDATE user_ids
+      SET custom_id = v_custom_id
+      WHERE user_id = v_user_id;
+    EXCEPTION WHEN OTHERS THEN
+      NULL; -- Table user_ids peut ne pas exister
+    END;
 
     RAISE NOTICE '✅ ID personnalisé mis à jour: %', v_custom_id;
   EXCEPTION WHEN OTHERS THEN
     -- Générer manuellement si la fonction n'existe pas
     v_custom_id := 'VND' || LPAD(FLOOR(RANDOM() * 9999)::TEXT, 4, '0');
 
-    INSERT INTO user_ids (user_id, custom_id, created_at)
-    VALUES (v_user_id, v_custom_id, NOW())
-    ON CONFLICT (user_id) DO UPDATE SET custom_id = v_custom_id;
+    UPDATE profiles
+    SET custom_id = v_custom_id
+    WHERE id = v_user_id;
 
     RAISE NOTICE '✅ ID personnalisé généré manuellement: %', v_custom_id;
   END;
 
-  -- 6. Réinitialiser les limites de carte virtuelle vers limites vendeur standard
-  UPDATE virtual_cards
-  SET
-    daily_limit = 5000000,    -- 5M GNF (limite vendeur standard)
-    monthly_limit = 20000000, -- 20M GNF (limite vendeur standard)
-    updated_at = NOW()
-  WHERE user_id = v_user_id;
+  -- 5. Réinitialiser les limites de carte virtuelle vers limites vendeur standard
+  BEGIN
+    UPDATE virtual_cards
+    SET
+      daily_limit = 5000000,    -- 5M GNF (limite vendeur standard)
+      monthly_limit = 20000000, -- 20M GNF (limite vendeur standard)
+      updated_at = NOW()
+    WHERE user_id = v_user_id;
 
-  RAISE NOTICE '✅ Limites carte virtuelle réinitialisées (vendeur standard)';
+    RAISE NOTICE '✅ Limites carte virtuelle réinitialisées (vendeur standard)';
+  EXCEPTION WHEN OTHERS THEN
+    RAISE NOTICE '⚠️ Pas de carte virtuelle à mettre à jour';
+  END;
 
-  -- 7. Supprimer de la table PDG si présent (le vendeur ne doit pas y être)
+  -- 6. Supprimer de la table PDG si présent (le vendeur ne doit pas y être)
   BEGIN
     DELETE FROM pdg WHERE id = v_user_id;
     RAISE NOTICE '✅ Entrée supprimée de la table PDG';
   EXCEPTION WHEN OTHERS THEN
     RAISE NOTICE '⚠️ Pas d''entrée PDG à supprimer (normal)';
+  END;
+
+  -- 7. S'assurer que le vendeur existe dans la table vendors
+  BEGIN
+    INSERT INTO vendors (user_id, created_at, updated_at)
+    VALUES (v_user_id, NOW(), NOW())
+    ON CONFLICT (user_id) DO NOTHING;
+    RAISE NOTICE '✅ Entrée vendors vérifiée/créée';
+  EXCEPTION WHEN OTHERS THEN
+    RAISE NOTICE '⚠️ Table vendors non accessible';
   END;
 
   -- 8. Vérifier l'intégrité des données
@@ -136,10 +147,14 @@ BEGIN
     RAISE NOTICE '✅ Wallet intact';
   ELSE
     -- Créer le wallet s'il n'existe pas
-    INSERT INTO wallets (user_id, balance, currency, created_at, updated_at)
-    VALUES (v_user_id, 0, 'GNF', NOW(), NOW())
-    ON CONFLICT (user_id) DO NOTHING;
-    RAISE NOTICE '✅ Wallet créé';
+    BEGIN
+      INSERT INTO wallets (user_id, balance, currency, created_at, updated_at)
+      VALUES (v_user_id, 0, 'GNF', NOW(), NOW())
+      ON CONFLICT (user_id) DO NOTHING;
+      RAISE NOTICE '✅ Wallet créé';
+    EXCEPTION WHEN OTHERS THEN
+      RAISE NOTICE '⚠️ Impossible de créer le wallet';
+    END;
   END IF;
 
   -- Résumé final
@@ -151,7 +166,6 @@ BEGIN
   RAISE NOTICE '📧 Email: %', v_email;
   RAISE NOTICE '🆔 UUID: %', v_user_id;
   RAISE NOTICE '📌 Nouveau rôle: vendeur';
-  RAISE NOTICE '🏪 Code vendeur: %', v_vendor_code;
   RAISE NOTICE '🎫 ID personnalisé: %', v_custom_id;
   RAISE NOTICE '📦 Produits: %', v_products_count;
   RAISE NOTICE '🛒 Commandes: %', v_orders_count;
@@ -171,16 +185,13 @@ SELECT
   p.full_name,
   p.first_name,
   p.last_name,
-  p.business_name,
-  p.vendor_code,
-  p.kyc_verified,
+  p.public_id,
+  p.custom_id,
   p.is_active,
   p.created_at,
-  ui.custom_id,
   w.balance as wallet_balance,
   (SELECT COUNT(*) FROM products WHERE vendor_id = p.id) as products_count,
   (SELECT COUNT(*) FROM orders WHERE vendor_id = p.id) as orders_count
 FROM profiles p
-LEFT JOIN user_ids ui ON p.id = ui.user_id
 LEFT JOIN wallets w ON p.id = w.user_id
 WHERE p.email = 'abconte2008@gmail.com';
