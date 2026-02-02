@@ -78,7 +78,7 @@ interface IdSearchResult {
 const ID_FORMAT_REGEX = /^[A-Z]{3}\d{4,}$/;
 const SEARCH_ID_REGEX = /^[A-Z]{3}\d{3,}$/; // Plus permissif pour la recherche
 
-const VALID_PREFIXES = ['VND', 'CLT', 'AGT', 'DRV', 'BUR', 'BST', 'ADM', 'PDG', 'TAX', 'LIV', 'TRS', 'SAG', 'VAG', 'WRK', 'MBR'];
+const VALID_PREFIXES = ['VND', 'CLT', 'AGT', 'DRV', 'BUR', 'BST', 'ADM', 'PDG', 'TAX', 'LIV', 'TRS', 'SAG', 'VAG', 'WRK', 'MBR', 'USR'];
 
 const REASONS_MAP: Record<string, { label: string; color: string }> = {
   'duplicate_detected': { label: 'Doublon détecté', color: '#EF4444' },
@@ -97,6 +97,11 @@ const ROLE_COLORS: Record<string, string> = {
   'agent': '#F59E0B',
   'driver': '#8B5CF6',
   'bureau': '#EC4899',
+  'taxi': '#6366F1',
+  'livreur': '#14B8A6',
+  'pdg': '#EF4444',
+  'transitaire': '#F97316',
+  'worker': '#84CC16',
 };
 
 const PREFIX_TO_ROLE: Record<string, string> = {
@@ -115,6 +120,7 @@ const PREFIX_TO_ROLE: Record<string, string> = {
   'TRS': 'Transitaire',
   'WRK': 'Worker',
   'MBR': 'Membre',
+  'USR': 'Utilisateur',
 };
 
 const PIE_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#EF4444'];
@@ -355,29 +361,88 @@ export default function IdNormalizationAudit() {
   };
 
   // Map profile role to RoleType for ID generation
+  // CORRIGÉ: Support complet de tous les rôles du système 224Solutions
   const mapRoleToRoleType = (role: string | undefined | null): RoleType | null => {
     if (!role) return null;
 
-    // Convert to string and normalize
+    // Convert to string and normalize - support for various formats
     const roleStr = String(role).toLowerCase().trim();
     console.log('🔍 Mapping role:', role, '→', roleStr);
 
+    // Mapping complet de tous les rôles vers RoleType
     const mapping: Record<string, RoleType> = {
+      // Vendeurs
       'vendor': 'vendor',
       'vendeur': 'vendor',
+      'vnd': 'vendor',
+      
+      // Clients  
       'client': 'client',
+      'clt': 'client',
+      'customer': 'client',
+      
+      // Agents
       'agent': 'agent',
+      'agt': 'agent',
+      'sous-agent': 'agent',
+      'sub_agent': 'agent',
+      
+      // Chauffeurs/Livreurs
       'driver': 'driver',
-      'livreur': 'livreur',  // CORRIGÉ: livreur → livreur (LIV)
-      'taxi': 'taxi',        // CORRIGÉ: taxi → taxi (TAX)
+      'drv': 'driver',
+      'chauffeur': 'driver',
+      
+      // Taxi-Moto (TAX)
+      'taxi': 'taxi',
+      'tax': 'taxi',
+      'taxi-moto': 'taxi',
+      'taxi_moto': 'taxi',
+      'taximan': 'taxi',
+      
+      // Livreurs (LIV)
+      'livreur': 'livreur',
+      'liv': 'livreur',
+      'delivery': 'livreur',
+      'coursier': 'livreur',
+      
+      // Bureaux/Syndicats
       'bureau': 'bureau',
+      'bur': 'bureau',
+      'bst': 'bureau',
+      'syndicat': 'bureau',
+      
+      // PDG/Admin
       'pdg': 'pdg',
-      'transitaire': 'transitaire',
-      'worker': 'worker',
+      'ceo': 'pdg',
       'admin': 'pdg',
+      'administrator': 'pdg',
+      
+      // Transitaires
+      'transitaire': 'transitaire',
+      'trs': 'transitaire',
+      'freight': 'transitaire',
+      
+      // Workers
+      'worker': 'worker',
+      'wrk': 'worker',
+      'employee': 'worker',
+      'membre': 'worker',
+      'member': 'worker',
     };
 
     const result = mapping[roleStr] || null;
+    
+    // Si pas de correspondance directe, essayer une détection partielle
+    if (!result) {
+      // Vérifier si le rôle contient un préfixe connu
+      for (const [key, value] of Object.entries(mapping)) {
+        if (roleStr.includes(key) || key.includes(roleStr)) {
+          console.log('🔍 Partial match found:', key, '→', value);
+          return value;
+        }
+      }
+    }
+    
     console.log('🔍 Mapped result:', result);
     return result;
   };
@@ -736,16 +801,47 @@ export default function IdNormalizationAudit() {
   };
 
   const getRoleBadge = (role: string) => {
+    const roleStr = (role || '').toLowerCase();
     const colors: Record<string, string> = {
       'vendor': 'bg-blue-500',
+      'vendeur': 'bg-blue-500',
       'client': 'bg-green-500',
       'agent': 'bg-yellow-500',
       'driver': 'bg-purple-500',
+      'chauffeur': 'bg-purple-500',
+      'taxi': 'bg-indigo-500',
+      'livreur': 'bg-teal-500',
       'bureau': 'bg-pink-500',
+      'syndicat': 'bg-pink-500',
+      'pdg': 'bg-red-500',
+      'admin': 'bg-red-500',
+      'ceo': 'bg-red-500',
+      'transitaire': 'bg-orange-500',
+      'worker': 'bg-lime-500',
     };
+    
+    // Trouver le label à afficher
+    const roleLabels: Record<string, string> = {
+      'vendor': 'VND',
+      'vendeur': 'VND',
+      'client': 'CLT',
+      'agent': 'AGT',
+      'driver': 'DRV',
+      'chauffeur': 'DRV',
+      'taxi': 'TAX',
+      'livreur': 'LIV',
+      'bureau': 'BUR',
+      'syndicat': 'BST',
+      'pdg': 'PDG',
+      'admin': 'ADM',
+      'ceo': 'PDG',
+      'transitaire': 'TRS',
+      'worker': 'WRK',
+    };
+    
     return (
-      <Badge className={`${colors[role] || 'bg-gray-500'} text-white`}>
-        {role.toUpperCase()}
+      <Badge className={`${colors[roleStr] || 'bg-gray-500'} text-white`}>
+        {roleLabels[roleStr] || role.toUpperCase()}
       </Badge>
     );
   };
@@ -1387,11 +1483,16 @@ export default function IdNormalizationAudit() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tous les rôles</SelectItem>
-                    <SelectItem value="vendor">Vendeur</SelectItem>
-                    <SelectItem value="client">Client</SelectItem>
-                    <SelectItem value="agent">Agent</SelectItem>
-                    <SelectItem value="driver">Livreur</SelectItem>
-                    <SelectItem value="bureau">Bureau</SelectItem>
+                    <SelectItem value="vendor">Vendeur (VND)</SelectItem>
+                    <SelectItem value="client">Client (CLT)</SelectItem>
+                    <SelectItem value="agent">Agent (AGT)</SelectItem>
+                    <SelectItem value="driver">Chauffeur (DRV)</SelectItem>
+                    <SelectItem value="taxi">Taxi-Moto (TAX)</SelectItem>
+                    <SelectItem value="livreur">Livreur (LIV)</SelectItem>
+                    <SelectItem value="bureau">Bureau (BUR/BST)</SelectItem>
+                    <SelectItem value="pdg">PDG/Admin</SelectItem>
+                    <SelectItem value="transitaire">Transitaire (TRS)</SelectItem>
+                    <SelectItem value="worker">Worker (WRK)</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select
