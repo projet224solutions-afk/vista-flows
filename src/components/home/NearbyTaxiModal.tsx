@@ -42,6 +42,8 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
   const [usedRadiusKm, setUsedRadiusKm] = useState<number>(MAX_DISTANCE_KM);
 
   const runRpcSearch = async (lat: number, lng: number, radiusKm: number) => {
+    console.log(`[NearbyTaxi] RPC search: lat=${lat}, lng=${lng}, radius=${radiusKm}km`);
+    
     const { data, error: rpcError } = await supabase.rpc('find_nearby_taxi_drivers', {
       p_lat: lat,
       p_lng: lng,
@@ -49,7 +51,12 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
       p_limit: 10,
     });
 
-    if (rpcError) throw rpcError;
+    if (rpcError) {
+      console.error('[NearbyTaxi] RPC error:', rpcError);
+      throw rpcError;
+    }
+    
+    console.log(`[NearbyTaxi] RPC found ${data?.length || 0} drivers`);
     
     // RPC already filters for online drivers, just sort by distance and limit to 3
     const sortedData = (data || [])
