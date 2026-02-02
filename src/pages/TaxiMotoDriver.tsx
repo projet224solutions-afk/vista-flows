@@ -289,23 +289,15 @@ export default function TaxiMotoDriver() {
             
             try {
                 // Obtenir position avec le hook GPS unifié (avec fallback automatique)
-                await enableGPS(
-                    (position) => {
-                        toast.dismiss('gps-loading');
-                        toast.success('✅ GPS activé');
-                    },
-                    (error) => {
-                        toast.dismiss('gps-loading');
-                        toast.error(error || 'Impossible d\'activer le GPS');
-                        return;
-                    }
-                );
+                const position = await getCurrentLocation();
+                toast.dismiss('gps-loading');
                 
-                // Vérifier qu'on a bien une position
-                if (!location) {
+                if (!position) {
                     toast.error('Position GPS non disponible');
                     return;
                 }
+                
+                toast.success('✅ GPS activé');
                 
                 // Mettre à jour le statut dans la base
                 await TaxiMotoService.updateDriverStatus(
@@ -329,7 +321,7 @@ export default function TaxiMotoDriver() {
             // Passer hors ligne
             try {
                 // Arrêter le suivi GPS
-                await disableGPS();
+                stopWatching();
                 
                 await TaxiMotoService.updateDriverStatus(
                     driverId,
