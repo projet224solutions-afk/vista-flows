@@ -29,11 +29,14 @@ export const useCurrentUserPermissions = (): CurrentUserPermissions => {
 
   // Déterminer le type d'utilisateur
   const isPDG = useMemo(() => {
-    return profile?.role === 'ceo' || profile?.role === 'admin';
+    const role = (profile?.role || '').toString().toLowerCase();
+    // PDG et CEO sont équivalents dans toute l'app (voir mémoire projet)
+    return role === 'ceo' || role === 'admin' || role === 'pdg';
   }, [profile?.role]);
 
   const isAgent = useMemo(() => {
-    return profile?.role === 'agent';
+    const role = (profile?.role || '').toString().toLowerCase();
+    return role === 'agent';
   }, [profile?.role]);
 
   // Charger les permissions
