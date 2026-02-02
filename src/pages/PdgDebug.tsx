@@ -10,15 +10,17 @@ export default function PdgDebug() {
   const navigate = useNavigate();
   const { profile } = useAuth();
 
+  const hasPdgAccess = !!profile && ['admin', 'pdg', 'ceo'].includes((profile.role || '').toString().toLowerCase());
+
   useEffect(() => {
     // Vérifier que l'utilisateur est PDG
-    if (profile && profile.role !== 'admin') {
+    if (profile && !hasPdgAccess) {
       toast.error('Accès refusé - Réservé au PDG');
       navigate('/home');
     }
-  }, [profile, navigate]);
+  }, [profile, navigate, hasPdgAccess]);
 
-  if (!profile || profile.role !== 'admin') {
+  if (!hasPdgAccess) {
     return null;
   }
 

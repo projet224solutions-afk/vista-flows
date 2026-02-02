@@ -59,7 +59,9 @@ export default function PDG224Solutions() {
   const envOk = Boolean(import.meta.env.VITE_SUPABASE_URL && (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY));
   
   // Déterminer le rôle uniquement depuis le profil (source de vérité sécurisée)
-  const isAdmin = profile?.role === 'admin';
+  // ⚠️ IMPORTANT: L'interface PDG doit accepter les rôles équivalents.
+  // (Historique: certains comptes PDG ont role='pdg' au lieu de 'admin')
+  const isAdmin = ['admin', 'pdg', 'ceo'].includes((profile?.role || '').toString().toLowerCase());
   
   const [mfaVerified, setMfaVerified] = useState<boolean>(() => {
     // Persistance courte dans la session du navigateur
@@ -113,19 +115,20 @@ export default function PDG224Solutions() {
 
     // Vérifier le rôle UNIQUEMENT depuis le profil (source de vérité)
     const currentRole = profile.role;
-    if (currentRole !== 'admin') {
+    // Autoriser admin/pdg/ceo à accéder à l'interface PDG
+    if (!['admin', 'pdg', 'ceo'].includes(currentRole?.toString().toLowerCase())) {
       toast.error('Accès refusé - Réservé au PDG');
       navigate('/home');
       return;
     }
 
     // Exiger MFA avant toute action PDG
-    if (currentRole === 'admin' && !mfaVerified) {
+    if (['admin', 'pdg', 'ceo'].includes(currentRole?.toString().toLowerCase()) && !mfaVerified) {
       setShowMfaDialog(true);
     }
 
     // Log de l'accès PDG une fois le profil chargé (après MFA si possible)
-    if (currentRole === 'admin' && user) {
+    if (['admin', 'pdg', 'ceo'].includes(currentRole?.toString().toLowerCase()) && user) {
       const logAccess = async () => {
         try {
           await supabase.from('audit_logs').insert({
