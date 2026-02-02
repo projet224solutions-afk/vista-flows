@@ -125,7 +125,9 @@ export function AgentLayoutProfessional({
       label: 'Mes Utilisateurs',
       icon: <Users className="w-5 h-5" />,
       gradient: 'from-cyan-500 to-blue-500',
-      permission: 'view_users'
+      // La permission historique côté PDG/agent est souvent `manage_users`
+      // (et non `view_users`). Les alias dans hasPermission gèrent les deux.
+      permission: 'manage_users'
     },
     {
       id: 'my-purchases',

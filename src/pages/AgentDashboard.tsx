@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Key, Mail, Lock, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -351,6 +352,40 @@ export default function AgentDashboard() {
       case 'settings':
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Permissions (lecture) */}
+            <Card className="border-0 shadow-lg md:col-span-2">
+              <CardHeader className="bg-muted/40 border-b">
+                <CardTitle className="text-foreground">Permissions accordées</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                {permissionsLoading ? (
+                  <p className="text-sm text-muted-foreground">Chargement des permissions…</p>
+                ) : (
+                  <>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {Object.values(unifiedPermissions).filter(Boolean).length} permissions actives
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(unifiedPermissions)
+                        .filter(([_, v]) => v === true)
+                        .map(([perm]) => (
+                          <Badge key={perm} variant="secondary" className="bg-muted text-muted-foreground">
+                            {perm}
+                          </Badge>
+                        ))}
+
+                      {/* Fallback UX si aucune permission */}
+                      {Object.values(unifiedPermissions).filter(Boolean).length === 0 && (
+                        <span className="text-sm text-muted-foreground">
+                          Aucune permission active.
+                        </span>
+                      )}
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Email Settings */}
             <Card className="border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b">
