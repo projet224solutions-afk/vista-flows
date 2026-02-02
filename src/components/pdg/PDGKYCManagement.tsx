@@ -52,18 +52,24 @@ export default function PDGKYCManagement() {
 
   const loadSettings = async () => {
     try {
+      // La table system_settings utilise setting_key et setting_value
       const { data, error } = await supabase
-        .from('system_settings' as any)
+        .from('system_settings')
         .select('*')
-        .eq('category', 'kyc')
-        .single();
+        .eq('setting_key', 'kyc_settings')
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         console.error('Erreur chargement settings KYC:', error);
       }
 
-      if ((data as any)?.settings) {
-        setSettings((data as any).settings as KYCSettings);
+      if (data?.setting_value) {
+        try {
+          const parsed = JSON.parse(data.setting_value);
+          setSettings(parsed as KYCSettings);
+        } catch (parseErr) {
+          console.error('Erreur parsing settings:', parseErr);
+        }
       }
     } catch (err) {
       console.error('Erreur:', err);
@@ -82,20 +88,43 @@ export default function PDGKYCManagement() {
   const saveSettings = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('system_settings' as any)
-        .upsert({
-          category: 'kyc',
-          settings: settings,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'category' });
+      // Vérifier si le setting existe déjà
+      const { data: existing } = await supabase
+        .from('system_settings')
+        .select('id')
+        .eq('setting_key', 'kyc_settings')
+        .maybeSingle();
 
-      if (error) throw error;
+      const settingsJson = JSON.stringify(settings);
+
+      if (existing) {
+        // Update existing
+        const { error } = await supabase
+          .from('system_settings')
+          .update({
+            setting_value: settingsJson,
+            updated_at: new Date().toISOString()
+          })
+          .eq('setting_key', 'kyc_settings');
+
+        if (error) throw error;
+      } else {
+        // Insert new
+        const { error } = await supabase
+          .from('system_settings')
+          .insert({
+            setting_key: 'kyc_settings',
+            setting_value: settingsJson,
+            description: 'Paramètres KYC par type utilisateur'
+          });
+
+        if (error) throw error;
+      }
 
       toast.success('Paramètres KYC enregistrés');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erreur sauvegarde:', err);
-      toast.error('Erreur lors de la sauvegarde');
+      toast.error(err.message || 'Erreur lors de la sauvegarde');
     } finally {
       setSaving(false);
     }
