@@ -57,8 +57,67 @@ export default function SubscriptionManagement() {
 
   useEffect(() => {
     fetchData();
+    loadAllSubscriptionsOnMount();
     setupRealtimeSubscription();
   }, []);
+
+  const loadAllSubscriptionsOnMount = async () => {
+    try {
+      setLoadingSubscriptions(true);
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select(`
+          id,
+          user_id,
+          plan_id,
+          status,
+          billing_cycle,
+          started_at,
+          current_period_end,
+          created_at,
+          plans (display_name, name)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const userIds = [...new Set(data?.map(sub => sub.user_id) || [])];
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, email, first_name, last_name, role')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      const enrichedData = data?.map(sub => ({
+        ...sub,
+        profiles: profiles?.find(p => p.id === sub.user_id)
+      }));
+
+      const uniqueSubscriptions = enrichedData?.reduce((acc, sub) => {
+        const existingIndex = acc.findIndex(s => s.user_id === sub.user_id);
+        
+        if (existingIndex === -1) {
+          acc.push(sub);
+        } else {
+          const existingDate = new Date(acc[existingIndex].created_at);
+          const currentDate = new Date(sub.created_at);
+          
+          if (currentDate > existingDate) {
+            acc[existingIndex] = sub;
+          }
+        }
+        
+        return acc;
+      }, [] as any[]);
+
+      setAllSubscriptions(uniqueSubscriptions || []);
+    } catch (error) {
+      console.error('Error loading subscriptions:', error);
+    } finally {
+      setLoadingSubscriptions(false);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -578,11 +637,114 @@ export default function SubscriptionManagement() {
         </Alert>
       )}
 
-      <Tabs defaultValue="plans" className="space-y-4">
+      <Tabs defaultValue="subscribers" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="subscribers">📋 Vendeurs Abonnés</TabsTrigger>
           <TabsTrigger value="plans">Plans et Prix</TabsTrigger>
           <TabsTrigger value="history">Historique des Prix</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="subscribers" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    Liste des Vendeurs Abonnés
+                  </CardTitle>
+                  <CardDescription>
+                    Tous les vendeurs avec un abonnement actif
+                  </CardDescription>
+                </div>
+                <Button onClick={loadAllSubscriptions} variant="outline" size="sm" disabled={loadingSubscriptions}>
+                  <RefreshCw className={`w-4 h-4 mr-2 ${loadingSubscriptions ? 'animate-spin' : ''}`} />
+                  Actualiser
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loadingSubscriptions ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  <span className="ml-3">Chargement...</span>
+                </div>
+              ) : allSubscriptions.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Aucun abonnement trouvé</p>
+                  <Button onClick={loadAllSubscriptions} variant="outline" className="mt-4">
+                    Charger les abonnements
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>{allSubscriptions.length} abonnement(s) trouvé(s)</span>
+                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Vendeur</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Rôle</TableHead>
+                        <TableHead>Plan</TableHead>
+                        <TableHead>Statut</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Début</TableHead>
+                        <TableHead>Fin</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {allSubscriptions.map((sub) => (
+                        <TableRow key={sub.id}>
+                          <TableCell className="font-medium">
+                            {sub.profiles?.first_name} {sub.profiles?.last_name}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {sub.profiles?.email}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{sub.profiles?.role}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{sub.plans?.display_name}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={sub.status === 'active' ? 'default' : 'destructive'}>
+                              {sub.status === 'active' ? '✓ Actif' : sub.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {sub.billing_cycle === 'lifetime' ? (
+                              <Badge variant="default" className="bg-primary text-primary-foreground">
+                                🎁 À vie
+                              </Badge>
+                            ) : sub.billing_cycle === 'custom' ? (
+                              <Badge variant="outline" className="border-accent text-accent-foreground">
+                                🎁 Offert
+                              </Badge>
+                            ) : sub.billing_cycle === 'yearly' ? (
+                              <Badge variant="outline">Annuel</Badge>
+                            ) : (
+                              <Badge variant="outline">{sub.billing_cycle}</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {sub.started_at ? format(new Date(sub.started_at), 'dd/MM/yyyy', { locale: fr }) : '-'}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {sub.current_period_end ? format(new Date(sub.current_period_end), 'dd/MM/yyyy', { locale: fr }) : '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="plans" className="space-y-4">
           <Card>
@@ -1016,7 +1178,7 @@ export default function SubscriptionManagement() {
                       </TableCell>
                       <TableCell>
                         {sub.billing_cycle === 'lifetime' ? (
-                          <Badge variant="default" className="bg-green-500">
+                          <Badge variant="default" className="bg-primary text-primary-foreground">
                             🎁 Offert
                           </Badge>
                         ) : (
