@@ -287,8 +287,17 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
           </Sheet>
         </div>
 
+        {/* Si aucune section n'est visible (permissions en cours/incorrectes), afficher un hint */}
+        {filteredCategories.length === 0 && !permissionsLoading && (
+          <Card>
+            <CardContent className="p-3 text-sm text-muted-foreground">
+              Aucune section disponible. Vérifiez le rôle/permissions de ce compte.
+            </CardContent>
+          </Card>
+        )}
+
         {/* Accès rapide catégories - horizontal scroll */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none w-full px-0.5">
+        <div className="flex flex-wrap gap-2 pb-2 w-full px-0.5">
           {filteredCategories.map((category) => {
             const hasActiveItem = category.items.some(item => item.value === activeTab);
             return (
@@ -299,7 +308,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
                   setMobileMenuOpen(true);
                 }}
                 className={cn(
-                  "flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
+                  "px-3 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
                   "bg-gradient-to-r text-white",
                   category.color,
                   hasActiveItem && "ring-2 ring-offset-1 ring-primary"

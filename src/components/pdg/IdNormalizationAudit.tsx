@@ -1441,7 +1441,9 @@ export default function IdNormalizationAudit() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      logs.map((log) => (
+                      logs
+                        .filter((log, idx, arr) => arr.findIndex(l => l.id === log.id) === idx)
+                        .map((log) => (
                         <TableRow key={log.id}>
                           <TableCell className="whitespace-nowrap">
                             <div className="flex items-center gap-2">
