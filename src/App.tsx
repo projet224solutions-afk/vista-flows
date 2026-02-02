@@ -417,7 +417,7 @@ function App() {
               <Route
                 path="/pdg"
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'pdg']}>
+                  <ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}>
                     <PDG224Solutions />
                   </ProtectedRoute>
                 }
@@ -425,7 +425,7 @@ function App() {
               <Route
                 path="/pdg/debug"
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'pdg']}>
+                  <ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}>
                     <PdgDebug />
                   </ProtectedRoute>
                 }
@@ -433,7 +433,7 @@ function App() {
               <Route
                 path="/pdg/api-supervision"
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'pdg']}>
+                  <ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}>
                     <ApiSupervision />
                   </ProtectedRoute>
                 }
@@ -441,7 +441,7 @@ function App() {
               <Route
                 path="/pdg/command-center"
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'pdg']}>
+                  <ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}>
                     <PdgCommandCenter />
                   </ProtectedRoute>
                 }
@@ -449,7 +449,7 @@ function App() {
               <Route
                 path="/pdg/security"
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'pdg']}>
+                  <ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}>
                     <PdgSecurity />
                   </ProtectedRoute>
                 }
@@ -457,13 +457,13 @@ function App() {
               <Route
                 path="/pdg/competitive-analysis"
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'pdg']}>
+                  <ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}>
                     <CompetitiveAnalysis />
                   </ProtectedRoute>
                 }
               />
               <Route path="/pdg224solutionssoulbah" element={<PDG224Solutions />} />
-              <Route path="/pdg/copilot" element={<ProtectedRoute allowedRoles={['pdg', 'owner']}><PDGCopilotDashboard /></ProtectedRoute>} />
+              <Route path="/pdg/copilot" element={<ProtectedRoute allowedRoles={['pdg', 'ceo', 'admin']}><PDGCopilotDashboard /></ProtectedRoute>} />
               
               {/* Agent & Bureau Login with MFA */}
               <Route path="/agent/login" element={<AgentLogin />} />
