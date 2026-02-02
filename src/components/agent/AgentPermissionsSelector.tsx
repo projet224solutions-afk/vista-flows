@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Shield, DollarSign, Users, Briefcase, Settings, Brain, ChevronDown, ChevronUp, CheckSquare, Square } from 'lucide-react';
+import { Shield, DollarSign, Users, Briefcase, Settings, Brain, ChevronDown, ChevronUp, CheckSquare, Square, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   PERMISSION_CATEGORIES, 
@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
   finance: DollarSign,
   gestion: Users,
+  services_pro: Store,
   operations: Briefcase,
   systeme: Settings,
   intelligence: Brain,

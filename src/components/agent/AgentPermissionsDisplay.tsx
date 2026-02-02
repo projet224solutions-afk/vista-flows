@@ -6,7 +6,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Shield, DollarSign, Users, Briefcase, Settings, Brain, ChevronDown, Check, X } from 'lucide-react';
+import { Shield, DollarSign, Users, Briefcase, Settings, Brain, ChevronDown, Check, X, Store } from 'lucide-react';
 import { 
   PERMISSION_CATEGORIES, 
   getPermissionLabel,
@@ -18,6 +18,7 @@ import { useState } from 'react';
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
   finance: DollarSign,
   gestion: Users,
+  services_pro: Store,
   operations: Briefcase,
   systeme: Settings,
   intelligence: Brain,
