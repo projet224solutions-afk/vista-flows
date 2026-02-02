@@ -20,7 +20,9 @@ import {
   Zap,
   CreditCard,
   ArrowUpRight,
-  Link2
+  Link2,
+  DollarSign,
+  FileCheck
 } from 'lucide-react';
 import {
   Tooltip,
@@ -113,6 +115,29 @@ export function AgentLayoutProfessional({
       icon: <Wallet className="w-5 h-5" />,
       gradient: 'from-emerald-500 to-teal-500'
     },
+    // --- Nouvelles fonctionnalités opérationnelles ---
+    {
+      id: 'finance',
+      label: 'Finance & Revenus',
+      icon: <DollarSign className="w-5 h-5" />,
+      gradient: 'from-amber-500 to-orange-500',
+      permission: 'view_finance'
+    },
+    {
+      id: 'kyc-management',
+      label: 'Gestion KYC',
+      icon: <FileCheck className="w-5 h-5" />,
+      gradient: 'from-indigo-500 to-purple-500',
+      permission: 'view_kyc'
+    },
+    {
+      id: 'wallet-transactions',
+      label: 'Transactions Wallet',
+      icon: <CreditCard className="w-5 h-5" />,
+      gradient: 'from-teal-500 to-cyan-500',
+      permission: 'manage_wallet_transactions'
+    },
+    // --- Fin nouvelles fonctionnalités ---
     {
       id: 'create-user',
       label: 'Créer Utilisateur',
@@ -125,8 +150,6 @@ export function AgentLayoutProfessional({
       label: 'Mes Utilisateurs',
       icon: <Users className="w-5 h-5" />,
       gradient: 'from-cyan-500 to-blue-500',
-      // La permission historique côté PDG/agent est souvent `manage_users`
-      // (et non `view_users`). Les alias dans hasPermission gèrent les deux.
       permission: 'manage_users'
     },
     {

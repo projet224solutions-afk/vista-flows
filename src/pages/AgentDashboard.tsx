@@ -25,6 +25,10 @@ import { useAgentStats } from '@/hooks/useAgentStats';
 import { AgentCreatedUsersList } from '@/components/agent/AgentCreatedUsersList';
 import { AgentOrdersTracking } from '@/components/agent/AgentOrdersTracking';
 import MyPurchasesOrdersList from '@/components/shared/MyPurchasesOrdersList';
+// Nouvelles fonctionnalités opérationnelles
+import { AgentKYCManagement } from '@/components/agent/AgentKYCManagement';
+import { AgentFinanceOverview } from '@/components/agent/AgentFinanceOverview';
+import { AgentWalletTransactionsManagement } from '@/components/agent/AgentWalletTransactionsManagement';
 
 export default function AgentDashboard() {
   const { user, signOut } = useAuth();
@@ -300,6 +304,22 @@ export default function AgentDashboard() {
             showTransactions={true}
           />
         );
+      
+      // --- Nouvelles fonctionnalités opérationnelles ---
+      case 'finance':
+        return <AgentFinanceOverview agentId={agent.id} />;
+      
+      case 'kyc-management':
+        return (
+          <AgentKYCManagement 
+            agentId={agent.id} 
+            canManage={unifiedPermissions.manage_kyc === true}
+          />
+        );
+      
+      case 'wallet-transactions':
+        return <AgentWalletTransactionsManagement agentId={agent.id} />;
+      // --- Fin nouvelles fonctionnalités ---
       
       case 'create-user':
         return (
