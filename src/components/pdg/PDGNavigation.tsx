@@ -81,6 +81,7 @@ const categories: NavCategory[] = [
     bgColor: 'bg-purple-500',
     items: [
       { value: 'security', label: 'Sécurité', icon: Shield },
+      { value: 'logic-surveillance', label: 'Surveillance Logique', icon: Zap, badge: true },
       { value: 'id-normalization', label: 'Audit ID', icon: Shield, badge: true },
       { value: 'bug-bounty', label: 'Bug Bounty', icon: Shield },
       { value: 'config', label: 'Configuration', icon: Settings },
