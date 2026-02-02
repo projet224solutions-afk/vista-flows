@@ -32,7 +32,10 @@ import { ManageCommissionsSection } from '@/components/agent/ManageCommissionsSe
 import AgentWalletManagement from '@/components/agent/AgentWalletManagement';
 import { AgentAffiliateLinksSection } from '@/components/agent/AgentAffiliateLinksSection';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
-import { useAgentPermissionsUnified, AVAILABLE_PERMISSIONS } from '@/hooks/useAgentPermissionsUnified';
+import { useAgentPermissionsUnified } from '@/hooks/useAgentPermissionsUnified';
+import { AVAILABLE_PERMISSIONS } from '@/hooks/useAgentPermissions';
+import { AgentPermissionsDisplay } from '@/components/agent/AgentPermissionsDisplay';
+import { AgentPermissionsSelector } from '@/components/agent/AgentPermissionsSelector';
 
 // Schéma de validation pour le sous-agent
 const subAgentSchema = z.object({
@@ -418,40 +421,11 @@ export default function AgentDashboardPublic() {
               </CardContent>
             </Card>
 
-            {/* Permissions */}
-            <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-primary" />
-                  Permissions Actives
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {/* Afficher les permissions unifiées (nouvelle table + legacy) */}
-                  {Object.entries(unifiedPermissions)
-                    .filter(([_, value]) => value === true)
-                    .map(([perm]) => (
-                      <Badge key={perm} variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-                        {AVAILABLE_PERMISSIONS[perm as keyof typeof AVAILABLE_PERMISSIONS] || perm.replace(/_/g, ' ')}
-                      </Badge>
-                    ))}
-                  {/* Legacy permissions du JSON */}
-                  {agent.permissions
-                    .filter(perm => !unifiedPermissions[perm])
-                    .map((perm) => (
-                      <Badge key={perm} variant="secondary" className="bg-muted text-muted-foreground">
-                        {perm.replace(/_/g, ' ')}
-                      </Badge>
-                    ))}
-                  {agent.can_create_sub_agent && (
-                    <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-                      Création sous-agents
-                    </Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            {/* Permissions - nouveau composant avec catégories */}
+            <AgentPermissionsDisplay 
+              permissions={unifiedPermissions} 
+              loading={permissionsLoading} 
+            />
           </div>
         );
 
