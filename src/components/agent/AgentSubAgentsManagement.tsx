@@ -6,11 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
+import { AgentPermissionsSelector } from './AgentPermissionsSelector';
 
 // Types
 export interface SubAgent {
@@ -90,7 +91,14 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingSubAgent, setEditingSubAgent] = useState<SubAgent | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+    commission_rate: number;
+    permissions: Record<string, boolean>;
+  }>({
     name: '',
     email: '',
     phone: '',
@@ -99,9 +107,6 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
     permissions: {
       create_users: true,
       view_reports: false,
-      manage_commissions: false,
-      manage_users: false,
-      manage_products: false
     }
   });
 
@@ -594,33 +599,11 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
                 />
               </div>
 
-              <div className="space-y-3 border-t pt-4">
-                <Label>Permissions</Label>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="create_users"
-                      checked={formData.permissions.create_users}
-                      onCheckedChange={(checked) => setFormData({
-                        ...formData,
-                        permissions: { ...formData.permissions, create_users: checked as boolean }
-                      })}
-                    />
-                    <label htmlFor="create_users" className="text-sm">Créer des utilisateurs</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="view_reports"
-                      checked={formData.permissions.view_reports}
-                      onCheckedChange={(checked) => setFormData({
-                        ...formData,
-                        permissions: { ...formData.permissions, view_reports: checked as boolean }
-                      })}
-                    />
-                    <label htmlFor="view_reports" className="text-sm">Voir les rapports</label>
-                  </div>
-                </div>
-              </div>
+              {/* Sélecteur de permissions avec toutes les catégories */}
+              <AgentPermissionsSelector
+                selectedPermissions={formData.permissions}
+                onChange={(newPerms) => setFormData({ ...formData, permissions: newPerms })}
+              />
 
               <div className="flex justify-end gap-2 pt-4">
                 <Button 
