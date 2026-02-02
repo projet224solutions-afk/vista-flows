@@ -66,6 +66,7 @@ const TransitaireDashboard = lazyWithRetry(() => import("./pages/TransitaireDash
 const PDG224Solutions = lazyWithRetry(() => import("./pages/PDG224Solutions"));
 const PdgCommandCenter = lazyWithRetry(() => import("./pages/PdgCommandCenter"));
 const PdgSecurity = lazyWithRetry(() => import("./pages/PdgSecurity"));
+const PdgDebug = lazyWithRetry(() => import("./pages/PdgDebug"));
 const CompetitiveAnalysis = lazyWithRetry(() => import("./pages/pdg/CompetitiveAnalysis"));
 const ApiSupervision = lazyWithRetry(() => import("./pages/pdg/ApiSupervision"));
 const SystemDebugPage = lazyWithRetry(() => import("./pages/pdg/SystemDebugPage"));
@@ -408,7 +409,7 @@ function App() {
               <Route
                 path="/admin"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['admin', 'pdg']}>
                     <PDG224Solutions />
                   </ProtectedRoute>
                 }
@@ -416,7 +417,7 @@ function App() {
               <Route
                 path="/pdg"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['admin', 'pdg']}>
                     <PDG224Solutions />
                   </ProtectedRoute>
                 }
@@ -424,15 +425,15 @@ function App() {
               <Route
                 path="/pdg/debug"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <SystemDebugPage />
+                  <ProtectedRoute allowedRoles={['admin', 'pdg']}>
+                    <PdgDebug />
                   </ProtectedRoute>
                 }
               />
               <Route
                 path="/pdg/api-supervision"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['admin', 'pdg']}>
                     <ApiSupervision />
                   </ProtectedRoute>
                 }
@@ -440,7 +441,7 @@ function App() {
               <Route
                 path="/pdg/command-center"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['admin', 'pdg']}>
                     <PdgCommandCenter />
                   </ProtectedRoute>
                 }
@@ -448,7 +449,7 @@ function App() {
               <Route
                 path="/pdg/security"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['admin', 'pdg']}>
                     <PdgSecurity />
                   </ProtectedRoute>
                 }
@@ -456,7 +457,7 @@ function App() {
               <Route
                 path="/pdg/competitive-analysis"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['admin', 'pdg']}>
                     <CompetitiveAnalysis />
                   </ProtectedRoute>
                 }

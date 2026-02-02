@@ -29,6 +29,7 @@ const Dashboard = () => {
 
     // Redirection selon le rôle depuis le PROFIL (source de vérité sécurisée)
     const roleRedirects: Record<string, string> = {
+      'pdg': '/pdg',
       'admin': '/pdg',
       'ceo': '/pdg',
       'vendeur': '/vendeur',
