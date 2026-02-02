@@ -52,6 +52,7 @@ const PDGBureauMonitoring = lazy(() => import('@/components/pdg/PDGBureauMonitor
 const VendorCertificationManager = lazy(() => import('@/components/ceo/VendorCertificationManager').then(m => ({ default: m.VendorCertificationManager })));
 const VendorKYCReview = lazy(() => import('@/components/ceo/VendorKYCReview').then(m => ({ default: m.VendorKYCReview })));
 const IdNormalizationAudit = lazy(() => import('@/components/pdg/IdNormalizationAudit'));
+const LogicSurveillanceDashboard = lazy(() => import('@/components/pdg/LogicSurveillanceDashboard'));
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
   const navigate = useNavigate();
