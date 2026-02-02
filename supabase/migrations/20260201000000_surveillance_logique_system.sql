@@ -41,14 +41,14 @@ CREATE TABLE IF NOT EXISTS public.logic_results (
 -- Anomalies détectées
 CREATE TABLE IF NOT EXISTS public.logic_anomalies (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  rule_id TEXT NOT NULL REFERENCES logic_rules(rule_id) ON DELETE CASCADE,
+  rule_id TEXT REFERENCES logic_rules(rule_id) ON DELETE CASCADE,
   domain TEXT NOT NULL,
-  severity TEXT NOT NULL,
-  expected_value JSONB NOT NULL,
-  actual_value JSONB NOT NULL,
+  severity TEXT NOT NULL DEFAULT 'MEDIUM',
+  expected_value JSONB DEFAULT '{}'::JSONB,
+  actual_value JSONB DEFAULT '{}'::JSONB,
   difference JSONB,
   affected_entities JSONB, -- [{type: 'order', id: '...'}, ...]
-  detected_at TIMESTAMPTZ NOT NULL,
+  detected_at TIMESTAMPTZ DEFAULT now(),
   acknowledged_by UUID REFERENCES auth.users(id),
   acknowledged_at TIMESTAMPTZ,
   resolved_at TIMESTAMPTZ,
@@ -113,31 +113,86 @@ ALTER TABLE logic_corrections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE logic_audit ENABLE ROW LEVEL SECURITY;
 
 -- Policies pour logic_rules (visible à PDG/Admin)
-CREATE POLICY IF NOT EXISTS "PDG can view logic rules"
-ON logic_rules FOR SELECT
-USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'pdg'))
-);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'PDG can view logic rules' AND tablename = 'logic_rules') THEN
+    CREATE POLICY "PDG can view logic rules"
+    ON logic_rules FOR SELECT
+    USING (
+      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'pdg', 'ceo'))
+    );
+  END IF;
+END$$;
 
 -- Policies pour logic_anomalies (visible à PDG uniquement)
-CREATE POLICY IF NOT EXISTS "PDG can view logic anomalies"
-ON logic_anomalies FOR SELECT
-USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'pdg')
-);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'PDG can view logic anomalies' AND tablename = 'logic_anomalies') THEN
+    CREATE POLICY "PDG can view logic anomalies"
+    ON logic_anomalies FOR SELECT
+    USING (
+      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'pdg', 'ceo'))
+    );
+  END IF;
+END$$;
 
-CREATE POLICY IF NOT EXISTS "PDG can acknowledge anomalies"
-ON logic_anomalies FOR UPDATE
-USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'pdg')
-);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'PDG can acknowledge anomalies' AND tablename = 'logic_anomalies') THEN
+    CREATE POLICY "PDG can acknowledge anomalies"
+    ON logic_anomalies FOR UPDATE
+    USING (
+      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'pdg', 'ceo'))
+    );
+  END IF;
+END$$;
 
 -- Policies pour logic_audit (immutable, audit only)
-CREATE POLICY IF NOT EXISTS "PDG can view audit logs"
-ON logic_audit FOR SELECT
-USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'pdg')
-);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'PDG can view audit logs' AND tablename = 'logic_audit') THEN
+    CREATE POLICY "PDG can view audit logs"
+    ON logic_audit FOR SELECT
+    USING (
+      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'pdg', 'ceo'))
+    );
+  END IF;
+END$$;
+
+-- Policies pour logic_results
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'PDG can view logic results' AND tablename = 'logic_results') THEN
+    CREATE POLICY "PDG can view logic results"
+    ON logic_results FOR SELECT
+    USING (
+      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'pdg', 'ceo'))
+    );
+  END IF;
+END$$;
+
+-- Policies pour logic_corrections
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'PDG can view logic corrections' AND tablename = 'logic_corrections') THEN
+    CREATE POLICY "PDG can view logic corrections"
+    ON logic_corrections FOR SELECT
+    USING (
+      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'pdg', 'ceo'))
+    );
+  END IF;
+END$$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'PDG can create logic corrections' AND tablename = 'logic_corrections') THEN
+    CREATE POLICY "PDG can create logic corrections"
+    ON logic_corrections FOR INSERT
+    WITH CHECK (
+      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'pdg', 'ceo'))
+    );
+  END IF;
+END$$;
 
 -- ====================================================================
 -- 3. FONCTIONS RPC (SECURITY DEFINER)
