@@ -59,17 +59,20 @@ const REDIRECT_TRIGGER_ROUTES = [
  */
 export const getDashboardRoute = (role: string | null | undefined): string => {
   if (!role) return '/home';
-  
+
   const roleRoutes: Record<string, string> = {
+    pdg: '/pdg',
     admin: '/pdg',
     ceo: '/pdg',
     vendeur: '/vendeur',
     livreur: '/livreur',
     taxi: '/taxi-moto/driver',
+    driver: '/taxi-moto/driver',
     syndicat: '/syndicat',
+    bureau: '/bureau',
     transitaire: '/transitaire',
     client: '/client',
-    agent: '/agent',
+    agent: '/agent-dashboard',
   };
 
   return roleRoutes[role] || '/home';
