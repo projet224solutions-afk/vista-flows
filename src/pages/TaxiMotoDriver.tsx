@@ -285,6 +285,7 @@ export default function TaxiMotoDriver() {
         }
 
         if (next) {
+            // PASSER EN LIGNE
             toast.loading('📍 Activation GPS...', { id: 'gps-loading' });
             
             try {
@@ -292,52 +293,76 @@ export default function TaxiMotoDriver() {
                 const position = await getCurrentLocation();
                 toast.dismiss('gps-loading');
                 
-                if (!position) {
+                if (!position || typeof position.latitude !== 'number' || typeof position.longitude !== 'number') {
                     toast.error('Position GPS non disponible');
                     return;
                 }
                 
-                toast.success('✅ GPS activé');
+                console.log('🟢 [Online] Position GPS:', position.latitude, position.longitude);
                 
-                // Mettre à jour le statut dans la base
+                // Mettre à jour le statut dans la base avec la VRAIE position
                 await TaxiMotoService.updateDriverStatus(
                     driverId,
                     true,
                     true,
-                    location.latitude,
-                    location.longitude
+                    position.latitude,
+                    position.longitude
                 );
 
                 setIsOnline(true);
+                setOnlineSince(new Date());
                 
-                toast.success('🟢 Vous êtes maintenant en ligne');
+                // Démarrer le suivi continu
+                startWatching();
+                
+                toast.success('🟢 Vous êtes maintenant en ligne', {
+                    description: `GPS: ${position.latitude.toFixed(4)}, ${position.longitude.toFixed(4)}`
+                });
+                
+                console.log('🟢 [Online] Statut mis à jour avec succès');
                 
             } catch (error: any) {
                 toast.dismiss('gps-loading');
                 console.error('❌ Erreur activation:', error);
+                capture('network', 'Erreur lors de la mise en ligne', error);
+                toast.error('Impossible de passer en ligne', {
+                    description: error?.message || 'Veuillez réessayer'
+                });
                 return;
             }
         } else {
-            // Passer hors ligne
+            // PASSER HORS LIGNE
+            console.log('🔴 [Offline] Déconnexion en cours...');
+            
             try {
-                // Arrêter le suivi GPS
+                // 1. D'abord arrêter le suivi GPS
                 stopWatching();
+                console.log('🔴 [Offline] Suivi GPS arrêté');
                 
+                // 2. Mettre à jour le statut dans la base (sans coordonnées pour nettoyer)
                 await TaxiMotoService.updateDriverStatus(
                     driverId,
                     false,
                     false,
-                    location?.latitude,
-                    location?.longitude
+                    undefined,
+                    undefined
                 );
+                console.log('🔴 [Offline] Statut DB mis à jour');
 
+                // 3. Mettre à jour l'état local
                 setIsOnline(false);
+                setOnlineSince(null);
                 clearRideRequests();
                 
                 toast.info('🔴 Vous êtes maintenant hors ligne');
-            } catch (error) {
+                console.log('🔴 [Offline] Déconnexion réussie');
+                
+            } catch (error: any) {
+                console.error('🔴 [Offline] Erreur:', error);
                 capture('network', 'Erreur lors du changement de statut', error);
-                toast.error('Erreur lors du changement de statut');
+                toast.error('Erreur lors du changement de statut', {
+                    description: error?.message || 'Veuillez réessayer'
+                });
             }
         }
     };
