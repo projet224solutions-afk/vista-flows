@@ -38,6 +38,8 @@ const ROLE_LABELS: Record<RoleType, string> = {
   client: 'Clients (CLT)',
   agent: 'Agents (AGT)',
   driver: 'Chauffeurs (DRV)',
+  taxi: 'Taxi-Motos (TAX)',
+  livreur: 'Livreurs (LIV)',
   bureau: 'Bureaux (BST)',
   pdg: 'PDG',
   transitaire: 'Transitaires (TRS)',

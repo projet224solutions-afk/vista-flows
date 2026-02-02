@@ -78,6 +78,8 @@ export function AutoIdCard({ id, roleType, label }: AutoIdCardProps) {
       vendor: 'Code Vendeur',
       bureau: 'Code Bureau',
       driver: 'Code Chauffeur',
+      taxi: 'Code Taxi-Moto',
+      livreur: 'Code Livreur',
       client: 'Code Client',
       pdg: 'Code PDG',
       transitaire: 'Code Transitaire',
