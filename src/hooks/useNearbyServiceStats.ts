@@ -64,7 +64,8 @@ export function useNearbyServiceStats() {
         supabase
           .from('taxi_drivers')
           .select('id, last_lat, last_lng')
-          .eq('is_online', true),
+          .eq('is_online', true)
+          .in('status', ['online', 'available']),
         supabase
           .from('drivers')
           .select('id, current_location, last_location, is_online, status')
