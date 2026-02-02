@@ -252,12 +252,36 @@ function TimelineEvent({
 
 export function UserActivitySearch() {
   const [searchId, setSearchId] = useState('');
+  const [searchError, setSearchError] = useState<{
+    message: string;
+    searchedId?: string;
+    isValidFormat?: boolean;
+    needsCorrection?: boolean;
+    suggestions?: string[];
+    multipleMatches?: Array<{ custom_id: string; user_id: string; role_type: string }>;
+  } | null>(null);
   const { searchUserById, activityData, loading, error, exportToJson, reset } = useUserActivityTracker();
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (searchId.trim()) {
-      searchUserById(searchId);
+      setSearchError(null);
+      const result = await searchUserById(searchId);
+      // Si pas de résultat, vérifier l'erreur détaillée
+      if (!result && error) {
+        try {
+          // L'erreur peut contenir des infos JSON
+          const errorData = JSON.parse(error);
+          setSearchError(errorData);
+        } catch {
+          setSearchError({ message: error });
+        }
+      }
     }
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setSearchId(suggestion);
+    setSearchError(null);
   };
 
   const getRoleBadge = (roleType: string | null) => {
@@ -265,9 +289,13 @@ export function UserActivitySearch() {
       vendor: 'bg-purple-100 text-purple-800',
       client: 'bg-blue-100 text-blue-800',
       driver: 'bg-green-100 text-green-800',
+      taxi: 'bg-yellow-100 text-yellow-800',
+      livreur: 'bg-teal-100 text-teal-800',
       agent: 'bg-orange-100 text-orange-800',
       pdg: 'bg-red-100 text-red-800',
-      transitaire: 'bg-cyan-100 text-cyan-800'
+      transitaire: 'bg-cyan-100 text-cyan-800',
+      worker: 'bg-indigo-100 text-indigo-800',
+      bureau: 'bg-pink-100 text-pink-800'
     };
     return roleColors[roleType || ''] || 'bg-gray-100 text-gray-800';
   };
@@ -279,6 +307,9 @@ export function UserActivitySearch() {
     }).format(amount) + ' ' + currency;
   };
 
+  // Liste des préfixes valides
+  const validPrefixes = ['VND', 'CLT', 'DRV', 'TAX', 'LIV', 'AGT', 'PDG', 'TRS', 'WRK', 'BST', 'SAG', 'VAG', 'MBR', 'ADM'];
+
   return (
     <div className="space-y-6">
       {/* Barre de recherche */}
@@ -289,13 +320,13 @@ export function UserActivitySearch() {
             Recherche d'Activité Utilisateur Complète
           </CardTitle>
           <CardDescription>
-            Entrez l'ID utilisateur (ex: VND0001, CLT0002, DRV0003) pour voir TOUT son historique complet
+            Entrez l'ID utilisateur (ex: VND0001, CLT0002, DRV0003, TAX0001, LIV0001) pour voir TOUT son historique complet
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="flex gap-2">
             <Input
-              placeholder="Entrez l'ID (ex: VND0001)..."
+              placeholder="Entrez l'ID (ex: VND0001, TAX0001)..."
               value={searchId}
               onChange={(e) => setSearchId(e.target.value.toUpperCase())}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -321,11 +352,114 @@ export function UserActivitySearch() {
               </>
             )}
           </div>
-          {error && (
-            <p className="text-sm text-destructive mt-2 flex items-center gap-1">
-              <AlertCircle className="h-4 w-4" />
-              {error}
-            </p>
+
+          {/* Préfixes valides */}
+          <div className="flex flex-wrap gap-1">
+            <span className="text-xs text-muted-foreground mr-2">Préfixes valides:</span>
+            {validPrefixes.map(prefix => (
+              <Badge key={prefix} variant="outline" className="text-xs font-mono cursor-pointer hover:bg-muted"
+                onClick={() => setSearchId(prefix)}>
+                {prefix}
+              </Badge>
+            ))}
+          </div>
+
+          {/* Erreur avec détails */}
+          {(error || searchError) && (
+            <div className="p-4 border border-destructive/50 bg-destructive/10 rounded-lg space-y-3">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-medium text-destructive">
+                    {searchError?.message || error}
+                  </p>
+                  
+                  {searchError?.searchedId && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      ID recherché: <code className="font-mono bg-muted px-1 rounded">{searchError.searchedId}</code>
+                      {searchError.isValidFormat !== undefined && (
+                        <Badge className={`ml-2 ${searchError.isValidFormat ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {searchError.isValidFormat ? 'Format valide' : 'Format invalide'}
+                        </Badge>
+                      )}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Suggestions */}
+              {searchError?.suggestions && searchError.suggestions.length > 0 && (
+                <div className="pt-2 border-t">
+                  <p className="text-sm text-muted-foreground mb-2">IDs similaires trouvés:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {searchError.suggestions.map(suggestion => (
+                      <Button
+                        key={suggestion}
+                        variant="outline"
+                        size="sm"
+                        className="font-mono"
+                        onClick={() => {
+                          handleSuggestionClick(suggestion);
+                          setTimeout(() => handleSearch(), 100);
+                        }}
+                      >
+                        {suggestion}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Correspondances multiples */}
+              {searchError?.multipleMatches && searchError.multipleMatches.length > 0 && (
+                <div className="pt-2 border-t">
+                  <p className="text-sm text-muted-foreground mb-2">Plusieurs correspondances trouvées:</p>
+                  <div className="space-y-2">
+                    {searchError.multipleMatches.map(match => (
+                      <Button
+                        key={match.custom_id}
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start font-mono"
+                        onClick={() => {
+                          setSearchId(match.custom_id);
+                          setSearchError(null);
+                          setTimeout(() => handleSearch(), 100);
+                        }}
+                      >
+                        <Badge className={getRoleBadge(match.role_type)} variant="secondary">
+                          {match.role_type?.toUpperCase() || 'N/A'}
+                        </Badge>
+                        <span className="ml-2">{match.custom_id}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Bouton de correction */}
+              {searchError?.needsCorrection && (
+                <div className="pt-2 border-t flex items-center gap-2">
+                  <Button 
+                    variant="default" 
+                    size="sm"
+                    onClick={() => {
+                      // Rediriger vers l'onglet de correction d'ID
+                      const tabsElement = document.querySelector('[data-state="active"][value="audit"]');
+                      if (tabsElement) {
+                        (tabsElement as HTMLElement).click();
+                      }
+                    }}
+                  >
+                    <Shield className="h-4 w-4 mr-1" />
+                    Ouvrir l'outil de correction ID
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    Utilisez l'audit de normalisation pour corriger ou créer cet ID
+                  </span>
+                </div>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>
