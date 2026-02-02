@@ -125,15 +125,15 @@ const LogicSurveillanceDashboard: React.FC = () => {
     try {
       setLoading(true);
       
-      // Load dashboard stats via raw RPC call (type not yet in generated types)
-      const { data: statsData, error: statsError } = await (supabase as any)
+      // Load dashboard stats via RPC
+      const { data: statsData, error: statsError } = await supabase
         .rpc('get_logic_surveillance_dashboard');
       
       if (statsError) throw statsError;
       setDashboardData(statsData as DashboardData);
 
-      // Load validation rules via raw query (table not yet in generated types)
-      const { data: rulesData, error: rulesError } = await (supabase as any)
+      // Load validation rules
+      const { data: rulesData, error: rulesError } = await supabase
         .from('logic_validation_rules')
         .select('*')
         .order('domain', { ascending: true });
@@ -164,7 +164,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
     
     setRunningValidation(true);
     try {
-      const { data, error } = await (supabase as any).rpc('run_full_system_validation', {
+      const { data, error } = await supabase.rpc('run_full_system_validation', {
         p_triggered_by: user.id
       });
 
@@ -186,14 +186,14 @@ const LogicSurveillanceDashboard: React.FC = () => {
     try {
       if (correctionType === 'auto') {
         // Récupérer le domaine de l'anomalie
-        const { data: anomaly } = await (supabase as any)
+        const { data: anomaly } = await supabase
           .from('logic_anomalies')
           .select('domain')
           .eq('id', anomalyId)
           .single();
 
         if (anomaly?.domain === 'stock') {
-          const { error } = await (supabase as any).rpc('auto_correct_stock_anomaly', {
+          const { error } = await supabase.rpc('auto_correct_stock_anomaly', {
             p_anomaly_id: anomalyId,
             p_corrected_by: user.id
           });
@@ -201,7 +201,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
         }
       } else {
         // Correction manuelle - marquer comme corrigée
-        const { error } = await (supabase as any)
+        const { error } = await supabase
           .from('logic_anomalies')
           .update({
             status: 'corrected',
@@ -228,7 +228,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
     if (!user?.id) return;
 
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('logic_anomalies')
         .update({
           status: 'ignored',
