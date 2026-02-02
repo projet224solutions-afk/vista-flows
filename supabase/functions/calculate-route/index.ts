@@ -17,35 +17,47 @@ serve(async (req) => {
       throw new Error('Origin and destination are required');
     }
 
-    const GOOGLE_MAPS_API_KEY = Deno.env.get('GOOGLE_CLOUD_API_KEY');
+    const MAPBOX_TOKEN = Deno.env.get('MAPBOX_ACCESS_TOKEN');
     
-    if (!GOOGLE_MAPS_API_KEY) {
-      throw new Error('Google Maps API key not configured');
+    if (!MAPBOX_TOKEN) {
+      throw new Error('Mapbox API key not configured');
     }
 
-    // Appel à l'API Google Directions
-    const directionsUrl = `https://maps.googleapis.com/maps/api/directions/json?` +
-      `origin=${origin.lat},${origin.lng}&` +
-      `destination=${destination.lat},${destination.lng}&` +
-      `mode=driving&` +
-      `key=${GOOGLE_MAPS_API_KEY}`;
+    // Appel à l'API Mapbox Directions
+    const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?geometries=geojson&overview=full&access_token=${MAPBOX_TOKEN}`;
 
+    console.log(`[calculate-route] Calling Mapbox Directions API`);
     const response = await fetch(directionsUrl);
     const data = await response.json();
 
-    if (data.status !== 'OK') {
-      throw new Error(`Google Directions API error: ${data.status}`);
+    if (!response.ok || data.code !== 'Ok') {
+      console.error('[calculate-route] Mapbox error:', data);
+      throw new Error(`Mapbox Directions API error: ${data.message || data.code || 'Unknown error'}`);
+    }
+
+    if (!data.routes || data.routes.length === 0) {
+      throw new Error('No route found');
     }
 
     const route = data.routes[0];
-    const leg = route.legs[0];
 
-    // Décoder le polyline pour obtenir les coordonnées de la route
-    const routeCoordinates = decodePolyline(route.overview_polyline.points);
+    // Extraire les coordonnées de la géométrie GeoJSON
+    const routeCoordinates: [number, number][] = route.geometry.coordinates;
 
     // Calculer la distance en km et la durée en minutes
-    const distanceKm = leg.distance.value / 1000;
-    const durationMin = Math.ceil(leg.duration.value / 60);
+    const distanceKm = route.distance / 1000;
+    const durationMin = Math.ceil(route.duration / 60);
+
+    // Formater les textes de distance et durée
+    const distanceText = distanceKm < 1 
+      ? `${Math.round(route.distance)} m` 
+      : `${distanceKm.toFixed(1)} km`;
+    
+    const durationText = durationMin < 60 
+      ? `${durationMin} min` 
+      : `${Math.floor(durationMin / 60)} h ${durationMin % 60} min`;
+
+    console.log(`[calculate-route] Success: distance=${distanceKm.toFixed(2)}km, duration=${durationMin}min`);
 
     return new Response(
       JSON.stringify({
@@ -53,10 +65,10 @@ serve(async (req) => {
         route: routeCoordinates,
         distance: distanceKm,
         duration: durationMin,
-        distanceText: leg.distance.text,
-        durationText: leg.duration.text,
-        startAddress: leg.start_address,
-        endAddress: leg.end_address
+        distanceText: distanceText,
+        durationText: durationText,
+        startAddress: `${origin.lat}, ${origin.lng}`,
+        endAddress: `${destination.lat}, ${destination.lng}`
       }),
       { 
         headers: { 
@@ -83,42 +95,3 @@ serve(async (req) => {
     );
   }
 });
-
-// Fonction pour décoder le polyline de Google Maps
-function decodePolyline(encoded: string): [number, number][] {
-  const coordinates: [number, number][] = [];
-  let index = 0;
-  let lat = 0;
-  let lng = 0;
-
-  while (index < encoded.length) {
-    let shift = 0;
-    let result = 0;
-    let byte: number;
-
-    do {
-      byte = encoded.charCodeAt(index++) - 63;
-      result |= (byte & 0x1f) << shift;
-      shift += 5;
-    } while (byte >= 0x20);
-
-    const deltaLat = ((result & 1) ? ~(result >> 1) : (result >> 1));
-    lat += deltaLat;
-
-    shift = 0;
-    result = 0;
-
-    do {
-      byte = encoded.charCodeAt(index++) - 63;
-      result |= (byte & 0x1f) << shift;
-      shift += 5;
-    } while (byte >= 0x20);
-
-    const deltaLng = ((result & 1) ? ~(result >> 1) : (result >> 1));
-    lng += deltaLng;
-
-    coordinates.push([lng / 1e5, lat / 1e5]);
-  }
-
-  return coordinates;
-}
