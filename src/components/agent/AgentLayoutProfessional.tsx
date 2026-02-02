@@ -124,6 +124,13 @@ export function AgentLayoutProfessional({
       permission: 'view_finance'
     },
     {
+      id: 'banking',
+      label: 'Système Bancaire',
+      icon: <Shield className="w-5 h-5" />,
+      gradient: 'from-indigo-500 to-blue-500',
+      permission: 'view_banking'
+    },
+    {
       id: 'kyc-management',
       label: 'Gestion KYC',
       icon: <FileCheck className="w-5 h-5" />,
@@ -136,6 +143,27 @@ export function AgentLayoutProfessional({
       icon: <CreditCard className="w-5 h-5" />,
       gradient: 'from-teal-500 to-cyan-500',
       permission: 'manage_wallet_transactions'
+    },
+    {
+      id: 'users-management',
+      label: 'Utilisateurs',
+      icon: <Users className="w-5 h-5" />,
+      gradient: 'from-blue-500 to-indigo-500',
+      permission: 'view_users'
+    },
+    {
+      id: 'vendors-management',
+      label: 'Vendeurs',
+      icon: <Wallet className="w-5 h-5" />,
+      gradient: 'from-emerald-500 to-teal-500',
+      permission: 'view_vendors'
+    },
+    {
+      id: 'orders-management',
+      label: 'Commandes',
+      icon: <ArrowUpRight className="w-5 h-5" />,
+      gradient: 'from-orange-500 to-red-500',
+      permission: 'view_orders'
     },
     // --- Fin nouvelles fonctionnalités ---
     {

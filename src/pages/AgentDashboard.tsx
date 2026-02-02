@@ -25,10 +25,14 @@ import { useAgentStats } from '@/hooks/useAgentStats';
 import { AgentCreatedUsersList } from '@/components/agent/AgentCreatedUsersList';
 import { AgentOrdersTracking } from '@/components/agent/AgentOrdersTracking';
 import MyPurchasesOrdersList from '@/components/shared/MyPurchasesOrdersList';
-// Nouvelles fonctionnalités opérationnelles
+// Modules opérationnels complets
 import { AgentKYCManagement } from '@/components/agent/AgentKYCManagement';
-import { AgentFinanceOverview } from '@/components/agent/AgentFinanceOverview';
+import { AgentFullFinanceModule } from '@/components/agent/modules/AgentFullFinanceModule';
 import { AgentWalletTransactionsManagement } from '@/components/agent/AgentWalletTransactionsManagement';
+import { AgentBankingModule } from '@/components/agent/modules/AgentBankingModule';
+import { AgentUsersModule } from '@/components/agent/modules/AgentUsersModule';
+import { AgentVendorsModule } from '@/components/agent/modules/AgentVendorsModule';
+import { AgentOrdersModule } from '@/components/agent/modules/AgentOrdersModule';
 
 export default function AgentDashboard() {
   const { user, signOut } = useAuth();
@@ -305,21 +309,28 @@ export default function AgentDashboard() {
           />
         );
       
-      // --- Nouvelles fonctionnalités opérationnelles ---
+      // --- Modules opérationnels complets ---
       case 'finance':
-        return <AgentFinanceOverview agentId={agent.id} />;
+        return <AgentFullFinanceModule agentId={agent.id} canManage={unifiedPermissions.manage_finance === true} />;
+      
+      case 'banking':
+        return <AgentBankingModule agentId={agent.id} canManage={unifiedPermissions.manage_banking === true} />;
       
       case 'kyc-management':
-        return (
-          <AgentKYCManagement 
-            agentId={agent.id} 
-            canManage={unifiedPermissions.manage_kyc === true}
-          />
-        );
+        return <AgentKYCManagement agentId={agent.id} canManage={unifiedPermissions.manage_kyc === true} />;
       
       case 'wallet-transactions':
         return <AgentWalletTransactionsManagement agentId={agent.id} />;
-      // --- Fin nouvelles fonctionnalités ---
+      
+      case 'users-management':
+        return <AgentUsersModule agentId={agent.id} canManage={unifiedPermissions.manage_users === true} />;
+      
+      case 'vendors-management':
+        return <AgentVendorsModule agentId={agent.id} canManage={unifiedPermissions.manage_vendors === true} />;
+      
+      case 'orders-management':
+        return <AgentOrdersModule agentId={agent.id} canManage={unifiedPermissions.manage_orders === true} />;
+      // --- Fin modules opérationnels ---
       
       case 'create-user':
         return (
