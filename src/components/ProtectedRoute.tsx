@@ -158,9 +158,17 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
 
   // Vérifier si l'utilisateur est authentifié via Supabase OU session custom
   const isAuthenticated = !!user || customAuth.isValid;
-  const effectiveRole = profile?.role || customAuth.role || 'client';
-
-  // Vérification des rôles
+  const rawRole = profile?.role || customAuth.role || 'client';
+  
+  // Normaliser les rôles équivalents (pdg/ceo/admin sont tous des rôles PDG)
+  const normalizeRole = (role: string): string => {
+    const r = role.toLowerCase();
+    // ceo est équivalent à pdg
+    if (r === 'ceo') return 'pdg';
+    return r;
+  };
+  
+  const effectiveRole = normalizeRole(rawRole);
   if (!isAuthenticated || (effectiveRole && !allowedRoles.includes(effectiveRole))) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">

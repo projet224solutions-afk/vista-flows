@@ -28,6 +28,9 @@ const Dashboard = () => {
     }
 
     // Redirection selon le rôle depuis le PROFIL (source de vérité sécurisée)
+    // Normaliser le rôle en minuscules pour la comparaison
+    const role = profile.role?.toLowerCase() || 'client';
+    
     const roleRedirects: Record<string, string> = {
       'pdg': '/pdg',
       'admin': '/pdg',
@@ -43,8 +46,6 @@ const Dashboard = () => {
       'client': '/client',
     };
 
-    // TOUJOURS utiliser profile.role, JAMAIS user.user_metadata.role
-    const role = profile.role;
     const redirectPath = roleRedirects[role] || '/home';
     
     console.log(`🔄 Dashboard: Redirection vers ${redirectPath} (rôle: ${role})`);

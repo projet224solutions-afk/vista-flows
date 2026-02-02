@@ -9,7 +9,7 @@ export interface Profile {
   email: string;
   first_name?: string;
   last_name?: string;
-  role: 'admin' | 'ceo' | 'vendeur' | 'livreur' | 'taxi' | 'syndicat' | 'transitaire' | 'client' | 'agent';
+  role: 'admin' | 'ceo' | 'pdg' | 'vendeur' | 'livreur' | 'taxi' | 'syndicat' | 'transitaire' | 'client' | 'agent';
   avatar_url?: string;
   phone?: string;
   city?: string;
@@ -188,7 +188,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (v === 'syndicat' || v === 'bureau') return 'syndicat';
       if (v === 'agent') return 'agent';
       if (v === 'admin') return 'admin';
-      if (v === 'ceo' || v === 'pdg') return 'ceo';
+      if (v === 'ceo' || v === 'pdg') return 'pdg';
       if (v === 'client') return 'client';
       return null;
     };

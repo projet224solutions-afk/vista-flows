@@ -60,6 +60,9 @@ const REDIRECT_TRIGGER_ROUTES = [
 export const getDashboardRoute = (role: string | null | undefined): string => {
   if (!role) return '/home';
 
+  // Normaliser le rôle (pdg/ceo/admin -> pdg)
+  const normalizedRole = role.toLowerCase();
+  
   const roleRoutes: Record<string, string> = {
     pdg: '/pdg',
     admin: '/pdg',
@@ -75,7 +78,7 @@ export const getDashboardRoute = (role: string | null | undefined): string => {
     agent: '/agent-dashboard',
   };
 
-  return roleRoutes[role] || '/home';
+  return roleRoutes[normalizedRole] || '/home';
 };
 
 /**
