@@ -33,6 +33,7 @@ import { AgentBankingModule } from '@/components/agent/modules/AgentBankingModul
 import { AgentUsersModule } from '@/components/agent/modules/AgentUsersModule';
 import { AgentVendorsModule } from '@/components/agent/modules/AgentVendorsModule';
 import { AgentOrdersModule } from '@/components/agent/modules/AgentOrdersModule';
+import { AgentServiceSubscriptionsModule } from '@/components/agent/modules/AgentServiceSubscriptionsModule';
 import { AgentPermissionsDisplay } from '@/components/agent/AgentPermissionsDisplay';
 
 export default function AgentDashboard() {
@@ -331,6 +332,9 @@ export default function AgentDashboard() {
       
       case 'orders-management':
         return <AgentOrdersModule agentId={agent.id} canManage={unifiedPermissions.manage_orders === true} />;
+      
+      case 'service-subscriptions':
+        return <AgentServiceSubscriptionsModule agentId={agent.id} canManage={unifiedPermissions.manage_service_subscriptions === true} />;
       // --- Fin modules opérationnels ---
       
       case 'create-user':
