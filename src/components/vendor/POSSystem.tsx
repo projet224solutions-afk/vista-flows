@@ -1911,12 +1911,11 @@ export function POSSystem() {
                       return (
                         <Card 
                           key={product.id} 
-                          className={`group relative cursor-pointer transition-all duration-200 hover:shadow-xl border bg-card active:scale-[0.98] ${
+                          className={`group relative transition-all duration-200 hover:shadow-xl border bg-card ${
                             isRecent 
                               ? 'border-primary/60 ring-2 ring-primary/20 shadow-lg' 
                               : 'border-border/50 hover:border-primary/40'
                           }`}
-                          onClick={() => addToCart(product)}
                         >
                         <CardContent className="p-0 flex flex-col">
                           {/* Image produit - Hauteur fixe pour éviter les débordements */}

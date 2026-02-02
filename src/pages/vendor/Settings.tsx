@@ -6,9 +6,10 @@ import VendorLocationSettings from '@/components/vendor/settings/VendorLocationS
 import VendorDeliveryPricing from '@/components/vendor/settings/VendorDeliveryPricing';
 import VendorShopImagesSettings from '@/components/vendor/settings/VendorShopImagesSettings';
 import VendorPasswordChange from '@/components/vendor/settings/VendorPasswordChange';
+import VendorKYCSettings from '@/components/vendor/settings/VendorKYCSettings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, User, Bell, Truck, MapPin, ImageIcon } from 'lucide-react';
+import { Building2, User, Bell, Truck, MapPin, ImageIcon, Shield } from 'lucide-react';
 
 export default function VendorSettings() {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ export default function VendorSettings() {
 
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (tab && tab !== 'kyc') {
+    if (tab) {
       setActiveTab(tab);
     }
   }, [searchParams]);
@@ -82,7 +83,7 @@ export default function VendorSettings() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="business" className="gap-2">
             <Building2 className="w-4 h-4" />
             <span className="hidden sm:inline">Entreprise</span>
@@ -98,6 +99,10 @@ export default function VendorSettings() {
           <TabsTrigger value="delivery" className="gap-2">
             <Truck className="w-4 h-4" />
             <span className="hidden sm:inline">Livraison</span>
+          </TabsTrigger>
+          <TabsTrigger value="kyc" className="gap-2">
+            <Shield className="w-4 h-4" />
+            <span className="hidden sm:inline">KYC</span>
           </TabsTrigger>
           <TabsTrigger value="profile" className="gap-2">
             <User className="w-4 h-4" />
@@ -123,6 +128,10 @@ export default function VendorSettings() {
 
         <TabsContent value="delivery" className="mt-6" forceMount hidden={activeTab !== 'delivery'}>
           <VendorDeliveryPricing vendorId={vendorId} />
+        </TabsContent>
+
+        <TabsContent value="kyc" className="mt-6" forceMount hidden={activeTab !== 'kyc'}>
+          <VendorKYCSettings vendorId={vendorId} />
         </TabsContent>
 
         <TabsContent value="profile" className="mt-6">
