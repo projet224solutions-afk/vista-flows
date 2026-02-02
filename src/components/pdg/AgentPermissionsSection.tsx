@@ -133,8 +133,8 @@ export function AgentPermissionsSection({
       <p className="text-xs text-muted-foreground mb-3">
         Gérez les accès aux différentes fonctionnalités du système
       </p>
-      <ScrollArea className="max-h-[300px] pr-2">
-        <div className="space-y-2">
+      <ScrollArea className="h-[350px] pr-4">
+        <div className="space-y-2 pb-2">
           {Object.entries(permissionCategories).map(([category, keys]) => {
             const activeCount = getActiveCategoryCount(keys);
             
