@@ -80,10 +80,23 @@ export function AgentLayoutProfessional({
 
   /**
    * Vérifie si l'agent a une permission donnée (unifié + legacy)
+   * Gère les alias de permissions pour compatibilité
    */
   const hasPermission = (key: string): boolean => {
-    if (unifiedPermissions[key] === true) return true;
-    if (agent.permissions?.includes(key)) return true;
+    // Mapping d'alias de permissions
+    const permissionAliases: Record<string, string[]> = {
+      'view_users': ['view_users', 'manage_users', 'create_users'],
+      'manage_users': ['manage_users', 'view_users'],
+      'view_reports': ['view_reports', 'view_analytics', 'view_finance'],
+      'create_sub_agents': ['create_sub_agents', 'manage_agents'],
+    };
+
+    const keysToCheck = permissionAliases[key] || [key];
+
+    for (const k of keysToCheck) {
+      if (unifiedPermissions[k] === true) return true;
+      if (agent.permissions?.includes(k)) return true;
+    }
     return false;
   };
 
