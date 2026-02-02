@@ -652,6 +652,12 @@ export default function PDG224Solutions() {
                   <IdNormalizationAudit />
                 </ErrorBoundary>
               )}
+
+              {activeTab === 'logic-surveillance' && (
+                <ErrorBoundary>
+                  <LogicSurveillanceDashboard />
+                </ErrorBoundary>
+              )}
             </Suspense>
           </div>
         </div>
