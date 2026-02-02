@@ -52,11 +52,21 @@ export default function AgentSidebar({
   // Fonction pour vérifier les permissions (combine les deux sources)
   const hasPermission = (permission: string): boolean => {
     // Vérifier d'abord les permissions unifiées (nouvelle table)
-    if (unifiedPermissions[permission] === true) return true;
+    if (unifiedPermissions[permission] === true) {
+      console.log(`✅ Permission accordée (unifié): ${permission}`);
+      return true;
+    }
     // Ensuite vérifier les permissions legacy (tableau)
-    if (agent.permissions.includes(permission)) return true;
+    if (agent.permissions.includes(permission)) {
+      console.log(`✅ Permission accordée (legacy): ${permission}`);
+      return true;
+    }
     return false;
   };
+
+  // Log des permissions pour debug
+  console.log('🔐 Permissions unifiées:', unifiedPermissions);
+  console.log('🔐 Permissions legacy:', agent.permissions);
 
   const navItems: NavItem[] = [
     { 
@@ -123,11 +133,18 @@ export default function AgentSidebar({
   ];
 
   const filteredNavItems = navItems.filter(item => {
+    // Toujours afficher les items sans permission requise
     if (!item.permission) return true;
+    
+    // Pour les sous-agents, vérifier plusieurs permissions
     if (item.id === 'sub-agents') {
       return agent.can_create_sub_agent || hasPermission('create_sub_agents') || hasPermission('manage_agents');
     }
-    return hasPermission(item.permission);
+    
+    // Vérifier la permission spécifique
+    const hasPerm = hasPermission(item.permission);
+    console.log(`📋 Item "${item.label}" - permission "${item.permission}": ${hasPerm}`);
+    return hasPerm;
   });
 
   return (

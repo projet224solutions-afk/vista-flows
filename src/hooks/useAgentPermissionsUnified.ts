@@ -29,6 +29,7 @@ export function useAgentPermissionsUnified(agentId: string | undefined): Unified
 
     try {
       setLoading(true);
+      console.log('📋 [Permissions] Chargement pour agent:', agentId);
 
       // Charger les permissions depuis la table agent_permissions
       const { data: permissionsData, error: permError } = await supabase
@@ -37,7 +38,9 @@ export function useAgentPermissionsUnified(agentId: string | undefined): Unified
         .eq('agent_id', agentId);
 
       if (permError) {
-        console.error('Erreur chargement agent_permissions:', permError);
+        console.error('❌ Erreur chargement agent_permissions:', permError);
+      } else {
+        console.log('📋 [Permissions] Données table agent_permissions:', permissionsData);
       }
 
       // Charger aussi les permissions legacy du JSON dans agents_management
@@ -48,17 +51,20 @@ export function useAgentPermissionsUnified(agentId: string | undefined): Unified
         .single();
 
       if (agentError) {
-        console.error('Erreur chargement agent permissions JSON:', agentError);
+        console.error('❌ Erreur chargement agent permissions JSON:', agentError);
+      } else {
+        console.log('📋 [Permissions] Données legacy JSON:', agentData?.permissions);
       }
 
       // Fusionner les permissions
       const mergedPermissions: Record<string, boolean> = {};
 
       // D'abord, les permissions de la nouvelle table (prioritaires)
-      if (permissionsData) {
+      if (permissionsData && permissionsData.length > 0) {
         permissionsData.forEach(p => {
           mergedPermissions[p.permission_key] = p.permission_value ?? false;
         });
+        console.log('📋 [Permissions] Après ajout nouvelle table:', mergedPermissions);
       }
 
       // Ensuite, ajouter les permissions legacy si elles n'existent pas déjà
@@ -81,11 +87,13 @@ export function useAgentPermissionsUnified(agentId: string | undefined): Unified
             }
           });
         }
+        console.log('📋 [Permissions] Après fusion legacy:', mergedPermissions);
       }
 
+      console.log('✅ [Permissions] Permissions finales:', mergedPermissions);
       setPermissions(mergedPermissions);
     } catch (error) {
-      console.error('Erreur chargement permissions unifiées:', error);
+      console.error('❌ Erreur chargement permissions unifiées:', error);
     } finally {
       setLoading(false);
     }
