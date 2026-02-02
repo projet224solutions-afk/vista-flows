@@ -141,8 +141,13 @@ export function useAgentPermissionsUnified(agentId: string | undefined): Unified
 
     loadPermissions();
 
-    // Écouter les changements en temps réel sur agent_permissions
-    const channel = supabase
+    /**
+     * IMPORTANT:
+     * Selon la session (agent public via token, sans auth), le realtime sur agent_permissions
+     * peut ne pas être fiable (ou filtré). On écoute donc aussi agents_management (id) et
+     * on recharge les permissions à chaque update.
+     */
+    const channelAgentPermissions = supabase
       .channel(`agent-permissions-unified-${agentId}`)
       .on(
         'postgres_changes',
@@ -150,17 +155,35 @@ export function useAgentPermissionsUnified(agentId: string | undefined): Unified
           event: '*',
           schema: 'public',
           table: 'agent_permissions',
-          filter: `agent_id=eq.${agentId}`
+          filter: `agent_id=eq.${agentId}`,
         },
         () => {
-          console.log('📋 Permissions agent mises à jour');
+          console.log('📋 [Permissions] Changement agent_permissions → reload');
+          loadPermissions();
+        }
+      )
+      .subscribe();
+
+    const channelAgentRow = supabase
+      .channel(`agent-row-unified-${agentId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'agents_management',
+          filter: `id=eq.${agentId}`,
+        },
+        () => {
+          console.log('📋 [Permissions] Changement agents_management → reload');
           loadPermissions();
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(channelAgentPermissions);
+      supabase.removeChannel(channelAgentRow);
     };
   }, [agentId, loadPermissions]);
 
