@@ -1234,3 +1234,805 @@ COMMENT ON VIEW logic_validation_rules IS 'Vue de compatibilité pour le dashboa
 COMMENT ON FUNCTION get_logic_surveillance_dashboard IS 'Retourne les données du tableau de bord de surveillance';
 COMMENT ON FUNCTION detect_stock_anomalies IS 'Détecte les incohérences de stock entre products et inventory';
 COMMENT ON FUNCTION auto_correct_stock_anomaly IS 'Corrige automatiquement une anomalie de stock';
+
+-- ====================================================================
+-- 8. RÈGLES SUPPLÉMENTAIRES - DOMAINES MANQUANTS
+-- ====================================================================
+
+INSERT INTO logic_rules (rule_id, domain, name, description, expected_logic, detection_method, severity, auto_correctable)
+VALUES
+
+-- ==================== TAXI-MOTO (8 règles) ====================
+('TAXI_001', 'TAXI_MOTO', 'Driver must have valid KYC',
+ 'Chauffeur doit avoir KYC validé pour accepter des courses',
+ '{"action": "ride_accepted", "expected_result": "driver_kyc_valid"}'::JSONB,
+ 'check_driver_kyc', 'HIGH', false),
+
+('TAXI_002', 'TAXI_MOTO', 'Ride fare must match pricing',
+ 'Tarif course doit correspondre à la grille tarifaire',
+ '{"action": "ride_completed", "expected_result": "fare_matches_pricing"}'::JSONB,
+ 'check_ride_fare', 'HIGH', true),
+
+('TAXI_003', 'TAXI_MOTO', 'Driver location must be updated',
+ 'Position chauffeur doit être mise à jour régulièrement',
+ '{"action": "ride_active", "expected_result": "location_updated"}'::JSONB,
+ 'check_driver_location', 'MEDIUM', false),
+
+('TAXI_004', 'TAXI_MOTO', 'Ride payment must be processed',
+ 'Paiement course doit être traité après fin',
+ '{"action": "ride_completed", "expected_result": "payment_processed"}'::JSONB,
+ 'check_ride_payment', 'CRITICAL', true),
+
+('TAXI_005', 'TAXI_MOTO', 'Driver earnings must be credited',
+ 'Gains chauffeur doivent être crédités',
+ '{"action": "ride_completed", "expected_result": "earnings_credited"}'::JSONB,
+ 'check_driver_earnings', 'HIGH', true),
+
+('TAXI_006', 'TAXI_MOTO', 'SOS alert must be processed',
+ 'Alerte SOS doit être traitée immédiatement',
+ '{"action": "sos_triggered", "expected_result": "alert_processed"}'::JSONB,
+ 'check_sos_alert', 'CRITICAL', false),
+
+('TAXI_007', 'TAXI_MOTO', 'Vehicle must be registered',
+ 'Véhicule doit être enregistré et valide',
+ '{"action": "ride_started", "expected_result": "vehicle_valid"}'::JSONB,
+ 'check_vehicle_registration', 'HIGH', false),
+
+('TAXI_008', 'TAXI_MOTO', 'Ride tracking must be active',
+ 'Tracking GPS doit être actif pendant la course',
+ '{"action": "ride_active", "expected_result": "tracking_enabled"}'::JSONB,
+ 'check_ride_tracking', 'MEDIUM', false),
+
+-- ==================== ESCROW (5 règles) ====================
+('ESC_001', 'ESCROW', 'Escrow funds must be held',
+ 'Fonds escrow doivent être retenus jusqu\'à validation',
+ '{"action": "escrow_created", "expected_result": "funds_held"}'::JSONB,
+ 'check_escrow_funds', 'CRITICAL', false),
+
+('ESC_002', 'ESCROW', 'Escrow release must be authorized',
+ 'Libération escrow doit être autorisée',
+ '{"action": "escrow_released", "expected_result": "release_authorized"}'::JSONB,
+ 'check_escrow_release', 'CRITICAL', false),
+
+('ESC_003', 'ESCROW', 'Escrow refund must follow rules',
+ 'Remboursement escrow doit suivre les règles',
+ '{"action": "escrow_refunded", "expected_result": "refund_valid"}'::JSONB,
+ 'check_escrow_refund', 'HIGH', false),
+
+('ESC_004', 'ESCROW', 'Escrow dispute must be logged',
+ 'Litige escrow doit être journalisé',
+ '{"action": "escrow_disputed", "expected_result": "dispute_logged"}'::JSONB,
+ 'check_escrow_dispute', 'MEDIUM', false),
+
+('ESC_005', 'ESCROW', 'Escrow timeout must be handled',
+ 'Timeout escrow doit déclencher action automatique',
+ '{"action": "escrow_timeout", "expected_result": "timeout_handled"}'::JSONB,
+ 'check_escrow_timeout', 'HIGH', true),
+
+-- ==================== FRAUDE (6 règles) ====================
+('FRD_001', 'FRAUD', 'Suspicious transaction must be flagged',
+ 'Transaction suspecte doit être signalée',
+ '{"action": "transaction_created", "expected_result": "fraud_check_passed"}'::JSONB,
+ 'check_fraud_detection', 'CRITICAL', false),
+
+('FRD_002', 'FRAUD', 'Multiple failed logins must trigger alert',
+ 'Plusieurs échecs login doivent déclencher alerte',
+ '{"action": "login_failed_multiple", "expected_result": "alert_triggered"}'::JSONB,
+ 'check_login_attempts', 'HIGH', true),
+
+('FRD_003', 'FRAUD', 'Unusual activity must be detected',
+ 'Activité inhabituelle doit être détectée',
+ '{"action": "activity_detected", "expected_result": "pattern_checked"}'::JSONB,
+ 'check_unusual_activity', 'HIGH', false),
+
+('FRD_004', 'FRAUD', 'Device fingerprint must be verified',
+ 'Empreinte appareil doit être vérifiée',
+ '{"action": "login_attempt", "expected_result": "device_verified"}'::JSONB,
+ 'check_device_fingerprint', 'MEDIUM', false),
+
+('FRD_005', 'FRAUD', 'High-value transaction must require 2FA',
+ 'Transaction haute valeur doit exiger 2FA',
+ '{"action": "high_value_transaction", "expected_result": "2fa_completed"}'::JSONB,
+ 'check_2fa_required', 'CRITICAL', false),
+
+('FRD_006', 'FRAUD', 'Blacklisted user must be blocked',
+ 'Utilisateur blacklisté doit être bloqué',
+ '{"action": "user_action", "expected_result": "blacklist_checked"}'::JSONB,
+ 'check_blacklist', 'CRITICAL', true),
+
+-- ==================== DROPSHIPPING (4 règles) ====================
+('DROP_001', 'DROPSHIPPING', 'Price sync must be accurate',
+ 'Synchronisation prix doit être exacte',
+ '{"action": "price_synced", "expected_result": "price_accurate"}'::JSONB,
+ 'check_price_sync', 'HIGH', true),
+
+('DROP_002', 'DROPSHIPPING', 'Supplier must be verified',
+ 'Fournisseur doit être vérifié',
+ '{"action": "order_placed", "expected_result": "supplier_verified"}'::JSONB,
+ 'check_supplier_status', 'HIGH', false),
+
+('DROP_003', 'DROPSHIPPING', 'Stock availability must be checked',
+ 'Disponibilité stock fournisseur doit être vérifiée',
+ '{"action": "product_ordered", "expected_result": "stock_available"}'::JSONB,
+ 'check_supplier_stock', 'HIGH', false),
+
+('DROP_004', 'DROPSHIPPING', 'Shipping cost must be calculated',
+ 'Frais expédition doivent être calculés',
+ '{"action": "order_created", "expected_result": "shipping_calculated"}'::JSONB,
+ 'check_shipping_cost', 'MEDIUM', true),
+
+-- ==================== SERVICES PROFESSIONNELS (6 règles) ====================
+('SVC_001', 'PROFESSIONAL_SERVICES', 'Appointment must be confirmed',
+ 'RDV doit être confirmé avant l\'heure',
+ '{"action": "appointment_created", "expected_result": "confirmation_sent"}'::JSONB,
+ 'check_appointment_confirmation', 'MEDIUM', false),
+
+('SVC_002', 'PROFESSIONAL_SERVICES', 'Service provider must be available',
+ 'Prestataire doit être disponible',
+ '{"action": "booking_requested", "expected_result": "provider_available"}'::JSONB,
+ 'check_provider_availability', 'HIGH', false),
+
+('SVC_003', 'PROFESSIONAL_SERVICES', 'Service price must match catalog',
+ 'Prix service doit correspondre au catalogue',
+ '{"action": "service_booked", "expected_result": "price_matches"}'::JSONB,
+ 'check_service_price', 'HIGH', true),
+
+('SVC_004', 'PROFESSIONAL_SERVICES', 'Rating must be submitted after service',
+ 'Évaluation doit être demandée après service',
+ '{"action": "service_completed", "expected_result": "rating_requested"}'::JSONB,
+ 'check_rating_request', 'LOW', false),
+
+('SVC_005', 'PROFESSIONAL_SERVICES', 'Provider earnings must be credited',
+ 'Gains prestataire doivent être crédités',
+ '{"action": "service_completed", "expected_result": "earnings_credited"}'::JSONB,
+ 'check_provider_earnings', 'HIGH', true),
+
+('SVC_006', 'PROFESSIONAL_SERVICES', 'Cancellation must follow policy',
+ 'Annulation doit suivre la politique',
+ '{"action": "booking_cancelled", "expected_result": "policy_followed"}'::JSONB,
+ 'check_cancellation_policy', 'MEDIUM', false),
+
+-- ==================== COMMUNICATION (4 règles) ====================
+('COM_MSG_001', 'COMMUNICATION', 'Message must be delivered',
+ 'Message doit être livré au destinataire',
+ '{"action": "message_sent", "expected_result": "delivered"}'::JSONB,
+ 'check_message_delivery', 'MEDIUM', false),
+
+('COM_MSG_002', 'COMMUNICATION', 'Conversation must be logged',
+ 'Conversation doit être journalisée pour audit',
+ '{"action": "conversation_created", "expected_result": "audit_logged"}'::JSONB,
+ 'check_conversation_audit', 'LOW', false),
+
+('COM_MSG_003', 'COMMUNICATION', 'Spam content must be filtered',
+ 'Contenu spam doit être filtré',
+ '{"action": "message_sent", "expected_result": "spam_checked"}'::JSONB,
+ 'check_spam_filter', 'MEDIUM', true),
+
+('COM_MSG_004', 'COMMUNICATION', 'Video call must have valid participants',
+ 'Appel vidéo doit avoir des participants valides',
+ '{"action": "call_started", "expected_result": "participants_valid"}'::JSONB,
+ 'check_call_participants', 'HIGH', false),
+
+-- ==================== VENDEURS (5 règles) ====================
+('VND_001', 'VENDORS', 'Vendor must have valid certification',
+ 'Vendeur doit avoir certification valide',
+ '{"action": "product_listed", "expected_result": "vendor_certified"}'::JSONB,
+ 'check_vendor_certification', 'HIGH', false),
+
+('VND_002', 'VENDORS', 'Vendor KYC must be verified',
+ 'KYC vendeur doit être vérifié',
+ '{"action": "vendor_activated", "expected_result": "kyc_verified"}'::JSONB,
+ 'check_vendor_kyc', 'HIGH', false),
+
+('VND_003', 'VENDORS', 'Vendor payout must be processed',
+ 'Paiement vendeur doit être traité',
+ '{"action": "payout_requested", "expected_result": "payout_processed"}'::JSONB,
+ 'check_vendor_payout', 'HIGH', true),
+
+('VND_004', 'VENDORS', 'Vendor rating must be updated',
+ 'Note vendeur doit être mise à jour',
+ '{"action": "review_submitted", "expected_result": "rating_updated"}'::JSONB,
+ 'check_vendor_rating', 'LOW', true),
+
+('VND_005', 'VENDORS', 'Vendor must respect return policy',
+ 'Vendeur doit respecter politique de retour',
+ '{"action": "return_requested", "expected_result": "policy_checked"}'::JSONB,
+ 'check_return_policy', 'MEDIUM', false),
+
+-- ==================== CLIENTS (4 règles) ====================
+('CLT_001', 'CUSTOMERS', 'Customer order history must be maintained',
+ 'Historique commandes client doit être maintenu',
+ '{"action": "order_completed", "expected_result": "history_updated"}'::JSONB,
+ 'check_order_history', 'LOW', true),
+
+('CLT_002', 'CUSTOMERS', 'Customer loyalty points must be credited',
+ 'Points fidélité doivent être crédités',
+ '{"action": "purchase_completed", "expected_result": "points_credited"}'::JSONB,
+ 'check_loyalty_points', 'MEDIUM', true),
+
+('CLT_003', 'CUSTOMERS', 'Customer refund must be processed within SLA',
+ 'Remboursement doit être traité dans le SLA',
+ '{"action": "refund_requested", "expected_result": "sla_respected"}'::JSONB,
+ 'check_refund_sla', 'HIGH', false),
+
+('CLT_004', 'CUSTOMERS', 'Customer data must be protected',
+ 'Données client doivent être protégées',
+ '{"action": "data_accessed", "expected_result": "access_authorized"}'::JSONB,
+ 'check_data_protection', 'CRITICAL', false),
+
+-- ==================== API (4 règles) ====================
+('API_001', 'API', 'API rate limit must be respected',
+ 'Limite de taux API doit être respectée',
+ '{"action": "api_call", "expected_result": "rate_limit_ok"}'::JSONB,
+ 'check_rate_limit', 'HIGH', true),
+
+('API_002', 'API', 'API key must be valid',
+ 'Clé API doit être valide',
+ '{"action": "api_authenticated", "expected_result": "key_valid"}'::JSONB,
+ 'check_api_key', 'CRITICAL', false),
+
+('API_003', 'API', 'API response time must be acceptable',
+ 'Temps de réponse API doit être acceptable',
+ '{"action": "api_response", "expected_result": "response_time_ok"}'::JSONB,
+ 'check_api_latency', 'MEDIUM', false),
+
+('API_004', 'API', 'API errors must be logged',
+ 'Erreurs API doivent être journalisées',
+ '{"action": "api_error", "expected_result": "error_logged"}'::JSONB,
+ 'check_api_error_log', 'HIGH', false)
+
+ON CONFLICT (rule_id) DO NOTHING;
+
+-- ====================================================================
+-- 9. TRIGGERS DE DÉTECTION EN TEMPS RÉEL
+-- ====================================================================
+
+-- Fonction générique pour créer une anomalie
+CREATE OR REPLACE FUNCTION log_surveillance_anomaly(
+  p_domain TEXT,
+  p_entity_type TEXT,
+  p_entity_id TEXT,
+  p_action_type TEXT,
+  p_expected JSONB,
+  p_actual JSONB,
+  p_severity TEXT DEFAULT 'MEDIUM'
+)
+RETURNS UUID
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_anomaly_id UUID;
+BEGIN
+  INSERT INTO logic_anomalies (
+    domain,
+    entity_type,
+    entity_id,
+    action_type,
+    expected_value,
+    actual_value,
+    severity,
+    status,
+    detected_at,
+    detected_by
+  ) VALUES (
+    p_domain,
+    p_entity_type,
+    p_entity_id,
+    p_action_type,
+    p_expected,
+    p_actual,
+    p_severity,
+    'pending',
+    NOW(),
+    'system_trigger'
+  ) RETURNING id INTO v_anomaly_id;
+
+  -- Créer une alerte PDG si critique
+  IF p_severity = 'CRITICAL' THEN
+    INSERT INTO pdg_financial_alerts (alert_type, severity, title, message, metadata)
+    VALUES (
+      'logic_anomaly',
+      'critical',
+      'Anomalie critique détectée',
+      format('Domaine: %s, Type: %s, Action: %s', p_domain, p_entity_type, p_action_type),
+      jsonb_build_object('anomaly_id', v_anomaly_id, 'domain', p_domain)
+    );
+  END IF;
+
+  RETURN v_anomaly_id;
+END;
+$$;
+
+-- Trigger sur les wallets pour détecter les soldes négatifs
+CREATE OR REPLACE FUNCTION trigger_check_wallet_balance()
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.balance < 0 THEN
+    PERFORM log_surveillance_anomaly(
+      'WALLETS',
+      'wallet',
+      NEW.id::TEXT,
+      'balance_negative',
+      jsonb_build_object('expected', 'balance >= 0'),
+      jsonb_build_object('actual_balance', NEW.balance, 'user_id', NEW.user_id),
+      'CRITICAL'
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_surveillance_wallet_balance ON wallets;
+CREATE TRIGGER trg_surveillance_wallet_balance
+  AFTER INSERT OR UPDATE OF balance ON wallets
+  FOR EACH ROW
+  EXECUTE FUNCTION trigger_check_wallet_balance();
+
+-- Trigger sur les commandes pour vérifier la cohérence
+CREATE OR REPLACE FUNCTION trigger_check_order_total()
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_calculated_total NUMERIC;
+BEGIN
+  -- Calculer le total des items
+  SELECT COALESCE(SUM(quantity * unit_price), 0)
+  INTO v_calculated_total
+  FROM order_items
+  WHERE order_id = NEW.id;
+
+  -- Vérifier si le total correspond (avec tolérance de 1%)
+  IF ABS(NEW.total_amount - v_calculated_total) > (NEW.total_amount * 0.01) AND NEW.total_amount > 0 THEN
+    PERFORM log_surveillance_anomaly(
+      'ORDERS',
+      'order',
+      NEW.id::TEXT,
+      'total_mismatch',
+      jsonb_build_object('expected_total', v_calculated_total),
+      jsonb_build_object('actual_total', NEW.total_amount, 'difference', NEW.total_amount - v_calculated_total),
+      'HIGH'
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_surveillance_order_total ON orders;
+CREATE TRIGGER trg_surveillance_order_total
+  AFTER INSERT OR UPDATE OF total_amount ON orders
+  FOR EACH ROW
+  EXECUTE FUNCTION trigger_check_order_total();
+
+-- Trigger sur les produits pour détecter les stocks négatifs
+CREATE OR REPLACE FUNCTION trigger_check_product_stock()
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.stock_quantity < 0 THEN
+    PERFORM log_surveillance_anomaly(
+      'INVENTORY',
+      'product',
+      NEW.id::TEXT,
+      'stock_negative',
+      jsonb_build_object('expected', 'stock >= 0'),
+      jsonb_build_object('actual_stock', NEW.stock_quantity, 'product_name', NEW.name),
+      'CRITICAL'
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_surveillance_product_stock ON products;
+CREATE TRIGGER trg_surveillance_product_stock
+  AFTER INSERT OR UPDATE OF stock_quantity ON products
+  FOR EACH ROW
+  EXECUTE FUNCTION trigger_check_product_stock();
+
+-- Trigger sur les transactions wallet pour vérifier la cohérence
+CREATE OR REPLACE FUNCTION trigger_check_wallet_transaction()
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_wallet_balance NUMERIC;
+BEGIN
+  -- Vérifier que le montant n'est pas nul ou aberrant
+  IF NEW.amount = 0 THEN
+    PERFORM log_surveillance_anomaly(
+      'WALLETS',
+      'transaction',
+      NEW.id::TEXT,
+      'zero_amount',
+      jsonb_build_object('expected', 'amount != 0'),
+      jsonb_build_object('amount', NEW.amount, 'type', NEW.type),
+      'MEDIUM'
+    );
+  END IF;
+
+  -- Vérifier les transactions très élevées (> 10M GNF)
+  IF ABS(NEW.amount) > 10000000 THEN
+    PERFORM log_surveillance_anomaly(
+      'WALLETS',
+      'transaction',
+      NEW.id::TEXT,
+      'high_value_transaction',
+      jsonb_build_object('threshold', 10000000),
+      jsonb_build_object('amount', NEW.amount, 'type', NEW.type, 'wallet_id', NEW.wallet_id),
+      'HIGH'
+    );
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_surveillance_wallet_transaction ON wallet_transactions;
+CREATE TRIGGER trg_surveillance_wallet_transaction
+  AFTER INSERT ON wallet_transactions
+  FOR EACH ROW
+  EXECUTE FUNCTION trigger_check_wallet_transaction();
+
+-- Trigger sur les profils pour vérifier les changements de rôle
+CREATE OR REPLACE FUNCTION trigger_check_role_change()
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF OLD.role IS DISTINCT FROM NEW.role THEN
+    -- Logger le changement de rôle
+    PERFORM log_surveillance_anomaly(
+      'SECURITY',
+      'profile',
+      NEW.id::TEXT,
+      'role_change',
+      jsonb_build_object('old_role', OLD.role),
+      jsonb_build_object('new_role', NEW.role, 'user_email', NEW.email),
+      'HIGH'
+    );
+
+    -- Alerte critique si changement vers admin/pdg/ceo
+    IF NEW.role IN ('admin', 'pdg', 'ceo') AND OLD.role NOT IN ('admin', 'pdg', 'ceo') THEN
+      INSERT INTO pdg_financial_alerts (alert_type, severity, title, message, metadata)
+      VALUES (
+        'security_alert',
+        'critical',
+        'Changement de rôle privilégié',
+        format('Utilisateur %s promu en %s', NEW.email, NEW.role),
+        jsonb_build_object('user_id', NEW.id, 'old_role', OLD.role, 'new_role', NEW.role)
+      );
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_surveillance_role_change ON profiles;
+CREATE TRIGGER trg_surveillance_role_change
+  AFTER UPDATE OF role ON profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION trigger_check_role_change();
+
+-- ====================================================================
+-- 10. FONCTIONS DE DÉTECTION AVANCÉES
+-- ====================================================================
+
+-- Détection des anomalies de wallet (réconciliation)
+CREATE OR REPLACE FUNCTION detect_wallet_reconciliation_anomalies()
+RETURNS TABLE (
+  wallet_id UUID,
+  user_id UUID,
+  stored_balance NUMERIC,
+  calculated_balance NUMERIC,
+  difference NUMERIC,
+  severity TEXT
+)
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    w.id,
+    w.user_id,
+    COALESCE(w.balance, 0),
+    COALESCE((
+      SELECT SUM(
+        CASE
+          WHEN wt.type IN ('credit', 'deposit', 'refund', 'commission') THEN wt.amount
+          WHEN wt.type IN ('debit', 'withdrawal', 'payment', 'transfer_out') THEN -wt.amount
+          ELSE 0
+        END
+      )
+      FROM wallet_transactions wt
+      WHERE wt.wallet_id = w.id
+    ), 0) AS calc_balance,
+    COALESCE(w.balance, 0) - COALESCE((
+      SELECT SUM(
+        CASE
+          WHEN wt.type IN ('credit', 'deposit', 'refund', 'commission') THEN wt.amount
+          WHEN wt.type IN ('debit', 'withdrawal', 'payment', 'transfer_out') THEN -wt.amount
+          ELSE 0
+        END
+      )
+      FROM wallet_transactions wt
+      WHERE wt.wallet_id = w.id
+    ), 0) AS diff,
+    CASE
+      WHEN ABS(COALESCE(w.balance, 0) - COALESCE((
+        SELECT SUM(
+          CASE
+            WHEN wt.type IN ('credit', 'deposit', 'refund', 'commission') THEN wt.amount
+            WHEN wt.type IN ('debit', 'withdrawal', 'payment', 'transfer_out') THEN -wt.amount
+            ELSE 0
+          END
+        )
+        FROM wallet_transactions wt
+        WHERE wt.wallet_id = w.id
+      ), 0)) > 1000 THEN 'critical'
+      WHEN ABS(COALESCE(w.balance, 0) - COALESCE((
+        SELECT SUM(
+          CASE
+            WHEN wt.type IN ('credit', 'deposit', 'refund', 'commission') THEN wt.amount
+            WHEN wt.type IN ('debit', 'withdrawal', 'payment', 'transfer_out') THEN -wt.amount
+            ELSE 0
+          END
+        )
+        FROM wallet_transactions wt
+        WHERE wt.wallet_id = w.id
+      ), 0)) > 0 THEN 'warning'
+      ELSE 'ok'
+    END
+  FROM wallets w
+  WHERE ABS(COALESCE(w.balance, 0) - COALESCE((
+    SELECT SUM(
+      CASE
+        WHEN wt.type IN ('credit', 'deposit', 'refund', 'commission') THEN wt.amount
+        WHEN wt.type IN ('debit', 'withdrawal', 'payment', 'transfer_out') THEN -wt.amount
+        ELSE 0
+      END
+    )
+    FROM wallet_transactions wt
+    WHERE wt.wallet_id = w.id
+  ), 0)) > 0;
+END;
+$$;
+
+-- Détection des commandes sans paiement
+CREATE OR REPLACE FUNCTION detect_unpaid_orders()
+RETURNS TABLE (
+  order_id UUID,
+  order_status TEXT,
+  total_amount NUMERIC,
+  created_at TIMESTAMPTZ,
+  hours_since_creation NUMERIC,
+  severity TEXT
+)
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    o.id,
+    o.status,
+    o.total_amount,
+    o.created_at,
+    EXTRACT(EPOCH FROM (NOW() - o.created_at)) / 3600 AS hours_diff,
+    CASE
+      WHEN EXTRACT(EPOCH FROM (NOW() - o.created_at)) / 3600 > 48 THEN 'critical'
+      WHEN EXTRACT(EPOCH FROM (NOW() - o.created_at)) / 3600 > 24 THEN 'warning'
+      ELSE 'info'
+    END
+  FROM orders o
+  WHERE o.status IN ('pending', 'confirmed')
+  AND o.payment_status != 'paid'
+  AND o.created_at < NOW() - INTERVAL '4 hours';
+END;
+$$;
+
+-- Fonction de validation système complète améliorée
+CREATE OR REPLACE FUNCTION run_full_system_validation(p_triggered_by UUID DEFAULT NULL)
+RETURNS UUID
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_snapshot_id UUID;
+  v_stock_anomalies INTEGER := 0;
+  v_wallet_anomalies INTEGER := 0;
+  v_order_anomalies INTEGER := 0;
+  v_reconciliation_anomalies INTEGER := 0;
+  v_total_anomalies INTEGER := 0;
+  v_total_checks INTEGER := 0;
+BEGIN
+  -- Créer le snapshot
+  INSERT INTO logic_validation_snapshots (snapshot_type, triggered_by, started_at)
+  VALUES ('on_demand', p_triggered_by, now())
+  RETURNING id INTO v_snapshot_id;
+
+  -- 1. Vérifier les anomalies de stock
+  v_total_checks := v_total_checks + 1;
+  SELECT COUNT(*) INTO v_stock_anomalies FROM detect_stock_anomalies() WHERE severity != 'ok';
+
+  INSERT INTO logic_anomalies (domain, entity_type, entity_id, action_type, expected_value, actual_value, severity, detected_by, status)
+  SELECT
+    'INVENTORY',
+    'product',
+    product_id::TEXT,
+    'stock_sync',
+    jsonb_build_object('products_stock', products_stock),
+    jsonb_build_object('inventory_quantity', inventory_quantity, 'difference', difference),
+    CASE WHEN severity = 'critical' THEN 'CRITICAL' WHEN severity = 'warning' THEN 'HIGH' ELSE 'MEDIUM' END,
+    'system_validation',
+    'pending'
+  FROM detect_stock_anomalies()
+  WHERE severity != 'ok';
+
+  -- 2. Vérifier les anomalies de wallet (soldes négatifs)
+  v_total_checks := v_total_checks + 1;
+  SELECT COUNT(*) INTO v_wallet_anomalies
+  FROM wallets WHERE balance < 0;
+
+  INSERT INTO logic_anomalies (domain, entity_type, entity_id, action_type, expected_value, actual_value, severity, detected_by, status)
+  SELECT
+    'WALLETS',
+    'wallet',
+    id::TEXT,
+    'balance_check',
+    jsonb_build_object('expected', 'balance >= 0'),
+    jsonb_build_object('balance', balance, 'user_id', user_id),
+    'CRITICAL',
+    'system_validation',
+    'pending'
+  FROM wallets
+  WHERE balance < 0;
+
+  -- 3. Vérifier les réconciliations wallet
+  v_total_checks := v_total_checks + 1;
+  SELECT COUNT(*) INTO v_reconciliation_anomalies FROM detect_wallet_reconciliation_anomalies() WHERE severity != 'ok';
+
+  INSERT INTO logic_anomalies (domain, entity_type, entity_id, action_type, expected_value, actual_value, severity, detected_by, status)
+  SELECT
+    'WALLETS',
+    'wallet',
+    wallet_id::TEXT,
+    'reconciliation',
+    jsonb_build_object('stored_balance', stored_balance),
+    jsonb_build_object('calculated_balance', calculated_balance, 'difference', difference),
+    CASE WHEN severity = 'critical' THEN 'CRITICAL' ELSE 'HIGH' END,
+    'system_validation',
+    'pending'
+  FROM detect_wallet_reconciliation_anomalies()
+  WHERE severity != 'ok';
+
+  -- 4. Vérifier les commandes impayées
+  v_total_checks := v_total_checks + 1;
+  SELECT COUNT(*) INTO v_order_anomalies FROM detect_unpaid_orders() WHERE severity IN ('critical', 'warning');
+
+  INSERT INTO logic_anomalies (domain, entity_type, entity_id, action_type, expected_value, actual_value, severity, detected_by, status)
+  SELECT
+    'ORDERS',
+    'order',
+    order_id::TEXT,
+    'unpaid_order',
+    jsonb_build_object('expected', 'payment_received'),
+    jsonb_build_object('status', order_status, 'hours_since', hours_since_creation, 'amount', total_amount),
+    CASE WHEN severity = 'critical' THEN 'CRITICAL' ELSE 'HIGH' END,
+    'system_validation',
+    'pending'
+  FROM detect_unpaid_orders()
+  WHERE severity IN ('critical', 'warning');
+
+  v_total_anomalies := v_stock_anomalies + v_wallet_anomalies + v_reconciliation_anomalies + v_order_anomalies;
+
+  -- Mettre à jour le snapshot
+  UPDATE logic_validation_snapshots
+  SET
+    completed_at = now(),
+    total_checks = v_total_checks,
+    passed_checks = v_total_checks - CASE WHEN v_total_anomalies > 0 THEN 1 ELSE 0 END,
+    failed_checks = CASE WHEN v_total_anomalies > 0 THEN 1 ELSE 0 END,
+    anomalies_detected = v_total_anomalies,
+    details = jsonb_build_object(
+      'stock_anomalies', v_stock_anomalies,
+      'wallet_anomalies', v_wallet_anomalies,
+      'reconciliation_anomalies', v_reconciliation_anomalies,
+      'order_anomalies', v_order_anomalies
+    )
+  WHERE id = v_snapshot_id;
+
+  -- Créer une alerte PDG si anomalies critiques
+  IF v_total_anomalies > 0 THEN
+    INSERT INTO pdg_financial_alerts (alert_type, severity, title, message, metadata)
+    VALUES (
+      'logic_anomaly',
+      CASE WHEN v_total_anomalies > 5 THEN 'critical' ELSE 'warning' END,
+      'Validation système - Anomalies détectées',
+      format('%s anomalies détectées lors de la validation système', v_total_anomalies),
+      jsonb_build_object('snapshot_id', v_snapshot_id, 'total_anomalies', v_total_anomalies, 'details', jsonb_build_object(
+        'stock', v_stock_anomalies,
+        'wallet', v_wallet_anomalies,
+        'reconciliation', v_reconciliation_anomalies,
+        'orders', v_order_anomalies
+      ))
+    );
+  END IF;
+
+  RETURN v_snapshot_id;
+END;
+$$;
+
+-- ====================================================================
+-- 11. VUES DE MONITORING
+-- ====================================================================
+
+-- Vue des anomalies actives par domaine
+CREATE OR REPLACE VIEW v_active_anomalies_by_domain AS
+SELECT
+  domain,
+  severity,
+  COUNT(*) as count,
+  MIN(detected_at) as oldest_anomaly,
+  MAX(detected_at) as newest_anomaly
+FROM logic_anomalies
+WHERE status = 'pending' OR (status IS NULL AND resolved_at IS NULL)
+GROUP BY domain, severity
+ORDER BY
+  CASE severity
+    WHEN 'CRITICAL' THEN 1
+    WHEN 'HIGH' THEN 2
+    WHEN 'MEDIUM' THEN 3
+    ELSE 4
+  END,
+  count DESC;
+
+-- Vue de santé du système par module
+CREATE OR REPLACE VIEW v_system_health_by_module AS
+SELECT
+  domain,
+  COUNT(*) FILTER (WHERE status = 'pending') as pending_count,
+  COUNT(*) FILTER (WHERE status = 'corrected') as corrected_count,
+  COUNT(*) FILTER (WHERE status = 'ignored') as ignored_count,
+  COUNT(*) FILTER (WHERE severity = 'CRITICAL' AND status = 'pending') as critical_pending,
+  CASE
+    WHEN COUNT(*) FILTER (WHERE severity = 'CRITICAL' AND status = 'pending') > 0 THEN 'CRITICAL'
+    WHEN COUNT(*) FILTER (WHERE status = 'pending') > 5 THEN 'WARNING'
+    ELSE 'OK'
+  END as health_status
+FROM logic_anomalies
+GROUP BY domain;
+
+-- ====================================================================
+-- 12. COMMENTAIRES FINAUX
+-- ====================================================================
+
+COMMENT ON FUNCTION log_surveillance_anomaly IS 'Crée une anomalie de surveillance avec alerte PDG si critique';
+COMMENT ON FUNCTION trigger_check_wallet_balance IS 'Trigger pour détecter les soldes wallet négatifs';
+COMMENT ON FUNCTION trigger_check_order_total IS 'Trigger pour vérifier la cohérence des totaux commande';
+COMMENT ON FUNCTION trigger_check_product_stock IS 'Trigger pour détecter les stocks négatifs';
+COMMENT ON FUNCTION trigger_check_wallet_transaction IS 'Trigger pour surveiller les transactions wallet';
+COMMENT ON FUNCTION trigger_check_role_change IS 'Trigger pour alerter sur les changements de rôle';
+COMMENT ON FUNCTION detect_wallet_reconciliation_anomalies IS 'Détecte les écarts entre solde et transactions';
+COMMENT ON FUNCTION detect_unpaid_orders IS 'Détecte les commandes impayées anciennes';
+COMMENT ON VIEW v_active_anomalies_by_domain IS 'Vue des anomalies actives groupées par domaine';
+COMMENT ON VIEW v_system_health_by_module IS 'Vue de la santé système par module';
