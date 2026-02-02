@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Key, Mail, Lock, AlertTriangle } from 'lucide-react';
+import { Key, Mail, Lock, AlertTriangle, Shield, Users, DollarSign, Settings as SettingsIcon, Brain, Zap } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from "@/hooks/useTranslation";
+import { AVAILABLE_PERMISSIONS, PermissionKey } from '@/hooks/useAgentPermissions';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AgentLayoutProfessional } from '@/components/agent/AgentLayoutProfessional';
@@ -352,36 +353,116 @@ export default function AgentDashboard() {
       case 'settings':
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Permissions (lecture) */}
+            {/* Permissions accordées - affichage par catégorie */}
             <Card className="border-0 shadow-lg md:col-span-2">
-              <CardHeader className="bg-muted/40 border-b">
-                <CardTitle className="text-foreground">Permissions accordées</CardTitle>
+              <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 border-b">
+                <CardTitle className="flex items-center gap-2 text-foreground">
+                  <Shield className="w-5 h-5 text-primary" />
+                  Mes permissions ({Object.values(unifiedPermissions).filter(Boolean).length} actives)
+                </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
                 {permissionsLoading ? (
                   <p className="text-sm text-muted-foreground">Chargement des permissions…</p>
+                ) : Object.values(unifiedPermissions).filter(Boolean).length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Aucune permission active.</p>
                 ) : (
-                  <>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {Object.values(unifiedPermissions).filter(Boolean).length} permissions actives
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(unifiedPermissions)
-                        .filter(([_, v]) => v === true)
-                        .map(([perm]) => (
-                          <Badge key={perm} variant="secondary" className="bg-muted text-muted-foreground">
-                            {perm}
-                          </Badge>
-                        ))}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Finance */}
+                    {['view_finance', 'manage_finance', 'view_banking', 'manage_banking', 'manage_wallet_transactions', 'access_pdg_wallet', 'view_financial_module', 'manage_commissions', 'view_payments', 'manage_payments'].some(k => unifiedPermissions[k]) && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-amber-600">
+                          <DollarSign className="w-4 h-4" />
+                          Finance
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {['view_finance', 'manage_finance', 'view_banking', 'manage_banking', 'manage_wallet_transactions', 'access_pdg_wallet', 'view_financial_module', 'manage_commissions', 'view_payments', 'manage_payments']
+                            .filter(k => unifiedPermissions[k])
+                            .map(perm => (
+                              <Badge key={perm} variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+                                {AVAILABLE_PERMISSIONS[perm as PermissionKey] || perm}
+                              </Badge>
+                            ))}
+                        </div>
+                      </div>
+                    )}
 
-                      {/* Fallback UX si aucune permission */}
-                      {Object.values(unifiedPermissions).filter(Boolean).length === 0 && (
-                        <span className="text-sm text-muted-foreground">
-                          Aucune permission active.
-                        </span>
-                      )}
-                    </div>
-                  </>
+                    {/* Gestion */}
+                    {['view_users', 'manage_users', 'create_users', 'view_products', 'manage_products', 'view_transfer_fees', 'manage_transfer_fees', 'view_kyc', 'manage_kyc', 'view_service_subscriptions', 'manage_service_subscriptions'].some(k => unifiedPermissions[k]) && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-blue-600">
+                          <Users className="w-4 h-4" />
+                          Gestion
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {['view_users', 'manage_users', 'create_users', 'view_products', 'manage_products', 'view_transfer_fees', 'manage_transfer_fees', 'view_kyc', 'manage_kyc', 'view_service_subscriptions', 'manage_service_subscriptions']
+                            .filter(k => unifiedPermissions[k])
+                            .map(perm => (
+                              <Badge key={perm} variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                {AVAILABLE_PERMISSIONS[perm as PermissionKey] || perm}
+                              </Badge>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Opérations */}
+                    {['view_agents', 'manage_agents', 'create_sub_agents', 'view_syndicat', 'manage_syndicat', 'view_orders', 'manage_orders', 'view_vendors', 'manage_vendors', 'view_drivers', 'manage_drivers', 'manage_deliveries'].some(k => unifiedPermissions[k]) && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-green-600">
+                          <Zap className="w-4 h-4" />
+                          Opérations
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {['view_agents', 'manage_agents', 'create_sub_agents', 'view_syndicat', 'manage_syndicat', 'view_orders', 'manage_orders', 'view_vendors', 'manage_vendors', 'view_drivers', 'manage_drivers', 'manage_deliveries']
+                            .filter(k => unifiedPermissions[k])
+                            .map(perm => (
+                              <Badge key={perm} variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                {AVAILABLE_PERMISSIONS[perm as PermissionKey] || perm}
+                              </Badge>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Système */}
+                    {['view_security', 'manage_security', 'view_config', 'manage_config', 'view_maintenance', 'manage_maintenance', 'view_api', 'manage_api', 'view_debug', 'manage_debug'].some(k => unifiedPermissions[k]) && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-purple-600">
+                          <SettingsIcon className="w-4 h-4" />
+                          Système
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {['view_security', 'manage_security', 'view_config', 'manage_config', 'view_maintenance', 'manage_maintenance', 'view_api', 'manage_api', 'view_debug', 'manage_debug']
+                            .filter(k => unifiedPermissions[k])
+                            .map(perm => (
+                              <Badge key={perm} variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                                {AVAILABLE_PERMISSIONS[perm as PermissionKey] || perm}
+                              </Badge>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Intelligence */}
+                    {['access_ai_assistant', 'access_copilot', 'access_copilot_dashboard', 'view_copilot_audit', 'view_reports', 'manage_reports', 'view_statistics'].some(k => unifiedPermissions[k]) && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-pink-600">
+                          <Brain className="w-4 h-4" />
+                          Intelligence
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {['access_ai_assistant', 'access_copilot', 'access_copilot_dashboard', 'view_copilot_audit', 'view_reports', 'manage_reports', 'view_statistics']
+                            .filter(k => unifiedPermissions[k])
+                            .map(perm => (
+                              <Badge key={perm} variant="outline" className="text-xs bg-pink-50 text-pink-700 border-pink-200">
+                                {AVAILABLE_PERMISSIONS[perm as PermissionKey] || perm}
+                              </Badge>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>
