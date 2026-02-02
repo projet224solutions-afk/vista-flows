@@ -78,7 +78,7 @@ interface IdSearchResult {
 const ID_FORMAT_REGEX = /^[A-Z]{3}\d{4,}$/;
 const SEARCH_ID_REGEX = /^[A-Z]{3}\d{3,}$/; // Plus permissif pour la recherche
 
-const VALID_PREFIXES = ['VND', 'CLT', 'AGT', 'DRV', 'BUR', 'ADM', 'PDG', 'TAX', 'LIV', 'TRS'];
+const VALID_PREFIXES = ['VND', 'CLT', 'AGT', 'DRV', 'BUR', 'BST', 'ADM', 'PDG', 'TAX', 'LIV', 'TRS', 'SAG', 'VAG', 'WRK', 'MBR'];
 
 const REASONS_MAP: Record<string, { label: string; color: string }> = {
   'duplicate_detected': { label: 'Doublon détecté', color: '#EF4444' },
@@ -103,13 +103,18 @@ const PREFIX_TO_ROLE: Record<string, string> = {
   'VND': 'Vendeur',
   'CLT': 'Client',
   'AGT': 'Agent',
-  'DRV': 'Livreur',
-  'TAX': 'Taxi',
+  'SAG': 'Sous-Agent',
+  'VAG': 'Vendor Agent',
+  'DRV': 'Chauffeur',
+  'TAX': 'Taxi-Moto',
   'LIV': 'Livreur',
   'BUR': 'Bureau',
+  'BST': 'Bureau Syndicat',
   'ADM': 'Admin',
   'PDG': 'PDG',
   'TRS': 'Transitaire',
+  'WRK': 'Worker',
+  'MBR': 'Membre',
 };
 
 const PIE_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#EF4444'];
@@ -969,7 +974,7 @@ export default function IdNormalizationAudit() {
                     </TableHeader>
                     <TableBody>
                       {nonStandardUsers.map((item) => {
-                        const prefix = item.custom_id?.substring(0, 3) || '';
+                        const prefix = (item.custom_id?.substring(0, 3) || '').toUpperCase();
                         const isValidPrefix = VALID_PREFIXES.includes(prefix);
                         const hasCorrectLength = item.custom_id?.length >= 7;
                         
