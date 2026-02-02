@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { GeocodedAddress } from "@/components/vendor/GeocodedAddress";
+import CreditSalesForm from "@/components/vendor/CreditSalesForm";
 import { 
   ShoppingCart, Search, Filter, Eye, Package, Clock, 
   CheckCircle, XCircle, Truck, CreditCard, FileText,
@@ -158,6 +160,7 @@ export default function OrderManagement() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeView, setActiveView] = useState<'pos' | 'online'>('pos');
   const [onlineStatusFilter, setOnlineStatusFilter] = useState<'all' | 'pending' | 'processing' | 'delivered'>('all');
+  const [mainTab, setMainTab] = useState<'orders' | 'credit'>('orders');
 
   useEffect(() => {
     if (!vendorId || vendorLoading) return;
@@ -649,7 +652,22 @@ export default function OrderManagement() {
   if (loading) return <div className="p-4">Chargement des commandes...</div>;
 
   return (
-    <div className="space-y-4 md:space-y-6 px-2 md:px-0">
+    <Tabs value={mainTab} onValueChange={(value) => setMainTab(value as 'orders' | 'credit')} className="w-full">
+      {/* Onglets principaux */}
+      <TabsList className="grid w-full grid-cols-2 h-auto">
+        <TabsTrigger value="orders" className="flex items-center gap-2 text-xs sm:text-sm py-2">
+          <ShoppingCart className="w-4 h-4" />
+          <span>Commandes</span>
+        </TabsTrigger>
+        <TabsTrigger value="credit" className="flex items-center gap-2 text-xs sm:text-sm py-2">
+          <CreditCard className="w-4 h-4" />
+          <span>Ventes à Crédit</span>
+        </TabsTrigger>
+      </TabsList>
+
+      {/* Onglet Commandes */}
+      <TabsContent value="orders" className="mt-6">
+        <div className="space-y-4 md:space-y-6 px-2 md:px-0">
       {/* Titre et actions - Mobile optimisé */}
       <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center">
         <div className="min-w-0">
@@ -1454,6 +1472,13 @@ export default function OrderManagement() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+        </div>
+      </TabsContent>
+
+      {/* Onglet Ventes à Crédit */}
+      <TabsContent value="credit" className="mt-6">
+        {vendorId ? <CreditSalesForm /> : <p>Chargement...</p>}
+      </TabsContent>
+    </Tabs>
   );
 }

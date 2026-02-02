@@ -21,6 +21,7 @@ import {
   Building2,
   Wallet,
   Shield,
+  Eye,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -420,6 +421,50 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
               }}
             >
               Accéder à la gestion
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Surveillance Logique Globale */}
+        <Card 
+          className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950 dark:to-violet-950 hover:shadow-xl transition-all duration-300 cursor-pointer group"
+          onClick={() => onNavigate?.('debug')}
+        >
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-purple-600 text-white group-hover:scale-110 transition-transform">
+                  <Eye className="w-5 h-5" />
+                </div>
+                Surveillance Logique
+              </CardTitle>
+              <Badge variant="secondary" className="bg-purple-600 text-white">
+                Sécurité
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Monitez 120 règles métier en temps réel, détectez les anomalies au sein d'une minute et appliquez les corrections automatiquement
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
+                <p className="text-xs text-muted-foreground">Détection</p>
+                <p className="text-lg font-bold text-purple-600">1 min</p>
+              </div>
+              <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
+                <p className="text-xs text-muted-foreground">Couverture</p>
+                <p className="text-lg font-bold text-purple-600">100%</p>
+              </div>
+            </div>
+            <Button 
+              className="w-full mt-4 bg-purple-600 hover:bg-purple-700 group-hover:scale-105 transition-transform"
+              onClick={(e) => {
+                e.stopPropagation();
+                onNavigate?.('debug');
+              }}
+            >
+              Accéder à la surveillance
             </Button>
           </CardContent>
         </Card>
