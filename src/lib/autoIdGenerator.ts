@@ -5,11 +5,13 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export type RoleType = 
-  | 'agent' 
-  | 'vendor' 
-  | 'bureau' 
-  | 'driver' 
+export type RoleType =
+  | 'agent'
+  | 'vendor'
+  | 'bureau'
+  | 'driver'
+  | 'taxi'
+  | 'livreur'
   | 'client'
   | 'pdg'
   | 'transitaire'
@@ -47,6 +49,18 @@ const ID_CONFIGS: Record<RoleType, IdConfig> = {
     table: 'taxi_moto_drivers',
     column: 'driver_code',
     length: 4 // DRV0001 = 7 chars max
+  },
+  taxi: {
+    prefix: 'TAX',
+    table: 'taxi_moto_drivers',
+    column: 'driver_code',
+    length: 4 // TAX0001 = 7 chars max
+  },
+  livreur: {
+    prefix: 'LIV',
+    table: 'taxi_moto_drivers',
+    column: 'driver_code',
+    length: 4 // LIV0001 = 7 chars max
   },
   client: {
     prefix: 'CLT',

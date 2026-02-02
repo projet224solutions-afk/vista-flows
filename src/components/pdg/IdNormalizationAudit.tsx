@@ -78,7 +78,7 @@ interface IdSearchResult {
 const ID_FORMAT_REGEX = /^[A-Z]{3}\d{4,}$/;
 const SEARCH_ID_REGEX = /^[A-Z]{3}\d{3,}$/; // Plus permissif pour la recherche
 
-const VALID_PREFIXES = ['VND', 'CLT', 'AGT', 'DRV', 'BUR', 'ADM', 'PDG'];
+const VALID_PREFIXES = ['VND', 'CLT', 'AGT', 'DRV', 'BUR', 'ADM', 'PDG', 'TAX', 'LIV', 'TRS'];
 
 const REASONS_MAP: Record<string, { label: string; color: string }> = {
   'duplicate_detected': { label: 'Doublon détecté', color: '#EF4444' },
@@ -104,9 +104,12 @@ const PREFIX_TO_ROLE: Record<string, string> = {
   'CLT': 'Client',
   'AGT': 'Agent',
   'DRV': 'Livreur',
+  'TAX': 'Taxi',
+  'LIV': 'Livreur',
   'BUR': 'Bureau',
   'ADM': 'Admin',
   'PDG': 'PDG',
+  'TRS': 'Transitaire',
 };
 
 const PIE_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#EF4444'];
@@ -349,26 +352,26 @@ export default function IdNormalizationAudit() {
   // Map profile role to RoleType for ID generation
   const mapRoleToRoleType = (role: string | undefined | null): RoleType | null => {
     if (!role) return null;
-    
+
     // Convert to string and normalize
     const roleStr = String(role).toLowerCase().trim();
     console.log('🔍 Mapping role:', role, '→', roleStr);
-    
+
     const mapping: Record<string, RoleType> = {
       'vendor': 'vendor',
       'vendeur': 'vendor',
       'client': 'client',
       'agent': 'agent',
       'driver': 'driver',
-      'livreur': 'driver',
-      'taxi': 'driver',
+      'livreur': 'livreur',  // CORRIGÉ: livreur → livreur (LIV)
+      'taxi': 'taxi',        // CORRIGÉ: taxi → taxi (TAX)
       'bureau': 'bureau',
       'pdg': 'pdg',
       'transitaire': 'transitaire',
       'worker': 'worker',
       'admin': 'pdg',
     };
-    
+
     const result = mapping[roleStr] || null;
     console.log('🔍 Mapped result:', result);
     return result;
