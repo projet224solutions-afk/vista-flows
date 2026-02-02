@@ -3,6 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AVAILABLE_PERMISSIONS, PermissionKey } from './useAgentPermissions';
 import { PERMISSION_CATEGORIES } from '@/constants/agentPermissionCategories';
+import {
+  hasPermissionWithAliases,
+  hasAnyPermissionWithAliases,
+  hasAllPermissionsWithAliases,
+} from '@/lib/agent-permissions';
 
 export interface PermissionGrant {
   id: string;
@@ -253,15 +258,15 @@ export function useCurrentAgentPermissions() {
   }, []);
 
   const hasPermission = (permissionKey: string): boolean => {
-    return agentPermissions.has(permissionKey);
+    return hasPermissionWithAliases(agentPermissions, permissionKey);
   };
 
   const hasAnyPermission = (keys: string[]): boolean => {
-    return keys.some(key => agentPermissions.has(key));
+    return hasAnyPermissionWithAliases(agentPermissions, keys);
   };
 
   const hasAllPermissions = (keys: string[]): boolean => {
-    return keys.every(key => agentPermissions.has(key));
+    return hasAllPermissionsWithAliases(agentPermissions, keys);
   };
 
   return {
