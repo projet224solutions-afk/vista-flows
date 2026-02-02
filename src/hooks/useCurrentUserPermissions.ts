@@ -2,6 +2,11 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { PermissionKey, AVAILABLE_PERMISSIONS } from './useAgentPermissions';
+import {
+  hasPermissionWithAliases,
+  hasAnyPermissionWithAliases,
+  hasAllPermissionsWithAliases,
+} from '@/lib/agent-permissions';
 
 export interface CurrentUserPermissions {
   permissions: Record<string, boolean>;
@@ -138,20 +143,19 @@ export const useCurrentUserPermissions = (): CurrentUserPermissions => {
     // PDG/CEO/Admin a toutes les permissions
     if (isPDG) return true;
 
-    // Vérifier dans les permissions chargées
-    return permissions[permissionKey] === true;
+    return hasPermissionWithAliases(permissions, permissionKey);
   }, [permissions, isPDG]);
 
   // Vérifier si l'utilisateur a au moins une des permissions
   const hasAnyPermission = useCallback((keys: (PermissionKey | string)[]): boolean => {
     if (isPDG) return true;
-    return keys.some(key => permissions[key] === true);
+    return hasAnyPermissionWithAliases(permissions, keys as string[]);
   }, [permissions, isPDG]);
 
   // Vérifier si l'utilisateur a toutes les permissions
   const hasAllPermissions = useCallback((keys: (PermissionKey | string)[]): boolean => {
     if (isPDG) return true;
-    return keys.every(key => permissions[key] === true);
+    return hasAllPermissionsWithAliases(permissions, keys as string[]);
   }, [permissions, isPDG]);
 
   // Charger les permissions au montage et lors des changements d'utilisateur
