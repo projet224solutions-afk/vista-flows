@@ -27,6 +27,7 @@ export const AVAILABLE_PERMISSIONS = {
   // ==================== GESTION ====================
   view_users: 'Voir les utilisateurs',
   manage_users: 'Gérer les utilisateurs',
+  create_users: 'Créer des utilisateurs',
   view_products: 'Voir les produits',
   manage_products: 'Gérer les produits',
   view_transfer_fees: 'Voir les frais de transfert',
