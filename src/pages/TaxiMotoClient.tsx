@@ -146,7 +146,7 @@ export default function TaxiMotoClient() {
       const { data: drivers, error } = await supabase
         .from('taxi_drivers')
         .select('*')
-        .eq('status', 'available')
+        .in('status', ['available', 'online'])
         .eq('is_online', true)
         .limit(10);
 
