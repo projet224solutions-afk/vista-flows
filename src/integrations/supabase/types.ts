@@ -25160,6 +25160,18 @@ export type Database = {
         }
         Returns: Json
       }
+      detect_wallet_anomalies: {
+        Args: never
+        Returns: {
+          calculated_balance: number
+          difference: number
+          owner_id: string
+          severity: string
+          stored_balance: number
+          wallet_id: string
+          wallet_type: string
+        }[]
+      }
       disablelongtransactions: { Args: never; Returns: string }
       dispute_escrow: { Args: { p_escrow_id: string }; Returns: boolean }
       dropgeometrycolumn:
@@ -26359,6 +26371,10 @@ export type Database = {
       }
       rotate_marketplace_products: { Args: never; Returns: Json }
       run_daily_wallet_audit: { Args: never; Returns: Json }
+      run_full_system_validation: {
+        Args: { p_triggered_by?: string }
+        Returns: string
+      }
       schedule_funds_release: {
         Args: {
           p_amount: number
