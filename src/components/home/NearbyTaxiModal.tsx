@@ -163,28 +163,52 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
     setUsingFallbackLocation(false);
 
     if (!navigator.geolocation) {
-      console.log('Geolocation not supported, falling back to RPC search');
+      console.log('[NearbyTaxi] Geolocation not supported, falling back');
       setUserLocation(null);
       setUsingFallbackLocation(true);
       searchAllOnlineDrivers();
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setUserLocation({ lat: latitude, lng: longitude });
-        setUsingFallbackLocation(false);
-        searchNearbyDrivers(latitude, longitude);
-      },
-      (err) => {
-        console.error('Geolocation error, falling back to RPC search:', err);
-        setUserLocation(null);
-        setUsingFallbackLocation(true);
-        searchAllOnlineDrivers();
-      },
-      { enableHighAccuracy: true, timeout: 5000 }
-    );
+    // Stratégie: essayer haute précision d'abord, puis mode rapide
+    const tryHighAccuracy = () => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude, accuracy } = position.coords;
+          console.log(`[NearbyTaxi] GPS OK (high): lat=${latitude}, lng=${longitude}, accuracy=${accuracy}m`);
+          setUserLocation({ lat: latitude, lng: longitude });
+          setUsingFallbackLocation(false);
+          searchNearbyDrivers(latitude, longitude);
+        },
+        () => {
+          // Haute précision échouée, essayer mode rapide
+          console.log('[NearbyTaxi] High accuracy failed, trying fast mode...');
+          tryFastMode();
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+      );
+    };
+
+    const tryFastMode = () => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude, accuracy } = position.coords;
+          console.log(`[NearbyTaxi] GPS OK (fast): lat=${latitude}, lng=${longitude}, accuracy=${accuracy}m`);
+          setUserLocation({ lat: latitude, lng: longitude });
+          setUsingFallbackLocation(false);
+          searchNearbyDrivers(latitude, longitude);
+        },
+        (err) => {
+          console.error('[NearbyTaxi] GPS failed completely:', err.message);
+          setUserLocation(null);
+          setUsingFallbackLocation(true);
+          searchAllOnlineDrivers();
+        },
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+      );
+    };
+
+    tryHighAccuracy();
   };
 
   useEffect(() => {
