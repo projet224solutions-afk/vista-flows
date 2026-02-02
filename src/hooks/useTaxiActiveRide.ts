@@ -146,7 +146,10 @@ export function useTaxiActiveRide(
   }, [driverId, onStartNavigation]);
 
   const updateRideStatus = useCallback(async (newStatus: ActiveRide['status']) => {
-    if (!activeRide) return;
+    if (!activeRide) {
+      console.warn('[ActiveRide] Pas de course active pour mise à jour');
+      return;
+    }
 
     try {
       // Mapper les statuts frontend vers les statuts DB
@@ -162,7 +165,23 @@ export function useTaxiActiveRide(
         dbStatus = newStatus;
       }
 
-      await TaxiMotoService.updateRideStatus(activeRide.id, dbStatus);
+      console.log(`[ActiveRide] Mise à jour statut: ${activeRide.status} -> ${newStatus} (DB: ${dbStatus})`);
+
+      // Mise à jour directe dans Supabase pour plus de robustesse
+      const { error } = await supabase
+        .from('taxi_trips')
+        .update({ 
+          status: dbStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', activeRide.id);
+
+      if (error) {
+        console.error('[ActiveRide] Erreur DB:', error);
+        throw error;
+      }
+
+      // Mise à jour locale immédiate
       setActiveRide(prev => prev ? { ...prev, status: newStatus } : null);
 
       switch (newStatus) {
@@ -179,9 +198,13 @@ export function useTaxiActiveRide(
           toast.success('🏁 Arrivé à destination !');
           break;
       }
-    } catch (error) {
-      console.error('Error updating ride status:', error);
-      toast.error('Erreur lors de la mise à jour');
+
+      console.log(`[ActiveRide] Statut mis à jour avec succès: ${newStatus}`);
+    } catch (error: any) {
+      console.error('[ActiveRide] Erreur mise à jour statut:', error);
+      toast.error('Erreur lors de la mise à jour', {
+        description: error?.message || 'Veuillez réessayer'
+      });
     }
   }, [activeRide, onStartNavigation]);
 

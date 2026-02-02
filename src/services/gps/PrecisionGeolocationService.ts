@@ -56,13 +56,14 @@ export interface RouteInfo {
   polyline: string;
 }
 
-// Configuration GPS
+// Configuration GPS - Plus tolérant pour éviter les déconnexions intempestives
 export const GPS_CONFIG = {
-  MIN_ACCURACY_METERS: 50, // Précision minimale requise (mètres)
-  HIGH_ACCURACY_METERS: 10, // Haute précision souhaitée
+  MIN_ACCURACY_METERS: 500, // Précision minimale très tolérante (mètres)
+  ACCEPTABLE_ACCURACY_METERS: 100, // Précision acceptable pour navigation
+  HIGH_ACCURACY_METERS: 30, // Haute précision souhaitée
   TIMEOUT_MS: 30000, // Timeout pour acquisition GPS
-  MAX_AGE_MS: 60000, // Âge maximum de la position en cache
-  HEARTBEAT_INTERVAL_MS: 10000, // Intervalle mise à jour conducteur
+  MAX_AGE_MS: 120000, // Âge maximum de la position en cache (2 min)
+  HEARTBEAT_INTERVAL_MS: 15000, // Intervalle mise à jour conducteur (15s)
   STALE_THRESHOLD_MS: 600000, // 10 minutes - seuil position obsolète
 };
 

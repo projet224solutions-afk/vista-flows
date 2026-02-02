@@ -46,7 +46,7 @@ export function useDriverGPS(options: UseDriverGPSOptions = {}) {
   const watchIdRef = useRef<number | null>(null);
   const heartbeatRef = useRef<NodeJS.Timeout | null>(null);
   const invalidGPSCountRef = useRef(0);
-  const MAX_INVALID_GPS_ATTEMPTS = 3;
+  const MAX_INVALID_GPS_ATTEMPTS = 10; // Plus tolérant - évite les déconnexions intempestives
 
   /**
    * Vérifie si le GPS est valide
@@ -85,20 +85,30 @@ export function useDriverGPS(options: UseDriverGPSOptions = {}) {
     } else {
       invalidGPSCountRef.current++;
       
-      if (invalidGPSCountRef.current >= MAX_INVALID_GPS_ATTEMPTS) {
-        // Trop de positions invalides, basculer hors ligne
-        await goOffline(`GPS imprécis (${location.accuracy.toFixed(0)}m > ${GPS_CONFIG.MIN_ACCURACY_METERS}m)`);
-      } else {
-        toast.warning(
-          `Précision GPS insuffisante: ${location.accuracy.toFixed(0)}m`,
-          { description: 'Déplacez-vous vers un espace dégagé' }
+      // Log mais ne pas afficher de toast sauf si vraiment critique
+      console.warn(`[DriverGPS] Précision GPS: ${location.accuracy.toFixed(0)}m (tentative ${invalidGPSCountRef.current}/${MAX_INVALID_GPS_ATTEMPTS})`);
+      
+      // On met quand même à jour la position même si imprécise
+      onLocationUpdate?.(location);
+      
+      // Notification seulement toutes les 5 tentatives
+      if (invalidGPSCountRef.current % 5 === 0 && invalidGPSCountRef.current < MAX_INVALID_GPS_ATTEMPTS) {
+        toast.info(
+          `GPS en mode dégradé (${location.accuracy.toFixed(0)}m)`,
+          { description: 'La navigation continue normalement' }
         );
+      }
+      
+      // Ne pas déconnecter automatiquement - laisser le conducteur continuer
+      // Seulement prévenir si vraiment critique
+      if (invalidGPSCountRef.current >= MAX_INVALID_GPS_ATTEMPTS) {
+        console.warn('[DriverGPS] GPS très imprécis mais on continue...');
       }
     }
   }, [isGPSValid, onLocationUpdate, updateServerPosition]);
 
   /**
-   * Gère une erreur GPS
+   * Gère une erreur GPS - Plus tolérant
    */
   const handleGPSError = useCallback(async (error: Error) => {
     console.error('[DriverGPS] Erreur GPS:', error.message);
@@ -109,8 +119,15 @@ export function useDriverGPS(options: UseDriverGPSOptions = {}) {
       isGPSValid: false,
     }));
 
-    // Basculer hors ligne en cas d'erreur GPS
-    await goOffline(error.message);
+    // NE PAS basculer hors ligne automatiquement
+    // Afficher un toast mais laisser le conducteur continuer
+    toast.warning('Signal GPS faible', {
+      description: 'La course continue. Essayez de vous déplacer vers un espace dégagé.',
+      duration: 5000,
+    });
+    
+    // Log pour debug mais ne pas déconnecter
+    console.warn('[DriverGPS] Erreur GPS ignorée pour éviter déconnexion:', error.message);
   }, []);
 
   /**
@@ -126,17 +143,31 @@ export function useDriverGPS(options: UseDriverGPSOptions = {}) {
         return false;
       }
 
-      // Obtenir une position initiale valide
+      // Obtenir une position initiale - plus tolérant
       toast.info('Acquisition GPS en cours...');
       
-      const location = await precisionGeoService.getCurrentPosition(true);
+      let location: PreciseLocation;
+      try {
+        location = await precisionGeoService.getCurrentPosition(true);
+      } catch (gpsError: any) {
+        // Essayer en mode moins précis
+        console.warn('[DriverGPS] Haute précision échouée, essai mode rapide...');
+        try {
+          location = await precisionGeoService.getCurrentPosition(false);
+        } catch (fallbackError: any) {
+          toast.error('GPS indisponible', {
+            description: 'Veuillez autoriser l\'accès GPS dans les paramètres du navigateur'
+          });
+          return false;
+        }
+      }
       
-      if (!isGPSValid(location.accuracy)) {
-        toast.error(
-          `Précision GPS insuffisante: ${location.accuracy.toFixed(0)}m`,
-          { description: `Minimum requis: ${GPS_CONFIG.MIN_ACCURACY_METERS}m. Déplacez-vous vers un espace dégagé.` }
+      // Accepter même une précision moins bonne pour démarrer
+      if (location.accuracy > GPS_CONFIG.MIN_ACCURACY_METERS) {
+        toast.warning(
+          `GPS en mode dégradé (${location.accuracy.toFixed(0)}m)`,
+          { description: 'Vous pouvez continuer, le GPS s\'améliorera.' }
         );
-        return false;
       }
 
       // GPS valide, démarrer le suivi
