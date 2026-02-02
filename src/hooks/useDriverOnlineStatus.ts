@@ -11,9 +11,7 @@ interface UseDriverOnlineStatusProps {
   getCurrentLocation: () => Promise<any>;
   startLocationTracking: () => void;
   loadPendingRides: () => void;
-  stopWatching: (watchId: number) => void;
-  locationWatchId: number | null;
-  setLocationWatchId: (id: number | null) => void;
+  stopWatching: () => void; // Fixed: no parameter needed
   setRideRequests: (requests: any[]) => void;
 }
 
@@ -25,8 +23,6 @@ export function useDriverOnlineStatus({
   startLocationTracking,
   loadPendingRides,
   stopWatching,
-  locationWatchId,
-  setLocationWatchId,
   setRideRequests
 }: UseDriverOnlineStatusProps) {
   const [isOnline, setIsOnline] = useState(false);
@@ -90,7 +86,7 @@ export function useDriverOnlineStatus({
         loadPendingRides();
         
       } catch (error: any) {
-        // Si l'update DB du statut échoue, on ne doit pas afficher une erreur “GPS”.
+        // Si l'update DB du statut échoue, on ne doit pas afficher une erreur "GPS".
         const msg = error?.message || '';
 
         if (
@@ -121,12 +117,12 @@ export function useDriverOnlineStatus({
         return;
       }
     } else {
+      // PASSER HORS LIGNE
       try {
-        if (locationWatchId) {
-          stopWatching(locationWatchId);
-          setLocationWatchId(null);
-        }
+        console.log('🔴 [Offline] Arrêt du suivi GPS...');
+        stopWatching(); // Fixed: call without parameter
         
+        console.log('🔴 [Offline] Mise à jour statut DB...');
         await TaxiMotoService.updateDriverStatus(
           driverId,
           false,
@@ -138,9 +134,11 @@ export function useDriverOnlineStatus({
         setIsOnline(false);
         toast.info('🔴 Vous êtes maintenant hors ligne');
         setRideRequests([]);
+        console.log('🔴 [Offline] Déconnexion réussie');
       } catch (error) {
         capture('network', 'Erreur lors du changement de statut', error);
         toast.error('Erreur lors du changement de statut');
+        console.error('🔴 [Offline] Erreur:', error);
       }
     }
   }, [
@@ -152,8 +150,6 @@ export function useDriverOnlineStatus({
     startLocationTracking,
     loadPendingRides,
     stopWatching,
-    locationWatchId,
-    setLocationWatchId,
     setRideRequests,
     capture
   ]);
