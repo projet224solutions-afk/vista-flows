@@ -40,6 +40,7 @@ interface AgentLayoutProfessionalProps {
     is_active: boolean;
     commission_rate: number;
     can_create_sub_agent?: boolean;
+    permissions?: string[];
   };
   activeTab: string;
   onTabChange: (tab: string) => void;
@@ -49,6 +50,8 @@ interface AgentLayoutProfessionalProps {
     totalCommissions: number;
   };
   onSignOut: () => void;
+  /** Permissions unifiées (table agent_permissions + legacy) */
+  unifiedPermissions?: Record<string, boolean>;
 }
 
 interface NavItem {
@@ -58,6 +61,8 @@ interface NavItem {
   badge?: string | number;
   gradient?: string;
   disabled?: boolean;
+  /** Clé de permission requise pour afficher cet item */
+  permission?: string;
 }
 
 export function AgentLayoutProfessional({
@@ -67,10 +72,20 @@ export function AgentLayoutProfessional({
   onTabChange,
   walletBalance = 0,
   stats,
-  onSignOut
+  onSignOut,
+  unifiedPermissions = {}
 }: AgentLayoutProfessionalProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  /**
+   * Vérifie si l'agent a une permission donnée (unifié + legacy)
+   */
+  const hasPermission = (key: string): boolean => {
+    if (unifiedPermissions[key] === true) return true;
+    if (agent.permissions?.includes(key)) return true;
+    return false;
+  };
 
   const navItems: NavItem[] = [
     {
@@ -89,13 +104,15 @@ export function AgentLayoutProfessional({
       id: 'create-user',
       label: 'Créer Utilisateur',
       icon: <UserPlus className="w-5 h-5" />,
-      gradient: 'from-violet-500 to-purple-500'
+      gradient: 'from-violet-500 to-purple-500',
+      permission: 'create_users'
     },
     {
       id: 'my-users',
       label: 'Mes Utilisateurs',
       icon: <Users className="w-5 h-5" />,
-      gradient: 'from-cyan-500 to-blue-500'
+      gradient: 'from-cyan-500 to-blue-500',
+      permission: 'view_users'
     },
     {
       id: 'my-purchases',
@@ -108,14 +125,16 @@ export function AgentLayoutProfessional({
       label: 'Sous-Agents',
       icon: <Users className="w-5 h-5" />,
       gradient: 'from-orange-500 to-amber-500',
-      badge: agent.can_create_sub_agent ? undefined : 'Pro',
-      disabled: !agent.can_create_sub_agent
+      badge: (agent.can_create_sub_agent || hasPermission('create_sub_agents')) ? undefined : 'Pro',
+      disabled: !(agent.can_create_sub_agent || hasPermission('create_sub_agents')),
+      permission: 'create_sub_agents'
     },
     {
       id: 'reports',
       label: 'Analytics',
       icon: <BarChart3 className="w-5 h-5" />,
-      gradient: 'from-pink-500 to-rose-500'
+      gradient: 'from-pink-500 to-rose-500',
+      permission: 'view_reports'
     },
     {
       id: 'affiliate',
@@ -131,6 +150,14 @@ export function AgentLayoutProfessional({
       gradient: 'from-slate-500 to-zinc-500'
     }
   ];
+
+  // Filtrer les items selon les permissions
+  const filteredNavItems = navItems.filter(item => {
+    // Items sans permission requise: toujours visibles
+    if (!item.permission) return true;
+    // Sinon, vérifier la permission
+    return hasPermission(item.permission);
+  });
 
   const getInitials = (name: string) => {
     return name
@@ -252,7 +279,7 @@ export function AgentLayoutProfessional({
       {/* Navigation */}
       <ScrollArea className="flex-1 px-3 py-4">
         <nav className="space-y-1">
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const isActive = activeTab === item.id;
             const isDisabled = item.disabled;
 
