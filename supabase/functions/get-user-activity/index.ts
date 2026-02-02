@@ -87,32 +87,118 @@ serve(async (req) => {
     const trimmedId = customId.trim().toUpperCase()
     console.log('Searching for user:', trimmedId)
 
-    // 1. Trouver l'utilisateur dans user_ids
-    const { data: userIdData, error: userIdError } = await adminClient
+    // Valider le format de l'ID
+    const validPrefixes = ['VND', 'CLT', 'DRV', 'TAX', 'LIV', 'AGT', 'PDG', 'TRS', 'WRK', 'BST', 'SAG', 'VAG', 'MBR', 'ADM', 'USR']
+    const idPrefix = trimmedId.substring(0, 3).toUpperCase()
+    const isValidFormat = validPrefixes.includes(idPrefix) && /^[A-Z]{3}\d{4,}$/.test(trimmedId)
+    
+    console.log('ID validation:', { trimmedId, idPrefix, isValidFormat })
+
+    // 1. Chercher dans user_ids
+    let userIdData = null
+    let userId: string | null = null
+    let foundIn: string | null = null
+    
+    const { data: userIdRecord, error: userIdError } = await adminClient
       .from('user_ids')
       .select('*')
       .eq('custom_id', trimmedId)
       .maybeSingle()
 
     if (userIdError) {
-      console.error('Error finding user:', userIdError)
-      return new Response(JSON.stringify({ error: 'Erreur lors de la recherche' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      console.error('Error finding user in user_ids:', userIdError)
+    } else if (userIdRecord) {
+      userIdData = userIdRecord
+      userId = userIdRecord.user_id
+      foundIn = 'user_ids'
+      console.log('Found in user_ids:', userId)
     }
 
-    if (!userIdData) {
-      console.log('User not found:', trimmedId)
-      return new Response(JSON.stringify({ error: `Aucun utilisateur trouvé avec l'ID: ${trimmedId}` }), {
+    // 2. Si non trouvé, chercher dans profiles.public_id
+    if (!userId) {
+      const { data: profileRecord, error: profileError } = await adminClient
+        .from('profiles')
+        .select('*')
+        .eq('public_id', trimmedId)
+        .maybeSingle()
+
+      if (profileError) {
+        console.error('Error finding user in profiles:', profileError)
+      } else if (profileRecord) {
+        userId = profileRecord.id
+        foundIn = 'profiles'
+        console.log('Found in profiles.public_id:', userId)
+      }
+    }
+
+    // 3. Chercher aussi avec le numéro seul (ex: 0001 → chercher XXX0001)
+    if (!userId && /^\d{4,}$/.test(trimmedId)) {
+      console.log('Searching by numeric ID:', trimmedId)
+      const { data: numericMatches } = await adminClient
+        .from('user_ids')
+        .select('*')
+        .ilike('custom_id', `%${trimmedId}`)
+        .limit(10)
+
+      if (numericMatches && numericMatches.length > 0) {
+        // Retourner les correspondances multiples pour que l'utilisateur choisisse
+        return new Response(JSON.stringify({
+          error: `ID numérique "${trimmedId}" trouvé dans plusieurs entrées`,
+          multipleMatches: numericMatches.map(m => ({
+            custom_id: m.custom_id,
+            user_id: m.user_id,
+            role_type: m.role_type
+          })),
+          needsCorrection: true,
+          searchedId: trimmedId
+        }), {
+          status: 300,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+    }
+
+    // 4. Vérifier les doublons
+    if (userId) {
+      const { data: duplicates } = await adminClient
+        .from('user_ids')
+        .select('custom_id, user_id, role_type')
+        .eq('user_id', userId)
+
+      if (duplicates && duplicates.length > 1) {
+        console.log('Duplicates found for user:', duplicates)
+      }
+    }
+
+    // 5. Si toujours pas trouvé
+    if (!userId) {
+      console.log('User not found anywhere:', trimmedId)
+      
+      // Chercher des IDs similaires pour suggestions
+      const searchPattern = trimmedId.length >= 3 ? trimmedId.substring(0, 3) + '%' : '%'
+      const { data: similarIds } = await adminClient
+        .from('user_ids')
+        .select('custom_id, role_type')
+        .ilike('custom_id', searchPattern)
+        .limit(5)
+
+      return new Response(JSON.stringify({
+        error: `Aucun utilisateur trouvé avec l'ID: ${trimmedId}`,
+        searchedId: trimmedId,
+        isValidFormat,
+        needsCorrection: true,
+        suggestions: similarIds?.map(s => s.custom_id) || [],
+        message: isValidFormat 
+          ? `L'ID "${trimmedId}" a un format valide mais n'est lié à aucun utilisateur dans le système.`
+          : `L'ID "${trimmedId}" n'a pas un format reconnu. Formats valides: ${validPrefixes.join(', ')} suivi de chiffres (ex: VND0001).`
+      }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    const userId = userIdData.user_id
     const roleType = getRoleTypeFromCustomId(trimmedId)
-    console.log('Found user:', userId, 'Role type:', roleType)
+    console.log('Found user:', userId, 'Role type:', roleType, 'Found in:', foundIn)
 
     // 2. Récupérer le profil complet
     const { data: userProfile } = await adminClient
