@@ -32,6 +32,7 @@ import { ManageCommissionsSection } from '@/components/agent/ManageCommissionsSe
 import AgentWalletManagement from '@/components/agent/AgentWalletManagement';
 import { AgentAffiliateLinksSection } from '@/components/agent/AgentAffiliateLinksSection';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
+import { useAgentPermissionsUnified, AVAILABLE_PERMISSIONS } from '@/hooks/useAgentPermissionsUnified';
 
 // Schéma de validation pour le sous-agent
 const subAgentSchema = z.object({
@@ -111,6 +112,9 @@ export default function AgentDashboardPublic() {
       create_sub_agents: false
     }
   });
+
+  // Hook pour les permissions unifiées (nouvelle table + legacy)
+  const { permissions: unifiedPermissions, hasPermission, loading: permissionsLoading } = useAgentPermissionsUnified(agent?.id);
 
   useEffect(() => {
     if (token) {
@@ -418,19 +422,30 @@ export default function AgentDashboardPublic() {
             <Card className="border-0 shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-blue-600" />
+                  <Shield className="w-5 h-5 text-primary" />
                   Permissions Actives
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {agent.permissions.map((perm) => (
-                    <Badge key={perm} variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
-                      {perm.replace(/_/g, ' ')}
-                    </Badge>
-                  ))}
+                  {/* Afficher les permissions unifiées (nouvelle table + legacy) */}
+                  {Object.entries(unifiedPermissions)
+                    .filter(([_, value]) => value === true)
+                    .map(([perm]) => (
+                      <Badge key={perm} variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                        {AVAILABLE_PERMISSIONS[perm as keyof typeof AVAILABLE_PERMISSIONS] || perm.replace(/_/g, ' ')}
+                      </Badge>
+                    ))}
+                  {/* Legacy permissions du JSON */}
+                  {agent.permissions
+                    .filter(perm => !unifiedPermissions[perm])
+                    .map((perm) => (
+                      <Badge key={perm} variant="secondary" className="bg-muted text-muted-foreground">
+                        {perm.replace(/_/g, ' ')}
+                      </Badge>
+                    ))}
                   {agent.can_create_sub_agent && (
-                    <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                    <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
                       Création sous-agents
                     </Badge>
                   )}
@@ -689,14 +704,14 @@ export default function AgentDashboardPublic() {
         return <ManageUsersSection agentId={agent.id} />;
 
       case 'products':
-        return agent.permissions.includes('manage_products') ? (
+        return hasPermission('manage_products') || agent.permissions.includes('manage_products') ? (
           <ManageProductsSection agentId={agent.id} />
         ) : (
           <Card><CardContent className="py-12 text-center text-muted-foreground">Permission non accordée</CardContent></Card>
         );
 
       case 'reports':
-        return agent.permissions.includes('view_reports') ? (
+        return hasPermission('view_reports') || agent.permissions.includes('view_reports') ? (
           <ViewReportsSection 
             agentId={agent.id}
             agentData={{
@@ -710,7 +725,7 @@ export default function AgentDashboardPublic() {
         );
 
       case 'commissions':
-        return agent.permissions.includes('manage_commissions') ? (
+        return hasPermission('manage_commissions') || agent.permissions.includes('manage_commissions') ? (
           <ManageCommissionsSection 
             agentId={agent.id}
             totalCommissions={agent.total_commissions_earned || 0}
@@ -737,6 +752,7 @@ export default function AgentDashboardPublic() {
         onSectionChange={setActiveSection}
         onChangePassword={() => setIsPasswordDialogOpen(true)}
         onLogout={handleLogout}
+        unifiedPermissions={unifiedPermissions}
       />
 
       {/* Main Content */}
