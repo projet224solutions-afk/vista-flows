@@ -1,22 +1,24 @@
 /**
  * 🎨 NAVIGATION PDG - INTERFACE ORGANISÉE
  * Navigation par catégories avec version mobile optimisée
+ * Filtrage automatique selon les permissions de l'utilisateur
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
+import {
   DollarSign, Users, Shield, Settings, Package, Wrench,
   UserCheck, Building2, BarChart3, Brain, MessageSquare, Key, Zap,
   ChevronDown, ChevronUp, Sparkles, Percent, Store, Bike, FileText, Landmark,
-  Menu, ChevronRight, Car
+  Menu, ChevronRight, Car, Lock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useCurrentUserPermissions, PermissionKey } from '@/hooks/useCurrentUserPermissions';
 
 interface NavItem {
   value: string;
@@ -24,6 +26,7 @@ interface NavItem {
   icon: React.ElementType;
   badge?: boolean;
   external?: string;
+  permission?: PermissionKey; // Permission requise pour voir cet item
 }
 
 interface NavCategory {
@@ -39,8 +42,8 @@ const categories: NavCategory[] = [
     color: 'from-emerald-500 to-emerald-600',
     bgColor: 'bg-emerald-500',
     items: [
-      { value: 'finance', label: 'Finance & Revenus', icon: DollarSign },
-      { value: 'banking', label: 'Système Bancaire', icon: Landmark, badge: true },
+      { value: 'finance', label: 'Finance & Revenus', icon: DollarSign, permission: 'view_finance' },
+      { value: 'banking', label: 'Système Bancaire', icon: Landmark, badge: true, permission: 'view_banking' },
     ]
   },
   {
@@ -48,11 +51,11 @@ const categories: NavCategory[] = [
     color: 'from-blue-500 to-blue-600',
     bgColor: 'bg-blue-500',
     items: [
-      { value: 'users', label: 'Utilisateurs', icon: Users },
-      { value: 'products', label: 'Produits', icon: Package },
-      { value: 'transfer-fees', label: 'Frais de Transfert', icon: Percent },
-      { value: 'kyc', label: 'Gestion KYC', icon: Shield },
-      { value: 'service-subscriptions', label: 'Abonnements Services', icon: Sparkles, badge: true },
+      { value: 'users', label: 'Utilisateurs', icon: Users, permission: 'view_users' },
+      { value: 'products', label: 'Produits', icon: Package, permission: 'view_products' },
+      { value: 'transfer-fees', label: 'Frais de Transfert', icon: Percent, permission: 'view_transfer_fees' },
+      { value: 'kyc', label: 'Gestion KYC', icon: Shield, permission: 'view_kyc' },
+      { value: 'service-subscriptions', label: 'Abonnements Services', icon: Sparkles, badge: true, permission: 'view_service_subscriptions' },
     ]
   },
   {
@@ -60,19 +63,19 @@ const categories: NavCategory[] = [
     color: 'from-green-500 to-green-600',
     bgColor: 'bg-green-500',
     items: [
-      { value: 'agents', label: 'Agents', icon: UserCheck },
-      { value: 'syndicat', label: 'Bureaux Syndicaux', icon: Building2 },
-      { value: 'bureau-monitoring', label: 'Monitoring Bureaux', icon: Car, badge: true },
-      { value: 'driver-subscriptions', label: 'Abonnements Chauffeurs', icon: Bike },
-      { value: 'stolen-vehicles', label: 'Motos Volées', icon: Shield, badge: true },
-      { value: 'orders', label: 'Commandes', icon: Package },
-      { value: 'vendors', label: 'Vendeurs', icon: Store },
-      { value: 'vendor-kyc-review', label: 'Vérification KYC', icon: Shield, badge: true },
-      { value: 'vendor-certification', label: 'Certification Vendeurs', icon: Shield, badge: true },
-      { value: 'drivers', label: 'Livreurs', icon: Bike },
-      { value: 'quotes-invoices', label: 'Devis & Factures', icon: FileText },
-      { value: 'communication', label: 'Communication', icon: MessageSquare },
-      { value: 'agent-wallet-audit', label: 'Audit Wallet Agents', icon: Shield },
+      { value: 'agents', label: 'Agents', icon: UserCheck, permission: 'view_agents' },
+      { value: 'syndicat', label: 'Bureaux Syndicaux', icon: Building2, permission: 'view_syndicat' },
+      { value: 'bureau-monitoring', label: 'Monitoring Bureaux', icon: Car, badge: true, permission: 'view_bureau_monitoring' },
+      { value: 'driver-subscriptions', label: 'Abonnements Chauffeurs', icon: Bike, permission: 'view_driver_subscriptions' },
+      { value: 'stolen-vehicles', label: 'Motos Volées', icon: Shield, badge: true, permission: 'view_stolen_vehicles' },
+      { value: 'orders', label: 'Commandes', icon: Package, permission: 'view_orders' },
+      { value: 'vendors', label: 'Vendeurs', icon: Store, permission: 'view_vendors' },
+      { value: 'vendor-kyc-review', label: 'Vérification KYC', icon: Shield, badge: true, permission: 'view_vendor_kyc' },
+      { value: 'vendor-certification', label: 'Certification Vendeurs', icon: Shield, badge: true, permission: 'view_vendor_certification' },
+      { value: 'drivers', label: 'Livreurs', icon: Bike, permission: 'view_drivers' },
+      { value: 'quotes-invoices', label: 'Devis & Factures', icon: FileText, permission: 'view_quotes_invoices' },
+      { value: 'communication', label: 'Communication', icon: MessageSquare, permission: 'access_communication' },
+      { value: 'agent-wallet-audit', label: 'Audit Wallet Agents', icon: Shield, permission: 'view_agent_wallet_audit' },
     ]
   },
   {
@@ -80,14 +83,14 @@ const categories: NavCategory[] = [
     color: 'from-purple-500 to-purple-600',
     bgColor: 'bg-purple-500',
     items: [
-      { value: 'security', label: 'Sécurité', icon: Shield },
-      { value: 'logic-surveillance', label: 'Surveillance Logique', icon: Zap, badge: true },
-      { value: 'id-normalization', label: 'Audit ID', icon: Shield, badge: true },
-      { value: 'bug-bounty', label: 'Bug Bounty', icon: Shield },
-      { value: 'config', label: 'Configuration', icon: Settings },
-      { value: 'maintenance', label: 'Maintenance', icon: Wrench },
-      { value: 'api', label: 'API', icon: Key },
-      { value: 'debug', label: 'Debug & Surveillance', icon: Zap, badge: true },
+      { value: 'security', label: 'Sécurité', icon: Shield, permission: 'view_security' },
+      { value: 'logic-surveillance', label: 'Surveillance Logique', icon: Zap, badge: true, permission: 'view_debug' },
+      { value: 'id-normalization', label: 'Audit ID', icon: Shield, badge: true, permission: 'view_id_normalization' },
+      { value: 'bug-bounty', label: 'Bug Bounty', icon: Shield, permission: 'view_bug_bounty' },
+      { value: 'config', label: 'Configuration', icon: Settings, permission: 'view_config' },
+      { value: 'maintenance', label: 'Maintenance', icon: Wrench, permission: 'view_maintenance' },
+      { value: 'api', label: 'API', icon: Key, permission: 'view_api' },
+      { value: 'debug', label: 'Debug & Surveillance', icon: Zap, badge: true, permission: 'view_debug' },
     ]
   },
   {
@@ -95,11 +98,11 @@ const categories: NavCategory[] = [
     color: 'from-pink-500 to-pink-600',
     bgColor: 'bg-pink-500',
     items: [
-      { value: 'ai-assistant', label: 'Assistant IA', icon: Brain, badge: true },
-      { value: 'copilot', label: 'Copilote IA', icon: MessageSquare },
-      { value: 'copilot-dashboard', label: 'Copilote Executive', icon: MessageSquare, badge: true, external: '/pdg/copilot' },
-      { value: 'copilot-audit', label: 'Audit Copilote', icon: Shield },
-      { value: 'reports', label: 'Rapports', icon: BarChart3 },
+      { value: 'ai-assistant', label: 'Assistant IA', icon: Brain, badge: true, permission: 'access_ai_assistant' },
+      { value: 'copilot', label: 'Copilote IA', icon: MessageSquare, permission: 'access_copilot' },
+      { value: 'copilot-dashboard', label: 'Copilote Executive', icon: MessageSquare, badge: true, external: '/pdg/copilot', permission: 'access_copilot_dashboard' },
+      { value: 'copilot-audit', label: 'Audit Copilote', icon: Shield, permission: 'view_copilot_audit' },
+      { value: 'reports', label: 'Rapports', icon: BarChart3, permission: 'view_reports' },
     ]
   }
 ];
@@ -114,14 +117,34 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
   const isMobile = useIsMobile();
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { hasPermission, isPDG, isAgent, loading: permissionsLoading } = useCurrentUserPermissions();
 
   const toggleCategory = (title: string) => {
     setExpandedCategory(expandedCategory === title ? null : title);
   };
 
+  // Filtrer les catégories et items selon les permissions de l'utilisateur
+  const filteredCategories = useMemo(() => {
+    // PDG a accès à tout
+    if (isPDG) return categories;
+
+    // Filtrer les items selon les permissions de l'agent
+    return categories
+      .map(category => ({
+        ...category,
+        items: category.items.filter(item => {
+          // Si pas de permission requise, l'item est accessible
+          if (!item.permission) return true;
+          // Vérifier la permission
+          return hasPermission(item.permission);
+        })
+      }))
+      .filter(category => category.items.length > 0); // Exclure les catégories vides
+  }, [isPDG, hasPermission]);
+
   // Auto-expand la catégorie active au chargement
   useEffect(() => {
-    const activeCategory = categories.find(cat => 
+    const activeCategory = filteredCategories.find(cat =>
       cat.items.some(item => item.value === activeTab)
     );
 
@@ -130,17 +153,17 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
       return;
     }
 
-    // Quand on est sur un onglet non listé (ex: dashboard), ouvrir une catégorie utile par défaut
-    if (activeTab === 'dashboard') {
-      setExpandedCategory('Opérations');
+    // Quand on est sur un onglet non listé (ex: dashboard), ouvrir la première catégorie disponible
+    if (activeTab === 'dashboard' && filteredCategories.length > 0) {
+      setExpandedCategory(filteredCategories[0].title);
     }
-  }, [activeTab]);
+  }, [activeTab, filteredCategories]);
 
-  // Trouver la catégorie et l'item actifs
-  const activeCategory = categories.find(cat => 
+  // Trouver la catégorie et l'item actifs (dans les catégories filtrées)
+  const activeCategory = filteredCategories.find(cat =>
     cat.items.some(item => item.value === activeTab)
   );
-  const activeItem = categories.flatMap(c => c.items).find(item => item.value === activeTab);
+  const activeItem = filteredCategories.flatMap(c => c.items).find(item => item.value === activeTab);
 
   const handleItemClick = (value: string, externalUrl?: string) => {
     // Si c'est une URL externe, naviguer directement
@@ -194,7 +217,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
               </SheetHeader>
               <ScrollArea className="h-[calc(85vh-60px)]">
                 <div className="p-3 space-y-2">
-                  {categories.map((category) => {
+                  {filteredCategories.map((category) => {
                     const isExpanded = expandedCategory === category.title;
                     const hasActiveItem = category.items.some(item => item.value === activeTab);
                     
@@ -266,7 +289,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
 
         {/* Accès rapide catégories - horizontal scroll */}
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none w-full px-0.5">
-          {categories.map((category) => {
+          {filteredCategories.map((category) => {
             const hasActiveItem = category.items.some(item => item.value === activeTab);
             return (
               <button
@@ -296,7 +319,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
     <div className="space-y-4">
       {/* Navigation compacte en grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {categories.map((category) => {
+        {filteredCategories.map((category) => {
           const isExpanded = expandedCategory === category.title;
           const hasActiveItem = category.items.some(item => item.value === activeTab);
           
