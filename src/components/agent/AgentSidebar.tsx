@@ -26,6 +26,8 @@ interface AgentSidebarProps {
   onSectionChange: (section: string) => void;
   onChangePassword: () => void;
   onLogout: () => void;
+  // Nouvelle prop pour les permissions unifiées
+  unifiedPermissions?: Record<string, boolean>;
 }
 
 interface NavItem {
@@ -42,9 +44,19 @@ export default function AgentSidebar({
   activeSection,
   onSectionChange,
   onChangePassword,
-  onLogout
+  onLogout,
+  unifiedPermissions = {}
 }: AgentSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
+
+  // Fonction pour vérifier les permissions (combine les deux sources)
+  const hasPermission = (permission: string): boolean => {
+    // Vérifier d'abord les permissions unifiées (nouvelle table)
+    if (unifiedPermissions[permission] === true) return true;
+    // Ensuite vérifier les permissions legacy (tableau)
+    if (agent.permissions.includes(permission)) return true;
+    return false;
+  };
 
   const navItems: NavItem[] = [
     { 
@@ -113,9 +125,9 @@ export default function AgentSidebar({
   const filteredNavItems = navItems.filter(item => {
     if (!item.permission) return true;
     if (item.id === 'sub-agents') {
-      return agent.can_create_sub_agent || agent.permissions.includes('create_sub_agents');
+      return agent.can_create_sub_agent || hasPermission('create_sub_agents') || hasPermission('manage_agents');
     }
-    return agent.permissions.includes(item.permission);
+    return hasPermission(item.permission);
   });
 
   return (
