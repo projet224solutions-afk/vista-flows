@@ -217,39 +217,65 @@ export default function DriverSubscriptionManagement() {
     try {
       console.log('🎁 [PDG] Offre abonnement:', { userId: offerData.userId, type: offerData.type, days });
 
-      // Résoudre l'ID utilisateur
+      // Résoudre l'ID utilisateur via RPC (contourne RLS)
       let resolvedUserId = offerData.userId.trim();
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      
+
       if (!uuidRegex.test(resolvedUserId)) {
-        // Chercher dans user_ids
-        console.log('🔍 [PDG] Recherche dans user_ids:', resolvedUserId.toUpperCase());
-        const { data: userIdData, error: userIdError } = await supabase
-          .from('user_ids')
-          .select('user_id')
-          .eq('custom_id', resolvedUserId.toUpperCase())
-          .single();
+        console.log('🔍 [PDG] Recherche utilisateur:', resolvedUserId);
 
-        if (userIdError || !userIdData) {
-          // Chercher par email ou téléphone dans profiles
-          console.log('🔍 [PDG] Recherche dans profiles par email/phone');
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('id, email, phone')
-            .or(`email.ilike.%${resolvedUserId}%,phone.ilike.%${resolvedUserId}%`)
-            .limit(1)
-            .single();
+        // Utiliser la fonction RPC pour résoudre l'utilisateur (SECURITY DEFINER)
+        const { data: foundUserId, error: resolveError } = await supabase
+          .rpc('resolve_user_for_subscription', {
+            p_identifier: resolvedUserId
+          });
 
-          if (profileError || !profileData) {
-            console.error('❌ [PDG] Utilisateur non trouvé');
+        if (resolveError || !foundUserId) {
+          console.error('❌ [PDG] Erreur résolution:', resolveError);
+
+          // Fallback: recherche directe dans profiles (si RPC n'existe pas)
+          if (resolveError?.code === 'PGRST202') {
+            console.log('⚠️ [PDG] RPC non trouvée, recherche directe...');
+
+            // Recherche par email exact
+            let { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('id, email')
+              .eq('email', resolvedUserId.toLowerCase())
+              .maybeSingle();
+
+            // Si pas trouvé par email, chercher par téléphone
+            if (!profileData) {
+              const { data: phoneData } = await supabase
+                .from('profiles')
+                .select('id, email')
+                .eq('phone', resolvedUserId)
+                .maybeSingle();
+              profileData = phoneData;
+            }
+
+            // Si pas trouvé, chercher par custom_id/public_id
+            if (!profileData) {
+              const { data: idData } = await supabase
+                .from('profiles')
+                .select('id, email')
+                .or(`custom_id.eq.${resolvedUserId.toUpperCase()},public_id.eq.${resolvedUserId.toUpperCase()}`)
+                .maybeSingle();
+              profileData = idData;
+            }
+
+            if (!profileData) {
+              throw new Error(`Utilisateur "${resolvedUserId}" non trouvé. Vérifiez l'ID, email ou téléphone.`);
+            }
+
+            console.log('✅ [PDG] Utilisateur trouvé:', profileData.email);
+            resolvedUserId = profileData.id;
+          } else {
             throw new Error(`Utilisateur "${resolvedUserId}" non trouvé. Vérifiez l'ID, email ou téléphone.`);
           }
-          
-          console.log('✅ [PDG] Utilisateur trouvé:', profileData.email);
-          resolvedUserId = profileData.id;
         } else {
-          console.log('✅ [PDG] Utilisateur trouvé via user_ids');
-          resolvedUserId = userIdData.user_id;
+          console.log('✅ [PDG] Utilisateur résolu via RPC:', foundUserId);
+          resolvedUserId = foundUserId;
         }
       }
 

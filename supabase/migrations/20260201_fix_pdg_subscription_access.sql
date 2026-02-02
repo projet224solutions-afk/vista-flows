@@ -1,9 +1,15 @@
 -- =======================================================================
 -- FIX: Permettre au PDG d'offrir des abonnements taxi/moto
 -- =======================================================================
--- Problème: Les policies RLS vérifient 'admin' et 'ceo' mais pas 'pdg'
--- Solution: Ajouter 'pdg' aux vérifications de rôle
+-- Problèmes résolus:
+-- 1. Les policies RLS vérifient 'admin' et 'ceo' mais pas 'pdg'
+-- 2. Le PDG ne peut pas lire profiles pour trouver les utilisateurs
 -- =======================================================================
+
+-- 0. SUPPRIMER LES ANCIENNES FONCTIONS
+DROP FUNCTION IF EXISTS pdg_offer_subscription(UUID, TEXT, INTEGER);
+DROP FUNCTION IF EXISTS test_pdg_can_offer_subscription();
+DROP FUNCTION IF EXISTS resolve_user_for_subscription(TEXT);
 
 -- 1. Supprimer les anciennes policies
 DROP POLICY IF EXISTS "admin_manage_all_subscriptions" ON public.driver_subscriptions;
@@ -146,10 +152,79 @@ EXCEPTION WHEN OTHERS THEN
   RAISE NOTICE 'Contrainte payment_method existe déjà ou erreur: %', SQLERRM;
 END $$;
 
--- 5. Accorder les permissions
+-- 5. Fonction pour résoudre un utilisateur par email/phone/custom_id (SECURITY DEFINER)
+CREATE OR REPLACE FUNCTION resolve_user_for_subscription(p_identifier TEXT)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_user_id UUID;
+  v_identifier TEXT;
+BEGIN
+  v_identifier := TRIM(p_identifier);
+
+  IF v_identifier IS NULL OR v_identifier = '' THEN
+    RETURN NULL;
+  END IF;
+
+  -- 1. Chercher par email exact (insensible à la casse)
+  SELECT id INTO v_user_id
+  FROM profiles
+  WHERE LOWER(email) = LOWER(v_identifier)
+  LIMIT 1;
+
+  IF v_user_id IS NOT NULL THEN
+    RETURN v_user_id;
+  END IF;
+
+  -- 2. Chercher par téléphone exact
+  SELECT id INTO v_user_id
+  FROM profiles
+  WHERE phone = v_identifier OR phone = REPLACE(v_identifier, ' ', '')
+  LIMIT 1;
+
+  IF v_user_id IS NOT NULL THEN
+    RETURN v_user_id;
+  END IF;
+
+  -- 3. Chercher par custom_id dans profiles
+  SELECT id INTO v_user_id
+  FROM profiles
+  WHERE UPPER(custom_id) = UPPER(v_identifier)
+  LIMIT 1;
+
+  IF v_user_id IS NOT NULL THEN
+    RETURN v_user_id;
+  END IF;
+
+  -- 4. Chercher par public_id dans profiles
+  SELECT id INTO v_user_id
+  FROM profiles
+  WHERE UPPER(public_id) = UPPER(v_identifier)
+  LIMIT 1;
+
+  IF v_user_id IS NOT NULL THEN
+    RETURN v_user_id;
+  END IF;
+
+  -- 5. Chercher dans user_ids
+  SELECT user_id INTO v_user_id
+  FROM user_ids
+  WHERE UPPER(custom_id) = UPPER(v_identifier)
+  LIMIT 1;
+
+  RETURN v_user_id; -- Peut être NULL si non trouvé
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION resolve_user_for_subscription(TEXT) TO authenticated;
+
+-- 6. Accorder les permissions
 GRANT EXECUTE ON FUNCTION public.pdg_offer_subscription(UUID, TEXT, INTEGER) TO authenticated;
 
--- 6. Fonction de test pour vérifier les permissions PDG
+-- 7. Fonction de test pour vérifier les permissions PDG
 CREATE OR REPLACE FUNCTION test_pdg_can_offer_subscription()
 RETURNS TABLE(
   test_name TEXT,
