@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AgentLayoutProfessional } from '@/components/agent/AgentLayoutProfessional';
 import { AgentOverviewProfessional } from '@/components/agent/AgentOverviewProfessional';
+import { useAgentPermissionsUnified } from '@/hooks/useAgentPermissionsUnified';
 import { CreateUserForm } from '@/components/agent/CreateUserForm';
 import AgentWalletManagement from '@/components/agent/AgentWalletManagement';
 import AgentSubAgentsManagement from '@/components/agent/AgentSubAgentsManagement';
@@ -33,6 +34,9 @@ export default function AgentDashboard() {
   const [pdgUserId, setPdgUserId] = useState<string | null>(null);
   const [walletBalance, setWalletBalance] = useState(0);
   const { stats, refetch: refetchStats } = useAgentStats(agent?.id);
+  
+  // Hook pour les permissions unifiées (table agent_permissions + legacy JSON)
+  const { permissions: unifiedPermissions, loading: permissionsLoading } = useAgentPermissionsUnified(agent?.id);
   
   // Password change state
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
@@ -520,6 +524,7 @@ export default function AgentDashboard() {
         walletBalance={walletBalance}
         stats={stats}
         onSignOut={handleSignOut}
+        unifiedPermissions={unifiedPermissions}
       >
         {renderContent()}
       </AgentLayoutProfessional>
