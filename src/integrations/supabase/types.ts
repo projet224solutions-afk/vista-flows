@@ -25712,8 +25712,8 @@ export type Database = {
         Returns: undefined
       }
       pdg_offer_subscription: {
-        Args: { p_days: number; p_type: string; p_user_id: string }
-        Returns: Json
+        Args: { p_days?: number; p_type: string; p_user_id: string }
+        Returns: string
       }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
@@ -26062,6 +26062,10 @@ export type Database = {
         Returns: Json
       }
       resolve_cache_errors: { Args: never; Returns: number }
+      resolve_user_for_subscription: {
+        Args: { p_identifier: string }
+        Returns: string
+      }
       rotate_marketplace_products: { Args: never; Returns: Json }
       run_daily_wallet_audit: { Args: never; Returns: Json }
       schedule_funds_release: {

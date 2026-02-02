@@ -226,9 +226,9 @@ export default function DriverSubscriptionManagement() {
 
         // Utiliser la fonction RPC pour résoudre l'utilisateur (SECURITY DEFINER)
         const { data: foundUserId, error: resolveError } = await supabase
-          .rpc('resolve_user_for_subscription', {
+          .rpc('resolve_user_for_subscription' as any, {
             p_identifier: resolvedUserId
-          });
+          } as any);
 
         if (resolveError || !foundUserId) {
           console.error('❌ [PDG] Erreur résolution:', resolveError);
