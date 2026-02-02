@@ -10294,6 +10294,264 @@ export type Database = {
           },
         ]
       }
+      logic_anomalies: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          actual_value: Json
+          affected_entities: Json | null
+          created_at: string | null
+          detected_at: string
+          difference: Json | null
+          domain: string
+          expected_value: Json
+          id: string
+          resolution_type: string | null
+          resolved_at: string | null
+          rule_id: string
+          severity: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          actual_value: Json
+          affected_entities?: Json | null
+          created_at?: string | null
+          detected_at: string
+          difference?: Json | null
+          domain: string
+          expected_value: Json
+          id?: string
+          resolution_type?: string | null
+          resolved_at?: string | null
+          rule_id: string
+          severity: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          actual_value?: Json
+          affected_entities?: Json | null
+          created_at?: string | null
+          detected_at?: string
+          difference?: Json | null
+          domain?: string
+          expected_value?: Json
+          id?: string
+          resolution_type?: string | null
+          resolved_at?: string | null
+          rule_id?: string
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "logic_anomalies_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "logic_rules"
+            referencedColumns: ["rule_id"]
+          },
+        ]
+      }
+      logic_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          correction_id: string | null
+          created_at: string | null
+          id: string
+          ip_address: unknown
+          is_immutable: boolean | null
+          new_state: Json | null
+          old_state: Json | null
+          reason: string | null
+          timestamp: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          correction_id?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown
+          is_immutable?: boolean | null
+          new_state?: Json | null
+          old_state?: Json | null
+          reason?: string | null
+          timestamp: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          correction_id?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown
+          is_immutable?: boolean | null
+          new_state?: Json | null
+          old_state?: Json | null
+          reason?: string | null
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "logic_audit_correction_id_fkey"
+            columns: ["correction_id"]
+            isOneToOne: false
+            referencedRelation: "logic_corrections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      logic_corrections: {
+        Row: {
+          anomaly_id: string
+          applied_at: string | null
+          correction_type: string
+          created_at: string | null
+          id: string
+          new_state: Json
+          old_state: Json
+          pdg_id: string | null
+          reason: string | null
+          rule_id: string
+          status: string
+        }
+        Insert: {
+          anomaly_id: string
+          applied_at?: string | null
+          correction_type: string
+          created_at?: string | null
+          id?: string
+          new_state: Json
+          old_state: Json
+          pdg_id?: string | null
+          reason?: string | null
+          rule_id: string
+          status: string
+        }
+        Update: {
+          anomaly_id?: string
+          applied_at?: string | null
+          correction_type?: string
+          created_at?: string | null
+          id?: string
+          new_state?: Json
+          old_state?: Json
+          pdg_id?: string | null
+          reason?: string | null
+          rule_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "logic_corrections_anomaly_id_fkey"
+            columns: ["anomaly_id"]
+            isOneToOne: false
+            referencedRelation: "logic_anomalies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "logic_corrections_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "logic_rules"
+            referencedColumns: ["rule_id"]
+          },
+        ]
+      }
+      logic_results: {
+        Row: {
+          actual_result: Json | null
+          created_at: string | null
+          duration_ms: number | null
+          error_message: string | null
+          execution_date: string
+          expected_result: Json | null
+          id: string
+          rule_id: string
+          status: string
+        }
+        Insert: {
+          actual_result?: Json | null
+          created_at?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          execution_date: string
+          expected_result?: Json | null
+          id?: string
+          rule_id: string
+          status: string
+        }
+        Update: {
+          actual_result?: Json | null
+          created_at?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          execution_date?: string
+          expected_result?: Json | null
+          id?: string
+          rule_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "logic_results_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "logic_rules"
+            referencedColumns: ["rule_id"]
+          },
+        ]
+      }
+      logic_rules: {
+        Row: {
+          auto_correctable: boolean | null
+          created_at: string | null
+          description: string | null
+          detection_method: string
+          domain: string
+          enabled: boolean | null
+          expected_logic: Json
+          id: string
+          name: string
+          parameters: Json | null
+          rule_id: string
+          severity: string
+          updated_at: string | null
+        }
+        Insert: {
+          auto_correctable?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          detection_method: string
+          domain: string
+          enabled?: boolean | null
+          expected_logic: Json
+          id?: string
+          name: string
+          parameters?: Json | null
+          rule_id: string
+          severity: string
+          updated_at?: string | null
+        }
+        Update: {
+          auto_correctable?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          detection_method?: string
+          domain?: string
+          enabled?: boolean | null
+          expected_logic?: Json
+          id?: string
+          name?: string
+          parameters?: Json | null
+          rule_id?: string
+          severity?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       marketing_campaigns: {
         Row: {
           clicked_count: number | null
@@ -24398,6 +24656,19 @@ export type Database = {
         Args: { p_date?: string }
         Returns: undefined
       }
+      apply_correction: {
+        Args: {
+          p_anomaly_id: string
+          p_correction_type: string
+          p_new_value: Json
+          p_reason?: string
+        }
+        Returns: {
+          correction_id: string
+          message: string
+          success: boolean
+        }[]
+      }
       auto_escalate_disputes: {
         Args: never
         Returns: {
@@ -24870,6 +25141,15 @@ export type Database = {
       delete_syndicate_worker_secure: {
         Args: { p_bureau_id: string; p_worker_id: string }
         Returns: undefined
+      }
+      detect_all_anomalies: {
+        Args: { p_domain_filter?: string; p_severity_filter?: string }
+        Returns: {
+          anomaly_count: number
+          domain: string
+          rule_id: string
+          status: string
+        }[]
       }
       detect_expense_anomalies: { Args: { p_vendor_id: string }; Returns: Json }
       detect_fraud: {
@@ -25396,6 +25676,17 @@ export type Database = {
       get_syndicate_worker_permissions: {
         Args: { p_worker_id: string }
         Returns: Json
+      }
+      get_system_health: {
+        Args: never
+        Returns: {
+          critical_anomalies: number
+          overall_status: string
+          recent_anomalies_24h: number
+          resolution_rate: number
+          total_anomalies: number
+          total_rules: number
+        }[]
       }
       get_system_health_api: { Args: never; Returns: Json }
       get_system_transfer_fee_percent: { Args: never; Returns: number }
@@ -26971,6 +27262,18 @@ export type Database = {
           last_verified_at: string
         }[]
       }
+      verify_logic_rule: {
+        Args: { p_params?: Json; p_rule_id: string }
+        Returns: {
+          actual_value: Json
+          anomaly_found: boolean
+          can_auto_correct: boolean
+          expected_value: Json
+          is_valid: boolean
+          message: string
+          severity: string
+        }[]
+      }
       verify_wallet_exists: {
         Args: { target_user_id: string }
         Returns: boolean
@@ -27128,6 +27431,7 @@ export type Database = {
         | "client"
         | "ceo"
         | "agent"
+        | "pdg"
       vehicle_type: "moto" | "car" | "bicycle" | "truck"
       vendor_certification_status: "NON_CERTIFIE" | "CERTIFIE" | "SUSPENDU"
       wallet_status: "active" | "suspended" | "blocked" | "pending_verification"
@@ -27426,6 +27730,7 @@ export const Constants = {
         "client",
         "ceo",
         "agent",
+        "pdg",
       ],
       vehicle_type: ["moto", "car", "bicycle", "truck"],
       vendor_certification_status: ["NON_CERTIFIE", "CERTIFIE", "SUSPENDU"],
