@@ -175,7 +175,7 @@ export async function reorganizeIds(roleType: RoleType): Promise<ReorganizationR
  * Réorganise tous les types d'IDs
  */
 export async function reorganizeAllIds(): Promise<Record<RoleType, ReorganizationResult>> {
-  const roleTypes: RoleType[] = ['vendor', 'client', 'agent', 'driver', 'bureau', 'pdg', 'transitaire', 'worker'];
+  const roleTypes: RoleType[] = ['vendor', 'client', 'agent', 'driver', 'taxi', 'livreur', 'bureau', 'pdg', 'transitaire', 'worker'];
   const results: Partial<Record<RoleType, ReorganizationResult>> = {};
 
   for (const roleType of roleTypes) {
