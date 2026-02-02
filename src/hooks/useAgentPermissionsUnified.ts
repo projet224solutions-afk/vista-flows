@@ -131,8 +131,39 @@ export function useAgentPermissionsUnified(agentId: string | undefined): Unified
     }
   }, [agentId]);
 
+  /**
+   * Vérifie si l'agent a une permission donnée
+   * Implémente l'héritage: manage_* implique automatiquement view_*
+   */
   const hasPermission = useCallback((key: string): boolean => {
-    return permissions[key] === true;
+    // Vérification directe
+    if (permissions[key] === true) return true;
+    
+    // Héritage: si on demande view_*, vérifier si manage_* existe
+    if (key.startsWith('view_')) {
+      const manageKey = key.replace('view_', 'manage_');
+      if (permissions[manageKey] === true) return true;
+    }
+    
+    // Alias spécifiques pour certaines permissions
+    const permissionAliases: Record<string, string[]> = {
+      'view_users': ['manage_users', 'create_users'],
+      'create_users': ['manage_users'],
+      'view_reports': ['manage_reports', 'view_analytics', 'view_finance', 'manage_finance'],
+      'create_sub_agents': ['manage_agents'],
+      'view_financial_module': ['manage_finance', 'view_finance'],
+      'access_communication': ['manage_communication'],
+      'view_copilot_audit': ['access_copilot'],
+    };
+    
+    const aliases = permissionAliases[key];
+    if (aliases) {
+      for (const alias of aliases) {
+        if (permissions[alias] === true) return true;
+      }
+    }
+    
+    return false;
   }, [permissions]);
 
   // Charger au montage et écouter les changements

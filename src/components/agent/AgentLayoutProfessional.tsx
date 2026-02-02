@@ -82,15 +82,56 @@ export function AgentLayoutProfessional({
 
   /**
    * Vérifie si l'agent a une permission donnée (unifié + legacy)
-   * Gère les alias de permissions pour compatibilité
+   * Gère les alias de permissions pour compatibilité:
+   * - manage_* implique automatiquement view_* (héritage)
+   * - certaines permissions avancées satisfont les permissions basiques
    */
   const hasPermission = (key: string): boolean => {
-    // Mapping d'alias de permissions
+    // Mapping d'alias de permissions (héritage + compatibilité)
     const permissionAliases: Record<string, string[]> = {
+      // Gestion
       'view_users': ['view_users', 'manage_users', 'create_users'],
-      'manage_users': ['manage_users', 'view_users'],
-      'view_reports': ['view_reports', 'view_analytics', 'view_finance'],
+      'manage_users': ['manage_users'],
+      'create_users': ['create_users', 'manage_users'],
+      'view_kyc': ['view_kyc', 'manage_kyc'],
+      'view_vendor_kyc': ['view_vendor_kyc', 'manage_vendor_kyc'],
+      'view_products': ['view_products', 'manage_products'],
+      'view_transfer_fees': ['view_transfer_fees', 'manage_transfer_fees'],
+      'view_service_subscriptions': ['view_service_subscriptions', 'manage_service_subscriptions'],
+      
+      // Finance
+      'view_finance': ['view_finance', 'manage_finance'],
+      'view_banking': ['view_banking', 'manage_banking'],
+      'view_payments': ['view_payments', 'manage_payments'],
+      'view_financial_module': ['view_financial_module', 'manage_finance'],
+      
+      // Opérations
+      'view_agents': ['view_agents', 'manage_agents'],
       'create_sub_agents': ['create_sub_agents', 'manage_agents'],
+      'view_syndicat': ['view_syndicat', 'manage_syndicat'],
+      'view_bureau_monitoring': ['view_bureau_monitoring', 'manage_bureau_monitoring'],
+      'view_driver_subscriptions': ['view_driver_subscriptions', 'manage_driver_subscriptions'],
+      'view_stolen_vehicles': ['view_stolen_vehicles', 'manage_stolen_vehicles'],
+      'view_orders': ['view_orders', 'manage_orders'],
+      'view_vendors': ['view_vendors', 'manage_vendors'],
+      'view_vendor_certification': ['view_vendor_certification', 'manage_vendor_certification'],
+      'view_drivers': ['view_drivers', 'manage_drivers'],
+      'view_quotes_invoices': ['view_quotes_invoices', 'manage_quotes_invoices'],
+      'access_communication': ['access_communication', 'manage_communication'],
+      'view_agent_wallet_audit': ['view_agent_wallet_audit', 'manage_agent_wallet_audit'],
+      
+      // Système
+      'view_security': ['view_security', 'manage_security'],
+      'view_id_normalization': ['view_id_normalization', 'manage_id_normalization'],
+      'view_bug_bounty': ['view_bug_bounty', 'manage_bug_bounty'],
+      'view_config': ['view_config', 'manage_config'],
+      'view_maintenance': ['view_maintenance', 'manage_maintenance'],
+      'view_api': ['view_api', 'manage_api'],
+      'view_debug': ['view_debug', 'manage_debug'],
+      
+      // Intelligence
+      'view_reports': ['view_reports', 'manage_reports', 'view_analytics', 'view_finance'],
+      'view_copilot_audit': ['view_copilot_audit', 'access_copilot'],
     };
 
     const keysToCheck = permissionAliases[key] || [key];

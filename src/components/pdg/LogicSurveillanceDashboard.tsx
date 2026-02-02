@@ -130,7 +130,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
         .rpc('get_logic_surveillance_dashboard');
       
       if (statsError) throw statsError;
-      setDashboardData(statsData as DashboardData);
+      setDashboardData(statsData as unknown as DashboardData);
 
       // Load validation rules
       const { data: rulesData, error: rulesError } = await supabase
