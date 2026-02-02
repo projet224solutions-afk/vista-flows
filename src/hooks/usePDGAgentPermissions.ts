@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { AVAILABLE_PERMISSIONS, PermissionKey } from './useAgentPermissions';
+import { PERMISSION_CATEGORIES } from '@/constants/agentPermissionCategories';
 
 export interface PermissionGrant {
   id: string;
@@ -10,6 +12,7 @@ export interface PermissionGrant {
   is_active: boolean;
   expires_at: string | null;
   risk_level: string;
+  agent_id?: string;
 }
 
 export interface AgentPermission {
@@ -22,52 +25,78 @@ export interface AgentPermission {
   requires_audit: boolean;
 }
 
+// Generate permission catalog from constants
+function generatePermissionCatalog(): AgentPermission[] {
+  const catalog: AgentPermission[] = [];
+  
+  for (const cat of PERMISSION_CATEGORIES) {
+    for (const permKey of cat.permissions) {
+      catalog.push({
+        permission_key: permKey,
+        permission_name: AVAILABLE_PERMISSIONS[permKey] || permKey,
+        description: AVAILABLE_PERMISSIONS[permKey] || permKey,
+        category: cat.label,
+        risk_level: permKey.startsWith('manage_') ? 'high' : 'low',
+        requires_2fa: permKey.startsWith('manage_'),
+        requires_audit: true
+      });
+    }
+  }
+  
+  return catalog;
+}
+
 export function usePDGAgentPermissions(pdgId: string | null) {
   const [permissions, setPermissions] = useState<PermissionGrant[]>([]);
-  const [permissionCatalog, setPermissionCatalog] = useState<AgentPermission[]>([]);
+  const [permissionCatalog] = useState<AgentPermission[]>(generatePermissionCatalog());
   const [loading, setLoading] = useState(false);
 
-  // Charger le catalogue de permissions
-  useEffect(() => {
-    const loadCatalog = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('pdg_permission_catalog')
-          .select('*')
-          .order('category');
-
-        if (error) throw error;
-        setPermissionCatalog(data || []);
-      } catch (error) {
-        console.error('Erreur chargement catalogue permissions:', error);
-      }
-    };
-
-    loadCatalog();
-  }, []);
-
-  // Charger les permissions déléguées pour un PDG
+  // Charger les permissions déléguées pour un PDG (depuis agent_permissions table)
   const loadPermissions = useCallback(async () => {
     if (!pdgId) return;
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('pdg_access_permissions')
-        .select(`
-          id,
-          permission_key,
-          permission_name,
-          is_active,
-          expires_at,
-          agent_id,
-          pdg_permission_catalog (category, risk_level)
-        `)
-        .eq('pdg_id', pdgId)
-        .order('created_at', { ascending: false });
+      // Get all agents for this PDG
+      const { data: agents, error: agentsError } = await supabase
+        .from('agents_management')
+        .select('id, name')
+        .eq('pdg_id', pdgId);
 
-      if (error) throw error;
-      setPermissions(data as any || []);
+      if (agentsError) throw agentsError;
+
+      // Get permissions for each agent
+      const allPermissions: PermissionGrant[] = [];
+      
+      for (const agent of agents || []) {
+        const { data: agentPerms, error: permsError } = await supabase
+          .from('agent_permissions')
+          .select('*')
+          .eq('agent_id', agent.id);
+
+        if (!permsError && agentPerms) {
+          for (const perm of agentPerms) {
+            if (perm.permission_value) {
+              const catInfo = PERMISSION_CATEGORIES.find(c => 
+                c.permissions.includes(perm.permission_key as PermissionKey)
+              );
+              
+              allPermissions.push({
+                id: perm.id,
+                permission_key: perm.permission_key,
+                permission_name: AVAILABLE_PERMISSIONS[perm.permission_key as PermissionKey] || perm.permission_key,
+                category: catInfo?.label || 'Autre',
+                is_active: perm.permission_value || false,
+                expires_at: null,
+                risk_level: perm.permission_key.startsWith('manage_') ? 'high' : 'low',
+                agent_id: agent.id
+              });
+            }
+          }
+        }
+      }
+
+      setPermissions(allPermissions);
     } catch (error) {
       console.error('Erreur chargement permissions:', error);
       toast.error('Erreur lors du chargement des permissions');
@@ -80,67 +109,73 @@ export function usePDGAgentPermissions(pdgId: string | null) {
   const grantPermission = useCallback(async (
     agentId: string,
     permissionKey: string,
-    expiresInDays?: number,
-    scope?: any
+    _expiresInDays?: number,
+    _scope?: any
   ): Promise<boolean> => {
     try {
-      const { data, error } = await supabase
-        .rpc('grant_pdg_permission_to_agent', {
-          p_pdg_id: pdgId,
-          p_agent_id: agentId,
-          p_permission_key: permissionKey,
-          p_scope: scope,
-          p_expires_in_days: expiresInDays
-        });
+      // Check if permission already exists
+      const { data: existing } = await supabase
+        .from('agent_permissions')
+        .select('id')
+        .eq('agent_id', agentId)
+        .eq('permission_key', permissionKey)
+        .single();
 
-      if (error) throw error;
+      if (existing) {
+        // Update existing
+        const { error } = await supabase
+          .from('agent_permissions')
+          .update({ permission_value: true, updated_at: new Date().toISOString() })
+          .eq('id', existing.id);
 
-      if (data?.[0]?.success) {
-        toast.success('Permission accordée avec succès');
-        await loadPermissions();
-        return true;
+        if (error) throw error;
       } else {
-        toast.error(data?.[0]?.message || 'Erreur lors de l\'octroi de la permission');
-        return false;
+        // Insert new
+        const { error } = await supabase
+          .from('agent_permissions')
+          .insert({
+            agent_id: agentId,
+            permission_key: permissionKey,
+            permission_value: true
+          });
+
+        if (error) throw error;
       }
+
+      toast.success('Permission accordée avec succès');
+      await loadPermissions();
+      return true;
     } catch (error) {
       console.error('Erreur octroi permission:', error);
       toast.error('Erreur lors de l\'octroi de la permission');
       return false;
     }
-  }, [pdgId, loadPermissions]);
+  }, [loadPermissions]);
 
   // Révoquer une permission
   const revokePermission = useCallback(async (
     agentId: string,
     permissionKey: string,
-    reason?: string
+    _reason?: string
   ): Promise<boolean> => {
     try {
-      const { data, error } = await supabase
-        .rpc('revoke_pdg_permission_from_agent', {
-          p_pdg_id: pdgId,
-          p_agent_id: agentId,
-          p_permission_key: permissionKey,
-          p_reason: reason
-        });
+      const { error } = await supabase
+        .from('agent_permissions')
+        .update({ permission_value: false, updated_at: new Date().toISOString() })
+        .eq('agent_id', agentId)
+        .eq('permission_key', permissionKey);
 
       if (error) throw error;
 
-      if (data?.[0]?.success) {
-        toast.success('Permission révoquée avec succès');
-        await loadPermissions();
-        return true;
-      } else {
-        toast.error('Erreur lors de la révocation');
-        return false;
-      }
+      toast.success('Permission révoquée avec succès');
+      await loadPermissions();
+      return true;
     } catch (error) {
       console.error('Erreur révocation permission:', error);
       toast.error('Erreur lors de la révocation de la permission');
       return false;
     }
-  }, [pdgId, loadPermissions]);
+  }, [loadPermissions]);
 
   // Vérifier si un agent a une permission
   const checkAgentPermission = useCallback(async (
@@ -149,13 +184,14 @@ export function usePDGAgentPermissions(pdgId: string | null) {
   ): Promise<boolean> => {
     try {
       const { data, error } = await supabase
-        .rpc('agent_has_permission', {
-          p_agent_id: agentId,
-          p_permission_key: permissionKey
-        });
+        .from('agent_permissions')
+        .select('permission_value')
+        .eq('agent_id', agentId)
+        .eq('permission_key', permissionKey)
+        .single();
 
-      if (error) throw error;
-      return data || false;
+      if (error) return false;
+      return data?.permission_value || false;
     } catch (error) {
       console.error('Erreur vérification permission:', error);
       return false;
@@ -174,7 +210,7 @@ export function usePDGAgentPermissions(pdgId: string | null) {
 }
 
 // Hook pour vérifier les permissions de l'agent actuel
-export function useAgentPermissions() {
+export function useCurrentAgentPermissions() {
   const [agentPermissions, setAgentPermissions] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
@@ -198,13 +234,13 @@ export function useAgentPermissions() {
 
         // Charger les permissions actives
         const { data: permissions } = await supabase
-          .from('pdg_access_permissions')
-          .select('permission_key')
-          .eq('agent_id', agent.id)
-          .eq('is_active', true)
-          .gte('expires_at', new Date().toISOString());
+          .from('agent_permissions')
+          .select('permission_key, permission_value')
+          .eq('agent_id', agent.id);
 
-        const permSet = new Set(permissions?.map(p => p.permission_key) || []);
+        const permSet = new Set(
+          permissions?.filter(p => p.permission_value).map(p => p.permission_key) || []
+        );
         setAgentPermissions(permSet);
       } catch (error) {
         console.error('Erreur chargement permissions agent:', error);
@@ -236,3 +272,6 @@ export function useAgentPermissions() {
     hasAllPermissions
   };
 }
+
+// Alias pour compatibilité
+export const useAgentPermissions = useCurrentAgentPermissions;
