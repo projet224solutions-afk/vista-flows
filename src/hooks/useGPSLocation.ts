@@ -213,17 +213,22 @@ export function useGPSLocation(options: UseGPSLocationOptions = {}) {
         };
         
         setLocation(loc);
+        setError(null); // Effacer les erreurs précédentes quand on a une position
         if (onLocationChange) onLocationChange(loc);
       },
       (err) => {
         const gpsError = handleGeolocationError(err);
+        // Ne pas effacer la dernière position connue même si erreur
+        // Juste logger l'erreur sans bloquer
+        console.warn('[useGPSLocation] Watch error (continuing with last known position):', gpsError.userMessage);
         setError(gpsError);
+        // Seulement notifier l'erreur si callback fourni, mais ne pas arrêter le suivi
         if (onError) onError(gpsError);
       },
       {
         enableHighAccuracy,
-        timeout,
-        maximumAge
+        timeout: 30000, // Timeout plus long pour le suivi continu
+        maximumAge: 60000 // Accepter des positions plus anciennes
       }
     );
 

@@ -370,7 +370,14 @@ export function ActiveRideNavigationPanel({
       <div className="px-4 py-4 space-y-3">
         {statusConfig.nextAction && statusConfig.nextIcon && (
           <Button
-            onClick={() => onUpdateStatus(statusConfig.nextAction!)}
+            onClick={async () => {
+              try {
+                console.log(`[Navigation] Mise à jour statut vers: ${statusConfig.nextAction}`);
+                await onUpdateStatus(statusConfig.nextAction!);
+              } catch (error) {
+                console.error('[Navigation] Erreur mise à jour:', error);
+              }
+            }}
             disabled={isLoading}
             className={cn(
               "w-full h-14 text-lg font-semibold gap-3",
