@@ -17,7 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { 
   ShoppingCart, RotateCcw, CreditCard, Percent, Plus, 
-  Package, Users, Calendar, Search
+  Package, Users, Calendar, Search, Banknote, CheckCircle
 } from 'lucide-react';
 
 // Type produit pour la sélection
@@ -91,6 +91,9 @@ export default function AdvancedSalesManager() {
   const [isNewCreditOpen, setIsNewCreditOpen] = useState(false);
   const [isNewReturnOpen, setIsNewReturnOpen] = useState(false);
   const [isNewPromoOpen, setIsNewPromoOpen] = useState(false);
+  const [isCollectPaymentOpen, setIsCollectPaymentOpen] = useState(false);
+  const [selectedCreditForPayment, setSelectedCreditForPayment] = useState<CreditSale | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState('');
 
   // Formulaires
   const [newCredit, setNewCredit] = useState({
@@ -352,6 +355,60 @@ export default function AdvancedSalesManager() {
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
     }
+  };
+
+  // Encaisser un paiement sur une vente à crédit
+  const collectCreditPayment = async () => {
+    if (!selectedCreditForPayment || !paymentAmount) {
+      toast({ title: 'Montant requis', variant: 'destructive' });
+      return;
+    }
+
+    const amount = parseFloat(paymentAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast({ title: 'Montant invalide', variant: 'destructive' });
+      return;
+    }
+
+    if (amount > selectedCreditForPayment.remaining_amount) {
+      toast({ title: 'Le montant dépasse le reste à payer', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      const newPaidAmount = selectedCreditForPayment.paid_amount + amount;
+      const newRemainingAmount = selectedCreditForPayment.total - newPaidAmount;
+      const newStatus = newRemainingAmount <= 0 ? 'paid' : newPaidAmount > 0 ? 'partial' : 'pending';
+
+      const { error } = await supabase
+        .from('vendor_credit_sales')
+        .update({
+          paid_amount: newPaidAmount,
+          remaining_amount: newRemainingAmount,
+          status: newStatus
+        })
+        .eq('id', selectedCreditForPayment.id);
+
+      if (error) throw error;
+
+      toast({ 
+        title: newStatus === 'paid' ? '✅ Crédit soldé !' : '✅ Paiement enregistré',
+        description: `${amount.toLocaleString()} GNF encaissés`
+      });
+      setIsCollectPaymentOpen(false);
+      setSelectedCreditForPayment(null);
+      setPaymentAmount('');
+      loadData();
+    } catch (error: any) {
+      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  // Ouvrir le dialogue d'encaissement
+  const openCollectPaymentDialog = (credit: CreditSale) => {
+    setSelectedCreditForPayment(credit);
+    setPaymentAmount(credit.remaining_amount.toString());
+    setIsCollectPaymentOpen(true);
   };
 
   // Toggle sélection produit pour promo
@@ -668,19 +725,19 @@ export default function AdvancedSalesManager() {
             {creditSales.map((sale) => (
               <Card key={sale.id}>
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex-shrink-0">
                         <Users className="w-4 h-4 text-orange-600" />
                       </div>
-                      <div>
-                        <p className="font-semibold">{sale.customer_name}</p>
+                      <div className="min-w-0">
+                        <p className="font-semibold truncate">{sale.customer_name}</p>
                         <p className="text-sm text-muted-foreground">
                           Échéance: {new Date(sale.due_date).toLocaleDateString('fr-FR')}
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex-shrink-0">
                       <p className="font-bold text-orange-600">{sale.remaining_amount.toLocaleString()} GNF</p>
                       <p className="text-xs text-muted-foreground">
                         sur {sale.total.toLocaleString()} GNF
@@ -689,6 +746,21 @@ export default function AdvancedSalesManager() {
                         {sale.status === 'paid' ? 'Payé' : sale.status === 'partial' ? 'Partiel' : 'En attente'}
                       </Badge>
                     </div>
+                    {sale.status !== 'paid' && (
+                      <Button 
+                        size="sm" 
+                        onClick={() => openCollectPaymentDialog(sale)}
+                        className="flex-shrink-0"
+                      >
+                        <Banknote className="w-4 h-4 mr-1" />
+                        Encaisser
+                      </Button>
+                    )}
+                    {sale.status === 'paid' && (
+                      <div className="flex-shrink-0 p-2">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -702,6 +774,77 @@ export default function AdvancedSalesManager() {
               </Card>
             )}
           </div>
+
+          {/* Dialog d'encaissement */}
+          <Dialog open={isCollectPaymentOpen} onOpenChange={setIsCollectPaymentOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Banknote className="w-5 h-5 text-primary" />
+                  Encaisser un paiement
+                </DialogTitle>
+              </DialogHeader>
+              
+              {selectedCreditForPayment && (
+                <div className="space-y-4">
+                  <div className="rounded-lg border bg-muted/30 p-4">
+                    <p className="font-semibold text-lg">{selectedCreditForPayment.customer_name}</p>
+                    <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Total crédit:</span>
+                        <p className="font-medium">{selectedCreditForPayment.total.toLocaleString()} GNF</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Déjà payé:</span>
+                        <p className="font-medium text-green-600">{selectedCreditForPayment.paid_amount.toLocaleString()} GNF</p>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-muted-foreground">Reste à payer:</span>
+                        <p className="font-bold text-orange-600 text-lg">{selectedCreditForPayment.remaining_amount.toLocaleString()} GNF</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium">Montant à encaisser (GNF) *</label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={paymentAmount}
+                      onChange={(e) => setPaymentAmount(e.target.value)}
+                      className="mt-1"
+                    />
+                    <div className="flex gap-2 mt-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setPaymentAmount(selectedCreditForPayment.remaining_amount.toString())}
+                      >
+                        Tout solder
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setPaymentAmount(Math.round(selectedCreditForPayment.remaining_amount / 2).toString())}
+                      >
+                        Moitié
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 justify-end pt-4 border-t">
+                    <Button variant="outline" onClick={() => setIsCollectPaymentOpen(false)}>
+                      Annuler
+                    </Button>
+                    <Button onClick={collectCreditPayment}>
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      Confirmer l'encaissement
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* RETOURS */}
