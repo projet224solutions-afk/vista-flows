@@ -451,31 +451,54 @@ export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMoni
                 {/* Dropdown Menu */}
                 <AnimatePresence>
                   {showTransactionMenu && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="absolute top-full left-0 right-0 mt-2 z-50 bg-slate-900 border border-emerald-500/30 rounded-lg overflow-hidden shadow-xl"
-                    >
-                      <div className="p-2 space-y-1">
-                        <div className="flex justify-between items-center p-2 hover:bg-emerald-500/10 rounded cursor-pointer" onClick={() => setShowTransactionMenu(false)}>
-                          <span className="text-emerald-400 text-sm">Aujourd'hui</span>
-                          <span className="text-white font-mono font-bold">{transactionBreakdown.today.toLocaleString()}</span>
+                    <>
+                      {/* Backdrop pour fermer le menu */}
+                      <div 
+                        className="fixed inset-0 z-[100]" 
+                        onClick={() => setShowTransactionMenu(false)}
+                      />
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute top-full left-0 right-0 mt-2 z-[101] rounded-lg overflow-hidden shadow-2xl"
+                        style={{ 
+                          backgroundColor: '#0f172a',
+                          border: '1px solid rgba(16, 185, 129, 0.4)'
+                        }}
+                      >
+                        <div className="p-3 space-y-1">
+                          <div 
+                            className="flex justify-between items-center p-3 hover:bg-emerald-500/20 rounded-lg cursor-pointer transition-colors"
+                            onClick={() => setShowTransactionMenu(false)}
+                          >
+                            <span className="text-emerald-400 text-sm font-medium">📅 Aujourd'hui</span>
+                            <span className="text-white font-mono font-bold text-lg">{transactionBreakdown.today.toLocaleString()}</span>
+                          </div>
+                          <div 
+                            className="flex justify-between items-center p-3 hover:bg-emerald-500/20 rounded-lg cursor-pointer transition-colors"
+                            onClick={() => setShowTransactionMenu(false)}
+                          >
+                            <span className="text-emerald-400 text-sm font-medium">📆 Cette semaine</span>
+                            <span className="text-white font-mono font-bold text-lg">{transactionBreakdown.week.toLocaleString()}</span>
+                          </div>
+                          <div 
+                            className="flex justify-between items-center p-3 hover:bg-emerald-500/20 rounded-lg cursor-pointer transition-colors"
+                            onClick={() => setShowTransactionMenu(false)}
+                          >
+                            <span className="text-emerald-400 text-sm font-medium">🗓️ Ce mois</span>
+                            <span className="text-white font-mono font-bold text-lg">{transactionBreakdown.month.toLocaleString()}</span>
+                          </div>
+                          <div 
+                            className="flex justify-between items-center p-3 hover:bg-emerald-500/20 rounded-lg cursor-pointer transition-colors"
+                            onClick={() => setShowTransactionMenu(false)}
+                          >
+                            <span className="text-emerald-400 text-sm font-medium">📊 Cette année</span>
+                            <span className="text-white font-mono font-bold text-lg">{transactionBreakdown.year.toLocaleString()}</span>
+                          </div>
                         </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-emerald-500/10 rounded cursor-pointer" onClick={() => setShowTransactionMenu(false)}>
-                          <span className="text-emerald-400 text-sm">Cette semaine</span>
-                          <span className="text-white font-mono font-bold">{transactionBreakdown.week.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-emerald-500/10 rounded cursor-pointer" onClick={() => setShowTransactionMenu(false)}>
-                          <span className="text-emerald-400 text-sm">Ce mois</span>
-                          <span className="text-white font-mono font-bold">{transactionBreakdown.month.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-emerald-500/10 rounded cursor-pointer" onClick={() => setShowTransactionMenu(false)}>
-                          <span className="text-emerald-400 text-sm">Cette année</span>
-                          <span className="text-white font-mono font-bold">{transactionBreakdown.year.toLocaleString()}</span>
-                        </div>
-                      </div>
-                    </motion.div>
+                      </motion.div>
+                    </>
                   )}
                 </AnimatePresence>
               </div>
