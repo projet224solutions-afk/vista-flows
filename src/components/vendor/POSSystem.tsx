@@ -577,6 +577,7 @@ export function POSSystem() {
   // État pour la vente à crédit
   const [showCreditSaleModal, setShowCreditSaleModal] = useState(false);
   const [creditCustomerName, setCreditCustomerName] = useState('');
+  const [creditCustomerPhone, setCreditCustomerPhone] = useState('');
   const [creditDueDate, setCreditDueDate] = useState('');
   const [creditNotes, setCreditNotes] = useState('');
   const [isProcessingCredit, setIsProcessingCredit] = useState(false);
@@ -984,12 +985,20 @@ export function POSSystem() {
         .insert([{
           vendor_id: vendorId,
           customer_name: creditCustomerName.trim(),
+          customer_phone: creditCustomerPhone.trim() || null,
           order_number: orderNum,
           total: total,
           subtotal: subtotal,
           remaining_amount: total,
           due_date: creditDueDate,
           notes: creditNotes || `Produits: ${cart.map(i => `${i.name} x${i.quantity}`).join(', ')}`,
+          items: cart.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            images: item.images || []
+          })),
           status: 'pending'
         }]);
 
@@ -1002,6 +1011,7 @@ export function POSSystem() {
       // Fermer le modal et réinitialiser
       setShowCreditSaleModal(false);
       setCreditCustomerName('');
+      setCreditCustomerPhone('');
       setCreditDueDate('');
       setCreditNotes('');
       setCart([]);
@@ -2571,6 +2581,16 @@ export function POSSystem() {
                   placeholder="Nom du client"
                   value={creditCustomerName}
                   onChange={(e) => setCreditCustomerName(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="creditCustomerPhone">Contact du client</Label>
+                <Input
+                  id="creditCustomerPhone"
+                  type="tel"
+                  placeholder="Ex: 620 00 00 00"
+                  value={creditCustomerPhone}
+                  onChange={(e) => setCreditCustomerPhone(e.target.value)}
                 />
               </div>
               <div>
