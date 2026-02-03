@@ -25642,6 +25642,15 @@ export type Database = {
           severity: string
         }[]
       }
+      detect_commission_anomalies: {
+        Args: never
+        Returns: {
+          agent_id: string
+          agent_name: string
+          anomaly_type: string
+          details: Json
+        }[]
+      }
       detect_expense_anomalies: { Args: { p_vendor_id: string }; Returns: Json }
       detect_fraud: {
         Args: {
@@ -25650,6 +25659,28 @@ export type Database = {
           p_user_id: string
         }
         Returns: Json
+      }
+      detect_ledger_anomalies: {
+        Args: never
+        Returns: {
+          anomaly_type: string
+          difference: number
+          entity_id: string
+          entity_type: string
+          ledger_balance: number
+          wallet_balance: number
+        }[]
+      }
+      detect_order_anomalies: {
+        Args: never
+        Returns: {
+          anomaly_type: string
+          current_status: string
+          details: Json
+          expected_status: string
+          order_id: string
+          order_number: string
+        }[]
       }
       detect_permission_sync_anomalies: {
         Args: never
@@ -25664,12 +25695,12 @@ export type Database = {
       detect_stock_anomalies: {
         Args: never
         Returns: {
-          difference: number
-          inventory_quantity: number
+          anomaly_type: string
+          current_stock: number
+          details: Json
           product_id: string
           product_name: string
-          products_stock: number
-          severity: string
+          vendor_id: string
         }[]
       }
       detect_stock_anomalies_advanced: {
@@ -25682,6 +25713,15 @@ export type Database = {
           severity: string
           threshold_level: string
           vendor_id: string
+        }[]
+      }
+      detect_user_anomalies: {
+        Args: never
+        Returns: {
+          anomaly_type: string
+          details: Json
+          public_id: string
+          user_id: string
         }[]
       }
       detect_wallet_anomalies: {
@@ -25706,6 +25746,17 @@ export type Database = {
           transaction_count_24h: number
           user_id: string
           wallet_id: string
+        }[]
+      }
+      detect_wallet_balance_anomalies: {
+        Args: never
+        Returns: {
+          calculated_balance: number
+          difference: number
+          owner_id: string
+          stored_balance: number
+          wallet_id: string
+          wallet_type: string
         }[]
       }
       disablelongtransactions: { Args: never; Returns: string }
@@ -26253,6 +26304,8 @@ export type Database = {
         Args: never
         Returns: {
           critical_anomalies: number
+          domain_breakdown: Json
+          high_anomalies: number
           overall_status: string
           recent_anomalies_24h: number
           resolution_rate: number
@@ -26988,6 +27041,15 @@ export type Database = {
           snapshot_id: string
           status: string
           total_checks: number
+        }[]
+      }
+      run_global_anomaly_detection: {
+        Args: { p_domains?: string[] }
+        Returns: {
+          anomalies_found: number
+          critical_count: number
+          domain: string
+          high_count: number
         }[]
       }
       run_permission_sync_validation: {
