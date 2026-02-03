@@ -3705,6 +3705,79 @@ export type Database = {
           },
         ]
       }
+      contact_statements: {
+        Row: {
+          closing_balance: number
+          contact_id: string
+          contact_name: string
+          contact_type: string
+          generated_at: string
+          id: string
+          opening_balance: number
+          period_end: string
+          period_start: string
+          statement_date: string
+          total_credits: number
+          total_debits: number
+          transactions: Json
+          vendor_id: string
+        }
+        Insert: {
+          closing_balance?: number
+          contact_id: string
+          contact_name: string
+          contact_type: string
+          generated_at?: string
+          id?: string
+          opening_balance?: number
+          period_end: string
+          period_start: string
+          statement_date: string
+          total_credits?: number
+          total_debits?: number
+          transactions?: Json
+          vendor_id: string
+        }
+        Update: {
+          closing_balance?: number
+          contact_id?: string
+          contact_name?: string
+          contact_type?: string
+          generated_at?: string
+          id?: string
+          opening_balance?: number
+          period_end?: string
+          period_start?: string
+          statement_date?: string
+          total_credits?: number
+          total_debits?: number
+          transactions?: Json
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_statements_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "contact_statements_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "contact_statements_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
           amount: number | null
@@ -3931,6 +4004,44 @@ export type Database = {
           },
         ]
       }
+      credit_sale_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          credit_sale_id: string
+          id: string
+          notes: string | null
+          payment_account: string | null
+          payment_method: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          credit_sale_id: string
+          id?: string
+          notes?: string | null
+          payment_account?: string | null
+          payment_method?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          credit_sale_id?: string
+          id?: string
+          notes?: string | null
+          payment_account?: string | null
+          payment_method?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_sale_payments_credit_sale_id_fkey"
+            columns: ["credit_sale_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_credit_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       currencies: {
         Row: {
           code: string
@@ -4111,30 +4222,39 @@ export type Database = {
         Row: {
           addresses: Json | null
           created_at: string | null
+          credit_limit: number | null
           id: string
           payment_methods: Json | null
           preferences: Json | null
           public_id: string | null
+          total_credit: number | null
+          total_debt: number | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           addresses?: Json | null
           created_at?: string | null
+          credit_limit?: number | null
           id?: string
           payment_methods?: Json | null
           preferences?: Json | null
           public_id?: string | null
+          total_credit?: number | null
+          total_debt?: number | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           addresses?: Json | null
           created_at?: string | null
+          credit_limit?: number | null
           id?: string
           payment_methods?: Json | null
           preferences?: Json | null
           public_id?: string | null
+          total_credit?: number | null
+          total_debt?: number | null
           updated_at?: string | null
           user_id?: string
         }
@@ -8773,6 +8893,92 @@ export type Database = {
         }
         Relationships: []
       }
+      grouped_sales: {
+        Row: {
+          created_at: string
+          customer_name: string
+          customer_phone: string | null
+          discount_amount: number | null
+          discount_type: string | null
+          discount_value: number | null
+          group_name: string
+          id: string
+          items: Json
+          notes: string | null
+          payment_account_id: string | null
+          payment_method: string
+          status: string
+          subtotal: number
+          total: number
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_name: string
+          customer_phone?: string | null
+          discount_amount?: number | null
+          discount_type?: string | null
+          discount_value?: number | null
+          group_name: string
+          id?: string
+          items?: Json
+          notes?: string | null
+          payment_account_id?: string | null
+          payment_method?: string
+          status?: string
+          subtotal?: number
+          total?: number
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string
+          customer_phone?: string | null
+          discount_amount?: number | null
+          discount_type?: string | null
+          discount_value?: number | null
+          group_name?: string
+          id?: string
+          items?: Json
+          notes?: string | null
+          payment_account_id?: string | null
+          payment_method?: string
+          status?: string
+          subtotal?: number
+          total?: number
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grouped_sales_payment_account_id_fkey"
+            columns: ["payment_account_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_collection_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grouped_sales_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "grouped_sales_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "grouped_sales_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hairdresser_appointments: {
         Row: {
           appointment_date: string
@@ -9403,6 +9609,159 @@ export type Database = {
           scope?: string
         }
         Relationships: []
+      }
+      installment_payments: {
+        Row: {
+          amount_due: number
+          amount_paid: number | null
+          created_at: string
+          due_date: string
+          id: string
+          installment_number: number
+          notes: string | null
+          payment_date: string | null
+          payment_method: string | null
+          plan_id: string
+          status: string
+        }
+        Insert: {
+          amount_due: number
+          amount_paid?: number | null
+          created_at?: string
+          due_date: string
+          id?: string
+          installment_number: number
+          notes?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          plan_id: string
+          status?: string
+        }
+        Update: {
+          amount_due?: number
+          amount_paid?: number | null
+          created_at?: string
+          due_date?: string
+          id?: string
+          installment_number?: number
+          notes?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          plan_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installment_payments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "installment_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      installment_plans: {
+        Row: {
+          created_at: string
+          credit_sale_id: string | null
+          customer_name: string
+          customer_phone: string | null
+          down_payment: number | null
+          frequency: string
+          id: string
+          installment_amount: number
+          notes: string | null
+          number_of_installments: number
+          order_id: string | null
+          remaining_amount: number
+          start_date: string
+          status: string
+          total_amount: number
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string
+          credit_sale_id?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          down_payment?: number | null
+          frequency?: string
+          id?: string
+          installment_amount: number
+          notes?: string | null
+          number_of_installments: number
+          order_id?: string | null
+          remaining_amount: number
+          start_date: string
+          status?: string
+          total_amount: number
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string
+          credit_sale_id?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          down_payment?: number | null
+          frequency?: string
+          id?: string
+          installment_amount?: number
+          notes?: string | null
+          number_of_installments?: number
+          order_id?: string | null
+          remaining_amount?: number
+          start_date?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installment_plans_credit_sale_id_fkey"
+            columns: ["credit_sale_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_credit_sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "installment_plans_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "active_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "installment_plans_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "installment_plans_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "installment_plans_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "installment_plans_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       interactions: {
         Row: {
@@ -15527,6 +15886,110 @@ export type Database = {
         }
         Relationships: []
       }
+      sale_returns: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          order_id: string | null
+          order_item_id: string | null
+          processed_by: string | null
+          product_id: string | null
+          quantity_returned: number
+          refund_amount: number
+          refund_method: string | null
+          restock: boolean | null
+          return_condition: string | null
+          return_reason: string
+          unit_price: number
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          order_item_id?: string | null
+          processed_by?: string | null
+          product_id?: string | null
+          quantity_returned: number
+          refund_amount: number
+          refund_method?: string | null
+          restock?: boolean | null
+          return_condition?: string | null
+          return_reason: string
+          unit_price: number
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          order_item_id?: string | null
+          processed_by?: string | null
+          product_id?: string | null
+          quantity_returned?: number
+          refund_amount?: number
+          refund_method?: string | null
+          restock?: boolean | null
+          return_condition?: string | null
+          return_reason?: string
+          unit_price?: number
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_returns_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "active_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_returns_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_returns_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_returns_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "sale_returns_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "sale_returns_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "sale_returns_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales: {
         Row: {
           created_at: string | null
@@ -17234,6 +17697,103 @@ export type Database = {
           srtext?: string | null
         }
         Relationships: []
+      }
+      stock_adjustments: {
+        Row: {
+          adjustment_type: string
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          id: string
+          product_id: string
+          quantity_adjusted: number
+          quantity_after: number
+          quantity_before: number
+          reason: string
+          total_cost: number | null
+          unit_cost: number | null
+          valuation_method: string | null
+          vendor_id: string
+          warehouse_id: string | null
+        }
+        Insert: {
+          adjustment_type: string
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity_adjusted: number
+          quantity_after: number
+          quantity_before: number
+          reason: string
+          total_cost?: number | null
+          unit_cost?: number | null
+          valuation_method?: string | null
+          vendor_id: string
+          warehouse_id?: string | null
+        }
+        Update: {
+          adjustment_type?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity_adjusted?: number
+          quantity_after?: number
+          quantity_before?: number
+          reason?: string
+          total_cost?: number | null
+          unit_cost?: number | null
+          valuation_method?: string | null
+          vendor_id?: string
+          warehouse_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_adjustments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_adjustments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "stock_adjustments_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "stock_adjustments_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "stock_adjustments_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_adjustments_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stock_losses: {
         Row: {
@@ -21285,6 +21845,53 @@ export type Database = {
           },
         ]
       }
+      vendor_account_transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          balance_after: number
+          balance_before: number
+          created_at: string
+          description: string | null
+          id: string
+          reference_id: string | null
+          reference_type: string | null
+          transaction_type: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          balance_after: number
+          balance_before: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          transaction_type: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          balance_after?: number
+          balance_before?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_account_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_collection_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_agents: {
         Row: {
           access_token: string
@@ -21958,6 +22565,152 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_collection_accounts: {
+        Row: {
+          account_name: string
+          account_number: string | null
+          account_type: string
+          balance: number
+          created_at: string
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          metadata: Json | null
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          account_name: string
+          account_number?: string | null
+          account_type: string
+          balance?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          metadata?: Json | null
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          account_name?: string
+          account_number?: string | null
+          account_type?: string
+          balance?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          metadata?: Json | null
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_collection_accounts_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_collection_accounts_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_collection_accounts_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_credit_sales: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          due_date: string
+          id: string
+          items: Json
+          notes: string | null
+          order_number: string
+          paid_amount: number
+          remaining_amount: number
+          status: string
+          subtotal: number
+          tax: number
+          total: number
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          due_date: string
+          id?: string
+          items?: Json
+          notes?: string | null
+          order_number: string
+          paid_amount?: number
+          remaining_amount?: number
+          status?: string
+          subtotal?: number
+          tax?: number
+          total?: number
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          due_date?: string
+          id?: string
+          items?: Json
+          notes?: string | null
+          order_number?: string
+          paid_amount?: number
+          remaining_amount?: number
+          status?: string
+          subtotal?: number
+          tax?: number
+          total?: number
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_credit_sales_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_credit_sales_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_credit_sales_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_employees: {
         Row: {
           created_at: string | null
@@ -22295,6 +23048,91 @@ export type Database = {
           },
           {
             foreignKeyName: "vendor_preferred_drivers_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_promotions: {
+        Row: {
+          applicable_categories: Json | null
+          applicable_products: Json | null
+          created_at: string
+          description: string | null
+          discount_type: string
+          discount_value: number
+          end_date: string
+          id: string
+          is_active: boolean | null
+          max_discount_amount: number | null
+          min_purchase_amount: number | null
+          name: string
+          promo_code: string | null
+          start_date: string
+          updated_at: string
+          usage_count: number | null
+          usage_limit: number | null
+          vendor_id: string
+        }
+        Insert: {
+          applicable_categories?: Json | null
+          applicable_products?: Json | null
+          created_at?: string
+          description?: string | null
+          discount_type: string
+          discount_value: number
+          end_date: string
+          id?: string
+          is_active?: boolean | null
+          max_discount_amount?: number | null
+          min_purchase_amount?: number | null
+          name: string
+          promo_code?: string | null
+          start_date: string
+          updated_at?: string
+          usage_count?: number | null
+          usage_limit?: number | null
+          vendor_id: string
+        }
+        Update: {
+          applicable_categories?: Json | null
+          applicable_products?: Json | null
+          created_at?: string
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          end_date?: string
+          id?: string
+          is_active?: boolean | null
+          max_discount_amount?: number | null
+          min_purchase_amount?: number | null
+          name?: string
+          promo_code?: string | null
+          start_date?: string
+          updated_at?: string
+          usage_count?: number | null
+          usage_limit?: number | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_promotions_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_promotions_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "vendor_promotions_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "vendors"
@@ -23720,6 +24558,7 @@ export type Database = {
           manager_name: string | null
           manager_phone: string | null
           name: string
+          valuation_method: string | null
           vendor_id: string
         }
         Insert: {
@@ -23735,6 +24574,7 @@ export type Database = {
           manager_name?: string | null
           manager_phone?: string | null
           name: string
+          valuation_method?: string | null
           vendor_id: string
         }
         Update: {
@@ -23750,6 +24590,7 @@ export type Database = {
           manager_name?: string | null
           manager_phone?: string | null
           name?: string
+          valuation_method?: string | null
           vendor_id?: string
         }
         Relationships: []
@@ -27842,6 +28683,7 @@ export type Database = {
         }
         Returns: Json
       }
+      update_overdue_credit_sales: { Args: never; Returns: undefined }
       update_phone_history: {
         Args: { p_phone: string; p_success: boolean; p_user_id: string }
         Returns: undefined
