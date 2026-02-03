@@ -555,7 +555,7 @@ export default function AdvancedSalesManager() {
                         {/* Catégories */}
                         <div className="rounded-lg border bg-muted/30 p-3">
                           <p className="text-xs text-muted-foreground mb-2">Catégorie (optionnel)</p>
-                          <ScrollArea className="h-56">
+                          <ScrollArea className="h-auto max-h-56">
                             <div className="space-y-1">
                               {categories.map((cat) => (
                                 <div
@@ -603,7 +603,7 @@ export default function AdvancedSalesManager() {
                               className="pl-8"
                             />
                           </div>
-                          <ScrollArea className="h-48">
+                          <ScrollArea className="h-auto max-h-48">
                             <div className="space-y-1">
                               {vendorProducts
                                 .filter(p => {
@@ -788,7 +788,7 @@ export default function AdvancedSalesManager() {
                         {/* Catégories */}
                         <div className="rounded-lg border bg-muted/30 p-3">
                           <p className="text-xs text-muted-foreground mb-2">Catégorie (optionnel)</p>
-                          <ScrollArea className="h-56">
+                          <ScrollArea className="h-auto max-h-56">
                             <div className="space-y-1">
                               {categories.map((cat) => (
                                 <div
@@ -836,7 +836,7 @@ export default function AdvancedSalesManager() {
                               className="pl-8"
                             />
                           </div>
-                          <ScrollArea className="h-48">
+                          <ScrollArea className="h-auto max-h-48">
                             <div className="space-y-1">
                               {vendorProducts
                                 .filter(p => {
