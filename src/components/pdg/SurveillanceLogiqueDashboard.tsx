@@ -40,11 +40,14 @@ import {
   TrendingUp,
   Activity,
   BarChart3,
-  LogOut
+  LogOut,
+  Play,
+  Shield
 } from 'lucide-react';
 import { useSurveillanceLogic } from '@/hooks/useSurveillanceLogic';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import SystemTestDemo from './SystemTestDemo';
 
 interface AnomalyDetails {
   anomaly_id: string;
@@ -75,6 +78,7 @@ export default function SurveillanceLogiqueDashboard() {
   const [correctionReason, setCorrectionReason] = useState('');
   const [isApplying, setIsApplying] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [showSystemTest, setShowSystemTest] = useState(false);
 
   // Auto-refresh toutes les 5 minutes
   useEffect(() => {
@@ -279,7 +283,17 @@ export default function SurveillanceLogiqueDashboard() {
       )}
 
       {/* Actions */}
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
+        {/* Bouton Test Système - Ultra Professionnel */}
+        <Button
+          onClick={() => setShowSystemTest(true)}
+          className="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 hover:from-indigo-700 hover:via-purple-700 hover:to-blue-700 text-white font-semibold shadow-lg shadow-purple-500/25 border-0"
+        >
+          <Shield className="w-4 h-4 mr-2" />
+          <Play className="w-3 h-3 mr-1" />
+          Tester le Système
+        </Button>
+
         <Button
           onClick={() => detectAnomalies()}
           disabled={loading}
@@ -305,6 +319,9 @@ export default function SurveillanceLogiqueDashboard() {
           {autoRefresh ? 'Auto-refresh ON' : 'Auto-refresh OFF'}
         </Button>
       </div>
+
+      {/* Modal Test Système */}
+      <SystemTestDemo open={showSystemTest} onOpenChange={setShowSystemTest} />
 
       {/* Tabs */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
