@@ -2216,10 +2216,23 @@ export function POSSystem() {
                     {cart.map(item => (
                       <div 
                         key={`${item.id}-${item.saleType || 'unit'}`} 
-                        className="flex items-center p-1.5 sm:p-2 bg-background/80 rounded-lg border border-border/30"
+                        className="flex items-center gap-2 p-1.5 sm:p-2 bg-background/80 rounded-lg border border-border/30"
                       >
+                        {/* Image produit - petite */}
+                        {item.images && item.images[0] ? (
+                          <img 
+                            src={item.images[0]} 
+                            alt={item.name}
+                            className="w-8 h-8 rounded object-cover flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                            <Package className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                        )}
+                        
                         {/* Nom + Prix - zone flexible */}
-                        <div className="flex-1 min-w-0 mr-2">
+                        <div className="flex-1 min-w-0">
                           <p className="font-semibold text-[11px] sm:text-xs truncate">
                             {item.saleType === 'carton' && '📦 '}
                             {item.name}
