@@ -97,8 +97,13 @@ export default function AdvancedSalesManager() {
     customer_name: '',
     total: '',
     due_date: '',
-    notes: ''
+    notes: '',
+    selected_category: '',
+    selected_product: ''
   });
+  
+  // Recherche produit pour crédits
+  const [creditProductSearch, setCreditProductSearch] = useState('');
 
   const [newReturn, setNewReturn] = useState({
     order_id: '',
@@ -270,7 +275,7 @@ export default function AdvancedSalesManager() {
 
       toast({ title: '✅ Vente à crédit créée' });
       setIsNewCreditOpen(false);
-      setNewCredit({ customer_name: '', total: '', due_date: '', notes: '' });
+      setNewCredit({ customer_name: '', total: '', due_date: '', notes: '', selected_category: '', selected_product: '' });
       loadData();
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
@@ -497,34 +502,33 @@ export default function AdvancedSalesManager() {
                 <ScrollArea className="flex-1 pr-4">
                   <div className="pb-4">
                     <div className="grid gap-4 lg:grid-cols-3">
-                      {/* COL 1 — Client */}
+                      {/* COL 1 — Client & Détails */}
                       <div className="space-y-4 lg:col-span-1">
                         <div className="rounded-lg border bg-muted/30 p-3">
                           <p className="text-xs text-muted-foreground mb-2">Informations client</p>
-                          <label className="text-sm font-medium">Nom du client *</label>
-                          <Input
-                            placeholder="Nom du client"
-                            value={newCredit.customer_name}
-                            onChange={(e) => setNewCredit({ ...newCredit, customer_name: e.target.value })}
-                          />
+                          <div className="space-y-3">
+                            <div>
+                              <label className="text-sm font-medium">Nom du client *</label>
+                              <Input
+                                placeholder="Nom du client"
+                                value={newCredit.customer_name}
+                                onChange={(e) => setNewCredit({ ...newCredit, customer_name: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium">Notes</label>
+                              <Input
+                                placeholder="Notes optionnelles"
+                                value={newCredit.notes}
+                                onChange={(e) => setNewCredit({ ...newCredit, notes: e.target.value })}
+                              />
+                            </div>
+                          </div>
                         </div>
 
-                        <div className="rounded-lg border bg-muted/30 p-3">
-                          <p className="text-xs text-muted-foreground mb-2">Notes</p>
-                          <label className="text-sm font-medium">Commentaire</label>
-                          <Input
-                            placeholder="Notes optionnelles"
-                            value={newCredit.notes}
-                            onChange={(e) => setNewCredit({ ...newCredit, notes: e.target.value })}
-                          />
-                        </div>
-                      </div>
-
-                      {/* COL 2–3 — Détails crédit */}
-                      <div className="space-y-4 lg:col-span-2">
                         <div className="rounded-lg border bg-muted/30 p-3">
                           <p className="text-xs text-muted-foreground mb-2">Détails du crédit</p>
-                          <div className="grid gap-4 md:grid-cols-2">
+                          <div className="space-y-3">
                             <div>
                               <label className="text-sm font-medium">Montant (GNF) *</label>
                               <Input
@@ -544,12 +548,108 @@ export default function AdvancedSalesManager() {
                             </div>
                           </div>
                         </div>
+                      </div>
 
+                      {/* COL 2-3 — Sélection Catégorie & Produit */}
+                      <div className="grid gap-4 md:grid-cols-2 lg:col-span-2">
+                        {/* Catégories */}
                         <div className="rounded-lg border bg-muted/30 p-3">
-                          <p className="text-xs text-muted-foreground">Astuce</p>
-                          <p className="text-sm text-muted-foreground">
-                            Utilisez un nom client clair et une échéance réaliste pour un suivi comptable propre.
-                          </p>
+                          <p className="text-xs text-muted-foreground mb-2">Catégorie (optionnel)</p>
+                          <ScrollArea className="h-56">
+                            <div className="space-y-1">
+                              {categories.map((cat) => (
+                                <div
+                                  key={cat.id}
+                                  className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-muted/50 ${
+                                    newCredit.selected_category === cat.id ? 'bg-primary/10 border border-primary' : ''
+                                  }`}
+                                  onClick={() => {
+                                    setNewCredit({ 
+                                      ...newCredit, 
+                                      selected_category: newCredit.selected_category === cat.id ? '' : cat.id,
+                                      selected_product: ''
+                                    });
+                                  }}
+                                >
+                                  <Checkbox
+                                    checked={newCredit.selected_category === cat.id}
+                                    onCheckedChange={() => {
+                                      setNewCredit({ 
+                                        ...newCredit, 
+                                        selected_category: newCredit.selected_category === cat.id ? '' : cat.id,
+                                        selected_product: ''
+                                      });
+                                    }}
+                                  />
+                                  <span className="text-sm">{cat.name}</span>
+                                </div>
+                              ))}
+                              {categories.length === 0 && (
+                                <p className="text-sm text-muted-foreground text-center py-4">Aucune catégorie</p>
+                              )}
+                            </div>
+                          </ScrollArea>
+                        </div>
+
+                        {/* Produits */}
+                        <div className="rounded-lg border bg-muted/30 p-3">
+                          <p className="text-xs text-muted-foreground mb-2">Produit concerné *</p>
+                          <div className="relative mb-2">
+                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              placeholder="Rechercher..."
+                              value={creditProductSearch}
+                              onChange={(e) => setCreditProductSearch(e.target.value)}
+                              className="pl-8"
+                            />
+                          </div>
+                          <ScrollArea className="h-48">
+                            <div className="space-y-1">
+                              {vendorProducts
+                                .filter(p => {
+                                  const matchesSearch = p.name.toLowerCase().includes(creditProductSearch.toLowerCase());
+                                  const matchesCategory = !newCredit.selected_category || p.category_id === newCredit.selected_category;
+                                  return matchesSearch && matchesCategory;
+                                })
+                                .map((product) => (
+                                  <div
+                                    key={product.id}
+                                    className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-muted/50 ${
+                                      newCredit.selected_product === product.id ? 'bg-primary/10 border border-primary' : ''
+                                    }`}
+                                    onClick={() => {
+                                      setNewCredit({ 
+                                        ...newCredit, 
+                                        selected_product: newCredit.selected_product === product.id ? '' : product.id,
+                                        total: product.price.toString()
+                                      });
+                                    }}
+                                  >
+                                    <Checkbox
+                                      checked={newCredit.selected_product === product.id}
+                                      onCheckedChange={() => {
+                                        setNewCredit({ 
+                                          ...newCredit, 
+                                          selected_product: newCredit.selected_product === product.id ? '' : product.id,
+                                          total: product.price.toString()
+                                        });
+                                      }}
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <span className="text-sm block truncate">{product.name}</span>
+                                      <span className="text-xs text-muted-foreground">{product.price.toLocaleString()} GNF</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              {vendorProducts.filter(p => {
+                                const matchesSearch = p.name.toLowerCase().includes(creditProductSearch.toLowerCase());
+                                const matchesCategory = !newCredit.selected_category || p.category_id === newCredit.selected_category;
+                                return matchesSearch && matchesCategory;
+                              }).length === 0 && (
+                                <p className="text-sm text-muted-foreground text-center py-4">Aucun produit trouvé</p>
+                              )}
+                            </div>
+                          </ScrollArea>
                         </div>
                       </div>
                     </div>

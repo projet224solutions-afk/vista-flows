@@ -43,7 +43,8 @@ import {
   ImageIcon,
   Percent,
   ChevronRight,
-  Shield
+  Shield,
+  CreditCard
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
@@ -573,6 +574,13 @@ export function POSSystem() {
   const [keypadMode, setKeypadMode] = useState<'quantity' | 'amount'>('quantity');
   const [selectedCartItemForQuantity, setSelectedCartItemForQuantity] = useState<CartItem | null>(null);
   
+  // État pour la vente à crédit
+  const [showCreditSaleModal, setShowCreditSaleModal] = useState(false);
+  const [creditCustomerName, setCreditCustomerName] = useState('');
+  const [creditDueDate, setCreditDueDate] = useState('');
+  const [creditNotes, setCreditNotes] = useState('');
+  const [isProcessingCredit, setIsProcessingCredit] = useState(false);
+  
   // État pour le modal de paiement Stripe
   const [showStripeModal, setShowStripeModal] = useState(false);
   const [pendingStripeOrder, setPendingStripeOrder] = useState<{id: string, order_number: string} | null>(null);
@@ -939,6 +947,73 @@ export function POSSystem() {
       return;
     }
     setShowOrderSummary(true);
+  };
+
+  // Ouvrir le modal de vente à crédit
+  const openCreditSaleModal = () => {
+    if (cart.length === 0) {
+      toast.error('Panier vide');
+      return;
+    }
+    setShowCreditSaleModal(true);
+  };
+
+  // Traiter la vente à crédit
+  const processCreditSale = async () => {
+    if (!creditCustomerName.trim()) {
+      toast.error('Veuillez entrer le nom du client');
+      return;
+    }
+    if (!creditDueDate) {
+      toast.error('Veuillez sélectionner une date d\'échéance');
+      return;
+    }
+    if (!vendorId) {
+      toast.error('Vendeur non identifié');
+      return;
+    }
+
+    setIsProcessingCredit(true);
+
+    try {
+      const orderNum = `CR-${Date.now().toString(36).toUpperCase()}`;
+
+      // Créer la vente à crédit dans vendor_credit_sales
+      const { error } = await supabase
+        .from('vendor_credit_sales')
+        .insert([{
+          vendor_id: vendorId,
+          customer_name: creditCustomerName.trim(),
+          order_number: orderNum,
+          total: total,
+          subtotal: subtotal,
+          remaining_amount: total,
+          due_date: creditDueDate,
+          notes: creditNotes || `Produits: ${cart.map(i => `${i.name} x${i.quantity}`).join(', ')}`,
+          status: 'pending'
+        }]);
+
+      if (error) throw error;
+
+      toast.success('Vente à crédit enregistrée !', {
+        description: `${creditCustomerName} - ${total.toLocaleString()} GNF`,
+      });
+
+      // Fermer le modal et réinitialiser
+      setShowCreditSaleModal(false);
+      setCreditCustomerName('');
+      setCreditDueDate('');
+      setCreditNotes('');
+      setCart([]);
+      
+    } catch (error: any) {
+      console.error('Erreur vente à crédit:', error);
+      toast.error('Erreur lors de l\'enregistrement', {
+        description: error.message,
+      });
+    } finally {
+      setIsProcessingCredit(false);
+    }
   };
 
   // Mettre à jour le statut de commande POS avec fallback si l'enum n'est pas à jour
@@ -2346,14 +2421,27 @@ export function POSSystem() {
                   </div>
                 )}
 
-                {/* Bouton de validation */}
-                <Button 
-                  onClick={validateOrder}
-                  className="w-full h-11 sm:h-12 font-bold text-sm shadow-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-                >
-                  <CheckSquare className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                  Valider • {total.toLocaleString()} GNF
-                </Button>
+                {/* Boutons de validation */}
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    onClick={openCreditSaleModal}
+                    variant="outline"
+                    className="h-11 sm:h-12 font-semibold text-xs sm:text-sm"
+                    disabled={cart.length === 0}
+                  >
+                    <CreditCard className="h-4 w-4 mr-1" />
+                    À crédit
+                  </Button>
+                  <Button 
+                    onClick={validateOrder}
+                    className="h-11 sm:h-12 font-bold text-xs sm:text-sm shadow-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                    disabled={cart.length === 0}
+                  >
+                    <CheckSquare className="h-4 w-4 mr-1" />
+                    Valider
+                  </Button>
+                </div>
+                <p className="text-center text-xs font-bold text-primary">{total.toLocaleString()} GNF</p>
               </div>
             )}
           </Card>
@@ -2429,7 +2517,82 @@ export function POSSystem() {
         </DialogContent>
       </Dialog>
 
-      {/* Popup pavé numérique - Mode quantité ou montant */}
+      {/* Dialog de vente à crédit */}
+      <Dialog open={showCreditSaleModal} onOpenChange={setShowCreditSaleModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-primary" />
+              Vente à crédit
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="bg-muted/30 p-4 rounded-lg">
+              <h3 className="font-semibold mb-3">Récapitulatif panier</h3>
+              <div className="space-y-2 text-sm max-h-32 overflow-y-auto">
+                {cart.map(item => (
+                  <div key={item.id} className="flex justify-between">
+                    <span>{item.name} × {item.quantity}</span>
+                    <span>{item.total.toLocaleString()} GNF</span>
+                  </div>
+                ))}
+              </div>
+              <Separator className="my-3" />
+              <div className="flex justify-between font-bold text-lg">
+                <span>TOTAL</span>
+                <span className="text-primary">{total.toLocaleString()} GNF</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="creditCustomer">Nom du client *</Label>
+                <Input
+                  id="creditCustomer"
+                  placeholder="Nom du client"
+                  value={creditCustomerName}
+                  onChange={(e) => setCreditCustomerName(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="creditDueDate">Date d'échéance *</Label>
+                <Input
+                  id="creditDueDate"
+                  type="date"
+                  value={creditDueDate}
+                  onChange={(e) => setCreditDueDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="creditNotes">Notes (optionnel)</Label>
+                <Textarea
+                  id="creditNotes"
+                  placeholder="Notes sur la vente à crédit..."
+                  value={creditNotes}
+                  onChange={(e) => setCreditNotes(e.target.value)}
+                  rows={2}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowCreditSaleModal(false)} className="flex-1">
+                Annuler
+              </Button>
+              <Button 
+                onClick={processCreditSale} 
+                className="flex-1" 
+                disabled={isProcessingCredit || !creditCustomerName.trim() || !creditDueDate}
+              >
+                <CreditCard className="h-4 w-4 mr-2" />
+                {isProcessingCredit ? 'Enregistrement...' : 'Enregistrer'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <NumericKeypadPopup
         open={showKeypad}
         onOpenChange={setShowKeypad}
