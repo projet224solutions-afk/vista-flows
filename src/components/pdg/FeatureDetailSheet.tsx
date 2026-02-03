@@ -25,6 +25,7 @@ import {
   Activity,
   Clock,
   TrendingUp,
+  Database,
 } from 'lucide-react';
 import { FeatureHealthData } from '@/hooks/useFeatureHealth';
 import { motion } from 'framer-motion';
@@ -148,6 +149,17 @@ export default function FeatureDetailSheet({
               </span>
             </div>
             <Progress value={score} className={`h-3 ${getScoreColor(score)}`} />
+          </div>
+
+          {/* Source de données */}
+          <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600 mb-4">
+            <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
+              <Database className="w-3 h-3" />
+              Source de données
+            </div>
+            <p className="text-xs font-mono text-emerald-400">
+              {healthData.dataSource || 'Non définie'}
+            </p>
           </div>
 
           {/* Métriques */}
