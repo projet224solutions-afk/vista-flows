@@ -1540,7 +1540,7 @@ export default function Auth() {
         <div className="flex justify-end mb-4 px-4">
           <LanguageSelector variant="compact" />
         </div>
-        <h1 className="text-4xl font-bold text-purple-600 mb-6">224SOLUTIONS</h1>
+        <h1 className="text-4xl font-bold text-blue-600 mb-6">224SOLUTIONS</h1>
 
         {/* Boutons du header */}
         <div className="flex items-center justify-center gap-3 mb-8">
