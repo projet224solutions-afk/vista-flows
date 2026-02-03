@@ -979,8 +979,51 @@ export function POSSystem() {
     try {
       const orderNum = `CR-${Date.now().toString(36).toUpperCase()}`;
 
-      // Créer la vente à crédit dans vendor_credit_sales
-      const { error } = await supabase
+      // 1. Créer un client temporaire ou récupérer l'ID existant
+      const customerId = await getOrCreateCustomerId();
+      if (!customerId) {
+        toast.error('Erreur lors de la création du client');
+        setIsProcessingCredit(false);
+        return;
+      }
+
+      // 2. Créer la commande dans orders pour décrémenter le stock via trigger
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          order_number: orderNum,
+          vendor_id: vendorId,
+          customer_id: customerId,
+          total_amount: total,
+          subtotal: subtotal,
+          tax_amount: tax,
+          discount_amount: discountValue,
+          payment_status: 'pending', // Non payé
+          status: 'confirmed', // Confirmé mais non payé
+          payment_method: 'credit', // Vente à crédit
+          shipping_address: { address: 'Vente à crédit' },
+          notes: `Vente à crédit - Client: ${creditCustomerName.trim()}${creditCustomerPhone ? ` - Tél: ${creditCustomerPhone}` : ''}`,
+          source: 'pos'
+        })
+        .select('id, order_number')
+        .single();
+
+      if (orderError) throw orderError;
+
+      // 3. Créer les items de commande (le trigger décrémentera le stock automatiquement)
+      const orderItems = cart.map(item => ({
+        order_id: order.id,
+        product_id: item.id,
+        quantity: item.quantity,
+        unit_price: item.quantity > 0 ? item.total / item.quantity : item.price,
+        total_price: item.total
+      }));
+
+      const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
+      if (itemsError) throw itemsError;
+
+      // 4. Créer la vente à crédit dans vendor_credit_sales
+      const { error: creditError } = await supabase
         .from('vendor_credit_sales')
         .insert([{
           vendor_id: vendorId,
@@ -1002,10 +1045,10 @@ export function POSSystem() {
           status: 'pending'
         }]);
 
-      if (error) throw error;
+      if (creditError) throw creditError;
 
       toast.success('Vente à crédit enregistrée !', {
-        description: `${creditCustomerName} - ${total.toLocaleString()} GNF`,
+        description: `${creditCustomerName} - ${total.toLocaleString()} GNF - Stock mis à jour`,
       });
 
       // Fermer le modal et réinitialiser
@@ -1015,6 +1058,9 @@ export function POSSystem() {
       setCreditDueDate('');
       setCreditNotes('');
       setCart([]);
+      
+      // Recharger les produits pour afficher le stock mis à jour
+      await loadVendorProducts();
       
     } catch (error: any) {
       console.error('Erreur vente à crédit:', error);
