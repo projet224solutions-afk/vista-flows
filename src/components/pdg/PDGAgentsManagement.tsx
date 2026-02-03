@@ -119,9 +119,19 @@ export default function PDGAgentsManagement() {
     try {
       setIsSubmitting(true);
       
-      const permissions = Object.entries(formData.permissions)
+      const basePermissions = Object.entries(formData.permissions)
         .filter(([_, value]) => value)
         .map(([key]) => key);
+
+      // Permissions avancées sélectionnées (stockées dans agent_permissions)
+      const activeAdvancedPermissionKeys = Object.entries(advancedPermissions)
+        .filter(([_, value]) => value === true)
+        .map(([key]) => key);
+
+      // Compatibilité + interface agent publique (token): on synchronise aussi dans agents_management.permissions
+      const combinedLegacyPermissions = Array.from(
+        new Set([...basePermissions, ...activeAdvancedPermissionKeys])
+      );
 
       if (editingAgent) {
         // Mode édition
@@ -152,35 +162,44 @@ export default function PDGAgentsManagement() {
         await updateAgentAction(editingAgent.id, {
           name: formData.name,
           phone: formData.phone,
-          permissions,
+          permissions: combinedLegacyPermissions,
           commission_rate: formData.commission_rate,
           can_create_sub_agent: formData.permissions.create_sub_agents,
         });
 
-        // Sauvegarder les permissions avancées
-        if (Object.keys(advancedPermissions).length > 0) {
-          const { error: permError } = await supabase
-            .rpc('set_agent_permissions' as any, {
-              p_agent_id: editingAgent.id,
-              p_permissions: advancedPermissions
-            });
-          
-          if (permError) {
-            console.error('Erreur sauvegarde permissions avancées:', permError);
-          }
+        // Sauvegarder les permissions avancées (même si vide, pour permettre la révocation complète)
+        const { error: permError } = await supabase.rpc('set_agent_permissions' as any, {
+          p_agent_id: editingAgent.id,
+          p_permissions: advancedPermissions,
+        });
+
+        if (permError) {
+          console.error('Erreur sauvegarde permissions avancées:', permError);
         }
       } else {
         // Mode création
-        await createAgentAction({
+        const createRes = await createAgentAction({
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
           password: formData.password,
           type_agent: formData.type_agent,
-          permissions,
+          permissions: combinedLegacyPermissions,
           commission_rate: formData.commission_rate,
           can_create_sub_agent: formData.permissions.create_sub_agents,
         }, pdgProfile.id);
+
+        // Après création, appliquer aussi les permissions avancées en base (agent_permissions)
+        if (createRes?.success && createRes.agent?.id) {
+          const { error: permError } = await supabase.rpc('set_agent_permissions' as any, {
+            p_agent_id: createRes.agent.id,
+            p_permissions: advancedPermissions,
+          });
+
+          if (permError) {
+            console.error('Erreur sauvegarde permissions avancées (création):', permError);
+          }
+        }
       }
 
       // Réinitialiser le formulaire
@@ -200,6 +219,8 @@ export default function PDGAgentsManagement() {
           manage_products: false
         }
       });
+
+      setAdvancedPermissions({});
       
       setEditingAgent(null);
       setIsDialogOpen(false);
