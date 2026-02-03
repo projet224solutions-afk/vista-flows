@@ -364,10 +364,15 @@ export default function AdvancedSalesManager() {
     }));
   };
 
-  // Filtrer les produits par recherche (le filtre catégorie est optionnel et ne masque plus)
-  const filteredProducts = vendorProducts.filter(p => {
-    // Filtre par texte de recherche uniquement
-    return p.name.toLowerCase().includes(productSearchTerm.toLowerCase());
+  // Filtrer les produits (catégories sélectionnées + recherche)
+  // Règle demandée : si une catégorie est sélectionnée, n'afficher QUE les produits de cette/ces catégorie(s)
+  const filteredProducts = vendorProducts.filter((p) => {
+    const matchesSearch = p.name.toLowerCase().includes(productSearchTerm.toLowerCase());
+    const matchesSelectedCategories =
+      newPromo.selected_categories.length === 0 ||
+      (Boolean(p.category_id) && newPromo.selected_categories.includes(p.category_id as string));
+
+    return matchesSearch && matchesSelectedCategories;
   });
   
   // Produits dans les catégories sélectionnées (pour mise en évidence)
@@ -850,8 +855,10 @@ export default function AdvancedSalesManager() {
                           {productsInSelectedCategories.length} produit(s) dans les catégories sélectionnées • 
                         </span>
                       )}
-                      {newPromo.selected_products.length === 0 
-                        ? ' Tous les produits (aucune sélection)' 
+                      {newPromo.selected_products.length === 0
+                        ? (newPromo.selected_categories.length > 0
+                            ? ' Produits de la/les catégorie(s) sélectionnée(s) (aucune sélection)'
+                            : ' Tous les produits (aucune sélection)')
                         : ` ${newPromo.selected_products.length} produit(s) sélectionné(s)`}
                     </p>
                     
@@ -876,27 +883,30 @@ export default function AdvancedSalesManager() {
                         <p className="text-sm text-muted-foreground text-center py-4">
                           {productSearchTerm 
                             ? `Aucun résultat pour "${productSearchTerm}"`
-                            : 'Aucun produit disponible'}
+                            : newPromo.selected_categories.length > 0
+                              ? 'Aucun produit dans la/les catégorie(s) sélectionnée(s)'
+                              : 'Aucun produit disponible'}
                         </p>
                       ) : (
                         <div className="space-y-2">
                           {filteredProducts.map((product) => {
                             const isSelected = newPromo.selected_products.includes(product.id);
                             const categoryName = categories.find(c => c.id === product.category_id)?.name;
-                            const isInSelectedCategory = newPromo.selected_categories.length > 0 && 
-                              product.category_id && 
-                              newPromo.selected_categories.includes(product.category_id);
+                             const isInSelectedCategory =
+                               newPromo.selected_categories.length > 0 &&
+                               Boolean(product.category_id) &&
+                               newPromo.selected_categories.includes(product.category_id as string);
                             
                             return (
                               <div
                                 key={product.id}
-                                className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors border ${
-                                  isSelected
-                                    ? 'bg-primary/10 border-primary'
-                                    : isInSelectedCategory
-                                      ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'
-                                      : 'border-transparent hover:bg-muted'
-                                }`}
+                                 className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors border ${
+                                   isSelected
+                                     ? 'bg-primary/10 border-primary'
+                                     : isInSelectedCategory
+                                       ? 'bg-accent/40 border-accent'
+                                       : 'border-transparent hover:bg-muted'
+                                 }`}
                                 onClick={() => toggleProductSelection(product.id)}
                               >
                                 <Checkbox
