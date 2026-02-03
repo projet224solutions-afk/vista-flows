@@ -68,6 +68,11 @@ const CopiloteChat = lazy(() => import("@/components/copilot/CopiloteChat"));
 const ReviewsManagement = lazy(() => import("@/components/vendor/ReviewsManagement"));
 const VendorServiceModule = lazy(() => import("@/components/vendor/VendorServiceModule"));
 const VendorDigitalProducts = lazy(() => import("@/components/vendor/VendorDigitalProducts"));
+const CollectionAccountsManager = lazy(() => import("@/components/vendor/accounts/CollectionAccountsManager"));
+const StockAdjustmentForm = lazy(() => import("@/components/vendor/stock/StockAdjustmentForm"));
+const VendorReportsManager = lazy(() => import("@/components/vendor/reports/VendorReportsManager"));
+const AdvancedSalesManager = lazy(() => import("@/components/vendor/sales/AdvancedSalesManager"));
+const InstallmentPlansManager = lazy(() => import("@/components/vendor/payments/InstallmentPlansManager"));
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useVendorErrorBoundary } from "@/hooks/useVendorErrorBoundary";
 const MyPurchasesOrdersList = lazy(() => import("@/components/shared/MyPurchasesOrdersList"));
@@ -753,9 +758,17 @@ export default function VendeurDashboard() {
               {/* Rapports - Business+ */}
               <Route path="reports" element={
                 <ProtectedRoute feature="data_export">
-                  <Card><CardContent className="p-6">Module Rapports - En développement</CardContent></Card>
+                  <VendorReportsManager />
                 </ProtectedRoute>
               } />
+              {/* Comptes d'encaissement */}
+              <Route path="accounts" element={<CollectionAccountsManager />} />
+              {/* Ajustements stock */}
+              <Route path="stock-adjustments" element={<StockAdjustmentForm />} />
+              {/* Ventes avancées */}
+              <Route path="advanced-sales" element={<AdvancedSalesManager />} />
+              {/* Paiements échelonnés */}
+              <Route path="installments" element={<InstallmentPlansManager />} />
               
               {/* Système */}
               {/* Copilote IA - Basic+ */}

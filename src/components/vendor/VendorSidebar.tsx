@@ -135,6 +135,7 @@ export function VendorSidebar() {
     items.push(
       { title: t('sidebar.orders'), icon: ShoppingCart, path: "orders" },
       { title: t('sidebar.inventory'), icon: Box, path: "inventory" },
+      { title: "Ajustements Stock", icon: AlertTriangle, path: "stock-adjustments" },
       { title: t('sidebar.warehouses'), icon: Boxes, path: "warehouse" },
       { title: t('sidebar.suppliers'), icon: Building2, path: "suppliers" },
     );
@@ -173,9 +174,12 @@ export function VendorSidebar() {
       icon: Wallet,
       items: [
         { title: t('sidebar.wallet'), icon: Wallet, path: "wallet" },
+        { title: "Comptes Encaissement", icon: Wallet, path: "accounts" },
         { title: t('sidebar.virtualCard'), icon: Smartphone, path: "virtual-card" },
         { title: t('sidebar.quotesInvoices'), icon: FileText, path: "quotes-invoices" },
         { title: t('sidebar.payments'), icon: CreditCard, path: "payments" },
+        { title: "Paiements Échelonnés", icon: CreditCard, path: "installments" },
+        { title: "Ventes Avancées", icon: ShoppingCart, path: "advanced-sales" },
         { title: t('sidebar.paymentLinks'), icon: DollarSign, path: "payment-links" },
         { title: t('sidebar.expenses'), icon: Receipt, path: "expenses" },
         { title: t('sidebar.debts'), icon: AlertTriangle, path: "debts" },
