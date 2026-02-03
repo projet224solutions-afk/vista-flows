@@ -110,9 +110,11 @@ export default function AdvancedSalesManager() {
     total: '',
     due_date: '',
     notes: '',
-    selected_category: '',
-    selected_product: ''
+    selected_category: ''
   });
+  
+  // Produits sélectionnés pour crédit (avec quantité)
+  const [creditSelectedProducts, setCreditSelectedProducts] = useState<{id: string; name: string; price: number; quantity: number; images?: string[]}[]>([]);
   
   // Recherche produit pour crédits
   const [creditProductSearch, setCreditProductSearch] = useState('');
@@ -261,14 +263,29 @@ export default function AdvancedSalesManager() {
 
   // Créer une vente à crédit
   const createCreditSale = async () => {
-    if (!vendorId || !newCredit.customer_name || !newCredit.total || !newCredit.due_date) {
+    if (!vendorId || !newCredit.customer_name || !newCredit.due_date) {
       toast({ title: 'Champs requis manquants', variant: 'destructive' });
+      return;
+    }
+    
+    if (creditSelectedProducts.length === 0) {
+      toast({ title: 'Veuillez sélectionner au moins un produit', variant: 'destructive' });
       return;
     }
 
     try {
-      const amount = parseFloat(newCredit.total);
+      // Calculer le total à partir des produits sélectionnés
+      const calculatedTotal = creditSelectedProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
       const orderNum = `CR-${Date.now().toString(36).toUpperCase()}`;
+      
+      // Préparer les items pour sauvegarde
+      const itemsToSave = creditSelectedProducts.map(p => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        quantity: p.quantity,
+        images: p.images || []
+      }));
       
       const { error } = await supabase
         .from('vendor_credit_sales')
@@ -276,11 +293,12 @@ export default function AdvancedSalesManager() {
           vendor_id: vendorId,
           customer_name: newCredit.customer_name,
           order_number: orderNum,
-          total: amount,
-          subtotal: amount,
-          remaining_amount: amount,
+          total: calculatedTotal,
+          subtotal: calculatedTotal,
+          remaining_amount: calculatedTotal,
           due_date: newCredit.due_date,
           notes: newCredit.notes,
+          items: itemsToSave,
           status: 'pending'
         }]);
 
@@ -288,7 +306,8 @@ export default function AdvancedSalesManager() {
 
       toast({ title: '✅ Vente à crédit créée' });
       setIsNewCreditOpen(false);
-      setNewCredit({ customer_name: '', total: '', due_date: '', notes: '', selected_category: '', selected_product: '' });
+      setNewCredit({ customer_name: '', total: '', due_date: '', notes: '', selected_category: '' });
+      setCreditSelectedProducts([]);
       loadData();
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
@@ -633,8 +652,7 @@ export default function AdvancedSalesManager() {
                                   onClick={() => {
                                     setNewCredit({ 
                                       ...newCredit, 
-                                      selected_category: newCredit.selected_category === cat.id ? '' : cat.id,
-                                      selected_product: ''
+                                      selected_category: newCredit.selected_category === cat.id ? '' : cat.id
                                     });
                                   }}
                                 >
@@ -643,8 +661,7 @@ export default function AdvancedSalesManager() {
                                     onCheckedChange={() => {
                                       setNewCredit({ 
                                         ...newCredit, 
-                                        selected_category: newCredit.selected_category === cat.id ? '' : cat.id,
-                                        selected_product: ''
+                                        selected_category: newCredit.selected_category === cat.id ? '' : cat.id
                                       });
                                     }}
                                   />
@@ -658,13 +675,82 @@ export default function AdvancedSalesManager() {
                           </ScrollArea>
                         </div>
 
-                        {/* Produits */}
+                        {/* Produits sélectionnés */}
                         <div className="rounded-lg border bg-muted/30 p-3">
-                          <p className="text-xs text-muted-foreground mb-2">Produit concerné *</p>
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs text-muted-foreground">Produits sélectionnés *</p>
+                            {creditSelectedProducts.length > 0 && (
+                              <Badge variant="secondary">{creditSelectedProducts.length} produit(s)</Badge>
+                            )}
+                          </div>
+                          
+                          {/* Liste des produits sélectionnés */}
+                          {creditSelectedProducts.length > 0 && (
+                            <div className="space-y-2 mb-3 p-2 bg-primary/5 rounded-lg border border-primary/20">
+                              {creditSelectedProducts.map((sp) => (
+                                <div key={sp.id} className="flex items-center gap-2">
+                                  {sp.images && sp.images[0] ? (
+                                    <img src={sp.images[0]} alt={sp.name} className="w-8 h-8 rounded object-cover" />
+                                  ) : (
+                                    <div className="w-8 h-8 rounded bg-muted flex items-center justify-center">
+                                      <Package className="w-4 h-4 text-muted-foreground" />
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium truncate">{sp.name}</p>
+                                    <p className="text-[10px] text-muted-foreground">{sp.price.toLocaleString()} GNF</p>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      className="h-6 w-6"
+                                      onClick={() => {
+                                        setCreditSelectedProducts(prev => 
+                                          prev.map(p => p.id === sp.id ? {...p, quantity: Math.max(1, p.quantity - 1)} : p)
+                                        );
+                                      }}
+                                    >
+                                      -
+                                    </Button>
+                                    <span className="text-xs font-mono w-6 text-center">{sp.quantity}</span>
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      className="h-6 w-6"
+                                      onClick={() => {
+                                        setCreditSelectedProducts(prev => 
+                                          prev.map(p => p.id === sp.id ? {...p, quantity: p.quantity + 1} : p)
+                                        );
+                                      }}
+                                    >
+                                      +
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6 text-destructive"
+                                      onClick={() => {
+                                        setCreditSelectedProducts(prev => prev.filter(p => p.id !== sp.id));
+                                      }}
+                                    >
+                                      ×
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                              <div className="pt-2 border-t">
+                                <p className="text-sm font-bold text-primary">
+                                  Total: {creditSelectedProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0).toLocaleString()} GNF
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          
                           <div className="relative mb-2">
                             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
-                              placeholder="Rechercher..."
+                              placeholder="Rechercher un produit..."
                               value={creditProductSearch}
                               onChange={(e) => setCreditProductSearch(e.target.value)}
                               className="pl-8"
@@ -678,47 +764,47 @@ export default function AdvancedSalesManager() {
                                   const matchesCategory = !newCredit.selected_category || p.category_id === newCredit.selected_category;
                                   return matchesSearch && matchesCategory;
                                 })
-                                .map((product) => (
-                                  <div
-                                    key={product.id}
-                                    className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-muted/50 ${
-                                      newCredit.selected_product === product.id ? 'bg-primary/10 border border-primary' : ''
-                                    }`}
-                                    onClick={() => {
-                                      setNewCredit({ 
-                                        ...newCredit, 
-                                        selected_product: newCredit.selected_product === product.id ? '' : product.id,
-                                        total: product.price.toString()
-                                      });
-                                    }}
-                                  >
-                                    <Checkbox
-                                      checked={newCredit.selected_product === product.id}
-                                      onCheckedChange={() => {
-                                        setNewCredit({ 
-                                          ...newCredit, 
-                                          selected_product: newCredit.selected_product === product.id ? '' : product.id,
-                                          total: product.price.toString()
-                                        });
+                                .map((product) => {
+                                  const isSelected = creditSelectedProducts.some(sp => sp.id === product.id);
+                                  return (
+                                    <div
+                                      key={product.id}
+                                      className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-muted/50 ${
+                                        isSelected ? 'bg-primary/10 border border-primary' : ''
+                                      }`}
+                                      onClick={() => {
+                                        if (isSelected) {
+                                          setCreditSelectedProducts(prev => prev.filter(p => p.id !== product.id));
+                                        } else {
+                                          setCreditSelectedProducts(prev => [...prev, {
+                                            id: product.id,
+                                            name: product.name,
+                                            price: product.price,
+                                            quantity: 1,
+                                            images: product.images
+                                          }]);
+                                        }
                                       }}
-                                    />
-                                    {product.images && product.images[0] ? (
-                                      <img 
-                                        src={product.images[0]} 
-                                        alt={product.name}
-                                        className="w-10 h-10 rounded object-cover flex-shrink-0"
-                                      />
-                                    ) : (
-                                      <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                                        <Package className="w-5 h-5 text-muted-foreground" />
+                                    >
+                                      <Checkbox checked={isSelected} />
+                                      {product.images && product.images[0] ? (
+                                        <img 
+                                          src={product.images[0]} 
+                                          alt={product.name}
+                                          className="w-10 h-10 rounded object-cover flex-shrink-0"
+                                        />
+                                      ) : (
+                                        <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                                          <Package className="w-5 h-5 text-muted-foreground" />
+                                        </div>
+                                      )}
+                                      <div className="flex-1 min-w-0">
+                                        <span className="text-sm block truncate">{product.name}</span>
+                                        <span className="text-xs text-muted-foreground">{product.price.toLocaleString()} GNF</span>
                                       </div>
-                                    )}
-                                    <div className="flex-1 min-w-0">
-                                      <span className="text-sm block truncate">{product.name}</span>
-                                      <span className="text-xs text-muted-foreground">{product.price.toLocaleString()} GNF</span>
                                     </div>
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               {vendorProducts.filter(p => {
                                 const matchesSearch = p.name.toLowerCase().includes(creditProductSearch.toLowerCase());
                                 const matchesCategory = !newCredit.selected_category || p.category_id === newCredit.selected_category;
