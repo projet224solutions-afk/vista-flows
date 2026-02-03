@@ -64,6 +64,8 @@ interface CreditSaleItem {
 interface CreditSale {
   id: string;
   customer_name: string;
+  customer_phone?: string | null;
+  notes?: string | null;
   total: number;
   paid_amount: number;
   remaining_amount: number;
@@ -167,6 +169,8 @@ export default function AdvancedSalesManager() {
       setCreditSales((creditData || []).map(c => ({
         id: c.id,
         customer_name: c.customer_name || 'Client',
+        customer_phone: c.customer_phone || null,
+        notes: c.notes || null,
         total: c.total,
         paid_amount: c.paid_amount || 0,
         remaining_amount: c.remaining_amount,
@@ -1022,8 +1026,13 @@ export default function AdvancedSalesManager() {
                       <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30">
                         <Users className="w-5 h-5 text-orange-600" />
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <p className="font-semibold text-lg">{selectedCreditForDetails.customer_name}</p>
+                        {selectedCreditForDetails.customer_phone && (
+                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                            📞 {selectedCreditForDetails.customer_phone}
+                          </p>
+                        )}
                         <p className="text-sm text-muted-foreground">
                           Échéance: {new Date(selectedCreditForDetails.due_date).toLocaleDateString('fr-FR')}
                         </p>
@@ -1043,6 +1052,14 @@ export default function AdvancedSalesManager() {
                         <p className="font-bold text-orange-600">{selectedCreditForDetails.remaining_amount.toLocaleString()} GNF</p>
                       </div>
                     </div>
+                    
+                    {/* Notes */}
+                    {selectedCreditForDetails.notes && (
+                      <div className="mt-4 pt-3 border-t">
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Notes:</p>
+                        <p className="text-sm">{selectedCreditForDetails.notes}</p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Liste des produits */}
