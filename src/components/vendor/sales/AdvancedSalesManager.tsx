@@ -484,48 +484,54 @@ export default function AdvancedSalesManager() {
                   Nouvelle
                 </Button>
               </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
+              <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                <DialogHeader className="flex-shrink-0">
                   <DialogTitle>Nouvelle vente à crédit</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium">Nom du client *</label>
-                    <Input
-                      placeholder="Nom du client"
-                      value={newCredit.customer_name}
-                      onChange={(e) => setNewCredit({ ...newCredit, customer_name: e.target.value })}
-                    />
+
+                <ScrollArea className="flex-1 pr-4">
+                  <div className="space-y-4 pb-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className="text-sm font-medium">Nom du client *</label>
+                        <Input
+                          placeholder="Nom du client"
+                          value={newCredit.customer_name}
+                          onChange={(e) => setNewCredit({ ...newCredit, customer_name: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Montant (GNF) *</label>
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          value={newCredit.total}
+                          onChange={(e) => setNewCredit({ ...newCredit, total: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Date d'échéance *</label>
+                        <Input
+                          type="date"
+                          value={newCredit.due_date}
+                          onChange={(e) => setNewCredit({ ...newCredit, due_date: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Notes</label>
+                        <Input
+                          placeholder="Notes optionnelles"
+                          value={newCredit.notes}
+                          onChange={(e) => setNewCredit({ ...newCredit, notes: e.target.value })}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium">Montant (GNF) *</label>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      value={newCredit.total}
-                      onChange={(e) => setNewCredit({ ...newCredit, total: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Date d'échéance *</label>
-                    <Input
-                      type="date"
-                      value={newCredit.due_date}
-                      onChange={(e) => setNewCredit({ ...newCredit, due_date: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Notes</label>
-                    <Input
-                      placeholder="Notes optionnelles"
-                      value={newCredit.notes}
-                      onChange={(e) => setNewCredit({ ...newCredit, notes: e.target.value })}
-                    />
-                  </div>
-                  <div className="flex gap-2 justify-end">
-                    <Button variant="outline" onClick={() => setIsNewCreditOpen(false)}>Annuler</Button>
-                    <Button onClick={createCreditSale}>Créer</Button>
-                  </div>
+                </ScrollArea>
+
+                <div className="flex gap-2 justify-end pt-4 flex-shrink-0 border-t">
+                  <Button variant="outline" onClick={() => setIsNewCreditOpen(false)}>Annuler</Button>
+                  <Button onClick={createCreditSale}>Créer</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -582,60 +588,64 @@ export default function AdvancedSalesManager() {
                   Nouveau retour
                 </Button>
               </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
+              <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                <DialogHeader className="flex-shrink-0">
                   <DialogTitle>Enregistrer un retour</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium">N° Commande (optionnel)</label>
-                    <Input
-                      placeholder="ORD-XXXXX"
-                      value={newReturn.order_id}
-                      onChange={(e) => setNewReturn({ ...newReturn, order_id: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Raison du retour *</label>
-                    <Input
-                      placeholder="Produit défectueux, mauvaise taille..."
-                      value={newReturn.return_reason}
-                      onChange={(e) => setNewReturn({ ...newReturn, return_reason: e.target.value })}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
+
+                <ScrollArea className="flex-1 pr-4">
+                  <div className="space-y-4 pb-4">
                     <div>
-                      <label className="text-sm font-medium">Quantité *</label>
+                      <label className="text-sm font-medium">N° Commande (optionnel)</label>
                       <Input
-                        type="number"
-                        placeholder="1"
-                        value={newReturn.quantity_returned}
-                        onChange={(e) => setNewReturn({ ...newReturn, quantity_returned: e.target.value })}
+                        placeholder="ORD-XXXXX"
+                        value={newReturn.order_id}
+                        onChange={(e) => setNewReturn({ ...newReturn, order_id: e.target.value })}
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium">Prix unitaire *</label>
+                      <label className="text-sm font-medium">Raison du retour *</label>
                       <Input
-                        type="number"
-                        placeholder="0"
-                        value={newReturn.unit_price}
-                        onChange={(e) => setNewReturn({ ...newReturn, unit_price: e.target.value })}
+                        placeholder="Produit défectueux, mauvaise taille..."
+                        value={newReturn.return_reason}
+                        onChange={(e) => setNewReturn({ ...newReturn, return_reason: e.target.value })}
                       />
                     </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className="text-sm font-medium">Quantité *</label>
+                        <Input
+                          type="number"
+                          placeholder="1"
+                          value={newReturn.quantity_returned}
+                          onChange={(e) => setNewReturn({ ...newReturn, quantity_returned: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Prix unitaire *</label>
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          value={newReturn.unit_price}
+                          onChange={(e) => setNewReturn({ ...newReturn, unit_price: e.target.value })}
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="text-sm font-medium">Montant remboursement (GNF) *</label>
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          value={newReturn.refund_amount}
+                          onChange={(e) => setNewReturn({ ...newReturn, refund_amount: e.target.value })}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium">Montant remboursement (GNF) *</label>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      value={newReturn.refund_amount}
-                      onChange={(e) => setNewReturn({ ...newReturn, refund_amount: e.target.value })}
-                    />
-                  </div>
-                  <div className="flex gap-2 justify-end">
-                    <Button variant="outline" onClick={() => setIsNewReturnOpen(false)}>Annuler</Button>
-                    <Button onClick={createReturn}>Enregistrer</Button>
-                  </div>
+                </ScrollArea>
+
+                <div className="flex gap-2 justify-end pt-4 flex-shrink-0 border-t">
+                  <Button variant="outline" onClick={() => setIsNewReturnOpen(false)}>Annuler</Button>
+                  <Button onClick={createReturn}>Enregistrer</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -731,229 +741,241 @@ export default function AdvancedSalesManager() {
                   Nouvelle promo
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col">
+              <DialogContent className="w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
                 <DialogHeader className="flex-shrink-0">
                   <DialogTitle>Créer une promotion</DialogTitle>
                 </DialogHeader>
                 <ScrollArea className="flex-1 pr-4">
-                <div className="space-y-4 pb-4">
-                  <div>
-                    <label className="text-sm font-medium">Nom de la promo *</label>
-                    <Input
-                      placeholder="Ex: Soldes d'été"
-                      value={newPromo.name}
-                      onChange={(e) => setNewPromo({ ...newPromo, name: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Type de remise</label>
-                    <select
-                      className="w-full px-3 py-2 border rounded-md bg-background"
-                      value={newPromo.discount_type}
-                      onChange={(e) => setNewPromo({ ...newPromo, discount_type: e.target.value })}
-                    >
-                      <option value="percentage">Pourcentage (%)</option>
-                      <option value="fixed">Montant fixe (GNF)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">
-                      Valeur {newPromo.discount_type === 'percentage' ? '(%)' : '(GNF)'} *
-                    </label>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      value={newPromo.discount_value}
-                      onChange={(e) => setNewPromo({ ...newPromo, discount_value: e.target.value })}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium">Date début</label>
-                      <Input
-                        type="date"
-                        value={newPromo.start_date}
-                        onChange={(e) => setNewPromo({ ...newPromo, start_date: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Date fin</label>
-                      <Input
-                        type="date"
-                        value={newPromo.end_date}
-                        onChange={(e) => setNewPromo({ ...newPromo, end_date: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* 1. SÉLECTION DE CATÉGORIES (EN PREMIER) */}
-                  <div className="bg-muted/30 p-3 rounded-lg border">
-                    <label className="text-sm font-medium flex items-center gap-2">
-                      🏷️ Catégories concernées
-                    </label>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      {newPromo.selected_categories.length === 0 
-                        ? 'Toutes les catégories (aucune sélection)' 
-                        : `${newPromo.selected_categories.length} catégorie(s) sélectionnée(s) - Les produits ci-dessous seront filtrés`}
-                    </p>
-                    
-                    <div className="h-32 border rounded-md p-2 bg-background overflow-y-auto">
-                      {categories.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-4">
-                          Aucune catégorie disponible
-                        </p>
-                      ) : (
-                        <div className="space-y-2">
-                          {categories.map((category) => (
-                            <div
-                              key={category.id}
-                              className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${
-                                newPromo.selected_categories.includes(category.id)
-                                  ? 'bg-primary/10 border border-primary'
-                                  : 'hover:bg-muted'
-                              }`}
-                              onClick={() => toggleCategorySelection(category.id)}
-                            >
-                              <Checkbox
-                                checked={newPromo.selected_categories.includes(category.id)}
-                                onCheckedChange={() => toggleCategorySelection(category.id)}
-                              />
-                              <Package className="w-4 h-4 text-muted-foreground" />
-                              <span className="text-sm font-medium">{category.name}</span>
-                              <Badge variant="outline" className="ml-auto text-xs">
-                                {vendorProducts.filter(p => p.category_id === category.id).length} produit(s)
-                              </Badge>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    
-                    {newPromo.selected_categories.length > 0 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="mt-2"
-                        onClick={() => {
-                          setNewPromo({ ...newPromo, selected_categories: [], selected_products: [] });
-                        }}
-                      >
-                        Tout désélectionner
-                      </Button>
-                    )}
-                  </div>
+                <div className="pb-4">
+                  <div className="grid gap-4 lg:grid-cols-3">
+                    {/* COL 1 — Infos promotion */}
+                    <div className="space-y-4 lg:col-span-1">
+                      <div>
+                        <label className="text-sm font-medium">Nom de la promo *</label>
+                        <Input
+                          placeholder="Ex: Soldes d'été"
+                          value={newPromo.name}
+                          onChange={(e) => setNewPromo({ ...newPromo, name: e.target.value })}
+                        />
+                      </div>
 
-                  {/* 2. SÉLECTION DE PRODUITS */}
-                  <div>
-                    <label className="text-sm font-medium flex items-center gap-2">
-                      📦 Produits à promouvoir
-                    </label>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      {newPromo.selected_categories.length > 0 && productsInSelectedCategories.length > 0 && (
-                        <span className="text-primary font-medium">
-                          {productsInSelectedCategories.length} produit(s) dans les catégories sélectionnées • 
-                        </span>
-                      )}
-                      {newPromo.selected_products.length === 0
-                        ? (newPromo.selected_categories.length > 0
-                            ? ' Produits de la/les catégorie(s) sélectionnée(s) (aucune sélection)'
-                            : ' Tous les produits (aucune sélection)')
-                        : ` ${newPromo.selected_products.length} produit(s) sélectionné(s)`}
-                    </p>
-                    
-                    {/* Recherche */}
-                    <div className="relative mb-2">
-                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Rechercher un produit..."
-                        value={productSearchTerm}
-                        onChange={(e) => setProductSearchTerm(e.target.value)}
-                        className="pl-8"
-                      />
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <label className="text-sm font-medium">Type de remise</label>
+                          <select
+                            className="w-full px-3 py-2 border rounded-md bg-background"
+                            value={newPromo.discount_type}
+                            onChange={(e) => setNewPromo({ ...newPromo, discount_type: e.target.value })}
+                          >
+                            <option value="percentage">Pourcentage (%)</option>
+                            <option value="fixed">Montant fixe (GNF)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">
+                            Valeur {newPromo.discount_type === 'percentage' ? '(%)' : '(GNF)'} *
+                          </label>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            value={newPromo.discount_value}
+                            onChange={(e) => setNewPromo({ ...newPromo, discount_value: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <label className="text-sm font-medium">Date début</label>
+                          <Input
+                            type="date"
+                            value={newPromo.start_date}
+                            onChange={(e) => setNewPromo({ ...newPromo, start_date: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Date fin</label>
+                          <Input
+                            type="date"
+                            value={newPromo.end_date}
+                            onChange={(e) => setNewPromo({ ...newPromo, end_date: e.target.value })}
+                          />
+                        </div>
+                      </div>
                     </div>
-                    
-                    {/* Liste des produits */}
-                    <div className="h-48 border rounded-md p-2 bg-background overflow-y-auto">
-                      {vendorProducts.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-4">
-                          Aucun produit disponible dans votre boutique
+
+                    {/* COL 2–3 — Sélection (catégories + produits) */}
+                    <div className="grid gap-4 md:grid-cols-2 lg:col-span-2">
+                      {/* 1. SÉLECTION DE CATÉGORIES */}
+                      <div className="bg-muted/30 p-3 rounded-lg border">
+                        <label className="text-sm font-medium flex items-center gap-2">
+                          🏷️ Catégories concernées
+                        </label>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          {newPromo.selected_categories.length === 0
+                            ? 'Toutes les catégories (aucune sélection)'
+                            : `${newPromo.selected_categories.length} catégorie(s) sélectionnée(s) - Les produits ci-dessous seront filtrés`}
                         </p>
-                      ) : filteredProducts.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-4">
-                          {productSearchTerm 
-                            ? `Aucun résultat pour "${productSearchTerm}"`
-                            : newPromo.selected_categories.length > 0
-                              ? 'Aucun produit dans la/les catégorie(s) sélectionnée(s)'
-                              : 'Aucun produit disponible'}
-                        </p>
-                      ) : (
-                        <div className="space-y-2">
-                          {filteredProducts.map((product) => {
-                            const isSelected = newPromo.selected_products.includes(product.id);
-                            const categoryName = categories.find(c => c.id === product.category_id)?.name;
-                             const isInSelectedCategory =
-                               newPromo.selected_categories.length > 0 &&
-                               Boolean(product.category_id) &&
-                               newPromo.selected_categories.includes(product.category_id as string);
-                            
-                            return (
-                              <div
-                                key={product.id}
-                                 className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors border ${
-                                   isSelected
-                                     ? 'bg-primary/10 border-primary'
-                                     : isInSelectedCategory
-                                       ? 'bg-accent/40 border-accent'
-                                       : 'border-transparent hover:bg-muted'
-                                 }`}
-                                onClick={() => toggleProductSelection(product.id)}
-                              >
-                                <Checkbox
-                                  checked={isSelected}
-                                  onCheckedChange={() => toggleProductSelection(product.id)}
-                                />
-                                {product.images?.[0] && (
-                                  <img
-                                    src={product.images[0]}
-                                    alt={product.name}
-                                    className="w-10 h-10 object-cover rounded"
+
+                        <div className="h-56 border rounded-md p-2 bg-background overflow-y-auto">
+                          {categories.length === 0 ? (
+                            <p className="text-sm text-muted-foreground text-center py-4">
+                              Aucune catégorie disponible
+                            </p>
+                          ) : (
+                            <div className="space-y-2">
+                              {categories.map((category) => (
+                                <div
+                                  key={category.id}
+                                  className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${
+                                    newPromo.selected_categories.includes(category.id)
+                                      ? 'bg-primary/10 border border-primary'
+                                      : 'hover:bg-muted'
+                                  }`}
+                                  onClick={() => toggleCategorySelection(category.id)}
+                                >
+                                  <Checkbox
+                                    checked={newPromo.selected_categories.includes(category.id)}
+                                    onCheckedChange={() => toggleCategorySelection(category.id)}
                                   />
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium truncate">{product.name}</p>
-                                  <div className="flex items-center gap-2">
-                                    <p className="text-xs text-muted-foreground">
-                                      {product.price.toLocaleString()} GNF
-                                    </p>
-                                    {categoryName && (
-                                      <Badge variant="secondary" className="text-xs">
-                                        {categoryName}
-                                      </Badge>
+                                  <Package className="w-4 h-4 text-muted-foreground" />
+                                  <span className="text-sm font-medium">{category.name}</span>
+                                  <Badge variant="outline" className="ml-auto text-xs">
+                                    {vendorProducts.filter(p => p.category_id === category.id).length} produit(s)
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {newPromo.selected_categories.length > 0 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="mt-2"
+                            onClick={() => {
+                              setNewPromo({ ...newPromo, selected_categories: [], selected_products: [] });
+                            }}
+                          >
+                            Tout désélectionner
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* 2. SÉLECTION DE PRODUITS */}
+                      <div>
+                        <label className="text-sm font-medium flex items-center gap-2">
+                          📦 Produits à promouvoir
+                        </label>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          {newPromo.selected_categories.length > 0 && productsInSelectedCategories.length > 0 && (
+                            <span className="text-primary font-medium">
+                              {productsInSelectedCategories.length} produit(s) dans les catégories sélectionnées •
+                            </span>
+                          )}
+                          {newPromo.selected_products.length === 0
+                            ? (newPromo.selected_categories.length > 0
+                                ? ' Produits de la/les catégorie(s) sélectionnée(s) (aucune sélection)'
+                                : ' Tous les produits (aucune sélection)')
+                            : ` ${newPromo.selected_products.length} produit(s) sélectionné(s)`}
+                        </p>
+
+                        {/* Recherche */}
+                        <div className="relative mb-2">
+                          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Rechercher un produit..."
+                            value={productSearchTerm}
+                            onChange={(e) => setProductSearchTerm(e.target.value)}
+                            className="pl-8"
+                          />
+                        </div>
+
+                        {/* Liste des produits */}
+                        <div className="h-56 border rounded-md p-2 bg-background overflow-y-auto">
+                          {vendorProducts.length === 0 ? (
+                            <p className="text-sm text-muted-foreground text-center py-4">
+                              Aucun produit disponible dans votre boutique
+                            </p>
+                          ) : filteredProducts.length === 0 ? (
+                            <p className="text-sm text-muted-foreground text-center py-4">
+                              {productSearchTerm
+                                ? `Aucun résultat pour "${productSearchTerm}"`
+                                : newPromo.selected_categories.length > 0
+                                  ? 'Aucun produit dans la/les catégorie(s) sélectionnée(s)'
+                                  : 'Aucun produit disponible'}
+                            </p>
+                          ) : (
+                            <div className="space-y-2">
+                              {filteredProducts.map((product) => {
+                                const isSelected = newPromo.selected_products.includes(product.id);
+                                const categoryName = categories.find(c => c.id === product.category_id)?.name;
+                                const isInSelectedCategory =
+                                  newPromo.selected_categories.length > 0 &&
+                                  Boolean(product.category_id) &&
+                                  newPromo.selected_categories.includes(product.category_id as string);
+
+                                return (
+                                  <div
+                                    key={product.id}
+                                    className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors border ${
+                                      isSelected
+                                        ? 'bg-primary/10 border-primary'
+                                        : isInSelectedCategory
+                                          ? 'bg-accent/40 border-accent'
+                                          : 'border-transparent hover:bg-muted'
+                                    }`}
+                                    onClick={() => toggleProductSelection(product.id)}
+                                  >
+                                    <Checkbox
+                                      checked={isSelected}
+                                      onCheckedChange={() => toggleProductSelection(product.id)}
+                                    />
+                                    {product.images?.[0] && (
+                                      <img
+                                        src={product.images[0]}
+                                        alt={product.name}
+                                        className="w-10 h-10 object-cover rounded"
+                                      />
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium truncate">{product.name}</p>
+                                      <div className="flex items-center gap-2">
+                                        <p className="text-xs text-muted-foreground">
+                                          {product.price.toLocaleString()} GNF
+                                        </p>
+                                        {categoryName && (
+                                          <Badge variant="secondary" className="text-xs">
+                                            {categoryName}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {isSelected && (
+                                      <Badge variant="default" className="text-xs">✓</Badge>
                                     )}
                                   </div>
-                                </div>
-                                {isSelected && (
-                                  <Badge variant="default" className="text-xs">✓</Badge>
-                                )}
-                              </div>
-                            );
-                          })}
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
-                      )}
+
+                        {newPromo.selected_products.length > 0 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="mt-2"
+                            onClick={() => setNewPromo({ ...newPromo, selected_products: [] })}
+                          >
+                            Tout désélectionner les produits
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                    
-                    {newPromo.selected_products.length > 0 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="mt-2"
-                        onClick={() => setNewPromo({ ...newPromo, selected_products: [] })}
-                      >
-                        Tout désélectionner les produits
-                      </Button>
-                    )}
                   </div>
                 </div>
                 </ScrollArea>
