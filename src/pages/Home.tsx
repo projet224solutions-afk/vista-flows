@@ -26,6 +26,7 @@ import {
   NearbyVendorsModal,
   NearbyTaxiModal,
   NearbyDeliveryModal,
+  SplineBackground,
 } from '@/components/home';
 
 export default function Home() {
@@ -116,58 +117,62 @@ export default function Home() {
   );
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-24 relative overflow-hidden">
+      {/* 3D Spline Globe Background - Extended to cover entire page */}
+      <SplineBackground height="180vh" />
       {/* Premium Header */}
-      <HomeHeader
-        cartCount={user ? getCartCount() : 0}
-        notificationCount={notificationCount}
-      />
+      <div className="relative z-10">
+        <HomeHeader
+          cartCount={user ? getCartCount() : 0}
+          notificationCount={notificationCount}
+        />
 
-      {/* Premium Search Bar */}
-      <HomeSearchBar
-        value={searchQuery}
-        onChange={setSearchQuery}
-        placeholder="Rechercher des produits, services..."
-        showFilter
-        showCamera
-        onCameraCapture={(file) => {
-          navigate('/marketplace/visual-search', { state: { capturedImage: file } });
-        }}
-      />
+        {/* Premium Search Bar */}
+        <HomeSearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Rechercher des produits, services..."
+          showFilter
+          showCamera
+          onCameraCapture={(file) => {
+            navigate('/marketplace/visual-search', { state: { capturedImage: file } });
+          }}
+        />
 
-      {/* Hero Section - Create Service */}
-      <HeroSection />
+        {/* Hero Section - Create Service */}
+        <HeroSection />
 
-      {/* Nearby Services */}
-      <NearbyServicesSection
-        stats={serviceStats}
-        onServiceClick={handleServiceClick}
-      />
+        {/* Nearby Services */}
+        <NearbyServicesSection
+          stats={serviceStats}
+          onServiceClick={handleServiceClick}
+        />
 
-      {/* Latest Products */}
-      <LatestProductsSection
-        products={universalProducts}
-        loading={productsLoading}
-        onProductClick={handleProductClick}
-        onAddToCart={handleAddToCart}
-      />
+        {/* Latest Products */}
+        <LatestProductsSection
+          products={universalProducts}
+          loading={productsLoading}
+          onProductClick={handleProductClick}
+          onAddToCart={handleAddToCart}
+        />
 
-      {/* Bottom Navigation */}
-      <BottomNavigation />
+        {/* Bottom Navigation */}
+        <BottomNavigation />
 
-      {/* Modals */}
-      <NearbyVendorsModal 
-        open={showVendorsModal} 
-        onOpenChange={setShowVendorsModal} 
-      />
-      <NearbyTaxiModal 
-        open={showTaxiModal} 
-        onOpenChange={setShowTaxiModal} 
-      />
-      <NearbyDeliveryModal 
-        open={showDeliveryModal} 
-        onOpenChange={setShowDeliveryModal} 
-      />
+        {/* Modals */}
+        <NearbyVendorsModal 
+          open={showVendorsModal} 
+          onOpenChange={setShowVendorsModal} 
+        />
+        <NearbyTaxiModal 
+          open={showTaxiModal} 
+          onOpenChange={setShowTaxiModal} 
+        />
+        <NearbyDeliveryModal 
+          open={showDeliveryModal} 
+          onOpenChange={setShowDeliveryModal} 
+        />
+      </div>
     </div>
   );
 }
