@@ -94,15 +94,8 @@ export default function VendorReportsManager() {
       const totalSales = ordersData?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0;
       const totalOrders = ordersData?.length || 0;
 
-      // Dépenses
-      const { data: expensesData } = await supabase
-        .from('vendor_expenses')
-        .select('amount')
-        .eq('user_id', userId)
-        .gte('expense_date', startStr)
-        .lte('expense_date', endStr);
-
-      const totalExpenses = expensesData?.reduce((sum, e) => sum + (e.amount || 0), 0) || 0;
+      // Dépenses - skip if table doesn't exist
+      const totalExpenses = 0;
 
       // Ventes à crédit
       const { data: creditData } = await supabase

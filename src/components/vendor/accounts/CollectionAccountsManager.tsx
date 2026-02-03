@@ -76,7 +76,10 @@ export default function CollectionAccountsManager() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setAccounts(data || []);
+      setAccounts((data || []).map(acc => ({
+        ...acc,
+        account_type: acc.account_type as CollectionAccount['account_type']
+      })));
     } catch (error) {
       console.error('Error loading accounts:', error);
     } finally {
