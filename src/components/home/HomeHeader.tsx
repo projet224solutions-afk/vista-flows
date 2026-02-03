@@ -41,6 +41,18 @@ export function HomeHeader({
         className
       )}
     >
+      {/* Welcome Banner with Marquee Animation */}
+      <div className="bg-primary/10 border-b border-primary/20 overflow-hidden">
+        <div className="animate-marquee whitespace-nowrap py-1.5 text-sm font-medium text-primary">
+          <span className="mx-4">🎉 Bienvenue sur MarketPlace 224Solutions!</span>
+          <span className="mx-4">✨ Découvrez nos meilleures offres du jour</span>
+          <span className="mx-4">🚀 Livraison rapide dans toute la Guinée</span>
+          <span className="mx-4">💎 Qualité garantie sur tous nos produits</span>
+          <span className="mx-4">🎉 Bienvenue sur MarketPlace 224Solutions!</span>
+          <span className="mx-4">✨ Découvrez nos meilleures offres du jour</span>
+        </div>
+      </div>
+
       <div className="px-4 py-3 md:px-6 md:py-4">
         <div className="flex items-center justify-between gap-3">
           {/* Logo & Location */}
