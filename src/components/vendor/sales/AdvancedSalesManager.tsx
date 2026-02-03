@@ -26,6 +26,7 @@ interface Product {
   name: string;
   price: number;
   images?: string[];
+  category_id?: string;
 }
 
 // Type catégorie
@@ -199,10 +200,10 @@ export default function AdvancedSalesManager() {
           : []
       })));
 
-      // Produits du vendeur
+      // Produits du vendeur (avec category_id pour le filtrage)
       const { data: productsData } = await supabase
         .from('products')
-        .select('id, name, price, images')
+        .select('id, name, price, images, category_id')
         .eq('vendor_id', vendorId)
         .order('name');
       
@@ -356,10 +357,17 @@ export default function AdvancedSalesManager() {
     }));
   };
 
-  // Filtrer les produits par recherche
-  const filteredProducts = vendorProducts.filter(p => 
-    p.name.toLowerCase().includes(productSearchTerm.toLowerCase())
-  );
+  // Filtrer les produits par recherche ET par catégories sélectionnées
+  const filteredProducts = vendorProducts.filter(p => {
+    // Filtre par texte de recherche
+    const matchesSearch = p.name.toLowerCase().includes(productSearchTerm.toLowerCase());
+    
+    // Filtre par catégories sélectionnées (si aucune catégorie sélectionnée, afficher tous)
+    const matchesCategory = newPromo.selected_categories.length === 0 || 
+      (p.category_id && newPromo.selected_categories.includes(p.category_id));
+    
+    return matchesSearch && matchesCategory;
+  });
 
   // Stats
   const totalCredit = creditSales.reduce((sum, c) => sum + c.remaining_amount, 0);
@@ -766,94 +774,18 @@ export default function AdvancedSalesManager() {
                     </div>
                   </div>
                   
-                  {/* Sélection de produits */}
-                  <div>
-                    <label className="text-sm font-medium">Produits à promouvoir</label>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      {newPromo.selected_products.length === 0 
-                        ? 'Tous les produits (aucune sélection)' 
-                        : `${newPromo.selected_products.length} produit(s) sélectionné(s)`}
-                    </p>
-                    
-                    {/* Recherche */}
-                    <div className="relative mb-2">
-                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Rechercher un produit..."
-                        value={productSearchTerm}
-                        onChange={(e) => setProductSearchTerm(e.target.value)}
-                        className="pl-8"
-                      />
-                    </div>
-                    
-                    {/* Liste des produits */}
-                    <ScrollArea className="h-48 border rounded-md p-2">
-                      {vendorProducts.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-4">
-                          Aucun produit disponible
-                        </p>
-                      ) : filteredProducts.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-4">
-                          Aucun résultat pour "{productSearchTerm}"
-                        </p>
-                      ) : (
-                        <div className="space-y-2">
-                          {filteredProducts.map((product) => (
-                            <div
-                              key={product.id}
-                              className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${
-                                newPromo.selected_products.includes(product.id)
-                                  ? 'bg-primary/10 border border-primary'
-                                  : 'hover:bg-muted'
-                              }`}
-                              onClick={() => toggleProductSelection(product.id)}
-                            >
-                              <Checkbox
-                                checked={newPromo.selected_products.includes(product.id)}
-                                onCheckedChange={() => toggleProductSelection(product.id)}
-                              />
-                              {product.images?.[0] && (
-                                <img
-                                  src={product.images[0]}
-                                  alt={product.name}
-                                  className="w-10 h-10 object-cover rounded"
-                                />
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">{product.name}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {product.price.toLocaleString()} GNF
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </ScrollArea>
-                    
-                    {newPromo.selected_products.length > 0 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="mt-2"
-                        onClick={() => setNewPromo({ ...newPromo, selected_products: [] })}
-                      >
-                        Tout désélectionner
-                      </Button>
-                    )}
-                  </div>
-
-                  {/* Sélection de catégories */}
-                  <div>
-                    <label className="text-sm font-medium">Catégories concernées</label>
+                  {/* 1. SÉLECTION DE CATÉGORIES (EN PREMIER) */}
+                  <div className="bg-muted/30 p-3 rounded-lg border">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      🏷️ Catégories concernées
+                    </label>
                     <p className="text-xs text-muted-foreground mb-2">
                       {newPromo.selected_categories.length === 0 
                         ? 'Toutes les catégories (aucune sélection)' 
-                        : `${newPromo.selected_categories.length} catégorie(s) sélectionnée(s)`}
+                        : `${newPromo.selected_categories.length} catégorie(s) sélectionnée(s) - Les produits ci-dessous seront filtrés`}
                     </p>
                     
-                    <ScrollArea className="h-32 border rounded-md p-2">
+                    <ScrollArea className="h-32 border rounded-md p-2 bg-background">
                       {categories.length === 0 ? (
                         <p className="text-sm text-muted-foreground text-center py-4">
                           Aucune catégorie disponible
@@ -876,6 +808,9 @@ export default function AdvancedSalesManager() {
                               />
                               <Package className="w-4 h-4 text-muted-foreground" />
                               <span className="text-sm font-medium">{category.name}</span>
+                              <Badge variant="outline" className="ml-auto text-xs">
+                                {vendorProducts.filter(p => p.category_id === category.id).length} produit(s)
+                              </Badge>
                             </div>
                           ))}
                         </div>
@@ -888,9 +823,108 @@ export default function AdvancedSalesManager() {
                         variant="ghost"
                         size="sm"
                         className="mt-2"
-                        onClick={() => setNewPromo({ ...newPromo, selected_categories: [] })}
+                        onClick={() => {
+                          setNewPromo({ ...newPromo, selected_categories: [], selected_products: [] });
+                        }}
                       >
                         Tout désélectionner
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* 2. SÉLECTION DE PRODUITS (FILTRÉS PAR CATÉGORIE) */}
+                  <div>
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      📦 Produits à promouvoir
+                    </label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      {newPromo.selected_categories.length > 0 && (
+                        <span className="text-primary font-medium">
+                          Affichage filtré par les catégories sélectionnées • 
+                        </span>
+                      )}
+                      {newPromo.selected_products.length === 0 
+                        ? ' Tous les produits (aucune sélection)' 
+                        : ` ${newPromo.selected_products.length} produit(s) sélectionné(s)`}
+                    </p>
+                    
+                    {/* Recherche */}
+                    <div className="relative mb-2">
+                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Rechercher un produit..."
+                        value={productSearchTerm}
+                        onChange={(e) => setProductSearchTerm(e.target.value)}
+                        className="pl-8"
+                      />
+                    </div>
+                    
+                    {/* Liste des produits */}
+                    <ScrollArea className="h-48 border rounded-md p-2">
+                      {vendorProducts.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          Aucun produit disponible
+                        </p>
+                      ) : filteredProducts.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          {newPromo.selected_categories.length > 0 
+                            ? 'Aucun produit dans les catégories sélectionnées'
+                            : `Aucun résultat pour "${productSearchTerm}"`}
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {filteredProducts.map((product) => {
+                            const categoryName = categories.find(c => c.id === product.category_id)?.name;
+                            return (
+                              <div
+                                key={product.id}
+                                className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${
+                                  newPromo.selected_products.includes(product.id)
+                                    ? 'bg-primary/10 border border-primary'
+                                    : 'hover:bg-muted'
+                                }`}
+                                onClick={() => toggleProductSelection(product.id)}
+                              >
+                                <Checkbox
+                                  checked={newPromo.selected_products.includes(product.id)}
+                                  onCheckedChange={() => toggleProductSelection(product.id)}
+                                />
+                                {product.images?.[0] && (
+                                  <img
+                                    src={product.images[0]}
+                                    alt={product.name}
+                                    className="w-10 h-10 object-cover rounded"
+                                  />
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">{product.name}</p>
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-xs text-muted-foreground">
+                                      {product.price.toLocaleString()} GNF
+                                    </p>
+                                    {categoryName && (
+                                      <Badge variant="secondary" className="text-xs">
+                                        {categoryName}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </ScrollArea>
+                    
+                    {newPromo.selected_products.length > 0 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="mt-2"
+                        onClick={() => setNewPromo({ ...newPromo, selected_products: [] })}
+                      >
+                        Tout désélectionner les produits
                       </Button>
                     )}
                   </div>
