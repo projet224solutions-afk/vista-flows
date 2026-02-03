@@ -357,17 +357,16 @@ export default function AdvancedSalesManager() {
     }));
   };
 
-  // Filtrer les produits par recherche ET par catégories sélectionnées
+  // Filtrer les produits par recherche (le filtre catégorie est optionnel et ne masque plus)
   const filteredProducts = vendorProducts.filter(p => {
-    // Filtre par texte de recherche
-    const matchesSearch = p.name.toLowerCase().includes(productSearchTerm.toLowerCase());
-    
-    // Filtre par catégories sélectionnées (si aucune catégorie sélectionnée, afficher tous)
-    const matchesCategory = newPromo.selected_categories.length === 0 || 
-      (p.category_id && newPromo.selected_categories.includes(p.category_id));
-    
-    return matchesSearch && matchesCategory;
+    // Filtre par texte de recherche uniquement
+    return p.name.toLowerCase().includes(productSearchTerm.toLowerCase());
   });
+  
+  // Produits dans les catégories sélectionnées (pour mise en évidence)
+  const productsInSelectedCategories = newPromo.selected_categories.length > 0
+    ? vendorProducts.filter(p => p.category_id && newPromo.selected_categories.includes(p.category_id))
+    : [];
 
   // Stats
   const totalCredit = creditSales.reduce((sum, c) => sum + c.remaining_amount, 0);
@@ -833,15 +832,15 @@ export default function AdvancedSalesManager() {
                     )}
                   </div>
 
-                  {/* 2. SÉLECTION DE PRODUITS (FILTRÉS PAR CATÉGORIE) */}
+                  {/* 2. SÉLECTION DE PRODUITS */}
                   <div>
                     <label className="text-sm font-medium flex items-center gap-2">
                       📦 Produits à promouvoir
                     </label>
                     <p className="text-xs text-muted-foreground mb-2">
-                      {newPromo.selected_categories.length > 0 && (
+                      {newPromo.selected_categories.length > 0 && productsInSelectedCategories.length > 0 && (
                         <span className="text-primary font-medium">
-                          Affichage filtré par les catégories sélectionnées • 
+                          {productsInSelectedCategories.length} produit(s) dans les catégories sélectionnées • 
                         </span>
                       )}
                       {newPromo.selected_products.length === 0 
@@ -868,21 +867,18 @@ export default function AdvancedSalesManager() {
                         </p>
                       ) : filteredProducts.length === 0 ? (
                         <p className="text-sm text-muted-foreground text-center py-4">
-                          {newPromo.selected_categories.length > 0 
-                            ? 'Aucun produit dans les catégories sélectionnées'
-                            : `Aucun résultat pour "${productSearchTerm}"`}
+                          {productSearchTerm 
+                            ? `Aucun résultat pour "${productSearchTerm}"`
+                            : 'Aucun produit disponible'}
                         </p>
                       ) : (
                         <div className="space-y-2">
                           {filteredProducts.map((product) => {
                             const isSelected = newPromo.selected_products.includes(product.id);
                             const categoryName = categories.find(c => c.id === product.category_id)?.name;
-                            
-                            const handleSelect = (e: React.MouseEvent) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              toggleProductSelection(product.id);
-                            };
+                            const isInSelectedCategory = newPromo.selected_categories.length > 0 && 
+                              product.category_id && 
+                              newPromo.selected_categories.includes(product.category_id);
                             
                             return (
                               <div
@@ -890,9 +886,11 @@ export default function AdvancedSalesManager() {
                                 className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors border ${
                                   isSelected
                                     ? 'bg-primary/10 border-primary'
-                                    : 'border-transparent hover:bg-muted'
+                                    : isInSelectedCategory
+                                      ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'
+                                      : 'border-transparent hover:bg-muted'
                                 }`}
-                                onClick={handleSelect}
+                                onClick={() => toggleProductSelection(product.id)}
                               >
                                 <Checkbox
                                   checked={isSelected}
