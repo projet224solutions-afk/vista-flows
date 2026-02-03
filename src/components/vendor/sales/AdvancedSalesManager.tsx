@@ -53,6 +53,14 @@ interface SaleReturn {
   created_at: string;
 }
 
+interface CreditSaleItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  images?: string[];
+}
+
 interface CreditSale {
   id: string;
   customer_name: string;
@@ -61,6 +69,7 @@ interface CreditSale {
   remaining_amount: number;
   due_date: string;
   status: string;
+  items?: CreditSaleItem[];
 }
 
 interface Promotion {
@@ -156,7 +165,8 @@ export default function AdvancedSalesManager() {
         paid_amount: c.paid_amount || 0,
         remaining_amount: c.remaining_amount,
         due_date: c.due_date,
-        status: c.status
+        status: c.status,
+        items: (Array.isArray(c.items) ? c.items : []) as unknown as CreditSaleItem[]
       })));
 
       // Retours
@@ -736,40 +746,76 @@ export default function AdvancedSalesManager() {
             {creditSales.map((sale) => (
               <Card key={sale.id}>
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex-shrink-0">
-                        <Users className="w-4 h-4 text-orange-600" />
+                  <div className="space-y-3">
+                    {/* En-tête: Client + Montants + Actions */}
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex-shrink-0">
+                          <Users className="w-4 h-4 text-orange-600" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold truncate">{sale.customer_name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Échéance: {new Date(sale.due_date).toLocaleDateString('fr-FR')}
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="font-semibold truncate">{sale.customer_name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Échéance: {new Date(sale.due_date).toLocaleDateString('fr-FR')}
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-bold text-orange-600">{sale.remaining_amount.toLocaleString()} GNF</p>
+                        <p className="text-xs text-muted-foreground">
+                          sur {sale.total.toLocaleString()} GNF
                         </p>
+                        <Badge variant={sale.status === 'paid' ? 'default' : 'secondary'}>
+                          {sale.status === 'paid' ? 'Payé' : sale.status === 'partial' ? 'Partiel' : 'En attente'}
+                        </Badge>
                       </div>
+                      {sale.status !== 'paid' && (
+                        <Button 
+                          size="sm" 
+                          onClick={() => openCollectPaymentDialog(sale)}
+                          className="flex-shrink-0"
+                        >
+                          <Banknote className="w-4 h-4 mr-1" />
+                          Encaisser
+                        </Button>
+                      )}
+                      {sale.status === 'paid' && (
+                        <div className="flex-shrink-0 p-2">
+                          <CheckCircle className="w-5 h-5 text-green-600" />
+                        </div>
+                      )}
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="font-bold text-orange-600">{sale.remaining_amount.toLocaleString()} GNF</p>
-                      <p className="text-xs text-muted-foreground">
-                        sur {sale.total.toLocaleString()} GNF
-                      </p>
-                      <Badge variant={sale.status === 'paid' ? 'default' : 'secondary'}>
-                        {sale.status === 'paid' ? 'Payé' : sale.status === 'partial' ? 'Partiel' : 'En attente'}
-                      </Badge>
-                    </div>
-                    {sale.status !== 'paid' && (
-                      <Button 
-                        size="sm" 
-                        onClick={() => openCollectPaymentDialog(sale)}
-                        className="flex-shrink-0"
-                      >
-                        <Banknote className="w-4 h-4 mr-1" />
-                        Encaisser
-                      </Button>
-                    )}
-                    {sale.status === 'paid' && (
-                      <div className="flex-shrink-0 p-2">
-                        <CheckCircle className="w-5 h-5 text-green-600" />
+                    
+                    {/* Liste des produits vendus à crédit */}
+                    {sale.items && sale.items.length > 0 && (
+                      <div className="border-t pt-3">
+                        <p className="text-xs font-medium text-muted-foreground mb-2">Produits vendus:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {sale.items.map((item, idx) => (
+                            <div 
+                              key={idx}
+                              className="flex items-center gap-2 bg-muted/50 rounded-lg p-2"
+                            >
+                              {item.images && item.images[0] ? (
+                                <img 
+                                  src={item.images[0]} 
+                                  alt={item.name}
+                                  className="w-8 h-8 rounded object-cover flex-shrink-0"
+                                />
+                              ) : (
+                                <div className="w-8 h-8 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                                  <Package className="w-4 h-4 text-muted-foreground" />
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <p className="text-xs font-medium truncate max-w-[120px]">{item.name}</p>
+                                <p className="text-[10px] text-muted-foreground">
+                                  {item.quantity}x {item.price.toLocaleString()} GNF
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
