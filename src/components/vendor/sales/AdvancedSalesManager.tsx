@@ -1084,9 +1084,13 @@ export default function AdvancedSalesManager() {
                             </div>
                           ))
                         ) : (
-                          <div className="text-center py-8 text-muted-foreground">
-                            <Package className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                            <p>Aucun produit enregistré</p>
+                          <div className="text-center py-8">
+                            <Package className="w-10 h-10 mx-auto mb-2 text-muted-foreground opacity-50" />
+                            <p className="text-muted-foreground font-medium">Aucun produit enregistré</p>
+                            <p className="text-xs text-muted-foreground mt-2 max-w-[250px] mx-auto">
+                              Cette vente a été créée avant l'ajout de cette fonctionnalité. 
+                              Les nouvelles ventes à crédit afficheront les produits sélectionnés.
+                            </p>
                           </div>
                         )}
                       </div>
