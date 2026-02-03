@@ -1,17 +1,15 @@
 /**
  * SPLINE BACKGROUND - 3D Globe Animation
  * 224Solutions - Immersive Hero Background
- * Lazy loaded for optimal performance
+ * Uses Web Component for better compatibility
  */
 
-import { Suspense, lazy, useState, useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-// Lazy load Spline component for performance
-const Spline = lazy(() => import('@splinetool/react-spline'));
-
 const SPLINE_SCENE_URL = 'https://prod.spline.design/h5xspcRA7yF54Tzy/scene.splinecode';
+const SPLINE_VIEWER_SCRIPT = 'https://unpkg.com/@splinetool/viewer@1.12.48/build/spline-viewer.js';
 
 interface SplineBackgroundProps {
   className?: string;
@@ -26,61 +24,71 @@ function LoadingFallback() {
 
 export function SplineBackground({ className }: SplineBackgroundProps) {
   const isMobile = useIsMobile();
+  const [isLoaded, setIsLoaded] = useState(false);
   const [shouldLoad, setShouldLoad] = useState(false);
-  const [hasError, setHasError] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Delay loading for better initial page performance
   useEffect(() => {
     const timer = setTimeout(() => {
       setShouldLoad(true);
-    }, 1500); // Load after 1.5 seconds
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, []);
 
-  // Don't render on mobile for battery/performance
+  // Load Spline viewer script dynamically
+  useEffect(() => {
+    if (!shouldLoad || isMobile) return;
+
+    // Check if script already loaded
+    if (document.querySelector(`script[src="${SPLINE_VIEWER_SCRIPT}"]`)) {
+      setIsLoaded(true);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = SPLINE_VIEWER_SCRIPT;
+    script.async = true;
+    script.onload = () => setIsLoaded(true);
+    script.onerror = () => console.warn('Failed to load Spline viewer');
+    document.head.appendChild(script);
+
+    return () => {
+      // Don't remove script on cleanup to avoid reloading
+    };
+  }, [shouldLoad, isMobile]);
+
+  // Don't render 3D on mobile for battery/performance
   if (isMobile) {
     return (
-      <div className={cn(
-        'absolute inset-0 z-0 overflow-hidden',
-        className
-      )}>
-        {/* Static gradient fallback for mobile */}
+      <div className={cn('absolute inset-0 z-0 overflow-hidden', className)}>
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10" />
         <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background" />
       </div>
     );
   }
 
-  // Error fallback
-  if (hasError) {
-    return (
-      <div className={cn(
-        'absolute inset-0 z-0 overflow-hidden',
-        className
-      )}>
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5" />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background" />
-      </div>
-    );
-  }
-
   return (
-    <div className={cn(
-      'absolute inset-0 z-0 overflow-hidden',
-      className
-    )}>
-      {/* Spline 3D Globe */}
+    <div className={cn('absolute inset-0 z-0 overflow-hidden', className)} ref={containerRef}>
+      {/* Loading state */}
+      {!isLoaded && <LoadingFallback />}
+
+      {/* Spline 3D Globe - Web Component */}
       {shouldLoad && (
-        <Suspense fallback={<LoadingFallback />}>
-          <div className="absolute inset-0 opacity-30 sm:opacity-40">
-            <Spline
-              scene={SPLINE_SCENE_URL}
-              onError={() => setHasError(true)}
-              style={{ width: '100%', height: '100%' }}
-            />
-          </div>
-        </Suspense>
+        <div 
+          className={cn(
+            'absolute inset-0 opacity-0 transition-opacity duration-1000',
+            isLoaded && 'opacity-30 sm:opacity-40'
+          )}
+        >
+          {/* @ts-ignore - Web Component */}
+          <spline-viewer 
+            url={SPLINE_SCENE_URL}
+            style={{ width: '100%', height: '100%' }}
+          />
+        </div>
       )}
 
       {/* Overlay gradient for text readability */}
