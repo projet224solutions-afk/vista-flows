@@ -12,7 +12,6 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { AvailableServicesModal } from '@/components/professional-services/AvailableServicesModal';
-import { SplineBackground } from './SplineBackground';
 
 interface QuickAction {
   id: string;
@@ -81,10 +80,7 @@ export function HeroSection({ className }: HeroSectionProps) {
   };
 
   return (
-    <section className={cn('relative overflow-hidden', className)}>
-      {/* 3D Spline Globe Background */}
-      <SplineBackground />
-
+    <section className={cn('relative', className)}>
       {/* Compact Header */}
       <div className="relative z-10 px-4 pt-4 pb-6">
         {/* Welcome Badge */}

@@ -1,6 +1,6 @@
 /**
  * SPLINE BACKGROUND - 3D Globe Animation
- * 224Solutions - Immersive Hero Background
+ * 224Solutions - Immersive Full-Page Background
  * Uses Web Component for better compatibility
  */
 
@@ -13,6 +13,8 @@ const SPLINE_VIEWER_SCRIPT = 'https://unpkg.com/@splinetool/viewer@1.12.48/build
 
 interface SplineBackgroundProps {
   className?: string;
+  /** Height of the background - defaults to full viewport */
+  height?: string;
 }
 
 // Loading fallback with animated gradient
@@ -22,7 +24,7 @@ function LoadingFallback() {
   );
 }
 
-export function SplineBackground({ className }: SplineBackgroundProps) {
+export function SplineBackground({ className, height = '150vh' }: SplineBackgroundProps) {
   const isMobile = useIsMobile();
   const [isLoaded, setIsLoaded] = useState(false);
   const [shouldLoad, setShouldLoad] = useState(false);
@@ -63,7 +65,10 @@ export function SplineBackground({ className }: SplineBackgroundProps) {
   // Don't render 3D on mobile for battery/performance
   if (isMobile) {
     return (
-      <div className={cn('absolute inset-0 z-0 overflow-hidden', className)}>
+      <div 
+        className={cn('absolute inset-x-0 top-0 z-0 overflow-hidden pointer-events-none', className)}
+        style={{ height }}
+      >
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10" />
         <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background" />
       </div>
@@ -71,17 +76,25 @@ export function SplineBackground({ className }: SplineBackgroundProps) {
   }
 
   return (
-    <div className={cn('absolute inset-0 z-0 overflow-hidden', className)} ref={containerRef}>
+    <div 
+      className={cn('absolute inset-x-0 top-0 z-0 overflow-hidden pointer-events-none', className)} 
+      style={{ height }}
+      ref={containerRef}
+    >
       {/* Loading state */}
       {!isLoaded && <LoadingFallback />}
 
-      {/* Spline 3D Globe - Web Component */}
+      {/* Spline 3D Globe - Web Component - Enlarged */}
       {shouldLoad && (
         <div 
           className={cn(
             'absolute inset-0 opacity-0 transition-opacity duration-1000',
-            isLoaded && 'opacity-30 sm:opacity-40'
+            isLoaded && 'opacity-40 sm:opacity-50'
           )}
+          style={{ 
+            transform: 'scale(1.5)', 
+            transformOrigin: 'center top'
+          }}
         >
           {/* @ts-ignore - Web Component */}
           <spline-viewer 
@@ -91,8 +104,8 @@ export function SplineBackground({ className }: SplineBackgroundProps) {
         </div>
       )}
 
-      {/* Overlay gradient for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background pointer-events-none" />
+      {/* Overlay gradient for text readability - extends full height */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/50 to-background pointer-events-none" />
     </div>
   );
 }
