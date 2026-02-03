@@ -105,8 +105,13 @@ export default function AdvancedSalesManager() {
     return_reason: '',
     refund_amount: '',
     quantity_returned: '1',
-    unit_price: ''
+    unit_price: '',
+    selected_category: '',
+    selected_product: ''
   });
+  
+  // Recherche produit pour retours
+  const [returnProductSearch, setReturnProductSearch] = useState('');
 
   const [newPromo, setNewPromo] = useState({
     name: '',
@@ -295,7 +300,7 @@ export default function AdvancedSalesManager() {
 
       toast({ title: '✅ Retour enregistré' });
       setIsNewReturnOpen(false);
-      setNewReturn({ order_id: '', return_reason: '', refund_amount: '', quantity_returned: '1', unit_price: '' });
+      setNewReturn({ order_id: '', return_reason: '', refund_amount: '', quantity_returned: '1', unit_price: '', selected_category: '', selected_product: '' });
       loadData();
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
@@ -618,12 +623,11 @@ export default function AdvancedSalesManager() {
                 <ScrollArea className="flex-1 pr-4">
                   <div className="pb-4">
                     <div className="grid gap-4 lg:grid-cols-3">
-                      {/* COL 1–2 — Contexte */}
-                      <div className="space-y-4 lg:col-span-2">
+                      {/* COL 1 — Contexte & Raison */}
+                      <div className="space-y-4 lg:col-span-1">
                         <div className="rounded-lg border bg-muted/30 p-3">
                           <p className="text-xs text-muted-foreground mb-2">Contexte</p>
-
-                          <div className="grid gap-4 md:grid-cols-2">
+                          <div className="space-y-3">
                             <div>
                               <label className="text-sm font-medium">N° Commande (optionnel)</label>
                               <Input
@@ -642,14 +646,11 @@ export default function AdvancedSalesManager() {
                             </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* COL 3 — Montants */}
-                      <div className="space-y-4 lg:col-span-1">
                         <div className="rounded-lg border bg-muted/30 p-3">
                           <p className="text-xs text-muted-foreground mb-2">Montants</p>
-                          <div className="grid gap-4">
-                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
+                          <div className="space-y-3">
+                            <div className="grid gap-3 grid-cols-2">
                               <div>
                                 <label className="text-sm font-medium">Quantité *</label>
                                 <Input
@@ -669,7 +670,6 @@ export default function AdvancedSalesManager() {
                                 />
                               </div>
                             </div>
-
                             <div>
                               <label className="text-sm font-medium">Montant remboursement (GNF) *</label>
                               <Input
@@ -681,12 +681,108 @@ export default function AdvancedSalesManager() {
                             </div>
                           </div>
                         </div>
+                      </div>
 
+                      {/* COL 2-3 — Sélection Catégorie & Produit */}
+                      <div className="grid gap-4 md:grid-cols-2 lg:col-span-2">
+                        {/* Catégories */}
                         <div className="rounded-lg border bg-muted/30 p-3">
-                          <p className="text-xs text-muted-foreground">Astuce</p>
-                          <p className="text-sm text-muted-foreground">
-                            Renseignez quantité, prix unitaire et montant remboursé pour une traçabilité parfaite.
-                          </p>
+                          <p className="text-xs text-muted-foreground mb-2">Catégorie (optionnel)</p>
+                          <ScrollArea className="h-56">
+                            <div className="space-y-1">
+                              {categories.map((cat) => (
+                                <div
+                                  key={cat.id}
+                                  className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-muted/50 ${
+                                    newReturn.selected_category === cat.id ? 'bg-primary/10 border border-primary' : ''
+                                  }`}
+                                  onClick={() => {
+                                    setNewReturn({ 
+                                      ...newReturn, 
+                                      selected_category: newReturn.selected_category === cat.id ? '' : cat.id,
+                                      selected_product: '' // Reset product when category changes
+                                    });
+                                  }}
+                                >
+                                  <Checkbox
+                                    checked={newReturn.selected_category === cat.id}
+                                    onCheckedChange={() => {
+                                      setNewReturn({ 
+                                        ...newReturn, 
+                                        selected_category: newReturn.selected_category === cat.id ? '' : cat.id,
+                                        selected_product: ''
+                                      });
+                                    }}
+                                  />
+                                  <span className="text-sm">{cat.name}</span>
+                                </div>
+                              ))}
+                              {categories.length === 0 && (
+                                <p className="text-sm text-muted-foreground text-center py-4">Aucune catégorie</p>
+                              )}
+                            </div>
+                          </ScrollArea>
+                        </div>
+
+                        {/* Produits */}
+                        <div className="rounded-lg border bg-muted/30 p-3">
+                          <p className="text-xs text-muted-foreground mb-2">Produit concerné *</p>
+                          <div className="relative mb-2">
+                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              placeholder="Rechercher..."
+                              value={returnProductSearch}
+                              onChange={(e) => setReturnProductSearch(e.target.value)}
+                              className="pl-8"
+                            />
+                          </div>
+                          <ScrollArea className="h-48">
+                            <div className="space-y-1">
+                              {vendorProducts
+                                .filter(p => {
+                                  const matchesSearch = p.name.toLowerCase().includes(returnProductSearch.toLowerCase());
+                                  const matchesCategory = !newReturn.selected_category || p.category_id === newReturn.selected_category;
+                                  return matchesSearch && matchesCategory;
+                                })
+                                .map((product) => (
+                                  <div
+                                    key={product.id}
+                                    className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-muted/50 ${
+                                      newReturn.selected_product === product.id ? 'bg-primary/10 border border-primary' : ''
+                                    }`}
+                                    onClick={() => {
+                                      setNewReturn({ 
+                                        ...newReturn, 
+                                        selected_product: newReturn.selected_product === product.id ? '' : product.id,
+                                        unit_price: product.price.toString()
+                                      });
+                                    }}
+                                  >
+                                    <Checkbox
+                                      checked={newReturn.selected_product === product.id}
+                                      onCheckedChange={() => {
+                                        setNewReturn({ 
+                                          ...newReturn, 
+                                          selected_product: newReturn.selected_product === product.id ? '' : product.id,
+                                          unit_price: product.price.toString()
+                                        });
+                                      }}
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <span className="text-sm block truncate">{product.name}</span>
+                                      <span className="text-xs text-muted-foreground">{product.price.toLocaleString()} GNF</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              {vendorProducts.filter(p => {
+                                const matchesSearch = p.name.toLowerCase().includes(returnProductSearch.toLowerCase());
+                                const matchesCategory = !newReturn.selected_category || p.category_id === newReturn.selected_category;
+                                return matchesSearch && matchesCategory;
+                              }).length === 0 && (
+                                <p className="text-sm text-muted-foreground text-center py-4">Aucun produit trouvé</p>
+                              )}
+                            </div>
+                          </ScrollArea>
                         </div>
                       </div>
                     </div>
