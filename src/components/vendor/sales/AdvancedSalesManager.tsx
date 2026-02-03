@@ -17,7 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { 
   ShoppingCart, RotateCcw, CreditCard, Percent, Plus, 
-  Package, Users, Calendar, Search, Banknote, CheckCircle
+  Package, Users, Calendar, Search, Banknote, CheckCircle, Eye
 } from 'lucide-react';
 
 // Type produit pour la sélection
@@ -103,6 +103,10 @@ export default function AdvancedSalesManager() {
   const [isCollectPaymentOpen, setIsCollectPaymentOpen] = useState(false);
   const [selectedCreditForPayment, setSelectedCreditForPayment] = useState<CreditSale | null>(null);
   const [paymentAmount, setPaymentAmount] = useState('');
+  
+  // Dialog pour voir les détails des produits d'une vente à crédit
+  const [isCreditDetailsOpen, setIsCreditDetailsOpen] = useState(false);
+  const [selectedCreditForDetails, setSelectedCreditForDetails] = useState<CreditSale | null>(null);
 
   // Formulaires
   const [newCredit, setNewCredit] = useState({
@@ -855,21 +859,32 @@ export default function AdvancedSalesManager() {
                           {sale.status === 'paid' ? 'Payé' : sale.status === 'partial' ? 'Partiel' : 'En attente'}
                         </Badge>
                       </div>
-                      {sale.status !== 'paid' && (
-                        <Button 
-                          size="sm" 
-                          onClick={() => openCollectPaymentDialog(sale)}
-                          className="flex-shrink-0"
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedCreditForDetails(sale);
+                            setIsCreditDetailsOpen(true);
+                          }}
                         >
-                          <Banknote className="w-4 h-4 mr-1" />
-                          Encaisser
+                          <Eye className="w-4 h-4" />
                         </Button>
-                      )}
-                      {sale.status === 'paid' && (
-                        <div className="flex-shrink-0 p-2">
-                          <CheckCircle className="w-5 h-5 text-green-600" />
-                        </div>
-                      )}
+                        {sale.status !== 'paid' && (
+                          <Button 
+                            size="sm" 
+                            onClick={() => openCollectPaymentDialog(sale)}
+                          >
+                            <Banknote className="w-4 h-4 mr-1" />
+                            Encaisser
+                          </Button>
+                        )}
+                        {sale.status === 'paid' && (
+                          <div className="p-2">
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                          </div>
+                        )}
+                      </div>
                     </div>
                     
                     {/* Liste des produits vendus à crédit */}
@@ -982,6 +997,105 @@ export default function AdvancedSalesManager() {
                     <Button onClick={collectCreditPayment}>
                       <CheckCircle className="w-4 h-4 mr-1" />
                       Confirmer l'encaissement
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Dialog de détails des produits vendus à crédit */}
+          <Dialog open={isCreditDetailsOpen} onOpenChange={setIsCreditDetailsOpen}>
+            <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
+              <DialogHeader className="flex-shrink-0">
+                <DialogTitle className="flex items-center gap-2">
+                  <Package className="w-5 h-5 text-primary" />
+                  Détails de la vente à crédit
+                </DialogTitle>
+              </DialogHeader>
+              
+              {selectedCreditForDetails && (
+                <div className="space-y-4 overflow-hidden flex flex-col">
+                  {/* Infos client */}
+                  <div className="rounded-lg border bg-muted/30 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30">
+                        <Users className="w-5 h-5 text-orange-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-lg">{selectedCreditForDetails.customer_name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Échéance: {new Date(selectedCreditForDetails.due_date).toLocaleDateString('fr-FR')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 mt-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Total:</span>
+                        <p className="font-bold">{selectedCreditForDetails.total.toLocaleString()} GNF</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Payé:</span>
+                        <p className="font-medium text-green-600">{selectedCreditForDetails.paid_amount.toLocaleString()} GNF</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Reste:</span>
+                        <p className="font-bold text-orange-600">{selectedCreditForDetails.remaining_amount.toLocaleString()} GNF</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Liste des produits */}
+                  <div className="flex-1 overflow-hidden">
+                    <p className="text-sm font-medium mb-3">Produits vendus ({selectedCreditForDetails.items?.length || 0})</p>
+                    <ScrollArea className="h-[300px] pr-2">
+                      <div className="space-y-3">
+                        {selectedCreditForDetails.items && selectedCreditForDetails.items.length > 0 ? (
+                          selectedCreditForDetails.items.map((item, idx) => (
+                            <div 
+                              key={idx}
+                              className="flex items-center gap-3 p-3 rounded-lg border bg-card"
+                            >
+                              {item.images && item.images[0] ? (
+                                <img 
+                                  src={item.images[0]} 
+                                  alt={item.name}
+                                  className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+                                />
+                              ) : (
+                                <div className="w-14 h-14 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                                  <Package className="w-6 h-6 text-muted-foreground" />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate">{item.name}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  Prix unitaire: {item.price.toLocaleString()} GNF
+                                </p>
+                                <p className="text-sm">
+                                  Quantité: <span className="font-semibold">{item.quantity}</span>
+                                </p>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <p className="font-bold text-primary">
+                                  {(item.price * item.quantity).toLocaleString()} GNF
+                                </p>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <Package className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                            <p>Aucun produit enregistré</p>
+                          </div>
+                        )}
+                      </div>
+                    </ScrollArea>
+                  </div>
+
+                  <div className="flex justify-end pt-4 border-t flex-shrink-0">
+                    <Button variant="outline" onClick={() => setIsCreditDetailsOpen(false)}>
+                      Fermer
                     </Button>
                   </div>
                 </div>
