@@ -47,8 +47,9 @@ export function useSurveillanceLogic() {
   const [loading, setLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
-  // Vérifier les permissions (PDG = admin ou ceo role)
-  const isPDG = profile?.role === 'admin' || profile?.role === 'ceo';
+  // Vérifier les permissions (PDG = admin, ceo, ou pdg role)
+  const userRole = (profile?.role || '').toString().toLowerCase();
+  const isPDG = ['admin', 'ceo', 'pdg'].includes(userRole);
 
   // Charger les anomalies
   const loadAnomalies = useCallback(async () => {
