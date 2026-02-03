@@ -25136,6 +25136,10 @@ export type Database = {
           success: boolean
         }[]
       }
+      auto_sync_agent_permissions: {
+        Args: { p_agent_id: string }
+        Returns: Json
+      }
       block_ip_address: {
         Args: {
           p_auto_block?: boolean
@@ -25646,6 +25650,16 @@ export type Database = {
           p_user_id: string
         }
         Returns: Json
+      }
+      detect_permission_sync_anomalies: {
+        Args: never
+        Returns: {
+          agent_id: string
+          agent_name: string
+          missing_in_advanced: string[]
+          missing_in_legacy: string[]
+          severity: string
+        }[]
       }
       detect_stock_anomalies: {
         Args: never
@@ -26975,6 +26989,10 @@ export type Database = {
           status: string
           total_checks: number
         }[]
+      }
+      run_permission_sync_validation: {
+        Args: { p_triggered_by?: string }
+        Returns: Json
       }
       schedule_funds_release: {
         Args: {
