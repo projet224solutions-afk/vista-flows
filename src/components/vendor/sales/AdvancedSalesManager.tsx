@@ -10,13 +10,23 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { 
   ShoppingCart, RotateCcw, CreditCard, Percent, Plus, 
-  Package, Users, Calendar
+  Package, Users, Calendar, Search
 } from 'lucide-react';
+
+// Type produit pour la sélection
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  images?: string[];
+}
 
 // ============= TYPES =============
 interface GroupedSale {
@@ -54,6 +64,7 @@ interface Promotion {
   start_date: string | null;
   end_date: string | null;
   is_active: boolean;
+  applicable_products?: string[];
 }
 
 export default function AdvancedSalesManager() {
@@ -94,8 +105,13 @@ export default function AdvancedSalesManager() {
     discount_type: 'percentage',
     discount_value: '',
     start_date: '',
-    end_date: ''
+    end_date: '',
+    selected_products: [] as string[]
   });
+
+  // État pour les produits du vendeur
+  const [vendorProducts, setVendorProducts] = useState<Product[]>([]);
+  const [productSearchTerm, setProductSearchTerm] = useState('');
 
   // Chargement des données
   const loadData = async () => {
@@ -165,8 +181,20 @@ export default function AdvancedSalesManager() {
         discount_value: p.discount_value,
         start_date: p.start_date,
         end_date: p.end_date,
-        is_active: p.is_active
+        is_active: p.is_active,
+        applicable_products: Array.isArray(p.applicable_products) 
+          ? (p.applicable_products as unknown as string[])
+          : []
       })));
+
+      // Produits du vendeur
+      const { data: productsData } = await supabase
+        .from('products')
+        .select('id, name, price, images')
+        .eq('vendor_id', vendorId)
+        .order('name');
+      
+      setVendorProducts(productsData || []);
 
     } catch (error) {
       console.error('Error loading data:', error);
@@ -262,6 +290,7 @@ export default function AdvancedSalesManager() {
           discount_value: parseFloat(newPromo.discount_value),
           start_date: newPromo.start_date || null,
           end_date: newPromo.end_date || null,
+          applicable_products: newPromo.selected_products.length > 0 ? newPromo.selected_products : null,
           is_active: true
         }]);
 
@@ -269,12 +298,28 @@ export default function AdvancedSalesManager() {
 
       toast({ title: '✅ Promotion créée' });
       setIsNewPromoOpen(false);
-      setNewPromo({ name: '', discount_type: 'percentage', discount_value: '', start_date: '', end_date: '' });
+      setNewPromo({ name: '', discount_type: 'percentage', discount_value: '', start_date: '', end_date: '', selected_products: [] });
+      setProductSearchTerm('');
       loadData();
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
     }
   };
+
+  // Toggle sélection produit pour promo
+  const toggleProductSelection = (productId: string) => {
+    setNewPromo(prev => ({
+      ...prev,
+      selected_products: prev.selected_products.includes(productId)
+        ? prev.selected_products.filter(id => id !== productId)
+        : [...prev.selected_products, productId]
+    }));
+  };
+
+  // Filtrer les produits par recherche
+  const filteredProducts = vendorProducts.filter(p => 
+    p.name.toLowerCase().includes(productSearchTerm.toLowerCase())
+  );
 
   // Stats
   const totalCredit = creditSales.reduce((sum, c) => sum + c.remaining_amount, 0);
@@ -680,6 +725,84 @@ export default function AdvancedSalesManager() {
                       />
                     </div>
                   </div>
+                  
+                  {/* Sélection de produits */}
+                  <div>
+                    <label className="text-sm font-medium">Produits à promouvoir</label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      {newPromo.selected_products.length === 0 
+                        ? 'Tous les produits (aucune sélection)' 
+                        : `${newPromo.selected_products.length} produit(s) sélectionné(s)`}
+                    </p>
+                    
+                    {/* Recherche */}
+                    <div className="relative mb-2">
+                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Rechercher un produit..."
+                        value={productSearchTerm}
+                        onChange={(e) => setProductSearchTerm(e.target.value)}
+                        className="pl-8"
+                      />
+                    </div>
+                    
+                    {/* Liste des produits */}
+                    <ScrollArea className="h-48 border rounded-md p-2">
+                      {vendorProducts.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          Aucun produit disponible
+                        </p>
+                      ) : filteredProducts.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          Aucun résultat pour "{productSearchTerm}"
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {filteredProducts.map((product) => (
+                            <div
+                              key={product.id}
+                              className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${
+                                newPromo.selected_products.includes(product.id)
+                                  ? 'bg-primary/10 border border-primary'
+                                  : 'hover:bg-muted'
+                              }`}
+                              onClick={() => toggleProductSelection(product.id)}
+                            >
+                              <Checkbox
+                                checked={newPromo.selected_products.includes(product.id)}
+                                onCheckedChange={() => toggleProductSelection(product.id)}
+                              />
+                              {product.images?.[0] && (
+                                <img
+                                  src={product.images[0]}
+                                  alt={product.name}
+                                  className="w-10 h-10 object-cover rounded"
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{product.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {product.price.toLocaleString()} GNF
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                    
+                    {newPromo.selected_products.length > 0 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="mt-2"
+                        onClick={() => setNewPromo({ ...newPromo, selected_products: [] })}
+                      >
+                        Tout désélectionner
+                      </Button>
+                    )}
+                  </div>
                   <div className="flex gap-2 justify-end">
                     <Button variant="outline" onClick={() => setIsNewPromoOpen(false)}>Annuler</Button>
                     <Button onClick={createPromo}>Créer</Button>
@@ -690,36 +813,62 @@ export default function AdvancedSalesManager() {
           </div>
           
           <div className="space-y-3">
-            {promotions.map((promo) => (
-              <Card key={promo.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${promo.is_active ? 'bg-green-100 dark:bg-green-900/30' : 'bg-muted'}`}>
-                        <Percent className={`w-4 h-4 ${promo.is_active ? 'text-green-600' : 'text-muted-foreground'}`} />
+            {promotions.map((promo) => {
+              // Récupérer les noms des produits liés
+              const linkedProducts = promo.applicable_products && promo.applicable_products.length > 0
+                ? vendorProducts.filter(p => promo.applicable_products?.includes(p.id))
+                : [];
+              
+              return (
+                <Card key={promo.id}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${promo.is_active ? 'bg-green-100 dark:bg-green-900/30' : 'bg-muted'}`}>
+                          <Percent className={`w-4 h-4 ${promo.is_active ? 'text-green-600' : 'text-muted-foreground'}`} />
+                        </div>
+                        <div>
+                          <p className="font-semibold">{promo.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {promo.start_date && promo.end_date 
+                              ? `${new Date(promo.start_date).toLocaleDateString('fr-FR')} - ${new Date(promo.end_date).toLocaleDateString('fr-FR')}`
+                              : 'Sans limite de temps'
+                            }
+                          </p>
+                          {/* Afficher les produits liés */}
+                          {linkedProducts.length > 0 ? (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {linkedProducts.slice(0, 3).map(p => (
+                                <Badge key={p.id} variant="outline" className="text-xs">
+                                  {p.name}
+                                </Badge>
+                              ))}
+                              {linkedProducts.length > 3 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{linkedProducts.length - 3}
+                                </Badge>
+                              )}
+                            </div>
+                          ) : (
+                            <Badge variant="secondary" className="text-xs mt-1">
+                              Tous les produits
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold">{promo.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {promo.start_date && promo.end_date 
-                            ? `${new Date(promo.start_date).toLocaleDateString('fr-FR')} - ${new Date(promo.end_date).toLocaleDateString('fr-FR')}`
-                            : 'Sans limite de temps'
-                          }
+                      <div className="text-right">
+                        <p className="font-bold text-green-600">
+                          -{promo.discount_value}{promo.discount_type === 'percentage' ? '%' : ' GNF'}
                         </p>
+                        <Badge variant={promo.is_active ? 'default' : 'secondary'}>
+                          {promo.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-green-600">
-                        -{promo.discount_value}{promo.discount_type === 'percentage' ? '%' : ' GNF'}
-                      </p>
-                      <Badge variant={promo.is_active ? 'default' : 'secondary'}>
-                        {promo.is_active ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
             {promotions.length === 0 && (
               <Card>
                 <CardContent className="p-8 text-center">
