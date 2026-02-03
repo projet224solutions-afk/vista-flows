@@ -30,7 +30,8 @@ import {
   AlertOctagon,
   FileText,
   Clock,
-  TrendingUp
+  TrendingUp,
+  Monitor
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -47,6 +48,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Textarea } from '@/components/ui/textarea';
+import SystemLiveMonitor from './SystemLiveMonitor';
 
 interface DashboardData {
   pending_anomalies: number;
@@ -120,6 +122,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [runningValidation, setRunningValidation] = useState(false);
   const [correctionReason, setCorrectionReason] = useState('');
+  const [showLiveMonitor, setShowLiveMonitor] = useState(false);
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -164,16 +167,19 @@ const LogicSurveillanceDashboard: React.FC = () => {
     
     setRunningValidation(true);
     try {
-      const { data, error } = await supabase.rpc('run_full_system_validation', {
-        p_triggered_by: user.id
+      // Utiliser detect_all_anomalies au lieu de run_full_system_validation
+      const { data, error } = await supabase.rpc('detect_all_anomalies', {
+        p_domain_filter: null,
+        p_severity_filter: null
       });
 
       if (error) throw error;
       
-      toast.success('Validation système complète terminée');
+      toast.success(`Validation terminée: ${data?.length || 0} domaines vérifiés`);
       loadDashboard();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Erreur de validation';
+      console.error('Validation error:', error);
       toast.error(message);
     } finally {
       setRunningValidation(false);
@@ -297,7 +303,20 @@ const LogicSurveillanceDashboard: React.FC = () => {
           <p className="text-muted-foreground">Contrôle d'intégrité en temps réel de toutes les fonctionnalités</p>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Bouton Monitor Live 24/7 - Spectaculaire */}
+          <Button 
+            onClick={() => setShowLiveMonitor(true)}
+            className="bg-gradient-to-r from-emerald-600 via-cyan-600 to-blue-600 hover:from-emerald-700 hover:via-cyan-700 hover:to-blue-700 text-white font-bold shadow-lg shadow-emerald-500/30 border-0"
+          >
+            <Monitor className="h-4 w-4 mr-2 animate-pulse" />
+            <span className="relative flex items-center gap-2">
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-ping absolute -left-1" />
+              <span className="w-2 h-2 bg-red-500 rounded-full relative -left-1" />
+              Voir Système Live 24/7
+            </span>
+          </Button>
+
           <Button variant="outline" size="sm" onClick={loadDashboard} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Actualiser
@@ -309,10 +328,13 @@ const LogicSurveillanceDashboard: React.FC = () => {
             className="bg-gradient-to-r from-primary to-primary/80"
           >
             <Play className={`h-4 w-4 mr-2 ${runningValidation ? 'animate-spin' : ''}`} />
-            {runningValidation ? 'Validation...' : 'Lancer Validation Complète'}
+            {runningValidation ? 'Validation...' : 'Lancer Validation'}
           </Button>
         </div>
       </div>
+
+      {/* Modal Live Monitor */}
+      <SystemLiveMonitor open={showLiveMonitor} onOpenChange={setShowLiveMonitor} />
 
       {/* Alertes critiques */}
       {(dashboardData?.critical_anomalies || 0) > 0 && (
