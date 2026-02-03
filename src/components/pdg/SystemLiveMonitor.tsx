@@ -36,6 +36,7 @@ import {
   RefreshCw,
   AlertTriangle,
   AlertCircle,
+  ChevronDown,
 } from 'lucide-react';
 import { useFeatureHealth } from '@/hooks/useFeatureHealth';
 import FeatureDetailSheet from './FeatureDetailSheet';
@@ -111,6 +112,13 @@ export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMoni
     users: 0,
     checks: 0,
   });
+  const [transactionBreakdown, setTransactionBreakdown] = useState({
+    today: 0,
+    week: 0,
+    month: 0,
+    year: 0,
+  });
+  const [showTransactionMenu, setShowTransactionMenu] = useState(false);
   const [realStatsLoaded, setRealStatsLoaded] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState<typeof SYSTEM_FEATURES[0] | null>(null);
   const [showDetailSheet, setShowDetailSheet] = useState(false);
@@ -220,16 +228,37 @@ export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMoni
 
     const loadRealStats = async () => {
       try {
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+        const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        const yearStart = new Date(now.getFullYear(), 0, 1).toISOString();
+
         // Charger les vraies données en parallèle
-        const [usersRes, ordersRes, apiLogsRes, systemChecksRes] = await Promise.all([
+        const [usersRes, apiLogsRes, systemChecksRes, todayOrders, weekOrders, monthOrders, yearOrders] = await Promise.all([
           supabase.from('profiles').select('id', { count: 'exact', head: true }),
-          supabase.from('orders').select('id', { count: 'exact', head: true }),
           supabase.from('api_usage_logs').select('id', { count: 'exact', head: true }),
           supabase.from('logic_rules').select('id', { count: 'exact', head: true }),
+          supabase.from('orders').select('id', { count: 'exact', head: true }).gte('created_at', todayStart),
+          supabase.from('orders').select('id', { count: 'exact', head: true }).gte('created_at', weekStart),
+          supabase.from('orders').select('id', { count: 'exact', head: true }).gte('created_at', monthStart),
+          supabase.from('orders').select('id', { count: 'exact', head: true }).gte('created_at', yearStart),
         ]);
 
+        const todayCount = todayOrders.count || 0;
+        const weekCount = weekOrders.count || 0;
+        const monthCount = monthOrders.count || 0;
+        const yearCount = yearOrders.count || 0;
+
+        setTransactionBreakdown({
+          today: todayCount,
+          week: weekCount,
+          month: monthCount,
+          year: yearCount,
+        });
+
         setStats({
-          transactions: ordersRes.count || 0,
+          transactions: todayCount, // Afficher les transactions du jour par défaut
           requests: apiLogsRes.count || 0,
           users: usersRes.count || 0,
           checks: systemChecksRes.count || 0,
@@ -398,8 +427,61 @@ export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMoni
 
             {/* Stats Bar */}
             <div className="relative z-10 grid grid-cols-4 gap-4 mb-8">
+              {/* Transaction Card - Clickable with dropdown */}
+              <div className="relative">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0 }}
+                  onClick={() => setShowTransactionMenu(!showTransactionMenu)}
+                  className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30 backdrop-blur cursor-pointer hover:bg-emerald-500/20 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-emerald-500/70 text-xs mb-2">
+                      <CreditCard className="w-4 h-4" />
+                      TRANSACTIONS (AUJOURD'HUI)
+                    </div>
+                    <ChevronDown className={`w-4 h-4 text-emerald-500/70 transition-transform ${showTransactionMenu ? 'rotate-180' : ''}`} />
+                  </div>
+                  <div className="text-2xl font-bold text-emerald-400 font-mono">
+                    {transactionBreakdown.today.toLocaleString()}
+                  </div>
+                </motion.div>
+
+                {/* Dropdown Menu */}
+                <AnimatePresence>
+                  {showTransactionMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute top-full left-0 right-0 mt-2 z-50 bg-slate-900 border border-emerald-500/30 rounded-lg overflow-hidden shadow-xl"
+                    >
+                      <div className="p-2 space-y-1">
+                        <div className="flex justify-between items-center p-2 hover:bg-emerald-500/10 rounded cursor-pointer" onClick={() => setShowTransactionMenu(false)}>
+                          <span className="text-emerald-400 text-sm">Aujourd'hui</span>
+                          <span className="text-white font-mono font-bold">{transactionBreakdown.today.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between items-center p-2 hover:bg-emerald-500/10 rounded cursor-pointer" onClick={() => setShowTransactionMenu(false)}>
+                          <span className="text-emerald-400 text-sm">Cette semaine</span>
+                          <span className="text-white font-mono font-bold">{transactionBreakdown.week.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between items-center p-2 hover:bg-emerald-500/10 rounded cursor-pointer" onClick={() => setShowTransactionMenu(false)}>
+                          <span className="text-emerald-400 text-sm">Ce mois</span>
+                          <span className="text-white font-mono font-bold">{transactionBreakdown.month.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between items-center p-2 hover:bg-emerald-500/10 rounded cursor-pointer" onClick={() => setShowTransactionMenu(false)}>
+                          <span className="text-emerald-400 text-sm">Cette année</span>
+                          <span className="text-white font-mono font-bold">{transactionBreakdown.year.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Other Stats */}
               {[
-                { label: 'TRANSACTIONS', value: stats.transactions.toLocaleString(), icon: CreditCard },
                 { label: 'REQUÊTES API', value: stats.requests.toLocaleString(), icon: Network },
                 { label: 'UTILISATEURS', value: stats.users.toLocaleString(), icon: Users },
                 { label: 'CHECKS SYSTÈME', value: stats.checks.toLocaleString(), icon: CheckCircle2 },
@@ -408,7 +490,7 @@ export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMoni
                   key={stat.label}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
+                  transition={{ delay: (i + 1) * 0.1 }}
                   className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30 backdrop-blur"
                 >
                   <div className="flex items-center gap-2 text-emerald-500/70 text-xs mb-2">
