@@ -7,7 +7,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -38,6 +39,7 @@ import {
 } from 'lucide-react';
 import { useFeatureHealth } from '@/hooks/useFeatureHealth';
 import FeatureDetailSheet from './FeatureDetailSheet';
+import { supabase } from '@/integrations/supabase/client';
 
 // Toutes les fonctionnalités du système
 const SYSTEM_FEATURES = [
@@ -104,11 +106,12 @@ export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMoni
   const [logs, setLogs] = useState<FloatingLog[]>([]);
   const [uptime, setUptime] = useState({ days: 99, hours: 23, mins: 45, secs: 12 });
   const [stats, setStats] = useState({
-    transactions: 1247853,
-    requests: 8432561,
-    users: 15234,
-    checks: 98765,
+    transactions: 0,
+    requests: 0,
+    users: 0,
+    checks: 0,
   });
+  const [realStatsLoaded, setRealStatsLoaded] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState<typeof SYSTEM_FEATURES[0] | null>(null);
   const [showDetailSheet, setShowDetailSheet] = useState(false);
   const logIdRef = useRef(0);
@@ -211,21 +214,42 @@ export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMoni
     return () => clearInterval(interval);
   }, [open]);
 
-  // Mettre à jour les stats
+  // Charger les vraies statistiques depuis la base de données
   useEffect(() => {
-    if (!open) return;
+    if (!open || realStatsLoaded) return;
 
-    const interval = setInterval(() => {
-      setStats((prev) => ({
-        transactions: prev.transactions + Math.floor(Math.random() * 5),
-        requests: prev.requests + Math.floor(Math.random() * 20),
-        users: prev.users + (Math.random() > 0.9 ? 1 : 0),
-        checks: prev.checks + Math.floor(Math.random() * 3),
-      }));
-    }, 100);
+    const loadRealStats = async () => {
+      try {
+        // Charger les vraies données en parallèle
+        const [usersRes, ordersRes, apiLogsRes, systemChecksRes] = await Promise.all([
+          supabase.from('profiles').select('id', { count: 'exact', head: true }),
+          supabase.from('orders').select('id', { count: 'exact', head: true }),
+          supabase.from('api_usage_logs').select('id', { count: 'exact', head: true }),
+          supabase.from('logic_rules').select('id', { count: 'exact', head: true }),
+        ]);
 
-    return () => clearInterval(interval);
-  }, [open]);
+        setStats({
+          transactions: ordersRes.count || 0,
+          requests: apiLogsRes.count || 0,
+          users: usersRes.count || 0,
+          checks: systemChecksRes.count || 0,
+        });
+        setRealStatsLoaded(true);
+      } catch (error) {
+        console.error('Erreur chargement stats système:', error);
+      }
+    };
+
+    loadRealStats();
+  }, [open, realStatsLoaded]);
+
+  // Animation légère des stats (petits incréments visuels seulement après chargement)
+  useEffect(() => {
+    if (!open || !realStatsLoaded) return;
+
+    // Pas d'incrémentation aléatoire - les stats restent stables
+    // On pourrait ajouter un rafraîchissement périodique si nécessaire
+  }, [open, realStatsLoaded]);
 
   // Handler pour clic sur une carte
   const handleFeatureClick = (feature: typeof SYSTEM_FEATURES[0]) => {
@@ -271,7 +295,10 @@ export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMoni
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[95vw] max-h-[95vh] w-[1400px] h-[850px] p-0 overflow-hidden bg-black border-0">
+        <DialogContent className="max-w-[95vw] max-h-[95vh] w-[1400px] h-[850px] p-0 overflow-hidden bg-black border-0" aria-describedby={undefined}>
+          <VisuallyHidden>
+            <DialogTitle>Système de Surveillance 24/7</DialogTitle>
+          </VisuallyHidden>
           {/* Background Grid Effect */}
           <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,136,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,136,0.03)_1px,transparent_1px)] bg-[size:50px_50px]" />
           
