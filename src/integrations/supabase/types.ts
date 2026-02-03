@@ -25626,7 +25626,7 @@ export type Database = {
         Args: { p_domain_filter?: string; p_severity_filter?: string }
         Returns: {
           anomaly_count: number
-          domain: string
+          domain_name: string
           rule_id: string
           status: string
         }[]
