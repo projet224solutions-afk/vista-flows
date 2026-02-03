@@ -720,11 +720,12 @@ export default function AdvancedSalesManager() {
                   Nouvelle promo
                 </Button>
               </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
+              <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col">
+                <DialogHeader className="flex-shrink-0">
                   <DialogTitle>Créer une promotion</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">
+                <ScrollArea className="flex-1 pr-4">
+                <div className="space-y-4 pb-4">
                   <div>
                     <label className="text-sm font-medium">Nom de la promo *</label>
                     <Input
@@ -874,20 +875,29 @@ export default function AdvancedSalesManager() {
                       ) : (
                         <div className="space-y-2">
                           {filteredProducts.map((product) => {
+                            const isSelected = newPromo.selected_products.includes(product.id);
                             const categoryName = categories.find(c => c.id === product.category_id)?.name;
+                            
+                            const handleSelect = (e: React.MouseEvent) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              toggleProductSelection(product.id);
+                            };
+                            
                             return (
                               <div
                                 key={product.id}
-                                className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${
-                                  newPromo.selected_products.includes(product.id)
-                                    ? 'bg-primary/10 border border-primary'
-                                    : 'hover:bg-muted'
+                                className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors border ${
+                                  isSelected
+                                    ? 'bg-primary/10 border-primary'
+                                    : 'border-transparent hover:bg-muted'
                                 }`}
-                                onClick={() => toggleProductSelection(product.id)}
+                                onClick={handleSelect}
                               >
                                 <Checkbox
-                                  checked={newPromo.selected_products.includes(product.id)}
+                                  checked={isSelected}
                                   onCheckedChange={() => toggleProductSelection(product.id)}
+                                  onClick={(e) => e.stopPropagation()}
                                 />
                                 {product.images?.[0] && (
                                   <img
@@ -909,6 +919,9 @@ export default function AdvancedSalesManager() {
                                     )}
                                   </div>
                                 </div>
+                                {isSelected && (
+                                  <Badge variant="default" className="text-xs">✓</Badge>
+                                )}
                               </div>
                             );
                           })}
@@ -928,10 +941,11 @@ export default function AdvancedSalesManager() {
                       </Button>
                     )}
                   </div>
-                  <div className="flex gap-2 justify-end">
-                    <Button variant="outline" onClick={() => setIsNewPromoOpen(false)}>Annuler</Button>
-                    <Button onClick={createPromo}>Créer</Button>
-                  </div>
+                </div>
+                </ScrollArea>
+                <div className="flex gap-2 justify-end pt-4 flex-shrink-0 border-t">
+                  <Button variant="outline" onClick={() => setIsNewPromoOpen(false)}>Annuler</Button>
+                  <Button onClick={createPromo}>Créer</Button>
                 </div>
               </DialogContent>
             </Dialog>
