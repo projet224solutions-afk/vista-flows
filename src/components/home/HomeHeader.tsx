@@ -4,7 +4,6 @@
  * Glassmorphism + Premium animations
  */
 
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, ShoppingCart, Bell, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -41,18 +40,6 @@ export function HomeHeader({
         className
       )}
     >
-      {/* Welcome Banner with Marquee Animation */}
-      <div className="bg-primary/10 border-b border-primary/20 overflow-hidden">
-        <div className="animate-marquee whitespace-nowrap py-1.5 text-sm font-medium text-primary">
-          <span className="mx-4">🎉 Bienvenue sur MarketPlace 224Solutions!</span>
-          <span className="mx-4">✨ Découvrez nos meilleures offres du jour</span>
-          <span className="mx-4">🚀 Livraison rapide dans toute la Guinée</span>
-          <span className="mx-4">💎 Qualité garantie sur tous nos produits</span>
-          <span className="mx-4">🎉 Bienvenue sur MarketPlace 224Solutions!</span>
-          <span className="mx-4">✨ Découvrez nos meilleures offres du jour</span>
-        </div>
-      </div>
-
       <div className="px-4 py-3 md:px-6 md:py-4">
         <div className="flex items-center justify-between gap-3">
           {/* Logo & Location */}
@@ -101,13 +88,12 @@ export function HomeHeader({
               onClick={onCartClick || (() => navigate('/cart'))}
               className="relative h-10 w-10 rounded-full hover:bg-primary/10 transition-colors"
             >
-              <ShoppingCart className="w-5 h-5 text-muted-foreground" />
+              <ShoppingCart className="w-5 h-5 text-foreground" />
               {cartCount > 0 && (
-                <Badge
-                  variant="destructive"
-                  className="absolute -top-1 -right-1 h-5 min-w-5 px-1 flex items-center justify-center text-xs font-bold animate-bounce-in"
+                <Badge 
+                  className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-primary text-primary-foreground border-2 border-card"
                 >
-                  {cartCount > 9 ? '9+' : cartCount}
+                  {cartCount > 99 ? '99+' : cartCount}
                 </Badge>
               )}
             </Button>
@@ -116,17 +102,31 @@ export function HomeHeader({
             <Button
               variant="ghost"
               size="icon"
-              onClick={onNotificationClick || (() => navigate('/profil'))}
+              onClick={onNotificationClick || (() => navigate('/notifications'))}
               className="relative h-10 w-10 rounded-full hover:bg-primary/10 transition-colors"
             >
-              <Bell className="w-5 h-5 text-muted-foreground" />
+              <Bell className="w-5 h-5 text-foreground" />
               {notificationCount > 0 && (
-                <span className="absolute -top-1 -right-1 h-5 min-w-5 bg-destructive rounded-full text-xs text-destructive-foreground font-bold flex items-center justify-center px-1 animate-pulse">
-                  {notificationCount > 9 ? '9+' : notificationCount}
-                </span>
+                <Badge 
+                  className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-destructive text-destructive-foreground border-2 border-card"
+                >
+                  {notificationCount > 99 ? '99+' : notificationCount}
+                </Badge>
               )}
             </Button>
           </div>
+        </div>
+      </div>
+
+      {/* Welcome Banner with Marquee Animation - Below MarketPlace */}
+      <div className="bg-primary/10 border-t border-primary/20 overflow-hidden">
+        <div className="animate-marquee whitespace-nowrap py-1.5 text-sm font-medium text-primary">
+          <span className="mx-4">🎉 Bienvenue sur MarketPlace 224Solutions!</span>
+          <span className="mx-4">✨ Découvrez nos meilleures offres du jour</span>
+          <span className="mx-4">🚀 Livraison rapide dans toute la Guinée</span>
+          <span className="mx-4">💎 Qualité garantie sur tous nos produits</span>
+          <span className="mx-4">🎉 Bienvenue sur MarketPlace 224Solutions!</span>
+          <span className="mx-4">✨ Découvrez nos meilleures offres du jour</span>
         </div>
       </div>
     </header>
