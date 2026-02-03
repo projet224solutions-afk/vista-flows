@@ -494,103 +494,106 @@ export default function AdvancedSalesManager() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <ShoppingCart className="w-6 h-6" />
-            Ventes Avancées
+    <div className="space-y-3 sm:space-y-6">
+      {/* Header - Compact mobile */}
+      <div className="flex items-center justify-between">
+        <div className="min-w-0">
+          <h2 className="text-base sm:text-xl font-bold flex items-center gap-2">
+            <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+            <span className="truncate">Ventes Avancées</span>
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
             Gérez vos ventes à crédit, retours et promotions
           </p>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Stats - Grid 2x2 compact mobile */}
+      <div className="grid grid-cols-2 gap-2 sm:gap-4 md:grid-cols-4">
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-orange-600" />
-              <div>
-                <p className="text-xs text-muted-foreground">Créances</p>
-                <p className="text-lg font-bold text-orange-600">{totalCredit.toLocaleString()} GNF</p>
+          <CardContent className="p-2 sm:p-4">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Créances</p>
+                <p className="text-sm sm:text-lg font-bold text-orange-600 truncate">{totalCredit.toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <RotateCcw className="w-5 h-5 text-destructive" />
-              <div>
-                <p className="text-xs text-muted-foreground">Retours</p>
-                <p className="text-lg font-bold text-destructive">{totalReturns.toLocaleString()} GNF</p>
+          <CardContent className="p-2 sm:p-4">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 text-destructive flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Retours</p>
+                <p className="text-sm sm:text-lg font-bold text-destructive truncate">{totalReturns.toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Package className="w-5 h-5 text-primary" />
-              <div>
-                <p className="text-xs text-muted-foreground">Ventes groupées</p>
-                <p className="text-lg font-bold">{groupedSales.length}</p>
+          <CardContent className="p-2 sm:p-4">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Package className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Groupées</p>
+                <p className="text-sm sm:text-lg font-bold">{groupedSales.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Percent className="w-5 h-5 text-green-600" />
-              <div>
-                <p className="text-xs text-muted-foreground">Promos actives</p>
-                <p className="text-lg font-bold text-green-600">{activePromos}</p>
+          <CardContent className="p-2 sm:p-4">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Percent className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Promos</p>
+                <p className="text-sm sm:text-lg font-bold text-green-600">{activePromos}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs - Horizontal scroll mobile */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-4 w-full">
-          <TabsTrigger value="credit" className="text-xs sm:text-sm">
-            <CreditCard className="w-4 h-4 mr-1 hidden sm:inline" />
-            Crédit
-          </TabsTrigger>
-          <TabsTrigger value="returns" className="text-xs sm:text-sm">
-            <RotateCcw className="w-4 h-4 mr-1 hidden sm:inline" />
-            Retours
-          </TabsTrigger>
-          <TabsTrigger value="grouped" className="text-xs sm:text-sm">
-            <Package className="w-4 h-4 mr-1 hidden sm:inline" />
-            Groupées
-          </TabsTrigger>
-          <TabsTrigger value="promos" className="text-xs sm:text-sm">
-            <Percent className="w-4 h-4 mr-1 hidden sm:inline" />
-            Promos
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+          <TabsList className="grid grid-cols-4 w-full min-w-[280px]">
+            <TabsTrigger value="credit" className="text-[10px] sm:text-sm px-1 sm:px-3">
+              <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+              <span className="hidden sm:inline">Crédit</span>
+            </TabsTrigger>
+            <TabsTrigger value="returns" className="text-[10px] sm:text-sm px-1 sm:px-3">
+              <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+              <span className="hidden sm:inline">Retours</span>
+            </TabsTrigger>
+            <TabsTrigger value="grouped" className="text-[10px] sm:text-sm px-1 sm:px-3">
+              <Package className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+              <span className="hidden sm:inline">Groupées</span>
+            </TabsTrigger>
+            <TabsTrigger value="promos" className="text-[10px] sm:text-sm px-1 sm:px-3">
+              <Percent className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+              <span className="hidden sm:inline">Promos</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* VENTES À CRÉDIT */}
-        <TabsContent value="credit" className="mt-4">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold">Ventes à crédit</h3>
+        <TabsContent value="credit" className="mt-3 sm:mt-4">
+          <div className="flex justify-between items-center mb-3 sm:mb-4">
+            <h3 className="font-semibold text-sm sm:text-base">Ventes à crédit</h3>
             <Dialog open={isNewCreditOpen} onOpenChange={setIsNewCreditOpen}>
               <DialogTrigger asChild>
-                <Button size="sm">
-                  <Plus className="w-4 h-4 mr-1" />
-                  Nouvelle
+                <Button size="sm" className="h-8 text-xs sm:text-sm">
+                  <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="hidden sm:inline">Nouvelle</span>
+                  <span className="sm:hidden">+</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+              <DialogContent className="w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-3 sm:p-6">
                 <DialogHeader className="flex-shrink-0">
-                  <DialogTitle>Nouvelle vente à crédit</DialogTitle>
+                  <DialogTitle className="text-base sm:text-lg">Nouvelle vente à crédit</DialogTitle>
                 </DialogHeader>
 
                 <ScrollArea className="flex-1 pr-4">
@@ -836,58 +839,70 @@ export default function AdvancedSalesManager() {
             </Dialog>
           </div>
           
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {creditSales.map((sale) => (
               <Card key={sale.id}>
-                <CardContent className="p-4">
-                  <div className="space-y-3">
-                    {/* En-tête: Client + Montants + Actions */}
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex-shrink-0">
-                          <Users className="w-4 h-4 text-orange-600" />
+                <CardContent className="p-2.5 sm:p-4">
+                  <div className="space-y-2 sm:space-y-3">
+                    {/* Mobile: Stack layout / Desktop: Row layout */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                      {/* Client info */}
+                      <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                        <div className="p-1.5 sm:p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex-shrink-0">
+                          <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-600" />
                         </div>
-                        <div className="min-w-0">
-                          <p className="font-semibold truncate">{sale.customer_name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Échéance: {new Date(sale.due_date).toLocaleDateString('fr-FR')}
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-sm sm:text-base truncate">{sale.customer_name}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
+                            Éch: {new Date(sale.due_date).toLocaleDateString('fr-FR')}
                           </p>
                         </div>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="font-bold text-orange-600">{sale.remaining_amount.toLocaleString()} GNF</p>
-                        <p className="text-xs text-muted-foreground">
-                          sur {sale.total.toLocaleString()} GNF
-                        </p>
-                        <Badge variant={sale.status === 'paid' ? 'default' : 'secondary'}>
-                          {sale.status === 'paid' ? 'Payé' : sale.status === 'partial' ? 'Partiel' : 'En attente'}
+                        {/* Badge mobile only - inline with name */}
+                        <Badge variant={sale.status === 'paid' ? 'default' : 'secondary'} className="sm:hidden text-[10px] h-5">
+                          {sale.status === 'paid' ? 'Payé' : sale.status === 'partial' ? 'Part.' : 'Att.'}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedCreditForDetails(sale);
-                            setIsCreditDetailsOpen(true);
-                          }}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        {sale.status !== 'paid' && (
-                          <Button 
-                            size="sm" 
-                            onClick={() => openCollectPaymentDialog(sale)}
+                      
+                      {/* Montants + Actions */}
+                      <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
+                        <div className="text-left sm:text-right">
+                          <p className="font-bold text-sm sm:text-base text-orange-600">{sale.remaining_amount.toLocaleString()} GNF</p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">
+                            sur {sale.total.toLocaleString()}
+                          </p>
+                          <Badge variant={sale.status === 'paid' ? 'default' : 'secondary'} className="hidden sm:inline-flex">
+                            {sale.status === 'paid' ? 'Payé' : sale.status === 'partial' ? 'Partiel' : 'En attente'}
+                          </Badge>
+                        </div>
+                        
+                        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                            onClick={() => {
+                              setSelectedCreditForDetails(sale);
+                              setIsCreditDetailsOpen(true);
+                            }}
                           >
-                            <Banknote className="w-4 h-4 mr-1" />
-                            Encaisser
+                            <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </Button>
-                        )}
-                        {sale.status === 'paid' && (
-                          <div className="p-2">
-                            <CheckCircle className="w-5 h-5 text-green-600" />
-                          </div>
-                        )}
+                          {sale.status !== 'paid' && (
+                            <Button 
+                              size="sm"
+                              className="h-7 sm:h-8 text-xs sm:text-sm px-2 sm:px-3"
+                              onClick={() => openCollectPaymentDialog(sale)}
+                            >
+                              <Banknote className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
+                              <span className="hidden sm:inline">Encaisser</span>
+                            </Button>
+                          )}
+                          {sale.status === 'paid' && (
+                            <div className="p-1.5 sm:p-2">
+                              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                     
@@ -1010,46 +1025,47 @@ export default function AdvancedSalesManager() {
 
           {/* Dialog de détails des produits vendus à crédit */}
           <Dialog open={isCreditDetailsOpen} onOpenChange={setIsCreditDetailsOpen}>
-            <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
+            <DialogContent className="w-[95vw] sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col p-3 sm:p-6">
               <DialogHeader className="flex-shrink-0">
-                <DialogTitle className="flex items-center gap-2">
-                  <Package className="w-5 h-5 text-primary" />
-                  Détails de la vente à crédit
+                <DialogTitle className="flex items-center gap-2 text-sm sm:text-base">
+                  <Package className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                  Détails vente à crédit
                 </DialogTitle>
               </DialogHeader>
               
               {selectedCreditForDetails && (
-                <div className="space-y-4 overflow-hidden flex flex-col">
-                  {/* Infos client */}
-                  <div className="rounded-lg border bg-muted/30 p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30">
-                        <Users className="w-5 h-5 text-orange-600" />
+                <div className="space-y-3 sm:space-y-4 overflow-hidden flex flex-col">
+                  {/* Infos client - compact mobile */}
+                  <div className="rounded-lg border bg-muted/30 p-2.5 sm:p-4">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="p-1.5 sm:p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30">
+                        <Users className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
                       </div>
-                      <div className="flex-1">
-                        <p className="font-semibold text-lg">{selectedCreditForDetails.customer_name}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm sm:text-lg truncate">{selectedCreditForDetails.customer_name}</p>
                         {selectedCreditForDetails.customer_phone && (
-                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1">
                             📞 {selectedCreditForDetails.customer_phone}
                           </p>
                         )}
-                        <p className="text-sm text-muted-foreground">
-                          Échéance: {new Date(selectedCreditForDetails.due_date).toLocaleDateString('fr-FR')}
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          Éch: {new Date(selectedCreditForDetails.due_date).toLocaleDateString('fr-FR')}
                         </p>
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 mt-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Total:</span>
-                        <p className="font-bold">{selectedCreditForDetails.total.toLocaleString()} GNF</p>
+                    {/* Montants - grille responsive */}
+                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mt-3 sm:mt-4 text-xs sm:text-sm">
+                      <div className="bg-background/50 rounded p-1.5 sm:p-2">
+                        <span className="text-muted-foreground text-[10px] sm:text-xs">Total</span>
+                        <p className="font-bold text-xs sm:text-sm">{selectedCreditForDetails.total.toLocaleString()}</p>
                       </div>
-                      <div>
-                        <span className="text-muted-foreground">Payé:</span>
-                        <p className="font-medium text-green-600">{selectedCreditForDetails.paid_amount.toLocaleString()} GNF</p>
+                      <div className="bg-background/50 rounded p-1.5 sm:p-2">
+                        <span className="text-muted-foreground text-[10px] sm:text-xs">Payé</span>
+                        <p className="font-medium text-green-600 text-xs sm:text-sm">{selectedCreditForDetails.paid_amount.toLocaleString()}</p>
                       </div>
-                      <div>
-                        <span className="text-muted-foreground">Reste:</span>
-                        <p className="font-bold text-orange-600">{selectedCreditForDetails.remaining_amount.toLocaleString()} GNF</p>
+                      <div className="bg-background/50 rounded p-1.5 sm:p-2">
+                        <span className="text-muted-foreground text-[10px] sm:text-xs">Reste</span>
+                        <p className="font-bold text-orange-600 text-xs sm:text-sm">{selectedCreditForDetails.remaining_amount.toLocaleString()}</p>
                       </div>
                     </div>
                     
@@ -1126,19 +1142,20 @@ export default function AdvancedSalesManager() {
         </TabsContent>
 
         {/* RETOURS */}
-        <TabsContent value="returns" className="mt-4">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold">Retours et remboursements</h3>
+        <TabsContent value="returns" className="mt-3 sm:mt-4">
+          <div className="flex justify-between items-center mb-3 sm:mb-4">
+            <h3 className="font-semibold text-sm sm:text-base">Retours</h3>
             <Dialog open={isNewReturnOpen} onOpenChange={setIsNewReturnOpen}>
               <DialogTrigger asChild>
-                <Button size="sm">
-                  <Plus className="w-4 h-4 mr-1" />
-                  Nouveau retour
+                <Button size="sm" className="h-8 text-xs sm:text-sm">
+                  <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="hidden sm:inline">Nouveau retour</span>
+                  <span className="sm:hidden">+</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+              <DialogContent className="w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-3 sm:p-6">
                 <DialogHeader className="flex-shrink-0">
-                  <DialogTitle>Enregistrer un retour</DialogTitle>
+                  <DialogTitle className="text-base sm:text-lg">Enregistrer un retour</DialogTitle>
                 </DialogHeader>
 
                 <ScrollArea className="flex-1 pr-4">
@@ -1329,23 +1346,23 @@ export default function AdvancedSalesManager() {
             </Dialog>
           </div>
           
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {saleReturns.map((ret) => (
               <Card key={ret.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-destructive/10">
-                        <RotateCcw className="w-4 h-4 text-destructive" />
+                <CardContent className="p-2.5 sm:p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                      <div className="p-1.5 sm:p-2 rounded-lg bg-destructive/10 flex-shrink-0">
+                        <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-destructive" />
                       </div>
-                      <div>
-                        <p className="font-semibold">{ret.order_id ? `Commande ${ret.order_id}` : 'Retour direct'}</p>
-                        <p className="text-sm text-muted-foreground">{ret.return_reason}</p>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-xs sm:text-sm truncate">{ret.order_id ? `Cmd ${ret.order_id}` : 'Retour direct'}</p>
+                        <p className="text-[10px] sm:text-sm text-muted-foreground truncate">{ret.return_reason}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-destructive">-{ret.refund_amount.toLocaleString()} GNF</p>
-                      <p className="text-xs text-muted-foreground">
+                    <div className="text-right flex-shrink-0">
+                      <p className="font-bold text-sm sm:text-base text-destructive">-{ret.refund_amount.toLocaleString()}</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">
                         {new Date(ret.created_at).toLocaleDateString('fr-FR')}
                       </p>
                     </div>
@@ -1355,9 +1372,9 @@ export default function AdvancedSalesManager() {
             ))}
             {saleReturns.length === 0 && (
               <Card>
-                <CardContent className="p-8 text-center">
-                  <RotateCcw className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <p className="text-muted-foreground">Aucun retour enregistré</p>
+                <CardContent className="p-6 sm:p-8 text-center">
+                  <RotateCcw className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 text-muted-foreground/50" />
+                  <p className="text-sm sm:text-base text-muted-foreground">Aucun retour enregistré</p>
                 </CardContent>
               </Card>
             )}
@@ -1365,31 +1382,31 @@ export default function AdvancedSalesManager() {
         </TabsContent>
 
         {/* VENTES GROUPÉES */}
-        <TabsContent value="grouped" className="mt-4">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold">Ventes groupées</h3>
+        <TabsContent value="grouped" className="mt-3 sm:mt-4">
+          <div className="flex justify-between items-center mb-3 sm:mb-4">
+            <h3 className="font-semibold text-sm sm:text-base">Ventes groupées</h3>
           </div>
           
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {groupedSales.map((gs) => (
               <Card key={gs.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <Package className="w-4 h-4 text-primary" />
+                <CardContent className="p-2.5 sm:p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                      <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 flex-shrink-0">
+                        <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                       </div>
-                      <div>
-                        <p className="font-semibold">{gs.group_name}</p>
-                        <p className="text-sm text-muted-foreground">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-xs sm:text-sm truncate">{gs.group_name}</p>
+                        <p className="text-[10px] sm:text-sm text-muted-foreground">
                           {new Date(gs.created_at).toLocaleDateString('fr-FR')}
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold">{gs.total.toLocaleString()} GNF</p>
+                    <div className="text-right flex-shrink-0">
+                      <p className="font-bold text-sm sm:text-base">{gs.total.toLocaleString()}</p>
                       {gs.discount_value > 0 && (
-                        <p className="text-xs text-green-600">-{gs.discount_value}% remise</p>
+                        <p className="text-[10px] sm:text-xs text-green-600">-{gs.discount_value}%</p>
                       )}
                     </div>
                   </div>
@@ -1398,10 +1415,10 @@ export default function AdvancedSalesManager() {
             ))}
             {groupedSales.length === 0 && (
               <Card>
-                <CardContent className="p-8 text-center">
-                  <Package className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <p className="text-muted-foreground">Aucune vente groupée</p>
-                  <p className="text-xs text-muted-foreground mt-1">Les ventes groupées sont créées depuis le POS</p>
+                <CardContent className="p-6 sm:p-8 text-center">
+                  <Package className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 text-muted-foreground/50" />
+                  <p className="text-sm sm:text-base text-muted-foreground">Aucune vente groupée</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Créées depuis le POS</p>
                 </CardContent>
               </Card>
             )}
@@ -1409,19 +1426,20 @@ export default function AdvancedSalesManager() {
         </TabsContent>
 
         {/* PROMOTIONS */}
-        <TabsContent value="promos" className="mt-4">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold">Promotions</h3>
+        <TabsContent value="promos" className="mt-3 sm:mt-4">
+          <div className="flex justify-between items-center mb-3 sm:mb-4">
+            <h3 className="font-semibold text-sm sm:text-base">Promotions</h3>
             <Dialog open={isNewPromoOpen} onOpenChange={setIsNewPromoOpen}>
               <DialogTrigger asChild>
-                <Button size="sm">
-                  <Plus className="w-4 h-4 mr-1" />
-                  Nouvelle promo
+                <Button size="sm" className="h-8 text-xs sm:text-sm">
+                  <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="hidden sm:inline">Nouvelle promo</span>
+                  <span className="sm:hidden">+</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+              <DialogContent className="w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-3 sm:p-6">
                 <DialogHeader className="flex-shrink-0">
-                  <DialogTitle>Créer une promotion</DialogTitle>
+                  <DialogTitle className="text-base sm:text-lg">Créer une promotion</DialogTitle>
                 </DialogHeader>
                 <ScrollArea className="flex-1 pr-4">
                 <div className="pb-4">
@@ -1665,36 +1683,39 @@ export default function AdvancedSalesManager() {
             </Dialog>
           </div>
           
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {promotions.map((promo) => {
-              // Récupérer les noms des produits liés
               const linkedProducts = promo.applicable_products && promo.applicable_products.length > 0
                 ? vendorProducts.filter(p => promo.applicable_products?.includes(p.id))
                 : [];
               
-              // Récupérer les noms des catégories liées
               const linkedCategories = promo.applicable_categories && promo.applicable_categories.length > 0
                 ? categories.filter(c => promo.applicable_categories?.includes(c.id))
                 : [];
               
               return (
                 <Card key={promo.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${promo.is_active ? 'bg-green-100 dark:bg-green-900/30' : 'bg-muted'}`}>
-                          <Percent className={`w-4 h-4 ${promo.is_active ? 'text-green-600' : 'text-muted-foreground'}`} />
+                  <CardContent className="p-2.5 sm:p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                      <div className="flex items-start sm:items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                        <div className={`p-1.5 sm:p-2 rounded-lg flex-shrink-0 ${promo.is_active ? 'bg-green-100 dark:bg-green-900/30' : 'bg-muted'}`}>
+                          <Percent className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${promo.is_active ? 'text-green-600' : 'text-muted-foreground'}`} />
                         </div>
-                        <div>
-                          <p className="font-semibold">{promo.name}</p>
-                          <p className="text-sm text-muted-foreground">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold text-xs sm:text-sm truncate">{promo.name}</p>
+                            <Badge variant={promo.is_active ? 'default' : 'secondary'} className="text-[10px] h-5 sm:hidden">
+                              {promo.is_active ? 'Active' : 'Off'}
+                            </Badge>
+                          </div>
+                          <p className="text-[10px] sm:text-sm text-muted-foreground">
                             {promo.start_date && promo.end_date 
                               ? `${new Date(promo.start_date).toLocaleDateString('fr-FR')} - ${new Date(promo.end_date).toLocaleDateString('fr-FR')}`
-                              : 'Sans limite de temps'
+                              : 'Sans limite'
                             }
                           </p>
-                          {/* Afficher les produits liés */}
-                          <div className="flex flex-wrap gap-1 mt-1">
+                          {/* Tags produits/catégories - hidden on mobile for space */}
+                          <div className="hidden sm:flex flex-wrap gap-1 mt-1">
                             {linkedProducts.length > 0 ? (
                               <>
                                 {linkedProducts.slice(0, 2).map(p => (
@@ -1704,13 +1725,12 @@ export default function AdvancedSalesManager() {
                                 ))}
                                 {linkedProducts.length > 2 && (
                                   <Badge variant="outline" className="text-xs">
-                                    +{linkedProducts.length - 2} produits
+                                    +{linkedProducts.length - 2}
                                   </Badge>
                                 )}
                               </>
                             ) : null}
                             
-                            {/* Afficher les catégories liées */}
                             {linkedCategories.length > 0 ? (
                               <>
                                 {linkedCategories.slice(0, 2).map(c => (
@@ -1720,7 +1740,7 @@ export default function AdvancedSalesManager() {
                                 ))}
                                 {linkedCategories.length > 2 && (
                                   <Badge variant="secondary" className="text-xs">
-                                    +{linkedCategories.length - 2} catégories
+                                    +{linkedCategories.length - 2}
                                   </Badge>
                                 )}
                               </>
@@ -1732,13 +1752,29 @@ export default function AdvancedSalesManager() {
                               </Badge>
                             )}
                           </div>
+                          {/* Mobile: compact badge count */}
+                          <div className="flex sm:hidden flex-wrap gap-1 mt-1">
+                            {linkedProducts.length > 0 && (
+                              <Badge variant="outline" className="text-[10px] h-4">
+                                📦 {linkedProducts.length}
+                              </Badge>
+                            )}
+                            {linkedCategories.length > 0 && (
+                              <Badge variant="secondary" className="text-[10px] h-4">
+                                🏷️ {linkedCategories.length}
+                              </Badge>
+                            )}
+                            {linkedProducts.length === 0 && linkedCategories.length === 0 && (
+                              <Badge variant="secondary" className="text-[10px] h-4">Tous</Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-green-600">
+                      <div className="flex items-center justify-between sm:justify-end sm:flex-col sm:items-end gap-1">
+                        <p className="font-bold text-sm sm:text-base text-green-600">
                           -{promo.discount_value}{promo.discount_type === 'percentage' ? '%' : ' GNF'}
                         </p>
-                        <Badge variant={promo.is_active ? 'default' : 'secondary'}>
+                        <Badge variant={promo.is_active ? 'default' : 'secondary'} className="hidden sm:inline-flex">
                           {promo.is_active ? 'Active' : 'Inactive'}
                         </Badge>
                       </div>
@@ -1749,9 +1785,9 @@ export default function AdvancedSalesManager() {
             })}
             {promotions.length === 0 && (
               <Card>
-                <CardContent className="p-8 text-center">
-                  <Percent className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <p className="text-muted-foreground">Aucune promotion</p>
+                <CardContent className="p-6 sm:p-8 text-center">
+                  <Percent className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 text-muted-foreground/50" />
+                  <p className="text-sm sm:text-base text-muted-foreground">Aucune promotion</p>
                 </CardContent>
               </Card>
             )}
