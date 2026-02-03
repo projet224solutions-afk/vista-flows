@@ -24,7 +24,7 @@ function LoadingFallback() {
   );
 }
 
-export function SplineBackground({ className, height = '150vh' }: SplineBackgroundProps) {
+export function SplineBackground({ className, height = '130vh' }: SplineBackgroundProps) {
   const isMobile = useIsMobile();
   const [isLoaded, setIsLoaded] = useState(false);
   const [shouldLoad, setShouldLoad] = useState(false);
@@ -92,7 +92,7 @@ export function SplineBackground({ className, height = '150vh' }: SplineBackgrou
             isLoaded && 'opacity-40 sm:opacity-50'
           )}
           style={{ 
-            transform: 'scale(1.5)', 
+            transform: 'scale(1.3)', 
             transformOrigin: 'center top'
           }}
         >
