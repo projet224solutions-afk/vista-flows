@@ -591,239 +591,249 @@ export default function AdvancedSalesManager() {
                   <span className="sm:hidden">+</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[85vh] overflow-hidden flex flex-col p-0">
-                <DialogHeader className="flex-shrink-0 px-4 pt-4 pb-2 sm:px-6 sm:pt-6">
+              <DialogContent className="w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-3 sm:p-6">
+                <DialogHeader className="flex-shrink-0">
                   <DialogTitle className="text-base sm:text-lg">Nouvelle vente à crédit</DialogTitle>
                 </DialogHeader>
 
-                <ScrollArea className="flex-1 px-4 sm:px-6">
-                  <div className="pb-4 space-y-3">
-                    {/* Section Client */}
-                    <div className="rounded-lg border bg-muted/30 p-3">
-                      <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">Informations client</p>
-                      <div className="space-y-2">
-                        <div>
-                          <label className="text-xs sm:text-sm font-medium">Nom du client *</label>
-                          <Input
-                            placeholder="Nom du client"
-                            value={newCredit.customer_name}
-                            onChange={(e) => setNewCredit({ ...newCredit, customer_name: e.target.value })}
-                            className="h-9 text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs sm:text-sm font-medium">Notes</label>
-                          <Input
-                            placeholder="Notes optionnelles"
-                            value={newCredit.notes}
-                            onChange={(e) => setNewCredit({ ...newCredit, notes: e.target.value })}
-                            className="h-9 text-sm"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Section Détails Crédit - 2 colonnes sur mobile */}
-                    <div className="rounded-lg border bg-muted/30 p-3">
-                      <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">Détails du crédit</p>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="text-xs sm:text-sm font-medium">Montant (GNF) *</label>
-                          <Input
-                            type="number"
-                            placeholder="0"
-                            value={newCredit.total}
-                            onChange={(e) => setNewCredit({ ...newCredit, total: e.target.value })}
-                            className="h-9 text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs sm:text-sm font-medium">Échéance *</label>
-                          <Input
-                            type="date"
-                            value={newCredit.due_date}
-                            onChange={(e) => setNewCredit({ ...newCredit, due_date: e.target.value })}
-                            className="h-9 text-sm"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Section Catégorie - Horizontal scroll */}
-                    <div className="rounded-lg border bg-muted/30 p-3">
-                      <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">Catégorie (optionnel)</p>
-                      <div className="overflow-x-auto -mx-1 px-1">
-                        <div className="flex gap-2 pb-1">
-                          {categories.map((cat) => (
-                            <Badge
-                              key={cat.id}
-                              variant={newCredit.selected_category === cat.id ? 'default' : 'outline'}
-                              className="cursor-pointer whitespace-nowrap text-xs py-1.5 px-3 flex-shrink-0"
-                              onClick={() => {
-                                setNewCredit({ 
-                                  ...newCredit, 
-                                  selected_category: newCredit.selected_category === cat.id ? '' : cat.id
-                                });
-                              }}
-                            >
-                              {cat.name}
-                            </Badge>
-                          ))}
-                          {categories.length === 0 && (
-                            <p className="text-xs text-muted-foreground">Aucune catégorie</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Section Produits */}
-                    <div className="rounded-lg border bg-muted/30 p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wide">Produits *</p>
-                        {creditSelectedProducts.length > 0 && (
-                          <Badge variant="secondary" className="text-[10px]">{creditSelectedProducts.length}</Badge>
-                        )}
-                      </div>
-                      
-                      {/* Produits sélectionnés - Compact */}
-                      {creditSelectedProducts.length > 0 && (
-                        <div className="space-y-1.5 mb-3 p-2 bg-primary/5 rounded-lg border border-primary/20">
-                          {creditSelectedProducts.map((sp) => (
-                            <div key={sp.id} className="flex items-center gap-2">
-                              {sp.images && sp.images[0] ? (
-                                <img src={sp.images[0]} alt={sp.name} className="w-7 h-7 rounded object-cover flex-shrink-0" />
-                              ) : (
-                                <div className="w-7 h-7 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                                  <Package className="w-3.5 h-3.5 text-muted-foreground" />
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[11px] font-medium truncate">{sp.name}</p>
-                                <p className="text-[10px] text-muted-foreground">{sp.price.toLocaleString()} GNF</p>
-                              </div>
-                              <div className="flex items-center gap-0.5">
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-6 w-6 text-xs"
-                                  onClick={() => {
-                                    setCreditSelectedProducts(prev => 
-                                      prev.map(p => p.id === sp.id ? {...p, quantity: Math.max(1, p.quantity - 1)} : p)
-                                    );
-                                  }}
-                                >
-                                  -
-                                </Button>
-                                <span className="text-xs font-mono w-5 text-center">{sp.quantity}</span>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-6 w-6 text-xs"
-                                  onClick={() => {
-                                    setCreditSelectedProducts(prev => 
-                                      prev.map(p => p.id === sp.id ? {...p, quantity: p.quantity + 1} : p)
-                                    );
-                                  }}
-                                >
-                                  +
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 text-destructive"
-                                  onClick={() => {
-                                    setCreditSelectedProducts(prev => prev.filter(p => p.id !== sp.id));
-                                  }}
-                                >
-                                  ×
-                                </Button>
-                              </div>
+                <ScrollArea className="flex-1 pr-4">
+                  <div className="pb-4">
+                    <div className="grid gap-4 lg:grid-cols-3">
+                      {/* COL 1 — Client & Détails */}
+                      <div className="space-y-4 lg:col-span-1">
+                        <div className="rounded-lg border bg-muted/30 p-3">
+                          <p className="text-xs text-muted-foreground mb-2">Informations client</p>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="text-sm font-medium">Nom du client *</label>
+                              <Input
+                                placeholder="Nom du client"
+                                value={newCredit.customer_name}
+                                onChange={(e) => setNewCredit({ ...newCredit, customer_name: e.target.value })}
+                              />
                             </div>
-                          ))}
-                          <div className="pt-1.5 border-t mt-2">
-                            <p className="text-xs font-bold text-primary">
-                              Total: {creditSelectedProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0).toLocaleString()} GNF
-                            </p>
+                            <div>
+                              <label className="text-sm font-medium">Notes</label>
+                              <Input
+                                placeholder="Notes optionnelles"
+                                value={newCredit.notes}
+                                onChange={(e) => setNewCredit({ ...newCredit, notes: e.target.value })}
+                              />
+                            </div>
                           </div>
                         </div>
-                      )}
-                      
-                      {/* Recherche produit */}
-                      <div className="relative mb-2">
-                        <Search className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Rechercher..."
-                          value={creditProductSearch}
-                          onChange={(e) => setCreditProductSearch(e.target.value)}
-                          className="pl-8 h-8 text-sm"
-                        />
+
+                        <div className="rounded-lg border bg-muted/30 p-3">
+                          <p className="text-xs text-muted-foreground mb-2">Détails du crédit</p>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="text-sm font-medium">Montant (GNF) *</label>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                value={newCredit.total}
+                                onChange={(e) => setNewCredit({ ...newCredit, total: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium">Date d'échéance *</label>
+                              <Input
+                                type="date"
+                                value={newCredit.due_date}
+                                onChange={(e) => setNewCredit({ ...newCredit, due_date: e.target.value })}
+                              />
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      
-                      {/* Liste produits - Grid 2 colonnes mobile */}
-                      <ScrollArea className="h-36 sm:h-44">
-                        <div className="grid grid-cols-2 gap-1.5">
-                          {vendorProducts
-                            .filter(p => {
-                              const matchesSearch = p.name.toLowerCase().includes(creditProductSearch.toLowerCase());
-                              const matchesCategory = !newCredit.selected_category || p.category_id === newCredit.selected_category;
-                              return matchesSearch && matchesCategory;
-                            })
-                            .map((product) => {
-                              const isSelected = creditSelectedProducts.some(sp => sp.id === product.id);
-                              return (
+
+                      {/* COL 2-3 — Sélection Catégorie & Produit */}
+                      <div className="grid gap-4 md:grid-cols-2 lg:col-span-2">
+                        {/* Catégories */}
+                        <div className="rounded-lg border bg-muted/30 p-3">
+                          <p className="text-xs text-muted-foreground mb-2">Catégorie (optionnel)</p>
+                          <ScrollArea className="h-56">
+                            <div className="space-y-1">
+                              {categories.map((cat) => (
                                 <div
-                                  key={product.id}
-                                  className={`flex items-center gap-1.5 p-1.5 rounded cursor-pointer border transition-colors ${
-                                    isSelected ? 'bg-primary/10 border-primary' : 'bg-background hover:bg-muted/50 border-transparent'
+                                  key={cat.id}
+                                  className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-muted/50 ${
+                                    newCredit.selected_category === cat.id ? 'bg-primary/10 border border-primary' : ''
                                   }`}
                                   onClick={() => {
-                                    if (isSelected) {
-                                      setCreditSelectedProducts(prev => prev.filter(p => p.id !== product.id));
-                                    } else {
-                                      setCreditSelectedProducts(prev => [...prev, {
-                                        id: product.id,
-                                        name: product.name,
-                                        price: product.price,
-                                        quantity: 1,
-                                        images: product.images
-                                      }]);
-                                    }
+                                    setNewCredit({ 
+                                      ...newCredit, 
+                                      selected_category: newCredit.selected_category === cat.id ? '' : cat.id
+                                    });
                                   }}
                                 >
-                                  {product.images && product.images[0] ? (
-                                    <img 
-                                      src={product.images[0]} 
-                                      alt={product.name}
-                                      className="w-8 h-8 rounded object-cover flex-shrink-0"
-                                    />
+                                  <Checkbox
+                                    checked={newCredit.selected_category === cat.id}
+                                    onCheckedChange={() => {
+                                      setNewCredit({ 
+                                        ...newCredit, 
+                                        selected_category: newCredit.selected_category === cat.id ? '' : cat.id
+                                      });
+                                    }}
+                                  />
+                                  <span className="text-sm">{cat.name}</span>
+                                </div>
+                              ))}
+                              {categories.length === 0 && (
+                                <p className="text-sm text-muted-foreground text-center py-4">Aucune catégorie</p>
+                              )}
+                            </div>
+                          </ScrollArea>
+                        </div>
+
+                        {/* Produits sélectionnés */}
+                        <div className="rounded-lg border bg-muted/30 p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs text-muted-foreground">Produits sélectionnés *</p>
+                            {creditSelectedProducts.length > 0 && (
+                              <Badge variant="secondary">{creditSelectedProducts.length} produit(s)</Badge>
+                            )}
+                          </div>
+                          
+                          {/* Liste des produits sélectionnés */}
+                          {creditSelectedProducts.length > 0 && (
+                            <div className="space-y-2 mb-3 p-2 bg-primary/5 rounded-lg border border-primary/20">
+                              {creditSelectedProducts.map((sp) => (
+                                <div key={sp.id} className="flex items-center gap-2">
+                                  {sp.images && sp.images[0] ? (
+                                    <img src={sp.images[0]} alt={sp.name} className="w-8 h-8 rounded object-cover" />
                                   ) : (
-                                    <div className="w-8 h-8 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                                    <div className="w-8 h-8 rounded bg-muted flex items-center justify-center">
                                       <Package className="w-4 h-4 text-muted-foreground" />
                                     </div>
                                   )}
                                   <div className="flex-1 min-w-0">
-                                    <span className="text-[11px] block truncate font-medium">{product.name}</span>
-                                    <span className="text-[10px] text-muted-foreground">{product.price.toLocaleString()}</span>
+                                    <p className="text-xs font-medium truncate">{sp.name}</p>
+                                    <p className="text-[10px] text-muted-foreground">{sp.price.toLocaleString()} GNF</p>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      className="h-6 w-6"
+                                      onClick={() => {
+                                        setCreditSelectedProducts(prev => 
+                                          prev.map(p => p.id === sp.id ? {...p, quantity: Math.max(1, p.quantity - 1)} : p)
+                                        );
+                                      }}
+                                    >
+                                      -
+                                    </Button>
+                                    <span className="text-xs font-mono w-6 text-center">{sp.quantity}</span>
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      className="h-6 w-6"
+                                      onClick={() => {
+                                        setCreditSelectedProducts(prev => 
+                                          prev.map(p => p.id === sp.id ? {...p, quantity: p.quantity + 1} : p)
+                                        );
+                                      }}
+                                    >
+                                      +
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6 text-destructive"
+                                      onClick={() => {
+                                        setCreditSelectedProducts(prev => prev.filter(p => p.id !== sp.id));
+                                      }}
+                                    >
+                                      ×
+                                    </Button>
                                   </div>
                                 </div>
-                              );
-                            })}
+                              ))}
+                              <div className="pt-2 border-t">
+                                <p className="text-sm font-bold text-primary">
+                                  Total: {creditSelectedProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0).toLocaleString()} GNF
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          
+                          <div className="relative mb-2">
+                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              placeholder="Rechercher un produit..."
+                              value={creditProductSearch}
+                              onChange={(e) => setCreditProductSearch(e.target.value)}
+                              className="pl-8"
+                            />
+                          </div>
+                          <ScrollArea className="h-48">
+                            <div className="space-y-1">
+                              {vendorProducts
+                                .filter(p => {
+                                  const matchesSearch = p.name.toLowerCase().includes(creditProductSearch.toLowerCase());
+                                  const matchesCategory = !newCredit.selected_category || p.category_id === newCredit.selected_category;
+                                  return matchesSearch && matchesCategory;
+                                })
+                                .map((product) => {
+                                  const isSelected = creditSelectedProducts.some(sp => sp.id === product.id);
+                                  return (
+                                    <div
+                                      key={product.id}
+                                      className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-muted/50 ${
+                                        isSelected ? 'bg-primary/10 border border-primary' : ''
+                                      }`}
+                                      onClick={() => {
+                                        if (isSelected) {
+                                          setCreditSelectedProducts(prev => prev.filter(p => p.id !== product.id));
+                                        } else {
+                                          setCreditSelectedProducts(prev => [...prev, {
+                                            id: product.id,
+                                            name: product.name,
+                                            price: product.price,
+                                            quantity: 1,
+                                            images: product.images
+                                          }]);
+                                        }
+                                      }}
+                                    >
+                                      <Checkbox checked={isSelected} />
+                                      {product.images && product.images[0] ? (
+                                        <img 
+                                          src={product.images[0]} 
+                                          alt={product.name}
+                                          className="w-10 h-10 rounded object-cover flex-shrink-0"
+                                        />
+                                      ) : (
+                                        <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                                          <Package className="w-5 h-5 text-muted-foreground" />
+                                        </div>
+                                      )}
+                                      <div className="flex-1 min-w-0">
+                                        <span className="text-sm block truncate">{product.name}</span>
+                                        <span className="text-xs text-muted-foreground">{product.price.toLocaleString()} GNF</span>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              {vendorProducts.filter(p => {
+                                const matchesSearch = p.name.toLowerCase().includes(creditProductSearch.toLowerCase());
+                                const matchesCategory = !newCredit.selected_category || p.category_id === newCredit.selected_category;
+                                return matchesSearch && matchesCategory;
+                              }).length === 0 && (
+                                <p className="text-sm text-muted-foreground text-center py-4">Aucun produit trouvé</p>
+                              )}
+                            </div>
+                          </ScrollArea>
                         </div>
-                        {vendorProducts.filter(p => {
-                          const matchesSearch = p.name.toLowerCase().includes(creditProductSearch.toLowerCase());
-                          const matchesCategory = !newCredit.selected_category || p.category_id === newCredit.selected_category;
-                          return matchesSearch && matchesCategory;
-                        }).length === 0 && (
-                          <p className="text-xs text-muted-foreground text-center py-4">Aucun produit</p>
-                        )}
-                      </ScrollArea>
+                      </div>
                     </div>
                   </div>
                 </ScrollArea>
 
-                <div className="flex gap-2 justify-end px-4 py-3 sm:px-6 sm:py-4 flex-shrink-0 border-t bg-background">
-                  <Button variant="outline" size="sm" onClick={() => setIsNewCreditOpen(false)}>Annuler</Button>
-                  <Button size="sm" onClick={createCreditSale}>Créer</Button>
+                <div className="flex gap-2 justify-end pt-4 flex-shrink-0 border-t">
+                  <Button variant="outline" onClick={() => setIsNewCreditOpen(false)}>Annuler</Button>
+                  <Button onClick={createCreditSale}>Créer</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -1143,173 +1153,194 @@ export default function AdvancedSalesManager() {
                   <span className="sm:hidden">+</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[85vh] overflow-hidden flex flex-col p-0">
-                <DialogHeader className="flex-shrink-0 px-4 pt-4 pb-2 sm:px-6 sm:pt-6">
+              <DialogContent className="w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-3 sm:p-6">
+                <DialogHeader className="flex-shrink-0">
                   <DialogTitle className="text-base sm:text-lg">Enregistrer un retour</DialogTitle>
                 </DialogHeader>
 
-                <ScrollArea className="flex-1 px-4 sm:px-6">
-                  <div className="pb-4 space-y-3">
-                    {/* Section Contexte */}
-                    <div className="rounded-lg border bg-muted/30 p-3">
-                      <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">Contexte</p>
-                      <div className="space-y-2">
-                        <div>
-                          <label className="text-xs sm:text-sm font-medium">N° Commande (optionnel)</label>
-                          <Input
-                            placeholder="ORD-XXXXX"
-                            value={newReturn.order_id}
-                            onChange={(e) => setNewReturn({ ...newReturn, order_id: e.target.value })}
-                            className="h-9 text-sm"
-                          />
+                <ScrollArea className="flex-1 pr-4">
+                  <div className="pb-4">
+                    <div className="grid gap-4 lg:grid-cols-3">
+                      {/* COL 1 — Contexte & Raison */}
+                      <div className="space-y-4 lg:col-span-1">
+                        <div className="rounded-lg border bg-muted/30 p-3">
+                          <p className="text-xs text-muted-foreground mb-2">Contexte</p>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="text-sm font-medium">N° Commande (optionnel)</label>
+                              <Input
+                                placeholder="ORD-XXXXX"
+                                value={newReturn.order_id}
+                                onChange={(e) => setNewReturn({ ...newReturn, order_id: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium">Raison du retour *</label>
+                              <Input
+                                placeholder="Produit défectueux, mauvaise taille..."
+                                value={newReturn.return_reason}
+                                onChange={(e) => setNewReturn({ ...newReturn, return_reason: e.target.value })}
+                              />
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <label className="text-xs sm:text-sm font-medium">Raison du retour *</label>
-                          <Input
-                            placeholder="Produit défectueux..."
-                            value={newReturn.return_reason}
-                            onChange={(e) => setNewReturn({ ...newReturn, return_reason: e.target.value })}
-                            className="h-9 text-sm"
-                          />
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* Section Montants - Grid compact */}
-                    <div className="rounded-lg border bg-muted/30 p-3">
-                      <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">Montants</p>
-                      <div className="grid grid-cols-2 gap-2 mb-2">
-                        <div>
-                          <label className="text-xs sm:text-sm font-medium">Quantité *</label>
-                          <Input
-                            type="number"
-                            placeholder="1"
-                            value={newReturn.quantity_returned}
-                            onChange={(e) => setNewReturn({ ...newReturn, quantity_returned: e.target.value })}
-                            className="h-9 text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs sm:text-sm font-medium">Prix unitaire *</label>
-                          <Input
-                            type="number"
-                            placeholder="0"
-                            value={newReturn.unit_price}
-                            onChange={(e) => setNewReturn({ ...newReturn, unit_price: e.target.value })}
-                            className="h-9 text-sm"
-                          />
+                        <div className="rounded-lg border bg-muted/30 p-3">
+                          <p className="text-xs text-muted-foreground mb-2">Montants</p>
+                          <div className="space-y-3">
+                            <div className="grid gap-3 grid-cols-2">
+                              <div>
+                                <label className="text-sm font-medium">Quantité *</label>
+                                <Input
+                                  type="number"
+                                  placeholder="1"
+                                  value={newReturn.quantity_returned}
+                                  onChange={(e) => setNewReturn({ ...newReturn, quantity_returned: e.target.value })}
+                                />
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium">Prix unitaire *</label>
+                                <Input
+                                  type="number"
+                                  placeholder="0"
+                                  value={newReturn.unit_price}
+                                  onChange={(e) => setNewReturn({ ...newReturn, unit_price: e.target.value })}
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium">Montant remboursement (GNF) *</label>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                value={newReturn.refund_amount}
+                                onChange={(e) => setNewReturn({ ...newReturn, refund_amount: e.target.value })}
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <div>
-                        <label className="text-xs sm:text-sm font-medium">Remboursement (GNF) *</label>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          value={newReturn.refund_amount}
-                          onChange={(e) => setNewReturn({ ...newReturn, refund_amount: e.target.value })}
-                          className="h-9 text-sm"
-                        />
-                      </div>
-                    </div>
 
-                    {/* Section Catégorie - Horizontal scroll */}
-                    <div className="rounded-lg border bg-muted/30 p-3">
-                      <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">Catégorie (optionnel)</p>
-                      <div className="overflow-x-auto -mx-1 px-1">
-                        <div className="flex gap-2 pb-1">
-                          {categories.map((cat) => (
-                            <Badge
-                              key={cat.id}
-                              variant={newReturn.selected_category === cat.id ? 'default' : 'outline'}
-                              className="cursor-pointer whitespace-nowrap text-xs py-1.5 px-3 flex-shrink-0"
-                              onClick={() => {
-                                setNewReturn({ 
-                                  ...newReturn, 
-                                  selected_category: newReturn.selected_category === cat.id ? '' : cat.id,
-                                  selected_product: ''
-                                });
-                              }}
-                            >
-                              {cat.name}
-                            </Badge>
-                          ))}
-                          {categories.length === 0 && (
-                            <p className="text-xs text-muted-foreground">Aucune catégorie</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Section Produit */}
-                    <div className="rounded-lg border bg-muted/30 p-3">
-                      <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">Produit concerné *</p>
-                      <div className="relative mb-2">
-                        <Search className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Rechercher..."
-                          value={returnProductSearch}
-                          onChange={(e) => setReturnProductSearch(e.target.value)}
-                          className="pl-8 h-8 text-sm"
-                        />
-                      </div>
-                      <ScrollArea className="h-36 sm:h-44">
-                        <div className="grid grid-cols-2 gap-1.5">
-                          {vendorProducts
-                            .filter(p => {
-                              const matchesSearch = p.name.toLowerCase().includes(returnProductSearch.toLowerCase());
-                              const matchesCategory = !newReturn.selected_category || p.category_id === newReturn.selected_category;
-                              return matchesSearch && matchesCategory;
-                            })
-                            .map((product) => {
-                              const isSelected = newReturn.selected_product === product.id;
-                              return (
+                      {/* COL 2-3 — Sélection Catégorie & Produit */}
+                      <div className="grid gap-4 md:grid-cols-2 lg:col-span-2">
+                        {/* Catégories */}
+                        <div className="rounded-lg border bg-muted/30 p-3">
+                          <p className="text-xs text-muted-foreground mb-2">Catégorie (optionnel)</p>
+                          <ScrollArea className="h-56">
+                            <div className="space-y-1">
+                              {categories.map((cat) => (
                                 <div
-                                  key={product.id}
-                                  className={`flex items-center gap-1.5 p-1.5 rounded cursor-pointer border transition-colors ${
-                                    isSelected ? 'bg-primary/10 border-primary' : 'bg-background hover:bg-muted/50 border-transparent'
+                                  key={cat.id}
+                                  className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-muted/50 ${
+                                    newReturn.selected_category === cat.id ? 'bg-primary/10 border border-primary' : ''
                                   }`}
                                   onClick={() => {
                                     setNewReturn({ 
                                       ...newReturn, 
-                                      selected_product: isSelected ? '' : product.id,
-                                      unit_price: product.price.toString()
+                                      selected_category: newReturn.selected_category === cat.id ? '' : cat.id,
+                                      selected_product: '' // Reset product when category changes
                                     });
                                   }}
                                 >
-                                  {product.images && product.images[0] ? (
-                                    <img 
-                                      src={product.images[0]} 
-                                      alt={product.name}
-                                      className="w-8 h-8 rounded object-cover flex-shrink-0"
-                                    />
-                                  ) : (
-                                    <div className="w-8 h-8 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                                      <Package className="w-4 h-4 text-muted-foreground" />
-                                    </div>
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    <span className="text-[11px] block truncate font-medium">{product.name}</span>
-                                    <span className="text-[10px] text-muted-foreground">{product.price.toLocaleString()}</span>
-                                  </div>
+                                  <Checkbox
+                                    checked={newReturn.selected_category === cat.id}
+                                    onCheckedChange={() => {
+                                      setNewReturn({ 
+                                        ...newReturn, 
+                                        selected_category: newReturn.selected_category === cat.id ? '' : cat.id,
+                                        selected_product: ''
+                                      });
+                                    }}
+                                  />
+                                  <span className="text-sm">{cat.name}</span>
                                 </div>
-                              );
-                            })}
+                              ))}
+                              {categories.length === 0 && (
+                                <p className="text-sm text-muted-foreground text-center py-4">Aucune catégorie</p>
+                              )}
+                            </div>
+                          </ScrollArea>
                         </div>
-                        {vendorProducts.filter(p => {
-                          const matchesSearch = p.name.toLowerCase().includes(returnProductSearch.toLowerCase());
-                          const matchesCategory = !newReturn.selected_category || p.category_id === newReturn.selected_category;
-                          return matchesSearch && matchesCategory;
-                        }).length === 0 && (
-                          <p className="text-xs text-muted-foreground text-center py-4">Aucun produit</p>
-                        )}
-                      </ScrollArea>
+
+                        {/* Produits */}
+                        <div className="rounded-lg border bg-muted/30 p-3">
+                          <p className="text-xs text-muted-foreground mb-2">Produit concerné *</p>
+                          <div className="relative mb-2">
+                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              placeholder="Rechercher..."
+                              value={returnProductSearch}
+                              onChange={(e) => setReturnProductSearch(e.target.value)}
+                              className="pl-8"
+                            />
+                          </div>
+                          <ScrollArea className="h-48">
+                            <div className="space-y-1">
+                              {vendorProducts
+                                .filter(p => {
+                                  const matchesSearch = p.name.toLowerCase().includes(returnProductSearch.toLowerCase());
+                                  const matchesCategory = !newReturn.selected_category || p.category_id === newReturn.selected_category;
+                                  return matchesSearch && matchesCategory;
+                                })
+                                .map((product) => (
+                                  <div
+                                    key={product.id}
+                                    className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-muted/50 ${
+                                      newReturn.selected_product === product.id ? 'bg-primary/10 border border-primary' : ''
+                                    }`}
+                                    onClick={() => {
+                                      setNewReturn({ 
+                                        ...newReturn, 
+                                        selected_product: newReturn.selected_product === product.id ? '' : product.id,
+                                        unit_price: product.price.toString()
+                                      });
+                                    }}
+                                  >
+                                    <Checkbox
+                                      checked={newReturn.selected_product === product.id}
+                                      onCheckedChange={() => {
+                                        setNewReturn({ 
+                                          ...newReturn, 
+                                          selected_product: newReturn.selected_product === product.id ? '' : product.id,
+                                          unit_price: product.price.toString()
+                                        });
+                                      }}
+                                    />
+                                    {product.images && product.images[0] ? (
+                                      <img 
+                                        src={product.images[0]} 
+                                        alt={product.name}
+                                        className="w-10 h-10 rounded object-cover flex-shrink-0"
+                                      />
+                                    ) : (
+                                      <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                                        <Package className="w-5 h-5 text-muted-foreground" />
+                                      </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <span className="text-sm block truncate">{product.name}</span>
+                                      <span className="text-xs text-muted-foreground">{product.price.toLocaleString()} GNF</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              {vendorProducts.filter(p => {
+                                const matchesSearch = p.name.toLowerCase().includes(returnProductSearch.toLowerCase());
+                                const matchesCategory = !newReturn.selected_category || p.category_id === newReturn.selected_category;
+                                return matchesSearch && matchesCategory;
+                              }).length === 0 && (
+                                <p className="text-sm text-muted-foreground text-center py-4">Aucun produit trouvé</p>
+                              )}
+                            </div>
+                          </ScrollArea>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </ScrollArea>
 
-                <div className="flex gap-2 justify-end px-4 py-3 sm:px-6 sm:py-4 flex-shrink-0 border-t bg-background">
-                  <Button variant="outline" size="sm" onClick={() => setIsNewReturnOpen(false)}>Annuler</Button>
-                  <Button size="sm" onClick={createReturn}>Enregistrer</Button>
+                <div className="flex gap-2 justify-end pt-4 flex-shrink-0 border-t">
+                  <Button variant="outline" onClick={() => setIsNewReturnOpen(false)}>Annuler</Button>
+                  <Button onClick={createReturn}>Enregistrer</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -1406,175 +1437,247 @@ export default function AdvancedSalesManager() {
                   <span className="sm:hidden">+</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[85vh] overflow-hidden flex flex-col p-0">
-                <DialogHeader className="flex-shrink-0 px-4 pt-4 pb-2 sm:px-6 sm:pt-6">
+              <DialogContent className="w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-3 sm:p-6">
+                <DialogHeader className="flex-shrink-0">
                   <DialogTitle className="text-base sm:text-lg">Créer une promotion</DialogTitle>
                 </DialogHeader>
-                <ScrollArea className="flex-1 px-4 sm:px-6">
-                  <div className="pb-4 space-y-3">
-                    {/* Section Infos promotion */}
-                    <div className="rounded-lg border bg-muted/30 p-3">
-                      <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">Informations</p>
-                      <div className="space-y-2">
-                        <div>
-                          <label className="text-xs sm:text-sm font-medium">Nom de la promo *</label>
-                          <Input
-                            placeholder="Ex: Soldes d'été"
-                            value={newPromo.name}
-                            onChange={(e) => setNewPromo({ ...newPromo, name: e.target.value })}
-                            className="h-9 text-sm"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="text-xs sm:text-sm font-medium">Type</label>
-                            <select
-                              className="w-full h-9 px-3 text-sm border rounded-md bg-background"
-                              value={newPromo.discount_type}
-                              onChange={(e) => setNewPromo({ ...newPromo, discount_type: e.target.value })}
-                            >
-                              <option value="percentage">Pourcentage (%)</option>
-                              <option value="fixed">Montant (GNF)</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-xs sm:text-sm font-medium">
-                              Valeur {newPromo.discount_type === 'percentage' ? '(%)' : '(GNF)'} *
-                            </label>
-                            <Input
-                              type="number"
-                              placeholder="0"
-                              value={newPromo.discount_value}
-                              onChange={(e) => setNewPromo({ ...newPromo, discount_value: e.target.value })}
-                              className="h-9 text-sm"
-                            />
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="text-xs sm:text-sm font-medium">Date début</label>
-                            <Input
-                              type="date"
-                              value={newPromo.start_date}
-                              onChange={(e) => setNewPromo({ ...newPromo, start_date: e.target.value })}
-                              className="h-9 text-sm"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-xs sm:text-sm font-medium">Date fin</label>
-                            <Input
-                              type="date"
-                              value={newPromo.end_date}
-                              onChange={(e) => setNewPromo({ ...newPromo, end_date: e.target.value })}
-                              className="h-9 text-sm"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Section Catégories - Horizontal scroll */}
-                    <div className="rounded-lg border bg-muted/30 p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wide">🏷️ Catégories</p>
-                        {newPromo.selected_categories.length > 0 && (
-                          <Badge variant="secondary" className="text-[10px]">{newPromo.selected_categories.length}</Badge>
-                        )}
-                      </div>
-                      <p className="text-[10px] text-muted-foreground mb-2">
-                        {newPromo.selected_categories.length === 0 ? 'Toutes (aucune sélection)' : 'Produits filtrés par catégorie'}
-                      </p>
-                      <div className="overflow-x-auto -mx-1 px-1">
-                        <div className="flex gap-2 pb-1">
-                          {categories.map((cat) => {
-                            const isSelected = newPromo.selected_categories.includes(cat.id);
-                            const count = vendorProducts.filter(p => p.category_id === cat.id).length;
-                            return (
-                              <Badge
-                                key={cat.id}
-                                variant={isSelected ? 'default' : 'outline'}
-                                className="cursor-pointer whitespace-nowrap text-xs py-1.5 px-3 flex-shrink-0"
-                                onClick={() => toggleCategorySelection(cat.id)}
-                              >
-                                {cat.name} ({count})
-                              </Badge>
-                            );
-                          })}
-                          {categories.length === 0 && (
-                            <p className="text-xs text-muted-foreground">Aucune catégorie</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Section Produits */}
-                    <div className="rounded-lg border bg-muted/30 p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wide">📦 Produits</p>
-                        {newPromo.selected_products.length > 0 && (
-                          <Badge variant="secondary" className="text-[10px]">{newPromo.selected_products.length}</Badge>
-                        )}
-                      </div>
-                      <p className="text-[10px] text-muted-foreground mb-2">
-                        {newPromo.selected_products.length === 0
-                          ? (newPromo.selected_categories.length > 0 ? 'Produits des catégories' : 'Tous les produits')
-                          : `${newPromo.selected_products.length} sélectionné(s)`}
-                      </p>
-                      
-                      <div className="relative mb-2">
-                        <Search className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
+                <ScrollArea className="flex-1 pr-4">
+                <div className="pb-4">
+                  <div className="grid gap-4 lg:grid-cols-3">
+                    {/* COL 1 — Infos promotion */}
+                    <div className="space-y-4 lg:col-span-1">
+                      <div>
+                        <label className="text-sm font-medium">Nom de la promo *</label>
                         <Input
-                          placeholder="Rechercher..."
-                          value={productSearchTerm}
-                          onChange={(e) => setProductSearchTerm(e.target.value)}
-                          className="pl-8 h-8 text-sm"
+                          placeholder="Ex: Soldes d'été"
+                          value={newPromo.name}
+                          onChange={(e) => setNewPromo({ ...newPromo, name: e.target.value })}
                         />
                       </div>
 
-                      <ScrollArea className="h-40 sm:h-48">
-                        <div className="grid grid-cols-2 gap-1.5">
-                          {filteredProducts.map((product) => {
-                            const isSelected = newPromo.selected_products.includes(product.id);
-                            return (
-                              <div
-                                key={product.id}
-                                className={`flex items-center gap-1.5 p-1.5 rounded cursor-pointer border transition-colors ${
-                                  isSelected ? 'bg-primary/10 border-primary' : 'bg-background hover:bg-muted/50 border-transparent'
-                                }`}
-                                onClick={() => toggleProductSelection(product.id)}
-                              >
-                                {product.images?.[0] ? (
-                                  <img
-                                    src={product.images[0]}
-                                    alt={product.name}
-                                    className="w-8 h-8 object-cover rounded flex-shrink-0"
-                                  />
-                                ) : (
-                                  <div className="w-8 h-8 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                                    <Package className="w-4 h-4 text-muted-foreground" />
-                                  </div>
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <span className="text-[11px] block truncate font-medium">{product.name}</span>
-                                  <span className="text-[10px] text-muted-foreground">{product.price.toLocaleString()}</span>
-                                </div>
-                                {isSelected && (
-                                  <span className="text-primary text-xs">✓</span>
-                                )}
-                              </div>
-                            );
-                          })}
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <label className="text-sm font-medium">Type de remise</label>
+                          <select
+                            className="w-full px-3 py-2 border rounded-md bg-background"
+                            value={newPromo.discount_type}
+                            onChange={(e) => setNewPromo({ ...newPromo, discount_type: e.target.value })}
+                          >
+                            <option value="percentage">Pourcentage (%)</option>
+                            <option value="fixed">Montant fixe (GNF)</option>
+                          </select>
                         </div>
-                        {filteredProducts.length === 0 && (
-                          <p className="text-xs text-muted-foreground text-center py-4">Aucun produit</p>
+                        <div>
+                          <label className="text-sm font-medium">
+                            Valeur {newPromo.discount_type === 'percentage' ? '(%)' : '(GNF)'} *
+                          </label>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            value={newPromo.discount_value}
+                            onChange={(e) => setNewPromo({ ...newPromo, discount_value: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <label className="text-sm font-medium">Date début</label>
+                          <Input
+                            type="date"
+                            value={newPromo.start_date}
+                            onChange={(e) => setNewPromo({ ...newPromo, start_date: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Date fin</label>
+                          <Input
+                            type="date"
+                            value={newPromo.end_date}
+                            onChange={(e) => setNewPromo({ ...newPromo, end_date: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* COL 2–3 — Sélection (catégories + produits) */}
+                    <div className="grid gap-4 md:grid-cols-2 lg:col-span-2">
+                      {/* 1. SÉLECTION DE CATÉGORIES */}
+                      <div className="bg-muted/30 p-3 rounded-lg border">
+                        <label className="text-sm font-medium flex items-center gap-2">
+                          🏷️ Catégories concernées
+                        </label>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          {newPromo.selected_categories.length === 0
+                            ? 'Toutes les catégories (aucune sélection)'
+                            : `${newPromo.selected_categories.length} catégorie(s) sélectionnée(s) - Les produits ci-dessous seront filtrés`}
+                        </p>
+
+                        <div className="h-56 border rounded-md p-2 bg-background overflow-y-auto">
+                          {categories.length === 0 ? (
+                            <p className="text-sm text-muted-foreground text-center py-4">
+                              Aucune catégorie disponible
+                            </p>
+                          ) : (
+                            <div className="space-y-2">
+                              {categories.map((category) => (
+                                <div
+                                  key={category.id}
+                                  className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${
+                                    newPromo.selected_categories.includes(category.id)
+                                      ? 'bg-primary/10 border border-primary'
+                                      : 'hover:bg-muted'
+                                  }`}
+                                  onClick={() => toggleCategorySelection(category.id)}
+                                >
+                                  <Checkbox
+                                    checked={newPromo.selected_categories.includes(category.id)}
+                                    onCheckedChange={() => toggleCategorySelection(category.id)}
+                                  />
+                                  <Package className="w-4 h-4 text-muted-foreground" />
+                                  <span className="text-sm font-medium">{category.name}</span>
+                                  <Badge variant="outline" className="ml-auto text-xs">
+                                    {vendorProducts.filter(p => p.category_id === category.id).length} produit(s)
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {newPromo.selected_categories.length > 0 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="mt-2"
+                            onClick={() => {
+                              setNewPromo({ ...newPromo, selected_categories: [], selected_products: [] });
+                            }}
+                          >
+                            Tout désélectionner
+                          </Button>
                         )}
-                      </ScrollArea>
+                      </div>
+
+                      {/* 2. SÉLECTION DE PRODUITS */}
+                      <div>
+                        <label className="text-sm font-medium flex items-center gap-2">
+                          📦 Produits à promouvoir
+                        </label>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          {newPromo.selected_categories.length > 0 && productsInSelectedCategories.length > 0 && (
+                            <span className="text-primary font-medium">
+                              {productsInSelectedCategories.length} produit(s) dans les catégories sélectionnées •
+                            </span>
+                          )}
+                          {newPromo.selected_products.length === 0
+                            ? (newPromo.selected_categories.length > 0
+                                ? ' Produits de la/les catégorie(s) sélectionnée(s) (aucune sélection)'
+                                : ' Tous les produits (aucune sélection)')
+                            : ` ${newPromo.selected_products.length} produit(s) sélectionné(s)`}
+                        </p>
+
+                        {/* Recherche */}
+                        <div className="relative mb-2">
+                          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Rechercher un produit..."
+                            value={productSearchTerm}
+                            onChange={(e) => setProductSearchTerm(e.target.value)}
+                            className="pl-8"
+                          />
+                        </div>
+
+                        {/* Liste des produits */}
+                        <div className="h-56 border rounded-md p-2 bg-background overflow-y-auto">
+                          {vendorProducts.length === 0 ? (
+                            <p className="text-sm text-muted-foreground text-center py-4">
+                              Aucun produit disponible dans votre boutique
+                            </p>
+                          ) : filteredProducts.length === 0 ? (
+                            <p className="text-sm text-muted-foreground text-center py-4">
+                              {productSearchTerm
+                                ? `Aucun résultat pour "${productSearchTerm}"`
+                                : newPromo.selected_categories.length > 0
+                                  ? 'Aucun produit dans la/les catégorie(s) sélectionnée(s)'
+                                  : 'Aucun produit disponible'}
+                            </p>
+                          ) : (
+                            <div className="space-y-2">
+                              {filteredProducts.map((product) => {
+                                const isSelected = newPromo.selected_products.includes(product.id);
+                                const categoryName = categories.find(c => c.id === product.category_id)?.name;
+                                const isInSelectedCategory =
+                                  newPromo.selected_categories.length > 0 &&
+                                  Boolean(product.category_id) &&
+                                  newPromo.selected_categories.includes(product.category_id as string);
+
+                                return (
+                                  <div
+                                    key={product.id}
+                                    className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors border ${
+                                      isSelected
+                                        ? 'bg-primary/10 border-primary'
+                                        : isInSelectedCategory
+                                          ? 'bg-accent/40 border-accent'
+                                          : 'border-transparent hover:bg-muted'
+                                    }`}
+                                    onClick={() => toggleProductSelection(product.id)}
+                                  >
+                                    <Checkbox
+                                      checked={isSelected}
+                                      onCheckedChange={() => toggleProductSelection(product.id)}
+                                    />
+                                    {product.images?.[0] && (
+                                      <img
+                                        src={product.images[0]}
+                                        alt={product.name}
+                                        className="w-10 h-10 object-cover rounded"
+                                      />
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium truncate">{product.name}</p>
+                                      <div className="flex items-center gap-2">
+                                        <p className="text-xs text-muted-foreground">
+                                          {product.price.toLocaleString()} GNF
+                                        </p>
+                                        {categoryName && (
+                                          <Badge variant="secondary" className="text-xs">
+                                            {categoryName}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {isSelected && (
+                                      <Badge variant="default" className="text-xs">✓</Badge>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+
+                        {newPromo.selected_products.length > 0 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="mt-2"
+                            onClick={() => setNewPromo({ ...newPromo, selected_products: [] })}
+                          >
+                            Tout désélectionner les produits
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
+                </div>
                 </ScrollArea>
-                <div className="flex gap-2 justify-end px-4 py-3 sm:px-6 sm:py-4 flex-shrink-0 border-t bg-background">
-                  <Button variant="outline" size="sm" onClick={() => setIsNewPromoOpen(false)}>Annuler</Button>
-                  <Button size="sm" onClick={createPromo}>Créer</Button>
+                <div className="flex gap-2 justify-end pt-4 flex-shrink-0 border-t">
+                  <Button variant="outline" onClick={() => setIsNewPromoOpen(false)}>Annuler</Button>
+                  <Button onClick={createPromo}>Créer</Button>
                 </div>
               </DialogContent>
             </Dialog>
