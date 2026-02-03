@@ -88,11 +88,30 @@ serve(async (req) => {
     console.log('Searching for user:', trimmedId)
 
     // Valider le format de l'ID
-    const validPrefixes = ['VND', 'CLT', 'DRV', 'TAX', 'LIV', 'AGT', 'PDG', 'TRS', 'WRK', 'BST', 'SAG', 'VAG', 'MBR', 'ADM', 'USR']
+    const validPrefixes = ['VND', 'CLT', 'DRV', 'TAX', 'LIV', 'AGT', 'PDG', 'TRS', 'WRK', 'BST', 'SAG', 'VAG', 'MBR', 'ADM', 'USR', 'CLI']
     const idPrefix = trimmedId.substring(0, 3).toUpperCase()
     const isValidFormat = validPrefixes.includes(idPrefix) && /^[A-Z]{3}\d{4,}$/.test(trimmedId)
     
     console.log('ID validation:', { trimmedId, idPrefix, isValidFormat })
+
+    // Collecter les informations sur l'origine de l'ID
+    interface IdSourceInfo {
+      found_in_user_ids: boolean;
+      found_in_profiles: boolean;
+      user_ids_entry: any;
+      profiles_entry: any;
+      mismatch_detected: boolean;
+      origin_explanation: string;
+    }
+    
+    const idSourceInfo: IdSourceInfo = {
+      found_in_user_ids: false,
+      found_in_profiles: false,
+      user_ids_entry: null,
+      profiles_entry: null,
+      mismatch_detected: false,
+      origin_explanation: ''
+    }
 
     // 1. Chercher dans user_ids
     let userIdData = null
@@ -111,27 +130,49 @@ serve(async (req) => {
       userIdData = userIdRecord
       userId = userIdRecord.user_id
       foundIn = 'user_ids'
+      idSourceInfo.found_in_user_ids = true
+      idSourceInfo.user_ids_entry = userIdRecord
       console.log('Found in user_ids:', userId)
     }
 
-    // 2. Si non trouvé, chercher dans profiles.public_id
-    if (!userId) {
-      const { data: profileRecord, error: profileError } = await adminClient
-        .from('profiles')
-        .select('*')
-        .eq('public_id', trimmedId)
-        .maybeSingle()
+    // 2. Chercher dans profiles.public_id (indépendamment)
+    const { data: profileByPublicId, error: profileError } = await adminClient
+      .from('profiles')
+      .select('*')
+      .eq('public_id', trimmedId)
+      .maybeSingle()
 
-      if (profileError) {
-        console.error('Error finding user in profiles:', profileError)
-      } else if (profileRecord) {
-        userId = profileRecord.id
+    if (profileError) {
+      console.error('Error finding user in profiles:', profileError)
+    } else if (profileByPublicId) {
+      idSourceInfo.found_in_profiles = true
+      idSourceInfo.profiles_entry = profileByPublicId
+      
+      // Si pas encore trouvé dans user_ids, utiliser celui-ci
+      if (!userId) {
+        userId = profileByPublicId.id
         foundIn = 'profiles'
         console.log('Found in profiles.public_id:', userId)
+      } else if (userId !== profileByPublicId.id) {
+        // Mismatch détecté !
+        idSourceInfo.mismatch_detected = true
+        idSourceInfo.origin_explanation = `⚠️ MISMATCH: L'ID "${trimmedId}" pointe vers user_ids.user_id="${userId}" mais profiles.public_id="${trimmedId}" appartient à un autre utilisateur "${profileByPublicId.id}"`
+        console.warn('MISMATCH detected:', idSourceInfo.origin_explanation)
       }
     }
 
-    // 3. Chercher aussi avec le numéro seul (ex: 0001 → chercher XXX0001)
+    // 3. Déterminer l'explication de l'origine
+    if (idSourceInfo.found_in_user_ids && idSourceInfo.found_in_profiles) {
+      if (!idSourceInfo.mismatch_detected) {
+        idSourceInfo.origin_explanation = `✅ ID synchronisé: présent dans user_ids (créé: ${idSourceInfo.user_ids_entry?.created_at}) et profiles.public_id`
+      }
+    } else if (idSourceInfo.found_in_user_ids && !idSourceInfo.found_in_profiles) {
+      idSourceInfo.origin_explanation = `⚠️ ID présent dans user_ids mais PAS dans profiles.public_id - Le profil utilise peut-être un ID différent`
+    } else if (!idSourceInfo.found_in_user_ids && idSourceInfo.found_in_profiles) {
+      idSourceInfo.origin_explanation = `⚠️ ID présent dans profiles.public_id mais PAS dans user_ids - L'ID a peut-être été généré directement dans profiles`
+    }
+
+    // 4. Chercher aussi avec le numéro seul (ex: 0001 → chercher XXX0001)
     if (!userId && /^\d{4,}$/.test(trimmedId)) {
       console.log('Searching by numeric ID:', trimmedId)
       const { data: numericMatches } = await adminClient
@@ -140,15 +181,21 @@ serve(async (req) => {
         .ilike('custom_id', `%${trimmedId}`)
         .limit(10)
 
-      if (numericMatches && numericMatches.length > 0) {
-        // Retourner les correspondances multiples pour que l'utilisateur choisisse
+      const { data: profileNumericMatches } = await adminClient
+        .from('profiles')
+        .select('id, public_id, full_name, role')
+        .ilike('public_id', `%${trimmedId}`)
+        .limit(10)
+
+      const allMatches = [
+        ...(numericMatches || []).map(m => ({ custom_id: m.custom_id, user_id: m.user_id, role_type: m.role_type, source: 'user_ids' })),
+        ...(profileNumericMatches || []).map(p => ({ custom_id: p.public_id, user_id: p.id, role_type: p.role, source: 'profiles' }))
+      ]
+
+      if (allMatches.length > 0) {
         return new Response(JSON.stringify({
           error: `ID numérique "${trimmedId}" trouvé dans plusieurs entrées`,
-          multipleMatches: numericMatches.map(m => ({
-            custom_id: m.custom_id,
-            user_id: m.user_id,
-            role_type: m.role_type
-          })),
+          multipleMatches: allMatches,
           needsCorrection: true,
           searchedId: trimmedId
         }), {
@@ -158,7 +205,7 @@ serve(async (req) => {
       }
     }
 
-    // 4. Vérifier les doublons
+    // 5. Vérifier les doublons
     if (userId) {
       const { data: duplicates } = await adminClient
         .from('user_ids')
@@ -170,27 +217,63 @@ serve(async (req) => {
       }
     }
 
-    // 5. Si toujours pas trouvé
+    // 6. Si toujours pas trouvé - AMÉLIORER LA RECHERCHE
     if (!userId) {
       console.log('User not found anywhere:', trimmedId)
       
-      // Chercher des IDs similaires pour suggestions
+      // Chercher des IDs similaires dans TOUTES les sources
       const searchPattern = trimmedId.length >= 3 ? trimmedId.substring(0, 3) + '%' : '%'
-      const { data: similarIds } = await adminClient
-        .from('user_ids')
-        .select('custom_id, role_type')
-        .ilike('custom_id', searchPattern)
-        .limit(5)
+      
+      const [userIdSuggestions, profileSuggestions] = await Promise.all([
+        adminClient
+          .from('user_ids')
+          .select('custom_id, role_type, created_at')
+          .ilike('custom_id', searchPattern)
+          .limit(5),
+        adminClient
+          .from('profiles')
+          .select('public_id, role, full_name, created_at')
+          .ilike('public_id', searchPattern)
+          .limit(5)
+      ])
+
+      // Combiner et dédupliquer
+      const allSuggestions = new Map()
+      userIdSuggestions.data?.forEach(s => {
+        allSuggestions.set(s.custom_id, { id: s.custom_id, source: 'user_ids', role: s.role_type, created_at: s.created_at })
+      })
+      profileSuggestions.data?.forEach(s => {
+        if (!allSuggestions.has(s.public_id)) {
+          allSuggestions.set(s.public_id, { id: s.public_id, source: 'profiles', role: s.role, name: s.full_name, created_at: s.created_at })
+        }
+      })
+
+      // Construire une explication détaillée
+      let detailedMessage = ''
+      if (isValidFormat) {
+        detailedMessage = `🔍 L'ID "${trimmedId}" a un format valide (${idPrefix}XXXX) mais n'est lié à aucun utilisateur.\n\n`
+        detailedMessage += `📋 Origines possibles:\n`
+        detailedMessage += `• L'ID n'a jamais été créé dans le système\n`
+        detailedMessage += `• L'ID a été supprimé ou modifié lors d'une correction\n`
+        detailedMessage += `• L'ID est réservé mais non encore attribué\n\n`
+        detailedMessage += `💡 Utilisez l'outil d'audit de normalisation des IDs pour créer ou corriger cet ID.`
+      } else {
+        detailedMessage = `❌ L'ID "${trimmedId}" n'a pas un format reconnu.\n\n`
+        detailedMessage += `📋 Formats valides: ${validPrefixes.join(', ')} suivi de chiffres (ex: VND0001).\n\n`
+        detailedMessage += `💡 Vérifiez la saisie ou utilisez l'outil d'audit pour rechercher l'utilisateur.`
+      }
 
       return new Response(JSON.stringify({
         error: `Aucun utilisateur trouvé avec l'ID: ${trimmedId}`,
         searchedId: trimmedId,
         isValidFormat,
         needsCorrection: true,
-        suggestions: similarIds?.map(s => s.custom_id) || [],
-        message: isValidFormat 
-          ? `L'ID "${trimmedId}" a un format valide mais n'est lié à aucun utilisateur dans le système.`
-          : `L'ID "${trimmedId}" n'a pas un format reconnu. Formats valides: ${validPrefixes.join(', ')} suivi de chiffres (ex: VND0001).`
+        suggestions: Array.from(allSuggestions.values()),
+        detailedMessage,
+        checkedSources: {
+          user_ids: 'Non trouvé',
+          profiles_public_id: 'Non trouvé'
+        }
       }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -548,6 +631,17 @@ serve(async (req) => {
       customId: trimmedId,
       roleType,
       userId,
+      
+      // Information sur l'origine de l'ID (NOUVEAU)
+      idSourceInfo: {
+        found_in_user_ids: idSourceInfo.found_in_user_ids,
+        found_in_profiles: idSourceInfo.found_in_profiles,
+        mismatch_detected: idSourceInfo.mismatch_detected,
+        origin_explanation: idSourceInfo.origin_explanation,
+        user_ids_custom_id: idSourceInfo.user_ids_entry?.custom_id || null,
+        profiles_public_id: idSourceInfo.profiles_entry?.public_id || null,
+        found_in: foundIn
+      },
       
       // Wallet & Solde
       wallet: wallet ? {

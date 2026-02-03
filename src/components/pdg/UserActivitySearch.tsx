@@ -378,34 +378,64 @@ export function UserActivitySearch() {
                     <p className="text-sm text-muted-foreground mt-1">
                       ID recherché: <code className="font-mono bg-muted px-1 rounded">{searchError.searchedId}</code>
                       {searchError.isValidFormat !== undefined && (
-                        <Badge className={`ml-2 ${searchError.isValidFormat ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        <Badge className={`ml-2 ${searchError.isValidFormat ? 'bg-primary/20 text-primary' : 'bg-destructive/20 text-destructive'}`}>
                           {searchError.isValidFormat ? 'Format valide' : 'Format invalide'}
                         </Badge>
                       )}
                     </p>
                   )}
+
+                  {/* Message détaillé */}
+                  {(searchError as any)?.detailedMessage && (
+                    <div className="mt-3 p-3 bg-muted/50 rounded text-sm whitespace-pre-line">
+                      {(searchError as any).detailedMessage}
+                    </div>
+                  )}
+
+                  {/* Sources vérifiées */}
+                  {(searchError as any)?.checkedSources && (
+                    <div className="mt-2 flex gap-2 flex-wrap">
+                      <Badge variant="outline" className="text-xs">
+                        🗄️ user_ids: {(searchError as any).checkedSources.user_ids}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        👤 profiles.public_id: {(searchError as any).checkedSources.profiles_public_id}
+                      </Badge>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Suggestions */}
+              {/* Suggestions améliorées */}
               {searchError?.suggestions && searchError.suggestions.length > 0 && (
                 <div className="pt-2 border-t">
                   <p className="text-sm text-muted-foreground mb-2">IDs similaires trouvés:</p>
                   <div className="flex flex-wrap gap-2">
-                    {searchError.suggestions.map(suggestion => (
-                      <Button
-                        key={suggestion}
-                        variant="outline"
-                        size="sm"
-                        className="font-mono"
-                        onClick={() => {
-                          handleSuggestionClick(suggestion);
-                          setTimeout(() => handleSearch(), 100);
-                        }}
-                      >
-                        {suggestion}
-                      </Button>
-                    ))}
+                    {searchError.suggestions.map((suggestion: any, index: number) => {
+                      const suggestionId = typeof suggestion === 'string' ? suggestion : suggestion.id;
+                      const suggestionSource = typeof suggestion === 'object' ? suggestion.source : null;
+                      const suggestionRole = typeof suggestion === 'object' ? suggestion.role : null;
+                      return (
+                        <Button
+                          key={`${suggestionId}-${index}`}
+                          variant="outline"
+                          size="sm"
+                          className="font-mono"
+                          onClick={() => {
+                            handleSuggestionClick(suggestionId);
+                            setTimeout(() => handleSearch(), 100);
+                          }}
+                        >
+                          {suggestionId}
+                          {suggestionSource && (
+                            <span className="ml-1 text-xs opacity-60">({suggestionSource})</span>
+                          )}
+                          {suggestionRole && (
+                            <Badge variant="secondary" className="ml-1 text-xs">{suggestionRole}</Badge>
+                          )}
+                        </Button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -523,6 +553,28 @@ export function UserActivitySearch() {
                   <p className="text-xs font-mono text-muted-foreground mt-1">
                     UUID: {activityData.userId}
                   </p>
+
+                  {/* Info origine de l'ID */}
+                  {(activityData as any).idSourceInfo && (
+                    <div className="mt-2 p-2 bg-muted/50 rounded text-xs">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant={(activityData as any).idSourceInfo.found_in_user_ids ? "default" : "secondary"} className="text-xs">
+                          user_ids: {(activityData as any).idSourceInfo.found_in_user_ids ? '✓' : '✗'}
+                        </Badge>
+                        <Badge variant={(activityData as any).idSourceInfo.found_in_profiles ? "default" : "secondary"} className="text-xs">
+                          profiles: {(activityData as any).idSourceInfo.found_in_profiles ? '✓' : '✗'}
+                        </Badge>
+                        {(activityData as any).idSourceInfo.mismatch_detected && (
+                          <Badge variant="destructive" className="text-xs">⚠️ MISMATCH</Badge>
+                        )}
+                      </div>
+                      {(activityData as any).idSourceInfo.origin_explanation && (
+                        <p className="mt-1 text-muted-foreground">
+                          {(activityData as any).idSourceInfo.origin_explanation}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Stats rapides */}
