@@ -69,12 +69,12 @@ const createDomainConfigs = (): DomainConfig[] => [
     domain: 'WALLET',
     metricLabel: 'Portefeuilles actifs',
     route: '/pdg',
-    dataSource: 'wallets WHERE balance > 0',
+    dataSource: 'wallets WHERE wallet_status = active',
     fetchMetric: async () => {
       const { count } = await supabase
         .from('wallets')
         .select('*', { count: 'exact', head: true })
-        .gt('balance', 0);
+        .eq('wallet_status', 'active');
       return count || 0;
     },
   },
