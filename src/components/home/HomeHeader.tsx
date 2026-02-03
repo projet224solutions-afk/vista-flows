@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { MapPin, ShoppingCart, Bell, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import LanguageSelector from '@/components/LanguageSelector';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { cn } from '@/lib/utils';
@@ -78,6 +79,7 @@ export function HomeHeader({
 
           {/* Actions */}
           <div className="flex items-center gap-1 md:gap-2">
+            <ThemeToggle />
             <LanguageSelector variant="minimal" />
 
             {/* Cart Button */}
