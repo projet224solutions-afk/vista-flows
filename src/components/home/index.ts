@@ -1,6 +1,7 @@
 export { NearbyVendorsModal } from './NearbyVendorsModal';
 export { NearbyTaxiModal } from './NearbyTaxiModal';
 export { NearbyDeliveryModal } from './NearbyDeliveryModal';
+export { SplineBackground } from './SplineBackground';
 
 /**
  * HOME COMPONENTS - Index Export

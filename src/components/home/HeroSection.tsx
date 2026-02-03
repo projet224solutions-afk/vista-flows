@@ -12,6 +12,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { AvailableServicesModal } from '@/components/professional-services/AvailableServicesModal';
+import { SplineBackground } from './SplineBackground';
 
 interface QuickAction {
   id: string;
@@ -80,9 +81,12 @@ export function HeroSection({ className }: HeroSectionProps) {
   };
 
   return (
-    <section className={cn('relative', className)}>
+    <section className={cn('relative overflow-hidden', className)}>
+      {/* 3D Spline Globe Background */}
+      <SplineBackground />
+
       {/* Compact Header */}
-      <div className="px-4 pt-4 pb-6">
+      <div className="relative z-10 px-4 pt-4 pb-6">
         {/* Welcome Badge */}
         <div className="flex items-center gap-2 mb-3">
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 rounded-full">
@@ -156,7 +160,7 @@ export function HeroSection({ className }: HeroSectionProps) {
       </div>
 
       {/* Quick Actions Grid - Compact Cards */}
-      <div className="px-4 pb-4">
+      <div className="relative z-10 px-4 pb-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-foreground">{t('home.popularServices') || t('home.nearbyServices')}</h2>
           <button 
