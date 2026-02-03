@@ -28,6 +28,12 @@ interface Product {
   images?: string[];
 }
 
+// Type catégorie
+interface Category {
+  id: string;
+  name: string;
+}
+
 // ============= TYPES =============
 interface GroupedSale {
   id: string;
@@ -65,6 +71,7 @@ interface Promotion {
   end_date: string | null;
   is_active: boolean;
   applicable_products?: string[];
+  applicable_categories?: string[];
 }
 
 export default function AdvancedSalesManager() {
@@ -106,11 +113,13 @@ export default function AdvancedSalesManager() {
     discount_value: '',
     start_date: '',
     end_date: '',
-    selected_products: [] as string[]
+    selected_products: [] as string[],
+    selected_categories: [] as string[]
   });
 
-  // État pour les produits du vendeur
+  // État pour les produits et catégories
   const [vendorProducts, setVendorProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [productSearchTerm, setProductSearchTerm] = useState('');
 
   // Chargement des données
@@ -184,6 +193,9 @@ export default function AdvancedSalesManager() {
         is_active: p.is_active,
         applicable_products: Array.isArray(p.applicable_products) 
           ? (p.applicable_products as unknown as string[])
+          : [],
+        applicable_categories: Array.isArray(p.applicable_categories)
+          ? (p.applicable_categories as unknown as string[])
           : []
       })));
 
@@ -195,6 +207,15 @@ export default function AdvancedSalesManager() {
         .order('name');
       
       setVendorProducts(productsData || []);
+
+      // Catégories actives
+      const { data: categoriesData } = await supabase
+        .from('categories')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name');
+      
+      setCategories(categoriesData || []);
 
     } catch (error) {
       console.error('Error loading data:', error);
@@ -291,6 +312,7 @@ export default function AdvancedSalesManager() {
           start_date: newPromo.start_date || null,
           end_date: newPromo.end_date || null,
           applicable_products: newPromo.selected_products.length > 0 ? newPromo.selected_products : null,
+          applicable_categories: newPromo.selected_categories.length > 0 ? newPromo.selected_categories : null,
           is_active: true
         }]);
 
@@ -298,7 +320,15 @@ export default function AdvancedSalesManager() {
 
       toast({ title: '✅ Promotion créée' });
       setIsNewPromoOpen(false);
-      setNewPromo({ name: '', discount_type: 'percentage', discount_value: '', start_date: '', end_date: '', selected_products: [] });
+      setNewPromo({ 
+        name: '', 
+        discount_type: 'percentage', 
+        discount_value: '', 
+        start_date: '', 
+        end_date: '', 
+        selected_products: [],
+        selected_categories: []
+      });
       setProductSearchTerm('');
       loadData();
     } catch (error: any) {
@@ -313,6 +343,16 @@ export default function AdvancedSalesManager() {
       selected_products: prev.selected_products.includes(productId)
         ? prev.selected_products.filter(id => id !== productId)
         : [...prev.selected_products, productId]
+    }));
+  };
+
+  // Toggle sélection catégorie pour promo
+  const toggleCategorySelection = (categoryId: string) => {
+    setNewPromo(prev => ({
+      ...prev,
+      selected_categories: prev.selected_categories.includes(categoryId)
+        ? prev.selected_categories.filter(id => id !== categoryId)
+        : [...prev.selected_categories, categoryId]
     }));
   };
 
@@ -803,6 +843,57 @@ export default function AdvancedSalesManager() {
                       </Button>
                     )}
                   </div>
+
+                  {/* Sélection de catégories */}
+                  <div>
+                    <label className="text-sm font-medium">Catégories concernées</label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      {newPromo.selected_categories.length === 0 
+                        ? 'Toutes les catégories (aucune sélection)' 
+                        : `${newPromo.selected_categories.length} catégorie(s) sélectionnée(s)`}
+                    </p>
+                    
+                    <ScrollArea className="h-32 border rounded-md p-2">
+                      {categories.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          Aucune catégorie disponible
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {categories.map((category) => (
+                            <div
+                              key={category.id}
+                              className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${
+                                newPromo.selected_categories.includes(category.id)
+                                  ? 'bg-primary/10 border border-primary'
+                                  : 'hover:bg-muted'
+                              }`}
+                              onClick={() => toggleCategorySelection(category.id)}
+                            >
+                              <Checkbox
+                                checked={newPromo.selected_categories.includes(category.id)}
+                                onCheckedChange={() => toggleCategorySelection(category.id)}
+                              />
+                              <Package className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-sm font-medium">{category.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                    
+                    {newPromo.selected_categories.length > 0 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="mt-2"
+                        onClick={() => setNewPromo({ ...newPromo, selected_categories: [] })}
+                      >
+                        Tout désélectionner
+                      </Button>
+                    )}
+                  </div>
                   <div className="flex gap-2 justify-end">
                     <Button variant="outline" onClick={() => setIsNewPromoOpen(false)}>Annuler</Button>
                     <Button onClick={createPromo}>Créer</Button>
@@ -817,6 +908,11 @@ export default function AdvancedSalesManager() {
               // Récupérer les noms des produits liés
               const linkedProducts = promo.applicable_products && promo.applicable_products.length > 0
                 ? vendorProducts.filter(p => promo.applicable_products?.includes(p.id))
+                : [];
+              
+              // Récupérer les noms des catégories liées
+              const linkedCategories = promo.applicable_categories && promo.applicable_categories.length > 0
+                ? categories.filter(c => promo.applicable_categories?.includes(c.id))
                 : [];
               
               return (
@@ -836,24 +932,44 @@ export default function AdvancedSalesManager() {
                             }
                           </p>
                           {/* Afficher les produits liés */}
-                          {linkedProducts.length > 0 ? (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {linkedProducts.slice(0, 3).map(p => (
-                                <Badge key={p.id} variant="outline" className="text-xs">
-                                  {p.name}
-                                </Badge>
-                              ))}
-                              {linkedProducts.length > 3 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{linkedProducts.length - 3}
-                                </Badge>
-                              )}
-                            </div>
-                          ) : (
-                            <Badge variant="secondary" className="text-xs mt-1">
-                              Tous les produits
-                            </Badge>
-                          )}
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {linkedProducts.length > 0 ? (
+                              <>
+                                {linkedProducts.slice(0, 2).map(p => (
+                                  <Badge key={p.id} variant="outline" className="text-xs">
+                                    📦 {p.name}
+                                  </Badge>
+                                ))}
+                                {linkedProducts.length > 2 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    +{linkedProducts.length - 2} produits
+                                  </Badge>
+                                )}
+                              </>
+                            ) : null}
+                            
+                            {/* Afficher les catégories liées */}
+                            {linkedCategories.length > 0 ? (
+                              <>
+                                {linkedCategories.slice(0, 2).map(c => (
+                                  <Badge key={c.id} variant="secondary" className="text-xs">
+                                    🏷️ {c.name}
+                                  </Badge>
+                                ))}
+                                {linkedCategories.length > 2 && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    +{linkedCategories.length - 2} catégories
+                                  </Badge>
+                                )}
+                              </>
+                            ) : null}
+                            
+                            {linkedProducts.length === 0 && linkedCategories.length === 0 && (
+                              <Badge variant="secondary" className="text-xs">
+                                Tous les produits
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <div className="text-right">
