@@ -200,12 +200,19 @@ export default function AdvancedSalesManager() {
           : []
       })));
 
-      // Produits du vendeur (avec category_id pour le filtrage)
-      const { data: productsData } = await supabase
+      // Produits du vendeur - chercher par vendor_id OU user_id pour compatibilité
+      const { data: productsData, error: productsError } = await supabase
         .from('products')
         .select('id, name, price, images, category_id')
         .eq('vendor_id', vendorId)
+        .eq('is_active', true)
         .order('name');
+      
+      console.log('[AdvancedSalesManager] Produits chargés:', productsData?.length || 0, 'pour vendorId:', vendorId);
+      
+      if (productsError) {
+        console.error('[AdvancedSalesManager] Erreur chargement produits:', productsError);
+      }
       
       setVendorProducts(productsData || []);
 
@@ -785,7 +792,7 @@ export default function AdvancedSalesManager() {
                         : `${newPromo.selected_categories.length} catégorie(s) sélectionnée(s) - Les produits ci-dessous seront filtrés`}
                     </p>
                     
-                    <ScrollArea className="h-32 border rounded-md p-2 bg-background">
+                    <div className="h-32 border rounded-md p-2 bg-background overflow-y-auto">
                       {categories.length === 0 ? (
                         <p className="text-sm text-muted-foreground text-center py-4">
                           Aucune catégorie disponible
@@ -815,7 +822,7 @@ export default function AdvancedSalesManager() {
                           ))}
                         </div>
                       )}
-                    </ScrollArea>
+                    </div>
                     
                     {newPromo.selected_categories.length > 0 && (
                       <Button
@@ -860,10 +867,10 @@ export default function AdvancedSalesManager() {
                     </div>
                     
                     {/* Liste des produits */}
-                    <ScrollArea className="h-48 border rounded-md p-2">
+                    <div className="h-48 border rounded-md p-2 bg-background overflow-y-auto">
                       {vendorProducts.length === 0 ? (
                         <p className="text-sm text-muted-foreground text-center py-4">
-                          Aucun produit disponible
+                          Aucun produit disponible dans votre boutique
                         </p>
                       ) : filteredProducts.length === 0 ? (
                         <p className="text-sm text-muted-foreground text-center py-4">
@@ -895,7 +902,6 @@ export default function AdvancedSalesManager() {
                                 <Checkbox
                                   checked={isSelected}
                                   onCheckedChange={() => toggleProductSelection(product.id)}
-                                  onClick={(e) => e.stopPropagation()}
                                 />
                                 {product.images?.[0] && (
                                   <img
@@ -925,7 +931,7 @@ export default function AdvancedSalesManager() {
                           })}
                         </div>
                       )}
-                    </ScrollArea>
+                    </div>
                     
                     {newPromo.selected_products.length > 0 && (
                       <Button
