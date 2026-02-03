@@ -484,46 +484,68 @@ export default function AdvancedSalesManager() {
                   Nouvelle
                 </Button>
               </DialogTrigger>
-              <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+              <DialogContent className="w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
                 <DialogHeader className="flex-shrink-0">
                   <DialogTitle>Nouvelle vente à crédit</DialogTitle>
                 </DialogHeader>
 
                 <ScrollArea className="flex-1 pr-4">
-                  <div className="space-y-4 pb-4">
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div>
-                        <label className="text-sm font-medium">Nom du client *</label>
-                        <Input
-                          placeholder="Nom du client"
-                          value={newCredit.customer_name}
-                          onChange={(e) => setNewCredit({ ...newCredit, customer_name: e.target.value })}
-                        />
+                  <div className="pb-4">
+                    <div className="grid gap-4 lg:grid-cols-3">
+                      {/* COL 1 — Client */}
+                      <div className="space-y-4 lg:col-span-1">
+                        <div className="rounded-lg border bg-muted/30 p-3">
+                          <p className="text-xs text-muted-foreground mb-2">Informations client</p>
+                          <label className="text-sm font-medium">Nom du client *</label>
+                          <Input
+                            placeholder="Nom du client"
+                            value={newCredit.customer_name}
+                            onChange={(e) => setNewCredit({ ...newCredit, customer_name: e.target.value })}
+                          />
+                        </div>
+
+                        <div className="rounded-lg border bg-muted/30 p-3">
+                          <p className="text-xs text-muted-foreground mb-2">Notes</p>
+                          <label className="text-sm font-medium">Commentaire</label>
+                          <Input
+                            placeholder="Notes optionnelles"
+                            value={newCredit.notes}
+                            onChange={(e) => setNewCredit({ ...newCredit, notes: e.target.value })}
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label className="text-sm font-medium">Montant (GNF) *</label>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          value={newCredit.total}
-                          onChange={(e) => setNewCredit({ ...newCredit, total: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">Date d'échéance *</label>
-                        <Input
-                          type="date"
-                          value={newCredit.due_date}
-                          onChange={(e) => setNewCredit({ ...newCredit, due_date: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">Notes</label>
-                        <Input
-                          placeholder="Notes optionnelles"
-                          value={newCredit.notes}
-                          onChange={(e) => setNewCredit({ ...newCredit, notes: e.target.value })}
-                        />
+
+                      {/* COL 2–3 — Détails crédit */}
+                      <div className="space-y-4 lg:col-span-2">
+                        <div className="rounded-lg border bg-muted/30 p-3">
+                          <p className="text-xs text-muted-foreground mb-2">Détails du crédit</p>
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div>
+                              <label className="text-sm font-medium">Montant (GNF) *</label>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                value={newCredit.total}
+                                onChange={(e) => setNewCredit({ ...newCredit, total: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium">Date d'échéance *</label>
+                              <Input
+                                type="date"
+                                value={newCredit.due_date}
+                                onChange={(e) => setNewCredit({ ...newCredit, due_date: e.target.value })}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="rounded-lg border bg-muted/30 p-3">
+                          <p className="text-xs text-muted-foreground">Astuce</p>
+                          <p className="text-sm text-muted-foreground">
+                            Utilisez un nom client clair et une échéance réaliste pour un suivi comptable propre.
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -588,56 +610,84 @@ export default function AdvancedSalesManager() {
                   Nouveau retour
                 </Button>
               </DialogTrigger>
-              <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+              <DialogContent className="w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
                 <DialogHeader className="flex-shrink-0">
                   <DialogTitle>Enregistrer un retour</DialogTitle>
                 </DialogHeader>
 
                 <ScrollArea className="flex-1 pr-4">
-                  <div className="space-y-4 pb-4">
-                    <div>
-                      <label className="text-sm font-medium">N° Commande (optionnel)</label>
-                      <Input
-                        placeholder="ORD-XXXXX"
-                        value={newReturn.order_id}
-                        onChange={(e) => setNewReturn({ ...newReturn, order_id: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Raison du retour *</label>
-                      <Input
-                        placeholder="Produit défectueux, mauvaise taille..."
-                        value={newReturn.return_reason}
-                        onChange={(e) => setNewReturn({ ...newReturn, return_reason: e.target.value })}
-                      />
-                    </div>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div>
-                        <label className="text-sm font-medium">Quantité *</label>
-                        <Input
-                          type="number"
-                          placeholder="1"
-                          value={newReturn.quantity_returned}
-                          onChange={(e) => setNewReturn({ ...newReturn, quantity_returned: e.target.value })}
-                        />
+                  <div className="pb-4">
+                    <div className="grid gap-4 lg:grid-cols-3">
+                      {/* COL 1–2 — Contexte */}
+                      <div className="space-y-4 lg:col-span-2">
+                        <div className="rounded-lg border bg-muted/30 p-3">
+                          <p className="text-xs text-muted-foreground mb-2">Contexte</p>
+
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div>
+                              <label className="text-sm font-medium">N° Commande (optionnel)</label>
+                              <Input
+                                placeholder="ORD-XXXXX"
+                                value={newReturn.order_id}
+                                onChange={(e) => setNewReturn({ ...newReturn, order_id: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium">Raison du retour *</label>
+                              <Input
+                                placeholder="Produit défectueux, mauvaise taille..."
+                                value={newReturn.return_reason}
+                                onChange={(e) => setNewReturn({ ...newReturn, return_reason: e.target.value })}
+                              />
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <label className="text-sm font-medium">Prix unitaire *</label>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          value={newReturn.unit_price}
-                          onChange={(e) => setNewReturn({ ...newReturn, unit_price: e.target.value })}
-                        />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <label className="text-sm font-medium">Montant remboursement (GNF) *</label>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          value={newReturn.refund_amount}
-                          onChange={(e) => setNewReturn({ ...newReturn, refund_amount: e.target.value })}
-                        />
+
+                      {/* COL 3 — Montants */}
+                      <div className="space-y-4 lg:col-span-1">
+                        <div className="rounded-lg border bg-muted/30 p-3">
+                          <p className="text-xs text-muted-foreground mb-2">Montants</p>
+                          <div className="grid gap-4">
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
+                              <div>
+                                <label className="text-sm font-medium">Quantité *</label>
+                                <Input
+                                  type="number"
+                                  placeholder="1"
+                                  value={newReturn.quantity_returned}
+                                  onChange={(e) => setNewReturn({ ...newReturn, quantity_returned: e.target.value })}
+                                />
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium">Prix unitaire *</label>
+                                <Input
+                                  type="number"
+                                  placeholder="0"
+                                  value={newReturn.unit_price}
+                                  onChange={(e) => setNewReturn({ ...newReturn, unit_price: e.target.value })}
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="text-sm font-medium">Montant remboursement (GNF) *</label>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                value={newReturn.refund_amount}
+                                onChange={(e) => setNewReturn({ ...newReturn, refund_amount: e.target.value })}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="rounded-lg border bg-muted/30 p-3">
+                          <p className="text-xs text-muted-foreground">Astuce</p>
+                          <p className="text-sm text-muted-foreground">
+                            Renseignez quantité, prix unitaire et montant remboursé pour une traçabilité parfaite.
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
