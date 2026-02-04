@@ -299,14 +299,33 @@ export default function Marketplace() {
       <header className="bg-card border-b border-border sticky top-0 z-40">
         <div className="px-4 py-3">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">
-                {vendorName ? vendorName : 'Marketplace 224'}
-              </h1>
-              {vendorName && (
-                <p className="text-xs text-muted-foreground">
-                  {marketplaceTotal} article{marketplaceTotal > 1 ? 's' : ''} disponible{marketplaceTotal > 1 ? 's' : ''}
-                </p>
+            <div className="flex-1 min-w-0 overflow-hidden">
+              {vendorName ? (
+                <>
+                  <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">
+                    {vendorName}
+                  </h1>
+                  <p className="text-xs text-muted-foreground">
+                    {marketplaceTotal} article{marketplaceTotal > 1 ? 's' : ''} disponible{marketplaceTotal > 1 ? 's' : ''}
+                  </p>
+                </>
+              ) : (
+                <div className="overflow-hidden">
+                  <div className="flex animate-vision-ticker">
+                    <span className="text-sm sm:text-base font-medium text-primary whitespace-nowrap px-8 font-inter">
+                      224SOLUTIONS donne à l'Afrique la possibilité de vendre en ligne et physiquement, que ce soit des produits physiques ou digitaux, via l'affiliation, tout en permettant à chacun de gérer son commerce physique et d'offrir ou accéder aux services les plus proches de lui.
+                    </span>
+                    <span className="text-sm sm:text-base font-medium text-primary whitespace-nowrap px-8 font-inter">
+                      La plateforme connecte vendeurs et acheteurs à travers le continent, facilite le commerce digital, sécurise les paiements et crée de nouvelles opportunités économiques sans frontières.
+                    </span>
+                    <span className="text-sm sm:text-base font-medium text-primary whitespace-nowrap px-8 font-inter">
+                      224SOLUTIONS donne à l'Afrique la possibilité de vendre en ligne et physiquement, que ce soit des produits physiques ou digitaux, via l'affiliation, tout en permettant à chacun de gérer son commerce physique et d'offrir ou accéder aux services les plus proches de lui.
+                    </span>
+                    <span className="text-sm sm:text-base font-medium text-primary whitespace-nowrap px-8 font-inter">
+                      La plateforme connecte vendeurs et acheteurs à travers le continent, facilite le commerce digital, sécurise les paiements et crée de nouvelles opportunités économiques sans frontières.
+                    </span>
+                  </div>
+                </div>
               )}
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
