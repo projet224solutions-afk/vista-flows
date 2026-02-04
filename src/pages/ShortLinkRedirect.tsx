@@ -3,148 +3,141 @@
  * Résout les liens courts et redirige vers la page originale
  */
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Link2Off, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
+type Status = 'loading' | 'redirecting' | 'error' | 'fallback';
+
 interface LinkInfo {
   title: string;
   type: string;
-  originalUrl: string;
   targetPath: string;
 }
 
 export default function ShortLinkRedirect() {
   const { shortCode } = useParams<{ shortCode: string }>();
   const navigate = useNavigate();
-  const [status, setStatus] = useState<'loading' | 'error' | 'fallback'>('loading');
-  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [status, setStatus] = useState<Status>('loading');
+  const [errorMessage, setErrorMessage] = useState('');
   const [linkInfo, setLinkInfo] = useState<LinkInfo | null>(null);
-  
-  // Compteur pour éviter les appels multiples
-  const resolveCount = useRef(0);
+  const hasResolved = useRef(false);
 
-  const resolveAndRedirect = useCallback(async () => {
+  useEffect(() => {
+    if (!shortCode || hasResolved.current) return;
+    hasResolved.current = true;
+
+    resolveLink();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shortCode]);
+
+  const resolveLink = async () => {
     if (!shortCode) {
       setStatus('error');
       setErrorMessage('Code de lien manquant');
       return;
     }
 
-    // Incrémenter le compteur et capturer la valeur
-    const currentResolve = ++resolveCount.current;
-    console.log('🔗 [ShortLink] Starting resolve #', currentResolve, 'for:', shortCode);
+    console.log('🔗 [ShortLink] Resolving:', shortCode);
 
     try {
-      const { data, error: fetchError } = await supabase
-        .from('shared_links' as 'shared_links')
-        .select('original_url, title, link_type, resource_id')
+      const { data, error } = await supabase
+        .from('shared_links')
+        .select('original_url, title, link_type')
         .eq('short_code', shortCode)
         .eq('is_active', true)
         .maybeSingle();
 
-      // Vérifier si un autre appel a été fait pendant qu'on attendait
-      if (currentResolve !== resolveCount.current) {
-        console.log('🔗 [ShortLink] Resolve #', currentResolve, 'cancelled (newer resolve in progress)');
-        return;
-      }
-
-      console.log('🔗 [ShortLink] Query result:', { data, fetchError, currentResolve });
-
-      if (fetchError) {
-        console.error('🔗 [ShortLink] Database error:', fetchError);
+      if (error) {
+        console.error('🔗 [ShortLink] DB error:', error);
         setStatus('error');
-        setErrorMessage('Erreur lors de la résolution du lien');
+        setErrorMessage('Erreur de connexion');
         return;
       }
-      
+
       if (!data) {
-        console.error('🔗 [ShortLink] Link not found for code:', shortCode);
+        console.warn('🔗 [ShortLink] Not found:', shortCode);
         setStatus('error');
         setErrorMessage('Lien introuvable ou expiré');
         return;
       }
 
-      console.log('🔗 [ShortLink] Found link:', data.original_url);
+      console.log('🔗 [ShortLink] Found:', data.original_url);
 
-      // Incrémenter le compteur de vues (fire and forget)
-      (supabase.rpc as any)('increment_shared_link_views', { 
-        p_short_code: shortCode 
-      }).catch((e: any) => console.warn('Failed to increment views:', e));
+      // Increment views (fire and forget)
+      (supabase.rpc as any)('increment_shared_link_views', { p_short_code: shortCode })
+        .then(() => {})
+        .catch(() => {});
 
-      // Extraire le chemin relatif de l'URL originale
+      // Extract relative path
       let targetPath: string;
-      const originalUrl = data.original_url;
-      
       try {
-        const url = new URL(originalUrl);
-        // Retirer les paramètres internes Lovable
-        for (const key of Array.from(url.searchParams.keys())) {
+        const url = new URL(data.original_url);
+        // Clean up Lovable preview params
+        Array.from(url.searchParams.keys()).forEach(key => {
           if (key.startsWith('__lovable')) url.searchParams.delete(key);
-        }
-        targetPath = url.pathname + url.search;
-        console.log('🔗 [ShortLink] Extracted path:', targetPath);
+        });
+        targetPath = url.pathname + url.search + url.hash;
       } catch {
-        // Si l'URL est déjà relative ou malformée
-        targetPath = originalUrl.startsWith('/') 
-          ? originalUrl 
-          : `/${originalUrl}`;
-        console.log('🔗 [ShortLink] Using fallback path:', targetPath);
+        targetPath = data.original_url.startsWith('/') 
+          ? data.original_url 
+          : `/${data.original_url}`;
       }
 
-      // Préparer le fallback
-      const info: LinkInfo = {
+      console.log('🔗 [ShortLink] Target path:', targetPath);
+
+      // Store link info for fallback
+      setLinkInfo({
         title: data.title,
         type: data.link_type,
-        originalUrl: originalUrl,
         targetPath
-      };
-      
-      console.log('🔗 [ShortLink] Navigating to:', targetPath);
-      
-      // Effectuer la navigation
+      });
+
+      setStatus('redirecting');
+
+      // Perform navigation
       navigate(targetPath, { replace: true });
-      
-      // Vérifier après un court délai si la navigation a réussi
+
+      // Check if navigation succeeded after a short delay
       setTimeout(() => {
-        if (window.location.pathname.startsWith('/s/')) {
-          console.log('🔗 [ShortLink] Navigation may have failed, showing fallback UI');
-          setLinkInfo(info);
+        // If we're still on /s/ path, show fallback button
+        if (window.location.pathname.includes('/s/')) {
+          console.log('🔗 [ShortLink] Navigation seems stuck, showing fallback');
           setStatus('fallback');
-        } else {
-          console.log('🔗 [ShortLink] Navigation succeeded');
         }
-      }, 300);
+      }, 500);
 
     } catch (err) {
-      console.error('🔗 [ShortLink] Unexpected error:', err);
-      if (currentResolve === resolveCount.current) {
-        setStatus('error');
-        setErrorMessage('Erreur inattendue');
-      }
+      console.error('🔗 [ShortLink] Error:', err);
+      setStatus('error');
+      setErrorMessage('Erreur inattendue');
     }
-  }, [shortCode, navigate]);
+  };
 
-  useEffect(() => {
-    resolveAndRedirect();
-  }, [resolveAndRedirect]);
+  const handleManualRedirect = () => {
+    if (linkInfo?.targetPath) {
+      window.location.href = linkInfo.targetPath;
+    }
+  };
 
-  // État de chargement
-  if (status === 'loading') {
+  // Loading state
+  if (status === 'loading' || status === 'redirecting') {
     return (
       <div className="fixed inset-0 z-[9999] bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Redirection en cours...</p>
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground">
+            {status === 'loading' ? 'Chargement...' : 'Redirection en cours...'}
+          </p>
         </div>
       </div>
     );
   }
 
-  // État d'erreur
+  // Error state
   if (status === 'error') {
     return (
       <div className="fixed inset-0 z-[9999] bg-background flex items-center justify-center p-4">
@@ -156,48 +149,36 @@ export default function ShortLinkRedirect() {
             <CardTitle>Lien invalide</CardTitle>
             <CardDescription>{errorMessage}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-center text-muted-foreground">
-              Ce lien de partage n'est plus valide ou a expiré.
-            </p>
-            <div className="flex flex-col gap-2">
-              <Button onClick={() => navigate('/marketplace', { replace: true })} className="w-full">
-                Voir le Marketplace
-              </Button>
-              <Button variant="outline" onClick={() => navigate('/', { replace: true })} className="w-full">
-                Retour à l'accueil
-              </Button>
-            </div>
+          <CardContent className="space-y-3">
+            <Button onClick={() => navigate('/marketplace', { replace: true })} className="w-full">
+              Voir le Marketplace
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/', { replace: true })} className="w-full">
+              Retour à l'accueil
+            </Button>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  // État fallback (navigation a échoué, afficher un bouton manuel)
+  // Fallback state (navigation failed)
   if (status === 'fallback' && linkInfo) {
     return (
       <div className="fixed inset-0 z-[9999] bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardHeader className="text-center">
-            <CardTitle>{linkInfo.title}</CardTitle>
+            <CardTitle className="text-lg">{linkInfo.title}</CardTitle>
             <CardDescription>
-              Cliquez pour accéder à cette {linkInfo.type === 'shop' ? 'boutique' : 'page'}
+              Cliquez pour accéder à {linkInfo.type === 'shop' ? 'cette boutique' : linkInfo.type === 'product' ? 'ce produit' : 'cette page'}
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            <Button 
-              onClick={() => navigate(linkInfo.targetPath, { replace: true })}
-              className="w-full"
-            >
+          <CardContent className="space-y-3">
+            <Button onClick={handleManualRedirect} className="w-full">
               <ExternalLink className="w-4 h-4 mr-2" />
-              Ouvrir le lien
+              Ouvrir
             </Button>
-            <Button 
-              variant="outline"
-              onClick={() => navigate('/', { replace: true })}
-              className="w-full"
-            >
+            <Button variant="outline" onClick={() => navigate('/', { replace: true })} className="w-full">
               Retour à l'accueil
             </Button>
           </CardContent>

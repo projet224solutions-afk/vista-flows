@@ -10,6 +10,7 @@ import ProductPaymentModal from "@/components/ecommerce/ProductPaymentModal";
 import { ShareButton } from "@/components/shared/ShareButton";
 import { useAutoCarousel } from "@/hooks/useAutoCarousel";
 import { trackProductView } from "@/services/analyticsTrackingService";
+import SEOHead from "@/components/SEOHead";
 
 interface Product {
   id: string;
@@ -228,6 +229,15 @@ export default function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
+      {/* SEO Meta Tags */}
+      <SEOHead
+        title={product.name}
+        description={product.description || `${product.price?.toLocaleString()} GNF - Disponible chez ${product.vendors?.business_name || '224Solutions'}`}
+        image={images[0]}
+        type="product"
+        price={product.price}
+      />
+      
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-40">
         <div className="px-4 py-4 flex items-center gap-4">
