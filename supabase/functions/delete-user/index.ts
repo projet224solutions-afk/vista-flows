@@ -66,11 +66,79 @@ Deno.serve(async (req) => {
 
     const { data: userToDelete } = await supabaseAdmin
       .from('profiles')
-      .select('email, role')
+      .select('*')
       .eq('id', userId)
       .maybeSingle();
 
     console.log(`🗑️ Début suppression utilisateur ${userId} (${userToDelete?.email || 'email inconnu'})`);
+
+    // ========================================
+    // ARCHIVAGE DES DONNÉES AVANT SUPPRESSION
+    // ========================================
+    console.log('📦 Archivage des données utilisateur...');
+    
+    // Récupérer les données du wallet
+    const { data: walletData } = await supabaseAdmin
+      .from('wallets')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    // Récupérer les données user_ids
+    const { data: userIdsData } = await supabaseAdmin
+      .from('user_ids')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    // Récupérer les données spécifiques au rôle
+    let roleSpecificData = null;
+    
+    if (userToDelete?.role === 'vendor') {
+      const { data } = await supabaseAdmin.from('vendors').select('*').eq('user_id', userId).maybeSingle();
+      roleSpecificData = data;
+    } else if (userToDelete?.role === 'driver' || userToDelete?.role === 'livreur') {
+      const { data } = await supabaseAdmin.from('delivery_drivers').select('*').eq('user_id', userId).maybeSingle();
+      roleSpecificData = data;
+    } else if (userToDelete?.role === 'taxi') {
+      const { data } = await supabaseAdmin.from('taxi_drivers').select('*').eq('user_id', userId).maybeSingle();
+      roleSpecificData = data;
+    }
+    
+    // Créer l'archive
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+    
+    const archiveData = {
+      original_user_id: userId,
+      email: userToDelete?.email || null,
+      phone: userToDelete?.phone || null,
+      full_name: userToDelete?.first_name && userToDelete?.last_name 
+        ? `${userToDelete.first_name} ${userToDelete.last_name}`.trim()
+        : userToDelete?.first_name || userToDelete?.last_name || null,
+      role: userToDelete?.role || null,
+      public_id: userToDelete?.public_id || null,
+      profile_data: userToDelete || null,
+      wallet_data: walletData || null,
+      user_ids_data: userIdsData || null,
+      role_specific_data: roleSpecificData || null,
+      deletion_reason: 'Suppression via interface admin',
+      deletion_method: 'edge_function',
+      deleted_by: currentUser.id,
+      expires_at: expiresAt.toISOString(),
+      original_created_at: userToDelete?.created_at || null,
+      is_restored: false
+    };
+    
+    const { error: archiveError } = await supabaseAdmin
+      .from('deleted_users_archive')
+      .insert(archiveData);
+    
+    if (archiveError) {
+      console.error('⚠️ Erreur archivage (non bloquante):', archiveError.message);
+    } else {
+      console.log('✅ Données archivées avec succès');
+    }
 
     // ========================================
     // SUPPRESSION COMPLÈTE DE TOUTES LES DONNÉES
