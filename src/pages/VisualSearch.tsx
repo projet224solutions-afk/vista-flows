@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Camera, Upload, ArrowLeft, Search, Loader2, X, ImageIcon, Sparkles, Tag } from "lucide-react";
+import { Camera, Upload, ArrowLeft, Search, Loader2, X, ImageIcon, Zap, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

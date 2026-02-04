@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Crown, Lock, Sparkles, Check } from 'lucide-react';
+import { Crown, Lock, Zap, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -142,7 +142,7 @@ export function UpgradeDialog({
             {minPlan !== 'free' && (
               <div className="space-y-2">
                 <p className="text-sm font-medium flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-yellow-500" />
+                  <Crown className="w-4 h-4 text-yellow-500" />
                   Ce que vous obtiendrez avec {minPlanDisplay}
                 </p>
                 <ul className="space-y-1.5">

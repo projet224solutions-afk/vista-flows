@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Sparkles, Users, Calendar, DollarSign, Clock, 
+  Crown, Users, Calendar, DollarSign, Clock, 
   CheckCircle, XCircle, RefreshCw, Eye, Plus,
   TrendingUp, Settings
 } from 'lucide-react';
@@ -98,7 +98,7 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-2">
-              <Sparkles className="w-7 h-7 text-primary" />
+              <Crown className="w-7 h-7 text-primary" />
               {businessName || 'Salon de Beauté'}
             </h2>
             <p className="text-muted-foreground">Gérez votre salon</p>
@@ -113,7 +113,7 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-6 h-6 text-pink-600" />
+                <Crown className="w-6 h-6 text-pink-600" />
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-lg mb-2">Bienvenue dans votre espace Beauté !</h3>
@@ -160,7 +160,7 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Sparkles className="w-7 h-7 text-primary" />
+            <Crown className="w-7 h-7 text-primary" />
             {businessName || 'Salon de Beauté'}
           </h2>
           <p className="text-muted-foreground">Gérez vos rendez-vous et services</p>
@@ -193,7 +193,7 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
         <Card className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-transparent hover:border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Services</CardTitle>
-            <Sparkles className="h-4 w-4 text-muted-foreground" />
+            <Crown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.services.total || 0}</div>
@@ -240,7 +240,7 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
             Rendez-vous
           </TabsTrigger>
           <TabsTrigger value="services">
-            <Sparkles className="w-4 h-4 mr-2 hidden md:block" />
+            <Crown className="w-4 h-4 mr-2 hidden md:block" />
             Services
           </TabsTrigger>
         </TabsList>
@@ -374,7 +374,7 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Sparkles className="w-5 h-5" />
+                <Crown className="w-5 h-5" />
                 Produits & Services
               </CardTitle>
               <Button onClick={() => navigate('/vendeur/products')} className="gap-2">
@@ -384,7 +384,7 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
             </CardHeader>
             <CardContent className="p-6">
               <div className="text-center py-8 text-muted-foreground">
-                <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <Crown className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p className="mb-2">Gérez vos prestations et produits de beauté</p>
                 <p className="text-sm">Les services ajoutés seront visibles sur le marketplace</p>
                 <Button 

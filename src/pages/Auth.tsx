@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship, Crown, Utensils, ShoppingBag, Scissors, Car, GraduationCap, Stethoscope, Wrench, Home, Plane, Camera, ArrowLeft, Eye, EyeOff, Chrome, Search, ChevronDown, Check, RefreshCw, Sparkles, LogIn, UserPlus } from "lucide-react";
+import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship, Crown, Utensils, ShoppingBag, Scissors, Car, GraduationCap, Stethoscope, Wrench, Home, Plane, Camera, ArrowLeft, Eye, EyeOff, Chrome, Search, ChevronDown, Check, RefreshCw, Zap, LogIn, UserPlus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Separator } from "@/components/ui/separator";
@@ -1613,7 +1613,7 @@ export default function Auth() {
                       <span className="block text-lg font-bold">Mode Vendeur E-commerce classique</span>
                       <span className="block text-sm text-primary-foreground/80">(vente de produits uniquement)</span>
                     </div>
-                    <Sparkles className="w-5 h-5 animate-pulse" />
+                    <Zap className="w-5 h-5 animate-pulse" />
                   </div>
                 </button>
               </div>
@@ -1839,7 +1839,7 @@ export default function Auth() {
                 <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/60 rounded-xl shadow-sm">
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                      <Sparkles className="h-5 w-5 text-blue-600" />
+                      <Zap className="h-5 w-5 text-blue-600" />
                     </div>
                     <div>
                       <p className="text-blue-900 font-semibold text-sm mb-1">Connexion intelligente</p>

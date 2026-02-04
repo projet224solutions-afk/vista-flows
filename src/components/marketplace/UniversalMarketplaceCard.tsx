@@ -11,7 +11,7 @@ import {
   Star, 
   ShoppingCart, 
   Download,
-  Sparkles
+  Crown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MarketplaceItem } from '@/hooks/useMarketplaceUniversal';
@@ -135,7 +135,7 @@ export function UniversalMarketplaceCard({
         {/* Badge Sponsorisé */}
         {item.is_sponsored && (
           <Badge className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white border-0 z-20 shadow-lg">
-            <Sparkles className="w-3 h-3 mr-1" />
+            <Crown className="w-3 h-3 mr-1" />
             Sponsorisé
           </Badge>
         )}

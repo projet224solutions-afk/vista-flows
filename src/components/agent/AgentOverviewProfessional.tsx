@@ -17,7 +17,7 @@ import {
   Target,
   Award,
   ChevronRight,
-  Sparkles,
+  Crown,
   CreditCard,
   PieChart,
   Link2
@@ -125,7 +125,7 @@ export function AgentOverviewProfessional({
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Sparkles className="w-5 h-5 text-amber-500" />
+            <Crown className="w-5 h-5 text-amber-500" />
             <span className="text-sm font-medium text-slate-500">Bienvenue,</span>
           </div>
           <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">

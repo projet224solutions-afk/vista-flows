@@ -1,7 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { useSubscriptionFeatures, SubscriptionFeature, FEATURE_MIN_PLAN } from '@/hooks/useSubscriptionFeatures';
 import { Button } from '@/components/ui/button';
-import { Lock, Crown, Sparkles, Check } from 'lucide-react';
+import { Lock, Crown, Zap, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
@@ -181,7 +181,7 @@ export function FeatureGuard({
               {minPlan !== 'free' && PLAN_FEATURES_PREVIEW[minPlan] && (
                 <div className="space-y-2">
                   <p className="text-sm font-medium flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-yellow-500" />
+                    <Crown className="w-4 h-4 text-yellow-500" />
                     Ce que vous obtiendrez avec {minPlanDisplay}
                   </p>
                   <ul className="space-y-1.5">

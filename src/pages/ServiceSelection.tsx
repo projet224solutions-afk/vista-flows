@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ServiceSelectionCard } from '@/components/professional-services/ServiceSelectionCard';
@@ -84,7 +84,7 @@ export default function ServiceSelection() {
 
           <div className="mt-4 text-center space-y-3">
             <div className="flex items-center justify-center gap-2">
-              <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-primary shrink-0" />
+              <Zap className="w-6 h-6 sm:w-8 sm:h-8 text-primary shrink-0" />
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent leading-tight">
                 Choisissez votre Service Professionnel
               </h1>

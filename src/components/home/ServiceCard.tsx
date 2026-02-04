@@ -5,7 +5,7 @@
  */
 
 import { ReactNode } from 'react';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface HomeServiceCardProps {
@@ -53,7 +53,7 @@ export function HomeServiceCard({
         {/* Trending indicator */}
         {trending && count > 0 && (
           <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-500 text-white text-[8px] font-bold rounded-full shadow-lg shadow-amber-500/40">
-            <Sparkles className="w-2 h-2" />
+            <TrendingUp className="w-2 h-2" />
           </div>
         )}
 
@@ -109,7 +109,7 @@ export function HomeServiceCard({
       {/* Trending indicator */}
       {trending && count > 0 && (
         <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-amber-500 text-white text-[10px] font-bold rounded-full shadow-lg shadow-amber-500/40">
-          <Sparkles className="w-3 h-3" />
+          <TrendingUp className="w-3 h-3" />
           Populaire
         </div>
       )}

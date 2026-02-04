@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
-  Sparkles,
+  Crown,
   TrendingUp,
   Users,
   ShoppingCart,
@@ -43,7 +43,7 @@ const REASON_CONFIG = {
     color: 'bg-blue-100 text-blue-800'
   },
   similar_products: {
-    icon: Sparkles,
+    icon: Crown,
     label: 'Produits similaires',
     color: 'bg-purple-100 text-purple-800'
   },
@@ -113,7 +113,7 @@ const RecommendationCard = memo(({
         )}
         {recommendation.confidence > 0.7 && (
           <Badge className="absolute top-2 right-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs">
-            <Sparkles className="w-3 h-3 mr-1" />
+            <Crown className="w-3 h-3 mr-1" />
             Top pick
           </Badge>
         )}
@@ -235,7 +235,7 @@ export function MLRecommendations({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10">
-              <Sparkles className="w-5 h-5 text-purple-600" />
+              <Crown className="w-5 h-5 text-purple-600" />
             </div>
             <div>
               <CardTitle className="text-lg">{title}</CardTitle>

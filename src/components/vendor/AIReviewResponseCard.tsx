@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { Bot, Check, X, Edit2, Sparkles, Clock } from 'lucide-react';
+import { Bot, Check, X, Edit2, Zap, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -140,7 +140,7 @@ export default function AIReviewResponseCard({
       {/* Analysis Info */}
       {aiAnalyzedAt && (
         <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1">
-          <Sparkles className="w-3 h-3" />
+          <Zap className="w-3 h-3" />
           Analysé le {new Date(aiAnalyzedAt).toLocaleDateString('fr-FR', {
             day: 'numeric',
             month: 'long',
