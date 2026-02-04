@@ -52,9 +52,9 @@ export function HomeHeader({
               </div>
             </div>
 
-            <div className="min-w-0">
+            <div className="min-w-0 text-center">
               <h1 className="font-bold text-foreground text-lg md:text-xl tracking-tight truncate">
-                MarketPlace
+                224SOLUTIONS
               </h1>
               <button 
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors group"
