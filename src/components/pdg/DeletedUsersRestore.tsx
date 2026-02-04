@@ -38,7 +38,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { 
   RefreshCw, Search, UserX, RotateCcw, Clock, AlertTriangle,
-  User, Mail, Phone, Calendar, Shield, Eye, Wallet, CheckCircle2
+  User, Mail, Phone, Calendar, Shield, Eye, Wallet, CheckCircle2,
+  Database, XCircle, Package, CreditCard, ShoppingBag, ArrowRight
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -70,6 +71,23 @@ interface DeletedUser {
   original_created_at: string | null;
 }
 
+interface DataStatus {
+  exists: boolean;
+  data?: unknown;
+  count?: number;
+}
+
+interface UserDataAnalysis {
+  profile: DataStatus;
+  wallet: DataStatus;
+  user_ids: DataStatus;
+  agent: DataStatus;
+  vendor: DataStatus;
+  orders: DataStatus;
+  transactions: DataStatus;
+  archived: DataStatus;
+}
+
 interface ActiveProfile {
   id: string;
   email: string | null;
@@ -84,6 +102,12 @@ interface ActiveProfile {
   is_active: boolean | null;
   created_at: string | null;
   has_archived_data?: boolean;
+  data_analysis?: {
+    analysis: UserDataAnalysis;
+    missing_data: string[];
+    has_issues: boolean;
+  } | null;
+  archived_data?: DeletedUser | null;
 }
 
 export default function DeletedUsersRestore() {
@@ -371,7 +395,7 @@ export default function DeletedUsersRestore() {
         </Card>
       </div>
 
-      {/* Résultats de recherche - Profils actifs */}
+      {/* Résultats de recherche - Profils actifs avec analyse complète */}
       {searched && activeProfiles.length > 0 && (
         <Card>
           <CardHeader>
@@ -380,17 +404,18 @@ export default function DeletedUsersRestore() {
               Profils utilisateurs trouvés ({activeProfiles.length})
             </CardTitle>
             <CardDescription>
-              Utilisateurs actifs correspondant à votre recherche
+              Analyse complète des données pour chaque utilisateur
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {activeProfiles.map((profile) => (
                 <div 
                   key={profile.id}
                   className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
-                  <div className="flex items-start justify-between">
+                  {/* En-tête du profil */}
+                  <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                         <User className="h-6 w-6 text-primary" />
@@ -425,31 +450,180 @@ export default function DeletedUsersRestore() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-2">
-                      {profile.has_archived_data ? (
-                        <Badge variant="outline" className="text-orange-600 border-orange-600">
-                          <AlertTriangle className="h-3 w-3 mr-1" />
-                          Données archivées disponibles
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-green-600 border-green-600">
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Aucune donnée supprimée
-                        </Badge>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setSelectedProfile(profile);
-                          setProfileDetailsOpen(true);
-                        }}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        Voir détails
-                      </Button>
-                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedProfile(profile);
+                        setProfileDetailsOpen(true);
+                      }}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Détails complets
+                    </Button>
                   </div>
+
+                  {/* Analyse des données */}
+                  {profile.data_analysis && (
+                    <div className="mt-3 p-3 bg-muted/30 rounded-lg">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Database className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">Analyse des données</span>
+                        {profile.data_analysis.has_issues ? (
+                          <Badge variant="destructive" className="text-xs">
+                            {profile.data_analysis.missing_data.length} donnée(s) manquante(s)
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-green-600 text-white text-xs">
+                            Toutes les données intactes
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {/* Profil */}
+                        <div className={`flex items-center gap-2 p-2 rounded text-xs ${
+                          profile.data_analysis.analysis.profile.exists 
+                            ? 'bg-green-500/10 text-green-700' 
+                            : 'bg-red-500/10 text-red-700'
+                        }`}>
+                          {profile.data_analysis.analysis.profile.exists ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}
+                          <span>Profil</span>
+                        </div>
+
+                        {/* Wallet */}
+                        <div className={`flex items-center gap-2 p-2 rounded text-xs ${
+                          profile.data_analysis.analysis.wallet.exists 
+                            ? 'bg-green-500/10 text-green-700' 
+                            : 'bg-orange-500/10 text-orange-700'
+                        }`}>
+                          {profile.data_analysis.analysis.wallet.exists ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}
+                          <Wallet className="h-3 w-3" />
+                          <span>Portefeuille</span>
+                        </div>
+
+                        {/* User IDs */}
+                        <div className={`flex items-center gap-2 p-2 rounded text-xs ${
+                          profile.data_analysis.analysis.user_ids.exists 
+                            ? 'bg-green-500/10 text-green-700' 
+                            : 'bg-orange-500/10 text-orange-700'
+                        }`}>
+                          {profile.data_analysis.analysis.user_ids.exists ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}
+                          <span>ID Public</span>
+                        </div>
+
+                        {/* Commandes */}
+                        <div className={`flex items-center gap-2 p-2 rounded text-xs ${
+                          profile.data_analysis.analysis.orders.exists 
+                            ? 'bg-blue-500/10 text-blue-700' 
+                            : 'bg-muted text-muted-foreground'
+                        }`}>
+                          <ShoppingBag className="h-3 w-3" />
+                          <span>{profile.data_analysis.analysis.orders.count || 0} commandes</span>
+                        </div>
+
+                        {/* Transactions */}
+                        <div className={`flex items-center gap-2 p-2 rounded text-xs ${
+                          profile.data_analysis.analysis.transactions.exists 
+                            ? 'bg-blue-500/10 text-blue-700' 
+                            : 'bg-muted text-muted-foreground'
+                        }`}>
+                          <CreditCard className="h-3 w-3" />
+                          <span>{profile.data_analysis.analysis.transactions.count || 0} transactions</span>
+                        </div>
+
+                        {/* Agent */}
+                        {profile.data_analysis.analysis.agent.exists && (
+                          <div className="flex items-center gap-2 p-2 rounded text-xs bg-purple-500/10 text-purple-700">
+                            <Shield className="h-3 w-3" />
+                            <span>Agent</span>
+                          </div>
+                        )}
+
+                        {/* Vendor */}
+                        {profile.data_analysis.analysis.vendor.exists && (
+                          <div className="flex items-center gap-2 p-2 rounded text-xs bg-indigo-500/10 text-indigo-700">
+                            <Package className="h-3 w-3" />
+                            <span>Vendeur</span>
+                          </div>
+                        )}
+
+                        {/* Archives */}
+                        {profile.data_analysis.analysis.archived.exists && (
+                          <div className="flex items-center gap-2 p-2 rounded text-xs bg-orange-500/10 text-orange-700">
+                            <AlertTriangle className="h-3 w-3" />
+                            <span>Données archivées</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Message sur les données manquantes */}
+                      {profile.data_analysis.missing_data.length > 0 && (
+                        <div className="mt-3 p-2 border border-orange-500/30 rounded bg-orange-500/5">
+                          <p className="text-xs text-orange-700 flex items-center gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            Données manquantes: {profile.data_analysis.missing_data.join(', ')}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Lien vers archives si disponible */}
+                      {profile.has_archived_data && profile.archived_data && (
+                        <div className="mt-3 p-3 border border-primary/30 rounded bg-primary/5">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-primary flex items-center gap-1">
+                                <RotateCcw className="h-4 w-4" />
+                                Données archivées disponibles
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Supprimé le {format(new Date(profile.archived_data.deleted_at), 'dd/MM/yyyy', { locale: fr })}
+                              </p>
+                            </div>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                setSelectedUser(profile.archived_data!);
+                                openRestoreDialog(profile.archived_data!);
+                              }}
+                            >
+                              <RotateCcw className="h-4 w-4 mr-1" />
+                              Restaurer
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Message si pas d'analyse disponible */}
+                  {!profile.data_analysis && (
+                    <div className="mt-3 p-3 bg-muted/30 rounded-lg">
+                      {profile.has_archived_data ? (
+                        <div className="flex items-center gap-2 text-orange-600">
+                          <AlertTriangle className="h-4 w-4" />
+                          <span className="text-sm">Données archivées disponibles pour restauration</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-green-600">
+                          <CheckCircle2 className="h-4 w-4" />
+                          <span className="text-sm">Aucune donnée supprimée détectée</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -586,21 +760,22 @@ export default function DeletedUsersRestore() {
         </CardContent>
       </Card>
 
-      {/* Dialog Profil actif */}
+      {/* Dialog Profil actif avec analyse complète */}
       <Dialog open={profileDetailsOpen} onOpenChange={setProfileDetailsOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <User className="h-5 w-5 text-primary" />
-              Profil utilisateur
+              Analyse complète du profil
             </DialogTitle>
             <DialogDescription>
-              Informations du compte utilisateur actif
+              État détaillé des données de l'utilisateur dans la base de données
             </DialogDescription>
           </DialogHeader>
           
           {selectedProfile && (
             <div className="space-y-4">
+              {/* Informations principales */}
               <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">Nom complet</label>
@@ -640,27 +815,221 @@ export default function DeletedUsersRestore() {
                 </div>
               </div>
 
-              {/* Message sur les données archivées */}
-              {selectedProfile.has_archived_data ? (
-                <div className="p-4 border border-orange-500/30 rounded-lg bg-orange-500/5">
-                  <div className="flex items-center gap-2 text-orange-600 font-medium">
-                    <AlertTriangle className="h-4 w-4" />
-                    Des données archivées existent
+              {/* Analyse détaillée des données */}
+              {selectedProfile.data_analysis && (
+                <div className="space-y-3">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <Database className="h-4 w-4" />
+                    État des données dans la base
+                  </h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {/* Profil */}
+                    <div className={`p-3 rounded-lg border ${
+                      selectedProfile.data_analysis.analysis.profile.exists 
+                        ? 'border-green-500/30 bg-green-500/5' 
+                        : 'border-red-500/30 bg-red-500/5'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        {selectedProfile.data_analysis.analysis.profile.exists ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-600" />
+                        )}
+                        <span className="font-medium">Profil utilisateur</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {selectedProfile.data_analysis.analysis.profile.exists 
+                          ? 'Présent dans la table profiles' 
+                          : 'Absent de la table profiles'}
+                      </p>
+                    </div>
+
+                    {/* Wallet */}
+                    <div className={`p-3 rounded-lg border ${
+                      selectedProfile.data_analysis.analysis.wallet.exists 
+                        ? 'border-green-500/30 bg-green-500/5' 
+                        : 'border-orange-500/30 bg-orange-500/5'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        {selectedProfile.data_analysis.analysis.wallet.exists ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-orange-600" />
+                        )}
+                        <Wallet className="h-4 w-4" />
+                        <span className="font-medium">Portefeuille</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {selectedProfile.data_analysis.analysis.wallet.exists 
+                          ? 'Wallet actif trouvé' 
+                          : 'Aucun wallet trouvé'}
+                      </p>
+                    </div>
+
+                    {/* User IDs */}
+                    <div className={`p-3 rounded-lg border ${
+                      selectedProfile.data_analysis.analysis.user_ids.exists 
+                        ? 'border-green-500/30 bg-green-500/5' 
+                        : 'border-orange-500/30 bg-orange-500/5'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        {selectedProfile.data_analysis.analysis.user_ids.exists ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-orange-600" />
+                        )}
+                        <span className="font-medium">Identifiant public</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {selectedProfile.data_analysis.analysis.user_ids.exists 
+                          ? 'ID synchronisé dans user_ids' 
+                          : 'Absent de la table user_ids'}
+                      </p>
+                    </div>
+
+                    {/* Commandes */}
+                    <div className={`p-3 rounded-lg border ${
+                      selectedProfile.data_analysis.analysis.orders.exists 
+                        ? 'border-blue-500/30 bg-blue-500/5' 
+                        : 'border-muted'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        <ShoppingBag className="h-4 w-4 text-blue-600" />
+                        <span className="font-medium">Commandes</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {selectedProfile.data_analysis.analysis.orders.count || 0} commande(s) trouvée(s)
+                      </p>
+                    </div>
+
+                    {/* Transactions */}
+                    <div className={`p-3 rounded-lg border ${
+                      selectedProfile.data_analysis.analysis.transactions.exists 
+                        ? 'border-blue-500/30 bg-blue-500/5' 
+                        : 'border-muted'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="h-4 w-4 text-blue-600" />
+                        <span className="font-medium">Transactions</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {selectedProfile.data_analysis.analysis.transactions.count || 0} transaction(s) trouvée(s)
+                      </p>
+                    </div>
+
+                    {/* Agent */}
+                    {selectedProfile.data_analysis.analysis.agent.exists && (
+                      <div className="p-3 rounded-lg border border-purple-500/30 bg-purple-500/5">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-purple-600" />
+                          <span className="font-medium">Compte Agent</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Agent actif dans le système
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Vendor */}
+                    {selectedProfile.data_analysis.analysis.vendor.exists && (
+                      <div className="p-3 rounded-lg border border-indigo-500/30 bg-indigo-500/5">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-indigo-600" />
+                          <span className="font-medium">Boutique Vendeur</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Boutique associée trouvée
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Certaines données de cet utilisateur ont été supprimées et sont disponibles pour restauration ci-dessous.
-                  </p>
+
+                  {/* Données archivées */}
+                  {selectedProfile.data_analysis.analysis.archived.exists && (
+                    <div className="p-4 border border-orange-500/30 rounded-lg bg-orange-500/5">
+                      <div className="flex items-center gap-2 text-orange-600 font-medium">
+                        <AlertTriangle className="h-4 w-4" />
+                        Données archivées détectées
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Des données de cet utilisateur ont été précédemment supprimées et sont disponibles pour restauration.
+                      </p>
+                      {selectedProfile.archived_data && (
+                        <Button
+                          className="mt-3"
+                          size="sm"
+                          onClick={() => {
+                            setProfileDetailsOpen(false);
+                            setSelectedUser(selectedProfile.archived_data!);
+                            openRestoreDialog(selectedProfile.archived_data!);
+                          }}
+                        >
+                          <RotateCcw className="h-4 w-4 mr-1" />
+                          Restaurer les données archivées
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Données manquantes */}
+                  {selectedProfile.data_analysis.missing_data.length > 0 && (
+                    <div className="p-4 border border-red-500/30 rounded-lg bg-red-500/5">
+                      <div className="flex items-center gap-2 text-red-600 font-medium">
+                        <XCircle className="h-4 w-4" />
+                        Données manquantes détectées
+                      </div>
+                      <ul className="text-sm text-muted-foreground mt-2 space-y-1">
+                        {selectedProfile.data_analysis.missing_data.map((item, idx) => (
+                          <li key={idx} className="flex items-center gap-2">
+                            <ArrowRight className="h-3 w-3" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Tout OK */}
+                  {!selectedProfile.data_analysis.has_issues && (
+                    <div className="p-4 border border-green-500/30 rounded-lg bg-green-500/5">
+                      <div className="flex items-center gap-2 text-green-600 font-medium">
+                        <CheckCircle2 className="h-4 w-4" />
+                        Toutes les données sont intactes
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Aucune donnée supprimée ni manquante détectée pour cet utilisateur.
+                      </p>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="p-4 border border-green-500/30 rounded-lg bg-green-500/5">
-                  <div className="flex items-center gap-2 text-green-600 font-medium">
-                    <CheckCircle2 className="h-4 w-4" />
-                    Aucune donnée supprimée
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Toutes les données de cet utilisateur sont intactes. Aucune restauration n'est nécessaire.
-                  </p>
-                </div>
+              )}
+
+              {/* Fallback si pas d'analyse */}
+              {!selectedProfile.data_analysis && (
+                <>
+                  {selectedProfile.has_archived_data ? (
+                    <div className="p-4 border border-orange-500/30 rounded-lg bg-orange-500/5">
+                      <div className="flex items-center gap-2 text-orange-600 font-medium">
+                        <AlertTriangle className="h-4 w-4" />
+                        Des données archivées existent
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Certaines données de cet utilisateur ont été supprimées et sont disponibles pour restauration.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-4 border border-green-500/30 rounded-lg bg-green-500/5">
+                      <div className="flex items-center gap-2 text-green-600 font-medium">
+                        <CheckCircle2 className="h-4 w-4" />
+                        Aucune donnée supprimée
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Toutes les données de cet utilisateur sont intactes.
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
