@@ -174,8 +174,8 @@ export function HeroSection({ className }: HeroSectionProps) {
               className={cn(
                 'flex flex-col items-center gap-2 p-3 rounded-2xl',
                 'bg-card border border-border/50',
-                'hover:border-primary/30 hover:bg-primary/5',
-                'active:scale-95 transition-all duration-200'
+                'hover:border-blue-600 hover:bg-blue-600 hover:text-white',
+                'active:scale-95 transition-all duration-200 group'
               )}
             >
               <div className={cn(
@@ -185,7 +185,7 @@ export function HeroSection({ className }: HeroSectionProps) {
               )}>
                 {action.icon}
               </div>
-              <span className="text-[11px] font-medium text-foreground text-center leading-tight">
+              <span className="text-[11px] font-medium text-foreground text-center leading-tight group-hover:text-white transition-colors">
                 {action.label}
               </span>
             </button>
