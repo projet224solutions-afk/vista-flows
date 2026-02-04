@@ -17,7 +17,7 @@ import {
   Zap,
   BarChart3,
   Percent,
-  Sparkles,
+  Crown,
   ChevronRight
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -102,7 +102,7 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
       {/* Header */}
       <div className="text-center space-y-2">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-primary/10 to-accent/10 rounded-full border border-primary/20">
-          <Sparkles className="w-4 h-4 text-primary" />
+          <Crown className="w-4 h-4 text-primary" />
           <span className="text-sm font-semibold text-primary">Modèle de vente</span>
         </div>
         <h2 className="text-xl font-bold text-foreground">

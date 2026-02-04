@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Sparkles, History, Phone } from 'lucide-react';
+import { Loader2, Zap, History, Phone } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface AIContractFormProps {
@@ -165,7 +165,7 @@ export default function AIContractForm({ onSuccess }: AIContractFormProps) {
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" />
+          <Zap className="w-5 h-5 text-primary" />
           <CardTitle>Générer un contrat avec l'IA</CardTitle>
         </div>
         <CardDescription>
@@ -270,7 +270,7 @@ export default function AIContractForm({ onSuccess }: AIContractFormProps) {
               </>
             ) : (
               <>
-                <Sparkles className="w-4 h-4 mr-2" />
+                <Zap className="w-4 h-4 mr-2" />
                 Générer le contrat avec l'IA
               </>
             )}

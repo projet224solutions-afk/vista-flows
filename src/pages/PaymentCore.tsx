@@ -12,14 +12,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, CreditCard, Shield, Sparkles, Truck, Building2, Wallet } from 'lucide-react';
+import { ArrowLeft, CreditCard, Shield, Crown, Truck, Building2, Wallet } from 'lucide-react';
 
 type PaymentType = 'ORDER_PAYMENT' | 'SUBSCRIPTION' | 'BOOST' | 'DELIVERY' | 'COMMISSION' | 'WALLET_TOPUP';
 
 const paymentTypeIcons: Record<PaymentType, React.ReactNode> = {
   ORDER_PAYMENT: <CreditCard className="h-6 w-6" />,
-  SUBSCRIPTION: <Sparkles className="h-6 w-6" />,
-  BOOST: <Sparkles className="h-6 w-6" />,
+  SUBSCRIPTION: <Crown className="h-6 w-6" />,
+  BOOST: <Crown className="h-6 w-6" />,
   DELIVERY: <Truck className="h-6 w-6" />,
   COMMISSION: <Building2 className="h-6 w-6" />,
   WALLET_TOPUP: <Wallet className="h-6 w-6" />,

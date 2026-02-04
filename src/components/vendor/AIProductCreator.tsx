@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { 
-  Sparkles, 
+  Zap, 
   Wand2, 
   Image as ImageIcon, 
   Check, 
@@ -165,7 +165,7 @@ export function AIProductCreator() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-yellow-500" />
+            <Zap className="w-5 h-5 text-yellow-500" />
             Créer un produit avec l'IA
           </CardTitle>
           <CardDescription>

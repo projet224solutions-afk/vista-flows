@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Smartphone, Monitor, Tablet, Download, CheckCircle,
-  Crown, Shield, Sparkles, ArrowRight, ExternalLink,
+  Crown, Shield, Zap, ArrowRight, ExternalLink,
   Mail, Phone, User, Calendar
 } from "lucide-react";
 import { useUserActivation } from "@/hooks/useAgentSystem";

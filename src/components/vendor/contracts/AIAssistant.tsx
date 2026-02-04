@@ -4,7 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Sparkles, RefreshCw, Plus } from 'lucide-react';
+import { Loader2, Zap, RefreshCw, Plus } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface AIAssistantProps {
@@ -15,7 +15,7 @@ interface AIAssistantProps {
 
 const ASSISTANT_ACTIONS = [
   { value: 'reformuler', label: 'Reformuler le texte', icon: RefreshCw },
-  { value: 'ameliorer', label: 'Améliorer la rédaction', icon: Sparkles },
+  { value: 'ameliorer', label: 'Améliorer la rédaction', icon: Zap },
   { value: 'ajouter_clauses', label: 'Ajouter des clauses', icon: Plus },
 ];
 
@@ -81,7 +81,7 @@ export default function AIAssistant({ currentText, contractType, onTextUpdated }
     <Card className="border-primary/20">
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" />
+          <Zap className="w-5 h-5 text-primary" />
           <CardTitle className="text-lg">Assistant IA</CardTitle>
         </div>
       </CardHeader>
@@ -124,7 +124,7 @@ export default function AIAssistant({ currentText, contractType, onTextUpdated }
             </>
           ) : (
             <>
-              <Sparkles className="w-4 h-4 mr-2" />
+              <Zap className="w-4 h-4 mr-2" />
               Améliorer avec l'IA
             </>
           )}

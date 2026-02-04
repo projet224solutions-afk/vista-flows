@@ -11,7 +11,7 @@ import { useState } from 'react';
 import { 
   ArrowLeft, Plane, Link2, Percent, Tag, 
   Upload, X, DollarSign, MapPin, Loader2,
-  Sparkles, Image as ImageIcon
+  Zap, Image as ImageIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -464,7 +464,7 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
                   {generatingDescription ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
                   ) : (
-                    <Sparkles className="w-3 h-3" />
+                    <Zap className="w-3 h-3" />
                   )}
                   Générer par IA
                 </Button>

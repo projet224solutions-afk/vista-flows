@@ -32,7 +32,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Loader2, Store, Utensils, ShoppingBag, Scissors, Car, Home, Wrench, Camera, GraduationCap, Stethoscope, Plane, Package, Truck, Sparkles, HardHat, Tractor, Laptop } from "lucide-react";
+import { Loader2, Store, Utensils, ShoppingBag, Scissors, Car, Home, Wrench, Camera, GraduationCap, Stethoscope, Plane, Package, Truck, Zap, HardHat, Tractor, Laptop } from "lucide-react";
 
 // Types de services avec correspondance service_types.code dans la BDD
 const SERVICE_TYPES = [
@@ -41,7 +41,7 @@ const SERVICE_TYPES = [
   { value: "beaute", code: "beaute", label: "Beauté & Bien-être", icon: Scissors },
   { value: "reparation", code: "reparation", label: "Réparation / Mécanique", icon: Car },
   { value: "location", code: "location", label: "Location Immobilière", icon: Home },
-  { value: "menage", code: "menage", label: "Ménage & Entretien", icon: Sparkles },
+  { value: "menage", code: "menage", label: "Ménage & Entretien", icon: Home },
   { value: "livraison", code: "livraison", label: "Livraison / Coursier", icon: Truck },
   { value: "media", code: "media", label: "Photographe / Vidéaste", icon: Camera },
   { value: "education", code: "education", label: "Éducation / Formation", icon: GraduationCap },

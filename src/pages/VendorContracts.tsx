@@ -4,7 +4,7 @@ import ContractForm from '@/components/vendor/contracts/ContractForm';
 import ContractsList from '@/components/vendor/contracts/ContractsList';
 import AIContractForm from '@/components/vendor/contracts/AIContractForm';
 import AIContractEditor from '@/components/vendor/contracts/AIContractEditor';
-import { FileText, History, Sparkles } from 'lucide-react';
+import { FileText, History, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
 
@@ -68,7 +68,7 @@ export default function VendorContracts() {
       <Tabs defaultValue="ai" className="w-full">
         <TabsList className="w-full h-auto flex flex-wrap gap-1 p-1">
           <TabsTrigger value="ai" className="flex-1 min-w-0 gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-2">
-            <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+            <Zap className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
             <span className="truncate">Contrat IA</span>
           </TabsTrigger>
           <TabsTrigger value="create" className="flex-1 min-w-0 gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-2">

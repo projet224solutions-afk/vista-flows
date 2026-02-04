@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Lock, Sparkles } from 'lucide-react';
+import { Lock, Crown } from 'lucide-react';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -78,7 +78,7 @@ export function FeatureGate({
             <div className="flex items-center justify-center gap-2">
               <Badge variant="outline">Plan actuel: {userPlan}</Badge>
               <Badge className="bg-gradient-to-r from-primary to-primary-glow">
-                <Sparkles className="w-3 h-3 mr-1" />
+                <Crown className="w-3 h-3 mr-1" />
                 Premium requis
               </Badge>
             </div>
@@ -93,7 +93,7 @@ export function FeatureGate({
                   className="w-full"
                   size="lg"
                 >
-                  <Sparkles className="w-4 h-4 mr-2" />
+                  <Crown className="w-4 h-4 mr-2" />
                   Mettre à niveau mon plan
                 </Button>
                 

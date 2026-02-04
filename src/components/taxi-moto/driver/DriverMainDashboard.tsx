@@ -9,7 +9,7 @@ import { GoOnlineButton } from './GoOnlineButton';
 import { DriverStatsRow } from './DriverStatsRow';
 import { MiniMap } from './MiniMap';
 import { RideRequestCard } from './RideRequestCard';
-import { Car, Sparkles, Zap, AlertCircle } from 'lucide-react';
+import { Car, Crown, Zap, AlertCircle } from 'lucide-react';
 import { DriverTutorial } from '@/components/taxi-moto/DriverTutorial';
 import { DriverDiagnostic } from '@/components/taxi-moto/DriverDiagnostic';
 import { DriverVehicleInfo } from './DriverVehicleInfo';
@@ -157,7 +157,7 @@ export function DriverMainDashboard({
                   </div>
                 </div>
                 <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                  <Sparkles className="w-2.5 h-2.5 text-emerald-400" />
+                  <Zap className="w-2.5 h-2.5 text-emerald-400" />
                   <span className="text-emerald-400 text-[10px] font-medium">En direct</span>
                 </div>
               </div>
