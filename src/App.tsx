@@ -16,6 +16,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
+import { BroadcastRealtimeListener } from "@/components/common/BroadcastRealtimeListener";
 
 // Lazy load TOUT - même la page d'accueil pour réduire TBT
 const Index = lazyWithRetry(() => import("./pages/Index"));
@@ -200,6 +201,8 @@ function App() {
                 <TooltipProvider>
                 <Toaster />
                 <Sonner />
+                  {/* Réception globale des broadcasts (Realtime + toast) */}
+                  <BroadcastRealtimeListener />
                 {/* OfflineBanner retiré - uniquement dans VendeurDashboard */}
                 <InstallPromptBanner />
                 <DeepLinkInitializer />
