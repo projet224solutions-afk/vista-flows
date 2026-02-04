@@ -70,12 +70,31 @@ interface DeletedUser {
   original_created_at: string | null;
 }
 
+interface ActiveProfile {
+  id: string;
+  email: string | null;
+  phone: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  role: string | null;
+  public_id: string | null;
+  avatar_url: string | null;
+  city: string | null;
+  country: string | null;
+  is_active: boolean | null;
+  created_at: string | null;
+  has_archived_data?: boolean;
+}
+
 export default function DeletedUsersRestore() {
   const [deletedUsers, setDeletedUsers] = useState<DeletedUser[]>([]);
+  const [activeProfiles, setActiveProfiles] = useState<ActiveProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<DeletedUser | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<ActiveProfile | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [profileDetailsOpen, setProfileDetailsOpen] = useState(false);
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
   const [restoreNotes, setRestoreNotes] = useState('');
   const [restoring, setRestoring] = useState(false);
@@ -117,6 +136,7 @@ export default function DeletedUsersRestore() {
   // Recherche par ID ou email via Edge Function
   const handleSearch = useCallback(async () => {
     if (!searchQuery.trim()) {
+      setActiveProfiles([]);
       fetchAllDeletedUsers();
       return;
     }
@@ -137,12 +157,21 @@ export default function DeletedUsersRestore() {
         throw new Error(data?.error || 'Erreur de recherche');
       }
 
-      setDeletedUsers(data.data || []);
+      // Stocker les profils actifs et les archives
+      setActiveProfiles(data.active_profiles || []);
+      setDeletedUsers(data.archived_users || []);
       
-      if (data.count === 0) {
-        toast.info('Aucun utilisateur supprimé trouvé avec ces critères');
+      const totalFound = (data.total_active || 0) + (data.total_archived || 0);
+      
+      if (totalFound === 0) {
+        toast.info('Aucun utilisateur trouvé avec ces critères');
       } else {
-        toast.success(`${data.count} utilisateur(s) trouvé(s)`);
+        if (data.total_active > 0) {
+          toast.success(`${data.total_active} profil(s) actif(s) trouvé(s)`);
+        }
+        if (data.total_archived > 0) {
+          toast.info(`${data.total_archived} donnée(s) archivée(s) trouvée(s)`);
+        }
       }
     } catch (error: unknown) {
       console.error('Erreur recherche:', error);
@@ -342,12 +371,103 @@ export default function DeletedUsersRestore() {
         </Card>
       </div>
 
-      {/* Liste des utilisateurs */}
+      {/* Résultats de recherche - Profils actifs */}
+      {searched && activeProfiles.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <User className="h-5 w-5 text-primary" />
+              Profils utilisateurs trouvés ({activeProfiles.length})
+            </CardTitle>
+            <CardDescription>
+              Utilisateurs actifs correspondant à votre recherche
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {activeProfiles.map((profile) => (
+                <div 
+                  key={profile.id}
+                  className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">
+                            {profile.first_name} {profile.last_name}
+                          </span>
+                          <Badge className={`${getRoleBadgeColor(profile.role)} text-white`}>
+                            {profile.role || 'Inconnu'}
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-muted-foreground space-y-1 mt-1">
+                          <div className="flex items-center gap-2">
+                            <code className="bg-muted px-2 py-0.5 rounded text-xs font-mono">
+                              {profile.public_id || '-'}
+                            </code>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            {profile.email && (
+                              <span className="flex items-center gap-1">
+                                <Mail className="h-3 w-3" /> {profile.email}
+                              </span>
+                            )}
+                            {profile.phone && (
+                              <span className="flex items-center gap-1">
+                                <Phone className="h-3 w-3" /> {profile.phone}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      {profile.has_archived_data ? (
+                        <Badge variant="outline" className="text-orange-600 border-orange-600">
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          Données archivées disponibles
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-green-600 border-green-600">
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          Aucune donnée supprimée
+                        </Badge>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setSelectedProfile(profile);
+                          setProfileDetailsOpen(true);
+                        }}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Voir détails
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Liste des données archivées */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">
-            {searched ? 'Résultats de recherche' : 'Utilisateurs supprimés'} ({deletedUsers.length})
+            {searched ? 'Données archivées à restaurer' : 'Utilisateurs supprimés'} ({deletedUsers.length})
           </CardTitle>
+          {searched && deletedUsers.length === 0 && activeProfiles.length > 0 && (
+            <CardDescription className="text-green-600">
+              ✓ Aucune donnée de cet utilisateur n'a été supprimée
+            </CardDescription>
+          )}
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -357,10 +477,17 @@ export default function DeletedUsersRestore() {
           ) : deletedUsers.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <UserX className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p className="font-medium">Aucun utilisateur supprimé trouvé</p>
+              <p className="font-medium">
+                {searched && activeProfiles.length > 0 
+                  ? "Aucune donnée supprimée pour cet utilisateur"
+                  : "Aucun utilisateur supprimé trouvé"
+                }
+              </p>
               <p className="text-xs mt-2 max-w-md mx-auto">
                 {searched 
-                  ? "Aucun résultat pour votre recherche. Essayez avec un ID complet (USR0001) ou un email."
+                  ? activeProfiles.length > 0 
+                    ? "Toutes les données de cet utilisateur sont intactes. Aucune restauration n'est nécessaire."
+                    : "Aucun résultat pour votre recherche. Essayez avec un ID complet (USR0001) ou un email."
                   : "Les utilisateurs supprimés via l'application sont archivés pendant 30 jours pour restauration."
                 }
               </p>
@@ -458,6 +585,93 @@ export default function DeletedUsersRestore() {
           )}
         </CardContent>
       </Card>
+
+      {/* Dialog Profil actif */}
+      <Dialog open={profileDetailsOpen} onOpenChange={setProfileDetailsOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="h-5 w-5 text-primary" />
+              Profil utilisateur
+            </DialogTitle>
+            <DialogDescription>
+              Informations du compte utilisateur actif
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedProfile && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Nom complet</label>
+                  <p className="font-medium">{selectedProfile.first_name} {selectedProfile.last_name}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">ID Public</label>
+                  <code className="bg-primary/10 px-2 py-1 rounded font-mono text-sm block w-fit">
+                    {selectedProfile.public_id || '-'}
+                  </code>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                    <Mail className="h-3 w-3" /> Email
+                  </label>
+                  <p className="text-sm">{selectedProfile.email || 'Non renseigné'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                    <Phone className="h-3 w-3" /> Téléphone
+                  </label>
+                  <p className="text-sm">{selectedProfile.phone || 'Non renseigné'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                    <Shield className="h-3 w-3" /> Rôle
+                  </label>
+                  <Badge className={`${getRoleBadgeColor(selectedProfile.role)} text-white`}>
+                    {selectedProfile.role || 'Inconnu'}
+                  </Badge>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Statut</label>
+                  <Badge variant={selectedProfile.is_active ? "default" : "secondary"}>
+                    {selectedProfile.is_active ? 'Actif' : 'Inactif'}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Message sur les données archivées */}
+              {selectedProfile.has_archived_data ? (
+                <div className="p-4 border border-orange-500/30 rounded-lg bg-orange-500/5">
+                  <div className="flex items-center gap-2 text-orange-600 font-medium">
+                    <AlertTriangle className="h-4 w-4" />
+                    Des données archivées existent
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Certaines données de cet utilisateur ont été supprimées et sont disponibles pour restauration ci-dessous.
+                  </p>
+                </div>
+              ) : (
+                <div className="p-4 border border-green-500/30 rounded-lg bg-green-500/5">
+                  <div className="flex items-center gap-2 text-green-600 font-medium">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Aucune donnée supprimée
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Toutes les données de cet utilisateur sont intactes. Aucune restauration n'est nécessaire.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProfileDetailsOpen(false)}>
+              Fermer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog Détails de l'utilisateur */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
