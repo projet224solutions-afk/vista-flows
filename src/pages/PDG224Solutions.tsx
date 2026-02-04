@@ -55,6 +55,7 @@ const IdNormalizationAudit = lazy(() => import('@/components/pdg/IdNormalization
 const LogicSurveillanceDashboard = lazy(() => import('@/components/pdg/LogicSurveillanceDashboard'));
 const PDGSyncDashboard = lazy(() => import('@/components/pdg/PDGSyncDashboard'));
 const BroadcastMessageCenter = lazy(() => import('@/components/pdg/BroadcastMessageCenter'));
+const DeletedUsersRestore = lazy(() => import('@/components/pdg/DeletedUsersRestore'));
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -673,6 +674,12 @@ export default function PDG224Solutions() {
               {activeTab === 'broadcast-center' && (
                 <ErrorBoundary>
                   <BroadcastMessageCenter />
+                </ErrorBoundary>
+              )}
+
+              {activeTab === 'deleted-users-restore' && (
+                <ErrorBoundary>
+                  <DeletedUsersRestore />
                 </ErrorBoundary>
               )}
             </Suspense>

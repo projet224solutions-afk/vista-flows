@@ -4571,6 +4571,78 @@ export type Database = {
           },
         ]
       }
+      deleted_users_archive: {
+        Row: {
+          deleted_at: string
+          deleted_by: string | null
+          deletion_method: string | null
+          deletion_reason: string | null
+          email: string | null
+          expires_at: string | null
+          full_name: string | null
+          id: string
+          is_restored: boolean | null
+          original_created_at: string | null
+          original_user_id: string
+          phone: string | null
+          profile_data: Json | null
+          public_id: string | null
+          restoration_notes: string | null
+          restored_at: string | null
+          restored_by: string | null
+          role: string | null
+          role_specific_data: Json | null
+          user_ids_data: Json | null
+          wallet_data: Json | null
+        }
+        Insert: {
+          deleted_at?: string
+          deleted_by?: string | null
+          deletion_method?: string | null
+          deletion_reason?: string | null
+          email?: string | null
+          expires_at?: string | null
+          full_name?: string | null
+          id?: string
+          is_restored?: boolean | null
+          original_created_at?: string | null
+          original_user_id: string
+          phone?: string | null
+          profile_data?: Json | null
+          public_id?: string | null
+          restoration_notes?: string | null
+          restored_at?: string | null
+          restored_by?: string | null
+          role?: string | null
+          role_specific_data?: Json | null
+          user_ids_data?: Json | null
+          wallet_data?: Json | null
+        }
+        Update: {
+          deleted_at?: string
+          deleted_by?: string | null
+          deletion_method?: string | null
+          deletion_reason?: string | null
+          email?: string | null
+          expires_at?: string | null
+          full_name?: string | null
+          id?: string
+          is_restored?: boolean | null
+          original_created_at?: string | null
+          original_user_id?: string
+          phone?: string | null
+          profile_data?: Json | null
+          public_id?: string | null
+          restoration_notes?: string | null
+          restored_at?: string | null
+          restored_by?: string | null
+          role?: string | null
+          role_specific_data?: Json | null
+          user_ids_data?: Json | null
+          wallet_data?: Json | null
+        }
+        Relationships: []
+      }
       deliveries: {
         Row: {
           accepted_at: string | null
@@ -26100,6 +26172,10 @@ export type Database = {
           message: string
           success: boolean
         }[]
+      }
+      archive_user_before_deletion: {
+        Args: { p_deleted_by?: string; p_reason?: string; p_user_id: string }
+        Returns: string
       }
       auto_correct_negative_stock: {
         Args: never
