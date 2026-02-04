@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, Utensils, Truck, Car, Sparkles, ChevronRight, Package, GraduationCap } from 'lucide-react';
+import { Store, Utensils, Truck, Car, ChevronRight, Package, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/hooks/useAuth';
@@ -86,7 +86,6 @@ export function HeroSection({ className }: HeroSectionProps) {
         {/* Welcome Badge */}
         <div className="flex items-center gap-2 mb-3">
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 rounded-full">
-            <Sparkles className="w-3.5 h-3.5 text-primary" />
             <span className="text-xs font-medium text-primary">224Solutions</span>
           </div>
         </div>
@@ -115,7 +114,6 @@ export function HeroSection({ className }: HeroSectionProps) {
                 'active:scale-[0.98] transition-all duration-200'
               )}
             >
-              <Sparkles className="w-5 h-5" />
               {t('home.createService') || 'Créer un service'}
             </Button>
           </>
@@ -204,7 +202,7 @@ export function HeroSection({ className }: HeroSectionProps) {
             'active:scale-[0.98] transition-all duration-200'
           )}
         >
-          <Sparkles className="w-4 h-4 text-primary" />
+          <Package className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium text-muted-foreground">
             {t('home.andMore')}
           </span>
