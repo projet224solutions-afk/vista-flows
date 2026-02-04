@@ -68,39 +68,63 @@ Deno.serve(async (req) => {
       
       const query = search_query.trim();
       
-      // Vérifier si c'est un UUID valide pour la recherche par original_user_id
+      // Vérifier si c'est un UUID valide
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const isValidUUID = uuidRegex.test(query);
       
-      // Construire la requête de recherche
-      let searchFilter = `public_id.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%,full_name.ilike.%${query}%`;
-      
-      // Ajouter la recherche par UUID seulement si valide
+      // 1. Chercher l'utilisateur actif dans profiles
+      let profileFilter = `public_id.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%`;
       if (isValidUUID) {
-        searchFilter += `,original_user_id.eq.${query}`;
+        profileFilter += `,id.eq.${query}`;
       }
       
-      // Chercher dans les archives
+      const { data: activeProfiles, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .select('id, email, phone, first_name, last_name, role, public_id, avatar_url, city, country, is_active, created_at')
+        .or(profileFilter)
+        .limit(10);
+      
+      if (profileError) {
+        console.warn('⚠️ Erreur recherche profiles:', profileError.message);
+      }
+      
+      // 2. Chercher dans les archives
+      let archiveFilter = `public_id.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%,full_name.ilike.%${query}%`;
+      if (isValidUUID) {
+        archiveFilter += `,original_user_id.eq.${query}`;
+      }
+      
       const { data: archives, error: searchError } = await supabaseAdmin
         .from('deleted_users_archive')
         .select('*')
-        .or(searchFilter)
+        .or(archiveFilter)
         .eq('is_restored', false)
         .order('deleted_at', { ascending: false })
         .limit(20);
 
       if (searchError) {
-        console.error('❌ Erreur recherche:', searchError.message);
-        throw new Error(`Erreur recherche: ${searchError.message}`);
+        console.error('❌ Erreur recherche archives:', searchError.message);
       }
+      
+      // 3. Pour chaque profil actif, vérifier s'il a des données archivées
+      const profilesWithArchiveStatus = (activeProfiles || []).map(profile => {
+        const hasArchivedData = (archives || []).some(
+          a => a.original_user_id === profile.id || 
+               a.email === profile.email || 
+               a.public_id === profile.public_id
+        );
+        return { ...profile, has_archived_data: hasArchivedData };
+      });
 
-      console.log(`✅ ${archives?.length || 0} résultat(s) trouvé(s)`);
+      console.log(`✅ ${activeProfiles?.length || 0} profil(s) actif(s), ${archives?.length || 0} archive(s) trouvée(s)`);
 
       return new Response(
         JSON.stringify({
           success: true,
-          data: archives || [],
-          count: archives?.length || 0
+          active_profiles: profilesWithArchiveStatus,
+          archived_users: archives || [],
+          total_active: activeProfiles?.length || 0,
+          total_archived: archives?.length || 0
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
