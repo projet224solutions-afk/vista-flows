@@ -10,13 +10,6 @@ import { Loader2, Link2Off, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
-interface SharedLinkData {
-  original_url: string;
-  title: string;
-  link_type: string;
-  resource_id: string | null;
-}
-
 export default function ShortLinkRedirect() {
   const { shortCode } = useParams<{ shortCode: string }>();
   const navigate = useNavigate();
@@ -26,6 +19,7 @@ export default function ShortLinkRedirect() {
     title: string;
     type: string;
     originalUrl: string;
+    targetPath: string;
   } | null>(null);
   
   // Protection contre double exécution
@@ -48,7 +42,6 @@ export default function ShortLinkRedirect() {
 
       console.log('🔗 [ShortLink] Resolving short code:', shortCode);
 
-      // Utiliser une requête directe avec cast pour éviter les problèmes de types
       const { data, error: fetchError } = await supabase
         .from('shared_links' as 'shared_links')
         .select('original_url, title, link_type, resource_id')
@@ -78,24 +71,17 @@ export default function ShortLinkRedirect() {
         linkType: data.link_type
       });
 
-      // Incrémenter le compteur de vues (cast to any pour éviter les erreurs de type)
+      // Incrémenter le compteur de vues
       (supabase.rpc as any)('increment_shared_link_views', { 
         p_short_code: shortCode 
       }).catch((e: any) => console.warn('Failed to increment views:', e));
-
-      // Stocker les infos pour affichage en cas de fallback
-      setLinkInfo({
-        title: data.title,
-        type: data.link_type,
-        originalUrl: data.original_url
-      });
 
       // Extraire le chemin relatif de l'URL originale
       let targetPath: string;
       
       try {
         const url = new URL(data.original_url);
-        // Retirer les paramètres internes Lovable (ex: __lovable_token)
+        // Retirer les paramètres internes Lovable
         for (const key of Array.from(url.searchParams.keys())) {
           if (key.startsWith('__lovable')) url.searchParams.delete(key);
         }
@@ -108,22 +94,24 @@ export default function ShortLinkRedirect() {
       }
 
       console.log('🔗 [ShortLink] Target path extracted:', targetPath);
+
+      // Stocker les infos pour affichage en cas d'échec de navigation
+      setLinkInfo({
+        title: data.title,
+        type: data.link_type,
+        originalUrl: data.original_url,
+        targetPath
+      });
+
+      // ⚡ Utiliser React Router navigate() pour les chemins internes
+      // Cela garantit une navigation SPA propre
+      console.log('🔗 [ShortLink] Navigating to:', targetPath);
       
-      // ⚡ SOLUTION: Toujours utiliser window.location.replace pour éviter
-      // les conflits avec React Router et useRoleRedirect
-      // Cela garantit une navigation propre vers la destination
+      // Utiliser navigate avec replace pour ne pas polluer l'historique
+      navigate(targetPath, { replace: true });
       
-      // Construire l'URL complète pour la redirection
-      const baseUrl = window.location.origin;
-      const fullUrl = targetPath.startsWith('http') 
-        ? targetPath 
-        : `${baseUrl}${targetPath}`;
-      
-      console.log('🔗 [ShortLink] Redirecting via window.location to:', fullUrl);
-      
-      // Utiliser window.location.replace pour une redirection fiable
-      // Cela contourne tous les hooks React et garantit la navigation
-      window.location.replace(fullUrl);
+      // Mettre loading à false car on a lancé la navigation
+      setLoading(false);
 
     } catch (err) {
       console.error('🔗 [ShortLink] Error resolving short link:', err);
@@ -135,7 +123,7 @@ export default function ShortLinkRedirect() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="fixed inset-0 z-[9999] bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Redirection en cours...</p>
@@ -146,7 +134,7 @@ export default function ShortLinkRedirect() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[9999] bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardHeader className="text-center">
             <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -160,10 +148,10 @@ export default function ShortLinkRedirect() {
               Ce lien de partage n'est plus valide ou a expiré.
             </p>
             <div className="flex flex-col gap-2">
-              <Button onClick={() => navigate('/marketplace')} className="w-full">
+              <Button onClick={() => navigate('/marketplace', { replace: true })} className="w-full">
                 Voir le Marketplace
               </Button>
-              <Button variant="outline" onClick={() => navigate('/')} className="w-full">
+              <Button variant="outline" onClick={() => navigate('/', { replace: true })} className="w-full">
                 Retour à l'accueil
               </Button>
             </div>
@@ -173,11 +161,11 @@ export default function ShortLinkRedirect() {
     );
   }
 
-  // Si on arrive ici, c'est que la redirection n'a pas fonctionné
-  // On affiche un lien manuel
+  // Si linkInfo existe mais qu'on est toujours ici, la navigation a peut-être échoué
+  // Afficher un bouton de redirection manuelle
   if (linkInfo) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[9999] bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardHeader className="text-center">
             <CardTitle>{linkInfo.title}</CardTitle>
@@ -185,13 +173,20 @@ export default function ShortLinkRedirect() {
               Cliquez pour accéder à cette {linkInfo.type === 'shop' ? 'boutique' : 'page'}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-2">
             <Button 
-              onClick={() => window.location.href = linkInfo.originalUrl}
+              onClick={() => navigate(linkInfo.targetPath, { replace: true })}
               className="w-full"
             >
               <ExternalLink className="w-4 h-4 mr-2" />
               Ouvrir le lien
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/', { replace: true })}
+              className="w-full"
+            >
+              Retour à l'accueil
             </Button>
           </CardContent>
         </Card>
