@@ -53,7 +53,7 @@ export function HomeHeader({
             </div>
 
             <div className="min-w-0 text-center">
-              <h1 className="font-bold text-foreground text-lg md:text-xl tracking-tight truncate">
+              <h1 className="font-bold text-primary text-lg md:text-xl tracking-tight truncate">
                 224SOLUTIONS
               </h1>
               <button 
