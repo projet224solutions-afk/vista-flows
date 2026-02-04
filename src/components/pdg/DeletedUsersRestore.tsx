@@ -1,10 +1,9 @@
 /**
  * 🔄 RESTAURATION UTILISATEURS SUPPRIMÉS
- * Permet de restaurer les utilisateurs supprimés par accident
- * Accessible uniquement aux PDG/Admin
+ * Workflow: Recherche par ID/Email → Affichage profil → Restauration
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,13 +38,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { 
   RefreshCw, Search, UserX, RotateCcw, Clock, AlertTriangle,
-  User, Mail, Phone, Calendar, Shield, Trash2, Eye
+  User, Mail, Phone, Calendar, Shield, Eye, Wallet, CheckCircle2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format, formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
-
 import { Json } from '@/integrations/supabase/types';
 
 interface DeletedUser {
@@ -74,7 +72,7 @@ interface DeletedUser {
 
 export default function DeletedUsersRestore() {
   const [deletedUsers, setDeletedUsers] = useState<DeletedUser[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<DeletedUser | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -82,12 +80,14 @@ export default function DeletedUsersRestore() {
   const [restoreNotes, setRestoreNotes] = useState('');
   const [restoring, setRestoring] = useState(false);
   const [showRestored, setShowRestored] = useState(false);
+  const [searched, setSearched] = useState(false);
 
+  // Charger les utilisateurs supprimés au montage
   useEffect(() => {
-    fetchDeletedUsers();
+    fetchAllDeletedUsers();
   }, [showRestored]);
 
-  const fetchDeletedUsers = async () => {
+  const fetchAllDeletedUsers = async () => {
     try {
       setLoading(true);
       
@@ -105,21 +105,61 @@ export default function DeletedUsersRestore() {
       if (error) throw error;
       
       setDeletedUsers(data || []);
+      setSearched(false);
     } catch (error) {
-      console.error('Erreur chargement utilisateurs supprimés:', error);
-      toast.error('Erreur lors du chargement des utilisateurs supprimés');
+      console.error('Erreur chargement:', error);
+      toast.error('Erreur lors du chargement');
     } finally {
       setLoading(false);
     }
   };
 
+  // Recherche par ID ou email via Edge Function
+  const handleSearch = useCallback(async () => {
+    if (!searchQuery.trim()) {
+      fetchAllDeletedUsers();
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setSearched(true);
+
+      const { data, error } = await supabase.functions.invoke('restore-user', {
+        body: { search_query: searchQuery.trim() }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erreur de recherche');
+      }
+
+      setDeletedUsers(data.data || []);
+      
+      if (data.count === 0) {
+        toast.info('Aucun utilisateur supprimé trouvé avec ces critères');
+      } else {
+        toast.success(`${data.count} utilisateur(s) trouvé(s)`);
+      }
+    } catch (error: unknown) {
+      console.error('Erreur recherche:', error);
+      const msg = error instanceof Error ? error.message : 'Erreur de recherche';
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery]);
+
+  // Restauration de l'utilisateur
   const handleRestore = async () => {
     if (!selectedUser) return;
     
     try {
       setRestoring(true);
       
-      // Appeler la Edge Function via le client Supabase (gère auth + headers automatiquement)
       const { data, error } = await supabase.functions.invoke('restore-user', {
         body: {
           archive_id: selectedUser.id,
@@ -135,7 +175,7 @@ export default function DeletedUsersRestore() {
         throw new Error(data?.error || 'Erreur lors de la restauration');
       }
 
-      toast.success(`Utilisateur ${selectedUser.public_id || selectedUser.email} restauré avec succès!`);
+      toast.success(`✅ Utilisateur ${selectedUser.public_id || selectedUser.email} restauré!`);
 
       if (data?.data?.new_user_created) {
         toast.info("Un nouveau compte a été créé. L'utilisateur devra réinitialiser son mot de passe.", {
@@ -144,9 +184,16 @@ export default function DeletedUsersRestore() {
       }
       
       setRestoreDialogOpen(false);
+      setDetailsOpen(false);
       setRestoreNotes('');
       setSelectedUser(null);
-      fetchDeletedUsers();
+      
+      // Rafraîchir la liste
+      if (searched && searchQuery) {
+        handleSearch();
+      } else {
+        fetchAllDeletedUsers();
+      }
     } catch (error: unknown) {
       console.error('Erreur restauration:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
@@ -155,18 +202,6 @@ export default function DeletedUsersRestore() {
       setRestoring(false);
     }
   };
-
-  const filteredUsers = deletedUsers.filter(user => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      user.email?.toLowerCase().includes(query) ||
-      user.phone?.toLowerCase().includes(query) ||
-      user.full_name?.toLowerCase().includes(query) ||
-      user.public_id?.toLowerCase().includes(query) ||
-      user.role?.toLowerCase().includes(query)
-    );
-  });
 
   const getRoleBadgeColor = (role: string | null) => {
     switch (role?.toLowerCase()) {
@@ -199,9 +234,19 @@ export default function DeletedUsersRestore() {
     return { status: 'ok', text: `${daysLeft}j restants`, color: 'text-muted-foreground' };
   };
 
+  const openUserDetails = (user: DeletedUser) => {
+    setSelectedUser(user);
+    setDetailsOpen(true);
+  };
+
+  const openRestoreDialog = (user: DeletedUser) => {
+    setSelectedUser(user);
+    setRestoreDialogOpen(true);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header avec recherche */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -209,7 +254,7 @@ export default function DeletedUsersRestore() {
             Restauration Utilisateurs
           </CardTitle>
           <CardDescription>
-            Restaurez les utilisateurs supprimés par accident (conservation: 30 jours)
+            Recherchez un utilisateur supprimé par son ID (USR0001) ou email pour le restaurer
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -217,23 +262,27 @@ export default function DeletedUsersRestore() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par email, téléphone, nom, ID..."
+                placeholder="Rechercher par ID (USR0001), email ou téléphone..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className="pl-10"
               />
             </div>
             <div className="flex gap-2">
+              <Button onClick={handleSearch} disabled={loading}>
+                <Search className="h-4 w-4 mr-2" />
+                Rechercher
+              </Button>
               <Button
                 variant={showRestored ? "default" : "outline"}
                 onClick={() => setShowRestored(!showRestored)}
                 size="sm"
               >
-                {showRestored ? 'Masquer restaurés' : 'Afficher restaurés'}
+                {showRestored ? 'Masquer restaurés' : 'Voir restaurés'}
               </Button>
-              <Button variant="outline" onClick={fetchDeletedUsers} size="sm">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Actualiser
+              <Button variant="outline" onClick={fetchAllDeletedUsers} size="sm" disabled={loading}>
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               </Button>
             </div>
           </div>
@@ -256,7 +305,7 @@ export default function DeletedUsersRestore() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <RotateCcw className="h-5 w-5 text-green-500" />
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
               <div>
                 <p className="text-2xl font-bold">{deletedUsers.filter(u => u.is_restored).length}</p>
                 <p className="text-xs text-muted-foreground">Restaurés</p>
@@ -272,7 +321,7 @@ export default function DeletedUsersRestore() {
                 <p className="text-2xl font-bold">
                   {deletedUsers.filter(u => {
                     const exp = getExpirationStatus(u.expires_at);
-                    return exp?.status === 'warning';
+                    return exp?.status === 'warning' && !u.is_restored;
                   }).length}
                 </p>
                 <p className="text-xs text-muted-foreground">Expirent bientôt</p>
@@ -297,7 +346,7 @@ export default function DeletedUsersRestore() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">
-            Utilisateurs supprimés ({filteredUsers.length})
+            {searched ? 'Résultats de recherche' : 'Utilisateurs supprimés'} ({deletedUsers.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -305,13 +354,16 @@ export default function DeletedUsersRestore() {
             <div className="flex justify-center py-8">
               <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
-          ) : filteredUsers.length === 0 ? (
+          ) : deletedUsers.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <UserX className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>Aucun utilisateur supprimé trouvé</p>
-               <p className="text-xs mt-2">
-                 Seules les suppressions effectuées via l'application sont archivées pour restauration (30 jours).
-               </p>
+              <p className="font-medium">Aucun utilisateur supprimé trouvé</p>
+              <p className="text-xs mt-2 max-w-md mx-auto">
+                {searched 
+                  ? "Aucun résultat pour votre recherche. Essayez avec un ID complet (USR0001) ou un email."
+                  : "Les utilisateurs supprimés via l'application sont archivés pendant 30 jours pour restauration."
+                }
+              </p>
             </div>
           ) : (
             <ScrollArea className="h-[400px]">
@@ -321,18 +373,18 @@ export default function DeletedUsersRestore() {
                     <TableHead>Utilisateur</TableHead>
                     <TableHead>Rôle</TableHead>
                     <TableHead>ID Public</TableHead>
-                    <TableHead>Supprimé le</TableHead>
+                    <TableHead>Supprimé</TableHead>
                     <TableHead>Expiration</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUsers.map((user) => {
+                  {deletedUsers.map((user) => {
                     const expStatus = getExpirationStatus(user.expires_at);
                     return (
-                      <TableRow key={user.id}>
-                        <TableCell>
+                      <TableRow key={user.id} className="cursor-pointer hover:bg-muted/50">
+                        <TableCell onClick={() => openUserDetails(user)}>
                           <div className="flex flex-col">
                             <span className="font-medium">{user.full_name || 'Sans nom'}</span>
                             <span className="text-xs text-muted-foreground">{user.email || user.phone}</span>
@@ -344,7 +396,7 @@ export default function DeletedUsersRestore() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <code className="text-xs bg-muted px-2 py-1 rounded">
+                          <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
                             {user.public_id || '-'}
                           </code>
                         </TableCell>
@@ -368,7 +420,7 @@ export default function DeletedUsersRestore() {
                         <TableCell>
                           {user.is_restored ? (
                             <Badge variant="outline" className="text-green-600 border-green-600">
-                              Restauré
+                              ✓ Restauré
                             </Badge>
                           ) : (
                             <Badge variant="outline" className="text-orange-600 border-orange-600">
@@ -381,21 +433,15 @@ export default function DeletedUsersRestore() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => {
-                                setSelectedUser(user);
-                                setDetailsOpen(true);
-                              }}
+                              onClick={() => openUserDetails(user)}
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            {!user.is_restored && (
+                            {!user.is_restored && expStatus?.status !== 'expired' && (
                               <Button
                                 size="sm"
                                 variant="default"
-                                onClick={() => {
-                                  setSelectedUser(user);
-                                  setRestoreDialogOpen(true);
-                                }}
+                                onClick={() => openRestoreDialog(user)}
                               >
                                 <RotateCcw className="h-4 w-4 mr-1" />
                                 Restaurer
@@ -413,29 +459,32 @@ export default function DeletedUsersRestore() {
         </CardContent>
       </Card>
 
-      {/* Dialog Détails */}
+      {/* Dialog Détails de l'utilisateur */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
-              Détails utilisateur supprimé
+              Profil utilisateur supprimé
             </DialogTitle>
             <DialogDescription>
-              Informations archivées avant suppression
+              Données archivées avant suppression - Vérifiez les informations avant restauration
             </DialogDescription>
           </DialogHeader>
           
           {selectedUser && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-6">
+              {/* Informations principales */}
+              <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">Nom complet</label>
-                  <p className="font-medium">{selectedUser.full_name || 'Non renseigné'}</p>
+                  <p className="font-medium text-lg">{selectedUser.full_name || 'Non renseigné'}</p>
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">ID Public</label>
-                  <code className="text-sm bg-muted px-2 py-1 rounded">{selectedUser.public_id || '-'}</code>
+                  <code className="text-lg bg-primary/10 px-3 py-1 rounded font-mono block w-fit">
+                    {selectedUser.public_id || '-'}
+                  </code>
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
@@ -461,104 +510,172 @@ export default function DeletedUsersRestore() {
                   <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                     <Calendar className="h-3 w-3" /> Créé le
                   </label>
-                  <p>{selectedUser.original_created_at ? format(new Date(selectedUser.original_created_at), 'dd/MM/yyyy HH:mm', { locale: fr }) : '-'}</p>
-                </div>
-              </div>
-              
-              <div className="border-t pt-4">
-                <h4 className="font-medium mb-2 flex items-center gap-2">
-                  <Trash2 className="h-4 w-4 text-red-500" />
-                  Informations de suppression
-                </h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <label className="text-xs text-muted-foreground">Supprimé le</label>
-                    <p>{format(new Date(selectedUser.deleted_at), 'dd/MM/yyyy HH:mm', { locale: fr })}</p>
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground">Méthode</label>
-                    <p>{selectedUser.deletion_method || 'Manuel'}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <label className="text-xs text-muted-foreground">Raison</label>
-                    <p>{selectedUser.deletion_reason || 'Non spécifiée'}</p>
-                  </div>
+                  <p>
+                    {selectedUser.original_created_at 
+                      ? format(new Date(selectedUser.original_created_at), 'dd MMMM yyyy', { locale: fr })
+                      : 'Inconnu'
+                    }
+                  </p>
                 </div>
               </div>
 
+              {/* Données du wallet */}
               {selectedUser.wallet_data && (
-                <div className="border-t pt-4">
-                  <h4 className="font-medium mb-2">Données Wallet</h4>
-                  <pre className="text-xs bg-muted p-2 rounded overflow-auto max-h-32">
-                    {JSON.stringify(selectedUser.wallet_data, null, 2)}
-                  </pre>
+                <div className="p-4 border rounded-lg">
+                  <h4 className="font-medium flex items-center gap-2 mb-3">
+                    <Wallet className="h-4 w-4" />
+                    Données du portefeuille
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Solde:</span>
+                      <span className="ml-2 font-medium">
+                        {((selectedUser.wallet_data as Record<string, unknown>)?.balance as number || 0).toLocaleString()} 
+                        {' '}
+                        {(selectedUser.wallet_data as Record<string, unknown>)?.currency as string || 'GNF'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Statut:</span>
+                      <span className="ml-2">
+                        {(selectedUser.wallet_data as Record<string, unknown>)?.wallet_status as string || 'N/A'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               )}
 
-              {selectedUser.is_restored && (
-                <div className="border-t pt-4 bg-green-50 dark:bg-green-950 rounded p-3">
-                  <h4 className="font-medium text-green-700 dark:text-green-300 mb-2">✅ Restauré</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Restauré le {selectedUser.restored_at ? format(new Date(selectedUser.restored_at), 'dd/MM/yyyy HH:mm', { locale: fr }) : '-'}
-                  </p>
-                  {selectedUser.restoration_notes && (
-                    <p className="text-sm mt-1">{selectedUser.restoration_notes}</p>
+              {/* Informations de suppression */}
+              <div className="p-4 border border-destructive/30 rounded-lg bg-destructive/5">
+                <h4 className="font-medium text-destructive mb-3">Informations de suppression</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Supprimé le:</span>
+                    <span className="ml-2">
+                      {format(new Date(selectedUser.deleted_at), 'dd/MM/yyyy à HH:mm', { locale: fr })}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Méthode:</span>
+                    <span className="ml-2">{selectedUser.deletion_method || 'N/A'}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-muted-foreground">Raison:</span>
+                    <span className="ml-2">{selectedUser.deletion_reason || 'Non spécifiée'}</span>
+                  </div>
+                  {selectedUser.expires_at && (
+                    <div className="col-span-2">
+                      <span className="text-muted-foreground">Expire le:</span>
+                      <span className={`ml-2 ${getExpirationStatus(selectedUser.expires_at)?.color}`}>
+                        {format(new Date(selectedUser.expires_at), 'dd MMMM yyyy', { locale: fr })}
+                        {' '}({getExpirationStatus(selectedUser.expires_at)?.text})
+                      </span>
+                    </div>
                   )}
+                </div>
+              </div>
+
+              {/* Statut de restauration */}
+              {selectedUser.is_restored && (
+                <div className="p-4 border border-green-500/30 rounded-lg bg-green-500/5">
+                  <h4 className="font-medium text-green-600 mb-3 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Restauré avec succès
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Restauré le:</span>
+                      <span className="ml-2">
+                        {selectedUser.restored_at 
+                          ? format(new Date(selectedUser.restored_at), 'dd/MM/yyyy à HH:mm', { locale: fr })
+                          : 'N/A'
+                        }
+                      </span>
+                    </div>
+                    {selectedUser.restoration_notes && (
+                      <div className="col-span-2">
+                        <span className="text-muted-foreground">Notes:</span>
+                        <span className="ml-2">{selectedUser.restoration_notes}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
           )}
           
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setDetailsOpen(false)}>
               Fermer
             </Button>
-            {selectedUser && !selectedUser.is_restored && (
+            {selectedUser && !selectedUser.is_restored && getExpirationStatus(selectedUser.expires_at)?.status !== 'expired' && (
               <Button onClick={() => {
                 setDetailsOpen(false);
-                setRestoreDialogOpen(true);
+                openRestoreDialog(selectedUser);
               }}>
                 <RotateCcw className="h-4 w-4 mr-2" />
-                Restaurer
+                Restaurer cet utilisateur
               </Button>
             )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Dialog Confirmation Restauration */}
+      {/* Dialog de confirmation de restauration */}
       <AlertDialog open={restoreDialogOpen} onOpenChange={setRestoreDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la restauration</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
-              <p>
-                Vous allez marquer l'utilisateur <strong>{selectedUser?.public_id || selectedUser?.email}</strong> comme restauré.
-              </p>
-              <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded p-3">
-                <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                  <AlertTriangle className="h-4 w-4 inline mr-1" />
-                  <strong>Important:</strong> Cette action marque l'utilisateur comme restauré dans l'archive. 
-                  Pour recréer le compte Supabase Auth, vous devez utiliser le dashboard Supabase.
+            <AlertDialogTitle className="flex items-center gap-2">
+              <RotateCcw className="h-5 w-5 text-primary" />
+              Confirmer la restauration
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                <p>
+                  Vous allez restaurer l'utilisateur{' '}
+                  <strong>{selectedUser?.public_id || selectedUser?.email}</strong>.
                 </p>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Notes de restauration (optionnel)</label>
-                <Textarea
-                  placeholder="Raison de la restauration..."
-                  value={restoreNotes}
-                  onChange={(e) => setRestoreNotes(e.target.value)}
-                />
+                
+                <div className="p-3 bg-muted rounded-lg text-sm">
+                  <p className="font-medium mb-2">Ce qui sera restauré:</p>
+                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                    <li>Profil utilisateur (nom, email, téléphone)</li>
+                    <li>Identifiant public ({selectedUser?.public_id})</li>
+                    {selectedUser?.wallet_data && <li>Portefeuille et solde</li>}
+                    <li>Compte d'authentification (mot de passe à réinitialiser)</li>
+                  </ul>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Notes de restauration (optionnel)</label>
+                  <Textarea
+                    placeholder="Raison de la restauration..."
+                    value={restoreNotes}
+                    onChange={(e) => setRestoreNotes(e.target.value)}
+                    className="resize-none"
+                    rows={2}
+                  />
+                </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={restoring}>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRestore} disabled={restoring}>
+            <AlertDialogAction
+              onClick={handleRestore}
+              disabled={restoring}
+              className="bg-primary"
+            >
               {restoring ? (
-                <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Restauration...</>
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Restauration...
+                </>
               ) : (
-                <><RotateCcw className="h-4 w-4 mr-2" /> Confirmer</>
+                <>
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Confirmer la restauration
+                </>
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

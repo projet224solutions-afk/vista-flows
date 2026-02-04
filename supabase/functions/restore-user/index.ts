@@ -1,12 +1,11 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -17,19 +16,24 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Vérifier l'authentification
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Non autorisé - en-tête Authorization manquant' }),
+        JSON.stringify({ success: false, error: 'Non autorisé - token manquant' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
       );
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+    const token = authHeader.substring(7); // Remove 'Bearer '
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
-    if (!user) {
-      throw new Error('Non autorisé');
+    if (authError || !user) {
+      console.error('❌ Auth error:', authError?.message);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Non autorisé - token invalide' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
     }
 
     // Vérifier que l'utilisateur est PDG (table pdg_management) OU Admin/CEO
@@ -47,15 +51,53 @@ serve(async (req) => {
         .maybeSingle();
 
       const role = (profile?.role || '').toString().toLowerCase();
-      if (!['admin', 'ceo'].includes(role)) {
-        throw new Error('Permissions insuffisantes - PDG/Admin requis');
+      if (!['admin', 'ceo', 'pdg'].includes(role)) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Permissions insuffisantes - PDG/Admin requis' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+        );
       }
     }
 
-    const { archive_id, restoration_notes } = await req.json();
+    const body = await req.json();
+    const { archive_id, search_query, restoration_notes } = body;
 
+    // Mode recherche: chercher par ID ou email
+    if (search_query && !archive_id) {
+      console.log('🔍 Recherche utilisateur:', search_query);
+      
+      const query = search_query.trim();
+      
+      // Chercher dans les archives
+      const { data: archives, error: searchError } = await supabaseAdmin
+        .from('deleted_users_archive')
+        .select('*')
+        .or(`public_id.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%,original_user_id.eq.${query}`)
+        .eq('is_restored', false)
+        .order('deleted_at', { ascending: false })
+        .limit(20);
+
+      if (searchError) {
+        console.error('❌ Erreur recherche:', searchError.message);
+        throw new Error(`Erreur recherche: ${searchError.message}`);
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: archives || [],
+          count: archives?.length || 0
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
+
+    // Mode restauration
     if (!archive_id) {
-      throw new Error('ID archive requis');
+      return new Response(
+        JSON.stringify({ success: false, error: 'archive_id ou search_query requis' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
     }
 
     // Récupérer les données archivées
@@ -66,11 +108,18 @@ serve(async (req) => {
       .single();
 
     if (archiveError || !archive) {
-      throw new Error('Archive non trouvée');
+      console.error('❌ Archive non trouvée:', archiveError?.message);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Archive non trouvée' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      );
     }
 
     if (archive.is_restored) {
-      throw new Error('Cet utilisateur a déjà été restauré');
+      return new Response(
+        JSON.stringify({ success: false, error: 'Cet utilisateur a déjà été restauré' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
     }
 
     console.log('🔄 Début restauration:', archive.email || archive.public_id);
@@ -90,7 +139,21 @@ serve(async (req) => {
       console.log('📝 Création nouveau compte auth...');
       
       if (!archive.email) {
-        throw new Error('Impossible de restaurer: email manquant dans l\'archive');
+        return new Response(
+          JSON.stringify({ success: false, error: "Impossible de restaurer: email manquant dans l'archive" }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
+      }
+
+      // Vérifier si l'email n'est pas déjà utilisé
+      const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+      const emailExists = existingUsers?.users?.some(u => u.email?.toLowerCase() === archive.email?.toLowerCase());
+      
+      if (emailExists) {
+        return new Response(
+          JSON.stringify({ success: false, error: `L'email ${archive.email} est déjà utilisé par un autre compte` }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
       }
 
       // Créer un nouveau compte auth
@@ -111,12 +174,18 @@ serve(async (req) => {
       });
 
       if (createAuthError) {
-        throw new Error(`Erreur création auth: ${createAuthError.message}`);
+        console.error('❌ Erreur création auth:', createAuthError.message);
+        return new Response(
+          JSON.stringify({ success: false, error: `Erreur création compte: ${createAuthError.message}` }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        );
       }
 
       restoredUserId = newAuthUser.user.id;
       newUserCreated = true;
       console.log('✅ Nouveau compte auth créé:', restoredUserId);
+    } else {
+      console.log('✅ Compte auth existant trouvé:', restoredUserId);
     }
 
     // Vérifier si le profil existe
@@ -155,6 +224,8 @@ serve(async (req) => {
       } else {
         console.log('✅ Profil restauré');
       }
+    } else if (existingProfile) {
+      console.log('✅ Profil existant trouvé');
     }
 
     // Restaurer user_ids si nécessaire
@@ -221,7 +292,7 @@ serve(async (req) => {
         is_restored: true,
         restored_at: new Date().toISOString(),
         restored_by: user.id,
-        restoration_notes: restoration_notes || 'Restauration automatique via Edge Function'
+        restoration_notes: restoration_notes || 'Restauration via Edge Function'
       })
       .eq('id', archive_id);
 
@@ -239,27 +310,19 @@ serve(async (req) => {
           restored_user_id: restoredUserId,
           new_user_created: newUserCreated,
           original_user_id: archive.original_user_id,
-          public_id: archive.public_id
+          public_id: archive.public_id,
+          email: archive.email
         }
       }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
 
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
     console.error('❌ Erreur restauration:', errorMessage);
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: errorMessage
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      }
+      JSON.stringify({ success: false, error: errorMessage }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });
