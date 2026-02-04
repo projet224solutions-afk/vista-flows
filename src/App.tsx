@@ -82,6 +82,7 @@ const Orders = lazyWithRetry(() => import("./pages/Orders"));
 const ContactUserById = lazyWithRetry(() => import("./components/communication/ContactUserById"));
 const DirectConversation = lazyWithRetry(() => import("./pages/DirectConversation"));
 const Devis = lazyWithRetry(() => import("./pages/Devis"));
+const Notifications = lazyWithRetry(() => import("./pages/Notifications"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const AgentActivation = lazyWithRetry(() => import("./pages/AgentActivation"));
 const AgentDashboard = lazyWithRetry(() => import("./pages/AgentDashboard"));
@@ -253,6 +254,7 @@ function App() {
               <Route path="/boutique/:slug/*" element={<VendorShop />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/messages" element={<Messages />} />
+              <Route path="/notifications" element={<Notifications />} />
               <Route path="/contact-user" element={<ContactUserById />} />
               {/* Messagerie directe: supporte les deux formats (legacy direct_ + nouveau direct/) */}
               <Route path="/communication/direct/:userId" element={<DirectConversation />} />
