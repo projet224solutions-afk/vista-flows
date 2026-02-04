@@ -118,40 +118,22 @@ export function HomeHeader({
         </div>
       </div>
 
-      {/* Professional Ticker Banner - Below MarketPlace */}
-      <div className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-t border-primary/20 overflow-hidden relative">
-        <div className="flex animate-ticker py-2">
-          {/* First set of phrases */}
-          <span className="ticker-item text-base md:text-lg font-semibold text-primary whitespace-nowrap px-8">
-            🎉 Bienvenue sur 224SOLUTIONS
+      {/* Professional Vision Ticker Banner */}
+      <div className="bg-gradient-to-r from-primary via-primary to-primary/90 border-t border-primary/30 overflow-hidden relative">
+        <div className="flex animate-vision-ticker py-3">
+          {/* First instance */}
+          <span className="ticker-item text-sm md:text-base font-medium text-primary-foreground whitespace-nowrap px-12 font-inter">
+            224SOLUTIONS donne à l'Afrique la possibilité de vendre en ligne et physiquement, que ce soit des produits physiques ou digitaux, via l'affiliation, tout en permettant à chacun de gérer son commerce physique et d'offrir ou accéder aux services les plus proches de lui.
           </span>
-          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
-            🌍 Une plateforme africaine
-          </span>
-          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
-            🚀 Des opportunités sans frontières
-          </span>
-          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
-            🏪 Tout votre marché en un seul endroit
-          </span>
-          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
-            💎 Découvrez, achetez et vendez simplement
+          <span className="ticker-item text-sm md:text-base font-medium text-primary-foreground whitespace-nowrap px-12 font-inter">
+            La plateforme connecte vendeurs et acheteurs à travers le continent, facilite le commerce digital, sécurise les paiements et crée de nouvelles opportunités économiques sans frontières.
           </span>
           {/* Duplicate for seamless loop */}
-          <span className="ticker-item text-base md:text-lg font-semibold text-primary whitespace-nowrap px-8">
-            🎉 Bienvenue sur 224SOLUTIONS
+          <span className="ticker-item text-sm md:text-base font-medium text-primary-foreground whitespace-nowrap px-12 font-inter">
+            224SOLUTIONS donne à l'Afrique la possibilité de vendre en ligne et physiquement, que ce soit des produits physiques ou digitaux, via l'affiliation, tout en permettant à chacun de gérer son commerce physique et d'offrir ou accéder aux services les plus proches de lui.
           </span>
-          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
-            🌍 Une plateforme africaine
-          </span>
-          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
-            🚀 Des opportunités sans frontières
-          </span>
-          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
-            🏪 Tout votre marché en un seul endroit
-          </span>
-          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
-            💎 Découvrez, achetez et vendez simplement
+          <span className="ticker-item text-sm md:text-base font-medium text-primary-foreground whitespace-nowrap px-12 font-inter">
+            La plateforme connecte vendeurs et acheteurs à travers le continent, facilite le commerce digital, sécurise les paiements et crée de nouvelles opportunités économiques sans frontières.
           </span>
         </div>
       </div>
