@@ -170,33 +170,61 @@ All colors MUST be HSL.
   }
 
   /* SYSTÈME HOVER BLEU GLOBAL - Ultra Professionnel */
-  /* Boutons */
-  button:not(:disabled):hover,
-  [role="button"]:not(:disabled):hover,
-  .btn:not(:disabled):hover {
+  /* Tous les boutons - hover bleu uniforme */
+  button:not(:disabled):not([data-radix-collection-item]):not(.no-hover-effect):hover,
+  [role="button"]:not(:disabled):not(.no-hover-effect):hover,
+  .btn:not(:disabled):hover,
+  input[type="submit"]:not(:disabled):hover,
+  input[type="button"]:not(:disabled):hover {
     background-color: hsl(var(--hover-bg)) !important;
     color: white !important;
     box-shadow: var(--hover-shadow) !important;
     border-color: hsl(var(--hover-bg)) !important;
+    transition: all 0.2s ease !important;
   }
 
   /* Links stylés comme boutons */
-  a[class*="bg-"]:hover,
-  a[class*="btn"]:hover {
+  a[class*="bg-"]:not(.no-hover-effect):hover,
+  a[class*="btn"]:not(.no-hover-effect):hover,
+  a.button:hover {
     background-color: hsl(var(--hover-bg)) !important;
     color: white !important;
     box-shadow: var(--hover-shadow) !important;
   }
 
-  /* Tabs et éléments de navigation */
-  [role="tab"]:hover,
-  [data-state]:hover {
-    background-color: hsl(var(--hover-bg) / 0.1) !important;
+  /* Badges interactifs */
+  .badge:hover,
+  [class*="Badge"]:hover {
+    background-color: hsl(var(--hover-bg)) !important;
+    color: white !important;
   }
 
+  /* Cards cliquables */
+  .card-clickable:hover,
+  [class*="cursor-pointer"][class*="bg-"]:hover {
+    border-color: hsl(var(--hover-bg)) !important;
+    box-shadow: var(--hover-shadow) !important;
+  }
+
+  /* Tabs navigation - actif en bleu */
   [role="tab"][data-state="active"] {
     background-color: hsl(var(--hover-bg)) !important;
     color: white !important;
+  }
+
+  /* Dropdown items */
+  [role="menuitem"]:hover,
+  [role="option"]:hover,
+  [data-radix-collection-item]:hover {
+    background-color: hsl(var(--hover-bg) / 0.15) !important;
+    color: hsl(var(--hover-bg)) !important;
+  }
+
+  /* Switch et toggles - pas de hover bleu */
+  [role="switch"],
+  [data-state="checked"],
+  [data-state="unchecked"] {
+    /* Garder les styles originaux */
   }
 
   /* 224SOLUTIONS Typography System */
