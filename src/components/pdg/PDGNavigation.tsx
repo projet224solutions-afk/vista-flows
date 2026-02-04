@@ -88,6 +88,7 @@ const categories: NavCategory[] = [
       { value: 'logic-surveillance', label: 'Surveillance Logique', icon: Zap, badge: true, permission: 'view_debug' },
       { value: 'sync-dashboard', label: 'Synchronisation', icon: RefreshCw, badge: true, permission: 'view_debug' },
       { value: 'id-normalization', label: 'Audit ID', icon: Shield, badge: true, permission: 'view_id_normalization' },
+      { value: 'deleted-users-restore', label: '🔄 Restauration', icon: RefreshCw, badge: true, permission: 'view_security' },
       { value: 'bug-bounty', label: 'Bug Bounty', icon: Shield, permission: 'view_bug_bounty' },
       { value: 'config', label: 'Configuration', icon: Settings, permission: 'view_config' },
       { value: 'maintenance', label: 'Maintenance', icon: Wrench, permission: 'view_maintenance' },
