@@ -1,6 +1,6 @@
-// Service Worker v10 - PWA + Firebase Cloud Messaging + Mode Offline Desktop & Mobile
-// v10: Fix SPA routing - toujours servir /index.html pour les routes de navigation
-const CACHE_VERSION = "v10";
+// Service Worker v11 - PWA + Firebase Cloud Messaging + Mode Offline Desktop & Mobile
+// v11: bump cache version to prevent stale app shell causing white-screen after deployments
+const CACHE_VERSION = "v11";
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
 const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
@@ -208,7 +208,7 @@ async function precacheIndexAndBuildAssets() {
 
 // INSTALL - Précacher les assets essentiels (mobile + desktop)
 self.addEventListener("install", (event) => {
-  console.log("[SW] Installation v9 - Mode offline amélioré");
+  console.log("[SW] Installation v11 - Mode offline amélioré");
 
   event.waitUntil(
     precacheIndexAndBuildAssets().then(() => {
@@ -220,7 +220,7 @@ self.addEventListener("install", (event) => {
 
 // ACTIVATE - Nettoyer anciens caches et mettre en cache les routes vendeur + core
 self.addEventListener("activate", (event) => {
-  console.log("[SW] Activation v9");
+  console.log("[SW] Activation v11");
 
   event.waitUntil(
     Promise.all([

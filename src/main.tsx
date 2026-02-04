@@ -6,6 +6,52 @@ import "./index.css";
 import { registerServiceWorker, unregisterServiceWorker } from "./lib/serviceWorkerRegistration";
 import { initPWAInstallPromptListener } from "./lib/pwaInstallPrompt";
 
+// --- Crash recovery (stale cache / SW / chunk load) ---
+const RECOVERY_FLAG = "__224_cache_recovery_done";
+
+function isLikelyChunkOrAssetLoadError(err: unknown): boolean {
+  const message =
+    (err instanceof Error ? err.message : "") ||
+    (typeof err === "string" ? err : "");
+
+  return (
+    /Failed to fetch dynamically imported module/i.test(message) ||
+    /Loading chunk \d+ failed/i.test(message) ||
+    /ChunkLoadError/i.test(message) ||
+    /Importing a module script failed/i.test(message)
+  );
+}
+
+async function recoverFromStaleCache(trigger: string, err?: unknown) {
+  try {
+    if (sessionStorage.getItem(RECOVERY_FLAG) === "1") return;
+    sessionStorage.setItem(RECOVERY_FLAG, "1");
+
+    console.warn("🧹 [Recovery] Tentative de récupération (cache/SW)", { trigger, err });
+
+    // Unregister ALL service workers for this origin
+    if ("serviceWorker" in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((r) => r.unregister().catch(() => false)));
+    }
+
+    // Clear caches
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    }
+
+    // Reload with a cache-busting param (avoid reusing bad SW/HTML)
+    const url = new URL(window.location.href);
+    url.searchParams.set("__reload", Date.now().toString());
+    window.location.replace(url.toString());
+  } catch (e) {
+    console.warn("🧹 [Recovery] Échec récupération", e);
+    // As a last resort, hard reload
+    window.location.reload();
+  }
+}
+
 // Initialiser le listener PWA le plus tôt possible (évite de rater beforeinstallprompt)
 initPWAInstallPromptListener();
 
@@ -107,8 +153,18 @@ if (import.meta.env.DEV && !enablePwaPreview) {
 // Capturer les erreurs globales
 window.addEventListener('error', (event) => {
   console.error('Erreur globale:', event.error || event.message);
+
+  // Auto-récupération sur erreurs typiques de cache/SW (écran blanc)
+  const err = (event as any).error ?? event.message;
+  if (isLikelyChunkOrAssetLoadError(err)) {
+    recoverFromStaleCache("window.error", err);
+  }
 });
 
 window.addEventListener('unhandledrejection', (event) => {
   console.error('Promise rejetée:', event.reason);
+
+  if (isLikelyChunkOrAssetLoadError(event.reason)) {
+    recoverFromStaleCache("unhandledrejection", event.reason);
+  }
 });
