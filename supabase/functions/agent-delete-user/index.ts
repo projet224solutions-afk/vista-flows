@@ -4,7 +4,7 @@ import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 // Schéma de validation
@@ -104,6 +104,71 @@ serve(async (req) => {
         JSON.stringify({ error: 'Utilisateur non trouvé ou non créé par cet agent' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // ========================================
+    // ARCHIVAGE AVANT SUPPRESSION AUTH
+    // ========================================
+    try {
+      console.log('📦 Archivage utilisateur (agent-delete-user)...');
+
+      const { data: authToDelete } = await supabaseAdmin.auth.admin.getUserById(userId);
+      const email = authToDelete?.user?.email ?? null;
+      const phone = authToDelete?.user?.phone ?? null;
+
+      const { data: profileToArchive } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      const { data: walletData } = await supabaseAdmin
+        .from('wallets')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      const { data: userIdsData } = await supabaseAdmin
+        .from('user_ids')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
+
+      const fullName = profileToArchive?.first_name && profileToArchive?.last_name
+        ? `${profileToArchive.first_name} ${profileToArchive.last_name}`.trim()
+        : profileToArchive?.first_name || profileToArchive?.last_name || null;
+
+      const { error: archiveError } = await supabaseAdmin
+        .from('deleted_users_archive')
+        .insert({
+          original_user_id: userId,
+          email,
+          phone,
+          full_name: fullName,
+          role: profileToArchive?.role ?? null,
+          public_id: profileToArchive?.public_id ?? null,
+          profile_data: profileToArchive ?? null,
+          wallet_data: walletData ?? null,
+          user_ids_data: userIdsData ?? null,
+          role_specific_data: { agent_id: agent.id },
+          deletion_reason: 'Suppression via agent',
+          deletion_method: 'agent-delete-user',
+          deleted_by: user.id,
+          expires_at: expiresAt.toISOString(),
+          original_created_at: profileToArchive?.created_at ?? null,
+          is_restored: false,
+        });
+
+      if (archiveError) {
+        console.warn('⚠️ Archivage échoué (non bloquant):', archiveError.message);
+      } else {
+        console.log('✅ Archivage OK');
+      }
+    } catch (e) {
+      console.warn('⚠️ Archivage exception (non bloquant):', e instanceof Error ? e.message : String(e));
     }
 
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);

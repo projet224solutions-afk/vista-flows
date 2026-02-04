@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 serve(async (req) => {
@@ -17,7 +17,14 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const authHeader = req.headers.get('Authorization')!;
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Non autorisé - en-tête Authorization manquant' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
     const token = authHeader.replace('Bearer ', '');
     const { data: { user } } = await supabaseAdmin.auth.getUser(token);
 
@@ -25,15 +32,24 @@ serve(async (req) => {
       throw new Error('Non autorisé');
     }
 
-    // Vérifier que l'utilisateur est PDG ou Admin
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+    // Vérifier que l'utilisateur est PDG (table pdg_management) OU Admin/CEO
+    const { data: pdgRow } = await supabaseAdmin
+      .from('pdg_management')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
 
-    if (!profile || !['pdg', 'admin', 'ceo'].includes(profile.role?.toLowerCase() || '')) {
-      throw new Error('Permissions insuffisantes - PDG/Admin requis');
+    if (!pdgRow) {
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      const role = (profile?.role || '').toString().toLowerCase();
+      if (!['admin', 'ceo'].includes(role)) {
+        throw new Error('Permissions insuffisantes - PDG/Admin requis');
+      }
     }
 
     const { archive_id, restoration_notes } = await req.json();
