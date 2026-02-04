@@ -27224,7 +27224,7 @@ export type Database = {
         Args: {
           p_regions?: string[]
           p_roles?: string[]
-          p_segment: string
+          p_segment?: string
           p_user_ids?: string[]
         }
         Returns: {
