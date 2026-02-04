@@ -75,17 +75,39 @@ interface DataStatus {
   exists: boolean;
   data?: unknown;
   count?: number;
+  table_name?: string;
 }
 
 interface UserDataAnalysis {
+  // Données de base
   profile: DataStatus;
   wallet: DataStatus;
   user_ids: DataStatus;
+  // Rôles spécifiques
   agent: DataStatus;
   vendor: DataStatus;
+  taxi_driver: DataStatus;
+  livreur: DataStatus;
+  // Activité
   orders: DataStatus;
   transactions: DataStatus;
+  notifications: DataStatus;
+  conversations: DataStatus;
+  messages: DataStatus;
+  // Commerce
+  products: DataStatus;
+  reviews: DataStatus;
+  favorites: DataStatus;
+  cart: DataStatus;
+  // Archives
   archived: DataStatus;
+}
+
+interface AnalysisSummary {
+  total_tables_checked: number;
+  existing_count: number;
+  missing_count: number;
+  deleted_count: number;
 }
 
 interface ActiveProfile {
@@ -105,9 +127,46 @@ interface ActiveProfile {
   data_analysis?: {
     analysis: UserDataAnalysis;
     missing_data: string[];
+    existing_data: string[];
+    deleted_data: string[];
     has_issues: boolean;
+    summary: AnalysisSummary;
   } | null;
   archived_data?: DeletedUser | null;
+}
+
+// Composant pour afficher le statut d'une donnée
+function DataStatusBadge({ 
+  status, 
+  label, 
+  icon, 
+  showIfZero = false 
+}: { 
+  status: DataStatus; 
+  label: string; 
+  icon?: React.ReactNode;
+  showIfZero?: boolean;
+}) {
+  // Ne pas afficher si count est 0 et showIfZero est false
+  if (!status.exists && !showIfZero && (status.count === undefined || status.count === 0)) {
+    return null;
+  }
+
+  const bgClass = status.exists 
+    ? 'bg-green-500/10 text-green-700' 
+    : 'bg-muted text-muted-foreground';
+
+  return (
+    <div className={`flex items-center gap-2 p-2 rounded text-xs ${bgClass}`}>
+      {status.exists ? (
+        <CheckCircle2 className="h-3 w-3" />
+      ) : (
+        icon || <XCircle className="h-3 w-3 opacity-50" />
+      )}
+      {icon && status.exists && icon}
+      <span>{label}</span>
+    </div>
+  );
 }
 
 export default function DeletedUsersRestore() {
@@ -466,105 +525,147 @@ export default function DeletedUsersRestore() {
                   {/* Analyse des données */}
                   {profile.data_analysis && (
                     <div className="mt-3 p-3 bg-muted/30 rounded-lg">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Database className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-medium">Analyse des données</span>
-                        {profile.data_analysis.has_issues ? (
-                          <Badge variant="destructive" className="text-xs">
-                            {profile.data_analysis.missing_data.length} donnée(s) manquante(s)
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-green-600 text-white text-xs">
-                            Toutes les données intactes
-                          </Badge>
-                        )}
+                      {/* En-tête avec résumé */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Database className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">Analyse complète ({profile.data_analysis.summary?.total_tables_checked || 0} tables)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {profile.data_analysis.summary && (
+                            <>
+                              <Badge className="bg-green-600/20 text-green-700 text-xs">
+                                {profile.data_analysis.summary.existing_count} existant(s)
+                              </Badge>
+                              {profile.data_analysis.summary.missing_count > 0 && (
+                                <Badge variant="outline" className="text-orange-600 border-orange-300 text-xs">
+                                  {profile.data_analysis.summary.missing_count} manquant(s)
+                                </Badge>
+                              )}
+                              {profile.data_analysis.summary.deleted_count > 0 && (
+                                <Badge variant="destructive" className="text-xs">
+                                  {profile.data_analysis.summary.deleted_count} supprimé(s)
+                                </Badge>
+                              )}
+                            </>
+                          )}
+                        </div>
                       </div>
                       
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {/* Données existantes */}
+                      {profile.data_analysis.existing_data && profile.data_analysis.existing_data.length > 0 && (
+                        <div className="mb-3">
+                          <p className="text-xs font-medium text-green-700 mb-2 flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3" />
+                            Données existantes:
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {profile.data_analysis.existing_data.map((item, idx) => (
+                              <span key={idx} className="text-xs bg-green-500/10 text-green-700 px-2 py-0.5 rounded">
+                                {item}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Grille des statuts principaux */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
                         {/* Profil */}
-                        <div className={`flex items-center gap-2 p-2 rounded text-xs ${
-                          profile.data_analysis.analysis.profile.exists 
-                            ? 'bg-green-500/10 text-green-700' 
-                            : 'bg-red-500/10 text-red-700'
-                        }`}>
-                          {profile.data_analysis.analysis.profile.exists ? (
-                            <CheckCircle2 className="h-3 w-3" />
-                          ) : (
-                            <XCircle className="h-3 w-3" />
-                          )}
-                          <span>Profil</span>
-                        </div>
-
+                        <DataStatusBadge 
+                          status={profile.data_analysis.analysis.profile} 
+                          label="Profil" 
+                          icon={<User className="h-3 w-3" />} 
+                        />
                         {/* Wallet */}
-                        <div className={`flex items-center gap-2 p-2 rounded text-xs ${
-                          profile.data_analysis.analysis.wallet.exists 
-                            ? 'bg-green-500/10 text-green-700' 
-                            : 'bg-orange-500/10 text-orange-700'
-                        }`}>
-                          {profile.data_analysis.analysis.wallet.exists ? (
-                            <CheckCircle2 className="h-3 w-3" />
-                          ) : (
-                            <XCircle className="h-3 w-3" />
-                          )}
-                          <Wallet className="h-3 w-3" />
-                          <span>Portefeuille</span>
-                        </div>
-
+                        <DataStatusBadge 
+                          status={profile.data_analysis.analysis.wallet} 
+                          label="Portefeuille" 
+                          icon={<Wallet className="h-3 w-3" />} 
+                        />
                         {/* User IDs */}
-                        <div className={`flex items-center gap-2 p-2 rounded text-xs ${
-                          profile.data_analysis.analysis.user_ids.exists 
-                            ? 'bg-green-500/10 text-green-700' 
-                            : 'bg-orange-500/10 text-orange-700'
-                        }`}>
-                          {profile.data_analysis.analysis.user_ids.exists ? (
-                            <CheckCircle2 className="h-3 w-3" />
-                          ) : (
-                            <XCircle className="h-3 w-3" />
-                          )}
-                          <span>ID Public</span>
-                        </div>
-
+                        <DataStatusBadge 
+                          status={profile.data_analysis.analysis.user_ids} 
+                          label="ID Public" 
+                        />
                         {/* Commandes */}
-                        <div className={`flex items-center gap-2 p-2 rounded text-xs ${
-                          profile.data_analysis.analysis.orders.exists 
-                            ? 'bg-blue-500/10 text-blue-700' 
-                            : 'bg-muted text-muted-foreground'
-                        }`}>
-                          <ShoppingBag className="h-3 w-3" />
-                          <span>{profile.data_analysis.analysis.orders.count || 0} commandes</span>
-                        </div>
-
+                        <DataStatusBadge 
+                          status={profile.data_analysis.analysis.orders} 
+                          label={`Commandes (${profile.data_analysis.analysis.orders.count || 0})`} 
+                          icon={<ShoppingBag className="h-3 w-3" />} 
+                          showIfZero
+                        />
                         {/* Transactions */}
-                        <div className={`flex items-center gap-2 p-2 rounded text-xs ${
-                          profile.data_analysis.analysis.transactions.exists 
-                            ? 'bg-blue-500/10 text-blue-700' 
-                            : 'bg-muted text-muted-foreground'
-                        }`}>
-                          <CreditCard className="h-3 w-3" />
-                          <span>{profile.data_analysis.analysis.transactions.count || 0} transactions</span>
-                        </div>
-
-                        {/* Agent */}
+                        <DataStatusBadge 
+                          status={profile.data_analysis.analysis.transactions} 
+                          label={`Transactions (${profile.data_analysis.analysis.transactions.count || 0})`} 
+                          icon={<CreditCard className="h-3 w-3" />} 
+                          showIfZero
+                        />
+                        {/* Notifications */}
+                        <DataStatusBadge 
+                          status={profile.data_analysis.analysis.notifications} 
+                          label={`Notifs (${profile.data_analysis.analysis.notifications?.count || 0})`} 
+                          showIfZero
+                        />
+                        {/* Messages */}
+                        <DataStatusBadge 
+                          status={profile.data_analysis.analysis.messages} 
+                          label={`Messages (${profile.data_analysis.analysis.messages?.count || 0})`} 
+                          icon={<Mail className="h-3 w-3" />} 
+                          showIfZero
+                        />
+                        {/* Conversations */}
+                        <DataStatusBadge 
+                          status={profile.data_analysis.analysis.conversations} 
+                          label={`Convos (${profile.data_analysis.analysis.conversations?.count || 0})`} 
+                          showIfZero
+                        />
+                        {/* Rôles spécifiques */}
                         {profile.data_analysis.analysis.agent.exists && (
-                          <div className="flex items-center gap-2 p-2 rounded text-xs bg-purple-500/10 text-purple-700">
-                            <Shield className="h-3 w-3" />
-                            <span>Agent</span>
-                          </div>
+                          <DataStatusBadge 
+                            status={profile.data_analysis.analysis.agent} 
+                            label="Agent" 
+                            icon={<Shield className="h-3 w-3" />} 
+                          />
                         )}
-
-                        {/* Vendor */}
                         {profile.data_analysis.analysis.vendor.exists && (
-                          <div className="flex items-center gap-2 p-2 rounded text-xs bg-indigo-500/10 text-indigo-700">
-                            <Package className="h-3 w-3" />
-                            <span>Vendeur</span>
-                          </div>
+                          <DataStatusBadge 
+                            status={profile.data_analysis.analysis.vendor} 
+                            label="Vendeur" 
+                            icon={<Package className="h-3 w-3" />} 
+                          />
                         )}
-
+                        {profile.data_analysis.analysis.taxi_driver?.exists && (
+                          <DataStatusBadge 
+                            status={profile.data_analysis.analysis.taxi_driver} 
+                            label="Taxi" 
+                          />
+                        )}
+                        {profile.data_analysis.analysis.livreur?.exists && (
+                          <DataStatusBadge 
+                            status={profile.data_analysis.analysis.livreur} 
+                            label="Livreur" 
+                          />
+                        )}
+                        {/* Commerce */}
+                        {profile.data_analysis.analysis.products?.exists && (
+                          <DataStatusBadge 
+                            status={profile.data_analysis.analysis.products} 
+                            label={`Produits (${profile.data_analysis.analysis.products.count || 0})`} 
+                          />
+                        )}
+                        {profile.data_analysis.analysis.favorites?.exists && (
+                          <DataStatusBadge 
+                            status={profile.data_analysis.analysis.favorites} 
+                            label={`Favoris (${profile.data_analysis.analysis.favorites.count || 0})`} 
+                          />
+                        )}
                         {/* Archives */}
                         {profile.data_analysis.analysis.archived.exists && (
-                          <div className="flex items-center gap-2 p-2 rounded text-xs bg-orange-500/10 text-orange-700">
+                          <div className="flex items-center gap-2 p-2 rounded text-xs bg-orange-500/10 text-orange-700 col-span-2">
                             <AlertTriangle className="h-3 w-3" />
-                            <span>Données archivées</span>
+                            <span>Données supprimées archivées</span>
                           </div>
                         )}
                       </div>
@@ -576,6 +677,23 @@ export default function DeletedUsersRestore() {
                             <AlertTriangle className="h-3 w-3" />
                             Données manquantes: {profile.data_analysis.missing_data.join(', ')}
                           </p>
+                        </div>
+                      )}
+
+                      {/* Données supprimées */}
+                      {profile.data_analysis.deleted_data && profile.data_analysis.deleted_data.length > 0 && (
+                        <div className="mt-3 p-2 border border-red-500/30 rounded bg-red-500/5">
+                          <p className="text-xs text-red-700 flex items-center gap-1 mb-1">
+                            <XCircle className="h-3 w-3" />
+                            Données supprimées (restaurables):
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {profile.data_analysis.deleted_data.map((item, idx) => (
+                              <span key={idx} className="text-xs bg-red-500/10 text-red-700 px-2 py-0.5 rounded">
+                                {item}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       )}
 
@@ -603,6 +721,16 @@ export default function DeletedUsersRestore() {
                               Restaurer
                             </Button>
                           </div>
+                        </div>
+                      )}
+
+                      {/* Message si tout est OK */}
+                      {!profile.data_analysis.has_issues && profile.data_analysis.existing_data && profile.data_analysis.existing_data.length > 0 && (
+                        <div className="mt-3 p-2 border border-green-500/30 rounded bg-green-500/5">
+                          <p className="text-xs text-green-700 flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3" />
+                            Toutes les données essentielles sont intactes. Aucune restauration nécessaire.
+                          </p>
                         </div>
                       )}
                     </div>
