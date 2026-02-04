@@ -174,7 +174,7 @@ export function NearbyVendorsModal({ open, onOpenChange }: NearbyVendorsModalPro
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0 rounded-2xl z-[100]">
         {/* Premium Header */}
-        <div className="bg-gradient-to-r from-vendeur-primary to-vendeur-primary/80 p-4 sm:p-6 text-white">
+        <div className="bg-vendeur-primary p-4 sm:p-6 text-white">
           <DialogHeader className="space-y-1">
             <div className="flex items-center gap-2 text-white/80 text-xs sm:text-sm font-medium">
               <Navigation className="w-3 h-3 sm:w-4 sm:h-4" />

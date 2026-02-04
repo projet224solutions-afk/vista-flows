@@ -484,7 +484,7 @@ export default function AgentDashboard() {
                 </p>
                 <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/40">
                       <Key className="w-4 h-4 mr-2" />
                       Changer le mot de passe
                     </Button>

@@ -158,7 +158,7 @@ export function AirlineAffiliateModule({ onBack }: AirlineAffiliateModuleProps) 
                 : 'Devenez marchand pour promouvoir des compagnies aériennes!'
               }
             </p>
-            <Button onClick={handleAddProduct} className={cn('bg-gradient-to-r text-white', gradient)}>
+            <Button onClick={handleAddProduct} className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/40">
               <Plus className="w-4 h-4 mr-2" />
               {user 
                 ? (isMerchant ? 'Ajouter une affiliation' : 'Devenir marchand')

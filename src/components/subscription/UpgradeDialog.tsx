@@ -167,7 +167,7 @@ export function UpgradeDialog({
             </Button>
             <Button 
               onClick={handleUpgrade}
-              className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
+              className="flex-1 bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/40"
             >
               <Crown className="w-4 h-4 mr-2" />
               Mettre à niveau

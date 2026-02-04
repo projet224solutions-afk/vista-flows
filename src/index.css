@@ -49,45 +49,45 @@ All colors MUST be HSL.
     --vendeur-primary: 211 100% 50%;
     --vendeur-secondary: 168 100% 39%;
     --vendeur-accent: 211 100% 95%;
-    --vendeur-gradient: linear-gradient(135deg, hsl(211 100% 50%), hsl(168 100% 39%));
+    --vendeur-gradient: hsl(211 100% 50%);
 
     /* Livreur - Style africain vibrant : Orange Guinée + Vert Forêt */
     --livreur-primary: 25 98% 55%; /* Orange africain vibrant #FF8C1A */
     --livreur-secondary: 145 65% 35%; /* Vert forêt guinéen */
     --livreur-accent: 45 100% 92%; /* Jaune soleil léger */
     --livreur-gold: 45 100% 51%; /* Or africain */
-    --livreur-gradient: linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%));
-    --livreur-gradient-warm: linear-gradient(135deg, hsl(25 98% 55%), hsl(45 100% 51%));
+    --livreur-gradient: hsl(25 98% 55%);
+    --livreur-gradient-warm: hsl(25 98% 55%);
 
     /* Taxi/Moto - Transport Yellow & Urban Grey */
     --taxi-primary: 51 100% 50%;
     --taxi-secondary: 215 16% 47%;
     --taxi-accent: 51 100% 95%;
-    --taxi-gradient: linear-gradient(135deg, hsl(51 100% 50%), hsl(215 16% 47%));
+    --taxi-gradient: hsl(51 100% 50%);
 
     /* Bureau Syndicat - Authority Red & Official Grey */
     --syndicat-primary: 0 84% 60%;
     --syndicat-secondary: 215 16% 47%;
     --syndicat-accent: 0 84% 95%;
-    --syndicat-gradient: linear-gradient(135deg, hsl(0 84% 60%), hsl(215 16% 47%));
+    --syndicat-gradient: hsl(0 84% 60%);
 
     /* Transitaire - Maritime Dark Blue & White */
     --transitaire-primary: 217 91% 30%;
     --transitaire-secondary: 0 0% 100%;
     --transitaire-accent: 217 91% 95%;
-    --transitaire-gradient: linear-gradient(135deg, hsl(217 91% 30%), hsl(0 0% 100%));
+    --transitaire-gradient: hsl(217 91% 30%);
 
     /* Admin/PDG - Corporate Black & Dark Blue */
     --admin-primary: 220 13% 18%;
     --admin-secondary: 217 91% 30%;
     --admin-accent: 220 13% 95%;
-    --admin-gradient: linear-gradient(135deg, hsl(220 13% 18%), hsl(217 91% 30%));
+    --admin-gradient: hsl(220 13% 18%);
 
     /* Client - Purchase Green & Trust White */
     --client-primary: 142 71% 45%;
     --client-secondary: 0 0% 100%;
     --client-accent: 142 71% 95%;
-    --client-gradient: linear-gradient(135deg, hsl(142 71% 45%), hsl(0 0% 100%));
+    --client-gradient: hsl(142 71% 45%);
 
     /* Global gradients and effects - 224SOLUTIONS Ultra Premium */
     --gradient-elegant: linear-gradient(135deg, hsl(211 100% 97%), hsl(40 30% 98%));

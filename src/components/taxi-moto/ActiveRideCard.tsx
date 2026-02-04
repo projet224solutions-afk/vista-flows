@@ -180,7 +180,7 @@ export function ActiveRideCard({
 
             <Button
               onClick={() => onUpdateStatus(statusInfo.nextAction as any)}
-              className="h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold shadow-lg"
+              className="h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-600/40"
             >
               ✅ {statusInfo.nextLabel}
             </Button>

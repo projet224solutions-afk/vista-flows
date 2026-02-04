@@ -589,7 +589,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
         <Button
           type="submit"
           disabled={loading}
-          className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+          className="bg-orange-600 hover:bg-orange-700 shadow-lg shadow-orange-600/40"
         >
           {loading ? 'Création...' : 'Créer l\'expédition'}
           <ArrowRight className="ml-2 h-4 w-4" />

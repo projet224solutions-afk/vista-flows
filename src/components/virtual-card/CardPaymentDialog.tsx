@@ -233,7 +233,7 @@ export function CardPaymentDialog({
               </Button>
               <Button
                 type="submit"
-                className="flex-1 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700"
+                className="flex-1 bg-violet-600 hover:bg-violet-700 shadow-lg shadow-violet-600/40"
                 disabled={loading}
               >
                 {loading ? (

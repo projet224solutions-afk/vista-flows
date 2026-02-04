@@ -757,7 +757,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
               <Button 
                 onClick={createVirtualCard}
                 disabled={creatingCard || !userInfo.wallet}
-                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                className="bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-600/40"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 {creatingCard ? 'Création...' : 'Créer une carte virtuelle'}

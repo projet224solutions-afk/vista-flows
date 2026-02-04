@@ -110,6 +110,15 @@ export default {
         'elegant-gradient': 'var(--gradient-elegant)',
         'neon-gradient': 'var(--gradient-neon)',
       },
+      backgroundColor: {
+        'vendeur-gradient': 'var(--vendeur-gradient)',
+        'livreur-gradient': 'var(--livreur-gradient)',
+        'taxi-gradient': 'var(--taxi-gradient)',
+        'syndicat-gradient': 'var(--syndicat-gradient)',
+        'transitaire-gradient': 'var(--transitaire-gradient)',
+        'admin-gradient': 'var(--admin-gradient)',
+        'client-gradient': 'var(--client-gradient)',
+      },
       boxShadow: {
         'elegant': 'var(--shadow-elegant)',
         'glow': 'var(--shadow-glow)',

@@ -288,7 +288,7 @@ export function TaxiMotoSOSButton({
           {/* Bouton Enregistrer */}
           <Button
             onClick={() => setShowRecorder(true)}
-            className="w-16 h-16 rounded-full shadow-2xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 group relative"
+            className="w-16 h-16 rounded-full shadow-2xl bg-red-600 hover:bg-red-700 group relative"
           >
             <Video className="w-7 h-7 text-white group-hover:scale-110 transition-transform" />
             <span className="absolute -top-1 -right-1 flex h-4 w-4">

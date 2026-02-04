@@ -605,7 +605,7 @@ export function AgentLayoutProfessional({
               </Button>
 
               {/* Quick Stats Badge - Show on mobile too but compact */}
-              <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 transition-all cursor-pointer"
+              <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-emerald-600 rounded-full shadow-lg shadow-emerald-600/40 hover:shadow-xl transition-all cursor-pointer"
                    onClick={() => onTabChange('wallet')}>
                 <Wallet className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                 <span className="text-xs sm:text-sm font-bold text-white">

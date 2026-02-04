@@ -307,7 +307,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
           {/* Bouton Monitor Live 24/7 - Spectaculaire */}
           <Button 
             onClick={() => setShowLiveMonitor(true)}
-            className="bg-gradient-to-r from-emerald-600 via-cyan-600 to-blue-600 hover:from-emerald-700 hover:via-cyan-700 hover:to-blue-700 text-white font-bold shadow-lg shadow-emerald-500/30 border-0"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-500/40 border-0"
           >
             <Monitor className="h-4 w-4 mr-2 animate-pulse" />
             <span className="relative flex items-center gap-2">
@@ -325,7 +325,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
           <Button 
             onClick={runFullValidation} 
             disabled={runningValidation}
-            className="bg-gradient-to-r from-primary to-primary/80"
+            className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/40"
           >
             <Play className={`h-4 w-4 mr-2 ${runningValidation ? 'animate-spin' : ''}`} />
             {runningValidation ? 'Validation...' : 'Lancer Validation'}

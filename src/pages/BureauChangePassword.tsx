@@ -289,7 +289,7 @@ const BureauChangePassword = () => {
                 </Button>
                 <Button
                   type="submit"
-                  className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40"
                   disabled={isLoading || passwordStrength.score < 3 || formData.newPassword !== formData.confirmPassword}
                 >
                   {isLoading ? "Modification..." : "Modifier le mot de passe"}

@@ -419,7 +419,7 @@ export default function BureauDashboard() {
                       </div>
                       <div className="flex justify-end gap-2 pt-4">
                         <Button type="button" variant="outline" onClick={() => setIsMemberDialogOpen(false)} disabled={isSubmittingMember}>Annuler</Button>
-                        <Button type="submit" disabled={isSubmittingMember} className="bg-gradient-to-r from-emerald-600 to-teal-600">
+                        <Button type="submit" disabled={isSubmittingMember} className="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40">
                           {isSubmittingMember ? 'Création...' : 'Créer l\'adhérent'}
                         </Button>
                       </div>
@@ -428,7 +428,7 @@ export default function BureauDashboard() {
                 </Dialog>
                 <Dialog open={isWorkerDialogOpen} onOpenChange={setIsWorkerDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700">
+                    <Button className="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40">
                       <Plus className="w-4 h-4 mr-2" />
                       Ajouter un Membre Bureau
                     </Button>
@@ -505,7 +505,7 @@ export default function BureauDashboard() {
                       <Button type="button" variant="outline" onClick={() => setIsWorkerDialogOpen(false)} disabled={isSubmittingWorker}>
                         Annuler
                       </Button>
-                      <Button type="submit" disabled={isSubmittingWorker} className="bg-gradient-to-r from-emerald-600 to-teal-600">
+                      <Button type="submit" disabled={isSubmittingWorker} className="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40">
                         {isSubmittingWorker ? 'Ajout en cours...' : 'Ajouter'}
                       </Button>
                     </div>

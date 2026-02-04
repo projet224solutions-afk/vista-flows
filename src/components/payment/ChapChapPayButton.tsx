@@ -250,7 +250,7 @@ export function ChapChapPayButton({
       <DialogTrigger asChild>
         <Button 
           className={cn(
-            "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white",
+            "bg-orange-600 hover:bg-orange-700 text-white shadow-lg shadow-orange-600/40",
             buttonClassName
           )}
           disabled={isLoading}
@@ -401,7 +401,7 @@ export function ChapChapPayButton({
             <Button
               onClick={handlePayment}
               disabled={processing || (requiresPhone && phoneNumber.length < 9) || (requiresOtp && otp.length < 4)}
-              className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+              className="flex-1 bg-orange-600 hover:bg-orange-700 shadow-lg shadow-orange-600/40"
             >
               {processing ? (
                 <>
