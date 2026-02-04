@@ -649,18 +649,18 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
                         )}
                       </Avatar>
 
-                      <div className={`rounded-xl px-3 py-2 sm:p-3 min-w-0 ${
+                      <div className={`rounded-xl px-3 py-2 sm:p-3 min-w-0 overflow-hidden ${
                         isUser
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted'
                       }`}>
                         {/* NOUVEAU: Support Markdown pour mode Enterprise */}
                         {!isUser && useEnterpriseMode ? (
-                          <div className="prose prose-sm dark:prose-invert max-w-none text-xs sm:text-sm [&_p]:mb-1.5 [&_ul]:my-1 [&_li]:my-0.5">
+                          <div className="prose prose-sm dark:prose-invert max-w-none text-xs sm:text-sm [&_p]:mb-1.5 [&_ul]:my-1 [&_li]:my-0.5 [&_a]:break-all [&_*]:max-w-full overflow-hidden">
                             <ReactMarkdown>{message.content}</ReactMarkdown>
                           </div>
                         ) : (
-                          <p className="text-xs sm:text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                          <p className="text-xs sm:text-sm whitespace-pre-wrap break-words overflow-wrap-anywhere">{message.content}</p>
                         )}
                         <p className="text-[10px] sm:text-xs mt-1 opacity-70">
                           {new Date(message.timestamp).toLocaleTimeString('fr-FR', {
