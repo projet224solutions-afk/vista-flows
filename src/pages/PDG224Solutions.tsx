@@ -53,6 +53,7 @@ const VendorCertificationManager = lazy(() => import('@/components/ceo/VendorCer
 const VendorKYCReview = lazy(() => import('@/components/ceo/VendorKYCReview').then(m => ({ default: m.VendorKYCReview })));
 const IdNormalizationAudit = lazy(() => import('@/components/pdg/IdNormalizationAudit'));
 const LogicSurveillanceDashboard = lazy(() => import('@/components/pdg/LogicSurveillanceDashboard'));
+const PDGSyncDashboard = lazy(() => import('@/components/pdg/PDGSyncDashboard'));
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -659,6 +660,12 @@ export default function PDG224Solutions() {
               {activeTab === 'logic-surveillance' && (
                 <ErrorBoundary>
                   <LogicSurveillanceDashboard />
+                </ErrorBoundary>
+              )}
+
+              {activeTab === 'sync-dashboard' && (
+                <ErrorBoundary>
+                  <PDGSyncDashboard />
                 </ErrorBoundary>
               )}
             </Suspense>

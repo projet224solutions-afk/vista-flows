@@ -14,7 +14,7 @@ import {
   DollarSign, Users, Shield, Settings, Package, Wrench,
   UserCheck, Building2, BarChart3, Brain, MessageSquare, Key, Zap,
   ChevronDown, ChevronUp, Sparkles, Percent, Store, Bike, FileText, Landmark,
-  Menu, ChevronRight, Car, Lock
+  Menu, ChevronRight, Car, Lock, RefreshCw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -85,6 +85,7 @@ const categories: NavCategory[] = [
     items: [
       { value: 'security', label: 'Sécurité', icon: Shield, permission: 'view_security' },
       { value: 'logic-surveillance', label: 'Surveillance Logique', icon: Zap, badge: true, permission: 'view_debug' },
+      { value: 'sync-dashboard', label: 'Synchronisation', icon: RefreshCw, badge: true, permission: 'view_debug' },
       { value: 'id-normalization', label: 'Audit ID', icon: Shield, badge: true, permission: 'view_id_normalization' },
       { value: 'bug-bounty', label: 'Bug Bounty', icon: Shield, permission: 'view_bug_bounty' },
       { value: 'config', label: 'Configuration', icon: Settings, permission: 'view_config' },

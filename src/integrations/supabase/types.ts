@@ -1831,6 +1831,178 @@ export type Database = {
           },
         ]
       }
+      broadcast_messages: {
+        Row: {
+          content: string
+          content_html: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          image_url: string | null
+          link_text: string | null
+          link_url: string | null
+          message_type: string
+          metadata: Json | null
+          priority: string
+          scheduled_at: string | null
+          sender_id: string
+          sender_name: string | null
+          sent_at: string | null
+          status: string
+          target_regions: string[] | null
+          target_roles: string[] | null
+          target_segment: string
+          target_user_ids: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          content_html?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          image_url?: string | null
+          link_text?: string | null
+          link_url?: string | null
+          message_type?: string
+          metadata?: Json | null
+          priority?: string
+          scheduled_at?: string | null
+          sender_id: string
+          sender_name?: string | null
+          sent_at?: string | null
+          status?: string
+          target_regions?: string[] | null
+          target_roles?: string[] | null
+          target_segment?: string
+          target_user_ids?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          content_html?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          image_url?: string | null
+          link_text?: string | null
+          link_url?: string | null
+          message_type?: string
+          metadata?: Json | null
+          priority?: string
+          scheduled_at?: string | null
+          sender_id?: string
+          sender_name?: string | null
+          sent_at?: string | null
+          status?: string
+          target_regions?: string[] | null
+          target_roles?: string[] | null
+          target_segment?: string
+          target_user_ids?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      broadcast_metrics: {
+        Row: {
+          broadcast_id: string
+          click_rate: number | null
+          delivery_rate: number | null
+          first_read_at: string | null
+          id: string
+          last_read_at: string | null
+          open_rate: number | null
+          total_clicked: number | null
+          total_delivered: number | null
+          total_dismissed: number | null
+          total_read: number | null
+          total_recipients: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          broadcast_id: string
+          click_rate?: number | null
+          delivery_rate?: number | null
+          first_read_at?: string | null
+          id?: string
+          last_read_at?: string | null
+          open_rate?: number | null
+          total_clicked?: number | null
+          total_delivered?: number | null
+          total_dismissed?: number | null
+          total_read?: number | null
+          total_recipients?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          broadcast_id?: string
+          click_rate?: number | null
+          delivery_rate?: number | null
+          first_read_at?: string | null
+          id?: string
+          last_read_at?: string | null
+          open_rate?: number | null
+          total_clicked?: number | null
+          total_delivered?: number | null
+          total_dismissed?: number | null
+          total_read?: number | null
+          total_recipients?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_metrics_broadcast_id_fkey"
+            columns: ["broadcast_id"]
+            isOneToOne: true
+            referencedRelation: "broadcast_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broadcast_recipients: {
+        Row: {
+          broadcast_id: string
+          channel: string | null
+          clicked_at: string | null
+          delivered_at: string | null
+          dismissed_at: string | null
+          id: string
+          read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          broadcast_id: string
+          channel?: string | null
+          clicked_at?: string | null
+          delivered_at?: string | null
+          dismissed_at?: string | null
+          id?: string
+          read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          broadcast_id?: string
+          channel?: string | null
+          clicked_at?: string | null
+          delivered_at?: string | null
+          dismissed_at?: string | null
+          id?: string
+          read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_recipients_broadcast_id_fkey"
+            columns: ["broadcast_id"]
+            isOneToOne: false
+            referencedRelation: "broadcast_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bug_bounty_hall_of_fame: {
         Row: {
           created_at: string
@@ -26254,6 +26426,23 @@ export type Database = {
           wallet_status: string
         }[]
       }
+      create_and_send_broadcast: {
+        Args: {
+          p_content: string
+          p_image_url?: string
+          p_link_text?: string
+          p_link_url?: string
+          p_message_type?: string
+          p_priority?: string
+          p_scheduled_at?: string
+          p_segment?: string
+          p_sender_id?: string
+          p_target_regions?: string[]
+          p_target_roles?: string[]
+          p_title: string
+        }
+        Returns: Json
+      }
       create_communication_notification: {
         Args: {
           p_body: string
@@ -26954,6 +27143,21 @@ export type Database = {
         Args: { p_location_id: string; p_product_id: string }
         Returns: number
       }
+      get_broadcast_dashboard: { Args: never; Returns: Json }
+      get_broadcast_target_users: {
+        Args: {
+          p_regions?: string[]
+          p_roles?: string[]
+          p_segment: string
+          p_user_ids?: string[]
+        }
+        Returns: {
+          user_email: string
+          user_id: string
+          user_name: string
+          user_role: string
+        }[]
+      }
       get_bureau_realtime_stats: {
         Args: { p_bureau_id: string }
         Returns: {
@@ -27187,6 +27391,23 @@ export type Database = {
           commission_rate: number
           parent_agent_id: string
           source: string
+        }[]
+      }
+      get_user_broadcasts: {
+        Args: { p_limit?: number; p_unread_only?: boolean; p_user_id?: string }
+        Returns: {
+          broadcast_id: string
+          content: string
+          image_url: string
+          is_read: boolean
+          link_text: string
+          link_url: string
+          message_type: string
+          priority: string
+          read_at: string
+          sender_name: string
+          sent_at: string
+          title: string
         }[]
       }
       get_user_code: { Args: { p_user_id: string }; Returns: string }
@@ -27438,6 +27659,10 @@ export type Database = {
         Returns: string
       }
       longtransactionsenabled: { Args: never; Returns: boolean }
+      mark_broadcast_read: {
+        Args: { p_broadcast_id: string }
+        Returns: boolean
+      }
       mark_conversation_messages_read: {
         Args: { p_conversation_id: string; p_user_id: string }
         Returns: number
@@ -27905,6 +28130,10 @@ export type Database = {
           p_wallet_id: string
         }
         Returns: string
+      }
+      send_broadcast_message: {
+        Args: { p_broadcast_id: string; p_sender_id: string }
+        Returns: Json
       }
       set_agent_permissions: {
         Args: { p_agent_id: string; p_permissions: Json }
