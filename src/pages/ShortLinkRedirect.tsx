@@ -65,6 +65,14 @@ export default function ShortLinkRedirect() {
         return;
       }
 
+      // Verify original_url exists
+      if (!data.original_url) {
+        console.error('🔗 [ShortLink] No original_url in data');
+        setStatus('error');
+        setErrorMessage('Lien corrompu');
+        return;
+      }
+
       console.log('🔗 [ShortLink] Found:', data.original_url);
 
       // Increment views (fire and forget)
@@ -82,9 +90,11 @@ export default function ShortLinkRedirect() {
         });
         targetPath = url.pathname + url.search + url.hash;
       } catch {
-        targetPath = data.original_url.startsWith('/') 
-          ? data.original_url 
-          : `/${data.original_url}`;
+        // Handle relative URLs safely
+        const originalUrl = data.original_url || '';
+        targetPath = originalUrl.startsWith('/') 
+          ? originalUrl 
+          : `/${originalUrl}`;
       }
 
       console.log('🔗 [ShortLink] Target path:', targetPath);
