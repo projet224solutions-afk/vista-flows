@@ -843,4 +843,32 @@ All colors MUST be HSL.
     transform: translateZ(0);
     backface-visibility: hidden;
   }
+
+  /* Professional Ticker Animation Styles */
+  .animate-ticker {
+    display: flex;
+    width: max-content;
+    will-change: transform;
+    animation: ticker 25s linear infinite;
+  }
+
+  .ticker-item {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  @keyframes ticker {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  /* Pause animation on hover for better readability */
+  .animate-ticker:hover {
+    animation-play-state: paused;
+  }
 }

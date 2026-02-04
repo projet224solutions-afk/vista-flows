@@ -185,9 +185,9 @@ export default {
             transform: "scale(1)"
           }
         },
-        "marquee": {
+        "ticker": {
           "0%": {
-            transform: "translateX(0%)"
+            transform: "translateX(0)"
           },
           "100%": {
             transform: "translateX(-50%)"
@@ -201,7 +201,7 @@ export default {
         "scale-in": "scale-in 0.4s ease-out",
         "glow": "glow 3s ease-in-out infinite",
         "bounce-in": "bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)",
-        "marquee": "marquee 20s linear infinite",
+        "ticker": "ticker 25s linear infinite",
       },
     },
   },

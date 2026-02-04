@@ -118,15 +118,41 @@ export function HomeHeader({
         </div>
       </div>
 
-      {/* Welcome Banner with Marquee Animation - Below MarketPlace */}
-      <div className="bg-primary/10 border-t border-primary/20 overflow-hidden">
-        <div className="animate-marquee whitespace-nowrap py-1.5 text-sm font-medium text-primary">
-          <span className="mx-4">🎉 Bienvenue sur MarketPlace 224Solutions!</span>
-          <span className="mx-4">✨ Découvrez nos meilleures offres du jour</span>
-          <span className="mx-4">🚀 Livraison rapide dans toute la Guinée</span>
-          <span className="mx-4">💎 Qualité garantie sur tous nos produits</span>
-          <span className="mx-4">🎉 Bienvenue sur MarketPlace 224Solutions!</span>
-          <span className="mx-4">✨ Découvrez nos meilleures offres du jour</span>
+      {/* Professional Ticker Banner - Below MarketPlace */}
+      <div className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-t border-primary/20 overflow-hidden relative">
+        <div className="flex animate-ticker py-2">
+          {/* First set of phrases */}
+          <span className="ticker-item text-base md:text-lg font-semibold text-primary whitespace-nowrap px-8">
+            ✨ Bienvenue sur 224SOLUTIONS
+          </span>
+          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
+            🌍 Une plateforme africaine
+          </span>
+          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
+            🚀 Des opportunités sans frontières
+          </span>
+          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
+            🏪 Tout votre marché en un seul endroit
+          </span>
+          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
+            💎 Découvrez, achetez et vendez simplement
+          </span>
+          {/* Duplicate for seamless loop */}
+          <span className="ticker-item text-base md:text-lg font-semibold text-primary whitespace-nowrap px-8">
+            ✨ Bienvenue sur 224SOLUTIONS
+          </span>
+          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
+            🌍 Une plateforme africaine
+          </span>
+          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
+            🚀 Des opportunités sans frontières
+          </span>
+          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
+            🏪 Tout votre marché en un seul endroit
+          </span>
+          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
+            💎 Découvrez, achetez et vendez simplement
+          </span>
         </div>
       </div>
     </header>
