@@ -258,7 +258,7 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
             )}
           </Button>
           <Button
-            className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+            className="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40"
             onClick={handleAccept}
             disabled={loading !== null || timeLeft === 0}
           >

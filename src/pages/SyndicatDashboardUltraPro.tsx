@@ -475,7 +475,7 @@ export default function SyndicatDashboardUltraPro() {
                                     <Button
                                         onClick={() => toast.info('Formulaire d\'ajout de taxi-motard')}
                                         size="sm"
-                                        className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                                        className="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40"
                                     >
                                         <UserPlus className="w-4 h-4 mr-2" />
                                         Ajouter
@@ -570,7 +570,7 @@ export default function SyndicatDashboardUltraPro() {
                                 <CardContent className="p-6 space-y-4">
                                     <Button
                                         onClick={() => toast.success('Paramètres mis à jour !')}
-                                        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl"
+                                        className="w-full bg-purple-600 hover:bg-purple-700 rounded-xl shadow-lg shadow-purple-600/40"
                                     >
                                         <Settings className="w-4 h-4 mr-2" />
                                         Configurer le Bureau
@@ -619,7 +619,7 @@ export default function SyndicatDashboardUltraPro() {
                                             loadSyndicateData();
                                             toast.success('Données synchronisées !');
                                         }}
-                                        className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 rounded-xl"
+                                        className="w-full bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-600/40"
                                     >
                                         <RefreshCw className="w-4 h-4 mr-2" />
                                         Synchroniser les Données

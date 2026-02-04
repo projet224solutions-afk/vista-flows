@@ -273,7 +273,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
         </div>
         <Dialog open={showNewAppointmentDialog} onOpenChange={setShowNewAppointmentDialog}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-pink-500 to-rose-500 text-white">
+            <Button className="bg-pink-600 hover:bg-pink-700 text-white shadow-lg shadow-pink-600/40">
               <Plus className="h-4 w-4 mr-2" />
               Nouveau RDV
             </Button>
@@ -330,7 +330,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowNewAppointmentDialog(false)}>Annuler</Button>
-              <Button onClick={handleAddAppointment} className="bg-gradient-to-r from-pink-500 to-rose-500">Confirmer</Button>
+              <Button onClick={handleAddAppointment} className="bg-pink-600 hover:bg-pink-700 shadow-lg shadow-pink-600/40">Confirmer</Button>
             </div>
           </DialogContent>
         </Dialog>

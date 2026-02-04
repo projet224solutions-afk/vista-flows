@@ -224,7 +224,7 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
         )}
         <Button
           onClick={onNewShipment}
-          className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 flex items-center gap-2"
+          className="bg-orange-600 hover:bg-orange-700 shadow-lg shadow-orange-600/40 flex items-center gap-2"
         >
           <Plus className="h-4 w-4" />
           Créer un nouvel envoi

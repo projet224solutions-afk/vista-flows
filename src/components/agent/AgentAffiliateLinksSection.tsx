@@ -362,7 +362,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
               </Button>
               <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                 <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600">
+                  <Button className="bg-pink-600 hover:bg-pink-700 shadow-lg shadow-pink-600/40">
                     <Plus className="h-4 w-4 mr-2" />
                     Nouveau lien
                   </Button>

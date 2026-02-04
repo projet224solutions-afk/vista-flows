@@ -272,7 +272,7 @@ export function ShipmentManager() {
             </div>
             <Button
               onClick={handleNewShipment}
-              className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+              className="bg-orange-600 hover:bg-orange-700 shadow-lg shadow-orange-600/40"
             >
               <Plus className="mr-2 h-4 w-4" />
               Nouvelle expédition
@@ -287,7 +287,7 @@ export function ShipmentManager() {
                 <p className="text-muted-foreground mb-4">Aucune expédition créée</p>
                 <Button
                   onClick={handleNewShipment}
-                  className="bg-gradient-to-r from-orange-500 to-orange-600"
+                  className="bg-orange-600 hover:bg-orange-700 shadow-lg shadow-orange-600/40"
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Créer votre première expédition

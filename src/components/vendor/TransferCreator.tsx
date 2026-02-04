@@ -699,7 +699,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="bg-gradient-to-r from-blue-500 to-purple-600"
+            className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/40"
           >
             {isSubmitting ? (
               <>

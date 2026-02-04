@@ -230,7 +230,7 @@ export function ActiveDeliveryPanel({
           {/* Bouton action principale */}
           {getNextStatus() && (
             <Button
-              className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40"
               onClick={handleNextStep}
               disabled={loading}
             >

@@ -263,7 +263,7 @@ export function Custom224PaymentForm({
           <Button
             type="submit"
             disabled={processing || !stripe || !cardComplete.number || !cardComplete.expiry || !cardComplete.cvc}
-            className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg"
+            className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/40"
           >
             {processing ? (
               <>

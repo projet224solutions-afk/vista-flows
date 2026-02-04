@@ -434,7 +434,7 @@ export default function MultiWarehouseManagement() {
           </Dialog>
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
-              <Button className="flex-1 md:flex-none bg-gradient-to-r from-blue-500 to-purple-600">
+              <Button className="flex-1 md:flex-none bg-primary hover:bg-primary/90 shadow-lg shadow-primary/40">
                 <Plus className="w-4 h-4 mr-2" />
                 Nouveau Lieu
               </Button>

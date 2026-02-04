@@ -88,7 +88,7 @@ export function PurchaseInputKeypad({
           color: 'from-emerald-500 to-emerald-600',
           bgColor: 'bg-emerald-500/10',
           borderColor: 'border-emerald-500/30',
-          buttonColor: 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400',
+          buttonColor: 'bg-emerald-600 hover:bg-emerald-700',
           suffix: currency
         };
       case 'quantity':
@@ -99,7 +99,7 @@ export function PurchaseInputKeypad({
           color: 'from-blue-500 to-blue-600',
           bgColor: 'bg-blue-500/10',
           borderColor: 'border-blue-500/30',
-          buttonColor: 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400',
+          buttonColor: 'bg-blue-600 hover:bg-blue-700',
           suffix: 'unités'
         };
       case 'carton':
@@ -110,7 +110,7 @@ export function PurchaseInputKeypad({
           color: 'from-purple-500 to-purple-600',
           bgColor: 'bg-purple-500/10',
           borderColor: 'border-purple-500/30',
-          buttonColor: 'bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400',
+          buttonColor: 'bg-purple-600 hover:bg-purple-700',
           suffix: 'cartons'
         };
     }

@@ -348,7 +348,7 @@ export default function DeliveryDriver() {
                 disabled={!hasAccess || gpsLoading}
                 className={`relative px-6 py-2 rounded-full font-medium transition-all ${
                   isOnline
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg shadow-green-500/30'
+                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/40'
                     : 'bg-white/10 text-gray-300 hover:bg-white/20'
                 }`}
               >
@@ -506,7 +506,7 @@ export default function DeliveryDriver() {
                           <Button
                             onClick={() => handleAcceptDelivery(delivery.id)}
                             disabled={!isOnline || !hasAccess}
-                            className="w-full bg-gradient-to-r from-blue-500 to-violet-600 hover:from-blue-600 hover:to-violet-700"
+                            className="w-full bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/40"
                           >
                             Accepter
                           </Button>
@@ -577,7 +577,7 @@ export default function DeliveryDriver() {
                   {currentDelivery.status === 'assigned' && (
                     <Button
                       onClick={handleStartDelivery}
-                      className="w-full bg-gradient-to-r from-green-500 to-emerald-600"
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40"
                     >
                       Ramassage effectué
                     </Button>
@@ -586,7 +586,7 @@ export default function DeliveryDriver() {
                   {currentDelivery.status === 'in_transit' && (
                     <Button
                       onClick={() => setShowProofUpload(true)}
-                      className="w-full bg-gradient-to-r from-blue-500 to-violet-600"
+                      className="w-full bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/40"
                     >
                       Livraison effectuée
                     </Button>

@@ -350,7 +350,7 @@ export default function PDG224Solutions() {
                   variant="default"
                   size="sm"
                   onClick={() => navigate('/pdg/command-center')}
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white gap-1 sm:gap-2 shadow-lg hover:shadow-xl transition-all text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
+                  className="bg-blue-600 hover:bg-blue-700 text-white gap-1 sm:gap-2 shadow-lg shadow-blue-600/40 hover:shadow-xl transition-all text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                 >
                   <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Centre de</span> Commande
@@ -359,7 +359,7 @@ export default function PDG224Solutions() {
                   variant="default"
                   size="sm"
                   onClick={() => navigate('/pdg/security')}
-                  className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white gap-1 sm:gap-2 shadow-lg hover:shadow-xl transition-all text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
+                  className="bg-red-600 hover:bg-red-700 text-white gap-1 sm:gap-2 shadow-lg shadow-red-600/40 hover:shadow-xl transition-all text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                 >
                   <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
                   Défense
@@ -368,7 +368,7 @@ export default function PDG224Solutions() {
                   variant="default"
                   size="sm"
                   onClick={() => navigate('/pdg/competitive-analysis')}
-                  className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white gap-1 sm:gap-2 shadow-lg hover:shadow-xl transition-all text-xs sm:text-sm whitespace-nowrap flex-shrink-0 hidden sm:flex"
+                  className="bg-purple-600 hover:bg-purple-700 text-white gap-1 sm:gap-2 shadow-lg shadow-purple-600/40 hover:shadow-xl transition-all text-xs sm:text-sm whitespace-nowrap flex-shrink-0 hidden sm:flex"
                 >
                   <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
                   Analyse IA

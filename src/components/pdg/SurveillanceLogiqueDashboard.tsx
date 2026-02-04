@@ -287,7 +287,7 @@ export default function SurveillanceLogiqueDashboard() {
         {/* Bouton Test Système - Ultra Professionnel */}
         <Button
           onClick={() => setShowSystemTest(true)}
-          className="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 hover:from-indigo-700 hover:via-purple-700 hover:to-blue-700 text-white font-semibold shadow-lg shadow-purple-500/25 border-0"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-lg shadow-indigo-500/40 border-0"
         >
           <Shield className="w-4 h-4 mr-2" />
           <Play className="w-3 h-3 mr-1" />

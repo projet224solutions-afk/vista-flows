@@ -206,7 +206,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
           <div className="flex items-center gap-2">
             <Dialog open={isCreateAgentOpen} onOpenChange={setIsCreateAgentOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                <Button className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/40">
                   <Plus className="w-4 h-4 mr-2" />
                   Créer Agent
                 </Button>

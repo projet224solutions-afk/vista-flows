@@ -451,7 +451,7 @@ export default function TaxiMotoBooking({
             <Button
                 onClick={handleProceedToPayment}
                 disabled={!pickupAddress || !destinationAddress || !priceEstimate || bookingInProgress}
-                className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-700"
+                className="w-full h-12 text-lg font-semibold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/40"
             >
                 {bookingInProgress ? (
                     <>

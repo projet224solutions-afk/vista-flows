@@ -46,8 +46,8 @@ export function HomeHeader({
           <div className="flex items-center gap-3 min-w-0">
             {/* Animated Logo */}
             <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary/60 rounded-xl blur-md opacity-50 group-hover:opacity-70 transition-opacity" />
-              <div className="relative w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-primary via-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="absolute inset-0 bg-primary rounded-xl blur-md opacity-50 group-hover:opacity-70 transition-opacity" />
+              <div className="relative w-10 h-10 md:w-12 md:h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/40">
                 <span className="text-primary-foreground font-bold text-lg md:text-xl">M</span>
               </div>
             </div>

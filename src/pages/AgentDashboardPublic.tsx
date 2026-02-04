@@ -469,7 +469,7 @@ export default function AgentDashboardPublic() {
               <h2 className="text-xl font-bold">Mes Sous-Agents ({subAgents.length})</h2>
               <Dialog open={isSubAgentDialogOpen} onOpenChange={setIsSubAgentDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-purple-600 to-pink-600">
+                  <Button className="bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-600/40">
                     <Plus className="w-4 h-4 mr-2" />
                     Nouveau Sous-Agent
                   </Button>
