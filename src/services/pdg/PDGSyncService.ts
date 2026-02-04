@@ -167,6 +167,7 @@ class PDGSyncService {
 
   /**
    * Synchronise profiles.public_id avec user_ids.custom_id
+   * Gère les conflits de clés uniques en procédant en deux phases
    */
   async syncPublicIds(): Promise<SyncResult> {
     const errors: string[] = [];
@@ -180,28 +181,55 @@ class PDGSyncService {
       ]);
 
       const userIdMap = new Map(userIds?.map(u => [u.user_id, u.custom_id]) || []);
+      const customIdToUserMap = new Map(userIds?.map(u => [u.custom_id, u.user_id]) || []);
 
-      for (const profile of profiles || []) {
+      // Phase 1: Identifier les profils à synchroniser
+      const profilesToSync = (profiles || []).filter(profile => {
         const existingCustomId = userIdMap.get(profile.id);
-        
-        // Si public_id existe mais pas de custom_id correspondant
-        if (profile.public_id && existingCustomId !== profile.public_id) {
-          const { error } = await supabase
-            .from('user_ids')
-            .upsert({
-              user_id: profile.id,
-              custom_id: profile.public_id
-            }, { onConflict: 'user_id' });
+        return profile.public_id && existingCustomId !== profile.public_id;
+      });
 
-          if (error) {
-            errors.push(`Erreur sync ${profile.id}: ${error.message}`);
+      // Phase 2: Synchroniser en vérifiant les conflits
+      for (const profile of profilesToSync) {
+        // Vérifier si le public_id est déjà utilisé par un autre utilisateur
+        const conflictUserId = customIdToUserMap.get(profile.public_id);
+        
+        if (conflictUserId && conflictUserId !== profile.id) {
+          // Il y a un conflit - quelqu'un d'autre utilise déjà ce custom_id
+          errors.push(`Conflit: ${profile.public_id} est déjà assigné à un autre utilisateur`);
+          continue;
+        }
+
+        // Pas de conflit, on peut synchroniser
+        const { error } = await supabase
+          .from('user_ids')
+          .upsert({
+            user_id: profile.id,
+            custom_id: profile.public_id
+          }, { onConflict: 'user_id' });
+
+        if (error) {
+          if (error.message.includes('duplicate key')) {
+            errors.push(`Conflit clé unique pour ${profile.public_id}`);
           } else {
-            synced++;
+            errors.push(`Erreur sync ${profile.id}: ${error.message}`);
           }
+        } else {
+          synced++;
+          // Mettre à jour notre map locale
+          customIdToUserMap.set(profile.public_id, profile.id);
         }
       }
 
-      return { success: errors.length === 0, synced, errors };
+      return { 
+        success: errors.length === 0, 
+        synced, 
+        errors,
+        details: {
+          totalChecked: profilesToSync.length,
+          conflicts: errors.filter(e => e.includes('Conflit')).length
+        }
+      };
     } catch (error) {
       return { 
         success: false, 

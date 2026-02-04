@@ -75,6 +75,10 @@ export default function PDGSyncDashboard() {
     const result = await runSync();
     if (result.success) {
       toast.success(`Synchronisation terminée: ${result.totalSynced} éléments synchronisés`);
+    } else if (result.totalSynced > 0) {
+      toast.warning(`Synchronisation partielle: ${result.totalSynced} réussis, ${result.totalErrors} erreurs (conflits possibles)`);
+    } else if (result.totalErrors > 0) {
+      toast.error(`Des conflits empêchent la synchronisation. Vérifiez les recommandations.`);
     }
   };
 
