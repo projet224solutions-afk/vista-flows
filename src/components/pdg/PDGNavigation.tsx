@@ -75,6 +75,7 @@ const categories: NavCategory[] = [
       { value: 'drivers', label: 'Livreurs', icon: Bike, permission: 'view_drivers' },
       { value: 'quotes-invoices', label: 'Devis & Factures', icon: FileText, permission: 'view_quotes_invoices' },
       { value: 'communication', label: 'Communication', icon: MessageSquare, permission: 'access_communication' },
+      { value: 'broadcast-center', label: 'Diffusion Globale', icon: MessageSquare, badge: true, permission: 'manage_broadcasts' },
       { value: 'agent-wallet-audit', label: 'Audit Wallet Agents', icon: Shield, permission: 'view_agent_wallet_audit' },
     ]
   },
