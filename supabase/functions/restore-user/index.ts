@@ -9,16 +9,31 @@ interface DataStatus {
   exists: boolean;
   data?: unknown;
   count?: number;
+  table_name?: string;
 }
 
 interface UserDataAnalysis {
+  // Données de base
   profile: DataStatus;
   wallet: DataStatus;
   user_ids: DataStatus;
+  // Rôles spécifiques
   agent: DataStatus;
   vendor: DataStatus;
+  taxi_driver: DataStatus;
+  livreur: DataStatus;
+  // Activité
   orders: DataStatus;
   transactions: DataStatus;
+  notifications: DataStatus;
+  conversations: DataStatus;
+  messages: DataStatus;
+  // Commerce
+  products: DataStatus;
+  reviews: DataStatus;
+  favorites: DataStatus;
+  cart: DataStatus;
+  // Archives
   archived: DataStatus;
 }
 
@@ -115,8 +130,29 @@ Deno.serve(async (req) => {
         .select('id, user_id, name, email, phone, agent_code')
         .or(`agent_code.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%,name.ilike.%${query}%`)
         .limit(10);
+
+      // 4. Chercher dans vendors
+      const { data: foundVendors } = await supabaseAdmin
+        .from('vendors')
+        .select('id, user_id, shop_name, vendor_code, email, phone')
+        .or(`vendor_code.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%,shop_name.ilike.%${query}%`)
+        .limit(10);
+
+      // 5. Chercher dans taxi_drivers
+      const { data: foundTaxiDrivers } = await supabaseAdmin
+        .from('taxi_drivers')
+        .select('id, user_id, driver_code, full_name, phone')
+        .or(`driver_code.ilike.%${query}%,phone.ilike.%${query}%,full_name.ilike.%${query}%`)
+        .limit(10);
+
+      // 6. Chercher dans livreurs
+      const { data: foundLivreurs } = await supabaseAdmin
+        .from('livreurs')
+        .select('id, user_id, livreur_code, full_name, phone')
+        .or(`livreur_code.ilike.%${query}%,phone.ilike.%${query}%,full_name.ilike.%${query}%`)
+        .limit(10);
       
-      // 4. Chercher dans les archives
+      // 7. Chercher dans les archives
       let archiveFilter = `public_id.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%,full_name.ilike.%${query}%`;
       if (isValidUUID) {
         archiveFilter += `,original_user_id.eq.${query}`;
@@ -142,10 +178,19 @@ Deno.serve(async (req) => {
       // Depuis agents
       foundAgents?.filter(a => a.user_id).forEach(a => userIdsToAnalyze.add(a.user_id!));
 
+      // Depuis vendors
+      foundVendors?.filter(v => v.user_id).forEach(v => userIdsToAnalyze.add(v.user_id!));
+
+      // Depuis taxi_drivers
+      foundTaxiDrivers?.filter(t => t.user_id).forEach(t => userIdsToAnalyze.add(t.user_id!));
+
+      // Depuis livreurs
+      foundLivreurs?.filter(l => l.user_id).forEach(l => userIdsToAnalyze.add(l.user_id!));
+
       // Analyser chaque utilisateur trouvé
       const analyzedUsers = await Promise.all(
         Array.from(userIdsToAnalyze).map(async (userId) => {
-          const analysis = await analyzeUserData(supabaseAdmin, userId, query);
+          const analysis = await analyzeUserDataComplete(supabaseAdmin, userId);
           return { userId, ...analysis };
         })
       );
@@ -196,6 +241,83 @@ Deno.serve(async (req) => {
         }
       }
 
+      // Ajouter les utilisateurs trouvés via autres tables mais pas dans profiles
+      const additionalFromOtherTables: typeof enrichedProfiles = [];
+      
+      // Depuis vendors
+      for (const vendor of foundVendors || []) {
+        if (vendor.user_id && !enrichedProfiles.some(p => p.id === vendor.user_id)) {
+          const analysis = analyzedUsers.find(a => a.userId === vendor.user_id);
+          additionalFromOtherTables.push({
+            id: vendor.user_id,
+            email: vendor.email || null,
+            phone: vendor.phone || null,
+            first_name: vendor.shop_name || null,
+            last_name: null,
+            role: 'vendor',
+            public_id: vendor.vendor_code,
+            avatar_url: null,
+            city: null,
+            country: null,
+            is_active: null,
+            created_at: null,
+            data_analysis: analysis || null,
+            has_archived_data: false,
+            archived_data: null
+          });
+        }
+      }
+
+      // Depuis taxi_drivers
+      for (const driver of foundTaxiDrivers || []) {
+        if (driver.user_id && !enrichedProfiles.some(p => p.id === driver.user_id)) {
+          const analysis = analyzedUsers.find(a => a.userId === driver.user_id);
+          additionalFromOtherTables.push({
+            id: driver.user_id,
+            email: null,
+            phone: driver.phone || null,
+            first_name: driver.full_name || null,
+            last_name: null,
+            role: 'taxi',
+            public_id: driver.driver_code,
+            avatar_url: null,
+            city: null,
+            country: null,
+            is_active: null,
+            created_at: null,
+            data_analysis: analysis || null,
+            has_archived_data: false,
+            archived_data: null
+          });
+        }
+      }
+
+      // Depuis agents
+      for (const agent of foundAgents || []) {
+        if (agent.user_id && !enrichedProfiles.some(p => p.id === agent.user_id)) {
+          const analysis = analyzedUsers.find(a => a.userId === agent.user_id);
+          additionalFromOtherTables.push({
+            id: agent.user_id,
+            email: agent.email || null,
+            phone: agent.phone || null,
+            first_name: agent.name || null,
+            last_name: null,
+            role: 'agent',
+            public_id: agent.agent_code,
+            avatar_url: null,
+            city: null,
+            country: null,
+            is_active: null,
+            created_at: null,
+            data_analysis: analysis || null,
+            has_archived_data: false,
+            archived_data: null
+          });
+        }
+      }
+
+      enrichedProfiles.push(...additionalFromOtherTables);
+
       console.log(`✅ ${enrichedProfiles.length} profil(s), ${archives?.length || 0} archive(s)`);
 
       return new Response(
@@ -204,6 +326,9 @@ Deno.serve(async (req) => {
           active_profiles: enrichedProfiles,
           archived_users: archives || [],
           agents_found: foundAgents || [],
+          vendors_found: foundVendors || [],
+          taxi_drivers_found: foundTaxiDrivers || [],
+          livreurs_found: foundLivreurs || [],
           total_active: enrichedProfiles.length,
           total_archived: archives?.length || 0
         }),
@@ -429,90 +554,209 @@ Deno.serve(async (req) => {
   }
 });
 
-// Fonction d'analyse complète des données utilisateur
-async function analyzeUserData(
+// Fonction d'analyse COMPLETE des données utilisateur - scanne toute la base
+async function analyzeUserDataComplete(
   supabase: ReturnType<typeof createClient>, 
-  userId: string,
-  searchQuery?: string
-): Promise<{ analysis: UserDataAnalysis; missing_data: string[]; has_issues: boolean }> {
+  userId: string
+): Promise<{ analysis: UserDataAnalysis; missing_data: string[]; existing_data: string[]; deleted_data: string[]; has_issues: boolean; summary: { total_tables_checked: number; existing_count: number; missing_count: number; deleted_count: number } }> {
   
   const missing_data: string[] = [];
+  const existing_data: string[] = [];
+  const deleted_data: string[] = [];
   
-  // 1. Profil
+  // 1. Profil (table: profiles)
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', userId)
     .maybeSingle();
   
-  const profileStatus: DataStatus = { exists: !!profile, data: profile };
-  if (!profile) missing_data.push('Profil utilisateur');
+  const profileStatus: DataStatus = { exists: !!profile, data: profile, table_name: 'profiles' };
+  if (profile) {
+    existing_data.push('Profil utilisateur');
+  } else {
+    missing_data.push('Profil utilisateur');
+  }
 
-  // 2. Wallet
+  // 2. Wallet (table: wallets)
   const { data: wallet } = await supabase
     .from('wallets')
     .select('*')
     .eq('user_id', userId)
     .maybeSingle();
   
-  const walletStatus: DataStatus = { exists: !!wallet, data: wallet };
-  if (!wallet) missing_data.push('Portefeuille');
+  const walletStatus: DataStatus = { exists: !!wallet, data: wallet, table_name: 'wallets' };
+  if (wallet) {
+    existing_data.push('Portefeuille');
+  } else {
+    missing_data.push('Portefeuille');
+  }
 
-  // 3. User IDs
+  // 3. User IDs (table: user_ids)
   const { data: userIds } = await supabase
     .from('user_ids')
     .select('*')
     .eq('user_id', userId)
     .maybeSingle();
   
-  const userIdsStatus: DataStatus = { exists: !!userIds, data: userIds };
-  if (!userIds) missing_data.push('Identifiant public');
+  const userIdsStatus: DataStatus = { exists: !!userIds, data: userIds, table_name: 'user_ids' };
+  if (userIds) {
+    existing_data.push('Identifiant public');
+  } else {
+    missing_data.push('Identifiant public');
+  }
 
-  // 4. Agent (si applicable)
+  // 4. Agent (table: agents_management)
   const { data: agent } = await supabase
     .from('agents_management')
-    .select('id, name, agent_code, is_active')
+    .select('id, name, agent_code, is_active, email, phone')
     .eq('user_id', userId)
     .maybeSingle();
   
-  const agentStatus: DataStatus = { exists: !!agent, data: agent };
+  const agentStatus: DataStatus = { exists: !!agent, data: agent, table_name: 'agents_management' };
+  if (agent) existing_data.push('Compte Agent');
 
-  // 5. Vendor (si applicable)
+  // 5. Vendor (table: vendors)
   const { data: vendor } = await supabase
     .from('vendors')
-    .select('id, shop_name, status')
+    .select('id, shop_name, status, vendor_code')
     .eq('user_id', userId)
     .maybeSingle();
   
-  const vendorStatus: DataStatus = { exists: !!vendor, data: vendor };
+  const vendorStatus: DataStatus = { exists: !!vendor, data: vendor, table_name: 'vendors' };
+  if (vendor) existing_data.push('Compte Vendeur');
 
-  // 6. Commandes
-  const { data: orders, count: ordersCount } = await supabase
-    .from('orders')
-    .select('id', { count: 'exact' })
+  // 6. Taxi Driver (table: taxi_drivers)
+  const { data: taxiDriver } = await supabase
+    .from('taxi_drivers')
+    .select('id, full_name, driver_code, status')
     .eq('user_id', userId)
-    .limit(1);
+    .maybeSingle();
   
-  const ordersStatus: DataStatus = { exists: (ordersCount || 0) > 0, count: ordersCount || 0 };
+  const taxiDriverStatus: DataStatus = { exists: !!taxiDriver, data: taxiDriver, table_name: 'taxi_drivers' };
+  if (taxiDriver) existing_data.push('Compte Taxi');
 
-  // 7. Transactions
-  const { data: transactions, count: transactionsCount } = await supabase
+  // 7. Livreur (table: livreurs)
+  const { data: livreur } = await supabase
+    .from('livreurs')
+    .select('id, full_name, livreur_code, status')
+    .eq('user_id', userId)
+    .maybeSingle();
+  
+  const livreurStatus: DataStatus = { exists: !!livreur, data: livreur, table_name: 'livreurs' };
+  if (livreur) existing_data.push('Compte Livreur');
+
+  // 8. Commandes (table: orders)
+  const { count: ordersCount } = await supabase
+    .from('orders')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId);
+  
+  const ordersStatus: DataStatus = { exists: (ordersCount || 0) > 0, count: ordersCount || 0, table_name: 'orders' };
+  if ((ordersCount || 0) > 0) existing_data.push(`Commandes (${ordersCount})`);
+
+  // 9. Transactions (table: wallet_transactions)
+  const { count: transactionsCount } = await supabase
     .from('wallet_transactions')
-    .select('id', { count: 'exact' })
-    .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
-    .limit(1);
+    .select('id', { count: 'exact', head: true })
+    .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`);
   
-  const transactionsStatus: DataStatus = { exists: (transactionsCount || 0) > 0, count: transactionsCount || 0 };
+  const transactionsStatus: DataStatus = { exists: (transactionsCount || 0) > 0, count: transactionsCount || 0, table_name: 'wallet_transactions' };
+  if ((transactionsCount || 0) > 0) existing_data.push(`Transactions (${transactionsCount})`);
 
-  // 8. Archives
+  // 10. Notifications (table: notifications)
+  const { count: notificationsCount } = await supabase
+    .from('notifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId);
+  
+  const notificationsStatus: DataStatus = { exists: (notificationsCount || 0) > 0, count: notificationsCount || 0, table_name: 'notifications' };
+  if ((notificationsCount || 0) > 0) existing_data.push(`Notifications (${notificationsCount})`);
+
+  // 11. Conversations (table: conversations)
+  const { count: conversationsCount } = await supabase
+    .from('conversations')
+    .select('id', { count: 'exact', head: true })
+    .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
+  
+  const conversationsStatus: DataStatus = { exists: (conversationsCount || 0) > 0, count: conversationsCount || 0, table_name: 'conversations' };
+  if ((conversationsCount || 0) > 0) existing_data.push(`Conversations (${conversationsCount})`);
+
+  // 12. Messages (table: messages)
+  const { count: messagesCount } = await supabase
+    .from('messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('sender_id', userId);
+  
+  const messagesStatus: DataStatus = { exists: (messagesCount || 0) > 0, count: messagesCount || 0, table_name: 'messages' };
+  if ((messagesCount || 0) > 0) existing_data.push(`Messages envoyés (${messagesCount})`);
+
+  // 13. Produits vendeur (table: products)
+  const { count: productsCount } = await supabase
+    .from('products')
+    .select('id', { count: 'exact', head: true })
+    .eq('vendor_id', vendor?.id || 'none');
+  
+  const productsStatus: DataStatus = { exists: (productsCount || 0) > 0, count: productsCount || 0, table_name: 'products' };
+  if ((productsCount || 0) > 0) existing_data.push(`Produits (${productsCount})`);
+
+  // 14. Avis (table: reviews) - si la table existe
+  let reviewsCount = 0;
+  try {
+    const { count } = await supabase
+      .from('reviews')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId);
+    reviewsCount = count || 0;
+  } catch {
+    // Table might not exist
+  }
+  
+  const reviewsStatus: DataStatus = { exists: reviewsCount > 0, count: reviewsCount, table_name: 'reviews' };
+  if (reviewsCount > 0) existing_data.push(`Avis (${reviewsCount})`);
+
+  // 15. Favoris (table: favorites)
+  let favoritesCount = 0;
+  try {
+    const { count } = await supabase
+      .from('favorites')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId);
+    favoritesCount = count || 0;
+  } catch {
+    // Table might not exist
+  }
+  
+  const favoritesStatus: DataStatus = { exists: favoritesCount > 0, count: favoritesCount, table_name: 'favorites' };
+  if (favoritesCount > 0) existing_data.push(`Favoris (${favoritesCount})`);
+
+  // 16. Panier (table: cart_items ou advanced_carts)
+  let cartCount = 0;
+  try {
+    const { count } = await supabase
+      .from('advanced_carts')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId);
+    cartCount = count || 0;
+  } catch {
+    // Table might not exist
+  }
+  
+  const cartStatus: DataStatus = { exists: cartCount > 0, count: cartCount, table_name: 'advanced_carts' };
+  if (cartCount > 0) existing_data.push(`Panier (${cartCount})`);
+
+  // 17. Archives (table: deleted_users_archive)
   const { data: archived } = await supabase
     .from('deleted_users_archive')
-    .select('id, deleted_at, deletion_reason, is_restored')
+    .select('id, deleted_at, deletion_reason, is_restored, role, public_id, email')
     .eq('original_user_id', userId)
     .eq('is_restored', false)
     .maybeSingle();
   
-  const archivedStatus: DataStatus = { exists: !!archived, data: archived };
+  const archivedStatus: DataStatus = { exists: !!archived, data: archived, table_name: 'deleted_users_archive' };
+  if (archived) {
+    deleted_data.push(`Données archivées (supprimé le ${new Date(archived.deleted_at).toLocaleDateString('fr-FR')})`);
+  }
 
   const analysis: UserDataAnalysis = {
     profile: profileStatus,
@@ -520,13 +764,40 @@ async function analyzeUserData(
     user_ids: userIdsStatus,
     agent: agentStatus,
     vendor: vendorStatus,
+    taxi_driver: taxiDriverStatus,
+    livreur: livreurStatus,
     orders: ordersStatus,
     transactions: transactionsStatus,
+    notifications: notificationsStatus,
+    conversations: conversationsStatus,
+    messages: messagesStatus,
+    products: productsStatus,
+    reviews: reviewsStatus,
+    favorites: favoritesStatus,
+    cart: cartStatus,
     archived: archivedStatus
   };
 
-  // Déterminer s'il y a des problèmes
+  // Calculer le résumé
+  const total_tables_checked = 17;
+  const existing_count = existing_data.length;
+  const missing_count = missing_data.length;
+  const deleted_count = deleted_data.length;
+
+  // Déterminer s'il y a des problèmes (données critiques manquantes ou archives non restaurées)
   const has_issues = missing_data.length > 0 || archivedStatus.exists;
 
-  return { analysis, missing_data, has_issues };
+  return { 
+    analysis, 
+    missing_data, 
+    existing_data, 
+    deleted_data, 
+    has_issues,
+    summary: {
+      total_tables_checked,
+      existing_count,
+      missing_count,
+      deleted_count
+    }
+  };
 }
