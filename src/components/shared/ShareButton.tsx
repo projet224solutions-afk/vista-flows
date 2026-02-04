@@ -11,10 +11,27 @@ import { toast } from "sonner";
 import { createShortLink } from "@/hooks/useDeepLinking";
 import { toPublicShareUrl } from "@/lib/site";
 
+const OG_META_FUNCTION_URL = "https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1/og-meta";
+
 function sanitizeShareUrl(rawUrl: string): string {
   // 1) retirer les params internes Lovable
   // 2) forcer le domaine public (ex: https://224solution.net)
   return toPublicShareUrl(rawUrl);
+}
+
+function extractShortCodeFromUrl(url: string): string | null {
+  try {
+    const u = new URL(url);
+    const match = u.pathname.match(/\/s\/([a-zA-Z0-9]+)/);
+    return match?.[1] || null;
+  } catch {
+    const match = url.match(/\/s\/([a-zA-Z0-9]+)/);
+    return match?.[1] || null;
+  }
+}
+
+function toOgMetaShortUrl(shortCode: string): string {
+  return `${OG_META_FUNCTION_URL}?type=short&code=${encodeURIComponent(shortCode)}`;
 }
 
 interface ShareButtonProps {
@@ -63,6 +80,12 @@ export function ShareButton({
         type: resourceType,
         resourceId: resourceId,
       });
+
+      // IMPORTANT: pour l'aperçu (WhatsApp/Facebook), il faut une page HTML avec OG tags.
+      // Les bots ne lisent pas les meta tags générés par React. On partage donc l'Edge Function og-meta.
+      const code = shortUrl ? extractShortCodeFromUrl(shortUrl) : null;
+      if (code) return toOgMetaShortUrl(code);
+
       return shortUrl || shareUrl;
     } catch (error) {
       console.error("Error creating short URL:", error);
