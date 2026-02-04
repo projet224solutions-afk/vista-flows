@@ -371,48 +371,53 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
                 )}
               </div>
 
-              {/* Items de navigation */}
+              {/* Items de navigation avec défilement pour les longues listes */}
               <CardContent 
                 className={cn(
                   "p-2 transition-all duration-300",
-                  isExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0 overflow-hidden"
+                  isExpanded ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0 overflow-hidden"
                 )}
               >
-                <div className="space-y-1">
-                  {category.items.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = activeTab === item.value;
-                    
-                    return (
-                      <button
-                        key={item.value}
-                        onClick={() => handleItemClick(item.value, item.external)}
-                        className={cn(
-                          "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                          "hover:bg-muted/80 hover:scale-105 group relative overflow-hidden",
-                          isActive && "bg-primary text-primary-foreground shadow-md scale-105"
-                        )}
-                      >
-                        {/* Effet de brillance pour l'item actif */}
-                        {isActive && (
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
-                        )}
-                        
-                        <Icon className={cn(
-                          "w-4 h-4 transition-transform group-hover:scale-110 relative z-10",
-                          isActive && "animate-pulse"
-                        )} />
-                        <span className="font-medium text-sm relative z-10">{item.label}</span>
-                        {item.badge && aiActive && (
-                          <Zap className="w-3 h-3 ml-auto text-yellow-500 animate-pulse relative z-10" />
-                        )}
-                        {isActive && (
-                          <div className="ml-auto w-2 h-2 rounded-full bg-current animate-pulse relative z-10" />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+                <ScrollArea className={cn(
+                  "pr-2",
+                  category.items.length > 6 ? "h-[350px]" : "h-auto"
+                )}>
+                  <div className="space-y-1">
+                    {category.items.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = activeTab === item.value;
+                      
+                      return (
+                        <button
+                          key={item.value}
+                          onClick={() => handleItemClick(item.value, item.external)}
+                          className={cn(
+                            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                            "hover:bg-muted/80 hover:scale-105 group relative overflow-hidden",
+                            isActive && "bg-primary text-primary-foreground shadow-md scale-105"
+                          )}
+                        >
+                          {/* Effet de brillance pour l'item actif */}
+                          {isActive && (
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+                          )}
+                          
+                          <Icon className={cn(
+                            "w-4 h-4 transition-transform group-hover:scale-110 relative z-10",
+                            isActive && "animate-pulse"
+                          )} />
+                          <span className="font-medium text-sm relative z-10">{item.label}</span>
+                          {item.badge && aiActive && (
+                            <Zap className="w-3 h-3 ml-auto text-yellow-500 animate-pulse relative z-10" />
+                          )}
+                          {isActive && (
+                            <div className="ml-auto w-2 h-2 rounded-full bg-current animate-pulse relative z-10" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
               </CardContent>
             </Card>
           );
