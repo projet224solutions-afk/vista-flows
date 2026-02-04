@@ -98,6 +98,10 @@ export default {
           secondary: "hsl(var(--client-secondary))",
           accent: "hsl(var(--client-accent))",
         },
+        // Hover global bleu
+        hover: {
+          DEFAULT: "hsl(var(--hover-bg))",
+        },
       },
       backgroundImage: {
         'vendeur-gradient': 'var(--vendeur-gradient)',
