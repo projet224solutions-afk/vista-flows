@@ -10,26 +10,25 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: 
-          "bg-gradient-to-b from-primary to-primary/85 text-primary-foreground shadow-md shadow-primary/25 hover:from-primary/95 hover:to-primary/80 hover:shadow-lg hover:shadow-primary/30 border border-primary/20",
+          "bg-primary text-primary-foreground shadow-lg shadow-primary/40 hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/50",
         destructive: 
-          "bg-gradient-to-b from-destructive to-destructive/85 text-destructive-foreground shadow-md shadow-destructive/25 hover:from-destructive/95 hover:to-destructive/80 hover:shadow-lg hover:shadow-destructive/30 border border-destructive/20",
+          "bg-destructive text-destructive-foreground shadow-lg shadow-destructive/40 hover:bg-destructive/90 hover:shadow-xl hover:shadow-destructive/50",
         outline: 
-          "border-2 border-primary/30 bg-background text-primary shadow-sm hover:bg-primary/5 hover:border-primary/50 hover:shadow-md",
+          "border-2 border-primary bg-transparent text-primary shadow-sm hover:bg-primary hover:text-primary-foreground hover:shadow-lg",
         secondary: 
-          "bg-gradient-to-b from-secondary to-secondary/90 text-secondary-foreground shadow-sm hover:from-secondary/95 hover:to-secondary/85 hover:shadow-md border border-border/50",
+          "bg-secondary text-secondary-foreground shadow-md hover:bg-secondary/80 hover:shadow-lg",
         ghost: 
-          "text-foreground hover:bg-accent/80 hover:text-accent-foreground",
+          "text-foreground hover:bg-accent hover:text-accent-foreground",
         link: 
           "text-primary underline-offset-4 hover:underline font-semibold",
-        // New premium variants
         premium:
-          "bg-gradient-to-br from-primary via-primary to-primary/70 text-primary-foreground shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 border border-white/10",
+          "bg-primary text-primary-foreground shadow-xl shadow-primary/50 hover:bg-primary/85 hover:shadow-2xl hover:shadow-primary/60",
         success:
-          "bg-gradient-to-b from-emerald-600 to-emerald-700 text-white shadow-md shadow-emerald-600/25 hover:from-emerald-500 hover:to-emerald-600 hover:shadow-lg border border-emerald-500/20",
+          "bg-emerald-600 text-white shadow-lg shadow-emerald-600/40 hover:bg-emerald-700 hover:shadow-xl hover:shadow-emerald-700/50",
         warning:
-          "bg-gradient-to-b from-amber-500 to-amber-600 text-white shadow-md shadow-amber-500/25 hover:from-amber-400 hover:to-amber-500 hover:shadow-lg border border-amber-400/20",
+          "bg-amber-500 text-white shadow-lg shadow-amber-500/40 hover:bg-amber-600 hover:shadow-xl hover:shadow-amber-600/50",
         dark:
-          "bg-gradient-to-b from-slate-800 to-slate-900 text-white shadow-md shadow-slate-900/30 hover:from-slate-700 hover:to-slate-800 hover:shadow-lg border border-slate-700/30",
+          "bg-slate-900 text-white shadow-lg shadow-slate-900/50 hover:bg-slate-800 hover:shadow-xl",
       },
       size: {
         default: "h-10 px-5 py-2",

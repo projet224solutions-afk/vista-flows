@@ -84,7 +84,7 @@ export default function ServiceCard({
                 onClick={onBook}
                 disabled={!isAvailable}
                 size="sm"
-                className="bg-livreur-primary hover:bg-livreur-primary/90"
+                className="bg-livreur-primary hover:bg-livreur-primary/85 shadow-lg shadow-livreur-primary/40"
               >
                 Réserver
               </Button>

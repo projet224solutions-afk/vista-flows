@@ -53,16 +53,16 @@ export function GoOnlineButton({
             isLoading && "animate-pulse",
             !isLoading && !isOnline && hasSubscription && "hover:scale-105 active:scale-95",
             isOnline 
-              ? "bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600 text-white shadow-emerald-500/50" 
-              : "bg-gradient-to-br from-gray-700 via-gray-800 to-gray-900 text-gray-300 shadow-black/50 border border-gray-600"
+              ? "bg-emerald-500 text-white shadow-emerald-500/60" 
+              : "bg-gray-800 text-gray-300 shadow-black/50 border border-gray-600"
           )}
         >
-          {/* Inner gradient overlay */}
+          {/* Inner subtle overlay */}
           <div className={cn(
             "absolute inset-1 rounded-full transition-opacity duration-300",
             isOnline 
-              ? "bg-gradient-to-t from-black/20 to-transparent" 
-              : "bg-gradient-to-t from-black/30 to-white/5"
+              ? "bg-black/10" 
+              : "bg-black/15"
           )} />
           
           {/* Icon */}
