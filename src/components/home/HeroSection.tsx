@@ -191,23 +191,6 @@ export function HeroSection({ className }: HeroSectionProps) {
             </button>
           ))}
         </div>
-
-        {/* More Services Chip */}
-        <button
-          onClick={() => user ? setShowServicesModal(true) : navigate('/services')}
-          className={cn(
-            'w-full mt-3 flex items-center justify-center gap-2 py-2.5 rounded-xl',
-            'bg-muted/50 border border-border/50',
-            'hover:bg-muted hover:border-border',
-            'active:scale-[0.98] transition-all duration-200'
-          )}
-        >
-          <Package className="w-4 h-4 text-primary" />
-          <span className="text-sm font-medium text-muted-foreground">
-            {t('home.andMore')}
-          </span>
-          <ChevronRight className="w-4 h-4 text-muted-foreground" />
-        </button>
       </div>
 
       {/* Available Services Modal - Only shown when user is logged in */}
