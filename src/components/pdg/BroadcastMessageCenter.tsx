@@ -147,7 +147,7 @@ const BroadcastMessageCenter: React.FC = () => {
       const { data, error } = await supabase.rpc('get_broadcast_dashboard');
 
       if (error) throw error;
-      setDashboardData(data as DashboardData);
+      setDashboardData(data as unknown as DashboardData);
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
     } finally {

@@ -76,11 +76,11 @@ export function useFinanceData(enabled: boolean = true) {
 
       console.log('✅ Transactions récupérées depuis wallet_transactions:', transData?.length);
 
-      // Mapper les transactions
+      // Mapper les transactions avec les bons noms de colonnes
       const mappedTransactions = (transData || []).map((t: any) => ({
         id: t.id,
-        sender_id: t.from_wallet_id,
-        receiver_id: t.to_wallet_id,
+        sender_id: t.sender_wallet_id,
+        receiver_id: t.receiver_wallet_id,
         amount: Number(t.amount),
         currency: t.currency || 'GNF',
         status: t.status,
