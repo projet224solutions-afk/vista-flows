@@ -119,31 +119,51 @@ export default function DeletedUsersRestore() {
     try {
       setRestoring(true);
       
-      // Marquer comme restauré dans l'archive
-      const { error: updateError } = await supabase
-        .from('deleted_users_archive')
-        .update({
-          is_restored: true,
-          restored_at: new Date().toISOString(),
-          restored_by: (await supabase.auth.getUser()).data.user?.id,
-          restoration_notes: restoreNotes || 'Restauration manuelle depuis l\'interface PDG'
-        })
-        .eq('id', selectedUser.id);
+      // Appeler la Edge Function pour restaurer complètement l'utilisateur
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('Session non valide');
+      }
 
-      if (updateError) throw updateError;
+      const response = await fetch(
+        `https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1/restore-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM'
+          },
+          body: JSON.stringify({
+            archive_id: selectedUser.id,
+            restoration_notes: restoreNotes || 'Restauration depuis l\'interface PDG'
+          })
+        }
+      );
 
-      toast.success(`Utilisateur ${selectedUser.public_id || selectedUser.email} marqué comme restauré`);
-      toast.info('Note: Les données Supabase Auth doivent être restaurées manuellement via le dashboard Supabase', {
-        duration: 6000
-      });
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur lors de la restauration');
+      }
+
+      toast.success(`Utilisateur ${selectedUser.public_id || selectedUser.email} restauré avec succès!`);
+      
+      if (result.data?.new_user_created) {
+        toast.info('Un nouveau compte a été créé. L\'utilisateur devra réinitialiser son mot de passe.', {
+          duration: 6000
+        });
+      }
       
       setRestoreDialogOpen(false);
       setRestoreNotes('');
       setSelectedUser(null);
       fetchDeletedUsers();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erreur restauration:', error);
-      toast.error('Erreur lors de la restauration');
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      toast.error(`Erreur: ${errorMessage}`);
     } finally {
       setRestoring(false);
     }

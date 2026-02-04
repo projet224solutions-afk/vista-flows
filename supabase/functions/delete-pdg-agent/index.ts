@@ -45,7 +45,7 @@ serve(async (req) => {
     // 1. Récupérer les informations de l'agent
     const { data: agent, error: agentError } = await supabaseAdmin
       .from('agents_management')
-      .select('id, user_id, agent_code, name, pdg_id')
+      .select('*')
       .eq('id', agent_id)
       .eq('pdg_id', pdgProfile.id)
       .single();
@@ -55,6 +55,76 @@ serve(async (req) => {
     }
 
     console.log('🗑️ Suppression de l\'agent:', agent.name, agent.agent_code);
+
+    // 1.5. Archiver les données de l'agent avant suppression
+    console.log('📦 Archivage des données agent...');
+    
+    // Récupérer le profil lié
+    let profileData = null;
+    let walletData = null;
+    let userIdsData = null;
+    
+    if (agent.user_id) {
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('id', agent.user_id)
+        .maybeSingle();
+      profileData = profile;
+      
+      const { data: wallet } = await supabaseAdmin
+        .from('wallets')
+        .select('*')
+        .eq('user_id', agent.user_id)
+        .maybeSingle();
+      walletData = wallet;
+      
+      const { data: userIds } = await supabaseAdmin
+        .from('user_ids')
+        .select('*')
+        .eq('user_id', agent.user_id)
+        .maybeSingle();
+      userIdsData = userIds;
+    }
+    
+    // Récupérer le wallet agent
+    const { data: agentWallet } = await supabaseAdmin
+      .from('agent_wallets')
+      .select('*')
+      .eq('agent_id', agent.id)
+      .maybeSingle();
+    
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+    
+    const archiveData = {
+      original_user_id: agent.user_id || agent.id,
+      email: agent.email || null,
+      phone: agent.phone || null,
+      full_name: agent.full_name || agent.name || null,
+      role: 'agent',
+      public_id: agent.agent_code || null,
+      profile_data: profileData || { agent_data: agent },
+      wallet_data: walletData ? { ...walletData, agent_wallet: agentWallet } : { agent_wallet: agentWallet },
+      user_ids_data: userIdsData || null,
+      role_specific_data: agent,
+      deletion_reason: 'Suppression agent via interface PDG',
+      deletion_method: 'edge_function_pdg_agent',
+      deleted_by: user.id,
+      expires_at: expiresAt.toISOString(),
+      original_created_at: agent.created_at || null,
+      is_restored: false
+    };
+    
+    const { error: archiveError } = await supabaseAdmin
+      .from('deleted_users_archive')
+      .insert(archiveData);
+    
+    if (archiveError) {
+      console.warn('⚠️ Erreur archivage (non bloquante):', archiveError.message);
+    } else {
+      console.log('✅ Données agent archivées');
+    }
 
     // 2. Supprimer le wallet de l'agent
     const { error: walletError } = await supabaseAdmin
