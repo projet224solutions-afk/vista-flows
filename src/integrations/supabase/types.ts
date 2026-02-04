@@ -28207,10 +28207,12 @@ export type Database = {
         }
         Returns: string
       }
-      send_broadcast_message: {
-        Args: { p_broadcast_id: string; p_sender_id: string }
-        Returns: Json
-      }
+      send_broadcast_message:
+        | { Args: { p_broadcast_id: string }; Returns: Json }
+        | {
+            Args: { p_broadcast_id: string; p_sender_id: string }
+            Returns: Json
+          }
       set_agent_permissions: {
         Args: { p_agent_id: string; p_permissions: Json }
         Returns: Json
