@@ -315,15 +315,19 @@ export default function Marketplace() {
                     <span className="text-sm sm:text-base font-medium text-primary whitespace-nowrap px-8 font-inter">
                       224SOLUTIONS donne à l'Afrique la possibilité de vendre en ligne et physiquement, que ce soit des produits physiques ou digitaux, via l'affiliation, tout en permettant à chacun de gérer son commerce physique et d'offrir ou accéder aux services les plus proches de lui.
                     </span>
+                    <span className="text-primary/40 whitespace-nowrap px-6">•••</span>
                     <span className="text-sm sm:text-base font-medium text-primary whitespace-nowrap px-8 font-inter">
                       La plateforme connecte vendeurs et acheteurs à travers le continent, facilite le commerce digital, sécurise les paiements et crée de nouvelles opportunités économiques sans frontières.
                     </span>
+                    <span className="text-primary/40 whitespace-nowrap px-6">•••</span>
                     <span className="text-sm sm:text-base font-medium text-primary whitespace-nowrap px-8 font-inter">
                       224SOLUTIONS donne à l'Afrique la possibilité de vendre en ligne et physiquement, que ce soit des produits physiques ou digitaux, via l'affiliation, tout en permettant à chacun de gérer son commerce physique et d'offrir ou accéder aux services les plus proches de lui.
                     </span>
+                    <span className="text-primary/40 whitespace-nowrap px-6">•••</span>
                     <span className="text-sm sm:text-base font-medium text-primary whitespace-nowrap px-8 font-inter">
                       La plateforme connecte vendeurs et acheteurs à travers le continent, facilite le commerce digital, sécurise les paiements et crée de nouvelles opportunités économiques sans frontières.
                     </span>
+                    <span className="text-primary/40 whitespace-nowrap px-6">•••</span>
                   </div>
                 </div>
               )}
