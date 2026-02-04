@@ -68,11 +68,23 @@ Deno.serve(async (req) => {
       
       const query = search_query.trim();
       
+      // Vérifier si c'est un UUID valide pour la recherche par original_user_id
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const isValidUUID = uuidRegex.test(query);
+      
+      // Construire la requête de recherche
+      let searchFilter = `public_id.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%,full_name.ilike.%${query}%`;
+      
+      // Ajouter la recherche par UUID seulement si valide
+      if (isValidUUID) {
+        searchFilter += `,original_user_id.eq.${query}`;
+      }
+      
       // Chercher dans les archives
       const { data: archives, error: searchError } = await supabaseAdmin
         .from('deleted_users_archive')
         .select('*')
-        .or(`public_id.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%,original_user_id.eq.${query}`)
+        .or(searchFilter)
         .eq('is_restored', false)
         .order('deleted_at', { ascending: false })
         .limit(20);
@@ -81,6 +93,8 @@ Deno.serve(async (req) => {
         console.error('❌ Erreur recherche:', searchError.message);
         throw new Error(`Erreur recherche: ${searchError.message}`);
       }
+
+      console.log(`✅ ${archives?.length || 0} résultat(s) trouvé(s)`);
 
       return new Response(
         JSON.stringify({
