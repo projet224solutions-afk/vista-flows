@@ -14,6 +14,7 @@ import QuickFooter from "@/components/QuickFooter";
 import { useAuth } from "@/hooks/useAuth";
 import { useVendorDigitalProducts } from "@/hooks/useHasDigitalProducts";
 import { trackShopVisit } from "@/services/analyticsTrackingService";
+import SEOHead from "@/components/SEOHead";
 interface Vendor {
   id: string;
   business_name: string;
@@ -273,6 +274,14 @@ export default function VendorShop() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
+      {/* SEO Meta Tags */}
+      <SEOHead
+        title={vendor.business_name}
+        description={vendor.description || `Découvrez la boutique ${vendor.business_name} sur 224Solutions`}
+        image={vendor.cover_image_url || vendor.logo_url}
+        type="website"
+      />
+      
       {/* Alertes boutique inactive */}
       {!vendor.is_active && (
         <Alert className="m-4 border-destructive/50 bg-destructive/10">
