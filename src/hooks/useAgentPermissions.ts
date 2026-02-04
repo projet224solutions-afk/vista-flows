@@ -97,6 +97,8 @@ export const AVAILABLE_PERMISSIONS = {
   manage_quotes_invoices: 'Gérer devis & factures',
   access_communication: 'Accès communication',
   manage_communication: 'Gérer la communication',
+  view_broadcasts: 'Voir les diffusions globales',
+  manage_broadcasts: 'Gérer les diffusions globales',
   view_agent_wallet_audit: 'Voir audit wallet agents',
   manage_agent_wallet_audit: 'Gérer audit wallet agents',
 
