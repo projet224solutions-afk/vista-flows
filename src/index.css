@@ -102,6 +102,10 @@ All colors MUST be HSL.
     --shadow-hero: 0 8px 40px hsl(211 100% 50% / 0.15);
     --shadow-bottom-nav: 0 -4px 30px hsl(0 0% 0% / 0.08);
     --shadow-service-card: 0 4px 24px hsl(211 100% 50% / 0.1);
+    
+    /* HOVER GLOBAL - Bleu professionnel pour tous les éléments interactifs */
+    --hover-bg: 217 91% 45%;
+    --hover-shadow: 0 8px 25px hsl(217 91% 45% / 0.5);
 
     --radius: 0.75rem;
 
@@ -163,6 +167,36 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', sans-serif;
+  }
+
+  /* SYSTÈME HOVER BLEU GLOBAL - Ultra Professionnel */
+  /* Boutons */
+  button:not(:disabled):hover,
+  [role="button"]:not(:disabled):hover,
+  .btn:not(:disabled):hover {
+    background-color: hsl(var(--hover-bg)) !important;
+    color: white !important;
+    box-shadow: var(--hover-shadow) !important;
+    border-color: hsl(var(--hover-bg)) !important;
+  }
+
+  /* Links stylés comme boutons */
+  a[class*="bg-"]:hover,
+  a[class*="btn"]:hover {
+    background-color: hsl(var(--hover-bg)) !important;
+    color: white !important;
+    box-shadow: var(--hover-shadow) !important;
+  }
+
+  /* Tabs et éléments de navigation */
+  [role="tab"]:hover,
+  [data-state]:hover {
+    background-color: hsl(var(--hover-bg) / 0.1) !important;
+  }
+
+  [role="tab"][data-state="active"] {
+    background-color: hsl(var(--hover-bg)) !important;
+    color: white !important;
   }
 
   /* 224SOLUTIONS Typography System */
