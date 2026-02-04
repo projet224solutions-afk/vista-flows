@@ -123,7 +123,7 @@ export function HomeHeader({
         <div className="flex animate-ticker py-2">
           {/* First set of phrases */}
           <span className="ticker-item text-base md:text-lg font-semibold text-primary whitespace-nowrap px-8">
-            ✨ Bienvenue sur 224SOLUTIONS
+            🎉 Bienvenue sur 224SOLUTIONS
           </span>
           <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
             🌍 Une plateforme africaine
@@ -139,7 +139,7 @@ export function HomeHeader({
           </span>
           {/* Duplicate for seamless loop */}
           <span className="ticker-item text-base md:text-lg font-semibold text-primary whitespace-nowrap px-8">
-            ✨ Bienvenue sur 224SOLUTIONS
+            🎉 Bienvenue sur 224SOLUTIONS
           </span>
           <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
             🌍 Une plateforme africaine
