@@ -3,125 +3,137 @@
  * Résout les liens courts et redirige vers la page originale
  */
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Link2Off, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
+interface LinkInfo {
+  title: string;
+  type: string;
+  originalUrl: string;
+  targetPath: string;
+}
+
 export default function ShortLinkRedirect() {
   const { shortCode } = useParams<{ shortCode: string }>();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [linkInfo, setLinkInfo] = useState<{
-    title: string;
-    type: string;
-    originalUrl: string;
-    targetPath: string;
-  } | null>(null);
+  const [status, setStatus] = useState<'loading' | 'error' | 'fallback'>('loading');
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [linkInfo, setLinkInfo] = useState<LinkInfo | null>(null);
   
-  // Protection contre double exécution
-  const hasResolved = useRef(false);
+  // Compteur pour éviter les appels multiples
+  const resolveCount = useRef(0);
 
-  useEffect(() => {
-    // Si déjà résolu ou pas de shortCode, ne rien faire
-    if (!shortCode || hasResolved.current) {
+  const resolveAndRedirect = useCallback(async () => {
+    if (!shortCode) {
+      setStatus('error');
+      setErrorMessage('Code de lien manquant');
       return;
     }
-    
-    hasResolved.current = true;
-    resolveAndRedirect();
-  }, [shortCode]);
 
-  const resolveAndRedirect = async () => {
+    // Incrémenter le compteur et capturer la valeur
+    const currentResolve = ++resolveCount.current;
+    console.log('🔗 [ShortLink] Starting resolve #', currentResolve, 'for:', shortCode);
+
     try {
-      setLoading(true);
-      setError(null);
-
-      console.log('🔗 [ShortLink] Resolving short code:', shortCode);
-
       const { data, error: fetchError } = await supabase
         .from('shared_links' as 'shared_links')
         .select('original_url, title, link_type, resource_id')
-        .eq('short_code', shortCode as string)
+        .eq('short_code', shortCode)
         .eq('is_active', true)
         .maybeSingle();
 
-      console.log('🔗 [ShortLink] Query result:', { data, fetchError });
+      // Vérifier si un autre appel a été fait pendant qu'on attendait
+      if (currentResolve !== resolveCount.current) {
+        console.log('🔗 [ShortLink] Resolve #', currentResolve, 'cancelled (newer resolve in progress)');
+        return;
+      }
+
+      console.log('🔗 [ShortLink] Query result:', { data, fetchError, currentResolve });
 
       if (fetchError) {
         console.error('🔗 [ShortLink] Database error:', fetchError);
-        setError('Erreur lors de la résolution du lien');
-        setLoading(false);
+        setStatus('error');
+        setErrorMessage('Erreur lors de la résolution du lien');
         return;
       }
       
       if (!data) {
         console.error('🔗 [ShortLink] Link not found for code:', shortCode);
-        setError('Lien introuvable ou expiré');
-        setLoading(false);
+        setStatus('error');
+        setErrorMessage('Lien introuvable ou expiré');
         return;
       }
 
-      console.log('🔗 [ShortLink] Found link data:', {
-        originalUrl: data.original_url,
-        title: data.title,
-        linkType: data.link_type
-      });
+      console.log('🔗 [ShortLink] Found link:', data.original_url);
 
-      // Incrémenter le compteur de vues
+      // Incrémenter le compteur de vues (fire and forget)
       (supabase.rpc as any)('increment_shared_link_views', { 
         p_short_code: shortCode 
       }).catch((e: any) => console.warn('Failed to increment views:', e));
 
       // Extraire le chemin relatif de l'URL originale
       let targetPath: string;
+      const originalUrl = data.original_url;
       
       try {
-        const url = new URL(data.original_url);
+        const url = new URL(originalUrl);
         // Retirer les paramètres internes Lovable
         for (const key of Array.from(url.searchParams.keys())) {
           if (key.startsWith('__lovable')) url.searchParams.delete(key);
         }
         targetPath = url.pathname + url.search;
+        console.log('🔗 [ShortLink] Extracted path:', targetPath);
       } catch {
         // Si l'URL est déjà relative ou malformée
-        targetPath = data.original_url.startsWith('/') 
-          ? data.original_url 
-          : `/${data.original_url}`;
+        targetPath = originalUrl.startsWith('/') 
+          ? originalUrl 
+          : `/${originalUrl}`;
+        console.log('🔗 [ShortLink] Using fallback path:', targetPath);
       }
 
-      console.log('🔗 [ShortLink] Target path extracted:', targetPath);
-
-      // Stocker les infos pour affichage en cas d'échec de navigation
-      setLinkInfo({
+      // Préparer le fallback
+      const info: LinkInfo = {
         title: data.title,
         type: data.link_type,
-        originalUrl: data.original_url,
+        originalUrl: originalUrl,
         targetPath
-      });
-
-      // ⚡ Utiliser React Router navigate() pour les chemins internes
-      // Cela garantit une navigation SPA propre
+      };
+      
       console.log('🔗 [ShortLink] Navigating to:', targetPath);
       
-      // Utiliser navigate avec replace pour ne pas polluer l'historique
+      // Effectuer la navigation
       navigate(targetPath, { replace: true });
       
-      // Mettre loading à false car on a lancé la navigation
-      setLoading(false);
+      // Vérifier après un court délai si la navigation a réussi
+      setTimeout(() => {
+        if (window.location.pathname.startsWith('/s/')) {
+          console.log('🔗 [ShortLink] Navigation may have failed, showing fallback UI');
+          setLinkInfo(info);
+          setStatus('fallback');
+        } else {
+          console.log('🔗 [ShortLink] Navigation succeeded');
+        }
+      }, 300);
 
     } catch (err) {
-      console.error('🔗 [ShortLink] Error resolving short link:', err);
-      setError('Erreur lors de la résolution du lien');
-      setLoading(false);
-      hasResolved.current = false; // Permettre un retry
+      console.error('🔗 [ShortLink] Unexpected error:', err);
+      if (currentResolve === resolveCount.current) {
+        setStatus('error');
+        setErrorMessage('Erreur inattendue');
+      }
     }
-  };
+  }, [shortCode, navigate]);
 
-  if (loading) {
+  useEffect(() => {
+    resolveAndRedirect();
+  }, [resolveAndRedirect]);
+
+  // État de chargement
+  if (status === 'loading') {
     return (
       <div className="fixed inset-0 z-[9999] bg-background flex items-center justify-center">
         <div className="text-center">
@@ -132,7 +144,8 @@ export default function ShortLinkRedirect() {
     );
   }
 
-  if (error) {
+  // État d'erreur
+  if (status === 'error') {
     return (
       <div className="fixed inset-0 z-[9999] bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
@@ -141,7 +154,7 @@ export default function ShortLinkRedirect() {
               <Link2Off className="w-8 h-8 text-destructive" />
             </div>
             <CardTitle>Lien invalide</CardTitle>
-            <CardDescription>{error}</CardDescription>
+            <CardDescription>{errorMessage}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-center text-muted-foreground">
@@ -161,9 +174,8 @@ export default function ShortLinkRedirect() {
     );
   }
 
-  // Si linkInfo existe mais qu'on est toujours ici, la navigation a peut-être échoué
-  // Afficher un bouton de redirection manuelle
-  if (linkInfo) {
+  // État fallback (navigation a échoué, afficher un bouton manuel)
+  if (status === 'fallback' && linkInfo) {
     return (
       <div className="fixed inset-0 z-[9999] bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
