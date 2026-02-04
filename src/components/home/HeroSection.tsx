@@ -4,7 +4,7 @@
  * Inspired by Uber, Deliveroo, Glovo
  */
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Store, Utensils, Truck, Car, ChevronRight, Package, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,7 @@ import { AvailableServicesModal } from '@/components/professional-services/Avail
 
 interface QuickAction {
   id: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   gradient: string;
 }
