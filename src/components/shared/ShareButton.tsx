@@ -30,8 +30,9 @@ function extractShortCodeFromUrl(url: string): string | null {
   }
 }
 
-function toOgMetaShortUrl(shortCode: string): string {
-  return `${OG_META_FUNCTION_URL}?type=short&code=${encodeURIComponent(shortCode)}`;
+function toOgMetaShortUrl(shortCode: string, baseOrigin?: string): string {
+  const base = baseOrigin ? `&base=${encodeURIComponent(baseOrigin)}` : '';
+  return `${OG_META_FUNCTION_URL}?type=short&code=${encodeURIComponent(shortCode)}${base}`;
 }
 
 interface ShareButtonProps {
@@ -84,7 +85,16 @@ export function ShareButton({
       // IMPORTANT: pour l'aperçu (WhatsApp/Facebook), il faut une page HTML avec OG tags.
       // Les bots ne lisent pas les meta tags générés par React. On partage donc l'Edge Function og-meta.
       const code = shortUrl ? extractShortCodeFromUrl(shortUrl) : null;
-      if (code) return toOgMetaShortUrl(code);
+      if (code) {
+        const baseOrigin = (() => {
+          try {
+            return new URL(shareUrl).origin;
+          } catch {
+            return undefined;
+          }
+        })();
+        return toOgMetaShortUrl(code, baseOrigin);
+      }
 
       return shortUrl || shareUrl;
     } catch (error) {

@@ -15,6 +15,36 @@ const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SITE_URL = "https://224solution.net";
 const DEFAULT_IMAGE = `${SITE_URL}/icon-512.png`;
 
+function isAllowedBaseUrl(baseUrl: string): boolean {
+  try {
+    const u = new URL(baseUrl);
+    const host = u.hostname;
+
+    // Allow: production custom domain + Lovable published/preview domains
+    return (
+      host === "224solution.net" ||
+      host.endsWith(".224solution.net") ||
+      host === "vista-flows.lovable.app" ||
+      host.endsWith(".lovable.app") ||
+      host.endsWith(".lovableproject.com")
+    );
+  } catch {
+    return false;
+  }
+}
+
+function getBaseOriginFromRequest(url: URL): string {
+  const base = url.searchParams.get("base");
+  if (base && isAllowedBaseUrl(base)) {
+    try {
+      return new URL(base).origin;
+    } catch {
+      // ignore
+    }
+  }
+  return SITE_URL;
+}
+
 interface OgData {
   title: string;
   description: string;
@@ -30,6 +60,7 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
+    const baseOrigin = getBaseOriginFromRequest(url);
     const type = url.searchParams.get("type"); // 'product', 'shop', 'short'
     const id = url.searchParams.get("id");
     const shortCode = url.searchParams.get("code");
@@ -71,7 +102,7 @@ Deno.serve(async (req) => {
               title: product.name || link.title,
               description: product.description || `Découvrez ce produit sur 224Solutions - ${product.price?.toLocaleString()} GNF`,
               image,
-              url: `${SITE_URL}/s/${shortCode}`,
+              url: `${baseOrigin}/s/${shortCode}`,
               type: "product",
             };
           }
@@ -87,7 +118,7 @@ Deno.serve(async (req) => {
               title: vendor.business_name || link.title,
               description: vendor.description || `Visitez la boutique ${vendor.business_name} sur 224Solutions`,
               image: vendor.cover_image_url || vendor.logo_url || DEFAULT_IMAGE,
-              url: `${SITE_URL}/s/${shortCode}`,
+              url: `${baseOrigin}/s/${shortCode}`,
               type: "website",
             };
           }
@@ -100,7 +131,7 @@ Deno.serve(async (req) => {
             title: link.title || "224Solutions",
             description: (metadata?.description as string) || "Découvrez ce contenu sur 224Solutions",
             image: (metadata?.image as string) || DEFAULT_IMAGE,
-            url: `${SITE_URL}/s/${shortCode}`,
+            url: `${baseOrigin}/s/${shortCode}`,
             type: "website",
           };
         }
@@ -124,7 +155,7 @@ Deno.serve(async (req) => {
           title: product.name,
           description: product.description || `${product.price?.toLocaleString()} GNF - Disponible sur 224Solutions`,
           image,
-          url: `${SITE_URL}/product/${id}`,
+          url: `${baseOrigin}/product/${id}`,
           type: "product",
         };
       }
@@ -143,7 +174,7 @@ Deno.serve(async (req) => {
           title: vendor.business_name,
           description: vendor.description || `Visitez la boutique ${vendor.business_name} sur 224Solutions`,
           image: vendor.cover_image_url || vendor.logo_url || DEFAULT_IMAGE,
-          url: `${SITE_URL}/boutique/${vendor.slug || id}`,
+          url: `${baseOrigin}/boutique/${vendor.slug || id}`,
           type: "website",
         };
       }
@@ -155,7 +186,7 @@ Deno.serve(async (req) => {
         title: "224Solutions",
         description: "Réservez un taxi, commandez vos repas, faites vos achats en ligne. La super-app tout-en-un de la Guinée.",
         image: DEFAULT_IMAGE,
-        url: SITE_URL,
+        url: baseOrigin,
         type: "website",
       };
     }
@@ -207,7 +238,7 @@ Deno.serve(async (req) => {
     return new Response(html, {
       headers: {
         ...corsHeaders,
-        "Content-Type": "text/html; charset=utf-8",
+        "content-type": "text/html; charset=utf-8",
         "Cache-Control": "public, max-age=3600",
       },
     });
