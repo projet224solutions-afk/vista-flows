@@ -13,10 +13,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useAgora } from '@/hooks/useAgora';
+import { useAutoTranslation } from '@/hooks/useAutoTranslation';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import AgoraVideoCall from '@/components/communication/AgoraVideoCall';
 import AgoraAudioCall from '@/components/communication/AgoraAudioCall';
+import { AutoTranslatedMessageBubble } from '@/components/messaging/AutoTranslatedMessageBubble';
+import { Message as CommunicationMessage } from '@/types/communication.types';
 import {
   MessageSquare,
   Send,
@@ -70,6 +73,7 @@ interface Contact {
 export default function ProfessionalMessaging() {
   const { user, profile } = useAuth();
   const { endCall } = useAgora();
+  const { userLanguage } = useAutoTranslation({ autoTranslate: true });
   
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
@@ -612,40 +616,64 @@ export default function ProfessionalMessaging() {
                 </div>
               ) : (
                 <>
-                  {messages.map((msg) => (
-                    <div key={msg.id} className={cn("flex mb-3", msg.isOwn ? "justify-end" : "justify-start")}>
-                      {!msg.isOwn && msg.sender_avatar && (
-                        <Avatar className="w-8 h-8 mr-2 flex-shrink-0">
-                          <AvatarImage src={msg.sender_avatar} />
-                          <AvatarFallback className="text-xs">{msg.sender_name?.charAt(0) || '?'}</AvatarFallback>
-                        </Avatar>
-                      )}
-                      
-                      <div className={cn(
-                        "max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm",
-                        msg.isOwn ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted rounded-bl-md"
-                      )}>
-                        {msg.type === 'image' && msg.file_url && (
-                          <img loading="lazy" src={msg.file_url} alt="Image" className="rounded-lg max-w-full mb-2" />
+                  {messages.map((msg) => {
+                    // Convertir le message local vers le type CommunicationMessage pour la traduction
+                    const communicationMsg: CommunicationMessage = {
+                      id: msg.id,
+                      content: msg.content,
+                      sender_id: msg.sender_id,
+                      recipient_id: '', // Non utilisé pour la traduction
+                      type: msg.type || 'text',
+                      status: msg.status as any,
+                      created_at: msg.created_at,
+                      file_url: msg.file_url,
+                      file_name: msg.file_name
+                    };
+
+                    return (
+                      <div key={msg.id} className={cn("flex mb-3", msg.isOwn ? "justify-end" : "justify-start")}>
+                        {!msg.isOwn && msg.sender_avatar && (
+                          <Avatar className="w-8 h-8 mr-2 flex-shrink-0">
+                            <AvatarImage src={msg.sender_avatar} />
+                            <AvatarFallback className="text-xs">{msg.sender_name?.charAt(0) || '?'}</AvatarFallback>
+                          </Avatar>
                         )}
-                        {msg.type === 'file' && msg.file_url && (
-                          <a href={msg.file_url} target="_blank" rel="noopener noreferrer" 
-                            className="flex items-center gap-2 text-sm underline mb-2">
-                            <Paperclip className="w-4 h-4" />
-                            {msg.file_name || 'Fichier'}
-                          </a>
-                        )}
-                        {msg.content && <p className="text-sm leading-relaxed break-words">{msg.content}</p>}
+                        
                         <div className={cn(
-                          "flex items-center justify-end gap-1 mt-1",
-                          msg.isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
+                          "max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm",
+                          msg.isOwn ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted rounded-bl-md"
                         )}>
-                          <span className="text-[10px]">{format(new Date(msg.created_at), 'HH:mm', { locale: fr })}</span>
-                          {msg.isOwn && <CheckCheck className="w-3 h-3" />}
+                          {msg.type === 'image' && msg.file_url && (
+                            <img loading="lazy" src={msg.file_url} alt="Image" className="rounded-lg max-w-full mb-2" />
+                          )}
+                          {msg.type === 'file' && msg.file_url && (
+                            <a href={msg.file_url} target="_blank" rel="noopener noreferrer" 
+                              className="flex items-center gap-2 text-sm underline mb-2">
+                              <Paperclip className="w-4 h-4" />
+                              {msg.file_name || 'Fichier'}
+                            </a>
+                          )}
+                          {msg.content && msg.type === 'text' && (
+                            <AutoTranslatedMessageBubble
+                              message={communicationMsg}
+                              userLanguage={userLanguage}
+                              isOwn={msg.isOwn}
+                            />
+                          )}
+                          {msg.content && msg.type !== 'text' && (
+                            <p className="text-sm leading-relaxed break-words">{msg.content}</p>
+                          )}
+                          <div className={cn(
+                            "flex items-center justify-end gap-1 mt-1",
+                            msg.isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
+                          )}>
+                            <span className="text-[10px]">{format(new Date(msg.created_at), 'HH:mm', { locale: fr })}</span>
+                            {msg.isOwn && <CheckCheck className="w-3 h-3" />}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   <div ref={messagesEndRef} />
                 </>
               )}

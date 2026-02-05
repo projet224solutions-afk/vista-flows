@@ -40,6 +40,8 @@ import ImprovedMessageInput from './ImprovedMessageInput';
 import ContactUserById from './ContactUserById';
 import { useSearchUserId } from '@/hooks/useSearchUserId';
 import { useUserPresence } from '@/hooks/useUserPresence';
+import { useAutoTranslation } from '@/hooks/useAutoTranslation';
+import { AutoTranslatedMessageBubble } from '@/components/messaging/AutoTranslatedMessageBubble';
 import type { UserProfile } from '@/types/communication.types';
 import { format, isToday, isYesterday } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -60,6 +62,7 @@ export default function UniversalCommunicationHub({
   const { isMobile } = useResponsive();
   const { searchById, loading: searchLoading } = useSearchUserId();
   const { isUserOnline, getUserStatus } = useUserPresence();
+  const { userLanguage, isLoading: isTranslating } = useAutoTranslation({ autoTranslate: true });
   
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [showSearchById, setShowSearchById] = useState(false);
@@ -799,7 +802,14 @@ export default function UniversalCommunicationHub({
                               {msg.file_name || 'Fichier'}
                             </a>
                           )}
-                          {msg.content && (
+                          {msg.content && msg.type === 'text' && (
+                            <AutoTranslatedMessageBubble
+                              message={msg}
+                              userLanguage={userLanguage}
+                              isOwn={isOwn}
+                            />
+                          )}
+                          {msg.content && msg.type !== 'text' && (
                             <p className="text-sm leading-relaxed break-words">{msg.content}</p>
                           )}
                           <div className={cn(

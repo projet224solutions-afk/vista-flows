@@ -5,22 +5,59 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-// Langues supportées
+// Langues supportées - Liste complète pour tous les pays
 export const SUPPORTED_LANGUAGES = {
+  // Langues européennes
   fr: 'Français',
   en: 'English',
-  ar: 'العربية',
   es: 'Español',
   pt: 'Português',
   de: 'Deutsch',
   it: 'Italiano',
+  nl: 'Nederlands',
+  pl: 'Polski',
+  ru: 'Русский',
+  uk: 'Українська',
+  ro: 'Română',
+  el: 'Ελληνικά',
+  tr: 'Türkçe',
+  cs: 'Čeština',
+  sv: 'Svenska',
+  da: 'Dansk',
+  fi: 'Suomi',
+  no: 'Norsk',
+  hu: 'Magyar',
+  
+  // Langues africaines
+  ar: 'العربية',
   sw: 'Kiswahili',
   wo: 'Wolof',
   ha: 'Hausa',
   bm: 'Bambara',
   ff: 'Fulfulde',
   yo: 'Yorùbá',
-  ig: 'Igbo'
+  ig: 'Igbo',
+  am: 'አማርኛ',
+  zu: 'isiZulu',
+  xh: 'isiXhosa',
+  af: 'Afrikaans',
+  rw: 'Kinyarwanda',
+  sn: 'Shona',
+  
+  // Langues asiatiques
+  zh: '中文',
+  ja: '日本語',
+  ko: '한국어',
+  hi: 'हिन्दी',
+  bn: 'বাংলা',
+  vi: 'Tiếng Việt',
+  th: 'ไทย',
+  id: 'Bahasa Indonesia',
+  ms: 'Bahasa Melayu',
+  tl: 'Tagalog',
+  
+  // Autres
+  he: 'עברית'
 } as const;
 
 export type SupportedLanguage = keyof typeof SUPPORTED_LANGUAGES;
@@ -262,22 +299,86 @@ class TranslationService {
   }
 
   /**
-   * Détecter la langue d'un texte (heuristique simple)
+   * Détecter la langue d'un texte (heuristique améliorée)
    */
   detectLanguage(text: string): SupportedLanguage {
-    // Arabe
-    if (/[\u0600-\u06FF]/.test(text)) return 'ar';
-    // Français (accents spécifiques)
-    if (/[àâäéèêëïîôùûüç]/i.test(text) && !/[ãõ]/i.test(text)) return 'fr';
+    // Scripts non-latins
+    if (/[\u0600-\u06FF\u0750-\u077F]/.test(text)) return 'ar'; // Arabe
+    if (/[\u4E00-\u9FFF]/.test(text)) return 'zh'; // Chinois
+    if (/[\u3040-\u309F\u30A0-\u30FF]/.test(text)) return 'ja'; // Japonais (Hiragana/Katakana)
+    if (/[\uAC00-\uD7AF]/.test(text)) return 'ko'; // Coréen
+    if (/[\u0900-\u097F]/.test(text)) return 'hi'; // Hindi (Devanagari)
+    if (/[\u0980-\u09FF]/.test(text)) return 'bn'; // Bengali
+    if (/[\u0E00-\u0E7F]/.test(text)) return 'th'; // Thaï
+    if (/[\u0590-\u05FF]/.test(text)) return 'he'; // Hébreu
+    if (/[\u0400-\u04FF]/.test(text)) return 'ru'; // Cyrillique (russe par défaut)
+    if (/[\u1200-\u137F]/.test(text)) return 'am'; // Amharique (Éthiopien)
+    if (/[\u1E00-\u1EFF]/.test(text) && /\b(và|của|là|một)\b/i.test(text)) return 'vi'; // Vietnamien
+    
+    // Langues latines - basées sur des caractères/mots spécifiques
+    const lowerText = text.toLowerCase();
+    
+    // Français - caractères accentués et mots communs
+    if (/[àâäéèêëïîôùûüç]/i.test(text) && !/[ãõ]/i.test(text)) {
+      if (/\b(le|la|les|un|une|de|du|des|et|est|je|tu|il|elle|nous|vous|ils|elles|que|qui|dans|pour|avec|sur|pas|plus|bien|très|tout|cette|son|sa|ses|mais|ou|où|comme|aussi|encore|même)\b/i.test(lowerText)) {
+        return 'fr';
+      }
+    }
+    
     // Espagnol
-    if (/[áéíóúñ¿¡]/i.test(text)) return 'es';
+    if (/[áéíóúñ¿¡]/i.test(text)) {
+      if (/\b(el|la|los|las|un|una|de|del|en|que|es|no|se|con|por|para|su|sus|como|pero|más|este|esta|muy)\b/i.test(lowerText)) {
+        return 'es';
+      }
+    }
+    
     // Portugais
-    if (/[ãõç]/i.test(text)) return 'pt';
+    if (/[ãõç]/i.test(text) && /\b(o|a|os|as|um|uma|de|do|da|em|que|é|não|se|com|para|seu|sua|como|mas|mais|este|esta|muito)\b/i.test(lowerText)) {
+      return 'pt';
+    }
+    
     // Allemand
-    if (/[äöüß]/i.test(text)) return 'de';
+    if (/[äöüß]/i.test(text) && /\b(der|die|das|und|ist|von|für|mit|auf|nicht|ein|eine|sich|auch|es|ich|du|wir|sie)\b/i.test(lowerText)) {
+      return 'de';
+    }
+    
     // Italien
-    if (/[àèéìòù]/i.test(text) && /\b(che|non|per|con)\b/i.test(text)) return 'it';
-    // Défaut: anglais
+    if (/[àèéìòù]/i.test(text) && /\b(il|la|lo|le|gli|un|una|di|del|che|è|non|per|con|su|sono|essere|questo|questa|molto)\b/i.test(lowerText)) {
+      return 'it';
+    }
+    
+    // Néerlandais
+    if (/\b(de|het|een|van|en|in|is|dat|op|te|zijn|voor|met|niet|ook|aan|naar|maar|dan|als|er|wel)\b/i.test(lowerText) && /ij|oe|ui|eu/i.test(text)) {
+      return 'nl';
+    }
+    
+    // Polonais
+    if (/[ąćęłńóśźż]/i.test(text)) {
+      return 'pl';
+    }
+    
+    // Turc
+    if (/[ğışöüç]/i.test(text) && /\b(ve|bir|bu|için|ile|da|de|mi|ne|var|yok|ben|sen|o|biz|siz|onlar)\b/i.test(lowerText)) {
+      return 'tr';
+    }
+    
+    // Swahili
+    if (/\b(na|ya|wa|ni|kwa|hakuna|sana|mimi|wewe|yeye|sisi|nyinyi|wao|ndiyo|hapana|asante|karibu)\b/i.test(lowerText)) {
+      return 'sw';
+    }
+    
+    // Langues africaines ouest-africaines (détection basique)
+    if (/\b(dafa|ndax|nit|benn|am|nii|wax)\b/i.test(lowerText)) return 'wo'; // Wolof
+    if (/\b(shi|ya|da|ba|na|mai|yana|suna|gida|ruwa)\b/i.test(lowerText)) return 'ha'; // Hausa
+    if (/\b(ewo|ihe|onye|ndi|gi|ya|ka|na|si|di|bu)\b/i.test(lowerText)) return 'ig'; // Igbo
+    if (/\b(emi|iwo|oun|wa|ti|si|ni|ko|mo|se)\b/i.test(lowerText)) return 'yo'; // Yoruba
+    
+    // Bahasa Indonesia/Malay
+    if (/\b(dan|yang|di|ini|itu|dengan|untuk|pada|tidak|dari|akan|saya|anda|mereka|bisa|ada|sudah|juga|atau|tetapi)\b/i.test(lowerText)) {
+      return 'id';
+    }
+    
+    // Défaut: anglais pour les textes non identifiés
     return 'en';
   }
 

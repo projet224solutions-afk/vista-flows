@@ -1,32 +1,73 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Liste des langues supportées
+// Liste des langues supportées - complète pour tous les pays
 const SUPPORTED_LANGUAGES = [
-  'fr', 'en', 'ar', 'es', 'pt', 'de', 'it', 'sw', 'wo', 'ha', 'bm', 'ff', 'yo', 'ig'
+  // Européennes
+  'fr', 'en', 'es', 'pt', 'de', 'it', 'nl', 'pl', 'ru', 'uk', 'ro', 'el', 'tr', 'cs', 'sv', 'da', 'fi', 'no', 'hu',
+  // Africaines
+  'ar', 'sw', 'wo', 'ha', 'bm', 'ff', 'yo', 'ig', 'am', 'zu', 'xh', 'af', 'rw', 'sn',
+  // Asiatiques
+  'zh', 'ja', 'ko', 'hi', 'bn', 'vi', 'th', 'id', 'ms', 'tl',
+  // Autres
+  'he'
 ];
 
 // Noms des langues pour l'affichage
 const LANGUAGE_NAMES: Record<string, string> = {
+  // Européennes
   'fr': 'Français',
   'en': 'English',
-  'ar': 'العربية',
   'es': 'Español',
   'pt': 'Português',
   'de': 'Deutsch',
   'it': 'Italiano',
+  'nl': 'Nederlands',
+  'pl': 'Polski',
+  'ru': 'Русский',
+  'uk': 'Українська',
+  'ro': 'Română',
+  'el': 'Ελληνικά',
+  'tr': 'Türkçe',
+  'cs': 'Čeština',
+  'sv': 'Svenska',
+  'da': 'Dansk',
+  'fi': 'Suomi',
+  'no': 'Norsk',
+  'hu': 'Magyar',
+  // Africaines
+  'ar': 'العربية',
   'sw': 'Kiswahili',
   'wo': 'Wolof',
   'ha': 'Hausa',
   'bm': 'Bambara',
   'ff': 'Fulfulde',
   'yo': 'Yorùbá',
-  'ig': 'Igbo'
+  'ig': 'Igbo',
+  'am': 'አማርኛ',
+  'zu': 'isiZulu',
+  'xh': 'isiXhosa',
+  'af': 'Afrikaans',
+  'rw': 'Kinyarwanda',
+  'sn': 'Shona',
+  // Asiatiques
+  'zh': '中文',
+  'ja': '日本語',
+  'ko': '한국어',
+  'hi': 'हिन्दी',
+  'bn': 'বাংলা',
+  'vi': 'Tiếng Việt',
+  'th': 'ไทย',
+  'id': 'Bahasa Indonesia',
+  'ms': 'Bahasa Melayu',
+  'tl': 'Tagalog',
+  // Autres
+  'he': 'עברית'
 };
 
 serve(async (req: Request) => {
