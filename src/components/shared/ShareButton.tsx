@@ -48,7 +48,7 @@ interface ShareButtonProps {
   size?: "default" | "sm" | "lg" | "icon";
   className?: string;
   /** Type de ressource pour le tracking */
-  resourceType?: "shop" | "product" | "service" | "other";
+  resourceType?: "shop" | "product" | "service" | "digital_product" | "other";
   /** ID de la ressource pour le tracking */
   resourceId?: string;
   /** Utiliser les short URLs avec tracking */

@@ -180,7 +180,7 @@ export default function ShortLinkRedirect() {
           <CardHeader className="text-center">
             <CardTitle className="text-lg">{linkInfo.title}</CardTitle>
             <CardDescription>
-              Cliquez pour accéder à {linkInfo.type === 'shop' ? 'cette boutique' : linkInfo.type === 'product' ? 'ce produit' : 'cette page'}
+              Cliquez pour accéder à {linkInfo.type === 'shop' ? 'cette boutique' : (linkInfo.type === 'product' || linkInfo.type === 'digital_product') ? 'ce produit' : 'cette page'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">

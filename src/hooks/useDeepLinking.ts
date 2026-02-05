@@ -169,7 +169,7 @@ interface SharedLink {
 export async function createShortLink(params: {
   originalUrl: string;
   title: string;
-  type: 'shop' | 'product' | 'service' | 'other';
+  type: 'shop' | 'product' | 'service' | 'digital_product' | 'other';
   resourceId?: string;
 }): Promise<string | null> {
   try {
