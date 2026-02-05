@@ -35,6 +35,11 @@ function toOgMetaShortUrl(shortCode: string, baseOrigin?: string): string {
   return `${OG_META_FUNCTION_URL}?type=short&code=${encodeURIComponent(shortCode)}${base}`;
 }
 
+function toOgMetaDirectUrl(type: string, id: string, baseOrigin?: string): string {
+  const base = baseOrigin ? `&base=${encodeURIComponent(baseOrigin)}` : '';
+  return `${OG_META_FUNCTION_URL}?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}${base}`;
+}
+
 interface ShareButtonProps {
   title: string;
   text?: string;
@@ -48,6 +53,8 @@ interface ShareButtonProps {
   resourceId?: string;
   /** Utiliser les short URLs avec tracking */
   useShortUrl?: boolean;
+  /** Type spécifique pour l'og-meta (product, shop, digital_product) */
+  ogType?: "product" | "shop" | "digital_product";
 }
 
 export function ShareButton({
@@ -60,6 +67,7 @@ export function ShareButton({
   resourceType = "other",
   resourceId,
   useShortUrl = false,
+  ogType,
 }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -85,6 +93,9 @@ export function ShareButton({
       // IMPORTANT: pour l'aperçu (WhatsApp/Facebook), il faut une page HTML avec OG tags.
       // Les bots ne lisent pas les meta tags générés par React. On partage donc l'Edge Function og-meta.
       const code = shortUrl ? extractShortCodeFromUrl(shortUrl) : null;
+      
+      // Si on a un short code, utiliser l'URL og-meta avec short code
+      // Sinon, si on a un ogType et resourceId, utiliser l'URL og-meta directe
       if (code) {
         const baseOrigin = (() => {
           try {
@@ -94,6 +105,18 @@ export function ShareButton({
           }
         })();
         return toOgMetaShortUrl(code, baseOrigin);
+      }
+
+      // Fallback: si pas de short code mais ogType spécifié, utiliser og-meta direct
+      if (ogType && resourceId) {
+        const baseOrigin = (() => {
+          try {
+            return new URL(shareUrl).origin;
+          } catch {
+            return undefined;
+          }
+        })();
+        return toOgMetaDirectUrl(ogType, resourceId, baseOrigin);
       }
 
       return shortUrl || shareUrl;

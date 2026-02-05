@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
     if (type === "shop" && id) {
       const { data: vendor } = await supabase
         .from("vendors")
-        .select("business_name, description, logo_url, cover_image_url, slug")
+        .select("business_name, description, logo_url, cover_image_url, shop_slug")
         .eq("id", id)
         .maybeSingle();
 
@@ -174,8 +174,31 @@ Deno.serve(async (req) => {
           title: vendor.business_name,
           description: vendor.description || `Visitez la boutique ${vendor.business_name} sur 224Solutions`,
           image: vendor.cover_image_url || vendor.logo_url || DEFAULT_IMAGE,
-          url: `${baseOrigin}/boutique/${vendor.slug || id}`,
+        url: `${baseOrigin}/boutique/${vendor.shop_slug || id}`,
           type: "website",
+        };
+      }
+    }
+
+    // Handle digital product lookup
+    if (type === "digital_product" && id) {
+      const { data: digitalProduct } = await supabase
+        .from("digital_products")
+        .select("title, description, short_description, images, price")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (digitalProduct) {
+        const image = Array.isArray(digitalProduct.images) && digitalProduct.images.length > 0 
+          ? digitalProduct.images[0] 
+          : DEFAULT_IMAGE;
+
+        ogData = {
+          title: digitalProduct.title,
+          description: digitalProduct.short_description || digitalProduct.description || `${digitalProduct.price?.toLocaleString()} GNF - Produit numérique sur 224Solutions`,
+          image,
+          url: `${baseOrigin}/digital-product/${id}`,
+          type: "product",
         };
       }
     }

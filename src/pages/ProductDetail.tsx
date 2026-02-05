@@ -414,6 +414,7 @@ export default function ProductDetail() {
                 resourceType="product"
                 resourceId={product.id}
                 useShortUrl={true}
+                ogType="product"
               />
             </div>
 
@@ -444,6 +445,7 @@ export default function ProductDetail() {
                     resourceType="shop"
                     resourceId={product.vendors.id}
                     useShortUrl={true}
+                    ogType="shop"
                   />
                 </div>
               </Card>
