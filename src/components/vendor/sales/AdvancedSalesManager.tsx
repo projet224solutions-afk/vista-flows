@@ -17,7 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { 
   ShoppingCart, RotateCcw, CreditCard, Percent, Plus, 
-  Package, Users, Calendar, Search, Banknote, CheckCircle, Eye
+  Package, Users, Calendar, Search, Banknote, CheckCircle, Eye, Check
 } from 'lucide-react';
 
 // Type produit pour la sélection
@@ -767,8 +767,8 @@ export default function AdvancedSalesManager() {
                               className="pl-8"
                             />
                           </div>
-                          <ScrollArea className="h-48">
-                            <div className="space-y-1">
+                          <ScrollArea className="h-56">
+                            <div className="grid grid-cols-2 gap-2">
                               {vendorProducts
                                 .filter(p => {
                                   const matchesSearch = p.name.toLowerCase().includes(creditProductSearch.toLowerCase());
@@ -780,8 +780,8 @@ export default function AdvancedSalesManager() {
                                   return (
                                     <div
                                       key={product.id}
-                                      className={`flex items-center space-x-2 p-2 rounded cursor-pointer hover:bg-muted/50 ${
-                                        isSelected ? 'bg-primary/10 border border-primary' : ''
+                                      className={`relative p-1.5 rounded-lg cursor-pointer transition-all hover:bg-muted/50 ${
+                                        isSelected ? 'bg-primary/10 ring-2 ring-primary' : 'bg-muted/20'
                                       }`}
                                       onClick={() => {
                                         if (isSelected) {
@@ -797,33 +797,42 @@ export default function AdvancedSalesManager() {
                                         }
                                       }}
                                     >
-                                      <Checkbox checked={isSelected} />
-                                      {product.images && product.images[0] ? (
-                                        <img 
-                                          src={product.images[0]} 
-                                          alt={product.name}
-                                          className="w-10 h-10 rounded object-cover flex-shrink-0"
-                                        />
-                                      ) : (
-                                        <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                                          <Package className="w-5 h-5 text-muted-foreground" />
+                                      {/* Checkbox indicator */}
+                                      {isSelected && (
+                                        <div className="absolute top-1 right-1 z-10 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                          <Check className="w-3 h-3 text-primary-foreground" />
                                         </div>
                                       )}
-                                      <div className="flex-1 min-w-0">
-                                        <span className="text-sm block truncate">{product.name}</span>
-                                        <span className="text-xs text-muted-foreground">{product.price.toLocaleString()} GNF</span>
+                                      
+                                      {/* Product image */}
+                                      <div className="aspect-square rounded-md overflow-hidden mb-1.5 bg-muted">
+                                        {product.images && product.images[0] ? (
+                                          <img 
+                                            src={product.images[0]} 
+                                            alt={product.name}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        ) : (
+                                          <div className="w-full h-full flex items-center justify-center">
+                                            <Package className="w-8 h-8 text-muted-foreground" />
+                                          </div>
+                                        )}
                                       </div>
+                                      
+                                      {/* Product info */}
+                                      <p className="text-xs font-medium truncate">{product.name}</p>
+                                      <p className="text-[10px] text-primary font-bold">{product.price.toLocaleString()} GNF</p>
                                     </div>
                                   );
                                 })}
-                              {vendorProducts.filter(p => {
-                                const matchesSearch = p.name.toLowerCase().includes(creditProductSearch.toLowerCase());
-                                const matchesCategory = !newCredit.selected_category || p.category_id === newCredit.selected_category;
-                                return matchesSearch && matchesCategory;
-                              }).length === 0 && (
-                                <p className="text-sm text-muted-foreground text-center py-4">Aucun produit trouvé</p>
-                              )}
                             </div>
+                            {vendorProducts.filter(p => {
+                              const matchesSearch = p.name.toLowerCase().includes(creditProductSearch.toLowerCase());
+                              const matchesCategory = !newCredit.selected_category || p.category_id === newCredit.selected_category;
+                              return matchesSearch && matchesCategory;
+                            }).length === 0 && (
+                              <p className="text-sm text-muted-foreground text-center py-4">Aucun produit trouvé</p>
+                            )}
                           </ScrollArea>
                         </div>
                       </div>
