@@ -911,77 +911,79 @@ export default function OrderManagement() {
               </div>
             ) : (
               orders.filter(o => o.source === 'pos').map((order) => (
-                <div key={order.id} className="border-2 border-purple-200 rounded-lg p-6 bg-white hover:shadow-lg transition-all">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <h3 className="font-bold text-xl text-purple-700">{order.order_number}</h3>
-                        <Badge variant="outline" className="text-xs">
-                          ID: {order.id.slice(0, 8)}
-                        </Badge>
-                        <Badge className="bg-purple-500 text-white">
-                          🛒 Vente POS
-                        </Badge>
-                      </div>
-                      
-                      {/* Informations Client */}
-                      <div className="bg-muted/50 rounded-lg p-4 mb-4 space-y-2">
-                        <h4 className="font-semibold text-sm text-primary mb-2 flex items-center gap-2">
-                          <User className="w-4 h-4" />
-                          Informations Client
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <span className="text-muted-foreground">Nom:</span>
-                            <span className="ml-2 font-semibold">
-                              {order.customers?.profiles?.full_name 
-                                || `${order.customers?.profiles?.first_name || ''} ${order.customers?.profiles?.last_name || ''}`.trim()
-                                || 'Client'}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">ID Client:</span>
-                            <span className="ml-2 font-mono text-xs font-semibold bg-muted px-2 py-0.5 rounded">
-                              {order.customers?.id 
-                                ? `CLI${order.customers.id.slice(-4).toUpperCase()}`
-                                : 'N/A'}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Téléphone:</span>
-                            <span className="ml-2 font-semibold">
-                              {order.customers?.profiles?.phone || 'Non renseigné'}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Email:</span>
-                            <span className="ml-2 font-semibold">
-                              {order.customers?.profiles?.email || 'Non renseigné'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Date de vente */}
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>Vendu le {new Date(order.created_at).toLocaleDateString('fr-FR', {
-                          day: '2-digit',
-                          month: 'long',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}</span>
-                      </div>
+                <div key={order.id} className="border-2 border-purple-200 rounded-lg p-3 sm:p-6 bg-white hover:shadow-lg transition-all">
+                  {/* Mobile-first header layout */}
+                  <div className="space-y-3 mb-4">
+                    {/* Order number and ID */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-bold text-base sm:text-xl text-purple-700 break-all">{order.order_number}</h3>
+                      <Badge variant="outline" className="text-[10px] sm:text-xs shrink-0">
+                        ID: {order.id.slice(0, 8)}
+                      </Badge>
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge className={statusColors[order.status]}>
+                    
+                    {/* Badges - wrap on mobile */}
+                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                      <Badge className="bg-purple-500 text-white text-[10px] sm:text-xs shrink-0">
+                        🛒 Vente POS
+                      </Badge>
+                      <Badge className={`${statusColors[order.status]} text-[10px] sm:text-xs shrink-0`}>
                         {statusLabels[order.status]}
                       </Badge>
-                      <Badge className={paymentStatusColors[order.payment_status]}>
+                      <Badge className={`${paymentStatusColors[order.payment_status]} text-[10px] sm:text-xs shrink-0`}>
                         {paymentStatusLabels[order.payment_status]}
                       </Badge>
                     </div>
+                  </div>
+                      
+                  {/* Informations Client - responsive */}
+                  <div className="bg-muted/50 rounded-lg p-3 sm:p-4 mb-4 space-y-2">
+                    <h4 className="font-semibold text-xs sm:text-sm text-primary mb-2 flex items-center gap-2">
+                      <User className="w-3 h-3 sm:w-4 sm:h-4" />
+                      Informations Client
+                    </h4>
+                    <div className="space-y-2 text-xs sm:text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Nom:</span>
+                        <span className="ml-2 font-semibold break-all">
+                          {order.customers?.profiles?.full_name 
+                            || `${order.customers?.profiles?.first_name || ''} ${order.customers?.profiles?.last_name || ''}`.trim()
+                            || 'Client'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">ID Client:</span>
+                        <span className="ml-2 font-mono text-[10px] sm:text-xs font-semibold bg-muted px-1.5 py-0.5 rounded">
+                          {order.customers?.id 
+                            ? `CLI${order.customers.id.slice(-4).toUpperCase()}`
+                            : 'N/A'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Téléphone:</span>
+                        <span className="ml-2 font-semibold">
+                          {order.customers?.profiles?.phone || 'Non renseigné'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Email:</span>
+                        <span className="ml-2 font-semibold break-all">
+                          {order.customers?.profiles?.email || 'Non renseigné'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Date de vente */}
+                  <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-3">
+                    <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span>Vendu le {new Date(order.created_at).toLocaleDateString('fr-FR', {
+                      day: '2-digit',
+                      month: 'long',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}</span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -1135,84 +1137,30 @@ export default function OrderManagement() {
                 if (onlineStatusFilter === 'delivered') return ['delivered', 'completed'].includes(order.status);
                 return true;
               }).map((order) => (
-                <div key={order.id} className="border-2 border-blue-200 rounded-lg p-6 bg-white hover:shadow-lg transition-all">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <h3 className="font-bold text-xl text-blue-700">{order.order_number}</h3>
-                        <Badge variant="outline" className="text-xs">
-                          ID: {order.id.slice(0, 8)}
-                        </Badge>
-                        <Badge className="bg-blue-500 text-white">
-                          📦 Commande En Ligne
-                        </Badge>
-                      </div>
-                      
-                      {/* Informations Client */}
-                      {order.customers && (
-                        <div className="bg-muted/50 rounded-lg p-4 mb-4 space-y-2">
-                          <h4 className="font-semibold text-sm text-primary mb-2 flex items-center gap-2">
-                            <User className="w-4 h-4" />
-                            Informations Client
-                          </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                            <div>
-                              <span className="text-muted-foreground">Nom:</span>
-                              <span className="ml-2 font-semibold">
-                                {order.customers?.profiles?.full_name 
-                                  || `${order.customers?.profiles?.first_name || ''} ${order.customers?.profiles?.last_name || ''}`.trim()
-                                  || 'Client'}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">ID Client:</span>
-                              <span className="ml-2 font-mono text-xs font-semibold bg-muted px-2 py-0.5 rounded">
-                                {order.customers?.id 
-                                  ? `CLI${order.customers.id.slice(-4).toUpperCase()}`
-                                  : 'N/A'}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Téléphone:</span>
-                              <span className="ml-2 font-semibold">
-                                {order.customers?.profiles?.phone || 'Non renseigné'}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Email:</span>
-                              <span className="ml-2 font-semibold">
-                                {order.customers?.profiles?.email || 'Non renseigné'}
-                              </span>
-                            </div>
-                          </div>
-                          {/* Adresse de livraison géolocalisée */}
-                          <div className="mt-3 pt-3 border-t border-border/50">
-                            <GeocodedAddress address={order.shipping_address} />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Date de commande */}
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>Commandé le {new Date(order.created_at).toLocaleDateString('fr-FR', {
-                          day: '2-digit',
-                          month: 'long',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}</span>
-                      </div>
+                <div key={order.id} className="border-2 border-blue-200 rounded-lg p-3 sm:p-6 bg-white hover:shadow-lg transition-all">
+                  {/* Mobile-first header layout */}
+                  <div className="space-y-3 mb-4">
+                    {/* Order number and ID */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-bold text-base sm:text-xl text-blue-700 break-all">{order.order_number}</h3>
+                      <Badge variant="outline" className="text-[10px] sm:text-xs shrink-0">
+                        ID: {order.id.slice(0, 8)}
+                      </Badge>
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge className={statusColors[order.status]}>
+                    
+                    {/* Badges - wrap on mobile */}
+                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                      <Badge className="bg-blue-500 text-white text-[10px] sm:text-xs shrink-0">
+                        📦 Commande En Ligne
+                      </Badge>
+                      <Badge className={`${statusColors[order.status]} text-[10px] sm:text-xs shrink-0`}>
                         {statusLabels[order.status]}
                       </Badge>
-                      <Badge className={paymentStatusColors[order.payment_status]}>
+                      <Badge className={`${paymentStatusColors[order.payment_status]} text-[10px] sm:text-xs shrink-0`}>
                         {paymentStatusLabels[order.payment_status]}
                       </Badge>
                       {order.escrow && (
-                        <Badge className={
+                        <Badge className={`text-[10px] sm:text-xs shrink-0 ${
                           order.escrow.status === 'pending' || order.escrow.status === 'held' 
                             ? 'bg-orange-100 text-orange-800 border-orange-300 border-2' :
                           order.escrow.status === 'released' 
@@ -1220,10 +1168,10 @@ export default function OrderManagement() {
                           order.escrow.status === 'refunded' 
                             ? 'bg-gray-100 text-gray-800' :
                           'bg-red-100 text-red-800'
-                        }>
+                        }`}>
                           <Shield className="w-3 h-3 mr-1" />
-                          {(order.escrow.status === 'pending' || order.escrow.status === 'held') && '🔒 Paiement sécurisé (Escrow)'}
-                          {order.escrow.status === 'released' && '✅ Paiement reçu'}
+                          {(order.escrow.status === 'pending' || order.escrow.status === 'held') && '🔒 Escrow'}
+                          {order.escrow.status === 'released' && '✅ Reçu'}
                           {order.escrow.status === 'refunded' && '↩️ Remboursé'}
                           {order.escrow.status === 'dispute' && '⚠️ Litige'}
                         </Badge>
@@ -1233,12 +1181,67 @@ export default function OrderManagement() {
                        order.payment_method === 'cash' && 
                        order.payment_status === 'pending' &&
                        (order.shipping_address as any)?.is_cod === true && (
-                        <Badge className="bg-amber-100 text-amber-800 border-amber-300 border-2">
-                          <Truck className="w-3 h-3 mr-1" />
+                        <Badge className="bg-amber-100 text-amber-800 border-amber-300 border-2 text-[10px] sm:text-xs shrink-0">
                           💵 Paiement à la livraison
                         </Badge>
                       )}
                     </div>
+                  </div>
+                  
+                  {/* Informations Client - responsive */}
+                  {order.customers && (
+                    <div className="bg-muted/50 rounded-lg p-3 sm:p-4 mb-4 space-y-2">
+                      <h4 className="font-semibold text-xs sm:text-sm text-primary mb-2 flex items-center gap-2">
+                        <User className="w-3 h-3 sm:w-4 sm:h-4" />
+                        Informations Client
+                      </h4>
+                      <div className="space-y-2 text-xs sm:text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Nom:</span>
+                          <span className="ml-2 font-semibold break-all">
+                            {order.customers?.profiles?.full_name 
+                              || `${order.customers?.profiles?.first_name || ''} ${order.customers?.profiles?.last_name || ''}`.trim()
+                              || 'Client'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">ID Client:</span>
+                          <span className="ml-2 font-mono text-[10px] sm:text-xs font-semibold bg-muted px-1.5 py-0.5 rounded">
+                            {order.customers?.id 
+                              ? `CLI${order.customers.id.slice(-4).toUpperCase()}`
+                              : 'N/A'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Téléphone:</span>
+                          <span className="ml-2 font-semibold">
+                            {order.customers?.profiles?.phone || 'Non renseigné'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Email:</span>
+                          <span className="ml-2 font-semibold break-all">
+                            {order.customers?.profiles?.email || 'Non renseigné'}
+                          </span>
+                        </div>
+                      </div>
+                      {/* Adresse de livraison géolocalisée */}
+                      <div className="mt-3 pt-3 border-t border-border/50">
+                        <GeocodedAddress address={order.shipping_address} />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Date de commande */}
+                  <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-3">
+                    <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span>Commandé le {new Date(order.created_at).toLocaleDateString('fr-FR', {
+                      day: '2-digit',
+                      month: 'long',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}</span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
