@@ -345,6 +345,7 @@ export default function Marketplace() {
                     resourceType="shop"
                     resourceId={vendorId}
                     useShortUrl={true}
+                    ogType="shop"
                   />
                   <Button 
                     variant="ghost" 

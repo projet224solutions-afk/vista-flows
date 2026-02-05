@@ -230,10 +230,11 @@ export default function DigitalProductDetail() {
           <ShareButton
             title={product.title}
             text={`Découvrez ${product.title} sur 224 Solutions`}
-            url={`${window.location.origin}/product/${product.id}?type=digital`}
+          url={`${window.location.origin}/digital-product/${product.id}`}
             resourceType="product"
             resourceId={product.id}
             useShortUrl={true}
+          ogType="digital_product"
           />
         </div>
       </header>
