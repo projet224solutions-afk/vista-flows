@@ -53,6 +53,7 @@ const COMMON_CURRENCIES = [
 export function usePriceConverter(): UsePriceConverterResult {
   const { geoInfo, loading: geoLoading } = useGeoDetection();
   
+  // Utiliser la devise du contexte de devise (synchronisé avec géo)
   const userCurrency = geoInfo?.currency || 'GNF';
   const userCountry = geoInfo?.country || 'GN';
 

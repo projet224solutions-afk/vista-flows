@@ -5,6 +5,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { translations, supportedLanguages, defaultLanguage } from './translations';
+import { getLanguageForCountry, isRTLLanguage } from '@/data/countryMappings';
 
 interface LanguageContextType {
   language: string;
@@ -19,46 +20,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 const STORAGE_KEY = 'app_language';
 const COUNTRY_KEY = 'user_country';
-const GEO_LANG_KEY = 'geo_detected_language';
-
-// Mapping pays -> langue par défaut
-const COUNTRY_TO_LANGUAGE: Record<string, string> = {
-  // Europe
-  DE: 'de', AT: 'de', CH: 'de', // Allemand
-  FR: 'fr', BE: 'fr', LU: 'fr', MC: 'fr', // Français
-  ES: 'es', MX: 'es', AR: 'es', CO: 'es', CL: 'es', // Espagnol
-  PT: 'pt', BR: 'pt', // Portugais
-  IT: 'it', // Italien
-  NL: 'nl', // Néerlandais
-  PL: 'pl', // Polonais
-  GB: 'en', US: 'en', CA: 'en', AU: 'en', NZ: 'en', IE: 'en', // Anglais
-  RU: 'ru', BY: 'ru', // Russe
-  UA: 'uk', // Ukrainien
-  TR: 'tr', // Turc
-  
-  // Asie
-  CN: 'zh', TW: 'zh', HK: 'zh', // Chinois
-  JP: 'ja', // Japonais
-  KR: 'ko', // Coréen
-  IN: 'hi', // Hindi
-  TH: 'th', // Thaï
-  VN: 'vi', // Vietnamien
-  ID: 'id', // Indonésien
-  
-  // Moyen-Orient
-  SA: 'ar', AE: 'ar', EG: 'ar', MA: 'ar', DZ: 'ar', TN: 'ar', // Arabe
-  IL: 'he', // Hébreu
-  IR: 'fa', // Persan
-  
-  // Afrique
-  GN: 'fr', SN: 'fr', ML: 'fr', CI: 'fr', BF: 'fr', NE: 'fr', TG: 'fr', BJ: 'fr', // Afrique francophone
-  SL: 'en', LR: 'en', GM: 'en', GW: 'pt', CV: 'pt', MR: 'ar', // Afrique de l'Ouest autres
-  NG: 'en', GH: 'en', ZA: 'en', // Afrique anglophone
-  TZ: 'sw', KE: 'sw', // Swahili (Kenya, Tanzanie)
-  
-  // Bangladesh
-  BD: 'bn',
-};
+const GEO_CACHE_KEY = 'geo_detection_cache';
 
 // Détecte la langue du navigateur
 const detectBrowserLanguage = (): string => {
@@ -78,10 +40,11 @@ const detectCountryAndLanguage = async (): Promise<{ country: string | null; lan
   try {
     // Vérifier le cache d'abord
     const cachedCountry = localStorage.getItem(COUNTRY_KEY);
-    const cachedLang = localStorage.getItem(GEO_LANG_KEY);
     
-    if (cachedCountry && cachedLang) {
-      return { country: cachedCountry, language: cachedLang };
+    if (cachedCountry) {
+      const language = getLanguageForCountry(cachedCountry);
+      const isSupported = supportedLanguages.some(l => l.code === language);
+      return { country: cachedCountry, language: isSupported ? language : null };
     }
 
     // Utiliser ipapi.co (gratuit, fiable)
@@ -97,15 +60,11 @@ const detectCountryAndLanguage = async (): Promise<{ country: string | null; lan
       if (country) {
         localStorage.setItem(COUNTRY_KEY, country);
         
-        // Déterminer la langue basée sur le pays
-        const suggestedLang = COUNTRY_TO_LANGUAGE[country.toUpperCase()];
+        // Utiliser notre mapping centralisé
+        const suggestedLang = getLanguageForCountry(country);
         const language = suggestedLang && supportedLanguages.some(l => l.code === suggestedLang) 
           ? suggestedLang 
           : null;
-        
-        if (language) {
-          localStorage.setItem(GEO_LANG_KEY, language);
-        }
         
         return { country, language };
       }
@@ -203,15 +162,16 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     return langTranslations[key] || translations[defaultLanguage]?.[key] || key;
   }, [language]);
 
-  // Vérifier si RTL
-  const isRTL = supportedLanguages.find(l => l.code === language)?.dir === 'rtl';
+  // Vérifier si RTL - utiliser notre helper centralisé
+  const currentIsRTL = isRTLLanguage(language) || 
+    supportedLanguages.find(l => l.code === language)?.dir === 'rtl';
 
   const value: LanguageContextType = {
     language,
     setLanguage,
     t,
     userCountry,
-    isRTL,
+    isRTL: currentIsRTL,
     supportedLanguages
   };
 

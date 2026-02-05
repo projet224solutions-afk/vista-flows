@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { 
+  COUNTRY_TO_CURRENCY, 
+  COUNTRY_TO_LANGUAGE, 
+  getCurrencyForCountry, 
+  getLanguageForCountry 
+} from '@/data/countryMappings';
 
 interface GeoInfo {
   country: string;
@@ -19,39 +25,6 @@ interface UseGeoDetectionResult {
   /** Demander la localisation GPS (avec consentement) */
   requestGpsLocation: () => Promise<boolean>;
 }
-
-// Mapping pays -> devise
-const COUNTRY_TO_CURRENCY: Record<string, string> = {
-  GN: 'GNF', SN: 'XOF', ML: 'XOF', CI: 'XOF', BF: 'XOF', NE: 'XOF', TG: 'XOF', BJ: 'XOF',
-  SL: 'SLL', LR: 'LRD', GM: 'GMD', GW: 'XOF', CV: 'CVE', MR: 'MRU', // Afrique de l'Ouest
-  CM: 'XAF', GA: 'XAF', TD: 'XAF', CF: 'XAF', CG: 'XAF', GQ: 'XAF',
-  NG: 'NGN', GH: 'GHS', KE: 'KES', ZA: 'ZAR', EG: 'EGP', MA: 'MAD', TN: 'TND', DZ: 'DZD',
-  FR: 'EUR', DE: 'EUR', IT: 'EUR', ES: 'EUR', PT: 'EUR', BE: 'EUR', NL: 'EUR', AT: 'EUR',
-  US: 'USD', CA: 'CAD', GB: 'GBP', CH: 'CHF', JP: 'JPY', CN: 'CNY', IN: 'INR',
-  AE: 'AED', SA: 'SAR', QA: 'QAR', KW: 'KWD',
-  AU: 'AUD', NZ: 'NZD', BR: 'BRL', MX: 'MXN', AR: 'ARS',
-  RU: 'RUB', TR: 'TRY', PL: 'PLN', SE: 'SEK', NO: 'NOK', DK: 'DKK',
-};
-
-// Mapping pays -> langue
-const COUNTRY_TO_LANGUAGE: Record<string, string> = {
-  GN: 'fr', SN: 'fr', ML: 'fr', CI: 'fr', BF: 'fr', NE: 'fr', TG: 'fr', BJ: 'fr',
-  SL: 'en', LR: 'en', GM: 'en', GW: 'pt', CV: 'pt', MR: 'ar', // Afrique de l'Ouest
-  CM: 'fr', GA: 'fr', TD: 'fr', CF: 'fr', CG: 'fr', FR: 'fr', BE: 'fr', CH: 'fr', CA: 'fr',
-  DE: 'de', AT: 'de',
-  US: 'en', GB: 'en', AU: 'en', NZ: 'en', NG: 'en', GH: 'en', KE: 'en', ZA: 'en', IN: 'en',
-  ES: 'es', MX: 'es', AR: 'es',
-  PT: 'pt', BR: 'pt',
-  IT: 'it',
-  NL: 'nl',
-  JP: 'ja',
-  CN: 'zh',
-  RU: 'ru',
-  SA: 'ar', AE: 'ar', EG: 'ar', MA: 'ar', DZ: 'ar', TN: 'ar',
-  TR: 'tr',
-  PL: 'pl',
-  SE: 'sv', NO: 'no', DK: 'da',
-};
 
 // Cache pour éviter les appels répétés
 const GEO_CACHE_KEY = 'geo_detection_cache';
@@ -184,8 +157,9 @@ export function useGeoDetection(): UseGeoDetectionResult {
         if (response.ok) {
           const data = await response.json();
           const country = data.country_code || 'GN';
-          const currency = data.currency || COUNTRY_TO_CURRENCY[country] || 'GNF';
-          const language = COUNTRY_TO_LANGUAGE[country] || 'fr';
+          // Utiliser notre mapping complet, avec fallback sur l'API
+          const currency = getCurrencyForCountry(country) || data.currency || 'GNF';
+          const language = getLanguageForCountry(country) || 'fr';
           
           const info: GeoInfo = {
             country,

@@ -13,6 +13,7 @@ import { ThemeProvider } from "next-themes";
 const MerchantOnboarding = lazyWithRetry(() => import("@/components/onboarding/MerchantOnboarding"));
 const WebRTCCallProvider = lazyWithRetry(() => import("@/components/communication/WebRTCCallProvider"));
 import { CartProvider } from "@/contexts/CartContext";
+import { CurrencyProvider } from "@/context/CurrencyContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
@@ -196,9 +197,10 @@ function App() {
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
         <BrowserRouter>
           <LanguageProvider>
-            <AuthProvider>
-              <OAuthPasswordGate />
-              <CartProvider>
+            <CurrencyProvider>
+              <AuthProvider>
+                <OAuthPasswordGate />
+                <CartProvider>
                 <TooltipProvider>
                 <Toaster />
                 <Sonner />
@@ -532,6 +534,7 @@ function App() {
         </TooltipProvider>
       </CartProvider>
     </AuthProvider>
+    </CurrencyProvider>
     </LanguageProvider>
     </BrowserRouter>
   </ThemeProvider>
