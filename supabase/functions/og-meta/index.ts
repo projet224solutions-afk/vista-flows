@@ -106,6 +106,27 @@ Deno.serve(async (req) => {
               type: "product",
             };
           }
+        } else if (link.link_type === "digital_product" && link.resource_id) {
+          // Handle digital products
+          const { data: digitalProduct } = await supabase
+            .from("digital_products")
+            .select("title, description, short_description, images, price")
+            .eq("id", link.resource_id)
+            .maybeSingle();
+
+          if (digitalProduct) {
+            const image = Array.isArray(digitalProduct.images) && digitalProduct.images.length > 0 
+              ? digitalProduct.images[0] 
+              : DEFAULT_IMAGE;
+            
+            ogData = {
+              title: digitalProduct.title || link.title,
+              description: digitalProduct.short_description || digitalProduct.description || `Produit numérique sur 224Solutions - ${digitalProduct.price?.toLocaleString()} GNF`,
+              image,
+              url: `${baseOrigin}/s/${shortCode}`,
+              type: "product",
+            };
+          }
         } else if (link.link_type === "shop" && link.resource_id) {
           const { data: vendor } = await supabase
             .from("vendors")
