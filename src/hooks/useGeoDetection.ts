@@ -23,6 +23,7 @@ interface UseGeoDetectionResult {
 // Mapping pays -> devise
 const COUNTRY_TO_CURRENCY: Record<string, string> = {
   GN: 'GNF', SN: 'XOF', ML: 'XOF', CI: 'XOF', BF: 'XOF', NE: 'XOF', TG: 'XOF', BJ: 'XOF',
+  SL: 'SLL', LR: 'LRD', GM: 'GMD', GW: 'XOF', CV: 'CVE', MR: 'MRU', // Afrique de l'Ouest
   CM: 'XAF', GA: 'XAF', TD: 'XAF', CF: 'XAF', CG: 'XAF', GQ: 'XAF',
   NG: 'NGN', GH: 'GHS', KE: 'KES', ZA: 'ZAR', EG: 'EGP', MA: 'MAD', TN: 'TND', DZ: 'DZD',
   FR: 'EUR', DE: 'EUR', IT: 'EUR', ES: 'EUR', PT: 'EUR', BE: 'EUR', NL: 'EUR', AT: 'EUR',
@@ -35,6 +36,7 @@ const COUNTRY_TO_CURRENCY: Record<string, string> = {
 // Mapping pays -> langue
 const COUNTRY_TO_LANGUAGE: Record<string, string> = {
   GN: 'fr', SN: 'fr', ML: 'fr', CI: 'fr', BF: 'fr', NE: 'fr', TG: 'fr', BJ: 'fr',
+  SL: 'en', LR: 'en', GM: 'en', GW: 'pt', CV: 'pt', MR: 'ar', // Afrique de l'Ouest
   CM: 'fr', GA: 'fr', TD: 'fr', CF: 'fr', CG: 'fr', FR: 'fr', BE: 'fr', CH: 'fr', CA: 'fr',
   DE: 'de', AT: 'de',
   US: 'en', GB: 'en', AU: 'en', NZ: 'en', NG: 'en', GH: 'en', KE: 'en', ZA: 'en', IN: 'en',
