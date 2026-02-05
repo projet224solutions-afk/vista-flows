@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ShareButton } from "@/components/shared/ShareButton";
 import { LocalPrice } from "@/components/ui/LocalPrice";
+import { useAuth } from "@/hooks/useAuth";
 
 interface DigitalProductWithVendor {
   id: string;
@@ -53,9 +54,13 @@ export default function DigitalProductDetail() {
   const [product, setProduct] = useState<DigitalProductWithVendor | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const { user } = useAuth();
 
   // Utiliser l'ID depuis les params ou depuis le query string
   const productId = id || searchParams.get('id');
+
+  // Vérifier si l'utilisateur actuel est le vendeur du produit
+  const isVendorOwner = user?.id && product?.merchant_id === user.id;
 
   useEffect(() => {
     if (productId) {
@@ -296,10 +301,12 @@ export default function DigitalProductDetail() {
               )}
 
               <div className="flex items-center gap-4 mb-4">
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <Eye className="w-4 h-4" />
-                  <span className="text-sm">{product.views_count || 0} vues</span>
-                </div>
+                {isVendorOwner && (
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Eye className="w-4 h-4" />
+                    <span className="text-sm">{product.views_count || 0} vues</span>
+                  </div>
+                )}
                 {product.rating > 0 && (
                   <div className="flex items-center gap-1">
                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
