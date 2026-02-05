@@ -124,9 +124,12 @@ class AutoErrorRecoveryService {
           const { data: { session } } = await supabase.auth.getSession();
           
           if (!session) {
-            // Rediriger vers login si non authentifié
-            window.location.href = '/auth';
-            return true;
+            // IMPORTANT:
+            // Une erreur RLS peut être attendue sur des pages publiques (marketplace, boutique, short links)
+            // quand l'utilisateur n'est pas connecté.
+            // Ne PAS rediriger globalement vers /auth ici, sinon on casse les routes publiques.
+            console.info('🔐 [AutoRecovery] RLS sans session (utilisateur non connecté) — pas de redirection automatique.');
+            return false;
           }
           
           // Rafraîchir la session si expirée
