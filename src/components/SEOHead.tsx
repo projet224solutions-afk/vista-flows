@@ -32,9 +32,10 @@ export default function SEOHead({
   const currentUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
   
   // Ensure image URL is absolute
-  const absoluteImage = image.startsWith('http') 
-    ? image 
-    : `https://224solution.net${image.startsWith('/') ? '' : '/'}${image}`;
+  const safeImage = image || DEFAULT_IMAGE;
+  const absoluteImage = safeImage.startsWith('http') 
+    ? safeImage 
+    : `https://224solution.net${safeImage.startsWith('/') ? '' : '/'}${safeImage}`;
 
   return (
     <Helmet>
