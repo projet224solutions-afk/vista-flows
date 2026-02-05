@@ -1000,9 +1000,9 @@ export function POSSystem() {
           discount_amount: discountValue,
           payment_status: 'pending', // Non payé
           status: 'confirmed', // Confirmé mais non payé
-          payment_method: 'credit', // Vente à crédit
-          shipping_address: { address: 'Vente à crédit' },
-          notes: `Vente à crédit - Client: ${creditCustomerName.trim()}${creditCustomerPhone ? ` - Tél: ${creditCustomerPhone}` : ''}`,
+          payment_method: 'cash', // Sera payé en espèces (crédit = paiement différé)
+          shipping_address: { address: 'Vente à crédit', is_credit_sale: true },
+          notes: `🔖 VENTE À CRÉDIT - Client: ${creditCustomerName.trim()}${creditCustomerPhone ? ` - Tél: ${creditCustomerPhone}` : ''}`,
           source: 'pos'
         })
         .select('id, order_number')
