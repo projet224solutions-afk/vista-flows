@@ -51,7 +51,8 @@ const COUNTRY_TO_LANGUAGE: Record<string, string> = {
   IR: 'fa', // Persan
   
   // Afrique
-  GN: 'fr', SN: 'fr', ML: 'fr', CI: 'fr', BF: 'fr', NE: 'fr', // Afrique francophone
+  GN: 'fr', SN: 'fr', ML: 'fr', CI: 'fr', BF: 'fr', NE: 'fr', TG: 'fr', BJ: 'fr', // Afrique francophone
+  SL: 'en', LR: 'en', GM: 'en', GW: 'pt', CV: 'pt', MR: 'ar', // Afrique de l'Ouest autres
   NG: 'en', GH: 'en', ZA: 'en', // Afrique anglophone
   TZ: 'sw', KE: 'sw', // Swahili (Kenya, Tanzanie)
   
