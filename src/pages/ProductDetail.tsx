@@ -391,7 +391,7 @@ export default function ProductDetail() {
                   +
                 </Button>
               </div>
-              {product.stock_quantity && (
+              {product.stock_quantity && userId === product.vendor_id && (
                 <span className="text-sm text-muted-foreground">
                   ({product.stock_quantity} en stock)
                 </span>
