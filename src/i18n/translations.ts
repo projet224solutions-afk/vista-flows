@@ -574,6 +574,9 @@ export const translations: Record<string, Record<string, string>> = {
     "marketplace.selectCurrency": "Sélectionner la devise",
     "marketplace.yourLocalCurrency": "Votre devise locale",
     "marketplace.originalCurrency": "Devise d'origine",
+    "marketplace.refreshLocation": "Actualiser ma position",
+    "marketplace.detectedCountry": "Pays détecté",
+    "marketplace.geoRefreshed": "Localisation actualisée",
     
     // Cart
     "cart.title": "Panier",
@@ -1232,6 +1235,9 @@ export const translations: Record<string, Record<string, string>> = {
     "marketplace.selectCurrency": "Select currency",
     "marketplace.yourLocalCurrency": "Your local currency",
     "marketplace.originalCurrency": "Original currency",
+    "marketplace.refreshLocation": "Refresh my location",
+    "marketplace.detectedCountry": "Detected country",
+    "marketplace.geoRefreshed": "Location updated",
     
     // Cart
     "cart.title": "Cart",
