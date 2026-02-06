@@ -505,7 +505,7 @@ export default function VendorShop() {
                   <p className="text-muted-foreground">Ce vendeur n'a pas encore de produits physiques disponibles.</p>
                 </Card>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 landscape:grid-cols-3 portrait:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {products.map((product) => (
                     <MarketplaceProductCard
                       key={product.id}
@@ -533,7 +533,7 @@ export default function VendorShop() {
 
             {/* Produits numériques */}
             <TabsContent value="digital">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 landscape:grid-cols-2 portrait:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {digitalProducts.map((product: any) => (
                   <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/digital-product/${product.id}`)}>
                     <div className="relative h-40 bg-muted">
@@ -605,7 +605,7 @@ export default function VendorShop() {
                 <p className="text-muted-foreground">Ce vendeur n'a pas encore de produits disponibles.</p>
               </Card>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 landscape:grid-cols-3 portrait:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {products.map((product) => (
                   <MarketplaceProductCard
                     key={product.id}
