@@ -533,7 +533,7 @@ export default function VendorShop() {
 
             {/* Produits numériques */}
             <TabsContent value="digital">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mobile-landscape-grid-2">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 mobile-landscape-grid">
                 {digitalProducts.map((product: any) => (
                   <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/digital-product/${product.id}`)}>
                     <div className="relative h-40 bg-muted">
