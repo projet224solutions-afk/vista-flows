@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { translationService, SupportedLanguage, SUPPORTED_LANGUAGES } from '@/services/translationService';
 import { Message } from '@/types/communication.types';
 import { getLanguageForCountry } from '@/data/countryMappings';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 interface UseAutoTranslationOptions {
   autoTranslate?: boolean;
@@ -22,38 +23,74 @@ interface TranslatedMessage extends Message {
 export function useAutoTranslation(options: UseAutoTranslationOptions = {}) {
   const { autoTranslate = true, context = 'general' } = options;
   
-  const [userLanguage, setUserLanguage] = useState<SupportedLanguage>('fr');
+  // Utiliser le contexte global de langue comme source de vérité
+  const { language: globalLanguage } = useLanguage();
+  
+  const [userLanguage, setUserLanguage] = useState<SupportedLanguage>(() => {
+    // Initialiser avec la langue globale si supportée
+    if (globalLanguage in SUPPORTED_LANGUAGES) {
+      return globalLanguage as SupportedLanguage;
+    }
+    return 'fr';
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [showOriginalIds, setShowOriginalIds] = useState<Set<string>>(new Set());
   const translationCache = useRef<Map<string, string>>(new Map());
   const pendingTranslations = useRef<Set<string>>(new Set());
 
-  // Charger la langue préférée de l'utilisateur au démarrage
+  // Synchroniser avec la langue globale quand elle change
+  useEffect(() => {
+    if (globalLanguage in SUPPORTED_LANGUAGES) {
+      const newLang = globalLanguage as SupportedLanguage;
+      if (newLang !== userLanguage) {
+        console.log(`🌍 [AutoTranslation] Sync avec langue globale: ${newLang}`);
+        setUserLanguage(newLang);
+        // Vider le cache car la langue a changé
+        translationCache.current.clear();
+      }
+    }
+  }, [globalLanguage, userLanguage]);
+
+  // Charger la langue préférée de l'utilisateur au démarrage (fallback si pas de contexte)
   useEffect(() => {
     const loadUserLanguage = async () => {
+      // Si la langue globale est déjà définie et différente de 'fr', l'utiliser
+      if (globalLanguage && globalLanguage in SUPPORTED_LANGUAGES && globalLanguage !== 'fr') {
+        setUserLanguage(globalLanguage as SupportedLanguage);
+        return;
+      }
+
       try {
-        // D'abord essayer depuis le profil Supabase
+        // Essayer depuis le profil Supabase
         const lang = await translationService.getUserPreferredLanguage();
-        setUserLanguage(lang);
-        
-        // Si pas définie, utiliser la langue détectée par géolocalisation
-        if (lang === 'fr') {
-          const storedLang = localStorage.getItem('user-language');
-          if (storedLang && storedLang in SUPPORTED_LANGUAGES) {
-            setUserLanguage(storedLang as SupportedLanguage);
-          }
+        if (lang !== 'fr') {
+          setUserLanguage(lang);
+          return;
         }
-      } catch (error) {
-        console.error('[AutoTranslation] Erreur chargement langue:', error);
-        // Fallback: utiliser localStorage
-        const storedLang = localStorage.getItem('user-language');
+        
+        // Fallback: utiliser localStorage (geo-cache ou user-language)
+        const geoCache = localStorage.getItem('geo_detection_cache');
+        if (geoCache) {
+          try {
+            const parsed = JSON.parse(geoCache);
+            if (parsed?.data?.language && parsed.data.language in SUPPORTED_LANGUAGES) {
+              console.log(`🌍 [AutoTranslation] Langue depuis geo-cache: ${parsed.data.language}`);
+              setUserLanguage(parsed.data.language as SupportedLanguage);
+              return;
+            }
+          } catch {}
+        }
+
+        const storedLang = localStorage.getItem('user-language') || localStorage.getItem('app_language');
         if (storedLang && storedLang in SUPPORTED_LANGUAGES) {
           setUserLanguage(storedLang as SupportedLanguage);
         }
+      } catch (error) {
+        console.error('[AutoTranslation] Erreur chargement langue:', error);
       }
     };
     loadUserLanguage();
-  }, []);
+  }, [globalLanguage]);
 
   /**
    * Générer une clé de cache unique
