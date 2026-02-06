@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
+import { playNotificationSound } from '@/services/notificationSoundService';
 
 interface Message {
   id: string;
@@ -278,6 +279,8 @@ export const useChat = () => {
           const newMessage = payload.new as Message;
           if (newMessage.sender_id !== user.id) {
             setMessages(prev => [...prev, newMessage]);
+            // Jouer le son de notification
+            playNotificationSound();
             // Marquer comme lu automatiquement
             markAsRead(newMessage.sender_id);
           }

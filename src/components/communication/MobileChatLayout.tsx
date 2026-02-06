@@ -27,9 +27,14 @@ import {
   Plus,
   MessageSquare
 } from 'lucide-react';
-import { format, isToday, isYesterday } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { format, isToday, isYesterday, type Locale } from 'date-fns';
+import { fr, enUS, es, ar, pt, de, it, ru, ja, ko, zhCN } from 'date-fns/locale';
 import { useTranslation } from '@/hooks/useTranslation';
+
+// Mapping des locales date-fns
+const dateLocales: Record<string, Locale> = {
+  fr, en: enUS, es, ar, pt, de, it, ru, zh: zhCN, ja, ko
+};
 
 // Types
 export interface ChatMessage {
@@ -88,9 +93,9 @@ interface MobileChatLayoutProps {
 }
 
 // Composant Message Bubble
-function MessageBubble({ message, isOwn }: { message: ChatMessage; isOwn: boolean }) {
+function MessageBubble({ message, isOwn, locale }: { message: ChatMessage; isOwn: boolean; locale: Locale }) {
   const formatTime = (dateStr: string) => {
-    return format(new Date(dateStr), 'HH:mm', { locale: fr });
+    return format(new Date(dateStr), 'HH:mm', { locale });
   };
 
   const getStatusIcon = () => {
@@ -166,18 +171,22 @@ function MessageBubble({ message, isOwn }: { message: ChatMessage; isOwn: boolea
 function ConversationItem({ 
   conversation, 
   isSelected, 
-  onClick 
+  onClick,
+  t,
+  locale
 }: { 
   conversation: ChatConversation; 
   isSelected: boolean;
   onClick: () => void;
+  t: (key: string) => string;
+  locale: Locale;
 }) {
   const formatTime = (dateStr?: string) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
-    if (isToday(date)) return format(date, 'HH:mm');
-    if (isYesterday(date)) return 'Hier';
-    return format(date, 'dd/MM');
+    if (isToday(date)) return format(date, 'HH:mm', { locale });
+    if (isYesterday(date)) return t('messaging.yesterday') || 'Yesterday';
+    return format(date, 'dd/MM', { locale });
   };
 
   return (
@@ -212,7 +221,7 @@ function ConversationItem({
         </div>
         <div className="flex items-center justify-between gap-2 mt-0.5">
           <span className="text-sm text-muted-foreground truncate">
-            {conversation.lastMessage || conversation.subtitle || 'Aucun message'}
+            {conversation.lastMessage || conversation.subtitle || t('messaging.noMessages') || 'No messages'}
           </span>
           {(conversation.unreadCount ?? 0) > 0 && (
             <Badge variant="default" className="h-5 min-w-5 px-1.5 text-xs flex-shrink-0">
@@ -253,6 +262,9 @@ export default function MobileChatLayout({
   const [showMobileChat, setShowMobileChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Locale pour date-fns basée sur la langue globale
+  const currentLocale = dateLocales[language] || enUS;
   
   // Valeurs par défaut traduites
   const defaultEmptyMessage = emptyStateMessage || t('messaging.selectConversation') || 'Select a conversation';
@@ -347,7 +359,7 @@ export default function MobileChatLayout({
             ) : filteredConversations.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <MessageSquare className="w-12 h-12 mb-3 opacity-40" />
-                <p className="text-sm">Aucune conversation</p>
+                <p className="text-sm">{t('messaging.noConversations') || 'No conversations'}</p>
               </div>
             ) : (
               filteredConversations.map(conv => (
@@ -356,6 +368,8 @@ export default function MobileChatLayout({
                   conversation={conv}
                   isSelected={selectedConversation?.id === conv.id}
                   onClick={() => handleSelectConversation(conv)}
+                  t={t}
+                  locale={currentLocale}
                 />
               ))
             )}
@@ -426,8 +440,8 @@ export default function MobileChatLayout({
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                   <MessageSquare className="w-16 h-16 mb-4 opacity-30" />
-                  <p>Aucun message</p>
-                  <p className="text-sm">Commencez la conversation</p>
+                  <p>{t('messaging.noMessages') || 'No messages'}</p>
+                  <p className="text-sm">{t('messaging.startConversation') || 'Start the conversation'}</p>
                 </div>
               ) : (
                 <>
@@ -435,7 +449,8 @@ export default function MobileChatLayout({
                     <MessageBubble 
                       key={msg.id} 
                       message={msg} 
-                      isOwn={msg.sender_id === currentUserId || msg.isOwn} 
+                      isOwn={msg.sender_id === currentUserId || msg.isOwn}
+                      locale={currentLocale}
                     />
                   ))}
                   <div ref={messagesEndRef} />

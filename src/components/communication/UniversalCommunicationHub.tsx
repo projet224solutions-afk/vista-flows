@@ -195,8 +195,13 @@ export default function UniversalCommunicationHub({
         // Scroll automatique avec délai pour le rendu
         setTimeout(() => scrollToBottom(), 100);
 
-        // Marquer comme lu si message d'un autre utilisateur
+        // Si message d'un autre utilisateur: son + marquer comme lu
         if (message.sender_id !== user.id) {
+          // Jouer le son de notification
+          import('@/services/notificationSoundService').then(({ playNotificationSound }) => {
+            playNotificationSound();
+          });
+
           universalCommunicationService.markMessagesAsRead(
             selectedConversation.id,
             user.id
