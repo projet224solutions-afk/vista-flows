@@ -21,6 +21,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 const STORAGE_KEY = 'app_language';
 const COUNTRY_KEY = 'user_country';
 const GEO_CACHE_KEY = 'geo_detection_cache';
+const GEO_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes - synchronisé avec useGeoDetection
 
 // Détecte la langue du navigateur
 const detectBrowserLanguage = (): string => {

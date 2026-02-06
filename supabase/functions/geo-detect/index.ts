@@ -29,17 +29,28 @@ const COUNTRY_CONFIG: Record<string, { currency: string; language: string }> = {
   // Guinée
   GN: { currency: "GNF", language: "fr" },
   
+  // Sierra Leone
+  SL: { currency: "SLL", language: "en" },
+  
+  // Autres pays africains anglophones/lusophones
+  LR: { currency: "LRD", language: "en" }, // Liberia
+  GM: { currency: "GMD", language: "en" }, // Gambie
+  
   // Autres pays africains
   NG: { currency: "NGN", language: "en" },
   GH: { currency: "GHS", language: "en" },
   KE: { currency: "KES", language: "en" },
   TZ: { currency: "TZS", language: "sw" },
   UG: { currency: "UGX", language: "en" },
+  RW: { currency: "RWF", language: "en" },
   ZA: { currency: "ZAR", language: "en" },
   EG: { currency: "EGP", language: "ar" },
   MA: { currency: "MAD", language: "ar" },
   DZ: { currency: "DZD", language: "ar" },
   TN: { currency: "TND", language: "ar" },
+  CD: { currency: "CDF", language: "fr" }, // RD Congo
+  MR: { currency: "MRU", language: "ar" }, // Mauritanie
+  CV: { currency: "CVE", language: "pt" }, // Cap-Vert
   
   // Europe
   FR: { currency: "EUR", language: "fr" },

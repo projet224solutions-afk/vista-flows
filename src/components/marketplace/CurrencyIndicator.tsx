@@ -1,10 +1,11 @@
 /**
  * Indicateur de Devise avec Toggle - Marketplace
  * Affiche la devise actuelle et permet de basculer entre locale/GNF
+ * Inclut rafraîchissement de la détection géographique
  */
 
 import { useState, useEffect } from 'react';
-import { Globe, RefreshCw } from 'lucide-react';
+import { Globe, RefreshCw, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,8 +23,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
+import { useGeoDetection } from '@/hooks/useGeoDetection';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getCurrencyByCode } from '@/data/currencies';
+import { toast } from 'sonner';
 
 interface CurrencyIndicatorProps {
   variant?: 'default' | 'compact';
@@ -32,11 +35,21 @@ interface CurrencyIndicatorProps {
 
 const CURRENCY_STORAGE_KEY = 'marketplace_display_currency';
 
+// Fonction pour vider tous les caches géo
+function clearAllGeoCaches() {
+  try {
+    localStorage.removeItem('geo_detection_cache');
+    localStorage.removeItem('user_country');
+    localStorage.removeItem(CURRENCY_STORAGE_KEY);
+  } catch {}
+}
+
 export function CurrencyIndicator({ 
   variant = 'default',
   showToggle = true 
 }: CurrencyIndicatorProps) {
   const { userCurrency, userCountry, loading, lastUpdated, refreshRates } = usePriceConverter();
+  const { forceRefresh: forceGeoRefresh, loading: geoLoading } = useGeoDetection();
   const { t } = useTranslation();
   
   // État local pour la devise d'affichage (peut être différente de la devise détectée)
@@ -48,6 +61,13 @@ export function CurrencyIndicator({
   // Synchroniser avec la devise détectée
   useEffect(() => {
     if (!localStorage.getItem(CURRENCY_STORAGE_KEY) && userCurrency) {
+      setDisplayCurrency(userCurrency);
+    }
+  }, [userCurrency]);
+
+  // Écouter les mises à jour de la devise utilisateur
+  useEffect(() => {
+    if (userCurrency && userCurrency !== displayCurrency && !localStorage.getItem(CURRENCY_STORAGE_KEY)) {
       setDisplayCurrency(userCurrency);
     }
   }, [userCurrency]);
@@ -69,6 +89,19 @@ export function CurrencyIndicator({
     window.dispatchEvent(new CustomEvent('currencyChanged', { 
       detail: { currency } 
     }));
+  };
+
+  // Rafraîchir la détection géo et réinitialiser tout
+  const handleRefreshGeo = async () => {
+    clearAllGeoCaches();
+    await forceGeoRefresh();
+    await refreshRates();
+    // Réinitialiser la devise d'affichage
+    setDisplayCurrency(userCurrency);
+    toast.success(t('marketplace.geoRefreshed') || 'Localisation actualisée');
+    
+    // Recharger la page pour appliquer les changements
+    window.location.reload();
   };
 
   const currency = getCurrencyByCode(displayCurrency);
@@ -103,6 +136,9 @@ export function CurrencyIndicator({
                 {t('marketplace.pricesIn') || 'Prix affichés en'}
               </p>
               <p>{currency?.name || displayCurrency}</p>
+              <p className="text-muted-foreground">
+                {t('marketplace.detectedCountry') || 'Pays détecté'}: {userCountry}
+              </p>
               {displayCurrency !== userCurrency && (
                 <p className="text-muted-foreground">
                   {t('marketplace.convertedFrom') || 'Converti depuis'} {detectedCurrency?.name}
@@ -134,9 +170,30 @@ export function CurrencyIndicator({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuLabel>
-          {t('marketplace.selectCurrency') || 'Sélectionner la devise'}
+        <DropdownMenuLabel className="flex items-center justify-between">
+          <span>{t('marketplace.selectCurrency') || 'Sélectionner la devise'}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-xs"
+            onClick={handleRefreshGeo}
+            disabled={geoLoading}
+          >
+            {geoLoading ? (
+              <RefreshCw className="w-3 h-3 animate-spin" />
+            ) : (
+              <MapPin className="w-3 h-3" />
+            )}
+          </Button>
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        
+        {/* Pays détecté */}
+        <div className="px-2 py-1 text-xs text-muted-foreground flex items-center gap-1">
+          <MapPin className="w-3 h-3" />
+          <span>{t('marketplace.detectedCountry') || 'Pays'}: {userCountry}</span>
+        </div>
+        
         <DropdownMenuSeparator />
         
         {/* Devise locale détectée */}
@@ -181,9 +238,27 @@ export function CurrencyIndicator({
 
         <DropdownMenuSeparator />
 
+        {/* Bouton de rafraîchissement géo */}
+        <div className="px-2 py-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full h-8 text-xs gap-2"
+            onClick={handleRefreshGeo}
+            disabled={geoLoading}
+          >
+            {geoLoading ? (
+              <RefreshCw className="w-3 h-3 animate-spin" />
+            ) : (
+              <MapPin className="w-3 h-3" />
+            )}
+            {t('marketplace.refreshLocation') || 'Actualiser ma position'}
+          </Button>
+        </div>
+
         {/* Informations sur le taux de change */}
         {displayCurrency !== 'GNF' && lastUpdated && (
-          <div className="px-2 py-2 text-xs text-muted-foreground">
+          <div className="px-2 py-2 text-xs text-muted-foreground border-t">
             <p className="flex items-center justify-between">
               <span>{t('marketplace.exchangeRate') || 'Taux de change'}:</span>
               <span className="font-mono">

@@ -24,15 +24,19 @@ interface UseGeoDetectionResult {
   refresh: () => Promise<void>;
   /** Demander la localisation GPS (avec consentement) */
   requestGpsLocation: () => Promise<boolean>;
+  /** Forcer un rafraîchissement complet (ignore le cache) */
+  forceRefresh: () => Promise<void>;
 }
 
 // Cache pour éviter les appels répétés
 const GEO_CACHE_KEY = 'geo_detection_cache';
-const GEO_CACHE_DURATION = 60 * 60 * 1000; // 1 heure
+const GEO_CACHE_VERSION = 'v2'; // Incrémenter pour forcer un refresh après mise à jour
+const GEO_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes (réduit pour meilleure réactivité)
 
 interface CachedGeo {
   data: GeoInfo;
   timestamp: number;
+  version?: string;
 }
 
 function getCachedGeo(): GeoInfo | null {
@@ -40,9 +44,14 @@ function getCachedGeo(): GeoInfo | null {
     const cached = localStorage.getItem(GEO_CACHE_KEY);
     if (cached) {
       const parsed: CachedGeo = JSON.parse(cached);
-      if (Date.now() - parsed.timestamp < GEO_CACHE_DURATION) {
+      // Vérifier version ET expiration
+      if (parsed.version === GEO_CACHE_VERSION && Date.now() - parsed.timestamp < GEO_CACHE_DURATION) {
         return parsed.data;
       }
+      // Cache expiré ou ancienne version, le supprimer
+      localStorage.removeItem(GEO_CACHE_KEY);
+      localStorage.removeItem('user_country');
+      localStorage.removeItem('marketplace_display_currency');
     }
   } catch {}
   return null;
@@ -53,7 +62,14 @@ function setCachedGeo(data: GeoInfo) {
     localStorage.setItem(GEO_CACHE_KEY, JSON.stringify({
       data,
       timestamp: Date.now(),
+      version: GEO_CACHE_VERSION,
     }));
+  } catch {}
+}
+
+function clearGeoCache() {
+  try {
+    localStorage.removeItem(GEO_CACHE_KEY);
   } catch {}
 }
 
@@ -78,23 +94,29 @@ export function useGeoDetection(): UseGeoDetectionResult {
   const [loading, setLoading] = useState(!getCachedGeo());
   const [error, setError] = useState<string | null>(null);
 
-  const detectGeo = useCallback(async (gpsCoords?: { lat: number; lng: number }) => {
+  const detectGeo = useCallback(async (gpsCoords?: { lat: number; lng: number }, forceRefresh = false) => {
     try {
       setLoading(true);
       setError(null);
 
-      // Vérifier le cache d'abord (sauf si GPS fourni)
-      if (!gpsCoords) {
+      // Vérifier le cache d'abord (sauf si GPS fourni ou force refresh)
+      if (!gpsCoords && !forceRefresh) {
         const cached = getCachedGeo();
         if (cached) {
+          console.log(`🌍 Geo depuis cache: pays=${cached.country}, devise=${cached.currency}, langue=${cached.language}`);
           setGeoInfo(cached);
           setLoading(false);
           return;
         }
       }
 
-      // Pour utilisateur connecté, vérifier en base
-      if (user?.id && !gpsCoords) {
+      // Si force refresh, vider le cache
+      if (forceRefresh) {
+        clearGeoCache();
+      }
+
+      // Pour utilisateur connecté, vérifier en base (sauf force refresh)
+      if (user?.id && !gpsCoords && !forceRefresh) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('detected_country, detected_currency, detected_language, geo_detection_method')
@@ -105,7 +127,7 @@ export function useGeoDetection(): UseGeoDetectionResult {
           const info: GeoInfo = {
             country: profile.detected_country,
             currency: profile.detected_currency,
-            language: profile.detected_language || 'fr',
+            language: profile.detected_language || getLanguageForCountry(profile.detected_country),
             detectionMethod: profile.geo_detection_method || 'cached',
           };
           setGeoInfo(info);
@@ -115,72 +137,49 @@ export function useGeoDetection(): UseGeoDetectionResult {
         }
       }
 
-      // Essayer l'edge function si disponible
-      if (user?.id) {
-        try {
-          const { data, error: fnError } = await supabase.functions.invoke('geo-detect', {
-            body: {
-              user_id: user.id,
-              update_profile: true,
-              ...(gpsCoords && {
-                gps_latitude: gpsCoords.lat,
-                gps_longitude: gpsCoords.lng,
-              }),
-            },
-          });
-
-          if (!fnError && data?.success) {
-            const info: GeoInfo = {
-              country: data.country,
-              currency: data.currency,
-              language: data.language,
-              detectionMethod: data.detection_method,
-              ...(gpsCoords && {
-                latitude: gpsCoords.lat,
-                longitude: gpsCoords.lng,
-              }),
-            };
-            setGeoInfo(info);
-            setCachedGeo(info);
-            setLoading(false);
-            return;
-          }
-        } catch {}
-      }
-
-      // Fallback: API IP gratuite (ipapi.co) pour tous les visiteurs
+      // Utiliser l'Edge Function geo-detect (fonctionne pour tous, connectés ou non)
       try {
-        const response = await fetch('https://ipapi.co/json/', {
-          headers: { 'Accept': 'application/json' },
+        const { data, error: fnError } = await supabase.functions.invoke('geo-detect', {
+          body: {
+            user_id: user?.id || null,
+            update_profile: !!user?.id, // Mettre à jour le profil seulement si connecté
+            ...(gpsCoords && {
+              gps_latitude: gpsCoords.lat,
+              gps_longitude: gpsCoords.lng,
+            }),
+          },
         });
-        
-        if (response.ok) {
-          const data = await response.json();
-          const country = data.country_code || 'GN';
-          // Utiliser notre mapping complet, avec fallback sur l'API
-          const currency = getCurrencyForCountry(country) || data.currency || 'GNF';
-          const language = getLanguageForCountry(country) || 'fr';
-          
+
+        if (!fnError && data?.success) {
           const info: GeoInfo = {
-            country,
-            currency,
-            language,
-            detectionMethod: 'ipapi',
+            country: data.country,
+            currency: data.currency,
+            language: data.language || getLanguageForCountry(data.country),
+            detectionMethod: data.detection_method,
+            ...(gpsCoords && {
+              latitude: gpsCoords.lat,
+              longitude: gpsCoords.lng,
+            }),
           };
+          console.log(`🌍 Geo via edge function: pays=${info.country}, devise=${info.currency}, langue=${info.language}`);
           setGeoInfo(info);
           setCachedGeo(info);
           setLoading(false);
           return;
         }
-      } catch {}
+      } catch (edgeError) {
+        console.warn('Edge function geo-detect failed:', edgeError);
+      }
 
-      // Dernier fallback
+      // Fallback: utiliser notre mapping côté client (si l'Edge Function échoue)
+      // Note: ipapi.co ne fonctionne pas côté client à cause de CORS
       const fallbackInfo: GeoInfo = {
         country: 'GN',
         currency: 'GNF',
         language: 'fr',
         detectionMethod: 'fallback',
       };
+      console.log('🌍 Geo fallback: pays=GN, devise=GNF');
       setGeoInfo(fallbackInfo);
       setCachedGeo(fallbackInfo);
     } catch (err) {
@@ -206,12 +205,17 @@ export function useGeoDetection(): UseGeoDetectionResult {
         lat: position.coords.latitude,
         lng: position.coords.longitude,
       };
-      await detectGeo(coords);
+      await detectGeo(coords, true); // Force refresh avec GPS
       return true;
     } catch (err) {
       console.warn('GPS location denied or failed:', err);
       return false;
     }
+  }, [detectGeo]);
+
+  // Forcer un rafraîchissement complet (ignore le cache)
+  const forceRefresh = useCallback(async () => {
+    await detectGeo(undefined, true);
   }, [detectGeo]);
 
   useEffect(() => {
@@ -224,5 +228,6 @@ export function useGeoDetection(): UseGeoDetectionResult {
     error,
     refresh: () => detectGeo(),
     requestGpsLocation,
+    forceRefresh,
   };
 }
