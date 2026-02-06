@@ -70,14 +70,15 @@ export function useAutoTranslation(options: UseAutoTranslationOptions = {}) {
     targetLanguage: SupportedLanguage
   ): Promise<TranslatedMessage> => {
     // Si le message est déjà traduit dans la bonne langue
+    // Vérifier translated_text (colonne DB) ou translated_content (alias)
+    const existingTranslation = message.translated_text || message.translated_content;
     if (
-      message.translation_status === 'completed' &&
-      message.translated_content &&
+      existingTranslation &&
       message.target_language === targetLanguage
     ) {
       return {
         ...message,
-        displayContent: message.translated_content,
+        displayContent: existingTranslation,
         isTranslated: true
       };
     }
@@ -132,6 +133,7 @@ export function useAutoTranslation(options: UseAutoTranslationOptions = {}) {
         ...message,
         displayContent: result.translatedContent,
         isTranslated: result.wasTranslated,
+        translated_text: result.translatedContent,
         translated_content: result.translatedContent,
         original_language: result.sourceLanguage,
         target_language: targetLanguage,
@@ -201,13 +203,13 @@ export function useAutoTranslation(options: UseAutoTranslationOptions = {}) {
       return message.content;
     }
 
-    // Si une traduction est disponible
+    // Si une traduction est disponible (vérifie les deux noms de colonnes)
+    const existingTranslation = message.translated_text || message.translated_content;
     if (
-      message.translation_status === 'completed' &&
-      message.translated_content &&
+      existingTranslation &&
       message.target_language === userLanguage
     ) {
-      return message.translated_content;
+      return existingTranslation;
     }
 
     // Vérifier le cache
@@ -233,9 +235,12 @@ export function useAutoTranslation(options: UseAutoTranslationOptions = {}) {
       return false;
     }
 
+    // Vérifier les deux noms de colonnes
+    const existingTranslation = message.translated_text || message.translated_content;
+    
     return (
-      message.translation_status === 'completed' &&
-      message.translated_content !== null &&
+      existingTranslation !== null &&
+      existingTranslation !== undefined &&
       message.target_language === userLanguage
     ) || translationCache.current.has(getCacheKey(message.content, userLanguage));
   }, [showOriginalIds, userLanguage, getCacheKey]);

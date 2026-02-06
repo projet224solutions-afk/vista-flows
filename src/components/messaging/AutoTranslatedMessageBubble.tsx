@@ -41,12 +41,13 @@ export const AutoTranslatedMessageBubble: React.FC<AutoTranslatedMessageBubblePr
       }
 
       // Si le message a déjà une traduction dans la bonne langue
+      // Vérifie les deux noms de colonnes: translated_text (DB) et translated_content (alias)
+      const existingTranslation = message.translated_text || message.translated_content;
       if (
-        message.translation_status === 'completed' &&
-        message.translated_content &&
+        existingTranslation &&
         message.target_language === userLanguage
       ) {
-        setDisplayContent(message.translated_content);
+        setDisplayContent(existingTranslation);
         setOriginalLanguage(message.original_language || null);
         setIsTranslated(true);
         return;
