@@ -978,7 +978,6 @@ All colors MUST be HSL.
   /* Mobile Landscape Product Grid - Optimized for horizontal view */
   @media screen and (orientation: landscape) and (max-width: 896px) {
     .mobile-landscape-grid {
-      display: grid !important;
       grid-template-columns: repeat(3, 1fr) !important;
       gap: 1rem !important;
     }
@@ -987,9 +986,16 @@ All colors MUST be HSL.
   /* Mobile Portrait - Standard 2 columns */
   @media screen and (orientation: portrait) and (max-width: 768px) {
     .mobile-portrait-grid {
-      display: grid !important;
       grid-template-columns: repeat(2, 1fr) !important;
       gap: 1rem !important;
     }
+  }
+
+  /* Fix pour les TabsContent - ne pas forcer display sur les onglets cachés */
+  [data-state="inactive"].mobile-landscape-grid,
+  [data-state="inactive"].mobile-portrait-grid,
+  [data-state="inactive"] .mobile-landscape-grid,
+  [data-state="inactive"] .mobile-portrait-grid {
+    display: none !important;
   }
 }
