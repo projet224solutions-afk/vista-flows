@@ -19,6 +19,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'app_language';
+const MANUAL_LANG_KEY = 'app_language_manual'; // Indique si l'utilisateur a VRAIMENT choisi manuellement
 const COUNTRY_KEY = 'user_country';
 const GEO_CACHE_KEY = 'geo_detection_cache';
 const GEO_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes - synchronisé avec useGeoDetection
@@ -97,10 +98,10 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
   // Détection du pays et langue au chargement - SYNCHRO avec useGeoDetection
   useEffect(() => {
     const detect = async () => {
-      // Vérifier si une langue a déjà été choisie manuellement
-      const hasManualPref = localStorage.getItem(STORAGE_KEY);
-      if (hasManualPref) {
-        console.log('🌍 Langue manuelle trouvée:', hasManualPref);
+      // Vérifier si l'utilisateur a VRAIMENT choisi manuellement (pas juste une ancienne valeur)
+      const hasManualChoice = localStorage.getItem(MANUAL_LANG_KEY) === 'true';
+      if (hasManualChoice) {
+        console.log('🌍 Langue choisie manuellement, pas de sync auto');
         return;
       }
 
@@ -115,9 +116,12 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
             
             // Vérifier si la langue est supportée
             if (supportedLanguages.some(l => l.code === detectedLang)) {
-              console.log(`🌍 Auto-détection (via geo-cache): pays=${country}, langue=${detectedLang}`);
+              console.log(`🌍 Auto-sync langue depuis géo: pays=${country}, langue=${detectedLang}`);
               setUserCountry(country);
-              setLanguageState(detectedLang);
+              if (detectedLang !== language) {
+                setLanguageState(detectedLang);
+                localStorage.setItem(STORAGE_KEY, detectedLang); // Sauvegarder pour persistance
+              }
               setHasAutoDetected(true);
               return;
             }
@@ -133,18 +137,20 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
       if (detectedLang && !hasAutoDetected) {
         console.log(`🌍 Auto-détection IP: pays=${country}, langue=${detectedLang}`);
         setLanguageState(detectedLang);
+        localStorage.setItem(STORAGE_KEY, detectedLang);
         setHasAutoDetected(true);
       }
     };
     
     detect();
-  }, [hasAutoDetected]);
+  }, [hasAutoDetected, language]);
 
   // Écouter les changements de cache géo pour synchroniser la langue
   useEffect(() => {
     const syncFromGeoCache = () => {
-      const hasManualPref = localStorage.getItem(STORAGE_KEY);
-      if (hasManualPref) return; // Ne pas écraser le choix manuel
+      // Ne pas écraser si choix manuel explicite
+      const hasManualChoice = localStorage.getItem(MANUAL_LANG_KEY) === 'true';
+      if (hasManualChoice) return;
 
       try {
         const geoCacheRaw = localStorage.getItem(GEO_CACHE_KEY);
@@ -155,6 +161,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
             if (supportedLanguages.some(l => l.code === detectedLang) && detectedLang !== language) {
               console.log(`🌍 Synchronisation langue depuis géo: ${detectedLang}`);
               setLanguageState(detectedLang);
+              localStorage.setItem(STORAGE_KEY, detectedLang);
               setUserCountry(geoCache.data.country);
             }
           }
@@ -162,8 +169,11 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
       } catch {}
     };
 
+    // Synchroniser immédiatement au montage
+    syncFromGeoCache();
+
     // Vérifier périodiquement si le cache géo a changé
-    const checkInterval = setInterval(syncFromGeoCache, 5000);
+    const checkInterval = setInterval(syncFromGeoCache, 2000);
     
     // Écouter les changements de storage
     const handleStorage = (e: StorageEvent) => {
@@ -193,7 +203,9 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     }
 
     setLanguageState(lang);
-    localStorage.setItem(STORAGE_KEY, lang); // Enregistrer le choix manuel
+    localStorage.setItem(STORAGE_KEY, lang);
+    localStorage.setItem(MANUAL_LANG_KEY, 'true'); // Marquer comme choix manuel explicite
+    console.log(`🌍 Langue définie manuellement: ${lang}`);
   }, []);
 
   // Fonction de traduction
