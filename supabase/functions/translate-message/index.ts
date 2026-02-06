@@ -6,68 +6,91 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Liste des langues supportées - complète pour tous les pays
+// 🌍 150 LANGUES SUPPORTÉES - Liste complète mondiale
 const SUPPORTED_LANGUAGES = [
-  // Européennes
+  // Européennes (40)
   'fr', 'en', 'es', 'pt', 'de', 'it', 'nl', 'pl', 'ru', 'uk', 'ro', 'el', 'tr', 'cs', 'sv', 'da', 'fi', 'no', 'hu',
-  // Africaines
-  'ar', 'sw', 'wo', 'ha', 'bm', 'ff', 'yo', 'ig', 'am', 'zu', 'xh', 'af', 'rw', 'sn',
-  // Asiatiques
-  'zh', 'ja', 'ko', 'hi', 'bn', 'vi', 'th', 'id', 'ms', 'tl',
-  // Autres
-  'he'
+  'sk', 'sl', 'hr', 'sr', 'bs', 'mk', 'bg', 'sq', 'et', 'lv', 'lt', 'mt', 'is', 'ga', 'cy', 'eu', 'ca', 'gl', 'be', 'ka', 'hy', 'az',
+  // Africaines (45)
+  'ar', 'sw', 'wo', 'ha', 'bm', 'ff', 'yo', 'ig', 'am', 'zu', 'xh', 'af', 'rw', 'sn', 'st', 'tn', 'ts', 'ss', 've', 'nr', 'nso',
+  'lg', 'ln', 'kg', 'lu', 'ny', 'mg', 'so', 'ti', 'om', 'ee', 'tw', 'ak', 'kr', 'fy', 'dyu', 'mos', 'snk', 'man', 'sus', 'tem', 'kri', 'ber', 'kab', 'tir',
+  // Asiatiques (40)
+  'zh', 'zh-TW', 'ja', 'ko', 'hi', 'bn', 'vi', 'th', 'id', 'ms', 'tl', 'ta', 'te', 'kn', 'ml', 'mr', 'gu', 'pa', 'or', 'as',
+  'ne', 'si', 'my', 'km', 'lo', 'dz', 'bo', 'mn', 'ug', 'kk', 'ky', 'uz', 'tk', 'tg', 'ps', 'fa', 'ur', 'sd', 'ku', 'ckb',
+  // Moyen-Orient (8)
+  'he', 'yi', 'syc', 'arc', 'arz', 'apc', 'acm', 'ary',
+  // Océanie (12)
+  'mi', 'haw', 'sm', 'to', 'fj', 'ty', 'mh', 'ch', 'bi', 'tpi', 'ho', 'rar',
+  // Amérindiennes (10)
+  'qu', 'ay', 'gn', 'nah', 'yua', 'ht', 'pap', 'srn', 'gcr', 'mfe'
 ];
 
-// Noms des langues pour l'affichage
+// Noms des 150 langues pour l'affichage
 const LANGUAGE_NAMES: Record<string, string> = {
-  // Européennes
-  'fr': 'Français',
-  'en': 'English',
-  'es': 'Español',
-  'pt': 'Português',
-  'de': 'Deutsch',
-  'it': 'Italiano',
-  'nl': 'Nederlands',
-  'pl': 'Polski',
-  'ru': 'Русский',
-  'uk': 'Українська',
-  'ro': 'Română',
-  'el': 'Ελληνικά',
-  'tr': 'Türkçe',
-  'cs': 'Čeština',
-  'sv': 'Svenska',
-  'da': 'Dansk',
-  'fi': 'Suomi',
-  'no': 'Norsk',
-  'hu': 'Magyar',
-  // Africaines
-  'ar': 'العربية',
-  'sw': 'Kiswahili',
-  'wo': 'Wolof',
-  'ha': 'Hausa',
-  'bm': 'Bambara',
-  'ff': 'Fulfulde',
-  'yo': 'Yorùbá',
-  'ig': 'Igbo',
-  'am': 'አማርኛ',
-  'zu': 'isiZulu',
-  'xh': 'isiXhosa',
-  'af': 'Afrikaans',
-  'rw': 'Kinyarwanda',
-  'sn': 'Shona',
-  // Asiatiques
-  'zh': '中文',
-  'ja': '日本語',
-  'ko': '한국어',
-  'hi': 'हिन्दी',
-  'bn': 'বাংলা',
-  'vi': 'Tiếng Việt',
-  'th': 'ไทย',
-  'id': 'Bahasa Indonesia',
-  'ms': 'Bahasa Melayu',
-  'tl': 'Tagalog',
-  // Autres
-  'he': 'עברית'
+  // ═══════════════════════════════════════════════════════════════
+  // LANGUES EUROPÉENNES
+  // ═══════════════════════════════════════════════════════════════
+  'fr': 'Français', 'en': 'English', 'es': 'Español', 'pt': 'Português',
+  'de': 'Deutsch', 'it': 'Italiano', 'nl': 'Nederlands', 'pl': 'Polski',
+  'ru': 'Русский', 'uk': 'Українська', 'ro': 'Română', 'el': 'Ελληνικά',
+  'tr': 'Türkçe', 'cs': 'Čeština', 'sv': 'Svenska', 'da': 'Dansk',
+  'fi': 'Suomi', 'no': 'Norsk', 'hu': 'Magyar', 'sk': 'Slovenčina',
+  'sl': 'Slovenščina', 'hr': 'Hrvatski', 'sr': 'Српски', 'bs': 'Bosanski',
+  'mk': 'Македонски', 'bg': 'Български', 'sq': 'Shqip', 'et': 'Eesti',
+  'lv': 'Latviešu', 'lt': 'Lietuvių', 'mt': 'Malti', 'is': 'Íslenska',
+  'ga': 'Gaeilge', 'cy': 'Cymraeg', 'eu': 'Euskara', 'ca': 'Català',
+  'gl': 'Galego', 'be': 'Беларуская', 'ka': 'ქართული', 'hy': 'Հայdelays',
+  'az': 'Azərbaycan',
+  
+  // ═══════════════════════════════════════════════════════════════
+  // LANGUES AFRICAINES
+  // ═══════════════════════════════════════════════════════════════
+  'ar': 'العربية', 'sw': 'Kiswahili', 'wo': 'Wolof', 'ha': 'Hausa',
+  'bm': 'Bambara', 'ff': 'Fulfulde', 'yo': 'Yorùbá', 'ig': 'Igbo',
+  'am': 'አማርኛ', 'zu': 'isiZulu', 'xh': 'isiXhosa', 'af': 'Afrikaans',
+  'rw': 'Kinyarwanda', 'sn': 'Shona', 'st': 'Sesotho', 'tn': 'Setswana',
+  'ts': 'Xitsonga', 'ss': 'siSwati', 've': 'Tshivenḓa', 'nr': 'isiNdebele',
+  'nso': 'Sepedi', 'lg': 'Luganda', 'ln': 'Lingála', 'kg': 'Kikongo',
+  'lu': 'Tshiluba', 'ny': 'Chichewa', 'mg': 'Malagasy', 'so': 'Soomaali',
+  'ti': 'ትግርኛ', 'om': 'Afaan Oromoo', 'ee': 'Eʋegbe', 'tw': 'Twi',
+  'ak': 'Akan', 'kr': 'Kanuri', 'fy': 'Fula', 'dyu': 'Dioula',
+  'mos': 'Mooré', 'snk': 'Soninké', 'man': 'Mandinka', 'sus': 'Susu',
+  'tem': 'Temne', 'kri': 'Krio', 'ber': 'Tamazight', 'kab': 'Taqbaylit', 'tir': 'Tigre',
+  
+  // ═══════════════════════════════════════════════════════════════
+  // LANGUES ASIATIQUES
+  // ═══════════════════════════════════════════════════════════════
+  'zh': '中文', 'zh-TW': '繁體中文', 'ja': '日本語', 'ko': '한국어',
+  'hi': 'हिन्दी', 'bn': 'বাংলা', 'vi': 'Tiếng Việt', 'th': 'ไทย',
+  'id': 'Bahasa Indonesia', 'ms': 'Bahasa Melayu', 'tl': 'Tagalog',
+  'ta': 'தமிழ்', 'te': 'తెలుగు', 'kn': 'ಕನ್ನಡ', 'ml': 'മലയാളം',
+  'mr': 'मराठी', 'gu': 'ગુજરાતી', 'pa': 'ਪੰਜਾਬੀ', 'or': 'ଓଡ଼ିଆ',
+  'as': 'অসমীয়া', 'ne': 'नेपाली', 'si': 'සිංහල', 'my': 'မြန်မာ',
+  'km': 'ភាសាខ្មែរ', 'lo': 'ລາວ', 'dz': 'རྫོང་ཁ', 'bo': 'བོད་སྐད',
+  'mn': 'Монгол', 'ug': 'ئۇيغۇرچە', 'kk': 'Қазақ', 'ky': 'Кыргызча',
+  'uz': 'Oʻzbek', 'tk': 'Türkmen', 'tg': 'Тоҷикӣ', 'ps': 'پښتو',
+  'fa': 'فارسی', 'ur': 'اردو', 'sd': 'سنڌي', 'ku': 'Kurdî', 'ckb': 'کوردی',
+  
+  // ═══════════════════════════════════════════════════════════════
+  // LANGUES MOYEN-ORIENTALES
+  // ═══════════════════════════════════════════════════════════════
+  'he': 'עברית', 'yi': 'ייִדיש', 'syc': 'ܣܘܪܝܝܐ', 'arc': 'ארמית',
+  'arz': 'مصرى', 'apc': 'شامي', 'acm': 'عراقي', 'ary': 'الدارجة',
+  
+  // ═══════════════════════════════════════════════════════════════
+  // LANGUES OCÉANIENNES & PACIFIQUE
+  // ═══════════════════════════════════════════════════════════════
+  'mi': 'Te Reo Māori', 'haw': 'ʻŌlelo Hawaiʻi', 'sm': 'Gagana Sāmoa',
+  'to': 'Lea faka-Tonga', 'fj': 'Na Vosa Vakaviti', 'ty': 'Reo Tahiti',
+  'mh': 'Kajin M̧ajeļ', 'ch': 'Chamoru', 'bi': 'Bislama', 'tpi': 'Tok Pisin',
+  'ho': 'Hiri Motu', 'rar': 'Māori Kūki ʻĀirani',
+  
+  // ═══════════════════════════════════════════════════════════════
+  // LANGUES AMÉRINDIENNES & CRÉOLES
+  // ═══════════════════════════════════════════════════════════════
+  'qu': 'Runasimi', 'ay': 'Aymar aru', 'gn': 'Avañeʼẽ', 'nah': 'Nāhuatl',
+  'yua': 'Màaya Tʼàan', 'ht': 'Kreyòl Ayisyen', 'pap': 'Papiamentu',
+  'srn': 'Sranantongo', 'gcr': 'Kriyòl Gwiyannen', 'mfe': 'Morisien'
 };
 
 serve(async (req: Request) => {

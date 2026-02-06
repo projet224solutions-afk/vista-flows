@@ -5,9 +5,11 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-// Langues supportées - Liste complète pour tous les pays
+// 🌍 150 LANGUES SUPPORTÉES - Liste complète mondiale
 export const SUPPORTED_LANGUAGES = {
-  // Langues européennes
+  // ═══════════════════════════════════════════════════════════════
+  // LANGUES EUROPÉENNES (35)
+  // ═══════════════════════════════════════════════════════════════
   fr: 'Français',
   en: 'English',
   es: 'Español',
@@ -27,8 +29,32 @@ export const SUPPORTED_LANGUAGES = {
   fi: 'Suomi',
   no: 'Norsk',
   hu: 'Magyar',
+  sk: 'Slovenčina',
+  sl: 'Slovenščina',
+  hr: 'Hrvatski',
+  sr: 'Српски',
+  bs: 'Bosanski',
+  mk: 'Македонски',
+  bg: 'Български',
+  sq: 'Shqip',
+  et: 'Eesti',
+  lv: 'Latviešu',
+  lt: 'Lietuvių',
+  mt: 'Malti',
+  is: 'Íslenska',
+  ga: 'Gaeilge',
+  cy: 'Cymraeg',
+  eu: 'Euskara',
+  ca: 'Català',
+  gl: 'Galego',
+  be: 'Беларуская',
+  ka: 'ქართული',
+  hy: 'Հայdelays',
+  az: 'Azərbaycan',
   
-  // Langues africaines
+  // ═══════════════════════════════════════════════════════════════
+  // LANGUES AFRICAINES (45)
+  // ═══════════════════════════════════════════════════════════════
   ar: 'العربية',
   sw: 'Kiswahili',
   wo: 'Wolof',
@@ -43,9 +69,43 @@ export const SUPPORTED_LANGUAGES = {
   af: 'Afrikaans',
   rw: 'Kinyarwanda',
   sn: 'Shona',
+  st: 'Sesotho',
+  tn: 'Setswana',
+  ts: 'Xitsonga',
+  ss: 'siSwati',
+  ve: 'Tshivenḓa',
+  nr: 'isiNdebele',
+  nso: 'Sepedi',
+  lg: 'Luganda',
+  ln: 'Lingála',
+  kg: 'Kikongo',
+  lu: 'Tshiluba',
+  ny: 'Chichewa',
+  mg: 'Malagasy',
+  so: 'Soomaali',
+  ti: 'ትግርኛ',
+  om: 'Afaan Oromoo',
+  ee: 'Eʋegbe',
+  tw: 'Twi',
+  ak: 'Akan',
+  kr: 'Kanuri',
+  fy: 'Fula',
+  dyu: 'Dioula',
+  mos: 'Mooré',
+  snk: 'Soninké',
+  man: 'Mandinka',
+  sus: 'Susu',
+  tem: 'Temne',
+  kri: 'Krio',
+  ber: 'Tamazight',
+  kab: 'Taqbaylit',
+  tir: 'Tigre',
   
-  // Langues asiatiques
+  // ═══════════════════════════════════════════════════════════════
+  // LANGUES ASIATIQUES (40)
+  // ═══════════════════════════════════════════════════════════════
   zh: '中文',
+  'zh-TW': '繁體中文',
   ja: '日本語',
   ko: '한국어',
   hi: 'हिन्दी',
@@ -55,9 +115,77 @@ export const SUPPORTED_LANGUAGES = {
   id: 'Bahasa Indonesia',
   ms: 'Bahasa Melayu',
   tl: 'Tagalog',
+  ta: 'தமிழ்',
+  te: 'తెలుగు',
+  kn: 'ಕನ್ನಡ',
+  ml: 'മലയാളം',
+  mr: 'मराठी',
+  gu: 'ગુજરાતી',
+  pa: 'ਪੰਜਾਬੀ',
+  or: 'ଓଡ଼ିଆ',
+  as: 'অসমীয়া',
+  ne: 'नेपाली',
+  si: 'සිංහල',
+  my: 'မြန်မာ',
+  km: 'ភាសាខ្មែរ',
+  lo: 'ລາວ',
+  dz: 'རྫོང་ཁ',
+  bo: 'བོད་སྐད',
+  mn: 'Монгол',
+  ug: 'ئۇيغۇرچە',
+  kk: 'Қазақ',
+  ky: 'Кыргызча',
+  uz: 'Oʻzbek',
+  tk: 'Türkmen',
+  tg: 'Тоҷикӣ',
+  ps: 'پښتو',
+  fa: 'فارسی',
+  ur: 'اردو',
+  sd: 'سنڌي',
+  ku: 'Kurdî',
+  ckb: 'کوردی',
   
-  // Autres
-  he: 'עברית'
+  // ═══════════════════════════════════════════════════════════════
+  // LANGUES MOYEN-ORIENTALES (8)
+  // ═══════════════════════════════════════════════════════════════
+  he: 'עברית',
+  yi: 'ייִדיש',
+  syc: 'ܣܘܪܝܝܐ',
+  arc: 'ארמית',
+  arz: 'مصرى',
+  apc: 'شامي',
+  acm: 'عراقي',
+  ary: 'الدارجة',
+  
+  // ═══════════════════════════════════════════════════════════════
+  // LANGUES OCÉANIENNES & PACIFIQUE (12)
+  // ═══════════════════════════════════════════════════════════════
+  mi: 'Te Reo Māori',
+  haw: 'ʻŌlelo Hawaiʻi',
+  sm: 'Gagana Sāmoa',
+  to: 'Lea faka-Tonga',
+  fj: 'Na Vosa Vakaviti',
+  ty: 'Reo Tahiti',
+  mh: 'Kajin M̧ajeļ',
+  ch: 'Chamoru',
+  bi: 'Bislama',
+  tpi: 'Tok Pisin',
+  ho: 'Hiri Motu',
+  rar: 'Māori Kūki ʻĀirani',
+  
+  // ═══════════════════════════════════════════════════════════════
+  // LANGUES AMÉRINDIENNES (10)
+  // ═══════════════════════════════════════════════════════════════
+  qu: 'Runasimi',
+  ay: 'Aymar aru',
+  gn: 'Avañeʼẽ',
+  nah: 'Nāhuatl',
+  yua: 'Màaya Tʼàan',
+  ht: 'Kreyòl Ayisyen',
+  pap: 'Papiamentu',
+  srn: 'Sranantongo',
+  gcr: 'Kriyòl Gwiyannen',
+  mfe: 'Morisien'
 } as const;
 
 export type SupportedLanguage = keyof typeof SUPPORTED_LANGUAGES;
