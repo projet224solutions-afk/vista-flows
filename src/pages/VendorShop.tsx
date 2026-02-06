@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ShareButton } from "@/components/shared/ShareButton";
-import { MarketplaceProductCard } from "@/components/marketplace/MarketplaceProductCard";
+import { TranslatedProductCard } from "@/components/marketplace/TranslatedProductCard";
 import QuickFooter from "@/components/QuickFooter";
 import { useAuth } from "@/hooks/useAuth";
 import { useVendorDigitalProducts } from "@/hooks/useHasDigitalProducts";
@@ -511,7 +511,7 @@ export default function VendorShop() {
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mobile-landscape-grid mobile-portrait-grid">
                   {products.map((product) => (
-                    <MarketplaceProductCard
+                    <TranslatedProductCard
                       key={product.id}
                       id={product.id}
                       image={product.images || []}
@@ -617,7 +617,7 @@ export default function VendorShop() {
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mobile-landscape-grid mobile-portrait-grid">
                 {products.map((product) => (
-                  <MarketplaceProductCard
+                  <TranslatedProductCard
                     key={product.id}
                     id={product.id}
                     image={product.images || []}

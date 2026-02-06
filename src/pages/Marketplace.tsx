@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import SearchBar from "@/components/SearchBar";
 import { MarketplaceGrid } from "@/components/marketplace/MarketplaceGrid";
-import { MarketplaceProductCard } from "@/components/marketplace/MarketplaceProductCard";
+import { TranslatedProductCard } from "@/components/marketplace/TranslatedProductCard";
 import { UniversalMarketplaceCard } from "@/components/marketplace/UniversalMarketplaceCard";
 import { ProfessionalServiceCard } from "@/components/marketplace/ProfessionalServiceCard";
 import { ServiceTypesGrid } from "@/components/marketplace/ServiceTypesGrid";
@@ -693,11 +693,12 @@ export default function Marketplace() {
             ) : (
               <MarketplaceGrid>
                 {marketplaceItems.filter(item => item.item_type !== 'professional_service').map((item) => (
-                  <MarketplaceProductCard
+                  <TranslatedProductCard
                     key={item.id}
                     id={item.id}
                     image={item.images || []}
                     title={item.name}
+                    description={item.description}
                     price={item.price}
                     originalPrice={item.originalPrice}
                     currency={item.currency || 'GNF'}
