@@ -323,3 +323,6 @@ verify_jwt = true
 
 [functions.og-meta]
 verify_jwt = false
+
+[functions.short-link]
+verify_jwt = false

@@ -12,27 +12,15 @@ import { createShortLink } from "@/hooks/useDeepLinking";
 import { toPublicShareUrl } from "@/lib/site";
 
 const OG_META_FUNCTION_URL = "https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1/og-meta";
+const PUBLIC_DOMAIN = "https://224solution.net";
 
 function sanitizeShareUrl(rawUrl: string): string {
-  // 1) retirer les params internes Lovable
-  // 2) forcer le domaine public (ex: https://224solution.net)
   return toPublicShareUrl(rawUrl);
 }
 
-function extractShortCodeFromUrl(url: string): string | null {
-  try {
-    const u = new URL(url);
-    const match = u.pathname.match(/\/s\/([a-zA-Z0-9]+)/);
-    return match?.[1] || null;
-  } catch {
-    const match = url.match(/\/s\/([a-zA-Z0-9]+)/);
-    return match?.[1] || null;
-  }
-}
-
-function toOgMetaShortUrl(shortCode: string, baseOrigin?: string): string {
-  const base = baseOrigin ? `&base=${encodeURIComponent(baseOrigin)}` : '';
-  return `${OG_META_FUNCTION_URL}?type=short&code=${encodeURIComponent(shortCode)}${base}`;
+function toCleanShortUrl(shortCode: string): string {
+  // URL propre qui sera proxied par Netlify vers l'Edge Function
+  return `${PUBLIC_DOMAIN}/s/${shortCode}`;
 }
 
 function toOgMetaDirectUrl(type: string, id: string, baseOrigin?: string): string {
@@ -75,7 +63,10 @@ export function ShareButton({
   const shareUrl = sanitizeShareUrl(url || window.location.href);
   const shareText = text || title;
 
-  // Obtenir l'URL de partage (courte ou normale)
+  // Obtenir l'URL de partage
+  // STRATÉGIE: On utilise l'Edge Function short-link qui:
+  // - Détecte les bots (WhatsApp, Facebook) et retourne HTML avec OG tags
+  // - Redirige les humains vers la page finale
   const getShareUrl = async (): Promise<string> => {
     if (!useShortUrl) {
       return shareUrl;
@@ -90,24 +81,17 @@ export function ShareButton({
         resourceId: resourceId,
       });
 
-      // IMPORTANT: pour l'aperçu (WhatsApp/Facebook), il faut une page HTML avec OG tags.
-      // Les bots ne lisent pas les meta tags générés par React. On partage donc l'Edge Function og-meta.
-      const code = shortUrl ? extractShortCodeFromUrl(shortUrl) : null;
-      
-      // Si on a un short code, utiliser l'URL og-meta avec short code
-      // Sinon, si on a un ogType et resourceId, utiliser l'URL og-meta directe
-      if (code) {
-        const baseOrigin = (() => {
-          try {
-            return new URL(shareUrl).origin;
-          } catch {
-            return undefined;
-          }
-        })();
-        return toOgMetaShortUrl(code, baseOrigin);
+      if (shortUrl) {
+        // Extraire le short code et utiliser l'URL propre
+        // Cette URL est proxied par Netlify vers l'Edge Function short-link
+        const shortCode = extractShortCodeFromUrl(shortUrl);
+        if (shortCode) {
+          return toCleanShortUrl(shortCode);
+        }
+        return shortUrl;
       }
 
-      // Fallback: si pas de short code mais ogType spécifié, utiliser og-meta direct
+      // Fallback: si pas de short link créé mais ogType spécifié, utiliser og-meta direct
       if (ogType && resourceId) {
         const baseOrigin = (() => {
           try {
@@ -119,7 +103,7 @@ export function ShareButton({
         return toOgMetaDirectUrl(ogType, resourceId, baseOrigin);
       }
 
-      return shortUrl || shareUrl;
+      return shareUrl;
     } catch (error) {
       console.error("Error creating short URL:", error);
       return shareUrl;
@@ -127,6 +111,17 @@ export function ShareButton({
       setLoading(false);
     }
   };
+
+  function extractShortCodeFromUrl(url: string): string | null {
+    try {
+      const u = new URL(url);
+      const match = u.pathname.match(/\/s\/([a-zA-Z0-9]+)/);
+      return match?.[1] || null;
+    } catch {
+      const match = url.match(/\/s\/([a-zA-Z0-9]+)/);
+      return match?.[1] || null;
+    }
+  }
 
   const handleCopyLink = async () => {
     try {
@@ -146,6 +141,8 @@ export function ShareButton({
       const urlToShare = await getShareUrl();
       
       if (navigator.share) {
+        // Pour le partage natif, on utilise l'URL propre (pas l'Edge Function)
+        // car le texte affiché sera l'URL elle-même
         await navigator.share({
           title,
           text: shareText,
