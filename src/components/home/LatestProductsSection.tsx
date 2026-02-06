@@ -106,6 +106,7 @@ export function LatestProductsSection({
                 }
                 title={product.name}
                 price={product.price}
+                currency="GNF"
                 vendor={product.vendor_name}
                 vendorPublicId={product.vendor_public_id}
                 rating={product.rating}

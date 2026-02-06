@@ -57,9 +57,9 @@ export function usePriceConverter(): UsePriceConverterResult {
   const userCurrency = geoInfo?.currency || 'GNF';
   const userCountry = geoInfo?.country || 'GN';
 
-  // Charger les taux depuis USD comme base (plus de paires disponibles)
+  // Charger les taux depuis GNF comme base (devise de tous les produits)
   const { rates, lastUpdated, loading: ratesLoading, refresh } = useFxRates({
-    base: 'USD',
+    base: 'GNF',
     symbols: COMMON_CURRENCIES,
     refreshMinutes: 60, // Rafraîchir toutes les heures
   });
@@ -84,26 +84,38 @@ export function usePriceConverter(): UsePriceConverterResult {
     }
 
     // Calculer le taux de conversion
-    // rates est basé sur USD, donc on convertit: FROM -> USD -> TO
+    // Les taux sont basés sur GNF: rates[X] = combien de X pour 1 GNF
     let rate = 1;
     let convertedAmount = amount;
 
-    const fromRate = from === 'USD' ? 1 : rates[from];
-    const toRate = to === 'USD' ? 1 : rates[to];
-
-    if (fromRate && toRate) {
-      // FROM -> USD -> TO
-      // Si FROM=EUR, rates[EUR]=0.85 signifie 1 USD = 0.85 EUR
-      // Donc 1 EUR = 1/0.85 USD
-      // Puis 1 USD = rates[TO] TO
-      rate = toRate / fromRate;
-      convertedAmount = amount * rate;
-    } else if (from === 'USD' && toRate) {
-      rate = toRate;
-      convertedAmount = amount * rate;
-    } else if (to === 'USD' && fromRate) {
-      rate = 1 / fromRate;
-      convertedAmount = amount * rate;
+    if (from === 'GNF') {
+      // Conversion directe: GNF -> autre devise
+      // rates[EUR] = 0.000092 signifie 1 GNF = 0.000092 EUR
+      const toRate = rates[to];
+      if (toRate && toRate > 0) {
+        rate = toRate;
+        convertedAmount = amount * rate;
+      }
+    } else if (to === 'GNF') {
+      // Conversion inverse: autre devise -> GNF
+      // Pour convertir EUR -> GNF, on divise par le taux EUR
+      const fromRate = rates[from];
+      if (fromRate && fromRate > 0) {
+        rate = 1 / fromRate;
+        convertedAmount = amount * rate;
+      }
+    } else {
+      // Conversion croisée: autre devise -> GNF -> autre devise
+      // Ex: EUR -> USD = EUR -> GNF -> USD
+      const fromRate = rates[from]; // EUR par 1 GNF
+      const toRate = rates[to];     // USD par 1 GNF
+      
+      if (fromRate && toRate && fromRate > 0) {
+        // Montant en GNF = amount / fromRate
+        // Puis en toDevise = montant_gnf * toRate
+        rate = toRate / fromRate;
+        convertedAmount = amount * rate;
+      }
     }
 
     // Arrondir selon la devise (certaines n'ont pas de décimales)

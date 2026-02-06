@@ -517,6 +517,7 @@ export default function VendorShop() {
                       image={product.images || []}
                       title={product.name}
                       price={product.price}
+                      currency="GNF"
                       vendor={vendor.business_name}
                       vendorId={vendor.id}
                       vendorPublicId={vendor.public_id}
@@ -622,6 +623,7 @@ export default function VendorShop() {
                     image={product.images || []}
                     title={product.name}
                     price={product.price}
+                    currency="GNF"
                     vendor={vendor.business_name}
                     vendorId={vendor.id}
                     vendorPublicId={vendor.public_id}

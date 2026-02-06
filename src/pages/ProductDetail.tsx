@@ -11,6 +11,8 @@ import { ShareButton } from "@/components/shared/ShareButton";
 import { useAutoCarousel } from "@/hooks/useAutoCarousel";
 import { trackProductView } from "@/services/analyticsTrackingService";
 import SEOHead from "@/components/SEOHead";
+import { LocalPrice } from "@/components/ui/LocalPrice";
+import { usePriceConverter } from "@/hooks/usePriceConverter";
 
 interface Product {
   id: string;
@@ -360,9 +362,13 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              <p className="text-3xl font-bold text-primary mb-4">
-                {product.price.toLocaleString()} {product.currency || 'GNF'}
-              </p>
+              <LocalPrice 
+                amount={product.price} 
+                currency={product.currency || 'GNF'} 
+                size="xl"
+                className="text-primary mb-4"
+                showOriginal
+              />
 
               {product.description && (
                 <p className="text-muted-foreground leading-relaxed">{product.description}</p>
