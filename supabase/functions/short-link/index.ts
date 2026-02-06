@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
       return Response.redirect(targetUrl, 302);
     }
 
-    // For bots, generate OG tags
+    // For bots, generate OG tags with enhanced metadata
     let ogData: OgData = {
       title: link.title || "224Solutions",
       description: "Découvrez ce contenu sur 224Solutions",
@@ -118,19 +118,24 @@ Deno.serve(async (req) => {
     if (link.link_type === "product" && link.resource_id) {
       const { data: product } = await supabase
         .from("products")
-        .select("name, description, images, price")
+        .select("name, description, images, price, currency")
         .eq("id", link.resource_id)
         .maybeSingle();
 
       if (product) {
-        const image = Array.isArray(product.images) && product.images.length > 0 
-          ? product.images[0] 
-          : DEFAULT_IMAGE;
+        // Get the best image (first one, ensure absolute URL)
+        let productImage = DEFAULT_IMAGE;
+        if (Array.isArray(product.images) && product.images.length > 0) {
+          productImage = ensureAbsoluteUrl(product.images[0]);
+        }
+        
+        const currency = product.currency || 'GNF';
+        const priceText = product.price ? `${formatPrice(product.price, currency)} ${currency}` : '';
         
         ogData = {
           title: product.name || link.title,
-          description: product.description || `Découvrez ce produit sur 224Solutions - ${product.price?.toLocaleString()} GNF`,
-          image,
+          description: truncateDescription(product.description) || `🛒 ${priceText} - Disponible sur 224Solutions`,
+          image: productImage,
           url: targetUrl,
           type: "product",
         };
@@ -138,19 +143,23 @@ Deno.serve(async (req) => {
     } else if (link.link_type === "digital_product" && link.resource_id) {
       const { data: digitalProduct } = await supabase
         .from("digital_products")
-        .select("title, description, short_description, images, price")
+        .select("title, description, short_description, images, price, currency")
         .eq("id", link.resource_id)
         .maybeSingle();
 
       if (digitalProduct) {
-        const image = Array.isArray(digitalProduct.images) && digitalProduct.images.length > 0 
-          ? digitalProduct.images[0] 
-          : DEFAULT_IMAGE;
+        let productImage = DEFAULT_IMAGE;
+        if (Array.isArray(digitalProduct.images) && digitalProduct.images.length > 0) {
+          productImage = ensureAbsoluteUrl(digitalProduct.images[0]);
+        }
+        
+        const currency = digitalProduct.currency || 'GNF';
+        const priceText = digitalProduct.price ? `${formatPrice(digitalProduct.price, currency)} ${currency}` : '';
         
         ogData = {
           title: digitalProduct.title || link.title,
-          description: digitalProduct.short_description || digitalProduct.description || `Produit numérique sur 224Solutions - ${digitalProduct.price?.toLocaleString()} GNF`,
-          image,
+          description: truncateDescription(digitalProduct.short_description || digitalProduct.description) || `📱 ${priceText} - Produit numérique sur 224Solutions`,
+          image: productImage,
           url: targetUrl,
           type: "product",
         };
@@ -163,21 +172,29 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (vendor) {
+        // Prefer cover image, fallback to logo
+        const shopImage = ensureAbsoluteUrl(vendor.cover_image_url || vendor.logo_url) || DEFAULT_IMAGE;
+        
         ogData = {
-          title: vendor.business_name || link.title,
-          description: vendor.description || `Visitez la boutique ${vendor.business_name} sur 224Solutions`,
-          image: vendor.cover_image_url || vendor.logo_url || DEFAULT_IMAGE,
+          title: `🏪 ${vendor.business_name}` || link.title,
+          description: truncateDescription(vendor.description) || `Visitez la boutique ${vendor.business_name} sur 224Solutions`,
+          image: shopImage,
           url: targetUrl,
           type: "website",
         };
       }
     }
 
-    // Use metadata if available
-    if (!ogData.description && link.metadata) {
+    // Use metadata from short link if available (fallback)
+    if (link.metadata) {
       const metadata = link.metadata as Record<string, unknown>;
-      if (metadata.description) ogData.description = metadata.description as string;
-      if (metadata.image) ogData.image = metadata.image as string;
+      // Override with stored metadata if description/image not found from resource
+      if (!ogData.description || ogData.description.includes('Découvrez ce contenu')) {
+        if (metadata.description) ogData.description = truncateDescription(metadata.description as string);
+      }
+      if (ogData.image === DEFAULT_IMAGE && metadata.image) {
+        ogData.image = ensureAbsoluteUrl(metadata.image as string) || DEFAULT_IMAGE;
+      }
     }
 
     // Return HTML with OG tags for bots
@@ -228,6 +245,29 @@ Deno.serve(async (req) => {
     return Response.redirect(`${SITE_URL}/404`, 302);
   }
 });
+
+// Helper: Ensure URL is absolute
+function ensureAbsoluteUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  // Handle relative URLs
+  return `${SITE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
+// Helper: Format price with thousands separator
+function formatPrice(price: number, _currency: string): string {
+  return price.toLocaleString('fr-FR');
+}
+
+// Helper: Truncate description for OG meta (max 160 chars)
+function truncateDescription(text: string | null | undefined): string {
+  if (!text) return '';
+  const clean = text.replace(/\s+/g, ' ').trim();
+  if (clean.length <= 160) return clean;
+  return clean.substring(0, 157) + '...';
+}
 
 function escapeHtml(str: string): string {
   return str

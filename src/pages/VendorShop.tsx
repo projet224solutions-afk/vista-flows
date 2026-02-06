@@ -338,7 +338,9 @@ export default function VendorShop() {
             resourceType="shop"
             resourceId={vendor.id}
             useShortUrl={true}
-          ogType="shop"
+            ogType="shop"
+            imageUrl={vendor.cover_image_url || vendor.logo_url}
+            description={vendor.description}
           />
         </div>
       </header>
@@ -475,7 +477,9 @@ export default function VendorShop() {
               resourceType="shop"
               resourceId={vendor.id}
               useShortUrl={true}
-            ogType="shop"
+              ogType="shop"
+              imageUrl={vendor.cover_image_url || vendor.logo_url}
+              description={vendor.description}
             />
           </div>
         </div>

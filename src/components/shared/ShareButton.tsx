@@ -43,6 +43,14 @@ interface ShareButtonProps {
   useShortUrl?: boolean;
   /** Type spécifique pour l'og-meta (product, shop, digital_product) */
   ogType?: "product" | "shop" | "digital_product";
+  /** Image URL pour l'aperçu social (OG image) */
+  imageUrl?: string;
+  /** Description pour l'aperçu social */
+  description?: string;
+  /** Prix du produit */
+  price?: number;
+  /** Devise */
+  currency?: string;
 }
 
 export function ShareButton({
@@ -56,6 +64,10 @@ export function ShareButton({
   resourceId,
   useShortUrl = false,
   ogType,
+  imageUrl,
+  description,
+  price,
+  currency,
 }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -79,6 +91,10 @@ export function ShareButton({
         title: title,
         type: resourceType,
         resourceId: resourceId,
+        imageUrl: imageUrl,
+        description: description || text,
+        price: price,
+        currency: currency,
       });
 
       if (shortUrl) {

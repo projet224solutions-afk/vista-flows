@@ -165,15 +165,30 @@ interface SharedLink {
   metadata: any;
 }
 
-// Créer un lien court pour le partage
+// Créer un lien court pour le partage avec métadonnées riches
 export async function createShortLink(params: {
   originalUrl: string;
   title: string;
   type: 'shop' | 'product' | 'service' | 'digital_product' | 'other';
   resourceId?: string;
+  /** Image URL pour l'aperçu social (OG image) */
+  imageUrl?: string;
+  /** Description pour l'aperçu social */
+  description?: string;
+  /** Prix du produit (si applicable) */
+  price?: number;
+  /** Devise */
+  currency?: string;
 }): Promise<string | null> {
   try {
     const shortCode = generateShortCode();
+    
+    // Construire les métadonnées pour l'aperçu social
+    const metadata: Record<string, any> = {};
+    if (params.imageUrl) metadata.image = params.imageUrl;
+    if (params.description) metadata.description = params.description;
+    if (params.price) metadata.price = params.price;
+    if (params.currency) metadata.currency = params.currency;
     
     // Utiliser un cast pour éviter les erreurs de type avec la nouvelle table
     const { error } = await (supabase
@@ -184,7 +199,8 @@ export async function createShortLink(params: {
         title: params.title,
         link_type: params.type,
         resource_id: params.resourceId || null,
-        views_count: 0
+        views_count: 0,
+        metadata: Object.keys(metadata).length > 0 ? metadata : null
       }) as any);
 
     if (error) {
