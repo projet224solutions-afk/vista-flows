@@ -1,32 +1,52 @@
 import { getCurrencyByCode } from '@/data/currencies';
 
 /**
+ * Liste des devises sans décimales
+ */
+const NO_DECIMAL_CURRENCIES = [
+  'GNF', 'JPY', 'KRW', 'VND', 'XOF', 'XAF', 'UGX', 'RWF', 'BIF', 
+  'DJF', 'KMF', 'PYG', 'CLP', 'ISK', 'VUV', 'SLL'
+];
+
+/**
  * Format a number as currency with the correct symbol and formatting
+ * Compatible avec tous les navigateurs et devises africaines
  */
 export function formatCurrency(amount: number, currencyCode: string = 'GNF'): string {
-  const currency = getCurrencyByCode(currencyCode);
+  const code = currencyCode?.toUpperCase() || 'GNF';
+  const currency = getCurrencyByCode(code);
   
-  if (!currency) {
-    return `${amount.toLocaleString()} ${currencyCode}`;
+  // Déterminer les décimales selon la devise
+  const decimals = NO_DECIMAL_CURRENCIES.includes(code) || (currency?.decimals === 0) ? 0 : 2;
+  
+  // Arrondir le montant
+  const roundedAmount = decimals === 0 ? Math.round(amount) : Math.round(amount * 100) / 100;
+  
+  // Formatage manuel pour garantir la compatibilité (évite les bugs Intl sur mobile)
+  let formattedAmount: string;
+  try {
+    formattedAmount = roundedAmount.toLocaleString('fr-FR', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    });
+  } catch {
+    // Fallback si toLocaleString échoue
+    formattedAmount = decimals === 0 
+      ? roundedAmount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+      : roundedAmount.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   }
 
-  // Determine decimal places based on currency
-  const noDecimalCurrencies = ['GNF', 'JPY', 'KRW', 'VND', 'XOF', 'XAF'];
-  const decimals = noDecimalCurrencies.includes(currencyCode) ? 0 : 2;
-
-  const formattedAmount = amount.toLocaleString(undefined, {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  });
-
+  // Utiliser le symbole de la devise ou le code
+  const symbol = currency?.symbol || code;
+  
   // Position du symbole selon la devise
-  const symbolBefore = ['USD', 'GBP', 'EUR', 'CAD', 'AUD'].includes(currencyCode);
+  const symbolBefore = ['USD', 'GBP', 'CAD', 'AUD', 'HKD', 'SGD', 'NZD', 'MXN'].includes(code);
   
   if (symbolBefore) {
-    return `${currency.symbol}${formattedAmount}`;
+    return `${symbol}${formattedAmount}`;
   }
   
-  return `${formattedAmount} ${currency.symbol}`;
+  return `${formattedAmount} ${symbol}`;
 }
 
 /**
