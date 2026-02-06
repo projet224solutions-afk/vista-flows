@@ -570,11 +570,16 @@ export default function VendorShop() {
                       <div className="flex items-center justify-between">
                         {product.price > 0 ? (
                           <span className="font-bold text-lg text-primary">
-                            {new Intl.NumberFormat('fr-FR', {
-                              style: 'currency',
-                              currency: product.currency || 'GNF',
-                              maximumFractionDigits: 0
-                            }).format(product.price)}
+                            {(() => {
+                              const currency = product.currency || 'GNF';
+                              const noDecimalCurrencies = ['GNF', 'XOF', 'XAF', 'JPY'];
+                              const decimals = noDecimalCurrencies.includes(currency) ? 0 : 2;
+                              const formattedAmount = Number(product.price).toLocaleString('fr-FR', {
+                                minimumFractionDigits: decimals,
+                                maximumFractionDigits: decimals,
+                              });
+                              return `${formattedAmount} ${currency}`;
+                            })()}
                           </span>
                         ) : (
                           <span className="font-bold text-lg text-green-600">Gratuit</span>
