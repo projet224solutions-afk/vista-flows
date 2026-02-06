@@ -1,11 +1,12 @@
 /**
- * 📤 HOOK: UPLOAD FICHIERS AMÉLIORÉ - 224SOLUTIONS
+ * 📤 HOOK: UPLOAD FICHIERS VERS GCS - 224SOLUTIONS
  * Upload avec progress, preview, validation et compression
+ * Utilise Google Cloud Storage comme stockage primaire via useStorageUpload
  */
 
 import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useStorageUpload, StorageFolder } from './useStorageUpload';
 import type { UploadProgress, UploadOptions } from '@/types/communication.types';
 
 const DEFAULT_MAX_SIZE = 10 * 1024 * 1024; // 10 MB
@@ -17,7 +18,10 @@ const DEFAULT_ALLOWED_TYPES = [
   'video/mp4',
   'video/webm',
   'audio/mp3',
+  'audio/mpeg',
   'audio/wav',
+  'audio/ogg',
+  'audio/webm',
   'application/pdf',
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -29,12 +33,25 @@ interface UploadResult {
   name: string;
   size: number;
   type: string;
+  provider?: 'gcs' | 'supabase';
+}
+
+/**
+ * Détermine le folder GCS basé sur le type MIME du fichier
+ */
+function getFolderFromMimeType(mimeType: string): StorageFolder {
+  if (mimeType.startsWith('image/')) return 'products';
+  if (mimeType.startsWith('video/')) return 'videos';
+  if (mimeType.startsWith('audio/')) return 'audio';
+  return 'documents';
 }
 
 export function useFileUpload() {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  
+  const { uploadFile: uploadToStorage } = useStorageUpload();
 
   /**
    * Valider un fichier
@@ -149,7 +166,7 @@ export function useFileUpload() {
   }, []);
 
   /**
-   * Upload un fichier avec progress
+   * Upload un fichier avec progress vers GCS
    */
   const uploadFile = useCallback(async (
     file: File,
@@ -183,11 +200,6 @@ export function useFileUpload() {
         }
       }
 
-      // Générer un nom unique
-      const timestamp = Date.now();
-      const fileName = `${timestamp}-${fileToUpload.name}`;
-      const filePath = `communication-files/${fileName}`;
-
       // Initialiser le progress
       const progressData: UploadProgress = {
         file_name: fileToUpload.name,
@@ -198,15 +210,26 @@ export function useFileUpload() {
       };
       setProgress(progressData);
 
-      // Upload vers Supabase Storage
-      const { data, error: uploadError } = await supabase.storage
-        .from('communication-files')
-        .upload(filePath, fileToUpload, {
-          cacheControl: '3600',
-          upsert: false,
-        });
+      // Déterminer le folder GCS basé sur le type de fichier
+      const folder = getFolderFromMimeType(fileToUpload.type);
+      
+      console.log(`[useFileUpload] Uploading to GCS folder: ${folder}`);
 
-      if (uploadError) throw uploadError;
+      // Upload vers GCS via useStorageUpload
+      const result = await uploadToStorage(fileToUpload, {
+        folder,
+        onProgress: (pct) => {
+          setProgress(prev => prev ? {
+            ...prev,
+            percentage: pct,
+            uploaded: Math.floor((pct / 100) * fileToUpload.size),
+          } : null);
+        },
+      });
+
+      if (!result.success || !result.publicUrl) {
+        throw new Error(result.error || 'Upload échoué');
+      }
 
       // Progress 100%
       setProgress({
@@ -216,21 +239,19 @@ export function useFileUpload() {
         status: 'completed',
       });
 
-      // Obtenir l'URL publique
-      const { data: urlData } = supabase.storage
-        .from('communication-files')
-        .getPublicUrl(data.path);
+      console.log(`[useFileUpload] ✅ Upload successful via ${result.provider}: ${result.publicUrl}`);
 
       toast.success('Fichier uploadé!', {
-        description: fileToUpload.name,
+        description: `${fileToUpload.name} (${result.provider?.toUpperCase()})`,
       });
 
       return {
-        url: urlData.publicUrl,
-        path: data.path,
+        url: result.publicUrl,
+        path: result.objectPath || '',
         name: fileToUpload.name,
         size: fileToUpload.size,
         type: fileToUpload.type,
+        provider: result.provider,
       };
     } catch (error: any) {
       console.error('Erreur upload:', error);
@@ -249,7 +270,7 @@ export function useFileUpload() {
     } finally {
       setUploading(false);
     }
-  }, [validateFile, compressImage, generatePreview]);
+  }, [validateFile, compressImage, generatePreview, uploadToStorage]);
 
   /**
    * Upload multiple fichiers

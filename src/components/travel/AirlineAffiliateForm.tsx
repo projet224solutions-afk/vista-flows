@@ -1,5 +1,6 @@
 /**
  * Formulaire de création d'affiliation aérienne
+ * Upload vers Google Cloud Storage
  * Interface similaire à DigitalProductForm - l'utilisateur entre manuellement:
  * - Nom de la compagnie
  * - Images
@@ -24,6 +25,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CurrencySelect } from '@/components/ui/currency-select';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useStorageUpload } from '@/hooks/useStorageUpload';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -37,6 +39,9 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [generatingDescription, setGeneratingDescription] = useState(false);
+  
+  // Hook pour upload vers GCS
+  const { uploadFile: uploadToGCS } = useStorageUpload();
   
   const [formData, setFormData] = useState({
     airlineName: '',
@@ -53,7 +58,7 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
     images: [] as string[]
   });
 
-  // Upload d'image
+  // Upload d'image vers GCS
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || !user) return;
@@ -63,18 +68,16 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
     
     try {
       for (const file of Array.from(files)) {
-        const fileName = `${user.id}/airlines/${Date.now()}_${file.name}`;
+        console.log(`[AirlineAffiliateForm] Uploading image to GCS...`);
         
-        const { error } = await supabase.storage
-          .from('product-images')
-          .upload(fileName, file);
+        const uploadResult = await uploadToGCS(file, {
+          folder: 'products',
+          subfolder: `${user.id}/airlines`,
+        });
 
-        if (!error) {
-          const { data: urlData } = supabase.storage
-            .from('product-images')
-            .getPublicUrl(fileName);
-          
-          uploadedUrls.push(urlData.publicUrl);
+        if (uploadResult.success && uploadResult.publicUrl) {
+          console.log(`[AirlineAffiliateForm] ✅ Image uploaded via ${uploadResult.provider}: ${uploadResult.publicUrl}`);
+          uploadedUrls.push(uploadResult.publicUrl);
         }
       }
 
@@ -82,7 +85,7 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
         ...prev,
         images: [...prev.images, ...uploadedUrls]
       }));
-      toast.success(`${uploadedUrls.length} image(s) uploadée(s)`);
+      toast.success(`${uploadedUrls.length} image(s) uploadée(s) vers GCS`);
     } catch (error) {
       console.error('Upload error:', error);
       toast.error('Erreur lors de l\'upload');

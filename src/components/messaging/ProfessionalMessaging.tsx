@@ -1,6 +1,7 @@
 /**
  * Messagerie Professionnelle - Interface Mobile-First
  * Composant moderne avec Supabase Realtime
+ * Upload vers Google Cloud Storage
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -14,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useAgora } from '@/hooks/useAgora';
 import { useAutoTranslation } from '@/hooks/useAutoTranslation';
+import { useStorageUpload, StorageFolder } from '@/hooks/useStorageUpload';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import AgoraVideoCall from '@/components/communication/AgoraVideoCall';
@@ -93,6 +95,9 @@ export default function ProfessionalMessaging() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Hook pour upload vers GCS
+  const { uploadFile: uploadToGCS } = useStorageUpload();
 
   const handleStartCall = (type: 'audio' | 'video') => {
     if (!activeConversation?.participantId || !user?.id) {
@@ -305,20 +310,27 @@ export default function ProfessionalMessaging() {
 
     try {
       if (selectedFile) {
-        const fileExt = selectedFile.name.split('.').pop();
-        const filePath = `${user.id}/${Date.now()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('communication-files')
-          .upload(filePath, selectedFile);
+        // Déterminer le folder GCS basé sur le type MIME
+        let folder: StorageFolder = 'documents';
+        if (selectedFile.type.startsWith('image/')) folder = 'products';
+        else if (selectedFile.type.startsWith('video/')) folder = 'videos';
+        else if (selectedFile.type.startsWith('audio/')) folder = 'audio';
 
-        if (uploadError) throw uploadError;
+        console.log(`[ProfessionalMessaging] Uploading file to GCS folder: ${folder}`);
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('communication-files')
-          .getPublicUrl(filePath);
+        // Upload vers GCS via useStorageUpload
+        const uploadResult = await uploadToGCS(selectedFile, {
+          folder,
+          subfolder: user.id,
+        });
 
-        fileUrl = publicUrl;
+        if (!uploadResult.success || !uploadResult.publicUrl) {
+          throw new Error(uploadResult.error || 'Upload échoué');
+        }
+
+        console.log(`[ProfessionalMessaging] ✅ File uploaded via ${uploadResult.provider}: ${uploadResult.publicUrl}`);
+
+        fileUrl = uploadResult.publicUrl;
         fileName = selectedFile.name;
         messageType = selectedFile.type.startsWith('image/') ? 'image' : 'file';
       }

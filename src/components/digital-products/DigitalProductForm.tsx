@@ -1,6 +1,7 @@
 /**
  * Formulaire unifié de création de produit numérique
  * Version professionnelle avec distinction claire Direct vs Affiliation
+ * Upload vers Google Cloud Storage
  * Inspiré de ClickBank, Gumroad, Teachable
  */
 
@@ -29,6 +30,7 @@ import { Badge } from '@/components/ui/badge';
 import { VideoUploadPreview } from '@/components/ui/video-upload-preview';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useStorageUpload } from '@/hooks/useStorageUpload';
 import type { DigitalProduct } from '@/hooks/useDigitalProducts';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -128,6 +130,9 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
   const navigate = useNavigate();
   const { user } = useAuth();
   const config = categoryConfig[category];
+  
+  // Hook pour upload vers GCS
+  const { uploadFile: uploadToGCS } = useStorageUpload();
   
   // Pour physique_affilie, on saute l'étape mode car seule l'affiliation est disponible
   const initialStep: FormStep = category === 'physique_affilie' ? 'details' : 'mode';
@@ -374,18 +379,16 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
     const uploadedUrls: string[] = [];
     
     for (const file of Array.from(files)) {
-      const fileName = `${user.id}/${Date.now()}_${file.name}`;
+      console.log(`[DigitalProductForm] Uploading image to GCS...`);
       
-      const { error } = await supabase.storage
-        .from('product-images')
-        .upload(fileName, file);
+      const uploadResult = await uploadToGCS(file, {
+        folder: 'products',
+        subfolder: user.id,
+      });
 
-      if (!error) {
-        const { data: urlData } = supabase.storage
-          .from('product-images')
-          .getPublicUrl(fileName);
-        
-        uploadedUrls.push(urlData.publicUrl);
+      if (uploadResult.success && uploadResult.publicUrl) {
+        console.log(`[DigitalProductForm] ✅ Image uploaded via ${uploadResult.provider}: ${uploadResult.publicUrl}`);
+        uploadedUrls.push(uploadResult.publicUrl);
       }
     }
 
@@ -458,17 +461,16 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
       let videoUrl: string | null = isEdit ? (initialProduct?.video_url || null) : null;
       if (videoFile) {
         setUploadingVideo(true);
-        const videoFileName = `${user.id}/videos/${Date.now()}_${videoFile.name}`;
+        console.log(`[DigitalProductForm] Uploading video to GCS...`);
         
-        const { error: videoError } = await supabase.storage
-          .from('product-images')
-          .upload(videoFileName, videoFile);
+        const uploadResult = await uploadToGCS(videoFile, {
+          folder: 'videos',
+          subfolder: user.id,
+        });
 
-        if (!videoError) {
-          const { data: videoUrlData } = supabase.storage
-            .from('product-images')
-            .getPublicUrl(videoFileName);
-          videoUrl = videoUrlData.publicUrl;
+        if (uploadResult.success && uploadResult.publicUrl) {
+          console.log(`[DigitalProductForm] ✅ Video uploaded via ${uploadResult.provider}: ${uploadResult.publicUrl}`);
+          videoUrl = uploadResult.publicUrl;
         }
         setUploadingVideo(false);
       }
