@@ -14,7 +14,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { fr, enUS } from "date-fns/locale";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface Message {
   id: string;
@@ -37,6 +38,7 @@ export default function DirectConversation() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t, language } = useTranslation();
   
   const [recipient, setRecipient] = useState<Profile | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -314,7 +316,7 @@ export default function DirectConversation() {
               ref={inputRef}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Écrivez votre message..."
+              placeholder={t('messaging.placeholder') || "Type your message..."}
               className="w-full h-11 bg-muted/60 border border-border/50 rounded-full px-5 pr-4 
                          focus:bg-background focus:border-primary/30 focus:ring-2 focus:ring-primary/10
                          placeholder:text-muted-foreground/60 transition-all"

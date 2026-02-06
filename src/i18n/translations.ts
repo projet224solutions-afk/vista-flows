@@ -663,6 +663,26 @@ export const translations: Record<string, Record<string, string>> = {
     "travel.becomeAffiliate": "Devenir affilié",
     "travel.flights": "Vols",
     "travel.hotels": "Hôtels",
+    
+    // Messaging / Chat
+    "messaging.placeholder": "Écrivez votre message...",
+    "messaging.sendHint": "Appuyez sur Entrée pour envoyer",
+    "messaging.videoMaxDuration": "Vidéos max",
+    "messaging.seconds": "s",
+    "messaging.reply": "Répondre...",
+    "messaging.online": "En ligne",
+    "messaging.offline": "Hors ligne",
+    "messaging.vendor": "Vendeur",
+    "messaging.translated": "Traduit",
+    "messaging.showOriginal": "Voir l'original",
+    "messaging.typing": "en train d'écrire...",
+    "messaging.selectConversation": "Sélectionnez une conversation",
+    "messaging.noMessages": "Aucun message",
+    "messaging.send": "Envoyer",
+    "messaging.attachFile": "Joindre un fichier",
+    "messaging.attachImage": "Joindre une image",
+    "messaging.startRecording": "Enregistrer un vocal",
+    "messaging.stopRecording": "Arrêter l'enregistrement",
   },
 
   // English
@@ -1324,6 +1344,26 @@ export const translations: Record<string, Record<string, string>> = {
     "travel.becomeAffiliate": "Become an affiliate",
     "travel.flights": "Flights",
     "travel.hotels": "Hotels",
+    
+    // Messaging / Chat
+    "messaging.placeholder": "Type your message...",
+    "messaging.sendHint": "Press Enter to send",
+    "messaging.videoMaxDuration": "Videos max",
+    "messaging.seconds": "s",
+    "messaging.reply": "Reply...",
+    "messaging.online": "Online",
+    "messaging.offline": "Offline",
+    "messaging.vendor": "Vendor",
+    "messaging.translated": "Translated",
+    "messaging.showOriginal": "Show original",
+    "messaging.typing": "typing...",
+    "messaging.selectConversation": "Select a conversation",
+    "messaging.noMessages": "No messages",
+    "messaging.send": "Send",
+    "messaging.attachFile": "Attach file",
+    "messaging.attachImage": "Attach image",
+    "messaging.startRecording": "Record voice",
+    "messaging.stopRecording": "Stop recording",
   },
 
   // Español

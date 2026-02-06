@@ -8,6 +8,7 @@ import { Globe, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Message } from '@/types/communication.types';
 import { SUPPORTED_LANGUAGES, SupportedLanguage, translationService } from '@/services/translationService';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface AutoTranslatedMessageBubbleProps {
   message: Message;
@@ -24,6 +25,7 @@ export const AutoTranslatedMessageBubble: React.FC<AutoTranslatedMessageBubblePr
   className = '',
   onTranslationComplete
 }) => {
+  const { t } = useTranslation();
   const [displayContent, setDisplayContent] = useState(message.content);
   const [isTranslated, setIsTranslated] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
@@ -108,7 +110,7 @@ export const AutoTranslatedMessageBubble: React.FC<AutoTranslatedMessageBubblePr
       {isTranslating && (
         <div className="flex items-center gap-1 mb-1 text-xs text-muted-foreground">
           <Loader2 className="w-3 h-3 animate-spin" />
-          <span>Traduction...</span>
+          <span>{t('common.loading') || 'Loading...'}</span>
         </div>
       )}
 
@@ -137,7 +139,7 @@ export const AutoTranslatedMessageBubble: React.FC<AutoTranslatedMessageBubblePr
               </>
             ) : (
               <>
-                <span>Traduit</span>
+                <span>{t('messaging.translated') || 'Translated'}</span>
                 <Eye className="w-2.5 h-2.5 ml-0.5" />
               </>
             )}

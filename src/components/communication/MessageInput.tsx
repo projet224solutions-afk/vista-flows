@@ -20,6 +20,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface MessageInputProps {
   onSendText: (text: string) => Promise<void>;
@@ -42,11 +43,13 @@ export default function MessageInput({
   onSendText,
   onSendFile,
   disabled = false,
-  placeholder = "Tapez votre message...",
+  placeholder,
   className,
   maxVideoDuration = 10,
   onInputChange
 }: MessageInputProps) {
+  const { t } = useTranslation();
+  const defaultPlaceholder = t('messaging.placeholder') || "Type your message...";
   const [message, setMessage] = useState('');
   const [attachments, setAttachments] = useState<AttachmentPreview[]>([]);
   const [isRecording, setIsRecording] = useState(false);
@@ -521,7 +524,7 @@ export default function MessageInput({
 
         {/* Input texte */}
         <Input
-          placeholder={placeholder}
+          placeholder={placeholder || defaultPlaceholder}
           value={message}
           onChange={(e) => {
             setMessage(e.target.value);
@@ -544,7 +547,7 @@ export default function MessageInput({
           variant={isRecording ? "destructive" : "ghost"}
           onClick={isRecording ? stopRecording : startRecording}
           disabled={disabled || isSending}
-          title={isRecording ? "Arrêter l'enregistrement" : "Message vocal"}
+          title={isRecording ? (t('messaging.stopRecording') || "Stop recording") : (t('messaging.startRecording') || "Record voice")}
           className={cn(
             "h-9 w-9",
             isRecording && "animate-pulse"
@@ -571,7 +574,7 @@ export default function MessageInput({
       {/* Indication Entrée */}
       {!isRecording && (
         <p className="text-xs text-muted-foreground text-center">
-          Appuyez sur Entrée pour envoyer • Vidéos max {maxVideoDuration}s
+          {t('messaging.sendHint') || 'Press Enter to send'} • {t('messaging.videoMaxDuration') || 'Videos max'} {maxVideoDuration}{t('messaging.seconds') || 's'}
         </p>
       )}
     </div>

@@ -28,7 +28,8 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { format, isToday, isYesterday } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS } from 'date-fns/locale';
+import { useTranslation } from '@/hooks/useTranslation';
 
 // Types
 export interface ChatMessage {
@@ -242,15 +243,20 @@ export default function MobileChatLayout({
   showHeader = true,
   showCallButtons = true,
   title = 'Messages',
-  emptyStateMessage = 'Sélectionnez une conversation',
-  placeholder = 'Écrivez votre message...',
+  emptyStateMessage,
+  placeholder,
   className
 }: MobileChatLayoutProps) {
+  const { t, language } = useTranslation();
   const [message, setMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileChat, setShowMobileChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Valeurs par défaut traduites
+  const defaultEmptyMessage = emptyStateMessage || t('messaging.selectConversation') || 'Select a conversation';
+  const defaultPlaceholder = placeholder || t('messaging.placeholder') || 'Type your message...';
 
   // Auto-scroll
   useEffect(() => {
@@ -456,7 +462,7 @@ export default function MobileChatLayout({
                   ref={inputRef}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder={placeholder}
+                  placeholder={defaultPlaceholder}
                   className="flex-1 bg-muted/50 border-0"
                   disabled={isSending}
                 />
@@ -476,7 +482,7 @@ export default function MobileChatLayout({
           // État vide
           <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
             <MessageSquare className="w-20 h-20 mb-4 opacity-20" />
-            <p className="text-lg">{emptyStateMessage}</p>
+            <p className="text-lg">{defaultEmptyMessage}</p>
           </div>
         )}
       </div>
