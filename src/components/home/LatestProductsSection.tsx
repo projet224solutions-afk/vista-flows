@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MarketplaceGrid } from '@/components/marketplace/MarketplaceGrid';
-import { MarketplaceProductCard } from '@/components/marketplace/MarketplaceProductCard';
+import { TranslatedProductCard } from '@/components/marketplace/TranslatedProductCard';
 import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
 
@@ -96,7 +96,7 @@ export function LatestProductsSection({
               className="animate-fade-in"
               style={{ animationDelay: `${index * 50}ms` }}
             >
-              <MarketplaceProductCard
+              <TranslatedProductCard
                 id={product.id}
                 image={
                   typeof product.images === 'string'
