@@ -104,7 +104,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
       }
 
       // Essayer de récupérer depuis le cache de géo-détection (synchronisation avec useGeoDetection)
-      const geoCacheRaw = localStorage.getItem('geo_detection_cache');
+      const geoCacheRaw = localStorage.getItem(GEO_CACHE_KEY);
       if (geoCacheRaw) {
         try {
           const geoCache = JSON.parse(geoCacheRaw);
@@ -124,13 +124,13 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
         } catch {}
       }
 
-      // Fallback: détection classique
+      // Fallback: détection classique via IP
       const { country, language: detectedLang } = await detectCountryAndLanguage();
       setUserCountry(country);
       
       // Si on a une langue détectée et pas encore auto-détecté
       if (detectedLang && !hasAutoDetected) {
-        console.log(`🌍 Auto-détection: pays=${country}, langue=${detectedLang}`);
+        console.log(`🌍 Auto-détection IP: pays=${country}, langue=${detectedLang}`);
         setLanguageState(detectedLang);
         setHasAutoDetected(true);
       }
@@ -138,6 +138,45 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     
     detect();
   }, [hasAutoDetected]);
+
+  // Écouter les changements de cache géo pour synchroniser la langue
+  useEffect(() => {
+    const syncFromGeoCache = () => {
+      const hasManualPref = localStorage.getItem(STORAGE_KEY);
+      if (hasManualPref) return; // Ne pas écraser le choix manuel
+
+      try {
+        const geoCacheRaw = localStorage.getItem(GEO_CACHE_KEY);
+        if (geoCacheRaw) {
+          const geoCache = JSON.parse(geoCacheRaw);
+          if (geoCache?.data?.language) {
+            const detectedLang = geoCache.data.language;
+            if (supportedLanguages.some(l => l.code === detectedLang) && detectedLang !== language) {
+              console.log(`🌍 Synchronisation langue depuis géo: ${detectedLang}`);
+              setLanguageState(detectedLang);
+              setUserCountry(geoCache.data.country);
+            }
+          }
+        }
+      } catch {}
+    };
+
+    // Vérifier périodiquement si le cache géo a changé
+    const checkInterval = setInterval(syncFromGeoCache, 5000);
+    
+    // Écouter les changements de storage
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === GEO_CACHE_KEY) {
+        syncFromGeoCache();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      clearInterval(checkInterval);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [language]);
 
   // Mise à jour de la direction du document
   useEffect(() => {

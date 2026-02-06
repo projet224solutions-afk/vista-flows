@@ -44,10 +44,20 @@ interface UsePriceConverterResult {
 }
 
 // Liste des devises les plus courantes pour le préchargement
+// Inclut toutes les devises africaines et les principales devises mondiales
 const COMMON_CURRENCIES = [
-  'USD', 'EUR', 'GBP', 'GNF', 'XOF', 'XAF', 
-  'NGN', 'GHS', 'KES', 'ZAR', 'MAD', 'EGP',
-  'CAD', 'AUD', 'CHF', 'JPY', 'CNY', 'INR', 'AED'
+  // Devises principales
+  'USD', 'EUR', 'GBP', 'CHF', 'CAD', 'AUD', 'JPY', 'CNY', 'INR', 'AED',
+  // Afrique de l'Ouest
+  'GNF', 'XOF', 'NGN', 'GHS', 'SLL', 'LRD', 'GMD', 'CVE', 'MRU',
+  // Afrique Centrale
+  'XAF', 'CDF',
+  // Afrique de l'Est
+  'KES', 'TZS', 'UGX', 'RWF', 'ETB',
+  // Afrique Australe & Nord
+  'ZAR', 'MAD', 'EGP', 'TND', 'DZD',
+  // Autres importantes
+  'BRL', 'MXN', 'SAR', 'QAR', 'KWD'
 ];
 
 export function usePriceConverter(): UsePriceConverterResult {
