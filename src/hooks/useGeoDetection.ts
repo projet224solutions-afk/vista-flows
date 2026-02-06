@@ -39,31 +39,45 @@ interface CachedGeo {
   version?: string;
 }
 
-function getCachedGeo(): GeoInfo | null {
+function getCachedGeoRaw(): CachedGeo | null {
   try {
     const cached = localStorage.getItem(GEO_CACHE_KEY);
-    if (cached) {
-      const parsed: CachedGeo = JSON.parse(cached);
-      // Vérifier version ET expiration
-      if (parsed.version === GEO_CACHE_VERSION && Date.now() - parsed.timestamp < GEO_CACHE_DURATION) {
-        return parsed.data;
-      }
-      // Cache expiré ou ancienne version, le supprimer
-      localStorage.removeItem(GEO_CACHE_KEY);
-      localStorage.removeItem('user_country');
-      localStorage.removeItem('marketplace_display_currency');
+    if (!cached) return null;
+
+    const parsed: CachedGeo = JSON.parse(cached);
+
+    // Vérifier version ET expiration
+    if (parsed.version === GEO_CACHE_VERSION && Date.now() - parsed.timestamp < GEO_CACHE_DURATION) {
+      return parsed;
     }
+
+    // Cache expiré ou ancienne version, le supprimer
+    localStorage.removeItem(GEO_CACHE_KEY);
+    localStorage.removeItem('user_country');
+    localStorage.removeItem('marketplace_display_currency');
   } catch {}
+
   return null;
 }
 
+function getCachedGeo(): GeoInfo | null {
+  return getCachedGeoRaw()?.data ?? null;
+}
+
 function setCachedGeo(data: GeoInfo) {
+  // IMPORTANT: ne pas “figer” un fallback GN/GNF/FR dans le cache.
+  // Si l'Edge Function échoue temporairement, on préfère retenter au prochain chargement.
+  if (data.detectionMethod === 'fallback') return;
+
   try {
-    localStorage.setItem(GEO_CACHE_KEY, JSON.stringify({
-      data,
-      timestamp: Date.now(),
-      version: GEO_CACHE_VERSION,
-    }));
+    localStorage.setItem(
+      GEO_CACHE_KEY,
+      JSON.stringify({
+        data,
+        timestamp: Date.now(),
+        version: GEO_CACHE_VERSION,
+      })
+    );
   } catch {}
 }
 
@@ -96,19 +110,28 @@ export function useGeoDetection(): UseGeoDetectionResult {
 
   const detectGeo = useCallback(async (gpsCoords?: { lat: number; lng: number }, forceRefresh = false) => {
     try {
-      setLoading(true);
       setError(null);
 
       // Vérifier le cache d'abord (sauf si GPS fourni ou force refresh)
+      // - Cache normal: on l'utilise et on s'arrête
+      // - Cache fallback: on l'affiche mais on relance une détection réseau pour corriger
       if (!gpsCoords && !forceRefresh) {
-        const cached = getCachedGeo();
+        const cachedRaw = getCachedGeoRaw();
+        const cached = cachedRaw?.data;
+
         if (cached) {
           console.log(`🌍 Geo depuis cache: pays=${cached.country}, devise=${cached.currency}, langue=${cached.language}`);
           setGeoInfo(cached);
-          setLoading(false);
-          return;
+
+          const shouldRevalidate = cached.detectionMethod === 'fallback';
+          if (!shouldRevalidate) {
+            setLoading(false);
+            return;
+          }
         }
       }
+
+      setLoading(true);
 
       // Si force refresh, vider le cache
       if (forceRefresh) {
