@@ -22,6 +22,7 @@ import { usePresence } from "@/hooks/usePresence";
 import { useRealtimePresence } from "@/hooks/useRealtimePresence";
 import { useConversationPresence } from "@/hooks/useConversationPresence";
 import { playNotificationSound } from "@/services/notificationSoundService";
+import { useStorageUpload, StorageFolder } from "@/hooks/useStorageUpload";
 import type { PresenceStatus, Message as MessageType } from "@/types/communication.types";
 
 interface Message {
@@ -726,6 +727,9 @@ export default function Messages() {
     }
   }, [currentUser, selectedConversation]);
 
+  // Hook pour upload vers GCS
+  const { uploadFile: uploadToGCS } = useStorageUpload();
+
   const handleSendFile = async (file: File) => {
     if (!selectedConversation || !currentUser) {
       toast.error('Impossible d\'envoyer le fichier');
@@ -733,41 +737,25 @@ export default function Messages() {
     }
 
     try {
-      const inferMimeFromExt = (ext?: string) => {
-        const e = (ext || '').toLowerCase();
-        if (e === 'm4a' || e === 'mp4') return 'audio/mp4';
-        if (e === 'webm') return 'audio/webm';
-        if (e === 'ogg') return 'audio/ogg';
-        if (e === 'wav') return 'audio/wav';
-        if (e === 'mp3') return 'audio/mpeg';
-        if (e === 'aac') return 'audio/aac';
-        if (e === 'png') return 'image/png';
-        if (e === 'jpg' || e === 'jpeg') return 'image/jpeg';
-        if (e === 'webp') return 'image/webp';
-        if (e === 'pdf') return 'application/pdf';
-        return undefined;
-      };
+      // Déterminer le folder GCS basé sur le type MIME
+      let folder: StorageFolder = 'documents';
+      if (file.type.startsWith('image/')) folder = 'products';
+      else if (file.type.startsWith('video/')) folder = 'videos';
+      else if (file.type.startsWith('audio/')) folder = 'audio';
 
-      // Upload fichier vers Supabase Storage
-      const fileExt = (file.name.split('.').pop() || '').toLowerCase();
-      const safeExt = fileExt || 'bin';
-      const contentType = file.type || inferMimeFromExt(safeExt) || 'application/octet-stream';
-      const fileName = `${currentUser.id}/${Date.now()}.${safeExt}`;
+      console.log(`[Messages] Uploading file to GCS folder: ${folder}`);
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('communication-files')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType,
-        });
+      // Upload vers GCS via useStorageUpload
+      const uploadResult = await uploadToGCS(file, {
+        folder,
+        subfolder: currentUser.id,
+      });
 
-      if (uploadError) throw uploadError;
+      if (!uploadResult.success || !uploadResult.publicUrl) {
+        throw new Error(uploadResult.error || 'Upload échoué');
+      }
 
-      // Récupérer URL publique
-      const { data: { publicUrl } } = supabase.storage
-        .from('communication-files')
-        .getPublicUrl(fileName);
+      console.log(`[Messages] ✅ File uploaded via ${uploadResult.provider}: ${uploadResult.publicUrl}`);
 
       // Déterminer le type de fichier - types acceptés par la DB: text, image, file, audio, video
       let fileType: 'image' | 'file' | 'audio' | 'video' = 'file';
@@ -779,12 +767,15 @@ export default function Messages() {
         fileType = 'video';
       }
 
+      const fileExt = (file.name.split('.').pop() || '').toLowerCase();
+
       // Insérer message avec fichier directement
       console.log('[Messages] Inserting file message:', { 
         type: fileType, 
         fileName: file.name, 
         fileSize: file.size,
-        mimeType: file.type 
+        mimeType: file.type,
+        provider: uploadResult.provider
       });
 
       const { error: messageError } = await supabase
@@ -795,13 +786,13 @@ export default function Messages() {
             recipient_id: selectedConversation,
             content: fileType === 'audio' ? '🎙️ Message vocal' : file.name,
             type: fileType,
-            file_url: publicUrl,
+            file_url: uploadResult.publicUrl,
             file_name: file.name,
             file_size: file.size,
             status: 'sent',
             ...(fileType === 'audio' && { 
-              audio_format: safeExt,
-              audio_mime_type: contentType,
+              audio_format: fileExt,
+              audio_mime_type: file.type,
             })
           },
         ]);
@@ -811,7 +802,7 @@ export default function Messages() {
       loadMessages(selectedConversation);
       loadConversations();
       scrollToBottom();
-      toast.success('Fichier envoyé !');
+      toast.success(`Fichier envoyé via ${uploadResult.provider?.toUpperCase()}!`);
     } catch (error: any) {
       console.error('Erreur envoi fichier:', error);
       toast.error(error.message || 'Erreur lors de l\'envoi');

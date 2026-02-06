@@ -1,3 +1,7 @@
+/**
+ * Formulaire d'enregistrement de moto
+ * Upload vers Google Cloud Storage
+ */
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +16,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useBureauOfflineSync } from '@/hooks/useBureauOfflineSync';
 import { useAuth } from '@/hooks/useAuth';
+import { useStorageUpload } from '@/hooks/useStorageUpload';
 
 // Import mode offline pour MotoRegistrationForm
 import offlineSyncManager from '@/lib/offlineSyncManager';
@@ -44,6 +49,10 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
   const [conducteurSearch, setConducteurSearch] = useState('');
   const [customBrand, setCustomBrand] = useState('');
   const { storeOfflineEvent, isOnline } = useBureauOfflineSync(bureauId);
+  
+  // Hook pour upload vers GCS
+  const { uploadFile: uploadToGCS } = useStorageUpload();
+  
   const [form, setForm] = useState<MotoForm>({
     owner_name: '',
     owner_phone: '',
@@ -64,21 +73,20 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
 
   const handleFileUpload = async (file: File, field: keyof MotoForm) => {
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      const filePath = `motos/${fileName}`;
+      console.log(`[MotoRegistrationForm] Uploading file to GCS for field: ${field}`);
+      
+      const uploadResult = await uploadToGCS(file, {
+        folder: 'products',
+        subfolder: `motos/${bureauId}`,
+      });
 
-      const { error: uploadError } = await supabase.storage
-        .from('product-images')
-        .upload(filePath, file);
+      if (!uploadResult.success || !uploadResult.publicUrl) {
+        throw new Error(uploadResult.error || 'Upload échoué');
+      }
 
-      if (uploadError) throw uploadError;
+      console.log(`[MotoRegistrationForm] ✅ File uploaded via ${uploadResult.provider}: ${uploadResult.publicUrl}`);
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('product-images')
-        .getPublicUrl(filePath);
-
-      updateForm(field, publicUrl);
+      updateForm(field, uploadResult.publicUrl);
       toast.success('Photo téléchargée avec succès');
     } catch (error) {
       console.error('Erreur upload:', error);
@@ -95,28 +103,20 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
 
     try {
       for (const file of Array.from(files)) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${crypto.randomUUID()}.${fileExt}`;
-        const filePath = `moto-documents/${fileName}`;
+        console.log('📄 Téléchargement du fichier vers GCS:', file.name);
 
-        console.log('📄 Téléchargement du fichier:', file.name, 'vers', filePath);
+        const uploadResult = await uploadToGCS(file, {
+          folder: 'documents',
+          subfolder: `moto-documents/${bureauId}`,
+        });
 
-        const { data, error: uploadError } = await supabase.storage
-          .from('product-images')
-          .upload(filePath, file);
-
-        if (uploadError) {
-          console.error('❌ Erreur upload:', uploadError);
-          throw uploadError;
+        if (!uploadResult.success || !uploadResult.publicUrl) {
+          throw new Error(uploadResult.error || 'Upload échoué');
         }
 
-        console.log('✅ Fichier téléchargé:', data);
+        console.log(`✅ Fichier téléchargé via ${uploadResult.provider}:`, uploadResult.publicUrl);
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('product-images')
-          .getPublicUrl(filePath);
-
-        uploadedUrls.push(publicUrl);
+        uploadedUrls.push(uploadResult.publicUrl);
       }
 
       setForm(prev => ({
@@ -124,7 +124,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
         documents: [...(prev.documents || []), ...uploadedUrls]
       }));
 
-      toast.success(`${uploadedUrls.length} document(s) téléchargé(s) avec succès`);
+      toast.success(`${uploadedUrls.length} document(s) téléchargé(s) vers GCS`);
     } catch (error: any) {
       console.error('❌ Erreur complète upload documents:', error);
       const errorMessage = error?.message || 'Erreur inconnue';
@@ -152,28 +152,20 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
 
     try {
       for (const file of Array.from(files)) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${crypto.randomUUID()}.${fileExt}`;
-        const filePath = `motos/${fileName}`;
+        console.log('📸 Téléchargement photo vers GCS:', file.name);
 
-        console.log('📸 Téléchargement photo:', file.name, 'vers', filePath);
+        const uploadResult = await uploadToGCS(file, {
+          folder: 'products',
+          subfolder: `motos/${bureauId}`,
+        });
 
-        const { data, error: uploadError } = await supabase.storage
-          .from('product-images')
-          .upload(filePath, file);
-
-        if (uploadError) {
-          console.error('❌ Erreur upload photo:', uploadError);
-          throw uploadError;
+        if (!uploadResult.success || !uploadResult.publicUrl) {
+          throw new Error(uploadResult.error || 'Upload échoué');
         }
 
-        console.log('✅ Photo téléchargée:', data);
+        console.log(`✅ Photo téléchargée via ${uploadResult.provider}:`, uploadResult.publicUrl);
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('product-images')
-          .getPublicUrl(filePath);
-
-        uploadedUrls.push(publicUrl);
+        uploadedUrls.push(uploadResult.publicUrl);
       }
 
       setForm(prev => ({
@@ -181,7 +173,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
         photos: [...(prev.photos || []), ...uploadedUrls]
       }));
 
-      toast.success(`${uploadedUrls.length} photo(s) téléchargée(s) avec succès`);
+      toast.success(`${uploadedUrls.length} photo(s) téléchargée(s) vers GCS`);
     } catch (error: any) {
       console.error('❌ Erreur complète upload photos:', error);
       const errorMessage = error?.message || 'Erreur inconnue';

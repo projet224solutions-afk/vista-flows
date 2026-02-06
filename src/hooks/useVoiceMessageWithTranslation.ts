@@ -1,7 +1,8 @@
 /**
  * 🎙️ HOOK D'ENVOI DE MESSAGE VOCAL AVEC TRADUCTION AUTOMATIQUE
- * Envoie un message vocal et déclenche automatiquement la traduction
- * si l'expéditeur et le destinataire ont des langues différentes
+ * Envoie un message vocal vers Google Cloud Storage et déclenche 
+ * automatiquement la traduction si l'expéditeur et le destinataire 
+ * ont des langues différentes
  */
 
 import { useState, useCallback } from 'react';
@@ -9,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { autoConvertIfNeeded, needsConversionForIOS, isIOS } from '@/services/AudioConversionService';
 import { audioTranslationService } from '@/services/audioTranslationService';
 import { useToast } from '@/hooks/use-toast';
+import { useStorageUpload } from '@/hooks/useStorageUpload';
 
 interface VoiceMessageOptions {
   conversationId?: string;
@@ -30,6 +32,7 @@ export function useVoiceMessageWithTranslation() {
   const [isRecording, setIsRecording] = useState(false);
   const [translationStatus, setTranslationStatus] = useState<'idle' | 'pending' | 'completed' | 'failed'>('idle');
   const { toast } = useToast();
+  const { uploadFile: uploadToGCS } = useStorageUpload();
 
   /**
    * Envoi d'un message vocal avec traduction automatique
@@ -66,33 +69,25 @@ export function useVoiceMessageWithTranslation() {
         mimeType = 'audio/webm';
       }
 
-      // 2. Upload vers Supabase Storage - utiliser le bucket communication-files
+      // 2. Créer un fichier à partir du blob pour l'upload vers GCS
       const fileName = `voice-${senderId}-${Date.now()}.${audioFormat}`;
-      const filePath = `audio/${fileName}`;
+      const audioFile = new File([audioBlob], fileName, { type: mimeType });
 
-      console.log('🎙️ Uploading voice message to storage...', { filePath, mimeType, audioFormat });
+      console.log('🎙️ Uploading voice message to GCS...', { fileName, mimeType, audioFormat });
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('communication-files')
-        .upload(filePath, audioBlob, {
-          contentType: mimeType,
-          upsert: true
-        });
+      // Upload vers GCS via useStorageUpload
+      const uploadResult = await uploadToGCS(audioFile, {
+        folder: 'audio',
+        subfolder: senderId,
+      });
 
-      if (uploadError) {
-        console.error('❌ Storage upload failed:', uploadError);
-        throw new Error(`Upload failed: ${uploadError.message}`);
+      if (!uploadResult.success || !uploadResult.publicUrl) {
+        throw new Error(uploadResult.error || 'Upload audio échoué');
       }
 
-      console.log('✅ Upload successful:', uploadData);
+      console.log(`✅ Upload successful via ${uploadResult.provider}:`, uploadResult.publicUrl);
 
-      // 3. Obtenir l'URL publique
-      const { data: publicUrlData } = supabase.storage
-        .from('communication-files')
-        .getPublicUrl(filePath);
-      
-      const audioUrl = publicUrlData.publicUrl;
-      console.log('🔗 Audio URL:', audioUrl);
+      const audioUrl = uploadResult.publicUrl;
 
       // 4. Vérifier si la traduction est nécessaire
       let needsTranslation = false;

@@ -2,6 +2,7 @@
  * 🤖 COMPOSANT: CRÉATEUR DE PRODUIT AVEC IA
  * 
  * Interface utilisateur pour créer des produits avec assistance IA complète
+ * Upload vers Google Cloud Storage
  */
 
 import { useState } from "react";
@@ -25,6 +26,7 @@ import {
 import ProductAIService, { ProductAnalysis } from "@/services/ai/productAIService";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useStorageUpload } from "@/hooks/useStorageUpload";
 
 export function AIProductCreator() {
   const { user } = useAuth();
@@ -35,6 +37,9 @@ export function AIProductCreator() {
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<ProductAnalysis | null>(null);
   const [saving, setSaving] = useState(false);
+  
+  // Hook pour upload vers GCS
+  const { uploadFile: uploadToGCS } = useStorageUpload();
 
   /**
    * 🤖 ANALYSER AVEC IA
@@ -118,23 +123,22 @@ export function AIProductCreator() {
         const imageBlob = await imageResponse.blob();
         
         const fileName = `${product.id}_ai_generated.png`;
+        const imageFile = new File([imageBlob], fileName, { type: 'image/png' });
         
-        const { error: uploadError } = await supabase.storage
-          .from('product-images')
-          .upload(fileName, imageBlob, {
-            contentType: 'image/png',
-            upsert: true
-          });
+        console.log('[AIProductCreator] Uploading AI-generated image to GCS...');
+        
+        const uploadResult = await uploadToGCS(imageFile, {
+          folder: 'products',
+          subfolder: vendor.id,
+        });
 
-        if (!uploadError) {
-          const { data: { publicUrl } } = supabase.storage
-            .from('product-images')
-            .getPublicUrl(fileName);
-
+        if (uploadResult.success && uploadResult.publicUrl) {
+          console.log(`[AIProductCreator] ✅ Image uploaded via ${uploadResult.provider}: ${uploadResult.publicUrl}`);
+          
           // Mettre à jour le produit avec l'image
           await supabase
             .from('products')
-            .update({ images: [publicUrl] })
+            .update({ images: [uploadResult.publicUrl] })
             .eq('id', product.id);
         }
       }
