@@ -35,12 +35,14 @@ interface CurrencyIndicatorProps {
 
 const CURRENCY_STORAGE_KEY = 'marketplace_display_currency';
 
-// Fonction pour vider tous les caches géo
+// Fonction pour vider tous les caches géo et langue
 function clearAllGeoCaches() {
   try {
     localStorage.removeItem('geo_detection_cache');
     localStorage.removeItem('user_country');
     localStorage.removeItem(CURRENCY_STORAGE_KEY);
+    localStorage.removeItem('app_language');
+    localStorage.removeItem('app_language_manual'); // Permettre la re-détection auto
   } catch {}
 }
 
