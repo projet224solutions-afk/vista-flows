@@ -704,13 +704,18 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                 </Button>
                 <ShareButton
                   title={product.name}
-                  text={`Découvrez ${product.name} à ${product.price.toLocaleString()} GNF sur 224 Solutions`}
+                  text={`Découvrez ${product.name} à ${product.price.toLocaleString()} ${product.currency || 'GNF'} sur 224 Solutions`}
                   url={`${window.location.origin}/product/${product.id}`}
                   variant="outline"
                   size="icon"
                   resourceType="product"
                   resourceId={product.id}
-                  useShortUrl={false}
+                  useShortUrl={true}
+                  ogType="product"
+                  imageUrl={product.images?.[0]}
+                  description={product.description}
+                  price={product.price}
+                  currency={product.currency || 'GNF'}
                 />
               </div>
             </div>
