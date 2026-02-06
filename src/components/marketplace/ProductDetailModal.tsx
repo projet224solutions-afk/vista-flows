@@ -589,6 +589,9 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                   variant="outline"
                   size="icon"
                   useShortUrl={true}
+                  resourceType="shop"
+                  resourceId={product.vendor_id}
+                  ogType="shop"
                 />
               </div>
             </div>
