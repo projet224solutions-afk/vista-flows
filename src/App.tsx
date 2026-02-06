@@ -27,7 +27,7 @@ const QuickFooter = lazyWithRetry(() => import("@/components/QuickFooter"));
 const CommunicationWidget = lazyWithRetry(() => import("@/components/communication/CommunicationWidget"));
 const DeepLinkInitializer = lazyWithRetry(() => import("@/components/DeepLinkInitializer"));
 const _PWAInstallPrompt = lazyWithRetry(() => import("@/components/pwa/PWAInstallPrompt"));
-const InstallPromptBanner = lazyWithRetry(() =>
+const _InstallPromptBanner = lazyWithRetry(() =>
   import("@/components/pwa/InstallPromptBanner").then((m) => ({ default: m.InstallPromptBanner }))
 );
 
@@ -207,7 +207,7 @@ function App() {
                   {/* Réception globale des notifications (Realtime + toast) */}
                   <NotificationsRealtimeListener />
                 {/* OfflineBanner retiré - uniquement dans VendeurDashboard */}
-                <InstallPromptBanner />
+                {/* InstallPromptBanner retiré - bouton d'installation masqué mais fonctionnalité PWA conservée */}
                 <DeepLinkInitializer />
                 <Suspense fallback={null}>
                   <MerchantOnboarding />
