@@ -32,14 +32,22 @@ interface IdDiscrepancy {
   profilesPublicId: string;
   userIdsCustomId: string | null;
   vendorCode: string | null;
-  status: 'desync_user_ids' | 'desync_vendor' | 'desync_both' | 'ok';
+  status: 'desync_user_ids' | 'desync_vendor' | 'desync_both' | 'missing_user_id' | 'conflict' | 'ok';
   canAutoFix: boolean;
+  conflictWith?: string; // userId du conflit potentiel
+}
+
+interface DuplicateInfo {
+  id: string;
+  users: string[];
+  count: number;
 }
 
 export function IdAuditManager() {
   const [loading, setLoading] = useState(false);
   const [fixing, setFixing] = useState(false);
   const [discrepancies, setDiscrepancies] = useState<IdDiscrepancy[]>([]);
+  const [duplicates, setDuplicates] = useState<DuplicateInfo[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [lastAudit, setLastAudit] = useState<string | null>(null);
   const [stats, setStats] = useState({
@@ -47,7 +55,9 @@ export function IdAuditManager() {
     synced: 0,
     desyncUserIds: 0,
     desyncVendor: 0,
-    desyncBoth: 0
+    desyncBoth: 0,
+    conflicts: 0,
+    missing: 0
   });
 
   const runAudit = async () => {
@@ -74,24 +84,63 @@ export function IdAuditManager() {
       ]);
 
       const profiles = profilesRes.data || [];
-      const userIds = new Map((userIdsRes.data || []).map(u => [u.user_id, u.custom_id]));
-      const vendors = new Map((vendorsRes.data || []).map(v => [v.user_id, v.vendor_code]));
+      const userIdsData = userIdsRes.data || [];
+      const vendorsData = vendorsRes.data || [];
+
+      // Maps pour recherche rapide
+      const userIdsByUserId = new Map(userIdsData.map(u => [u.user_id, u.custom_id]));
+      const userIdsByCustomId = new Map(userIdsData.map(u => [u.custom_id, u.user_id]));
+      const vendors = new Map(vendorsData.map(v => [v.user_id, v.vendor_code]));
+
+      // Détection des doublons dans profiles.public_id
+      const publicIdCounts = new Map<string, string[]>();
+      for (const profile of profiles) {
+        if (profile.public_id) {
+          const existing = publicIdCounts.get(profile.public_id) || [];
+          existing.push(profile.id);
+          publicIdCounts.set(profile.public_id, existing);
+        }
+      }
+
+      const foundDuplicates: DuplicateInfo[] = [];
+      publicIdCounts.forEach((users, id) => {
+        if (users.length > 1) {
+          foundDuplicates.push({ id, users, count: users.length });
+        }
+      });
+      setDuplicates(foundDuplicates);
 
       const results: IdDiscrepancy[] = [];
 
       for (const profile of profiles) {
         if (!profile.public_id) continue;
 
-        const userIdCustomId = userIds.get(profile.id);
+        const userIdCustomId = userIdsByUserId.get(profile.id);
         const vendorCode = vendors.get(profile.id);
+
+        // Vérifier si le public_id cible est déjà utilisé par un autre user dans user_ids
+        const existingOwner = userIdsByCustomId.get(profile.public_id);
+        const hasConflict = existingOwner && existingOwner !== profile.id;
 
         const isUserIdDesync = userIdCustomId && userIdCustomId !== profile.public_id;
         const isVendorDesync = vendorCode && vendorCode !== profile.public_id;
+        const isMissingUserIdEntry = !userIdCustomId;
 
         let status: IdDiscrepancy['status'] = 'ok';
-        if (isUserIdDesync && isVendorDesync) status = 'desync_both';
-        else if (isUserIdDesync) status = 'desync_user_ids';
-        else if (isVendorDesync) status = 'desync_vendor';
+        let canAutoFix = true;
+
+        if (hasConflict) {
+          status = 'conflict';
+          canAutoFix = false; // Conflit = correction manuelle nécessaire
+        } else if (isUserIdDesync && isVendorDesync) {
+          status = 'desync_both';
+        } else if (isUserIdDesync) {
+          status = 'desync_user_ids';
+        } else if (isVendorDesync) {
+          status = 'desync_vendor';
+        } else if (isMissingUserIdEntry) {
+          status = 'missing_user_id';
+        }
 
         if (status !== 'ok') {
           results.push({
@@ -102,7 +151,8 @@ export function IdAuditManager() {
             userIdsCustomId: userIdCustomId || null,
             vendorCode: vendorCode || null,
             status,
-            canAutoFix: true
+            canAutoFix,
+            conflictWith: hasConflict ? existingOwner : undefined
           });
         }
       }
@@ -121,7 +171,9 @@ export function IdAuditManager() {
       synced: 0,
       desyncUserIds: data.filter(d => d.status === 'desync_user_ids').length,
       desyncVendor: data.filter(d => d.status === 'desync_vendor').length,
-      desyncBoth: data.filter(d => d.status === 'desync_both').length
+      desyncBoth: data.filter(d => d.status === 'desync_both').length,
+      conflicts: data.filter(d => d.status === 'conflict').length,
+      missing: data.filter(d => d.status === 'missing_user_id').length
     });
   };
 
@@ -134,13 +186,54 @@ export function IdAuditManager() {
     setFixing(true);
     let fixed = 0;
     let errors = 0;
+    let skipped = 0;
 
     try {
       for (const userId of selectedIds) {
         const discrepancy = discrepancies.find(d => d.userId === userId);
         if (!discrepancy) continue;
 
-        // Corriger user_ids.custom_id
+        // Ne pas corriger les conflits automatiquement
+        if (discrepancy.status === 'conflict') {
+          console.warn(`⚠️ Conflit détecté pour ${userId}, correction manuelle requise`);
+          skipped++;
+          continue;
+        }
+
+        // Créer ou corriger user_ids.custom_id
+        if (discrepancy.status === 'missing_user_id') {
+          // Créer une nouvelle entrée
+          const { error: insertError } = await supabase
+            .from('user_ids')
+            .insert({ 
+              user_id: userId, 
+              custom_id: discrepancy.profilesPublicId 
+            });
+
+          if (insertError) {
+            // Si doublon, essayer un update
+            if (insertError.message.includes('duplicate')) {
+              const { error: updateError } = await supabase
+                .from('user_ids')
+                .update({ custom_id: discrepancy.profilesPublicId })
+                .eq('user_id', userId);
+              
+              if (updateError) {
+                console.error(`Erreur insert/update user_ids ${userId}:`, updateError);
+                errors++;
+                continue;
+              }
+            } else {
+              console.error(`Erreur insertion user_ids ${userId}:`, insertError);
+              errors++;
+              continue;
+            }
+          }
+          fixed++;
+          continue;
+        }
+
+        // Corriger user_ids.custom_id (désynchronisé)
         if (discrepancy.status === 'desync_user_ids' || discrepancy.status === 'desync_both') {
           const { error: userIdError } = await supabase
             .from('user_ids')
@@ -173,6 +266,9 @@ export function IdAuditManager() {
 
       if (fixed > 0) {
         toast.success(`✅ ${fixed} utilisateur(s) corrigé(s)`);
+      }
+      if (skipped > 0) {
+        toast.warning(`⚠️ ${skipped} conflit(s) ignoré(s) - correction manuelle requise`);
       }
       if (errors > 0) {
         toast.error(`❌ ${errors} erreur(s) lors de la correction`);
@@ -222,9 +318,13 @@ export function IdAuditManager() {
       case 'desync_user_ids':
         return <Badge variant="destructive" className="text-xs">user_ids désync</Badge>;
       case 'desync_vendor':
-        return <Badge className="bg-orange-500 text-xs">vendor désync</Badge>;
+        return <Badge className="bg-amber-500 text-white text-xs">vendor désync</Badge>;
       case 'desync_both':
         return <Badge variant="destructive" className="text-xs animate-pulse">CRITIQUE</Badge>;
+      case 'missing_user_id':
+        return <Badge className="bg-blue-500 text-white text-xs">Manquant</Badge>;
+      case 'conflict':
+        return <Badge className="bg-purple-600 text-white text-xs animate-pulse">⚠️ CONFLIT</Badge>;
       default:
         return <Badge variant="secondary" className="text-xs">OK</Badge>;
     }
@@ -263,24 +363,47 @@ export function IdAuditManager() {
 
       <CardContent className="space-y-4">
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
           <div className="p-3 rounded-lg bg-muted/50 text-center">
-            <div className="text-2xl font-bold text-foreground">{stats.total}</div>
-            <div className="text-xs text-muted-foreground">Total problèmes</div>
-          </div>
-          <div className="p-3 rounded-lg bg-red-500/10 text-center">
-            <div className="text-2xl font-bold text-red-500">{stats.desyncUserIds}</div>
-            <div className="text-xs text-muted-foreground">user_ids désync</div>
-          </div>
-          <div className="p-3 rounded-lg bg-orange-500/10 text-center">
-            <div className="text-2xl font-bold text-orange-500">{stats.desyncVendor}</div>
-            <div className="text-xs text-muted-foreground">vendors désync</div>
+            <div className="text-xl font-bold text-foreground">{stats.total}</div>
+            <div className="text-xs text-muted-foreground">Total</div>
           </div>
           <div className="p-3 rounded-lg bg-destructive/10 text-center">
-            <div className="text-2xl font-bold text-destructive">{stats.desyncBoth}</div>
+            <div className="text-xl font-bold text-destructive">{stats.desyncUserIds}</div>
+            <div className="text-xs text-muted-foreground">user_ids</div>
+          </div>
+          <div className="p-3 rounded-lg bg-amber-500/10 text-center">
+            <div className="text-xl font-bold text-amber-600">{stats.desyncVendor}</div>
+            <div className="text-xs text-muted-foreground">vendors</div>
+          </div>
+          <div className="p-3 rounded-lg bg-destructive/10 text-center">
+            <div className="text-xl font-bold text-destructive">{stats.desyncBoth}</div>
             <div className="text-xs text-muted-foreground">Critiques</div>
           </div>
+          <div className="p-3 rounded-lg bg-blue-500/10 text-center">
+            <div className="text-xl font-bold text-blue-600">{stats.missing}</div>
+            <div className="text-xs text-muted-foreground">Manquants</div>
+          </div>
+          <div className="p-3 rounded-lg bg-purple-500/10 text-center">
+            <div className="text-xl font-bold text-purple-600">{stats.conflicts}</div>
+            <div className="text-xs text-muted-foreground">Conflits</div>
+          </div>
         </div>
+
+        {/* Alerte doublons */}
+        {duplicates.length > 0 && (
+          <Alert variant="destructive" className="animate-pulse">
+            <XCircle className="h-4 w-4" />
+            <AlertTitle>🚨 Doublons détectés dans profiles.public_id!</AlertTitle>
+            <AlertDescription>
+              {duplicates.map(d => (
+                <div key={d.id} className="mt-1">
+                  <code className="bg-muted px-1 rounded">{d.id}</code> utilisé par {d.count} utilisateurs
+                </div>
+              ))}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {lastAudit && (
           <p className="text-xs text-muted-foreground">
@@ -360,22 +483,31 @@ export function IdAuditManager() {
               </TableHeader>
               <TableBody>
                 {discrepancies.map((d) => (
-                  <TableRow key={d.userId} className="hover:bg-muted/50">
+                  <TableRow 
+                    key={d.userId} 
+                    className={`hover:bg-muted/50 ${d.status === 'conflict' ? 'bg-purple-500/5' : ''}`}
+                  >
                     <TableCell>
                       <Checkbox 
                         checked={selectedIds.has(d.userId)}
                         onCheckedChange={() => toggleSelection(d.userId)}
+                        disabled={!d.canAutoFix}
                       />
                     </TableCell>
                     <TableCell>
                       <div>
                         <p className="font-medium text-sm">{d.fullName}</p>
                         <p className="text-xs text-muted-foreground">{d.email}</p>
+                        {d.conflictWith && (
+                          <p className="text-xs text-purple-600 mt-1">
+                            ⚠️ ID déjà utilisé par un autre user
+                          </p>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>{getStatusBadge(d.status)}</TableCell>
                     <TableCell>
-                      <code className="bg-green-500/20 text-green-600 px-2 py-1 rounded text-xs font-mono">
+                      <code className="bg-primary/10 text-primary px-2 py-1 rounded text-xs font-mono">
                         {d.profilesPublicId}
                       </code>
                     </TableCell>
@@ -384,8 +516,8 @@ export function IdAuditManager() {
                         <div className="flex items-center gap-1">
                           <code className={`px-2 py-1 rounded text-xs font-mono ${
                             d.userIdsCustomId === d.profilesPublicId 
-                              ? 'bg-green-500/20 text-green-600' 
-                              : 'bg-red-500/20 text-red-600'
+                              ? 'bg-primary/10 text-primary' 
+                              : 'bg-destructive/10 text-destructive'
                           }`}>
                             {d.userIdsCustomId}
                           </code>
@@ -394,15 +526,15 @@ export function IdAuditManager() {
                           )}
                         </div>
                       ) : (
-                        <span className="text-muted-foreground text-xs">—</span>
+                        <Badge variant="outline" className="text-xs">Aucun</Badge>
                       )}
                     </TableCell>
                     <TableCell>
                       {d.vendorCode ? (
                         <code className={`px-2 py-1 rounded text-xs font-mono ${
                           d.vendorCode === d.profilesPublicId 
-                            ? 'bg-green-500/20 text-green-600' 
-                            : 'bg-orange-500/20 text-orange-600'
+                            ? 'bg-primary/10 text-primary' 
+                            : 'bg-amber-500/10 text-amber-600'
                         }`}>
                           {d.vendorCode}
                         </code>
