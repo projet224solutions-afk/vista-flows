@@ -183,14 +183,14 @@ TRADUCTION (uniquement le texte traduit, rien d'autre):`;
     }
 
     // Si un messageId est fourni, mettre à jour le message dans la base
+    // Utilise les colonnes existantes: translated_text, original_language, target_language
     if (messageId) {
       const { error: updateError } = await supabaseAdmin
         .from('messages')
         .update({
-          translated_content: translatedContent,
+          translated_text: translatedContent,
           original_language: sourceLanguage || 'auto',
-          target_language: targetLanguage,
-          translation_status: 'completed'
+          target_language: targetLanguage
         })
         .eq('id', messageId);
 
