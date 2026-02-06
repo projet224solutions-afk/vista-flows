@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { playNotificationSound } from "@/services/notificationSoundService";
 
 type AppNotification = {
   id: string;
@@ -16,6 +17,9 @@ type AppNotification = {
 function showNotificationToast(n: AppNotification) {
   const title = n.title || "Nouvelle notification";
   const description = n.message;
+
+  // Jouer le son de notification
+  playNotificationSound();
 
   // Mapping simple par type (on n'a pas la priorité ici)
   switch ((n.type || "").toLowerCase()) {

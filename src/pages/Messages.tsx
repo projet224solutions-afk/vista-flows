@@ -21,6 +21,7 @@ import { ReplyBar } from "@/components/communication/EnhancedMessageBubble";
 import { usePresence } from "@/hooks/usePresence";
 import { useRealtimePresence } from "@/hooks/useRealtimePresence";
 import { useConversationPresence } from "@/hooks/useConversationPresence";
+import { playNotificationSound } from "@/services/notificationSoundService";
 import type { PresenceStatus, Message as MessageType } from "@/types/communication.types";
 
 interface Message {
@@ -187,6 +188,11 @@ export default function Messages() {
           if (newMsg.sender_id === selectedConversation || newMsg.sender_id === currentUser.id) {
             // Recharger les messages pour cette conversation
             loadMessages(selectedConversation);
+            
+            // Jouer le son si c'est un message reçu (pas notre propre message)
+            if (newMsg.sender_id !== currentUser.id) {
+              playNotificationSound();
+            }
           }
         }
       )

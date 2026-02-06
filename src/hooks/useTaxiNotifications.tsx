@@ -95,22 +95,7 @@ export const useTaxiNotifications = () => {
   };
 };
 
-// Singleton audio pour éviter "play() interrupted"
-let notificationAudio: HTMLAudioElement | null = null;
+// Utiliser le service de son global
+import { playNotificationSound } from '@/services/notificationSoundService';
 
-const playNotificationSound = () => {
-  try {
-    if (!notificationAudio) {
-      notificationAudio = new Audio('/notification.mp3');
-      notificationAudio.volume = 0.5;
-    }
-    // Reset avant de rejouer
-    notificationAudio.pause();
-    notificationAudio.currentTime = 0;
-    notificationAudio.play().catch(() => {
-      // Autoplay bloqué - silencieux
-    });
-  } catch {
-    // Erreur audio non critique
-  }
-};
+export { playNotificationSound };
