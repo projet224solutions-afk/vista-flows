@@ -5,7 +5,7 @@
  * Support: wallet, card, mobile_money, cash
  */
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+// Using native Deno.serve() API
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -24,7 +24,7 @@ interface DeliveryPaymentRequest {
   provider?: 'orange' | 'mtn' | 'moov'; // Pour Mobile Money
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
