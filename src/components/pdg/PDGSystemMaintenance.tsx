@@ -1,8 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, Database, Server, HardDrive, AlertTriangle, CheckCircle, Activity, Clock, FileText } from 'lucide-react';
+import { RefreshCw, Database, Server, HardDrive, AlertTriangle, CheckCircle, Activity, Clock, FileText, Shield } from 'lucide-react';
 import { usePDGMaintenanceData } from '@/hooks/usePDGMaintenanceData';
+import { IdAuditManager } from './IdAuditManager';
 
 export default function PDGSystemMaintenance() {
   const { 
@@ -141,6 +142,9 @@ export default function PDGSystemMaintenance() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Audit des IDs Système */}
+      <IdAuditManager />
 
       {/* Actions de maintenance */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
