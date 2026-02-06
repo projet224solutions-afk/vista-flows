@@ -6,6 +6,7 @@
 
 import { createContext, useState, useContext, useEffect, useCallback, ReactNode } from "react";
 import { getCurrencyForCountry } from "@/data/countryMappings";
+import { supabase } from '@/integrations/supabase/client';
 
 interface CurrencyContextType {
   currency: string;
@@ -29,7 +30,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     // Vérifier d'abord le choix manuel
     const stored = localStorage.getItem(CURRENCY_STORAGE_KEY);
     if (stored) return stored;
-    
+
     // Sinon, essayer de récupérer depuis le cache géo
     try {
       const geoCache = localStorage.getItem(GEO_CACHE_KEY);
@@ -40,10 +41,10 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch {}
-    
+
     return "GNF"; // Défaut
   });
-  
+
   const [userCountry, setUserCountry] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasAutoDetected, setHasAutoDetected] = useState(false);
@@ -51,6 +52,12 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   // Synchronisation avec géo-détection
   useEffect(() => {
     const detectCurrency = async () => {
+      // Si on a déjà auto-détecté, ne pas relancer (les sync live sont gérées plus bas)
+      if (hasAutoDetected) {
+        setLoading(false);
+        return;
+      }
+
       // Vérifier si une devise a été choisie manuellement
       const hasManualPref = localStorage.getItem(CURRENCY_STORAGE_KEY);
       if (hasManualPref) {
@@ -67,7 +74,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
           if (geoCache?.data?.country && geoCache?.data?.currency) {
             const country = geoCache.data.country;
             const detectedCurrency = geoCache.data.currency;
-            
+
             console.log(`💱 Auto-détection (via geo-cache): pays=${country}, devise=${detectedCurrency}`);
             setUserCountry(country);
             setCurrencyState(detectedCurrency);
@@ -78,39 +85,67 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
         }
       } catch {}
 
-      // Fallback: détection IP directe
-      if (!hasAutoDetected) {
-        try {
-          const response = await fetch('https://ipapi.co/json/', {
-            method: 'GET',
-            headers: { 'Accept': 'application/json' }
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            const country = data.country_code;
-            
-            if (country) {
-              setUserCountry(country);
-              
-              // Utiliser la devise de l'API ou notre mapping
-              const detectedCurrency = data.currency || getCurrencyForCountry(country);
-              
-              console.log(`💱 Auto-détection (IP): pays=${country}, devise=${detectedCurrency}`);
-              setCurrencyState(detectedCurrency);
-              setHasAutoDetected(true);
-            }
-          }
-        } catch (error) {
-          console.warn('💱 Détection devise échouée:', error);
+      // Fallback: Edge Function geo-detect (plus fiable que ipapi côté navigateur)
+      try {
+        const { data, error } = await supabase.functions.invoke('geo-detect', {
+          body: { user_id: null, update_profile: false },
+        });
+
+        if (!error && data?.success && data.country) {
+          const country = data.country as string;
+          const detectedCurrency = (data.currency as string | undefined) || getCurrencyForCountry(country);
+
+          console.log(`💱 Auto-détection (edge): pays=${country}, devise=${detectedCurrency}`);
+          setUserCountry(country);
+          setCurrencyState(detectedCurrency);
+          setHasAutoDetected(true);
         }
+      } catch (error) {
+        console.warn('💱 Détection devise (edge) échouée:', error);
       }
-      
+
       setLoading(false);
     };
 
     detectCurrency();
   }, [hasAutoDetected]);
+
+  // Sync live depuis geo-cache (quand useGeoDetection met à jour le cache dans le même onglet)
+  useEffect(() => {
+    const syncFromGeoCache = () => {
+      const hasManualPref = localStorage.getItem(CURRENCY_STORAGE_KEY);
+      if (hasManualPref) return;
+
+      try {
+        const geoCacheRaw = localStorage.getItem(GEO_CACHE_KEY);
+        if (!geoCacheRaw) return;
+
+        const geoCache = JSON.parse(geoCacheRaw);
+        const nextCurrency = geoCache?.data?.currency;
+        const nextCountry = geoCache?.data?.country;
+
+        if (nextCurrency && nextCurrency !== currency) {
+          console.log(`💱 Sync devise depuis geo-cache: ${nextCurrency}`);
+          setCurrencyState(nextCurrency);
+          setUserCountry(nextCountry || null);
+          setHasAutoDetected(true);
+        }
+      } catch {}
+    };
+
+    syncFromGeoCache();
+    const interval = setInterval(syncFromGeoCache, 2000);
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === GEO_CACHE_KEY) syncFromGeoCache();
+    };
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [currency]);
 
   // Fonction pour changer manuellement la devise
   const setCurrency = useCallback((newCurrency: string) => {

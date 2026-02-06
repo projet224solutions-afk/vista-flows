@@ -6,6 +6,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { translations, supportedLanguages, defaultLanguage } from './translations';
 import { getLanguageForCountry, isRTLLanguage } from '@/data/countryMappings';
+import { supabase } from '@/integrations/supabase/client';
 
 interface LanguageContextType {
   language: string;
@@ -29,7 +30,7 @@ const detectBrowserLanguage = (): string => {
   try {
     const browserLang = navigator.language || (navigator as any).userLanguage || '';
     const langCode = browserLang.split('-')[0].toLowerCase();
-    
+
     const isSupported = supportedLanguages.some(l => l.code === langCode);
     return isSupported ? langCode : defaultLanguage;
   } catch {
@@ -37,40 +38,39 @@ const detectBrowserLanguage = (): string => {
   }
 };
 
-// Détecte le pays via IP et retourne aussi la langue suggérée
+// Détecte le pays (Edge Function) et retourne aussi la langue suggérée
 const detectCountryAndLanguage = async (): Promise<{ country: string | null; language: string | null }> => {
   try {
     // Vérifier le cache d'abord
     const cachedCountry = localStorage.getItem(COUNTRY_KEY);
-    
+
     if (cachedCountry) {
       const language = getLanguageForCountry(cachedCountry);
       const isSupported = supportedLanguages.some(l => l.code === language);
       return { country: cachedCountry, language: isSupported ? language : null };
     }
 
-    // Utiliser ipapi.co (gratuit, fiable)
-    const response = await fetch('https://ipapi.co/json/', {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' }
+    // Utiliser l'Edge Function geo-detect (évite les soucis CORS côté navigateur)
+    const { data, error } = await supabase.functions.invoke('geo-detect', {
+      body: { user_id: null, update_profile: false },
     });
-    
-    if (response.ok) {
-      const data = await response.json();
-      const country = data.country_code || data.country || null;
-      
+
+    if (!error && data?.success) {
+      const country = (data.country || null) as string | null;
+
       if (country) {
         localStorage.setItem(COUNTRY_KEY, country);
-        
-        // Utiliser notre mapping centralisé
-        const suggestedLang = getLanguageForCountry(country);
-        const language = suggestedLang && supportedLanguages.some(l => l.code === suggestedLang) 
-          ? suggestedLang 
-          : null;
-        
+
+        // Priorité: langue détectée par la fonction (si supportée) > mapping centralisé
+        const langFromFn = String(data.language || '').toLowerCase();
+        const mappedLang = getLanguageForCountry(country);
+        const candidateLang = supportedLanguages.some(l => l.code === langFromFn) ? langFromFn : mappedLang;
+
+        const language = candidateLang && supportedLanguages.some(l => l.code === candidateLang) ? candidateLang : null;
         return { country, language };
       }
     }
+
     return { country: null, language: null };
   } catch (error) {
     console.warn('Détection du pays échouée:', error);
