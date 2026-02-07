@@ -63,9 +63,6 @@ export const RATE_LIMIT_CONFIGS = {
 
 export type RateLimitType = keyof typeof RATE_LIMIT_CONFIGS;
 
-// Re-export pour l'index
-export { RateLimitType };
-
 // Store en mémoire pour le développement
 const memoryStore = new Map<string, RateLimitEntry>();
 

@@ -55,7 +55,7 @@ export async function deriveKeyFromPIN(
   const derivedKey = await crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt: salt,
+      salt: salt.buffer as ArrayBuffer,
       iterations: PBKDF2_ITERATIONS,
       hash: 'SHA-256'
     },
@@ -80,7 +80,7 @@ export async function encryptWithKey(
   const dataBytes = encoder.encode(data);
 
   const encryptedBuffer = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv },
+    { name: 'AES-GCM', iv: iv.buffer as ArrayBuffer },
     key,
     dataBytes
   );
@@ -207,7 +207,7 @@ export async function hashPassword(
   const hashBuffer = await crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
-      salt: usedSalt,
+      salt: usedSalt.buffer as ArrayBuffer,
       iterations: PBKDF2_ITERATIONS,
       hash: 'SHA-256'
     },

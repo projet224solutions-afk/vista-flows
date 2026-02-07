@@ -23,18 +23,29 @@ export function VendorKYCForm({ onSuccess, onCancel }: VendorKYCFormProps) {
   const [documentPreview, setDocumentPreview] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Le fichier ne doit pas dépasser 5 Mo');
-        return;
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+      const file = e.target.files?.[0];
+      if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error('Le fichier ne doit pas dépasser 5 Mo');
+          return;
+        }
+        setDocumentFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setDocumentPreview(reader.result as string);
+        };
+        reader.onerror = () => {
+          toast.error('Erreur lors de la lecture du fichier');
+        };
+        reader.readAsDataURL(file);
       }
-      setDocumentFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setDocumentPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Erreur lors du changement de fichier:', error);
+      toast.error('Erreur lors du traitement du fichier');
     }
   };
 
@@ -173,6 +184,9 @@ export function VendorKYCForm({ onSuccess, onCancel }: VendorKYCFormProps) {
               Annuler
             </Button>
           )}
+          <Button type="submit" disabled={loading}>
+            {loading ? 'Envoi en cours...' : 'Soumettre les documents'}
+          </Button>
         </div>
       </form>
     </Card>
