@@ -1,13 +1,28 @@
 /**
  * 🔐 MIDDLEWARE DE SÉCURITÉ POUR EDGE FUNCTIONS SUPABASE
  * Protection complète des fonctions serverless
+ *
+ * CORRECTIONS DE SÉCURITÉ:
+ * - Validation CSRF avec comparaison timing-safe
+ * - Rate limiting par type d'endpoint
+ * - Validation Origin/Referer
+ * - Blocage après tentatives échouées
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 /**
- * Configuration de sécurité
+ * Configuration de sécurité par type d'endpoint
  */
+const RATE_LIMIT_CONFIGS = {
+  auth: { maxRequests: 5, windowMs: 60000, blockDurationMs: 900000 },
+  api: { maxRequests: 100, windowMs: 60000, blockDurationMs: 300000 },
+  financial: { maxRequests: 10, windowMs: 60000, blockDurationMs: 1800000 },
+  otp: { maxRequests: 3, windowMs: 60000, blockDurationMs: 3600000 }
+} as const;
+
+type RateLimitType = keyof typeof RATE_LIMIT_CONFIGS;
+
 const SECURITY_CONFIG = {
   MAX_REQUEST_SIZE: 1024 * 1024, // 1MB
   RATE_LIMIT_WINDOW: 60 * 1000, // 1 minute
@@ -16,6 +31,7 @@ const SECURITY_CONFIG = {
     'https://224solution.net',
     'https://www.224solution.net',
     'http://localhost:8080',
+    'http://localhost:5173',
     'http://127.0.0.1:8080'
   ]
 };
@@ -23,17 +39,102 @@ const SECURITY_CONFIG = {
 /**
  * Store en mémoire pour rate limiting (remplacer par Redis en production)
  */
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+const rateLimitStore = new Map<string, {
+  count: number;
+  resetTime: number;
+  blocked?: boolean;
+  blockUntil?: number;
+}>();
+
+/**
+ * Comparaison timing-safe pour éviter les timing attacks
+ */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    let result = 1;
+    const maxLen = Math.max(a.length, b.length);
+    for (let i = 0; i < maxLen; i++) {
+      result |= (a.charCodeAt(i % a.length) || 0) ^ (b.charCodeAt(i % b.length) || 0);
+    }
+    return false;
+  }
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
 
 /**
  * Classe principale de sécurité pour Edge Functions
  */
 export class EdgeFunctionSecurity {
-  
+
+  /**
+   * Validation de l'origine de la requête
+   */
+  static validateOrigin(req: Request): { valid: boolean; error?: string } {
+    const origin = req.headers.get('origin');
+    const referer = req.headers.get('referer');
+
+    // Les requêtes sans Origin/Referer sont potentiellement same-origin
+    if (!origin && !referer) {
+      return { valid: true };
+    }
+
+    const toCheck = origin || referer || '';
+
+    try {
+      const url = new URL(toCheck);
+      const isAllowed = SECURITY_CONFIG.ALLOWED_ORIGINS.some(allowed => {
+        try {
+          const allowedUrl = new URL(allowed);
+          return allowedUrl.origin === url.origin;
+        } catch {
+          return false;
+        }
+      });
+
+      if (!isAllowed) {
+        console.warn(`🚨 Origine non autorisée: ${toCheck}`);
+        return { valid: false, error: 'Origine non autorisée' };
+      }
+
+      return { valid: true };
+    } catch {
+      return { valid: false, error: 'Origine invalide' };
+    }
+  }
+
+  /**
+   * Validation du token CSRF avec comparaison timing-safe
+   */
+  static validateCSRFToken(req: Request, storedToken: string): boolean {
+    const csrfToken = req.headers.get('x-csrf-token');
+
+    if (!csrfToken) {
+      console.warn('🚨 Token CSRF manquant');
+      return false;
+    }
+
+    // Comparaison timing-safe
+    const isValid = timingSafeEqual(csrfToken, storedToken);
+
+    if (!isValid) {
+      console.warn('🚨 Token CSRF invalide');
+    }
+
+    return isValid;
+  }
+
   /**
    * Validation et authentification de la requête
    */
-  static async validateRequest(req: Request): Promise<{
+  static async validateRequest(req: Request, options?: {
+    validateOrigin?: boolean;
+    validateCSRF?: boolean;
+    csrfToken?: string;
+  }): Promise<{
     valid: boolean;
     user?: any;
     error?: string;
@@ -48,11 +149,19 @@ export class EdgeFunctionSecurity {
         };
       }
 
-      // Vérifier l'origine
-      const origin = req.headers.get('origin');
-      if (origin && !SECURITY_CONFIG.ALLOWED_ORIGINS.includes(origin)) {
-        console.warn(`🚨 Origine non autorisée: ${origin}`);
-        // Ne pas bloquer en dev/test mais logger
+      // Valider l'origine si demandé
+      if (options?.validateOrigin !== false) {
+        const originCheck = this.validateOrigin(req);
+        if (!originCheck.valid) {
+          return { valid: false, error: originCheck.error };
+        }
+      }
+
+      // Valider le CSRF si demandé
+      if (options?.validateCSRF && options?.csrfToken) {
+        if (!this.validateCSRFToken(req, options.csrfToken)) {
+          return { valid: false, error: 'Token CSRF invalide' };
+        }
       }
 
       // Vérifier le token d'authentification
@@ -65,7 +174,7 @@ export class EdgeFunctionSecurity {
       }
 
       const token = authHeader.replace('Bearer ', '');
-      
+
       // Créer le client Supabase
       const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
       const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
@@ -73,7 +182,7 @@ export class EdgeFunctionSecurity {
 
       // Vérifier le token
       const { data: { user }, error } = await supabase.auth.getUser(token);
-      
+
       if (error || !user) {
         return {
           valid: false,
@@ -95,56 +204,92 @@ export class EdgeFunctionSecurity {
   }
 
   /**
-   * Rate limiting
+   * Rate limiting avancé avec support par type d'endpoint
    */
-  static checkRateLimit(identifier: string): {
+  static checkRateLimit(
+    identifier: string,
+    type: RateLimitType = 'api'
+  ): {
     allowed: boolean;
     remaining?: number;
     resetAt?: number;
+    blocked?: boolean;
+    retryAfter?: number;
   } {
     const now = Date.now();
-    const key = `ratelimit:${identifier}`;
-    const limit = rateLimitStore.get(key);
+    const config = RATE_LIMIT_CONFIGS[type];
+    const key = `ratelimit:${type}:${identifier}`;
+    const entry = rateLimitStore.get(key);
 
-    if (limit) {
-      if (now < limit.resetTime) {
-        if (limit.count >= SECURITY_CONFIG.RATE_LIMIT_MAX) {
+    // Vérifier si bloqué
+    if (entry?.blocked && entry.blockUntil && entry.blockUntil > now) {
+      return {
+        allowed: false,
+        remaining: 0,
+        resetAt: entry.blockUntil,
+        blocked: true,
+        retryAfter: Math.ceil((entry.blockUntil - now) / 1000)
+      };
+    }
+
+    if (entry) {
+      if (now < entry.resetTime) {
+        if (entry.count >= config.maxRequests) {
+          // Bloquer après dépassement
+          entry.blocked = true;
+          entry.blockUntil = now + config.blockDurationMs;
+          rateLimitStore.set(key, entry);
+
+          console.warn(`🚫 Rate limit dépassé et bloqué: ${key}`);
+
           return {
             allowed: false,
             remaining: 0,
-            resetAt: limit.resetTime
+            resetAt: entry.blockUntil,
+            blocked: true,
+            retryAfter: Math.ceil(config.blockDurationMs / 1000)
           };
         }
-        
-        limit.count++;
+
+        entry.count++;
+        rateLimitStore.set(key, entry);
+
         return {
           allowed: true,
-          remaining: SECURITY_CONFIG.RATE_LIMIT_MAX - limit.count,
-          resetAt: limit.resetTime
+          remaining: config.maxRequests - entry.count,
+          resetAt: entry.resetTime
         };
       } else {
         // Fenêtre expirée, réinitialiser
         rateLimitStore.set(key, {
           count: 1,
-          resetTime: now + SECURITY_CONFIG.RATE_LIMIT_WINDOW
+          resetTime: now + config.windowMs
         });
         return {
           allowed: true,
-          remaining: SECURITY_CONFIG.RATE_LIMIT_MAX - 1,
-          resetAt: now + SECURITY_CONFIG.RATE_LIMIT_WINDOW
+          remaining: config.maxRequests - 1,
+          resetAt: now + config.windowMs
         };
       }
     } else {
       rateLimitStore.set(key, {
         count: 1,
-        resetTime: now + SECURITY_CONFIG.RATE_LIMIT_WINDOW
+        resetTime: now + config.windowMs
       });
       return {
         allowed: true,
-        remaining: SECURITY_CONFIG.RATE_LIMIT_MAX - 1,
-        resetAt: now + SECURITY_CONFIG.RATE_LIMIT_WINDOW
+        remaining: config.maxRequests - 1,
+        resetAt: now + config.windowMs
       };
     }
+  }
+
+  /**
+   * Réinitialiser le rate limit (après authentification réussie)
+   */
+  static resetRateLimit(identifier: string, type: RateLimitType = 'api'): void {
+    const key = `ratelimit:${type}:${identifier}`;
+    rateLimitStore.delete(key);
   }
 
   /**

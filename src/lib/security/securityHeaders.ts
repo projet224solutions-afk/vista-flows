@@ -1,21 +1,57 @@
 /**
  * Headers de sécurité HTTP complets
  * Protection contre diverses attaques web
+ *
+ * CORRECTIONS DE SÉCURITÉ:
+ * - Suppression de 'unsafe-inline' et 'unsafe-eval'
+ * - Utilisation de nonces pour les scripts inline
+ * - CSP stricte pour prévenir XSS
  */
 
-export const SECURITY_HEADERS = {
-  // Content Security Policy - Empêche XSS
-  'Content-Security-Policy': [
+/**
+ * Génère un nonce cryptographiquement sécurisé
+ */
+export function generateCSPNonce(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return btoa(String.fromCharCode(...bytes));
+}
+
+/**
+ * Construit les headers CSP avec un nonce
+ */
+export function buildCSPHeader(nonce?: string): string {
+  const nonceDirective = nonce ? `'nonce-${nonce}'` : '';
+
+  return [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    // Scripts: self + nonce pour inline + domaines de confiance
+    `script-src 'self' ${nonceDirective} 'strict-dynamic' https://cdn.jsdelivr.net https://unpkg.com https://js.stripe.com`,
+    // Styles: self + nonce pour inline + Google Fonts
+    `style-src 'self' ${nonceDirective} https://fonts.googleapis.com`,
+    // Fonts
     "font-src 'self' https://fonts.gstatic.com data:",
+    // Images
     "img-src 'self' data: https: blob:",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://djomy.com https://api.djomy.com",
+    // Connexions API
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://djomy.com https://api.djomy.com https://api.stripe.com https://api.mapbox.com",
+    // Frames
+    "frame-src 'self' https://js.stripe.com",
+    // Empêcher l'affichage dans une iframe
     "frame-ancestors 'none'",
+    // Restrictions supplémentaires
     "base-uri 'self'",
-    "form-action 'self'"
-  ].join('; '),
+    "form-action 'self'",
+    // Bloquer les plugins
+    "object-src 'none'",
+    // Upgrade des requêtes HTTP vers HTTPS
+    "upgrade-insecure-requests"
+  ].join('; ');
+}
+
+// Headers CSP par défaut (sans nonce - pour les cas où on ne peut pas injecter de nonce)
+export const SECURITY_HEADERS = {
+  // Content Security Policy - Mode strict
+  'Content-Security-Policy': buildCSPHeader(),
   
   // Empêcher le navigateur de deviner le MIME type
   'X-Content-Type-Options': 'nosniff',

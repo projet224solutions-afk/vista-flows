@@ -3,10 +3,20 @@
  * 224SOLUTIONS - Mode Offline Avancé
  *
  * Gère le stockage sécurisé des clés et des informations sensibles en mode offline
+ *
+ * CORRECTIONS DE SÉCURITÉ:
+ * - Chiffrement des API keys avec le PIN utilisateur
+ * - Dérivation PBKDF2 (600,000 itérations)
+ * - Comparaison timing-safe
  */
 
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import { hashPassword, generateSecureToken } from './encryption';
+import {
+  encryptWithPIN,
+  decryptWithPIN,
+  timingSafeEqual
+} from '@/lib/security/secureEncryption';
 
 /**
  * Clé stockée
@@ -282,6 +292,7 @@ export async function storeAPIKey(
   userId: string,
   keyName: string,
   keyValue: string,
+  pin: string,
   expiryDays?: number
 ): Promise<void> {
   const db = await initKeyDB();
@@ -290,23 +301,30 @@ export async function storeAPIKey(
     ? new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000).toISOString()
     : undefined;
 
+  // Chiffrer la clé API avec le PIN utilisateur (PBKDF2 + AES-GCM)
+  const { encrypted, iv, salt } = await encryptWithPIN(keyValue, pin);
+
   const key: StoredKey = {
     key_id: `api_${userId}_${keyName}`,
     key_type: 'api_key',
-    value: keyValue, // TODO: Chiffrer avec le PIN utilisateur
+    value: JSON.stringify({ encrypted, iv, salt }), // Stockage chiffré
     created_at: new Date().toISOString(),
     expires_at: expiresAt,
-    metadata: { user_id: userId, key_name: keyName }
+    metadata: { user_id: userId, key_name: keyName, encrypted: true }
   };
 
   await db.put('keys', key);
-  console.log(`[KeyManager] ✅ Clé API stockée: ${keyName}`);
+  console.log(`[KeyManager] ✅ Clé API chiffrée et stockée: ${keyName}`);
 }
 
 /**
- * Récupérer une clé API
+ * Récupérer une clé API (déchiffrée avec le PIN)
  */
-export async function getAPIKey(userId: string, keyName: string): Promise<string | null> {
+export async function getAPIKey(
+  userId: string,
+  keyName: string,
+  pin: string
+): Promise<string | null> {
   const db = await initKeyDB();
   const key = await db.get('keys', `api_${userId}_${keyName}`);
 
@@ -324,7 +342,21 @@ export async function getAPIKey(userId: string, keyName: string): Promise<string
     }
   }
 
-  return key.value; // TODO: Déchiffrer avec le PIN
+  // Vérifier si la clé est chiffrée
+  if (key.metadata?.encrypted) {
+    try {
+      const { encrypted, iv, salt } = JSON.parse(key.value);
+      const decrypted = await decryptWithPIN(encrypted, iv, salt, pin);
+      return decrypted;
+    } catch (error) {
+      console.error('[KeyManager] Erreur déchiffrement clé API:', error);
+      return null;
+    }
+  }
+
+  // Legacy: clé non chiffrée (migration)
+  console.warn('[KeyManager] ⚠️ Clé API non chiffrée détectée, migration recommandée');
+  return key.value;
 }
 
 /**

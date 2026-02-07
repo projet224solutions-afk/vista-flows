@@ -2,6 +2,11 @@
  * Composant de Connexion Universelle Intelligente
  * Support: Agent, Bureau Syndicat, Travailleur
  * Identifiant flexible: Email, Téléphone, ID unique
+ *
+ * CORRECTIONS DE SÉCURITÉ:
+ * - Utilisation de SecureStorage au lieu de localStorage
+ * - Sessions chiffrées avec AES-GCM
+ * - Protection contre XSS
  */
 
 import { useState } from 'react';
@@ -15,6 +20,7 @@ import { UserCheck, Building2, Users, Lock, Mail, Phone, IdCard, Loader2, Eye, E
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { SecureStorage } from '@/lib/secureStorage';
 
 type UserType = 'agent' | 'bureau' | 'worker';
 
@@ -75,10 +81,10 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
       if (!data?.success) throw new Error(data?.error || 'Erreur de connexion');
 
       console.log('✅ Connexion réussie:', data.session.role);
-      
-      // Stocker la session dans localStorage
-      localStorage.setItem(`${userType}_session`, JSON.stringify(data.session));
-      
+
+      // Stocker la session de manière sécurisée (chiffrée avec AES-GCM)
+      await SecureStorage.setItem(`${userType}_session`, data.session);
+
       toast.success('Connexion réussie !');
       
       // Redirection selon le rôle
