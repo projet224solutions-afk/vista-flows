@@ -678,7 +678,7 @@ export default function Proximite() {
                 <button
                   key={service.id}
                   onClick={() => navigate(`/services-proximite?type=${service.id}`)}
-                  className="group relative bg-gradient-to-br from-card to-muted/30 rounded-2xl p-4 border border-border/50 hover:border-primary/30 hover:shadow-lg transition-all duration-300 text-left overflow-hidden"
+                  className="group relative bg-card rounded-2xl p-4 border border-border/50 hover:border-primary/30 hover:bg-primary hover:text-primary-foreground hover:shadow-lg transition-all duration-300 text-left overflow-hidden"
                 >
                   <div className={cn(
                     "w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-transform group-hover:scale-110",
