@@ -25,6 +25,12 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+    // Prévenir les instances React dupliquées - FIX pour "Cannot read properties of null"
+    dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
+  },
+  optimizeDeps: {
+    include: ["@tanstack/react-query", "react", "react-dom"],
+    exclude: [],
   },
   build: {
     rollupOptions: {
