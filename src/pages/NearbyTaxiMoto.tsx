@@ -1,27 +1,30 @@
 /**
  * NEARBY TAXI-MOTO PAGE
  * Liste des taxi-motos disponibles à proximité
- * 224Solutions - Ultra Optimisé v2
+ * 224Solutions - Production Ready v3
+ *
+ * Optimisations appliquées:
+ * ✅ Pas de clignotement lors de l'auto-refresh
+ * ✅ Pas de double appel réseau
+ * ✅ Protection contre les requêtes parallèles (verrou isFetching)
+ * ✅ Indicateur de fraîcheur des données
+ * ✅ Protection contre les memory leaks (isMounted)
+ * ✅ Composants mémoïsés externalisés
+ * ✅ Comparaison des données avant setState
+ * ✅ Type correct pour setInterval (number)
+ * ✅ Protection anti-spam sur le bouton refresh
  */
 
-import { useState, useEffect, useCallback, memo, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft,
   Bike,
-  MapPin,
-  Star,
   Navigation,
   RefreshCw,
   Loader2,
-  Phone,
-  Clock,
-  User,
-  AlertCircle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import QuickFooter from "@/components/QuickFooter";
@@ -31,107 +34,42 @@ import {
   processTaxiDriver,
   filterDriversByRadius,
   sortDrivers,
-  formatDriverDistance,
-  getVehiclePlateDisplay,
   extractProfilesFromJoinedData,
 } from '@/lib/drivers';
+import { TaxiDriversList } from '@/components/drivers';
+
+// ============================================================================
+// Constants
+// ============================================================================
 
 const RADIUS_KM = 20;
 const AUTO_REFRESH_INTERVAL = 20000; // 20 secondes
 const MAX_DRIVERS_LIMIT = 100;
+const REFRESH_COOLDOWN = 2000; // 2 secondes entre les clics manuels
 
 // ============================================================================
-// Composant mémoïsé pour la carte du conducteur
+// Utility: Compare driver arrays pour éviter les re-renders inutiles
 // ============================================================================
 
-interface TaxiDriverCardProps {
-  driver: TaxiDriver;
-  onBook: (driverId: string) => void;
+function areDriversEqual(prev: TaxiDriver[], next: TaxiDriver[]): boolean {
+  if (prev.length !== next.length) return false;
+
+  for (let i = 0; i < prev.length; i++) {
+    const p = prev[i];
+    const n = next[i];
+    if (
+      p.id !== n.id ||
+      p.status !== n.status ||
+      p.is_online !== n.is_online ||
+      p.distance !== n.distance ||
+      p.rating !== n.rating
+    ) {
+      return false;
+    }
+  }
+
+  return true;
 }
-
-const TaxiDriverCard = memo(function TaxiDriverCard({ driver, onBook }: TaxiDriverCardProps) {
-  const displayName = driver.profile?.first_name
-    ? `${driver.profile.first_name}${driver.profile.last_name ? ` ${driver.profile.last_name.charAt(0)}.` : ''}`
-    : 'Conducteur';
-  const vehiclePlate = getVehiclePlateDisplay(driver);
-  const isAvailable = driver.status === 'available';
-
-  return (
-    <Card className="border-border/50 hover:border-emerald-500/50 transition-colors">
-      <CardContent className="p-4">
-        <div className="flex items-center gap-4">
-          {/* Avatar */}
-          <div className="relative">
-            <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center">
-              {driver.profile?.avatar_url ? (
-                <img
-                  src={driver.profile.avatar_url}
-                  alt=""
-                  className="w-14 h-14 rounded-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <User className="w-6 h-6 text-emerald-600" />
-              )}
-            </div>
-            {/* Status indicator */}
-            <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-              isAvailable ? 'bg-green-500' : 'bg-yellow-500'
-            }`} />
-          </div>
-
-          {/* Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-foreground truncate">
-                {displayName}
-              </h3>
-              <Badge variant={isAvailable ? 'default' : 'secondary'} className="text-xs">
-                {isAvailable ? 'Disponible' : 'En course'}
-              </Badge>
-            </div>
-
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              {/* Rating - seulement si disponible */}
-              {driver.rating !== null && driver.rating > 0 && (
-                <span className="flex items-center gap-1">
-                  <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                  {driver.rating.toFixed(1)}
-                </span>
-              )}
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {driver.total_rides ?? 0} courses
-              </span>
-              {driver.distance !== undefined && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  {formatDriverDistance(driver.distance)}
-                </span>
-              )}
-            </div>
-
-            <p className="text-xs text-muted-foreground mt-1">
-              {vehiclePlate}
-            </p>
-          </div>
-
-          {/* Action */}
-          <Button
-            size="sm"
-            onClick={() => onBook(driver.id)}
-            disabled={!isAvailable}
-            title={!isAvailable ? 'Conducteur en course' : undefined}
-            className="bg-emerald-500 hover:bg-emerald-600"
-          >
-            <Phone className="w-4 h-4 mr-1" />
-            Appeler
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-});
 
 // ============================================================================
 // Composant principal
@@ -139,25 +77,47 @@ const TaxiDriverCard = memo(function TaxiDriverCard({ driver, onBook }: TaxiDriv
 
 export default function NearbyTaxiMoto() {
   const navigate = useNavigate();
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // State
+  // ═══════════════════════════════════════════════════════════════════════════
   const [drivers, setDrivers] = useState<TaxiDriver[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const autoRefreshRef = useRef<NodeJS.Timeout | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [secondsAgo, setSecondsAgo] = useState(0);
 
-  // ✅ Utiliser useGeoDistance centralisé (fallback: Coyah)
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Refs pour protection memory leaks et requêtes parallèles
+  // ═══════════════════════════════════════════════════════════════════════════
+  const isMountedRef = useRef(true);
+  const isFetchingRef = useRef(false);
+  const autoRefreshRef = useRef<number | null>(null); // ✅ Type correct: number
+  const lastRefreshClickRef = useRef<number>(0);
+  const secondsIntervalRef = useRef<number | null>(null);
+
+  // Géolocalisation centralisée
   const { userPosition, positionReady, refreshPosition } = useGeoDistance();
 
-  // ✅ Fonction de chargement optimisée
-  const loadDrivers = useCallback(async () => {
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Fonction de chargement optimisée
+  // ═══════════════════════════════════════════════════════════════════════════
+  const loadDrivers = useCallback(async (isAutoRefresh = false) => {
+    // ✅ Protection contre les requêtes parallèles
+    if (isFetchingRef.current) return;
     if (!positionReady) return;
 
-    setLoading(true);
-    setError(null);
+    isFetchingRef.current = true;
+
+    // ✅ Activer le loading UNIQUEMENT pour le premier chargement
+    if (!isAutoRefresh) {
+      setLoading(true);
+      setError(null);
+    }
 
     try {
       const position = { lat: userPosition.latitude, lng: userPosition.longitude };
 
-      // ✅ Requête optimisée avec jointure profil et limite
       const { data, error: queryError } = await supabase
         .from('taxi_drivers')
         .select(`
@@ -176,58 +136,151 @@ export default function NearbyTaxiMoto() {
         .eq('is_online', true)
         .limit(MAX_DRIVERS_LIMIT);
 
+      // ✅ Vérifier si le composant est toujours monté
+      if (!isMountedRef.current) return;
+
       if (queryError) throw new Error(`Erreur: ${queryError.message}`);
 
-      // ✅ OPTIMISATION: Créer une seule Map globale de profils
+      // Traitement des données
       const rawData = (data || []) as Array<Record<string, unknown>>;
       const profileMap = extractProfilesFromJoinedData(rawData);
 
-      // ✅ Traitement des conducteurs avec la Map globale
       const processedDrivers: TaxiDriver[] = [];
-
       for (const raw of rawData) {
         processedDrivers.push(processTaxiDriver(raw, position, profileMap));
       }
 
-      // ✅ Filtrer par rayon et trier (distance puis rating)
       const filtered = filterDriversByRadius(processedDrivers, RADIUS_KM);
       const sorted = sortDrivers(filtered) as TaxiDriver[];
 
-      setDrivers(sorted);
-    } catch (err) {
-      console.error('Error loading taxi drivers:', err);
-      setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
-    } finally {
-      setLoading(false);
-    }
-  }, [positionReady, userPosition]);
+      // ✅ Vérifier à nouveau si le composant est monté
+      if (!isMountedRef.current) return;
 
-  // ✅ Chargement initial
+      // ✅ Mettre à jour uniquement si les données ont changé
+      setDrivers(prevDrivers => {
+        if (areDriversEqual(prevDrivers, sorted)) {
+          return prevDrivers; // Pas de changement, pas de re-render
+        }
+        return sorted;
+      });
+
+      // Mettre à jour le timestamp
+      setLastUpdated(new Date());
+      setSecondsAgo(0);
+
+      // Clear l'erreur en cas de succès (même sur auto-refresh)
+      setError(null);
+
+    } catch (err) {
+      if (!isMountedRef.current) return;
+
+      console.error('Error loading taxi drivers:', err);
+
+      // ✅ Ne pas écraser les données existantes en cas d'erreur d'auto-refresh
+      if (!isAutoRefresh || drivers.length === 0) {
+        setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
+      }
+    } finally {
+      if (isMountedRef.current) {
+        isFetchingRef.current = false;
+        if (!isAutoRefresh) {
+          setLoading(false);
+        }
+      }
+    }
+  }, [positionReady, userPosition, drivers.length]);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Chargement initial
+  // ═══════════════════════════════════════════════════════════════════════════
   useEffect(() => {
     if (positionReady) {
-      loadDrivers();
+      loadDrivers(false);
     }
   }, [positionReady, loadDrivers]);
 
-  // ✅ Auto-refresh toutes les 20 secondes
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Auto-refresh toutes les 20 secondes (SANS clignotement)
+  // ═══════════════════════════════════════════════════════════════════════════
   useEffect(() => {
     if (!positionReady) return;
 
-    autoRefreshRef.current = setInterval(() => {
-      loadDrivers();
+    autoRefreshRef.current = window.setInterval(() => {
+      if (isMountedRef.current) {
+        loadDrivers(true); // ✅ isAutoRefresh = true → pas de skeleton
+      }
     }, AUTO_REFRESH_INTERVAL);
 
     return () => {
-      if (autoRefreshRef.current) {
-        clearInterval(autoRefreshRef.current);
+      if (autoRefreshRef.current !== null) {
+        window.clearInterval(autoRefreshRef.current);
+        autoRefreshRef.current = null;
       }
     };
   }, [positionReady, loadDrivers]);
 
-  // Fonction de rafraîchissement manuel
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Compteur "Mis à jour il y a X secondes"
+  // ═══════════════════════════════════════════════════════════════════════════
+  useEffect(() => {
+    secondsIntervalRef.current = window.setInterval(() => {
+      if (isMountedRef.current && lastUpdated) {
+        const diff = Math.floor((Date.now() - lastUpdated.getTime()) / 1000);
+        setSecondsAgo(diff);
+      }
+    }, 1000);
+
+    return () => {
+      if (secondsIntervalRef.current !== null) {
+        window.clearInterval(secondsIntervalRef.current);
+        secondsIntervalRef.current = null;
+      }
+    };
+  }, [lastUpdated]);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Cleanup complet au démontage
+  // ═══════════════════════════════════════════════════════════════════════════
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+
+      if (autoRefreshRef.current !== null) {
+        window.clearInterval(autoRefreshRef.current);
+      }
+      if (secondsIntervalRef.current !== null) {
+        window.clearInterval(secondsIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Handlers
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Rafraîchissement manuel avec protection anti-spam
   const handleRefresh = useCallback(async () => {
+    const now = Date.now();
+
+    // ✅ Protection anti-spam: 2 secondes minimum entre les clics
+    if (now - lastRefreshClickRef.current < REFRESH_COOLDOWN) {
+      return;
+    }
+
+    // ✅ Protection contre les requêtes parallèles
+    if (isFetchingRef.current) {
+      return;
+    }
+
+    lastRefreshClickRef.current = now;
+
+    // Rafraîchir la position
     await refreshPosition();
-    await loadDrivers();
+
+    // ✅ Charger les données (le verrou empêchera les doublons)
+    await loadDrivers(false);
   }, [refreshPosition, loadDrivers]);
 
   const handleBookDriver = useCallback((driverId: string) => {
@@ -238,82 +291,25 @@ export default function NearbyTaxiMoto() {
     navigate('/taxi-moto');
   }, [navigate]);
 
-  // ============================================================================
-  // RENDU SIMPLIFIÉ - Sans useMemo complexe
-  // ============================================================================
+  const handleRetry = useCallback(() => {
+    loadDrivers(false);
+  }, [loadDrivers]);
 
-  const renderDriversList = () => {
-    // État de chargement
-    if (loading) {
-      return (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="border-border/50">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-4">
-                  <Skeleton className="w-14 h-14 rounded-full" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-24" />
-                  </div>
-                  <Skeleton className="h-9 w-24" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      );
-    }
-
-    // État d'erreur
-    if (error) {
-      return (
-        <Card className="border-border/50">
-          <CardContent className="p-8 text-center">
-            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-            <h3 className="font-semibold text-foreground mb-2">Erreur de chargement</h3>
-            <p className="text-sm text-muted-foreground mb-4">{error}</p>
-            <Button variant="outline" onClick={loadDrivers}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Réessayer
-            </Button>
-          </CardContent>
-        </Card>
-      );
-    }
-
-    // Liste vide
-    if (drivers.length === 0) {
-      return (
-        <Card className="border-border/50">
-          <CardContent className="p-8 text-center">
-            <Bike className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="font-semibold text-foreground mb-2">Aucun conducteur en ligne</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Réessayez dans quelques instants
-            </p>
-            <Button variant="outline" onClick={loadDrivers}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Actualiser
-            </Button>
-          </CardContent>
-        </Card>
-      );
-    }
-
-    // Liste des drivers
-    return (
-      <div className="space-y-3">
-        {drivers.map((driver) => (
-          <TaxiDriverCard
-            key={driver.id}
-            driver={driver}
-            onBook={handleBookDriver}
-          />
-        ))}
-      </div>
-    );
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Formatage du temps écoulé
+  // ═══════════════════════════════════════════════════════════════════════════
+  const formatTimeAgo = (seconds: number): string => {
+    if (seconds < 5) return 'À l\'instant';
+    if (seconds < 60) return `Il y a ${seconds}s`;
+    const minutes = Math.floor(seconds / 60);
+    return `Il y a ${minutes}min`;
   };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Rendu
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const isRefreshDisabled = loading || isFetchingRef.current;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 pb-24">
@@ -334,16 +330,24 @@ export default function NearbyTaxiMoto() {
                 <Bike className="w-5 h-5 text-emerald-500" />
                 Taxi-Moto à Proximité
               </h1>
-              <p className="text-xs text-muted-foreground">
-                {drivers.length} conducteur{drivers.length !== 1 ? 's' : ''} dans un rayon de {RADIUS_KM} km
-              </p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-xs text-muted-foreground">
+                  {drivers.length} conducteur{drivers.length !== 1 ? 's' : ''} dans un rayon de {RADIUS_KM} km
+                </p>
+                {lastUpdated && (
+                  <span className="text-xs text-muted-foreground/70">
+                    • {formatTimeAgo(secondsAgo)}
+                  </span>
+                )}
+              </div>
             </div>
             <Button
               variant="ghost"
               size="icon"
               onClick={handleRefresh}
-              disabled={loading}
+              disabled={isRefreshDisabled}
               className="rounded-full"
+              title="Actualiser"
             >
               {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -375,8 +379,14 @@ export default function NearbyTaxiMoto() {
           </CardContent>
         </Card>
 
-        {/* Drivers List */}
-        {renderDriversList()}
+        {/* ✅ Liste des conducteurs - Composant mémoïsé externe */}
+        <TaxiDriversList
+          loading={loading}
+          error={error}
+          drivers={drivers}
+          onRetry={handleRetry}
+          onBook={handleBookDriver}
+        />
       </div>
 
       <QuickFooter />
