@@ -1,10 +1,10 @@
 /**
  * NEARBY TAXI-MOTO PAGE
  * Liste des taxi-motos disponibles à proximité
- * 224Solutions - Optimisé
+ * 224Solutions - Ultra Optimisé v2
  */
 
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, memo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,22 +28,34 @@ import QuickFooter from "@/components/QuickFooter";
 import { useGeoDistance } from "@/hooks/useGeoDistance";
 import {
   type TaxiDriver,
-  type DriverProfile,
   processTaxiDriver,
   filterDriversByRadius,
   sortDrivers,
   formatDriverDistance,
+  getVehiclePlateDisplay,
+  extractProfilesFromJoinedData,
 } from '@/lib/drivers';
 
 const RADIUS_KM = 20;
+const AUTO_REFRESH_INTERVAL = 20000; // 20 secondes
+const MAX_DRIVERS_LIMIT = 100;
 
+// ============================================================================
 // Composant mémoïsé pour la carte du conducteur
+// ============================================================================
+
 interface TaxiDriverCardProps {
   driver: TaxiDriver;
   onBook: (driverId: string) => void;
 }
 
 const TaxiDriverCard = memo(function TaxiDriverCard({ driver, onBook }: TaxiDriverCardProps) {
+  const displayName = driver.profile?.first_name
+    ? `${driver.profile.first_name}${driver.profile.last_name ? ` ${driver.profile.last_name.charAt(0)}.` : ''}`
+    : 'Conducteur';
+  const vehiclePlate = getVehiclePlateDisplay(driver);
+  const isAvailable = driver.status === 'available';
+
   return (
     <Card className="border-border/50 hover:border-emerald-500/50 transition-colors">
       <CardContent className="p-4">
@@ -64,7 +76,7 @@ const TaxiDriverCard = memo(function TaxiDriverCard({ driver, onBook }: TaxiDriv
             </div>
             {/* Status indicator */}
             <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-              driver.status === 'available' ? 'bg-green-500' : 'bg-yellow-500'
+              isAvailable ? 'bg-green-500' : 'bg-yellow-500'
             }`} />
           </div>
 
@@ -72,10 +84,10 @@ const TaxiDriverCard = memo(function TaxiDriverCard({ driver, onBook }: TaxiDriv
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-foreground truncate">
-                {driver.profile?.first_name || 'Conducteur'} {driver.profile?.last_name?.charAt(0) || ''}
+                {displayName}
               </h3>
-              <Badge variant={driver.status === 'available' ? 'default' : 'secondary'} className="text-xs">
-                {driver.status === 'available' ? 'Disponible' : 'En course'}
+              <Badge variant={isAvailable ? 'default' : 'secondary'} className="text-xs">
+                {isAvailable ? 'Disponible' : 'En course'}
               </Badge>
             </div>
 
@@ -89,7 +101,7 @@ const TaxiDriverCard = memo(function TaxiDriverCard({ driver, onBook }: TaxiDriv
               )}
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                {driver.total_rides || 0} courses
+                {driver.total_rides ?? 0} courses
               </span>
               {driver.distance !== undefined && (
                 <span className="flex items-center gap-1">
@@ -100,7 +112,7 @@ const TaxiDriverCard = memo(function TaxiDriverCard({ driver, onBook }: TaxiDriv
             </div>
 
             <p className="text-xs text-muted-foreground mt-1">
-              {driver.vehicle_plate}
+              {vehiclePlate}
             </p>
           </div>
 
@@ -108,7 +120,8 @@ const TaxiDriverCard = memo(function TaxiDriverCard({ driver, onBook }: TaxiDriv
           <Button
             size="sm"
             onClick={() => onBook(driver.id)}
-            disabled={driver.status !== 'available'}
+            disabled={!isAvailable}
+            title={!isAvailable ? 'Conducteur en course' : undefined}
             className="bg-emerald-500 hover:bg-emerald-600"
           >
             <Phone className="w-4 h-4 mr-1" />
@@ -120,15 +133,21 @@ const TaxiDriverCard = memo(function TaxiDriverCard({ driver, onBook }: TaxiDriv
   );
 });
 
+// ============================================================================
+// Composant principal
+// ============================================================================
+
 export default function NearbyTaxiMoto() {
   const navigate = useNavigate();
   const [drivers, setDrivers] = useState<TaxiDriver[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const autoRefreshRef = useRef<NodeJS.Timeout | null>(null);
 
   // ✅ Utiliser useGeoDistance centralisé (fallback: Coyah)
   const { userPosition, positionReady, refreshPosition } = useGeoDistance();
 
+  // ✅ Fonction de chargement optimisée
   const loadDrivers = useCallback(async () => {
     if (!positionReady) return;
 
@@ -138,7 +157,7 @@ export default function NearbyTaxiMoto() {
     try {
       const position = { lat: userPosition.latitude, lng: userPosition.longitude };
 
-      // ✅ Requête optimisée avec jointure profil
+      // ✅ Requête optimisée avec jointure profil et limite
       const { data, error: queryError } = await supabase
         .from('taxi_drivers')
         .select(`
@@ -154,22 +173,23 @@ export default function NearbyTaxiMoto() {
           last_lng,
           profiles:user_id (id, first_name, last_name, phone, avatar_url)
         `)
-        .eq('is_online', true);
+        .eq('is_online', true)
+        .limit(MAX_DRIVERS_LIMIT);
 
       if (queryError) throw new Error(`Erreur: ${queryError.message}`);
 
-      // Traitement des conducteurs avec profil inclus
+      // ✅ OPTIMISATION: Créer une seule Map globale de profils
+      const rawData = (data || []) as Array<Record<string, unknown>>;
+      const profileMap = extractProfilesFromJoinedData(rawData);
+
+      // ✅ Traitement des conducteurs avec la Map globale
       const processedDrivers: TaxiDriver[] = [];
 
-      for (const raw of data || []) {
-        const profile = raw.profiles as unknown as DriverProfile | null;
-        const profileMap = new Map<string, DriverProfile>();
-        if (profile?.id) profileMap.set(raw.user_id, profile);
-
+      for (const raw of rawData) {
         processedDrivers.push(processTaxiDriver(raw, position, profileMap));
       }
 
-      // Filtrer par rayon et trier
+      // ✅ Filtrer par rayon et trier (distance puis rating)
       const filtered = filterDriversByRadius(processedDrivers, RADIUS_KM);
       const sorted = sortDrivers(filtered) as TaxiDriver[];
 
@@ -182,14 +202,29 @@ export default function NearbyTaxiMoto() {
     }
   }, [positionReady, userPosition]);
 
-  // Charger les conducteurs quand la position est prête
+  // ✅ Chargement initial
   useEffect(() => {
     if (positionReady) {
       loadDrivers();
     }
   }, [positionReady, loadDrivers]);
 
-  // Fonction de rafraîchissement
+  // ✅ Auto-refresh toutes les 20 secondes
+  useEffect(() => {
+    if (!positionReady) return;
+
+    autoRefreshRef.current = setInterval(() => {
+      loadDrivers();
+    }, AUTO_REFRESH_INTERVAL);
+
+    return () => {
+      if (autoRefreshRef.current) {
+        clearInterval(autoRefreshRef.current);
+      }
+    };
+  }, [positionReady, loadDrivers]);
+
+  // Fonction de rafraîchissement manuel
   const handleRefresh = useCallback(async () => {
     await refreshPosition();
     await loadDrivers();
@@ -203,8 +238,12 @@ export default function NearbyTaxiMoto() {
     navigate('/taxi-moto');
   }, [navigate]);
 
-  // Mémoïser le contenu de la liste
-  const driversList = useMemo(() => {
+  // ============================================================================
+  // RENDU SIMPLIFIÉ - Sans useMemo complexe
+  // ============================================================================
+
+  const renderDriversList = () => {
+    // État de chargement
     if (loading) {
       return (
         <div className="space-y-3">
@@ -226,6 +265,7 @@ export default function NearbyTaxiMoto() {
       );
     }
 
+    // État d'erreur
     if (error) {
       return (
         <Card className="border-border/50">
@@ -242,6 +282,7 @@ export default function NearbyTaxiMoto() {
       );
     }
 
+    // Liste vide
     if (drivers.length === 0) {
       return (
         <Card className="border-border/50">
@@ -260,6 +301,7 @@ export default function NearbyTaxiMoto() {
       );
     }
 
+    // Liste des drivers
     return (
       <div className="space-y-3">
         {drivers.map((driver) => (
@@ -271,7 +313,7 @@ export default function NearbyTaxiMoto() {
         ))}
       </div>
     );
-  }, [loading, error, drivers, loadDrivers, handleBookDriver]);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 pb-24">
@@ -334,7 +376,7 @@ export default function NearbyTaxiMoto() {
         </Card>
 
         {/* Drivers List */}
-        {driversList}
+        {renderDriversList()}
       </div>
 
       <QuickFooter />

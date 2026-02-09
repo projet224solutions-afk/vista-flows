@@ -4,4 +4,28 @@
  */
 
 export * from './types';
-export * from './utils';
+export {
+  // Type guards
+  isDeliveryDriver,
+  isTaxiDriver,
+  // Parsing
+  parsePostGISPoint,
+  isValidCoordinate,
+  parseDirectCoordinates,
+  // Distance
+  getDriverDistance,
+  formatDriverDistance,
+  // Helpers
+  getDriverTotalTrips,
+  getDriverDisplayName,
+  getVehicleTypeDisplay,
+  getVehiclePlateDisplay,
+  // Processing
+  processDeliveryDriver,
+  processTaxiDriver,
+  // Filtering & sorting
+  filterDriversByRadius,
+  sortDrivers,
+  createProfileMap,
+  extractProfilesFromJoinedData,
+} from './utils';

@@ -1,10 +1,10 @@
 /**
  * NEARBY LIVRAISON PAGE
  * Liste des livreurs disponibles à proximité
- * 224Solutions - Optimisé
+ * 224Solutions - Ultra Optimisé v2
  */
 
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, memo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,18 +29,25 @@ import QuickFooter from "@/components/QuickFooter";
 import { useGeoDistance } from "@/hooks/useGeoDistance";
 import {
   type NearbyDriver,
-  type DriverProfile,
   processDeliveryDriver,
   processTaxiDriver,
   filterDriversByRadius,
   sortDrivers,
-  createProfileMap,
   formatDriverDistance,
+  getDriverTotalTrips,
+  getDriverDisplayName,
+  getVehicleTypeDisplay,
+  extractProfilesFromJoinedData,
 } from '@/lib/drivers';
 
 const RADIUS_KM = 20;
+const AUTO_REFRESH_INTERVAL = 20000; // 20 secondes
+const MAX_DRIVERS_LIMIT = 100;
 
+// ============================================================================
 // Composant mémoïsé pour la carte du livreur
+// ============================================================================
+
 interface DriverCardProps {
   driver: NearbyDriver;
   onRequestDelivery: () => void;
@@ -55,9 +62,9 @@ const DriverCard = memo(function DriverCard({ driver, onRequestDelivery }: Drive
     }
   };
 
-  const totalDeliveries = driver.source === 'drivers'
-    ? driver.total_deliveries
-    : (driver as any).total_rides ?? 0;
+  const totalTrips = getDriverTotalTrips(driver);
+  const displayName = getDriverDisplayName(driver);
+  const vehicleType = getVehicleTypeDisplay(driver);
 
   return (
     <Card className="border-border/50 hover:border-orange-500/50 transition-colors">
@@ -86,7 +93,7 @@ const DriverCard = memo(function DriverCard({ driver, onRequestDelivery }: Drive
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-foreground truncate">
-                {driver.profile?.first_name || 'Livreur'} {driver.profile?.last_name?.charAt(0) || ''}
+                {displayName}
               </h3>
               <Badge variant={driver.is_online ? 'default' : 'secondary'} className="text-xs">
                 {driver.is_online ? 'En ligne' : 'Hors ligne'}
@@ -103,7 +110,7 @@ const DriverCard = memo(function DriverCard({ driver, onRequestDelivery }: Drive
               )}
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                {totalDeliveries || 0} livraisons
+                {totalTrips} livraisons
               </span>
               {driver.distance !== undefined && (
                 <span className="flex items-center gap-1">
@@ -115,7 +122,7 @@ const DriverCard = memo(function DriverCard({ driver, onRequestDelivery }: Drive
 
             <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
               {getVehicleIcon(driver.vehicle_type)}
-              <span className="capitalize">{driver.vehicle_type}</span>
+              <span className="capitalize">{vehicleType}</span>
             </div>
           </div>
 
@@ -124,6 +131,7 @@ const DriverCard = memo(function DriverCard({ driver, onRequestDelivery }: Drive
             size="sm"
             onClick={onRequestDelivery}
             disabled={!driver.is_online}
+            title={!driver.is_online ? 'Livreur hors ligne' : undefined}
             className="bg-orange-500 hover:bg-orange-600"
           >
             <Package className="w-4 h-4 mr-1" />
@@ -135,15 +143,21 @@ const DriverCard = memo(function DriverCard({ driver, onRequestDelivery }: Drive
   );
 });
 
+// ============================================================================
+// Composant principal
+// ============================================================================
+
 export default function NearbyLivraison() {
   const navigate = useNavigate();
   const [drivers, setDrivers] = useState<NearbyDriver[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const autoRefreshRef = useRef<NodeJS.Timeout | null>(null);
 
   // ✅ Utiliser useGeoDistance centralisé (fallback: Coyah)
   const { userPosition, positionReady, refreshPosition } = useGeoDistance();
 
+  // ✅ Fonction de chargement optimisée
   const loadDrivers = useCallback(async () => {
     if (!positionReady) return;
 
@@ -153,8 +167,9 @@ export default function NearbyLivraison() {
     try {
       const position = { lat: userPosition.latitude, lng: userPosition.longitude };
 
-      // ✅ Requêtes parallèles optimisées
+      // ✅ Requêtes parallèles optimisées avec limites
       const [deliveryRes, taxiRes] = await Promise.all([
+        // Delivery drivers - CORRIGÉ: ET logique au lieu de OU
         supabase
           .from('drivers')
           .select(`
@@ -168,8 +183,11 @@ export default function NearbyLivraison() {
             total_deliveries,
             profiles:user_id (id, first_name, last_name, phone, avatar_url)
           `)
-          .or('status.eq.active,is_online.eq.true'),
+          .eq('status', 'active')
+          .eq('is_online', true)
+          .limit(MAX_DRIVERS_LIMIT),
 
+        // Taxi drivers (peuvent aussi livrer)
         supabase
           .from('taxi_drivers')
           .select(`
@@ -184,33 +202,32 @@ export default function NearbyLivraison() {
             total_rides,
             profiles:user_id (id, first_name, last_name, phone, avatar_url)
           `)
-          .eq('is_online', true),
+          .eq('is_online', true)
+          .limit(MAX_DRIVERS_LIMIT),
       ]);
 
       if (deliveryRes.error) throw new Error(`Erreur drivers: ${deliveryRes.error.message}`);
       if (taxiRes.error) throw new Error(`Erreur taxi: ${taxiRes.error.message}`);
 
+      // ✅ OPTIMISATION: Créer une seule Map globale de profils
+      const deliveryData = (deliveryRes.data || []) as Array<Record<string, unknown>>;
+      const taxiData = (taxiRes.data || []) as Array<Record<string, unknown>>;
+
+      const deliveryProfileMap = extractProfilesFromJoinedData(deliveryData);
+      const taxiProfileMap = extractProfilesFromJoinedData(taxiData);
+
+      // ✅ Traitement des drivers avec la Map globale
       const allDrivers: NearbyDriver[] = [];
 
-      // Traitement des delivery drivers avec profil inclus
-      for (const raw of deliveryRes.data || []) {
-        const profile = raw.profiles as unknown as DriverProfile | null;
-        const profileMap = new Map<string, DriverProfile>();
-        if (profile?.id) profileMap.set(raw.user_id, profile);
-
-        allDrivers.push(processDeliveryDriver(raw, position, profileMap));
+      for (const raw of deliveryData) {
+        allDrivers.push(processDeliveryDriver(raw, position, deliveryProfileMap));
       }
 
-      // Traitement des taxi drivers avec profil inclus
-      for (const raw of taxiRes.data || []) {
-        const profile = raw.profiles as unknown as DriverProfile | null;
-        const profileMap = new Map<string, DriverProfile>();
-        if (profile?.id) profileMap.set(raw.user_id, profile);
-
-        allDrivers.push(processTaxiDriver(raw, position, profileMap));
+      for (const raw of taxiData) {
+        allDrivers.push(processTaxiDriver(raw, position, taxiProfileMap));
       }
 
-      // Filtrer par rayon et trier
+      // ✅ Filtrer par rayon et trier (distance puis rating)
       const filtered = filterDriversByRadius(allDrivers, RADIUS_KM);
       const sorted = sortDrivers(filtered);
 
@@ -223,14 +240,29 @@ export default function NearbyLivraison() {
     }
   }, [positionReady, userPosition]);
 
-  // Charger les livreurs quand la position est prête
+  // ✅ Chargement initial
   useEffect(() => {
     if (positionReady) {
       loadDrivers();
     }
   }, [positionReady, loadDrivers]);
 
-  // Fonction de rafraîchissement
+  // ✅ Auto-refresh toutes les 20 secondes
+  useEffect(() => {
+    if (!positionReady) return;
+
+    autoRefreshRef.current = setInterval(() => {
+      loadDrivers();
+    }, AUTO_REFRESH_INTERVAL);
+
+    return () => {
+      if (autoRefreshRef.current) {
+        clearInterval(autoRefreshRef.current);
+      }
+    };
+  }, [positionReady, loadDrivers]);
+
+  // Fonction de rafraîchissement manuel
   const handleRefresh = useCallback(async () => {
     await refreshPosition();
     await loadDrivers();
@@ -240,8 +272,12 @@ export default function NearbyLivraison() {
     navigate('/delivery-request');
   }, [navigate]);
 
-  // Mémoïser le contenu de la liste
-  const driversList = useMemo(() => {
+  // ============================================================================
+  // RENDU SIMPLIFIÉ - Sans useMemo complexe
+  // ============================================================================
+
+  const renderDriversList = () => {
+    // État de chargement
     if (loading) {
       return (
         <div className="space-y-3">
@@ -263,6 +299,7 @@ export default function NearbyLivraison() {
       );
     }
 
+    // État d'erreur
     if (error) {
       return (
         <Card className="border-border/50">
@@ -279,6 +316,7 @@ export default function NearbyLivraison() {
       );
     }
 
+    // Liste vide
     if (drivers.length === 0) {
       return (
         <Card className="border-border/50">
@@ -297,6 +335,7 @@ export default function NearbyLivraison() {
       );
     }
 
+    // Liste des drivers
     return (
       <div className="space-y-3">
         {drivers.map((driver) => (
@@ -308,7 +347,7 @@ export default function NearbyLivraison() {
         ))}
       </div>
     );
-  }, [loading, error, drivers, loadDrivers, handleRequestDelivery]);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 pb-24">
@@ -371,7 +410,7 @@ export default function NearbyLivraison() {
         </Card>
 
         {/* Drivers List */}
-        {driversList}
+        {renderDriversList()}
       </div>
 
       <QuickFooter />
