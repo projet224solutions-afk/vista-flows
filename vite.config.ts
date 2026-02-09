@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import obfuscatorPlugin from "rollup-plugin-obfuscator";
+// @ts-ignore - JS config file
 import { obfuscatorConfig, excludePatterns } from "./obfuscator.config.js";
 import { buildInfoPlugin } from "./vite-plugins/buildInfo";
 
@@ -143,7 +144,7 @@ export default defineConfig(({ mode }) => {
         // Usage: OBFUSCATE=true npm run build
         plugins: (isProduction && process.env.OBFUSCATE === 'true') ? [
           obfuscatorPlugin({
-            options: obfuscatorConfig.production,
+            options: obfuscatorConfig.production as any,
             exclude: excludePatterns
           })
         ] : []
