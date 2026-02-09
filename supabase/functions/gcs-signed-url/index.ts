@@ -191,19 +191,30 @@ serve(async (req) => {
       );
     }
 
-    console.log(`[gcs-signed-url] User ${user.id} requesting ${action} URL`);
+    console.log(`[gcs-signed-url] User ${user.id} requesting ${action} URL for file: ${fileName}`);
 
     // Récupérer la configuration
     const serviceAccountJson = Deno.env.get('GOOGLE_CLOUD_SERVICE_ACCOUNT');
     const bucketName = Deno.env.get('GCS_BUCKET_NAME') || '224solutions';
 
+    console.log(`[gcs-signed-url] Bucket: ${bucketName}`);
+    console.log(`[gcs-signed-url] Service account configured: ${!!serviceAccountJson}`);
+    
+    if (serviceAccountJson) {
+      console.log(`[gcs-signed-url] Service account JSON length: ${serviceAccountJson.length} chars`);
+    }
+
     if (!serviceAccountJson) {
-      console.log('[gcs-signed-url] GCS not configured, client should use fallback');
+      console.error('[gcs-signed-url] GOOGLE_CLOUD_SERVICE_ACCOUNT secret is NOT configured!');
       return new Response(
         JSON.stringify({ 
           error: 'GCS not configured',
           fallback: true,
-          message: 'Google Cloud Storage is not configured. Using Supabase Storage fallback.'
+          message: 'GOOGLE_CLOUD_SERVICE_ACCOUNT secret is missing. Please add it in Lovable settings.',
+          debug: {
+            hasServiceAccount: false,
+            bucketName,
+          }
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 503 }
       );
@@ -213,25 +224,43 @@ serve(async (req) => {
     try {
       serviceAccount = JSON.parse(serviceAccountJson);
       
+      console.log(`[gcs-signed-url] Service account parsed successfully`);
+      console.log(`[gcs-signed-url] Project: ${serviceAccount.project_id}`);
+      console.log(`[gcs-signed-url] Client email: ${serviceAccount.client_email}`);
+      console.log(`[gcs-signed-url] Has private_key: ${!!serviceAccount.private_key}`);
+      
       // Validate required fields
       if (!serviceAccount.client_email || !serviceAccount.private_key || !serviceAccount.project_id) {
         console.error('[gcs-signed-url] Invalid service account: missing required fields');
+        console.error(`  - client_email: ${!!serviceAccount.client_email}`);
+        console.error(`  - private_key: ${!!serviceAccount.private_key}`);
+        console.error(`  - project_id: ${!!serviceAccount.project_id}`);
         return new Response(
           JSON.stringify({ 
             error: 'Invalid GCS configuration',
             fallback: true,
-            message: 'Service account is missing required fields (client_email, private_key, or project_id)'
+            message: 'Service account is missing required fields (client_email, private_key, or project_id)',
+            debug: {
+              hasClientEmail: !!serviceAccount.client_email,
+              hasPrivateKey: !!serviceAccount.private_key,
+              hasProjectId: !!serviceAccount.project_id,
+            }
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 503 }
         );
       }
     } catch (parseError) {
       console.error('[gcs-signed-url] Failed to parse service account JSON:', parseError);
+      console.error('[gcs-signed-url] First 100 chars of JSON:', serviceAccountJson.substring(0, 100));
       return new Response(
         JSON.stringify({ 
           error: 'Invalid GCS configuration',
           fallback: true,
-          message: 'Failed to parse service account JSON'
+          message: 'Failed to parse service account JSON. Make sure it is valid JSON format.',
+          debug: {
+            parseError: String(parseError),
+            jsonLength: serviceAccountJson.length,
+          }
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 503 }
       );
