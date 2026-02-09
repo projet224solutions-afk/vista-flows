@@ -1,10 +1,10 @@
 /**
  * NEARBY TAXI-MOTO PAGE
  * Liste des taxi-motos disponibles à proximité
- * 224Solutions
+ * 224Solutions - Optimisé
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,39 +20,111 @@ import {
   Loader2,
   Phone,
   Clock,
-  User
+  User,
+  AlertCircle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import QuickFooter from "@/components/QuickFooter";
-// Framer-motion supprimé pour réduire TBT
-import { useGeoDistance, calculateDistance } from "@/hooks/useGeoDistance";
+import { useGeoDistance } from "@/hooks/useGeoDistance";
+import {
+  type TaxiDriver,
+  type DriverProfile,
+  processTaxiDriver,
+  filterDriversByRadius,
+  sortDrivers,
+  formatDriverDistance,
+} from '@/lib/drivers';
 
 const RADIUS_KM = 20;
 
-interface NearbyDriver {
-  id: string;
-  user_id: string;
-  vehicle_type: string;
-  vehicle_plate: string;
-  rating: number;
-  total_rides: number;
-  status: string;
-  is_online: boolean;
-  last_lat: number | null;
-  last_lng: number | null;
-  distance?: number;
-  profile?: {
-    first_name: string;
-    last_name: string;
-    phone: string;
-    avatar_url: string | null;
-  };
+// Composant mémoïsé pour la carte du conducteur
+interface TaxiDriverCardProps {
+  driver: TaxiDriver;
+  onBook: (driverId: string) => void;
 }
+
+const TaxiDriverCard = memo(function TaxiDriverCard({ driver, onBook }: TaxiDriverCardProps) {
+  return (
+    <Card className="border-border/50 hover:border-emerald-500/50 transition-colors">
+      <CardContent className="p-4">
+        <div className="flex items-center gap-4">
+          {/* Avatar */}
+          <div className="relative">
+            <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center">
+              {driver.profile?.avatar_url ? (
+                <img
+                  src={driver.profile.avatar_url}
+                  alt=""
+                  className="w-14 h-14 rounded-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <User className="w-6 h-6 text-emerald-600" />
+              )}
+            </div>
+            {/* Status indicator */}
+            <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
+              driver.status === 'available' ? 'bg-green-500' : 'bg-yellow-500'
+            }`} />
+          </div>
+
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-foreground truncate">
+                {driver.profile?.first_name || 'Conducteur'} {driver.profile?.last_name?.charAt(0) || ''}
+              </h3>
+              <Badge variant={driver.status === 'available' ? 'default' : 'secondary'} className="text-xs">
+                {driver.status === 'available' ? 'Disponible' : 'En course'}
+              </Badge>
+            </div>
+
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              {/* Rating - seulement si disponible */}
+              {driver.rating !== null && driver.rating > 0 && (
+                <span className="flex items-center gap-1">
+                  <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                  {driver.rating.toFixed(1)}
+                </span>
+              )}
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {driver.total_rides || 0} courses
+              </span>
+              {driver.distance !== undefined && (
+                <span className="flex items-center gap-1">
+                  <MapPin className="w-3 h-3" />
+                  {formatDriverDistance(driver.distance)}
+                </span>
+              )}
+            </div>
+
+            <p className="text-xs text-muted-foreground mt-1">
+              {driver.vehicle_plate}
+            </p>
+          </div>
+
+          {/* Action */}
+          <Button
+            size="sm"
+            onClick={() => onBook(driver.id)}
+            disabled={driver.status !== 'available'}
+            className="bg-emerald-500 hover:bg-emerald-600"
+          >
+            <Phone className="w-4 h-4 mr-1" />
+            Appeler
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+});
 
 export default function NearbyTaxiMoto() {
   const navigate = useNavigate();
-  const [drivers, setDrivers] = useState<NearbyDriver[]>([]);
+  const [drivers, setDrivers] = useState<TaxiDriver[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // ✅ Utiliser useGeoDistance centralisé (fallback: Coyah)
   const { userPosition, positionReady, refreshPosition } = useGeoDistance();
@@ -61,12 +133,13 @@ export default function NearbyTaxiMoto() {
     if (!positionReady) return;
 
     setLoading(true);
+    setError(null);
+
     try {
-      // Utiliser la position de useGeoDistance
       const position = { lat: userPosition.latitude, lng: userPosition.longitude };
 
-      // Fetch all online taxi drivers
-      const { data: taxiDrivers, error } = await supabase
+      // ✅ Requête optimisée avec jointure profil
+      const { data, error: queryError } = await supabase
         .from('taxi_drivers')
         .select(`
           id,
@@ -78,57 +151,32 @@ export default function NearbyTaxiMoto() {
           status,
           is_online,
           last_lat,
-          last_lng
+          last_lng,
+          profiles:user_id (id, first_name, last_name, phone, avatar_url)
         `)
         .eq('is_online', true);
 
-      if (error) throw error;
+      if (queryError) throw new Error(`Erreur: ${queryError.message}`);
 
-      // Fetch profiles for each driver
-      const userIds = taxiDrivers?.map(d => d.user_id).filter(Boolean) || [];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, phone, avatar_url')
-        .in('id', userIds);
+      // Traitement des conducteurs avec profil inclus
+      const processedDrivers: TaxiDriver[] = [];
 
-      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      for (const raw of data || []) {
+        const profile = raw.profiles as unknown as DriverProfile | null;
+        const profileMap = new Map<string, DriverProfile>();
+        if (profile?.id) profileMap.set(raw.user_id, profile);
 
-      // Calculate distances, filter by radius and sort
-      const driversWithDistance = (taxiDrivers || [])
-        .map(driver => {
-          let distance: number | undefined;
-          if (driver.last_lat && driver.last_lng) {
-            distance = calculateDistance(
-              position.lat,
-              position.lng,
-              Number(driver.last_lat),
-              Number(driver.last_lng)
-            );
-          }
-          return {
-            ...driver,
-            distance,
-            profile: profileMap.get(driver.user_id) as any
-          };
-        })
-        // Filtre: seulement les conducteurs dans un rayon de 20 km
-        .filter(driver => driver.distance !== undefined && driver.distance <= RADIUS_KM);
+        processedDrivers.push(processTaxiDriver(raw, position, profileMap));
+      }
 
-      // Sort by distance (nearest first), then by availability
-      driversWithDistance.sort((a, b) => {
-        // Available drivers first
-        if (a.status === 'available' && b.status !== 'available') return -1;
-        if (b.status === 'available' && a.status !== 'available') return 1;
-        // Then by distance
-        if (a.distance !== undefined && b.distance !== undefined) {
-          return a.distance - b.distance;
-        }
-        return 0;
-      });
+      // Filtrer par rayon et trier
+      const filtered = filterDriversByRadius(processedDrivers, RADIUS_KM);
+      const sorted = sortDrivers(filtered) as TaxiDriver[];
 
-      setDrivers(driversWithDistance);
-    } catch (error) {
-      console.error('Error loading taxi drivers:', error);
+      setDrivers(sorted);
+    } catch (err) {
+      console.error('Error loading taxi drivers:', err);
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
     } finally {
       setLoading(false);
     }
@@ -147,13 +195,83 @@ export default function NearbyTaxiMoto() {
     await loadDrivers();
   }, [refreshPosition, loadDrivers]);
 
-  const handleBookDriver = (driverId: string) => {
+  const handleBookDriver = useCallback((driverId: string) => {
     navigate(`/taxi-moto?driver=${driverId}`);
-  };
+  }, [navigate]);
 
-  const handleBookNow = () => {
+  const handleBookNow = useCallback(() => {
     navigate('/taxi-moto');
-  };
+  }, [navigate]);
+
+  // Mémoïser le contenu de la liste
+  const driversList = useMemo(() => {
+    if (loading) {
+      return (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="border-border/50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-4">
+                  <Skeleton className="w-14 h-14 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                  <Skeleton className="h-9 w-24" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <Card className="border-border/50">
+          <CardContent className="p-8 text-center">
+            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+            <h3 className="font-semibold text-foreground mb-2">Erreur de chargement</h3>
+            <p className="text-sm text-muted-foreground mb-4">{error}</p>
+            <Button variant="outline" onClick={loadDrivers}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Réessayer
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (drivers.length === 0) {
+      return (
+        <Card className="border-border/50">
+          <CardContent className="p-8 text-center">
+            <Bike className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="font-semibold text-foreground mb-2">Aucun conducteur en ligne</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Réessayez dans quelques instants
+            </p>
+            <Button variant="outline" onClick={loadDrivers}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Actualiser
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        {drivers.map((driver) => (
+          <TaxiDriverCard
+            key={driver.id}
+            driver={driver}
+            onBook={handleBookDriver}
+          />
+        ))}
+      </div>
+    );
+  }, [loading, error, drivers, loadDrivers, handleBookDriver]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 pb-24">
@@ -216,122 +334,10 @@ export default function NearbyTaxiMoto() {
         </Card>
 
         {/* Drivers List */}
-        {loading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="border-border/50">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    <Skeleton className="w-14 h-14 rounded-full" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-24" />
-                    </div>
-                    <Skeleton className="h-9 w-24" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : drivers.length === 0 ? (
-          <Card className="border-border/50">
-            <CardContent className="p-8 text-center">
-              <Bike className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="font-semibold text-foreground mb-2">Aucun conducteur en ligne</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Réessayez dans quelques instants
-              </p>
-              <Button variant="outline" onClick={loadDrivers}>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Actualiser
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-3">
-            {drivers.map((driver, index) => (
-              <div key={driver.id}>
-                <Card className="border-border/50 hover:border-emerald-500/50 transition-colors">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-4">
-                      {/* Avatar */}
-                      <div className="relative">
-                        <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center">
-                          {driver.profile?.avatar_url ? (
-                            <img
-                              src={driver.profile.avatar_url}
-                              alt=""
-                              className="w-14 h-14 rounded-full object-cover"
-                            />
-                          ) : (
-                            <User className="w-6 h-6 text-emerald-600" />
-                          )}
-                        </div>
-                        {/* Status indicator */}
-                        <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-                          driver.status === 'available' ? 'bg-green-500' : 'bg-yellow-500'
-                        }`} />
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-foreground truncate">
-                            {driver.profile?.first_name || 'Conducteur'} {driver.profile?.last_name?.charAt(0) || ''}
-                          </h3>
-                          <Badge variant={driver.status === 'available' ? 'default' : 'secondary'} className="text-xs">
-                            {driver.status === 'available' ? 'Disponible' : 'En course'}
-                          </Badge>
-                        </div>
-                        
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          {/* Rating - seulement si disponible (pas de valeur par défaut fake) */}
-                          {driver.rating !== undefined && driver.rating !== null && Number(driver.rating) > 0 && (
-                            <span className="flex items-center gap-1">
-                              <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                              {Number(driver.rating).toFixed(1)}
-                            </span>
-                          )}
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {driver.total_rides || 0} courses
-                          </span>
-                          {driver.distance !== undefined && (
-                            <span className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              {driver.distance < 1 
-                                ? `${Math.round(driver.distance * 1000)}m` 
-                                : `${driver.distance.toFixed(1)}km`}
-                            </span>
-                          )}
-                        </div>
-
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {driver.vehicle_plate}
-                        </p>
-                      </div>
-
-                      {/* Action */}
-                      <Button
-                        size="sm"
-                        onClick={() => handleBookDriver(driver.id)}
-                        disabled={driver.status !== 'available'}
-                        className="bg-emerald-500 hover:bg-emerald-600"
-                      >
-                        <Phone className="w-4 h-4 mr-1" />
-                        Appeler
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            ))}
-          </div>
-        )}
+        {driversList}
       </div>
 
       <QuickFooter />
     </div>
   );
 }
-
