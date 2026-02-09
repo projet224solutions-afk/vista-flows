@@ -91,10 +91,13 @@ function VendorCardComponent({ vendor, index, onNavigate }: VendorCardProps) {
         )}
 
         <div className="flex items-center gap-2 pt-1">
-          <div className="flex items-center gap-1">
-            <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-            <span className="text-xs font-semibold text-foreground">{vendor.rating?.toFixed(1) || "4.5"}</span>
-          </div>
+          {/* Rating - seulement si disponible (données réelles) */}
+          {vendor.rating !== null && vendor.rating !== undefined && vendor.rating > 0 && (
+            <div className="flex items-center gap-1">
+              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+              <span className="text-xs font-semibold text-foreground">{vendor.rating.toFixed(1)}</span>
+            </div>
+          )}
           {vendor.is_verified && (
             <Badge variant="secondary" className="text-[10px]">Vérifié</Badge>
           )}

@@ -56,33 +56,17 @@ export default function NearbyLivraison() {
   const navigate = useNavigate();
   const [drivers, setDrivers] = useState<NearbyDriver[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userPosition, setUserPosition] = useState<{ lat: number; lng: number } | null>(null);
 
-  const getUserPosition = useCallback(() => {
-    return new Promise<{ lat: number; lng: number }>((resolve) => {
-      if (!navigator.geolocation) {
-        resolve({ lat: 9.6412, lng: -13.5784 });
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const pos = { lat: position.coords.latitude, lng: position.coords.longitude };
-          setUserPosition(pos);
-          resolve(pos);
-        },
-        () => {
-          resolve({ lat: 9.6412, lng: -13.5784 });
-        },
-        { timeout: 5000, enableHighAccuracy: false }
-      );
-    });
-  }, []);
+  // ✅ Utiliser useGeoDistance centralisé (fallback: Coyah)
+  const { userPosition, positionReady, refreshPosition } = useGeoDistance();
 
   const loadDrivers = useCallback(async () => {
+    if (!positionReady) return;
+
     setLoading(true);
     try {
-      const position = await getUserPosition();
+      // Utiliser la position de useGeoDistance
+      const position = { lat: userPosition.latitude, lng: userPosition.longitude };
       
       // Fetch delivery drivers
       const { data: deliveryDrivers, error: driversError } = await supabase
@@ -197,11 +181,20 @@ export default function NearbyLivraison() {
     } finally {
       setLoading(false);
     }
-  }, [getUserPosition]);
+  }, [positionReady, userPosition]);
 
+  // Charger les livreurs quand la position est prête
   useEffect(() => {
-    loadDrivers();
-  }, [loadDrivers]);
+    if (positionReady) {
+      loadDrivers();
+    }
+  }, [positionReady, loadDrivers]);
+
+  // Fonction de rafraîchissement
+  const handleRefresh = useCallback(async () => {
+    await refreshPosition();
+    await loadDrivers();
+  }, [refreshPosition, loadDrivers]);
 
   const handleRequestDelivery = () => {
     navigate('/delivery-request');
@@ -241,7 +234,7 @@ export default function NearbyLivraison() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={loadDrivers}
+              onClick={handleRefresh}
               disabled={loading}
               className="rounded-full"
             >
@@ -344,10 +337,13 @@ export default function NearbyLivraison() {
                         </div>
                         
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                            {(driver.rating || 5).toFixed(1)}
-                          </span>
+                          {/* Rating - seulement si disponible (pas de valeur par défaut fake) */}
+                          {driver.rating !== undefined && driver.rating !== null && driver.rating > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                              {driver.rating.toFixed(1)}
+                            </span>
+                          )}
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             {driver.total_deliveries || 0} livraisons

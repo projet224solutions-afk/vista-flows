@@ -1,10 +1,13 @@
 /**
  * HOOK: useNearbyVendors
  * Fetches vendors with proximity sorting and geolocation
+ *
+ * ✅ Utilise useGeoDistance pour la géolocalisation et le calcul de distance (centralisé)
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { calculateDistance, useGeoDistance } from '@/hooks/useGeoDistance';
 
 export interface NearbyVendor {
   id: string;
@@ -23,11 +26,6 @@ export interface NearbyVendor {
   distance?: number; // Distance in km (calculated client-side)
 }
 
-interface UserPosition {
-  latitude: number;
-  longitude: number;
-}
-
 interface UseNearbyVendorsOptions {
   enabled?: boolean;
   limit?: number;
@@ -35,26 +33,6 @@ interface UseNearbyVendorsOptions {
   businessTypeFilter?: 'physical' | 'digital' | 'hybrid' | 'all';
   serviceTypeFilter?: 'wholesale' | 'retail' | 'mixed' | 'all';
 }
-
-// Haversine formula to calculate distance between two points
-const calculateDistance = (
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number => {
-  const R = 6371; // Earth's radius in km
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-};
 
 export function useNearbyVendors(options: UseNearbyVendorsOptions = {}) {
   const {
@@ -65,46 +43,24 @@ export function useNearbyVendors(options: UseNearbyVendorsOptions = {}) {
     serviceTypeFilter = 'all',
   } = options;
 
+  // ✅ Utiliser useGeoDistance pour la géolocalisation centralisée
+  const { userPosition, positionReady, usingRealLocation, refreshPosition } = useGeoDistance();
+
   const [vendors, setVendors] = useState<NearbyVendor[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [userPosition, setUserPosition] = useState<UserPosition | null>(null);
-  const [locationError, setLocationError] = useState<string | null>(null);
 
-  // Get user's current position
-  const getUserPosition = useCallback(() => {
-    if (!navigator.geolocation) {
-      setLocationError('Géolocalisation non supportée');
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserPosition({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-        setLocationError(null);
-      },
-      (err) => {
-        console.warn('Geolocation error:', err.message);
-        // Default to Coyah if geolocation fails
-        setUserPosition({
-          latitude: 9.7086357,
-          longitude: -13.3876116,
-        });
-        setLocationError('Position par défaut utilisée (Coyah)');
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000, // 5 minutes cache
-      }
-    );
-  }, []);
+  // Message d'erreur de localisation si GPS non disponible
+  const locationError = useMemo(() => {
+    if (!positionReady) return null;
+    if (usingRealLocation) return null;
+    return 'Position par défaut utilisée (Coyah)';
+  }, [positionReady, usingRealLocation]);
 
   // Fetch vendors from database
   const fetchVendors = useCallback(async () => {
+    if (!positionReady) return;
+
     setLoading(true);
     setError(null);
 
@@ -149,45 +105,40 @@ export function useNearbyVendors(options: UseNearbyVendorsOptions = {}) {
         service_type: vendor.service_type as NearbyVendor['service_type'],
       }));
 
-      // Calculate distance if user position is available
-      if (userPosition) {
-        vendorList = vendorList.map((vendor) => {
-          if (vendor.latitude && vendor.longitude) {
-            const distance = calculateDistance(
-              userPosition.latitude,
-              userPosition.longitude,
-              vendor.latitude,
-              vendor.longitude
-            );
-            return { ...vendor, distance };
-          }
-          return { ...vendor, distance: undefined };
-        });
+      // Calculate distance using centralized calculateDistance function
+      vendorList = vendorList.map((vendor) => {
+        if (vendor.latitude && vendor.longitude) {
+          const distance = calculateDistance(
+            userPosition.latitude,
+            userPosition.longitude,
+            vendor.latitude,
+            vendor.longitude
+          );
+          return { ...vendor, distance };
+        }
+        return { ...vendor, distance: undefined };
+      });
 
-        // Sort by distance (closest first), vendors without location go to end
-        vendorList.sort((a, b) => {
-          if (a.distance === undefined && b.distance === undefined) {
-            // Both without location: sort by rating
-            return (b.rating || 0) - (a.rating || 0);
-          }
-          if (a.distance === undefined) return 1;
-          if (b.distance === undefined) return -1;
-          return a.distance - b.distance;
-        });
-      } else {
-        // If no user position, sort by rating
-        vendorList.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-      }
+      // Sort by distance (closest first), vendors without location go to end
+      vendorList.sort((a, b) => {
+        if (a.distance === undefined && b.distance === undefined) {
+          // Both without location: sort by rating
+          return (b.rating || 0) - (a.rating || 0);
+        }
+        if (a.distance === undefined) return 1;
+        if (b.distance === undefined) return -1;
+        return a.distance - b.distance;
+      });
 
       // Apply search filter client-side (for reactivity)
       if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
+        const q = searchQuery.toLowerCase();
         vendorList = vendorList.filter(
           (v) =>
-            v.business_name.toLowerCase().includes(query) ||
-            v.city?.toLowerCase().includes(query) ||
-            v.neighborhood?.toLowerCase().includes(query) ||
-            v.description?.toLowerCase().includes(query)
+            v.business_name.toLowerCase().includes(q) ||
+            v.city?.toLowerCase().includes(q) ||
+            v.neighborhood?.toLowerCase().includes(q) ||
+            v.description?.toLowerCase().includes(q)
         );
       }
 
@@ -198,26 +149,19 @@ export function useNearbyVendors(options: UseNearbyVendorsOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, [userPosition, limit, businessTypeFilter, serviceTypeFilter, searchQuery]);
+  }, [positionReady, userPosition, limit, businessTypeFilter, serviceTypeFilter, searchQuery]);
 
-  // Get user position on mount
+  // Fetch vendors when position is ready or filters change
   useEffect(() => {
-    if (enabled) {
-      getUserPosition();
-    }
-  }, [enabled, getUserPosition]);
-
-  // Fetch vendors when position changes or filters change
-  useEffect(() => {
-    if (enabled) {
+    if (enabled && positionReady) {
       fetchVendors();
     }
-  }, [enabled, fetchVendors]);
+  }, [enabled, positionReady, fetchVendors]);
 
-  const refresh = useCallback(() => {
-    getUserPosition();
-    fetchVendors();
-  }, [getUserPosition, fetchVendors]);
+  const refresh = useCallback(async () => {
+    await refreshPosition();
+    await fetchVendors();
+  }, [refreshPosition, fetchVendors]);
 
   return {
     vendors,
@@ -226,6 +170,7 @@ export function useNearbyVendors(options: UseNearbyVendorsOptions = {}) {
     userPosition,
     locationError,
     refresh,
+    usingRealLocation,
   };
 }
 

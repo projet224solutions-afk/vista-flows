@@ -19,6 +19,11 @@ interface ProximityStats {
   formation: number;
   media: number;
   sport: number;
+  // Stats additionnelles utilisées dans Proximite.tsx
+  informatique: number;
+  agriculture: number;
+  freelance: number;
+  construction: number;
 }
 
 /** Debug info returned by hook */
@@ -59,6 +64,10 @@ export function useProximityStats() {
     formation: 0,
     media: 0,
     sport: 0,
+    informatique: 0,
+    agriculture: 0,
+    freelance: 0,
+    construction: 0,
   });
 
   const [loading, setLoading] = useState(true);
@@ -148,6 +157,10 @@ export function useProximityStats() {
         formation: 0,
         media: 0,
         sport: 0,
+        informatique: 0,
+        agriculture: 0,
+        freelance: 0,
+        construction: 0,
       };
 
       // Debug counters
@@ -269,12 +282,17 @@ export function useProximityStats() {
       newStats.beaute = serviceTypeCounts['beaute'] || 0;
       newStats.restaurant += serviceTypeCounts['restaurant'] || 0;
       newStats.reparation = serviceTypeCounts['reparation'] || 0;
-      newStats.nettoyage = serviceTypeCounts['menage'] || 0;
-      newStats.immobilier = serviceTypeCounts['location'] || 0;
-      newStats.formation = serviceTypeCounts['education'] || 0;
-      newStats.media = serviceTypeCounts['media'] || 0;
+      newStats.nettoyage = serviceTypeCounts['menage'] || serviceTypeCounts['nettoyage'] || 0;
+      newStats.immobilier = serviceTypeCounts['location'] || serviceTypeCounts['immobilier'] || 0;
+      newStats.formation = serviceTypeCounts['education'] || serviceTypeCounts['formation'] || 0;
+      newStats.media = serviceTypeCounts['media'] || serviceTypeCounts['photo-video'] || 0;
       newStats.sante = serviceTypeCounts['sante'] || 0;
       newStats.sport = serviceTypeCounts['sport'] || 0;
+      // Stats additionnelles
+      newStats.informatique = serviceTypeCounts['informatique'] || serviceTypeCounts['tech'] || 0;
+      newStats.agriculture = serviceTypeCounts['agriculture'] || 0;
+      newStats.freelance = serviceTypeCounts['freelance'] || serviceTypeCounts['administratif'] || 0;
+      newStats.construction = serviceTypeCounts['construction'] || serviceTypeCounts['btp'] || 0;
 
       // 5) Produits (catégories) — inchangé (pas de notion GPS)
       const productCategoryCounts: Record<string, Set<string>> = {};
@@ -309,17 +327,11 @@ export function useProximityStats() {
         }
       });
 
+      // Stats basées sur les données réelles uniquement (pas de fake stats)
       newStats.mode = productCategoryCounts['mode']?.size || 0;
-      newStats.electronique = productCategoryCounts['electronique']?.size || Math.floor((products.length || 0) / 4);
+      newStats.electronique = productCategoryCounts['electronique']?.size || 0;
       newStats.maison = productCategoryCounts['maison']?.size || 0;
-
-      if (products.length && newStats.mode === 0) {
-        const total = products.length;
-        newStats.mode = Math.ceil(total * 0.3);
-        newStats.electronique = Math.ceil(total * 0.25);
-        newStats.maison = Math.ceil(total * 0.2);
-        newStats.sante = Math.ceil(total * 0.25);
-      }
+      // Note: newStats.sante est déjà défini via les services professionnels
 
       // Debug log for developers
       console.log('[ProximityStats] Debug info:', dbg);

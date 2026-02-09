@@ -10,8 +10,6 @@ import { cn } from "@/lib/utils";
 import { useGeoDistance, calculateDistance as calcDistanceFn } from "@/hooks/useGeoDistance";
 import { VendorCard } from "@/components/vendor/VendorCard";
 
-// Position par défaut: Coyah
-const FALLBACK_POSITION = { latitude: 9.7086357, longitude: -13.3876116 };
 interface Vendor {
   id: string;
   business_name: string;
@@ -64,8 +62,8 @@ export default function NearbyBoutiques() {
       const { data, error: dbError } = await query;
       if (dbError) throw dbError;
 
-      // Utiliser la position fournie, ou la position utilisateur, ou la position par défaut
-      const origin = overridePosition ?? (userPosition.latitude ? userPosition : FALLBACK_POSITION);
+      // Utiliser la position fournie ou la position de useGeoDistance (inclut déjà le fallback Coyah)
+      const origin = overridePosition ?? userPosition;
 
       // On utilise la position (réelle ou par défaut) pour calculer les distances
 
