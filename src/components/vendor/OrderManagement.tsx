@@ -441,37 +441,52 @@ export default function OrderManagement() {
     ));
     
     try {
-      // Update order status with vendor verification
-      const { data, error } = await supabase
+      // Update (ne dépend pas du retour de lignes pour considérer le succès)
+      const { error: updateError } = await supabase
         .from('orders')
-        .update({ 
+        .update({
           status: newStatus,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', orderId)
-        .eq('vendor_id', vendorId)
-        .select();
+        .eq('vendor_id', vendorId);
 
-      if (error) {
-        console.error('❌ Supabase error updating order status:', error);
-        throw new Error(error.message || 'Erreur base de données');
+      if (updateError) {
+        console.error('❌ Supabase error updating order status:', updateError);
+        throw updateError;
       }
 
-      if (!data || data.length === 0) {
-        console.error('❌ No data returned - order may not belong to this vendor');
+      // Vérifier que la mise à jour est bien appliquée (évite les faux négatifs “0 rows returned”)
+      const { data: verify, error: verifyError } = await supabase
+        .from('orders')
+        .select('id, status')
+        .eq('id', orderId)
+        .eq('vendor_id', vendorId)
+        .maybeSingle();
+
+      if (verifyError) {
+        console.error('❌ Supabase error verifying order status:', verifyError);
+        throw verifyError;
+      }
+
+      if (!verify) {
         throw new Error('Commande non trouvée ou non autorisée');
       }
 
-      console.log('✅ Order status updated successfully:', data);
+      if (verify.status !== newStatus) {
+        throw new Error(`Le statut n'a pas été changé (actuel: ${verify.status})`);
+      }
+
+      console.log('✅ Order status updated successfully:', verify);
 
       toast({
         title: "✅ Statut mis à jour",
-        description: `La commande a été marquée comme ${statusLabels[newStatus]}.`
+        description: `La commande a été marquée comme ${statusLabels[newStatus]}.`,
       });
 
       // Refresh to ensure sync
       await fetchOrders();
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Failed to update order status:', error);
       
       // Rollback to previous state
