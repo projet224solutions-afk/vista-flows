@@ -198,16 +198,44 @@ serve(async (req) => {
     const bucketName = Deno.env.get('GCS_BUCKET_NAME') || '224solutions';
 
     if (!serviceAccountJson) {
+      console.log('[gcs-signed-url] GCS not configured, client should use fallback');
       return new Response(
         JSON.stringify({ 
-          error: 'Google Cloud configuration missing',
-          instructions: ['Configurez GOOGLE_CLOUD_SERVICE_ACCOUNT avec le JSON du compte de service']
+          error: 'GCS not configured',
+          fallback: true,
+          message: 'Google Cloud Storage is not configured. Using Supabase Storage fallback.'
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 503 }
       );
     }
 
-    const serviceAccount = JSON.parse(serviceAccountJson);
+    let serviceAccount: ServiceAccount;
+    try {
+      serviceAccount = JSON.parse(serviceAccountJson);
+      
+      // Validate required fields
+      if (!serviceAccount.client_email || !serviceAccount.private_key || !serviceAccount.project_id) {
+        console.error('[gcs-signed-url] Invalid service account: missing required fields');
+        return new Response(
+          JSON.stringify({ 
+            error: 'Invalid GCS configuration',
+            fallback: true,
+            message: 'Service account is missing required fields (client_email, private_key, or project_id)'
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 503 }
+        );
+      }
+    } catch (parseError) {
+      console.error('[gcs-signed-url] Failed to parse service account JSON:', parseError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid GCS configuration',
+          fallback: true,
+          message: 'Failed to parse service account JSON'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 503 }
+      );
+    }
 
     // Générer le chemin de l'objet
     const uniqueFileName = action === 'upload' 
