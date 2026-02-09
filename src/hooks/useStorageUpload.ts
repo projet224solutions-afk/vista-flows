@@ -62,7 +62,7 @@ const ALLOWED_TYPES: Record<StorageFolder, string[]> = {
   avatars: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
   products: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
   videos: ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'],
-  audio: ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4', 'audio/webm'],
+  audio: ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4', 'audio/webm', 'audio/aac', 'audio/m4a', 'audio/x-m4a'],
   documents: ['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
   stamps: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
   restaurant: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
@@ -85,6 +85,31 @@ const MAX_SIZES: Record<StorageFolder, number> = {
   misc: 10 * 1024 * 1024, // 10 MB
 };
 
+/**
+ * Vérifie si un type MIME de fichier correspond à un type autorisé
+ * Gère les types MIME avec paramètres comme "audio/webm;codecs=opus"
+ */
+function isTypeAllowed(fileType: string, allowedTypes: string[]): boolean {
+  // Extraire le type de base (sans les paramètres comme codecs)
+  const baseType = fileType.split(';')[0].trim().toLowerCase();
+  
+  // Vérification directe
+  if (allowedTypes.includes(baseType)) {
+    return true;
+  }
+  
+  // Pour l'audio, être plus flexible - accepter si le type commence par audio/
+  if (baseType.startsWith('audio/')) {
+    // Vérifier si le type de base (audio/mp4, audio/webm, etc.) est dans la liste
+    return allowedTypes.some(allowed => 
+      baseType === allowed || 
+      baseType.startsWith(allowed.split('/')[0] + '/')
+    );
+  }
+  
+  return false;
+}
+
 export function useStorageUpload(): UseStorageUploadReturn {
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -96,7 +121,19 @@ export function useStorageUpload(): UseStorageUploadReturn {
     const allowedTypes = ALLOWED_TYPES[folder];
     const maxSize = MAX_SIZES[folder];
 
-    if (!allowedTypes.includes(file.type)) {
+    // Pour l'audio, utiliser une validation plus flexible
+    if (folder === 'audio') {
+      const baseType = file.type.split(';')[0].trim().toLowerCase();
+      const isAudioValid = baseType.startsWith('audio/') || 
+                           file.name.match(/\.(mp3|wav|ogg|m4a|mp4|webm|aac|opus)$/i);
+      
+      if (!isAudioValid) {
+        return { 
+          valid: false, 
+          error: `Type de fichier audio non autorisé. Formats acceptés: MP3, WAV, OGG, M4A, AAC, WebM` 
+        };
+      }
+    } else if (!isTypeAllowed(file.type, allowedTypes)) {
       return { 
         valid: false, 
         error: `Type de fichier non autorisé. Types acceptés: ${allowedTypes.join(', ')}` 
