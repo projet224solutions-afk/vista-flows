@@ -1,178 +1,82 @@
 /**
  * DASHBOARD VENDEUR PROFESSIONNEL - 224SOLUTIONS
  * Interface complète avec sidebar et tous les modules
- * @updated 2025-12-20 - Ajout du panneau Avis Clients
+ *
+ * @version 2.0.0 - Refactoring complet
+ * @updated 2025-02-09
+ *
+ * Optimisations appliquées:
+ * ✅ Types stricts (plus de `any`)
+ * ✅ Composants extraits et mémoïsés (VendorHeader, VendorRoutes, VendorDashboardHome)
+ * ✅ Chunking intelligent des imports lazy par catégorie
+ * ✅ GlobalLoader unifié pour tous les Suspense
+ * ✅ Aria-labels pour l'accessibilité
+ * ✅ Hooks stabilisés avec useCallback
+ * ✅ Gestion d'erreurs centralisée
  */
 
-import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from "react";
-import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Activity, LogOut, Bell, Settings, User, ChevronRight,
-  DollarSign, ShoppingCart, Users, Target, TrendingUp, Package, Lock
-} from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { useRoleRedirect } from "@/hooks/useRoleRedirect";
-import { useToast } from "@/hooks/use-toast";
-import { useUserInfo } from "@/hooks/useUserInfo";
-import { useTranslation } from "@/hooks/useTranslation";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { VendorSidebar } from "@/components/vendor/VendorSidebar";
-import { useVendorStats } from "@/hooks/useVendorData";
-import { supabase } from "@/integrations/supabase/client";
-import { useCurrentVendor } from "@/hooks/useCurrentVendor";
+import { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import { useRoleRedirect } from '@/hooks/useRoleRedirect';
+import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from '@/hooks/useTranslation';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { VendorSidebar } from '@/components/vendor/VendorSidebar';
+import { useVendorStats } from '@/hooks/useVendorData';
+import { supabase } from '@/integrations/supabase/client';
+import { useCurrentVendor } from '@/hooks/useCurrentVendor';
+import { ErrorBanner } from '@/components/ui/ErrorBanner';
+import { useVendorErrorBoundary } from '@/hooks/useVendorErrorBoundary';
+import { PageLoader } from '@/components/ui/GlobalLoader';
+import { VendorHeader, VendorRoutes } from '@/components/vendor/dashboard';
+import type { RecentOrder, OrderFromSupabase } from '@/types/vendor-dashboard';
 
-// Import des modules vendeur (Lazy Loading pour optimisation)
-const ProductManagement = lazy(() => import("@/components/vendor/ProductManagement"));
-const OrderManagement = lazy(() => import("@/components/vendor/OrderManagement"));
-const ClientManagement = lazy(() => import("@/components/vendor/ClientManagement"));
-const AgentManagement = lazy(() => import("@/components/vendor/AgentManagement"));
-const ExpenseManagementDashboard = lazy(() => import("@/components/vendor/ExpenseManagementDashboard"));
-const PaymentLinksManager = lazy(() => import("@/components/vendor/PaymentLinksManager"));
-const VendorAnalyticsDashboard = lazy(() => import("@/components/vendor/VendorAnalyticsDashboard").then(m => ({ default: m.VendorAnalyticsDashboard })));
-const InventoryManagement = lazy(() => import("@/components/vendor/InventoryManagement"));
-const MarketingManagement = lazy(() => import("@/components/vendor/MarketingManagement"));
-const ProspectManagement = lazy(() => import("@/components/vendor/ProspectManagement"));
-const SupportTickets = lazy(() => import("@/components/vendor/SupportTickets"));
-const MultiWarehouseManagement = lazy(() => import("@/components/vendor/MultiWarehouseManagement"));
-const POSSystemWrapper = lazy(() => import("@/components/vendor/POSSystemWrapper"));
-const PaymentManagement = lazy(() => import("@/components/vendor/PaymentManagement"));
-const VendorDebtManagement = lazy(() => import("@/components/vendor/debts/VendorDebtManagement").then(m => ({ default: m.VendorDebtManagement })));
-const UniversalCommunicationHub = lazy(() => import("@/components/communication/UniversalCommunicationHub"));
-const AffiliateManagement = lazy(() => import("@/components/vendor/AffiliateManagement"));
-const SupplierManagement = lazy(() => import("@/components/vendor/SupplierManagement"));
-const UniversalWalletTransactions = lazy(() => import("@/components/wallet/UniversalWalletTransactions"));
-const ProfessionalVirtualCard = lazy(() => import("@/components/virtual-card").then(m => ({ default: m.ProfessionalVirtualCard })));
-const WalletBalanceWidget = lazy(() => import("@/components/wallet/WalletBalanceWidget").then(m => ({ default: m.WalletBalanceWidget })));
-const QuickTransferButton = lazy(() => import("@/components/wallet/QuickTransferButton").then(m => ({ default: m.QuickTransferButton })));
-const OfflineSyncPanel = lazy(() => import("@/components/vendor/OfflineSyncPanel"));
-const NetworkStatusIndicator = lazy(() => import("@/components/vendor/NetworkStatusIndicator"));
-const OfflineBanner = lazy(() => import("@/components/vendor/OfflineBanner"));
-const PWADiagnostic = lazy(() => import("@/components/pwa/PWADiagnostic"));
-const VendorIdDisplay = lazy(() => import("@/components/vendor/VendorIdDisplay").then(m => ({ default: m.VendorIdDisplay })));
-const VendorNotificationsPanel = lazy(() => import("@/components/vendor/VendorNotificationsPanel").then(m => ({ default: m.VendorNotificationsPanel })));
-const CommunicationWidget = lazy(() => import("@/components/communication/CommunicationWidget"));
-const VendorDeliveriesPanel = lazy(() => import("@/components/vendor/VendorDeliveriesPanel").then(m => ({ default: m.VendorDeliveriesPanel })));
-const VendorRatingsPanel = lazy(() => import("@/components/vendor/VendorRatingsPanel"));
-const PushNotificationButton = lazy(() => import("@/components/vendor/PushNotificationButton").then(m => ({ default: m.PushNotificationButton })));
-const ProtectedRoute = lazy(() => import("@/components/subscription/ProtectedRoute").then(m => ({ default: m.ProtectedRoute })));
-const VendorSubscriptionButton = lazy(() => import("@/components/vendor/VendorSubscriptionButton").then(m => ({ default: m.VendorSubscriptionButton })));
-const VendorSubscriptionBanner = lazy(() => import("@/components/vendor/VendorSubscriptionBanner").then(m => ({ default: m.VendorSubscriptionBanner })));
-const SubscriptionExpiryBanner = lazy(() => import("@/components/vendor/SubscriptionExpiryBanner").then(m => ({ default: m.SubscriptionExpiryBanner })));
-const VendorQuotesInvoices = lazy(() => import("@/pages/VendorQuotesInvoices"));
-const VendorContracts = lazy(() => import("@/pages/VendorContracts"));
-const VendorSettings = lazy(() => import("@/pages/vendor/Settings"));
-const CopiloteChat = lazy(() => import("@/components/copilot/CopiloteChat"));
-const ReviewsManagement = lazy(() => import("@/components/vendor/ReviewsManagement"));
-const VendorServiceModule = lazy(() => import("@/components/vendor/VendorServiceModule"));
-const VendorDigitalProducts = lazy(() => import("@/components/vendor/VendorDigitalProducts"));
-const CollectionAccountsManager = lazy(() => import("@/components/vendor/accounts/CollectionAccountsManager"));
-const StockAdjustmentForm = lazy(() => import("@/components/vendor/stock/StockAdjustmentForm"));
-const VendorReportsManager = lazy(() => import("@/components/vendor/reports/VendorReportsManager"));
-const AdvancedSalesManager = lazy(() => import("@/components/vendor/sales/AdvancedSalesManager"));
-const InstallmentPlansManager = lazy(() => import("@/components/vendor/payments/InstallmentPlansManager"));
-import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { useVendorErrorBoundary } from "@/hooks/useVendorErrorBoundary";
-const MyPurchasesOrdersList = lazy(() => import("@/components/shared/MyPurchasesOrdersList"));
+// Lazy loaded components pour le layout
+const SubscriptionExpiryBanner = lazy(() =>
+  import('@/components/vendor/SubscriptionExpiryBanner').then(m => ({ default: m.SubscriptionExpiryBanner }))
+);
+const CommunicationWidget = lazy(() =>
+  import('@/components/communication/CommunicationWidget')
+);
+const OfflineBanner = lazy(() =>
+  import('@/components/vendor/OfflineBanner')
+);
 
+// ============================================================================
+// Hook personnalisé pour charger les commandes récentes
+// ============================================================================
 
-export default function VendeurDashboard() {
-  const { user, profile, signOut } = useAuth();
-  const { toast } = useToast();
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const location = useLocation();
-  useRoleRedirect();
+function useRecentOrders(userId: string | undefined) {
+  const [orders, setOrders] = useState<RecentOrder[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Business type (physical | digital | hybrid) pour appliquer les règles marketplace/POS
-  const { canAccessPOS, businessType } = useCurrentVendor();
-
-  const { userInfo } = useUserInfo();
-  const { stats, loading: statsLoading, error: statsError } = useVendorStats();
-  
-  // Gestion des erreurs centralisée
-  const { error, captureError, clearError } = useVendorErrorBoundary();
-  const [recentOrders, setRecentOrders] = useState<{
-    order_number: string;
-    customer_label: string;
-    status: string;
-    total_amount: number;
-    created_at: string;
-  }[]>([]);
-  const [showAllOrders, setShowAllOrders] = useState(false);
-
-  // Stats dynamiques réelles (dérivées de useVendorStats)
-  const mainStats = useMemo(() => {
-    const revenue = stats?.revenue ?? 0;
-    const ordersCount = stats?.orders_count ?? 0;
-    const customersCount = stats?.customers_count ?? 0;
-    const conversion = customersCount > 0 ? (ordersCount / customersCount) * 100 : 0;
-
-    return [
-      {
-        label: t('vendor.revenue'),
-        value: `${Math.round(revenue).toLocaleString()} GNF`,
-        change: "",
-        icon: DollarSign,
-        color: "bg-green-50 text-green-600"
-      },
-      {
-        label: t('vendor.orders'),
-        value: `${ordersCount.toLocaleString()}`,
-        change: "",
-        icon: ShoppingCart,
-        color: "bg-blue-50 text-blue-600"
-      },
-      {
-        label: t('vendor.activeClients'),
-        value: `${customersCount.toLocaleString()}`,
-        change: "",
-        icon: Users,
-        color: "bg-purple-50 text-purple-600"
-      },
-      {
-        label: t('vendor.conversionRate'),
-        value: `${conversion.toFixed(1)}%`,
-        change: "",
-        icon: Target,
-        color: "bg-orange-50 text-orange-600"
-      }
-    ];
-  }, [stats, t]);
-
-  // Rediriger vers dashboard par défaut (optimisé pour éviter boucles)
   useEffect(() => {
-    // ✅ Redirection une seule fois au montage
-    const path = location.pathname;
-    if (path === '/vendeur' || path === '/vendeur/') {
-      navigate('/vendeur/dashboard', { replace: true });
-    }
-  }, []); // ✅ Dépendances vides = une seule exécution
+    if (!userId) return;
 
-  // Charger les 5 dernières commandes réelles du vendeur (optimisé)
-  useEffect(() => {
     const loadRecentOrders = async () => {
-      if (!user?.id) return;
-      
+      setLoading(true);
       try {
+        // 1. Récupérer le vendor
         const { data: vendor, error: vendorError } = await supabase
           .from('vendors')
           .select('id')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .maybeSingle();
-        
+
         if (vendorError) {
           console.warn('Erreur chargement vendeur:', vendorError);
           return;
         }
 
         if (!vendor) {
-          console.info('Aucun vendeur pour cet utilisateur, commandes ignorées');
+          console.info('Aucun vendeur pour cet utilisateur');
           return;
         }
 
+        // 2. Récupérer les commandes
         const { data, error } = await supabase
           .from('orders')
           .select(`
@@ -185,28 +89,170 @@ export default function VendeurDashboard() {
           .eq('vendor_id', vendor.id)
           .order('created_at', { ascending: false })
           .limit(5);
-        
+
         if (error) {
           console.error('Erreur chargement commandes:', error);
           return;
         }
 
-        const formatted = (data || []).map((o: any) => ({
-          order_number: o.order_number,
-          customer_label: o.customer?.user_id ? `Client ${(o.customer.user_id as string).slice(0, 6)}` : 'Client',
-          status: o.status || 'pending',
-          total_amount: o.total_amount || 0,
-          created_at: o.created_at
+        // 3. Transformer les données avec types stricts
+        const formatted: RecentOrder[] = (data || []).map((order: OrderFromSupabase) => ({
+          order_number: order.order_number,
+          customer_label: order.customer?.user_id
+            ? `Client ${order.customer.user_id.slice(0, 6)}`
+            : 'Client',
+          status: (order.status as RecentOrder['status']) || 'pending',
+          total_amount: order.total_amount || 0,
+          created_at: order.created_at,
         }));
-        setRecentOrders(formatted);
+
+        setOrders(formatted);
       } catch (error) {
         console.error('Erreur lors du chargement des commandes:', error);
+      } finally {
+        setLoading(false);
       }
     };
-    loadRecentOrders();
-  }, [user?.id]); // ✅ Dépendance stable (primitive)
 
-  // ✅ Correction : Stabilise la référence et empêche re-renders des enfants qui recevraient cette fonction
+    loadRecentOrders();
+  }, [userId]);
+
+  return { orders, loading };
+}
+
+// ============================================================================
+// Composants d'état (Offline, Error, Loading)
+// ============================================================================
+
+function OfflineState() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-6">
+      <Card className="max-w-md w-full">
+        <CardHeader>
+          <CardTitle>Mode hors ligne</CardTitle>
+          <CardDescription>
+            Vous êtes actuellement hors ligne. Veuillez vous connecter à Internet
+            pour charger vos données vendeur pour la première fois.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Une fois connecté une première fois, vos données seront mises en cache
+            pour fonctionner hors ligne.
+          </p>
+          <Button
+            onClick={() => window.location.reload()}
+            className="w-full"
+            aria-label="Réessayer le chargement"
+          >
+            Réessayer
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function VendorMissingState({ onGoHome }: { onGoHome: () => void }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-6">
+      <Card className="max-w-md w-full">
+        <CardHeader>
+          <CardTitle>Accès vendeur indisponible</CardTitle>
+          <CardDescription>
+            Ce compte n'est pas rattaché à une boutique vendeur.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Retournez à l'accueil pour utiliser votre compte utilisateur.
+          </p>
+          <Button onClick={onGoHome} className="w-full" aria-label="Aller à l'accueil">
+            Aller à l'accueil
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function ErrorState({
+  onGoHome,
+  onReload,
+  t,
+}: {
+  onGoHome: () => void;
+  onReload: () => void;
+  t: (key: string) => string;
+}) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-6">
+      <Card className="max-w-md w-full">
+        <CardHeader>
+          <CardTitle className="text-destructive">{t('vendor.loadError')}</CardTitle>
+          <CardDescription>{t('vendor.loadErrorDesc')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">{t('vendor.checkConnection')}</p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button onClick={onGoHome} className="w-full" aria-label="Aller à l'accueil">
+              Aller à l'accueil
+            </Button>
+            <Button
+              onClick={onReload}
+              variant="outline"
+              className="w-full"
+              aria-label="Recharger la page"
+            >
+              {t('common.reloadPage')}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ============================================================================
+// Composant principal
+// ============================================================================
+
+export default function VendeurDashboard() {
+  const { user, profile, signOut } = useAuth();
+  const { toast } = useToast();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
+  useRoleRedirect();
+
+  // Business type pour règles POS
+  const { canAccessPOS } = useCurrentVendor();
+
+  // Stats vendeur
+  const { stats, loading: statsLoading, error: statsError } = useVendorStats();
+
+  // Gestion des erreurs centralisée
+  const { error, clearError } = useVendorErrorBoundary();
+
+  // Commandes récentes (hook personnalisé)
+  const { orders: recentOrders } = useRecentOrders(user?.id);
+  const [showAllOrders, setShowAllOrders] = useState(false);
+
+  // Toggle pour afficher plus/moins de commandes
+  const handleToggleShowAllOrders = useCallback(() => {
+    setShowAllOrders(prev => !prev);
+  }, []);
+
+  // Redirection vers dashboard par défaut (une seule fois au montage)
+  useEffect(() => {
+    const path = location.pathname;
+    if (path === '/vendeur' || path === '/vendeur/') {
+      navigate('/vendeur/dashboard', { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Handler de déconnexion stabilisé
   const handleSignOut = useCallback(async () => {
     try {
       await signOut();
@@ -215,328 +261,70 @@ export default function VendeurDashboard() {
         description: t('common.signOutSuccess'),
       });
       navigate('/');
-    } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error);
+    } catch (err) {
+      console.error('Erreur lors de la déconnexion:', err);
       toast({
         title: t('common.error'),
         description: t('error.generic'),
-        variant: "destructive"
+        variant: 'destructive',
       });
     }
   }, [signOut, toast, navigate, t]);
 
-  // ✅ Correction : Ajoute un petit écran de chargement tant que user/profile ne sont pas prêts
+  // Navigation handlers
+  const handleGoHome = useCallback(() => navigate('/'), [navigate]);
+  const handleReload = useCallback(() => window.location.reload(), []);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // États de chargement et d'erreur
+  // ═══════════════════════════════════════════════════════════════════════════
+
   const isLoading = !user || typeof profile === 'undefined' || statsLoading;
-  
-  // Afficher un message d'erreur si les stats ne chargent pas
-  // Note: En mode offline, stats ne sera jamais null car on utilise le cache ou des valeurs par défaut
+
+  // État: Stats non chargées (après le loading)
   if (!isLoading && stats === null) {
     const isVendorMissing = statsError === 'Vendor profile not found';
     const isOffline = !navigator.onLine;
 
-    // Si offline et stats null, c'est probablement un problème de première visite
     if (isOffline) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-6">
-          <Card className="max-w-md w-full">
-            <CardHeader>
-              <CardTitle>Mode hors ligne</CardTitle>
-              <CardDescription>
-                Vous êtes actuellement hors ligne. Veuillez vous connecter à Internet pour charger vos données vendeur pour la première fois.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Une fois connecté une première fois, vos données seront mises en cache pour fonctionner hors ligne.
-              </p>
-              <Button onClick={() => window.location.reload()} className="w-full">
-                Réessayer
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      );
+      return <OfflineState />;
     }
 
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-6">
-        <Card className="max-w-md w-full">
-          <CardHeader>
-            <CardTitle className={isVendorMissing ? undefined : "text-destructive"}>
-              {isVendorMissing ? "Accès vendeur indisponible" : t('vendor.loadError')}
-            </CardTitle>
-            <CardDescription>
-              {isVendorMissing
-                ? "Ce compte n'est pas rattaché à une boutique vendeur."
-                : t('vendor.loadErrorDesc')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              {isVendorMissing
-                ? "Retournez à l'accueil pour utiliser votre compte utilisateur."
-                : t('vendor.checkConnection')}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button onClick={() => navigate('/')} className="w-full">
-                Aller à l'accueil
-              </Button>
-              {!isVendorMissing && (
-                <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
-                  {t('common.reloadPage')}
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    if (isVendorMissing) {
+      return <VendorMissingState onGoHome={handleGoHome} />;
+    }
+
+    return <ErrorState onGoHome={handleGoHome} onReload={handleReload} t={t} />;
   }
-  
+
+  // État: Chargement
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="flex items-center gap-3 text-slate-700">
-          <div className="w-3 h-3 rounded-full bg-blue-600 animate-pulse"></div>
-          <div className="w-3 h-3 rounded-full bg-indigo-600 animate-pulse [animation-delay:150ms]"></div>
-          <div className="w-3 h-3 rounded-full bg-purple-600 animate-pulse [animation-delay:300ms]"></div>
-          <span className="text-sm font-medium">{t('vendor.loadingSpace')}</span>
-        </div>
-      </div>
-    );
+    return <PageLoader text={t('vendor.loadingSpace')} />;
   }
 
-  // (stats déplacées plus haut via useMemo)
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Rendu principal
+  // ═══════════════════════════════════════════════════════════════════════════
 
-  // Composant Dashboard principal avec Suspense
-  const DashboardHome = () => (
-    <Suspense fallback={
-      <div className="flex items-center justify-center p-12">
-        <div className="flex items-center gap-3">
-          <div className="w-3 h-3 rounded-full bg-blue-600 animate-pulse"></div>
-          <div className="w-3 h-3 rounded-full bg-indigo-600 animate-pulse [animation-delay:150ms]"></div>
-          <div className="w-3 h-3 rounded-full bg-purple-600 animate-pulse [animation-delay:300ms]"></div>
-          <span className="text-sm font-medium">{t('common.loading')}</span>
-        </div>
-      </div>
-    }>
-      <div className="space-y-6">
-        {/* Banner d'abonnement */}
-        <VendorSubscriptionBanner />
-        
-        {/* Analytics Dashboard intégré */}
-        <VendorAnalyticsDashboard />
-
-      {/* Activité récente */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        {/* Wallet universel */}
-        <div>
-          <UniversalWalletTransactions />
-        </div>
-        
-        {/* Commandes + Notifications en 2 colonnes en paysage */}
-        <div className="grid grid-cols-1 landscape:grid-cols-2 md:grid-cols-2 lg:grid-cols-1 gap-4 lg:contents">
-          <Card>
-            <CardHeader className="pb-2 sm:pb-4">
-              <CardTitle className="text-base sm:text-lg">{t('vendor.recentOrders')}</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">Vos 2 dernières commandes</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-3 sm:space-y-4">
-                {(showAllOrders ? recentOrders : recentOrders.slice(0, 2)).map((o) => (
-                  <div key={o.order_number} className="flex items-center justify-between p-2 sm:p-3 bg-muted/50 rounded-lg">
-                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Package className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm sm:text-base truncate">{t('vendor.orders')} #{o.order_number}</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground truncate">{o.customer_label}</p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-2">
-                      <span className="text-xs sm:text-sm font-medium whitespace-nowrap">{o.total_amount.toLocaleString()} GNF</span>
-                      <Badge variant="secondary" className="text-[10px] sm:text-xs">{o.status}</Badge>
-                    </div>
-                  </div>
-                ))}
-                {recentOrders.length === 0 && (
-                  <div className="text-xs sm:text-sm text-muted-foreground">{t('vendor.noRecentOrders')}</div>
-                )}
-                {recentOrders.length > 2 && (
-                  <Button 
-                    variant="ghost" 
-                    className="w-full text-primary text-xs sm:text-sm" 
-                    onClick={() => setShowAllOrders(!showAllOrders)}
-                  >
-                    {showAllOrders ? 'Voir moins' : `Voir plus (${recentOrders.length - 2} autres)`}
-                    <ChevronRight className={`ml-1 h-3 w-3 sm:h-4 sm:w-4 transition-transform ${showAllOrders ? 'rotate-90' : ''}`} />
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Notifications intégrées */}
-          <div>
-            <VendorNotificationsPanel />
-          </div>
-        </div>
-      </div>
-
-      {/* Actions rapides */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('vendor.quickActions')}</CardTitle>
-          <CardDescription>{t('vendor.quickActionsDesc')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button
-              variant="outline"
-              className={`h-auto py-6 flex-col gap-2 ${!canAccessPOS ? 'opacity-60 cursor-not-allowed' : ''}`}
-              onClick={() => {
-                if (!canAccessPOS) {
-                  toast({
-                    title: "POS verrouillé",
-                    description: "Le POS est désactivé pour les vendeurs 'En ligne uniquement'.",
-                    variant: "destructive"
-                  });
-                  return;
-                }
-                navigate('/vendeur/pos');
-              }}
-            >
-              {!canAccessPOS ? <Lock className="w-6 h-6" /> : <Activity className="w-6 h-6" />}
-              <span className="text-sm font-medium">{t('vendor.pos')}{!canAccessPOS ? ' (verrouillé)' : ''}</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto py-6 flex-col gap-2"
-              onClick={() => navigate('/vendeur/products')}
-            >
-              <Package className="w-6 h-6" />
-              <span className="text-sm font-medium">{t('vendor.products')}</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto py-6 flex-col gap-2"
-              onClick={() => navigate('/vendeur/orders')}
-            >
-              <ShoppingCart className="w-6 h-6" />
-              <span className="text-sm font-medium">{t('vendor.orders')}</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto py-6 flex-col gap-2"
-              onClick={() => navigate('/vendeur/wallet')}
-            >
-              <DollarSign className="w-6 h-6" />
-              <span className="text-sm font-medium">{t('vendor.wallet')}</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-    </Suspense>
-  );
-
-  // Composant Settings
-  const SettingsPage = () => (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('vendor.settings')}</CardTitle>
-        <CardDescription>{t('vendor.settingsDesc')}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div>
-            <h3 className="font-semibold mb-2">{t('vendor.accountInfo')}</h3>
-            <p className="text-sm text-muted-foreground">{t('common.email')}: {user?.email}</p>
-            <p className="text-sm text-muted-foreground">{t('common.name')}: {profile?.first_name} {profile?.last_name}</p>
-            {userInfo && (
-              <p className="text-sm text-muted-foreground">ID: {userInfo.public_id}</p>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  const displayName = profile?.first_name || user?.email?.split('@')[0] || 'Vendeur';
+  const vendorId = stats?.vendorId || '';
 
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen w-full flex bg-gradient-to-br from-slate-50 via-white to-blue-50 overflow-x-hidden">
-        {/* Sidebar - cachée par défaut sur mobile, overlay mode */}
+        {/* Sidebar */}
         <VendorSidebar />
 
         <div className="flex-1 flex flex-col w-full min-w-0 max-w-full overflow-x-hidden">
-          {/* Header global optimisé mobile */}
-          <header className="min-h-14 md:min-h-16 bg-white/95 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-40 shadow-sm px-2 sm:px-3 md:px-6 w-full max-w-full overflow-visible">
-            <div className="flex flex-col sm:flex-row sm:items-center w-full min-w-0 gap-2 py-2 md:py-0">
-              {/* Ligne 1 (mobile): menu + logo + nom app */}
-              <div className="flex items-center gap-2 min-w-0">
-                <SidebarTrigger className="h-[60px] w-[60px] sm:h-10 sm:w-10 md:h-8 md:w-8 sm:mr-2 md:mr-4 [&_svg]:h-8 [&_svg]:w-8 sm:[&_svg]:h-5 sm:[&_svg]:w-5" />
-
-                <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Activity className="w-4 h-4 md:w-6 md:h-6 text-white" />
-                </div>
-
-                <h1 className="text-sm md:text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent whitespace-nowrap pr-1">
-                  224Solutions
-                </h1>
-              </div>
-
-              {/* Ligne 2 (mobile): user+ID à gauche, actions à droite */}
-              <div className="flex items-center justify-between w-full min-w-0 gap-2">
-                <div className="flex items-center gap-1 md:gap-2 min-w-0 flex-1">
-                  <p className="text-[10px] md:text-xs text-muted-foreground flex items-center gap-1 min-w-0">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse flex-shrink-0"></span>
-                    <span className="truncate max-w-[120px] sm:max-w-[200px] md:max-w-none">
-                      {profile?.first_name || user?.email?.split('@')[0]}
-                    </span>
-                  </p>
-                  <VendorIdDisplay showName={false} />
-                </div>
-
-                <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-                  <div className="hidden md:block">
-                    <NetworkStatusIndicator />
-                  </div>
-
-                  <QuickTransferButton variant="ghost" size="icon" showText={false} className="h-8 w-8 md:h-10 md:w-10" />
-                  <div className="hidden sm:block">
-                    <VendorSubscriptionButton />
-                  </div>
-
-                  <PushNotificationButton className="h-8 w-8 md:h-10 md:w-10" />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 md:h-10 md:w-10"
-                    onClick={() => navigate('/vendeur/settings')}
-                    title="Paramètres"
-                  >
-                    <Settings className="w-4 h-4 md:w-5 md:h-5" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={handleSignOut} className="h-8 w-8 md:h-10 md:w-10">
-                    <LogOut className="w-4 h-4 md:w-5 md:h-5" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Wallet compact - visible uniquement sur grands écrans */}
-            <div className="hidden xl:block pb-2">
-              <WalletBalanceWidget className="max-w-[250px]" showTransferButton={false} />
-            </div>
-          </header>
+          {/* Header */}
+          <VendorHeader displayName={displayName} onSignOut={handleSignOut} />
 
           {/* Banner d'expiration d'abonnement */}
           <Suspense fallback={null}>
             <SubscriptionExpiryBanner />
           </Suspense>
 
-          {/* Error Banner - Affichage des erreurs persistantes */}
+          {/* Error Banner */}
           {error && (
             <div className="px-6 pt-2">
               <ErrorBanner
@@ -547,269 +335,32 @@ export default function VendeurDashboard() {
             </div>
           )}
 
-          {/* Contenu principal - padding optimisé pour éviter coupures */}
-          <main className="flex-1 p-2 sm:p-3 md:p-6 overflow-x-auto overflow-y-auto pt-4 pb-24 md:pb-8 w-full max-w-full">
-            <Suspense fallback={
-              <div className="flex items-center justify-center h-64">
-                <div className="text-center space-y-3">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-                  <p className="text-sm text-muted-foreground">Chargement...</p>
-                </div>
-              </div>
-            }>
-            <Routes>
-              {/* Route par défaut - toujours accessible */}
-              <Route index element={<DashboardHome />} />
-              <Route path="dashboard" element={<DashboardHome />} />
-              
-              {/* Vue d'ensemble - Analytics (Basic+) */}
-              <Route path="analytics" element={
-                <ProtectedRoute feature="analytics_basic">
-                  <VendorAnalyticsDashboard />
-                </ProtectedRoute>
-              } />
-              
-              {/* Ventes & Commerce */}
-              {/* POS - Basic+ (verrouillé si business_type = digital) */}
-              <Route path="pos" element={
-                canAccessPOS ? (
-                  <ProtectedRoute feature="pos_system">
-                    <POSSystemWrapper />
-                  </ProtectedRoute>
-                ) : (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>POS verrouillé</CardTitle>
-                      <CardDescription>
-                        Votre boutique est configurée en "En ligne uniquement". Le POS est désactivé.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex gap-2">
-                      <Button variant="outline" onClick={() => navigate('/vendeur/settings')}>Paramètres</Button>
-                      <Button onClick={() => navigate('/vendeur/dashboard')}>Retour</Button>
-                    </CardContent>
-                  </Card>
-                )
-              } />
-              <Route path="service-module" element={
-                <VendorServiceModule />
-              } />
-              {/* Produits - Free (avec limite) */}
-              <Route path="products" element={
-                <ProtectedRoute feature="products_basic">
-                  <ProductManagement />
-                </ProtectedRoute>
-              } />
-              {/* Produits Numériques - Free */}
-              <Route path="digital-products" element={
-                <VendorDigitalProducts />
-              } />
-              {/* Commandes - Free */}
-              <Route path="orders" element={
-                <ProtectedRoute feature="orders_simple">
-                  <OrderManagement />
-                </ProtectedRoute>
-              } />
-              {/* Inventaire - Basic+ */}
-              <Route path="inventory" element={
-                <ProtectedRoute feature="inventory_management">
-                  <InventoryManagement />
-                </ProtectedRoute>
-              } />
-              {/* Entrepôts - Business+ */}
-              <Route path="warehouse" element={
-                <ProtectedRoute feature="multi_warehouse">
-                  <MultiWarehouseManagement />
-                </ProtectedRoute>
-              } />
-              {/* Fournisseurs - Business+ */}
-              <Route path="suppliers" element={
-                <ProtectedRoute feature="supplier_management">
-                  <SupplierManagement />
-                </ProtectedRoute>
-              } />
-              
-              {/* CRM & Marketing */}
-              {/* Clients - Basic+ */}
-              <Route path="clients" element={
-                <ProtectedRoute feature="crm_basic">
-                  <ClientManagement />
-                </ProtectedRoute>
-              } />
-              {/* Agents - Pro+ */}
-              <Route path="agents" element={
-                <ProtectedRoute feature="sales_agents">
-                  <AgentManagement />
-                </ProtectedRoute>
-              } />
-              {/* Prospects - Business+ */}
-              <Route path="prospects" element={
-                <ProtectedRoute feature="prospect_management">
-                  <ProspectManagement />
-                </ProtectedRoute>
-              } />
-              {/* Marketing - Pro+ */}
-              <Route path="marketing" element={
-                <ProtectedRoute feature="marketing_promotions">
-                  <MarketingManagement />
-                </ProtectedRoute>
-              } />
-              
-              {/* Finances */}
-              {/* Wallet - Free (accès basique) */}
-              <Route path="wallet" element={
-                <ProtectedRoute feature="wallet_basic">
-                  <UniversalWalletTransactions />
-                </ProtectedRoute>
-              } />
-              {/* Carte virtuelle - Free */}
-              <Route path="virtual-card" element={
-                <ProtectedRoute feature="wallet_basic">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Carte Virtuelle 224PAY</CardTitle>
-                      <CardDescription>Gérez votre carte virtuelle pour les paiements en ligne</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ProfessionalVirtualCard />
-                    </CardContent>
-                  </Card>
-                </ProtectedRoute>
-              } />
-              {/* Devis & Factures - Business+ */}
-              <Route path="quotes-invoices" element={
-                <ProtectedRoute feature="quotes_invoices">
-                  <VendorQuotesInvoices />
-                </ProtectedRoute>
-              } />
-              {/* Paiements - Business+ */}
-              <Route path="payments" element={
-                <ProtectedRoute feature="payments">
-                  <PaymentManagement />
-                </ProtectedRoute>
-              } />
-              {/* Liens de paiement - Business+ */}
-              <Route path="payment-links" element={
-                <ProtectedRoute feature="payment_links">
-                  <PaymentLinksManager />
-                </ProtectedRoute>
-              } />
-              {/* Dépenses - Business+ */}
-              <Route path="expenses" element={
-                <ProtectedRoute feature="expenses">
-                  <ExpenseManagementDashboard />
-                </ProtectedRoute>
-              } />
-              {/* Dettes - Business+ */}
-              <Route path="debts" element={
-                <ProtectedRoute feature="debt_management">
-                  <VendorDebtManagement vendorId={stats?.vendorId || ''} />
-                </ProtectedRoute>
-              } />
-              {/* Contrats - Business+ */}
-              <Route path="contracts" element={
-                <ProtectedRoute feature="contracts">
-                  <VendorContracts />
-                </ProtectedRoute>
-              } />
-              {/* Affiliation - Pro+ */}
-              <Route path="affiliate" element={
-                <ProtectedRoute feature="affiliate_program">
-                  <AffiliateManagement shopId={stats?.vendorId || undefined} />
-                </ProtectedRoute>
-              } />
-              
-              {/* Services */}
-              {/* Mes Achats - Free */}
-              <Route path="my-purchases" element={
-                <MyPurchasesOrdersList title="Mes Achats Personnels" emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace" />
-              } />
-              {/* Livraison - Basic+ */}
-              <Route path="delivery" element={
-                <ProtectedRoute feature="delivery_tracking">
-                  <VendorDeliveriesPanel />
-                </ProtectedRoute>
-              } />
-              {/* Avis clients - Free */}
-              <Route path="ratings" element={
-                <ProtectedRoute feature="ratings">
-                  <VendorRatingsPanel />
-                </ProtectedRoute>
-              } />
-              {/* Support - Basic+ */}
-              <Route path="support" element={
-                <ProtectedRoute feature="support_basic">
-                  <SupportTickets />
-                </ProtectedRoute>
-              } />
-              {/* Messages - Basic+ */}
-              <Route path="communication" element={
-                <ProtectedRoute feature="communication_hub">
-                  <UniversalCommunicationHub />
-                </ProtectedRoute>
-              } />
-              {/* Avis Clients - Basic+ */}
-              <Route path="reviews" element={
-                <ProtectedRoute feature="copilot_ai">
-                  <ReviewsManagement />
-                </ProtectedRoute>
-              } />
-
-              {/* Rapports - Business+ */}
-              <Route path="reports" element={
-                <ProtectedRoute feature="data_export">
-                  <VendorReportsManager />
-                </ProtectedRoute>
-              } />
-              {/* Comptes d'encaissement */}
-              <Route path="accounts" element={<CollectionAccountsManager />} />
-              {/* Ajustements stock */}
-              <Route path="stock-adjustments" element={<StockAdjustmentForm />} />
-              {/* Ventes avancées */}
-              <Route path="advanced-sales" element={<AdvancedSalesManager />} />
-              {/* Paiements échelonnés */}
-              <Route path="installments" element={<InstallmentPlansManager />} />
-              
-              {/* Système */}
-              {/* Copilote IA - Basic+ */}
-              <Route path="copilote" element={
-                <ProtectedRoute feature="copilot_ai">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Copilote IA Vendeur</CardTitle>
-                      <CardDescription>Votre assistant intelligent pour gérer votre boutique</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <CopiloteChat userRole="vendeur" height="500px" />
-                    </CardContent>
-                  </Card>
-                </ProtectedRoute>
-              } />
-              {/* Paramètres - Toujours accessible */}
-              <Route path="settings" element={<VendorSettings />} />
-              
-              {/* Autres - Premium */}
-              <Route path="offline-sync" element={
-                <ProtectedRoute feature="offline_mode">
-                  <OfflineSyncPanel />
-                </ProtectedRoute>
-              } />
-              {/* Diagnostic PWA - Toujours accessible */}
-              <Route path="pwa-diagnostic" element={<PWADiagnostic />} />
-            </Routes>
-            </Suspense>
+          {/* Contenu principal */}
+          <main
+            className="flex-1 p-2 sm:p-3 md:p-6 overflow-x-auto overflow-y-auto pt-4 pb-24 md:pb-8 w-full max-w-full"
+            role="main"
+            aria-label="Contenu principal du dashboard vendeur"
+          >
+            <VendorRoutes
+              recentOrders={recentOrders}
+              showAllOrders={showAllOrders}
+              onToggleShowAllOrders={handleToggleShowAllOrders}
+              canAccessPOS={canAccessPOS}
+              vendorId={vendorId}
+            />
           </main>
         </div>
       </div>
-      
+
       {/* Widget de communication flottant */}
-      <CommunicationWidget position="bottom-right" showNotifications={true} />
-      
-      {/* Bannière offline - s'affiche automatiquement */}
+      <Suspense fallback={null}>
+        <CommunicationWidget position="bottom-right" showNotifications={true} />
+      </Suspense>
+
+      {/* Bannière offline */}
       <Suspense fallback={null}>
         <OfflineBanner showSyncInfo={true} />
       </Suspense>
     </SidebarProvider>
   );
 }
-
