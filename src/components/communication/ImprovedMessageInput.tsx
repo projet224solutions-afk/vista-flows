@@ -8,7 +8,8 @@ import {
   Image as ImageIcon, 
   Mic, 
   Smile,
-  X
+  X,
+  Loader2
 } from 'lucide-react';
 
 interface ImprovedMessageInputProps {
@@ -26,9 +27,14 @@ export default function ImprovedMessageInput({
   const [message, setMessage] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isRecording, setIsRecording] = useState(false);
+  const [isSendingVoice, setIsSendingVoice] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleSend = () => {
     if (message.trim() || attachments.length > 0) {
@@ -49,41 +55,215 @@ export default function ImprovedMessageInput({
       return;
     }
     setAttachments([...attachments, ...files]);
+    if (event.target) event.target.value = '';
   };
 
   const removeAttachment = (index: number) => {
     setAttachments(attachments.filter((_, i) => i !== index));
   };
 
+  // Détection iOS/Safari
+  const isIOSDevice = () => /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isSafariBrowser = () => /Safari/i.test(navigator.userAgent) && !/CriOS|FxiOS|Chrome/i.test(navigator.userAgent);
+
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      const chunks: Blob[] = [];
+      // CRITICAL: getUserMedia must be called directly within the click handler
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100,
+        }
+      });
+
+      streamRef.current = stream;
+      audioChunksRef.current = [];
+
+      // Déterminer le meilleur format supporté
+      const isIOS = isIOSDevice();
+      const isSafari = isSafariBrowser();
+      
+      console.log('[VoiceRecord] Platform:', { isIOS, isSafari });
+
+      // Tester les formats dans l'ordre de préférence
+      const formatsToTry = [
+        { mime: 'audio/mp4', ext: 'm4a' },
+        { mime: 'audio/aac', ext: 'aac' },
+        { mime: 'audio/webm;codecs=opus', ext: 'webm' },
+        { mime: 'audio/webm', ext: 'webm' },
+        { mime: 'audio/wav', ext: 'wav' },
+        { mime: '', ext: 'webm' }, // Fallback
+      ];
+      
+      let selectedMime = '';
+      let selectedExt = 'webm';
+      
+      for (const format of formatsToTry) {
+        if (format.mime === '' || MediaRecorder.isTypeSupported(format.mime)) {
+          selectedMime = format.mime;
+          selectedExt = format.ext;
+          console.log('[VoiceRecord] Selected format:', format.mime || 'default');
+          break;
+        }
+      }
+
+      // Configuration du MediaRecorder
+      const recorderOptions: MediaRecorderOptions = {
+        audioBitsPerSecond: 128000
+      };
+      if (selectedMime) {
+        recorderOptions.mimeType = selectedMime;
+      }
+
+      let mediaRecorder: MediaRecorder;
+      try {
+        mediaRecorder = new MediaRecorder(stream, recorderOptions);
+      } catch (e) {
+        console.warn('[VoiceRecord] Fallback to default options:', e);
+        mediaRecorder = new MediaRecorder(stream);
+      }
+
+      console.log('[VoiceRecord] Using MIME type:', mediaRecorder.mimeType);
 
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
-          chunks.push(e.data);
+          audioChunksRef.current.push(e.data);
+          console.log('[VoiceRecord] Chunk received:', e.data.size, 'bytes');
         }
       };
 
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/webm' });
-        const file = new File([blob], `audio_${Date.now()}.webm`, { type: 'audio/webm' });
-        setAttachments([...attachments, file]);
-        stream.getTracks().forEach(track => track.stop());
+      mediaRecorder.onerror = (e) => {
+        console.error('[VoiceRecord] MediaRecorder error:', e);
+        toast({
+          title: "Erreur",
+          description: "Erreur lors de l'enregistrement",
+          variant: "destructive"
+        });
+        cleanupRecording();
       };
 
-      mediaRecorder.start();
+      mediaRecorder.onstop = async () => {
+        console.log('[VoiceRecord] Recording stopped, chunks:', audioChunksRef.current.length);
+        
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+
+        const actualMimeType = mediaRecorder.mimeType || selectedMime || 'audio/webm';
+        const audioBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
+        
+        // Déterminer l'extension
+        let finalExtension = selectedExt;
+        if (actualMimeType.includes('mp4') || actualMimeType.includes('m4a')) {
+          finalExtension = 'm4a';
+        } else if (actualMimeType.includes('webm')) {
+          finalExtension = 'webm';
+        } else if (actualMimeType.includes('ogg')) {
+          finalExtension = 'ogg';
+        } else if (actualMimeType.includes('wav')) {
+          finalExtension = 'wav';
+        }
+
+        const audioFile = new File(
+          [audioBlob],
+          `vocal_${Date.now()}.${finalExtension}`,
+          { type: actualMimeType }
+        );
+
+        console.log('[VoiceRecord] Audio file created:', {
+          name: audioFile.name,
+          type: audioFile.type,
+          size: audioFile.size
+        });
+
+        // Arrêter les pistes audio
+        stream.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+
+        if (audioFile.size < 1000) {
+          toast({
+            title: "Enregistrement trop court",
+            description: "L'enregistrement est trop court, veuillez réessayer",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // Envoyer le fichier audio directement
+        setIsSendingVoice(true);
+        try {
+          onSendMessage('🎙️ Message vocal', [audioFile]);
+          toast({
+            title: "Message vocal envoyé",
+            description: "Votre message vocal a été envoyé avec succès"
+          });
+        } catch (error: any) {
+          console.error('[VoiceRecord] Send error:', error);
+          toast({
+            title: "Erreur",
+            description: "Impossible d'envoyer le message vocal",
+            variant: "destructive"
+          });
+        } finally {
+          setIsSendingVoice(false);
+          setRecordingDuration(0);
+        }
+      };
+
+      // Démarrer l'enregistrement
+      const timeslice = isIOS ? 1000 : 500;
+      mediaRecorder.start(timeslice);
       mediaRecorderRef.current = mediaRecorder;
       setIsRecording(true);
-    } catch (error) {
+      setRecordingDuration(0);
+
+      // Timer pour afficher la durée
+      timerRef.current = setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
+
       toast({
-        title: "Erreur",
-        description: "Impossible d'accéder au microphone",
-        variant: "destructive"
+        title: "Enregistrement en cours",
+        description: "Cliquez à nouveau pour arrêter"
       });
+
+    } catch (error: any) {
+      console.error('[VoiceRecord] Error:', error);
+      if (error.name === 'NotAllowedError') {
+        toast({
+          title: "Accès refusé",
+          description: "Veuillez autoriser l'accès au microphone dans les paramètres de votre navigateur",
+          variant: "destructive"
+        });
+      } else if (error.name === 'NotFoundError') {
+        toast({
+          title: "Microphone non détecté",
+          description: "Aucun microphone n'a été trouvé sur cet appareil",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Impossible d'accéder au microphone",
+          variant: "destructive"
+        });
+      }
     }
+  };
+
+  const cleanupRecording = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    setIsRecording(false);
+    setRecordingDuration(0);
   };
 
   const stopRecording = () => {
@@ -91,6 +271,12 @@ export default function ImprovedMessageInput({
       mediaRecorderRef.current.stop();
       setIsRecording(false);
     }
+  };
+
+  const formatDuration = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -102,7 +288,7 @@ export default function ImprovedMessageInput({
             <div key={index} className="flex items-center gap-2 bg-background px-3 py-2 rounded-md border shadow-sm">
               {file.type.startsWith('image/') ? (
                 <ImageIcon className="w-4 h-4 text-primary" />
-              ) : file.type.startsWith('audio/') || file.name.startsWith('audio_') ? (
+              ) : file.type.startsWith('audio/') || file.name.startsWith('vocal_') ? (
                 <Mic className="w-4 h-4 text-orange-500" />
               ) : (
                 <Paperclip className="w-4 h-4 text-muted-foreground" />
@@ -145,7 +331,7 @@ export default function ImprovedMessageInput({
             size="icon"
             variant="ghost"
             onClick={() => imageInputRef.current?.click()}
-            disabled={disabled}
+            disabled={disabled || isRecording}
             title="Ajouter une image"
             className="h-9 w-9 hover:bg-primary/10 hover:text-primary"
           >
@@ -156,7 +342,7 @@ export default function ImprovedMessageInput({
             size="icon"
             variant="ghost"
             onClick={() => fileInputRef.current?.click()}
-            disabled={disabled}
+            disabled={disabled || isRecording}
             title="Ajouter un fichier"
             className="h-9 w-9 hover:bg-primary/10 hover:text-primary"
           >
@@ -167,44 +353,50 @@ export default function ImprovedMessageInput({
             size="icon"
             variant={isRecording ? "destructive" : "ghost"}
             onClick={isRecording ? stopRecording : startRecording}
-            disabled={disabled}
+            disabled={disabled || isSendingVoice}
             title={isRecording ? "Arrêter l'enregistrement" : "Enregistrer un message vocal"}
             className={`h-9 w-9 ${!isRecording ? 'hover:bg-orange-500/10 hover:text-orange-500' : ''}`}
           >
-            <Mic className={`w-5 h-5 ${isRecording ? 'animate-pulse' : ''}`} />
+            {isSendingVoice ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Mic className={`w-5 h-5 ${isRecording ? 'animate-pulse' : ''}`} />
+            )}
           </Button>
         </div>
 
         {/* Champ de texte avec style amélioré */}
         <div className="flex-1 min-w-0">
-          <Input
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-            placeholder={placeholder}
-            disabled={disabled}
-            className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-base placeholder:text-muted-foreground/60"
-          />
+          {isRecording ? (
+            <div className="flex items-center gap-2 h-10 px-3 text-destructive">
+              <div className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
+              <span className="font-medium">{formatDuration(recordingDuration)}</span>
+              <span className="text-sm opacity-70">Enregistrement...</span>
+            </div>
+          ) : (
+            <Input
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+              placeholder={placeholder}
+              disabled={disabled || isSendingVoice}
+              className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-base placeholder:text-muted-foreground/60"
+            />
+          )}
         </div>
 
         {/* Bouton d'envoi */}
-        <Button
-          onClick={handleSend}
-          disabled={disabled || (!message.trim() && attachments.length === 0)}
-          size="icon"
-          className="h-9 w-9 shrink-0 bg-primary hover:bg-primary/90"
-        >
-          <Send className="w-5 h-5" />
-        </Button>
+        {!isRecording && (
+          <Button
+            onClick={handleSend}
+            disabled={disabled || (!message.trim() && attachments.length === 0) || isSendingVoice}
+            size="icon"
+            className="h-9 w-9 shrink-0 bg-primary hover:bg-primary/90"
+          >
+            <Send className="w-5 h-5" />
+          </Button>
+        )}
       </div>
-      
-      {/* Indicateur d'enregistrement */}
-      {isRecording && (
-        <div className="flex items-center gap-2 text-sm text-destructive animate-pulse">
-          <div className="w-2 h-2 rounded-full bg-destructive" />
-          Enregistrement en cours... Cliquez sur le micro pour arrêter
-        </div>
-      )}
     </div>
   );
 }
