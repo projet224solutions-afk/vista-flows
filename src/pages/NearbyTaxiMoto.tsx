@@ -1,18 +1,19 @@
 /**
  * NEARBY TAXI-MOTO PAGE
  * Liste des taxi-motos disponibles à proximité
- * 224Solutions - Production Ready v3
+ * 224Solutions - Production Ready v4 (Uber/Bolt Grade)
  *
  * Optimisations appliquées:
- * ✅ Pas de clignotement lors de l'auto-refresh
- * ✅ Pas de double appel réseau
- * ✅ Protection contre les requêtes parallèles (verrou isFetching)
- * ✅ Indicateur de fraîcheur des données
- * ✅ Protection contre les memory leaks (isMounted)
- * ✅ Composants mémoïsés externalisés
- * ✅ Comparaison des données avant setState
- * ✅ Type correct pour setInterval (number)
- * ✅ Protection anti-spam sur le bouton refresh
+ * ✅ Comparaison des distances arrondies (évite re-renders sur micro-changements)
+ * ✅ Dépendances React corrigées (pas de drivers.length dans useCallback)
+ * ✅ Logique refresh unifiée (refreshPosition déclenche loadDrivers)
+ * ✅ Intervalle secondes unique (ref pour lastUpdated)
+ * ✅ Annulation des requêtes (AbortController)
+ * ✅ Auto-refresh intelligent (visibilityState)
+ * ✅ Protection memory leaks complète
+ * ✅ Protection contre requêtes parallèles
+ * ✅ Anti-spam sur bouton refresh
+ * ✅ Aucune recréation d'intervalle inutile
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -48,21 +49,34 @@ const MAX_DRIVERS_LIMIT = 100;
 const REFRESH_COOLDOWN = 2000; // 2 secondes entre les clics manuels
 
 // ============================================================================
-// Utility: Compare driver arrays pour éviter les re-renders inutiles
+// Utility: Compare driver arrays avec distances arrondies
 // ============================================================================
 
+/**
+ * Compare deux arrays de drivers en arrondissant les distances
+ * pour éviter les re-renders sur des micro-changements de float
+ */
 function areDriversEqual(prev: TaxiDriver[], next: TaxiDriver[]): boolean {
   if (prev.length !== next.length) return false;
 
   for (let i = 0; i < prev.length; i++) {
     const p = prev[i];
     const n = next[i];
+
+    // ✅ Arrondir les distances à 2 décimales (centièmes de km = 10m)
+    const pDistanceRounded = p.distance !== undefined ? Math.round(p.distance * 100) : -1;
+    const nDistanceRounded = n.distance !== undefined ? Math.round(n.distance * 100) : -1;
+
+    // ✅ Arrondir les ratings à 1 décimale
+    const pRatingRounded = p.rating !== null ? Math.round(p.rating * 10) : -1;
+    const nRatingRounded = n.rating !== null ? Math.round(n.rating * 10) : -1;
+
     if (
       p.id !== n.id ||
       p.status !== n.status ||
       p.is_online !== n.is_online ||
-      p.distance !== n.distance ||
-      p.rating !== n.rating
+      pDistanceRounded !== nDistanceRounded ||
+      pRatingRounded !== nRatingRounded
     ) {
       return false;
     }
@@ -84,28 +98,39 @@ export default function NearbyTaxiMoto() {
   const [drivers, setDrivers] = useState<TaxiDriver[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [secondsAgo, setSecondsAgo] = useState(0);
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // Refs pour protection memory leaks et requêtes parallèles
+  // Refs pour protection memory leaks, requêtes et intervalles
   // ═══════════════════════════════════════════════════════════════════════════
   const isMountedRef = useRef(true);
   const isFetchingRef = useRef(false);
-  const autoRefreshRef = useRef<number | null>(null); // ✅ Type correct: number
-  const lastRefreshClickRef = useRef<number>(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const autoRefreshRef = useRef<number | null>(null);
   const secondsIntervalRef = useRef<number | null>(null);
+  const lastRefreshClickRef = useRef<number>(0);
+  const lastUpdatedRef = useRef<Date | null>(null); // ✅ Ref au lieu de state pour éviter recréation d'intervalle
+  const driversRef = useRef<TaxiDriver[]>([]); // ✅ Ref pour accès dans catch sans dépendance
 
   // Géolocalisation centralisée
   const { userPosition, positionReady, refreshPosition } = useGeoDistance();
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // Fonction de chargement optimisée
+  // Fonction de chargement optimisée avec AbortController
   // ═══════════════════════════════════════════════════════════════════════════
   const loadDrivers = useCallback(async (isAutoRefresh = false) => {
     // ✅ Protection contre les requêtes parallèles
     if (isFetchingRef.current) return;
     if (!positionReady) return;
+
+    // ✅ Annuler la requête précédente si elle existe
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // ✅ Créer un nouveau AbortController
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
 
     isFetchingRef.current = true;
 
@@ -134,10 +159,11 @@ export default function NearbyTaxiMoto() {
           profiles:user_id (id, first_name, last_name, phone, avatar_url)
         `)
         .eq('is_online', true)
-        .limit(MAX_DRIVERS_LIMIT);
+        .limit(MAX_DRIVERS_LIMIT)
+        .abortSignal(abortController.signal);
 
-      // ✅ Vérifier si le composant est toujours monté
-      if (!isMountedRef.current) return;
+      // ✅ Vérifier si la requête a été annulée ou composant démonté
+      if (abortController.signal.aborted || !isMountedRef.current) return;
 
       if (queryError) throw new Error(`Erreur: ${queryError.message}`);
 
@@ -153,31 +179,38 @@ export default function NearbyTaxiMoto() {
       const filtered = filterDriversByRadius(processedDrivers, RADIUS_KM);
       const sorted = sortDrivers(filtered) as TaxiDriver[];
 
-      // ✅ Vérifier à nouveau si le composant est monté
-      if (!isMountedRef.current) return;
+      // ✅ Vérifier à nouveau si annulé ou démonté
+      if (abortController.signal.aborted || !isMountedRef.current) return;
 
       // ✅ Mettre à jour uniquement si les données ont changé
       setDrivers(prevDrivers => {
         if (areDriversEqual(prevDrivers, sorted)) {
           return prevDrivers; // Pas de changement, pas de re-render
         }
+        driversRef.current = sorted; // Sync ref
         return sorted;
       });
 
-      // Mettre à jour le timestamp
-      setLastUpdated(new Date());
+      // ✅ Mettre à jour le timestamp via ref (pas de recréation d'intervalle)
+      lastUpdatedRef.current = new Date();
       setSecondsAgo(0);
 
-      // Clear l'erreur en cas de succès (même sur auto-refresh)
+      // Clear l'erreur en cas de succès
       setError(null);
 
     } catch (err) {
+      // ✅ Ignorer les erreurs d'annulation
+      if (err instanceof Error && err.name === 'AbortError') {
+        return;
+      }
+
       if (!isMountedRef.current) return;
 
       console.error('Error loading taxi drivers:', err);
 
       // ✅ Ne pas écraser les données existantes en cas d'erreur d'auto-refresh
-      if (!isAutoRefresh || drivers.length === 0) {
+      // Utiliser driversRef au lieu de drivers.length pour éviter la dépendance
+      if (!isAutoRefresh || driversRef.current.length === 0) {
         setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
       }
     } finally {
@@ -188,45 +221,73 @@ export default function NearbyTaxiMoto() {
         }
       }
     }
-  }, [positionReady, userPosition, drivers.length]);
+  // ✅ Dépendances corrigées: pas de drivers.length
+  }, [positionReady, userPosition.latitude, userPosition.longitude]);
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // Chargement initial
+  // Chargement initial et rechargement sur changement de position
   // ═══════════════════════════════════════════════════════════════════════════
   useEffect(() => {
     if (positionReady) {
       loadDrivers(false);
     }
-  }, [positionReady, loadDrivers]);
+  }, [positionReady, userPosition.latitude, userPosition.longitude, loadDrivers]);
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // Auto-refresh toutes les 20 secondes (SANS clignotement)
+  // Auto-refresh intelligent avec visibilityState
   // ═══════════════════════════════════════════════════════════════════════════
   useEffect(() => {
     if (!positionReady) return;
 
-    autoRefreshRef.current = window.setInterval(() => {
-      if (isMountedRef.current) {
-        loadDrivers(true); // ✅ isAutoRefresh = true → pas de skeleton
+    // ✅ Fonction de refresh conditionnelle
+    const doAutoRefresh = () => {
+      // Ne pas rafraîchir si l'onglet n'est pas visible
+      if (document.visibilityState !== 'visible') return;
+      if (!isMountedRef.current) return;
+
+      loadDrivers(true);
+    };
+
+    // ✅ Handler pour le changement de visibilité
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isMountedRef.current) {
+        // Rafraîchir immédiatement quand l'onglet redevient visible
+        loadDrivers(true);
       }
-    }, AUTO_REFRESH_INTERVAL);
+    };
+
+    // Créer l'intervalle
+    autoRefreshRef.current = window.setInterval(doAutoRefresh, AUTO_REFRESH_INTERVAL);
+
+    // Écouter les changements de visibilité
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       if (autoRefreshRef.current !== null) {
         window.clearInterval(autoRefreshRef.current);
         autoRefreshRef.current = null;
       }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [positionReady, loadDrivers]);
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // Compteur "Mis à jour il y a X secondes"
+  // Compteur "Mis à jour il y a X secondes" - Intervalle unique
   // ═══════════════════════════════════════════════════════════════════════════
   useEffect(() => {
+    // ✅ Créer un seul intervalle au montage
     secondsIntervalRef.current = window.setInterval(() => {
-      if (isMountedRef.current && lastUpdated) {
+      if (!isMountedRef.current) return;
+
+      // ✅ Utiliser la ref au lieu du state pour éviter les dépendances
+      const lastUpdated = lastUpdatedRef.current;
+      if (lastUpdated) {
         const diff = Math.floor((Date.now() - lastUpdated.getTime()) / 1000);
-        setSecondsAgo(diff);
+        setSecondsAgo(prev => {
+          // ✅ Ne mettre à jour que si la valeur change
+          if (prev !== diff) return diff;
+          return prev;
+        });
       }
     }, 1000);
 
@@ -236,7 +297,7 @@ export default function NearbyTaxiMoto() {
         secondsIntervalRef.current = null;
       }
     };
-  }, [lastUpdated]);
+  }, []); // ✅ Aucune dépendance = intervalle créé une seule fois
 
   // ═══════════════════════════════════════════════════════════════════════════
   // Cleanup complet au démontage
@@ -247,11 +308,20 @@ export default function NearbyTaxiMoto() {
     return () => {
       isMountedRef.current = false;
 
+      // ✅ Annuler toute requête en cours
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+
+      // ✅ Nettoyer les intervalles
       if (autoRefreshRef.current !== null) {
         window.clearInterval(autoRefreshRef.current);
+        autoRefreshRef.current = null;
       }
       if (secondsIntervalRef.current !== null) {
         window.clearInterval(secondsIntervalRef.current);
+        secondsIntervalRef.current = null;
       }
     };
   }, []);
@@ -260,7 +330,8 @@ export default function NearbyTaxiMoto() {
   // Handlers
   // ═══════════════════════════════════════════════════════════════════════════
 
-  // Rafraîchissement manuel avec protection anti-spam
+  // ✅ Rafraîchissement manuel - uniquement refreshPosition
+  // Le chargement est déclenché automatiquement par le changement de position
   const handleRefresh = useCallback(async () => {
     const now = Date.now();
 
@@ -276,10 +347,12 @@ export default function NearbyTaxiMoto() {
 
     lastRefreshClickRef.current = now;
 
-    // Rafraîchir la position
+    // ✅ Rafraîchir la position - loadDrivers sera appelé automatiquement
+    // via l'effet qui écoute userPosition.latitude/longitude
     await refreshPosition();
 
-    // ✅ Charger les données (le verrou empêchera les doublons)
+    // ✅ Force un refresh immédiat après le refreshPosition
+    // car la position peut ne pas avoir changé significativement
     await loadDrivers(false);
   }, [refreshPosition, loadDrivers]);
 
@@ -310,6 +383,7 @@ export default function NearbyTaxiMoto() {
   // ═══════════════════════════════════════════════════════════════════════════
 
   const isRefreshDisabled = loading || isFetchingRef.current;
+  const hasLastUpdated = lastUpdatedRef.current !== null;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 pb-24">
@@ -334,7 +408,7 @@ export default function NearbyTaxiMoto() {
                 <p className="text-xs text-muted-foreground">
                   {drivers.length} conducteur{drivers.length !== 1 ? 's' : ''} dans un rayon de {RADIUS_KM} km
                 </p>
-                {lastUpdated && (
+                {hasLastUpdated && (
                   <span className="text-xs text-muted-foreground/70">
                     • {formatTimeAgo(secondsAgo)}
                   </span>
