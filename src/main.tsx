@@ -5,6 +5,14 @@ import App from "./App.tsx";
 import "./index.css";
 import { registerServiceWorker, unregisterServiceWorker } from "./lib/serviceWorkerRegistration";
 import { initPWAInstallPromptListener } from "./lib/pwaInstallPrompt";
+import { initMonitoring } from "./lib/monitoring";
+import { initializeSecurity } from "./lib/security";
+
+// Initialiser le monitoring (Sentry, erreurs globales, performance)
+initMonitoring().catch(console.error);
+
+// Initialiser la sécurité (watermark, anti-debug, validation env)
+initializeSecurity().catch(console.error);
 
 // --- Crash recovery (stale cache / SW / chunk load) ---
 const RECOVERY_FLAG = "__224_cache_recovery_done";

@@ -9,6 +9,9 @@
  * - credentialsManager: Gestion sécurisée des credentials
  * - securityHeaders: Headers HTTP de sécurité
  * - inputSanitizer: Validation et sanitization des entrées
+ * - antiDebug: Protection contre le débogage et l'inspection
+ * - watermark: Traçabilité des builds et détection de copies
+ * - envValidator: Validation des variables d'environnement
  */
 
 // Chiffrement sécurisé (PBKDF2 + AES-GCM)
@@ -74,6 +77,34 @@ export {
   applySecurityHeaders
 } from './securityHeaders';
 
+// Protection Anti-Débogage
+export {
+  startAntiDebugProtection,
+  stopAntiDebugProtection,
+  setDebugCallback,
+  defaultDebugAction
+} from './antiDebug';
+
+// Watermarking et Traçabilité
+export {
+  APP_WATERMARK,
+  embedWatermarkInDOM,
+  getWatermarkHeaders,
+  verifyWatermark,
+  getWatermarkInfo,
+  getAppFingerprint,
+  INVISIBLE_WATERMARK
+} from './watermark';
+
+// Validation des Variables d'Environnement
+export {
+  validateEnvVars,
+  logValidationResult,
+  secureConfig,
+  maskSensitiveValue,
+  initEnvValidation
+} from './envValidator';
+
 /**
  * Configuration de sécurité recommandée
  */
@@ -117,9 +148,26 @@ export const SECURITY_CONFIG = {
 export async function initializeSecurity(): Promise<void> {
   console.log('🔐 [Security] Initialisation des services de sécurité...');
 
+  // Valider les variables d'environnement
+  const { initEnvValidation } = await import('./envValidator');
+  initEnvValidation();
+
   // Générer le token CSRF initial
   const { generateCSRFToken } = await import('./csrf');
   generateCSRFToken();
+
+  // Intégrer le watermark dans le DOM
+  const { embedWatermarkInDOM, getWatermarkInfo } = await import('./watermark');
+  embedWatermarkInDOM();
+  console.log('🔐 [Security] Watermark:', getWatermarkInfo());
+
+  // Activer la protection anti-débogage en production
+  if (import.meta.env.PROD) {
+    const { startAntiDebugProtection, setDebugCallback, defaultDebugAction } = await import('./antiDebug');
+    setDebugCallback(defaultDebugAction);
+    startAntiDebugProtection();
+    console.log('🔐 [Security] Protection anti-débogage activée');
+  }
 
   console.log('🔐 [Security] ✅ Services de sécurité initialisés');
 }
