@@ -268,8 +268,15 @@ export function useStorageUpload(): UseStorageUploadReturn {
           }
         );
 
-        if (signedUrlError || !signedUrlData?.signedUrl) {
-          console.warn('[useStorageUpload] GCS signed URL failed, falling back to Supabase');
+        // Check for errors - both invoke errors AND error responses from the function
+        const hasError = signedUrlError || 
+                        signedUrlData?.error || 
+                        signedUrlData?.fallback || 
+                        !signedUrlData?.signedUrl;
+        
+        if (hasError) {
+          console.warn('[useStorageUpload] GCS signed URL failed, falling back to Supabase:', 
+            signedUrlError?.message || signedUrlData?.error || 'No signed URL received');
           const result = await uploadToSupabase(file, folder, subfolder, onProgress);
           setProgress(100);
           return result;
