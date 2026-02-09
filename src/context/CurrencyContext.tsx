@@ -16,6 +16,7 @@ interface CurrencyContextType {
 }
 
 const CURRENCY_STORAGE_KEY = 'app_currency';
+const CURRENCY_MANUAL_KEY = 'app_currency_manual'; // Flag explicite pour choix manuel
 const GEO_CACHE_KEY = 'geo_detection_cache';
 
 const CurrencyContext = createContext<CurrencyContextType>({
@@ -58,10 +59,10 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Vérifier si une devise a été choisie manuellement
-      const hasManualPref = localStorage.getItem(CURRENCY_STORAGE_KEY);
-      if (hasManualPref) {
-        console.log('💱 Devise manuelle trouvée:', hasManualPref);
+      // Vérifier si une devise a été choisie manuellement (flag explicite)
+      const hasManualChoice = localStorage.getItem(CURRENCY_MANUAL_KEY) === 'true';
+      if (hasManualChoice) {
+        console.log('💱 Devise choisie manuellement, pas de sync auto');
         setLoading(false);
         return;
       }
@@ -113,8 +114,9 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   // Sync live depuis geo-cache (quand useGeoDetection met à jour le cache dans le même onglet)
   useEffect(() => {
     const syncFromGeoCache = () => {
-      const hasManualPref = localStorage.getItem(CURRENCY_STORAGE_KEY);
-      if (hasManualPref) return;
+      // Ne pas écraser si choix manuel explicite
+      const hasManualChoice = localStorage.getItem(CURRENCY_MANUAL_KEY) === 'true';
+      if (hasManualChoice) return;
 
       try {
         const geoCacheRaw = localStorage.getItem(GEO_CACHE_KEY);
@@ -151,6 +153,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   const setCurrency = useCallback((newCurrency: string) => {
     setCurrencyState(newCurrency);
     localStorage.setItem(CURRENCY_STORAGE_KEY, newCurrency);
+    localStorage.setItem(CURRENCY_MANUAL_KEY, 'true'); // Marquer comme choix manuel
     console.log('💱 Devise changée manuellement:', newCurrency);
   }, []);
 

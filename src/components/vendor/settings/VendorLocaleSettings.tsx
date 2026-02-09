@@ -16,9 +16,13 @@ export default function VendorLocaleSettings() {
   const { toast } = useToast();
 
   const handleRefreshGeo = async () => {
-    // Supprimer le flag de choix manuel pour permettre la détection automatique
+    // Supprimer TOUS les flags manuels ET les valeurs stockées pour permettre la redétection
     localStorage.removeItem('app_language_manual');
     localStorage.removeItem('app_currency_manual');
+    localStorage.removeItem('app_language');
+    localStorage.removeItem('app_currency');
+    localStorage.removeItem('user_country');
+    localStorage.removeItem('geo_detection_cache');
     
     await refreshGeo();
     
@@ -29,8 +33,7 @@ export default function VendorLocaleSettings() {
   };
 
   const handleCurrencyChange = (newCurrency: string) => {
-    setCurrency(newCurrency);
-    localStorage.setItem('app_currency_manual', 'true');
+    setCurrency(newCurrency); // setCurrency already sets manual flag internally
     toast({
       title: "Devise mise à jour",
       description: `La devise a été changée en ${newCurrency}.`,

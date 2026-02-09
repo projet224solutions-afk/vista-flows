@@ -82,8 +82,7 @@ Deno.serve(async (req) => {
 
     // Increment view count (fire and forget)
     supabase.rpc('increment_shared_link_views', { p_short_code: shortCode })
-      .then(() => {})
-      .catch(() => {});
+      .then(() => {});
 
     // Get the target URL (clean it for SPA)
     let targetUrl = link.original_url;
@@ -126,7 +125,7 @@ Deno.serve(async (req) => {
         // Get the best image (first one, ensure absolute URL)
         let productImage = DEFAULT_IMAGE;
         if (Array.isArray(product.images) && product.images.length > 0) {
-          productImage = ensureAbsoluteUrl(product.images[0]);
+          productImage = ensureAbsoluteUrl(product.images[0]) || DEFAULT_IMAGE;
         }
         
         const currency = product.currency || 'GNF';
@@ -150,7 +149,7 @@ Deno.serve(async (req) => {
       if (digitalProduct) {
         let productImage = DEFAULT_IMAGE;
         if (Array.isArray(digitalProduct.images) && digitalProduct.images.length > 0) {
-          productImage = ensureAbsoluteUrl(digitalProduct.images[0]);
+          productImage = ensureAbsoluteUrl(digitalProduct.images[0]) || DEFAULT_IMAGE;
         }
         
         const currency = digitalProduct.currency || 'GNF';
