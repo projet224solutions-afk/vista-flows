@@ -400,13 +400,38 @@ export default function OrderManagement() {
   });
 
   const updateOrderStatus = async (orderId: string, newStatus: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'in_transit' | 'delivered' | 'cancelled') => {
+    // Prevent duplicate updates
     if (updatingOrderId === orderId) {
       console.log('⏳ Update already in progress for order:', orderId);
-      return; // Prevent duplicate updates
+      return;
     }
     
-    console.log('🔄 Updating order status:', { orderId, newStatus });
+    // Validate required data before proceeding
+    if (!vendorId) {
+      console.error('❌ No vendorId available');
+      toast({
+        title: "❌ Erreur",
+        description: "Profil vendeur non trouvé. Veuillez rafraîchir la page.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!user?.id) {
+      console.error('❌ No user authenticated');
+      toast({
+        title: "❌ Erreur",
+        description: "Vous devez être connecté pour effectuer cette action.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    console.log('🔄 Updating order status:', { orderId, newStatus, vendorId });
     setUpdatingOrderId(orderId);
+    
+    // Store previous state for rollback
+    const previousOrders = [...orders];
     
     // Optimistic update
     setOrders(prev => prev.map(order => 
@@ -416,10 +441,6 @@ export default function OrderManagement() {
     ));
     
     try {
-      if (!vendorId || !user?.id) {
-        throw new Error('User not authenticated or vendor not found');
-      }
-
       // Update order status with vendor verification
       const { data, error } = await supabase
         .from('orders')
@@ -428,14 +449,17 @@ export default function OrderManagement() {
           updated_at: new Date().toISOString()
         })
         .eq('id', orderId)
-        .eq('vendor_id', vendorId) // Security: only update own orders
+        .eq('vendor_id', vendorId)
         .select();
 
       if (error) {
-        console.error('❌ Error updating order status:', error);
-        // Rollback optimistic update
-        await fetchOrders();
-        throw error;
+        console.error('❌ Supabase error updating order status:', error);
+        throw new Error(error.message || 'Erreur base de données');
+      }
+
+      if (!data || data.length === 0) {
+        console.error('❌ No data returned - order may not belong to this vendor');
+        throw new Error('Commande non trouvée ou non autorisée');
       }
 
       console.log('✅ Order status updated successfully:', data);
@@ -449,13 +473,15 @@ export default function OrderManagement() {
       await fetchOrders();
     } catch (error) {
       console.error('❌ Failed to update order status:', error);
+      
+      // Rollback to previous state
+      setOrders(previousOrders);
+      
       toast({
         title: "❌ Erreur",
         description: error instanceof Error ? error.message : "Impossible de mettre à jour le statut de la commande.",
         variant: "destructive"
       });
-      // Rollback optimistic update
-      await fetchOrders();
     } finally {
       setUpdatingOrderId(null);
     }
