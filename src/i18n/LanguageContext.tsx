@@ -94,22 +94,22 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
         return;
       }
 
-      // Essayer de récupérer depuis le cache de géo-détection (synchronisation avec useGeoDetection)
+      // Essayer de récupérer depuis le cache de géo-détection (ignorer les fallback)
       const geoCacheRaw = localStorage.getItem(GEO_CACHE_KEY);
       if (geoCacheRaw) {
         try {
           const geoCache = JSON.parse(geoCacheRaw);
-          if (geoCache?.data?.country && geoCache?.data?.language) {
+          if (geoCache?.data?.country && geoCache?.data?.language && geoCache?.data?.detectionMethod !== 'fallback') {
             const country = geoCache.data.country;
             const detectedLang = geoCache.data.language;
             
             // Vérifier si la langue est supportée
             if (supportedLanguages.some(l => l.code === detectedLang)) {
-              console.log(`🌍 Auto-sync langue depuis géo: pays=${country}, langue=${detectedLang}`);
+              console.log(`🌍 Auto-sync langue (geo-cache): pays=${country}, langue=${detectedLang}`);
               setUserCountry(country);
               if (detectedLang !== language) {
                 setLanguageState(detectedLang);
-                localStorage.setItem(STORAGE_KEY, detectedLang); // Sauvegarder pour persistance
+                localStorage.setItem(STORAGE_KEY, detectedLang);
               }
               setHasAutoDetected(true);
               return;
@@ -145,10 +145,11 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
         const geoCacheRaw = localStorage.getItem(GEO_CACHE_KEY);
         if (geoCacheRaw) {
           const geoCache = JSON.parse(geoCacheRaw);
-          if (geoCache?.data?.language) {
+          // Ignorer les fallback
+          if (geoCache?.data?.language && geoCache?.data?.detectionMethod !== 'fallback') {
             const detectedLang = geoCache.data.language;
             if (supportedLanguages.some(l => l.code === detectedLang) && detectedLang !== language) {
-              console.log(`🌍 Synchronisation langue depuis géo: ${detectedLang}`);
+              console.log(`🌍 Sync langue (geo-cache): ${detectedLang}`);
               setLanguageState(detectedLang);
               localStorage.setItem(STORAGE_KEY, detectedLang);
               setUserCountry(geoCache.data.country);
