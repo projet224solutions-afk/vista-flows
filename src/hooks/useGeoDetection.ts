@@ -30,7 +30,7 @@ interface UseGeoDetectionResult {
 
 // Cache pour éviter les appels répétés
 const GEO_CACHE_KEY = 'geo_detection_cache';
-const GEO_CACHE_VERSION = 'v2'; // Incrémenter pour forcer un refresh après mise à jour
+const GEO_CACHE_VERSION = 'v3'; // v3: force invalidation des caches fallback périmés
 const GEO_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes (réduit pour meilleure réactivité)
 
 interface CachedGeo {

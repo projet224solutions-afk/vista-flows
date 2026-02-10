@@ -28,15 +28,16 @@ const CurrencyContext = createContext<CurrencyContextType>({
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [currency, setCurrencyState] = useState<string>(() => {
     // Vérifier d'abord le choix manuel
+    const hasManualChoice = localStorage.getItem(CURRENCY_MANUAL_KEY) === 'true';
     const stored = localStorage.getItem(CURRENCY_STORAGE_KEY);
-    if (stored) return stored;
+    if (hasManualChoice && stored) return stored;
 
-    // Sinon, essayer de récupérer depuis le cache géo
+    // Sinon, essayer de récupérer depuis le cache géo (ignorer les fallback)
     try {
       const geoCache = localStorage.getItem(GEO_CACHE_KEY);
       if (geoCache) {
         const parsed = JSON.parse(geoCache);
-        if (parsed?.data?.currency) {
+        if (parsed?.data?.currency && parsed?.data?.detectionMethod !== 'fallback') {
           return parsed.data.currency;
         }
       }
@@ -70,11 +71,12 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       const geoCacheRaw = localStorage.getItem(GEO_CACHE_KEY);
       if (geoCacheRaw) {
         const geoCache = JSON.parse(geoCacheRaw);
-        if (geoCache?.data?.country && geoCache?.data?.currency) {
+        // Ignorer les résultats fallback (GN/GNF par défaut — pas fiable)
+        if (geoCache?.data?.country && geoCache?.data?.currency && geoCache?.data?.detectionMethod !== 'fallback') {
           const country = geoCache.data.country;
           const detectedCurrency = geoCache.data.currency;
 
-          console.log(`💱 Auto-détection (via geo-cache): pays=${country}, devise=${detectedCurrency}`);
+          console.log(`💱 Auto-détection (geo-cache): pays=${country}, devise=${detectedCurrency}`);
           setUserCountry(country);
           setCurrencyState(detectedCurrency);
           setHasAutoDetected(true);
