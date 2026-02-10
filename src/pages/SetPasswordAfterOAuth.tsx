@@ -15,19 +15,21 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Lock, Eye, EyeOff, Loader2, CheckCircle2, Shield, 
+import {
+  Lock, Eye, EyeOff, Loader2, CheckCircle2, Shield,
   AlertCircle, Mail, ArrowRight
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { getDashboardRoute } from '@/hooks/useRoleRedirect';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function SetPasswordAfterOAuth() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user, profile, loading: authLoading, profileLoading } = useAuth();
-  
+
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -157,7 +159,7 @@ export default function SetPasswordAfterOAuth() {
     
     localStorage.removeItem('needs_oauth_password');
     localStorage.setItem(`oauth_password_set_${user.id}`, 'skipped');
-    toast.message('Vous pourrez définir un mot de passe plus tard depuis votre profil.');
+    toast.message(t('auth.setPassword.skipMessage'));
     redirectToProperDashboard();
   };
 
@@ -166,7 +168,7 @@ export default function SetPasswordAfterOAuth() {
     setError(null);
 
     if (!isPasswordValid) {
-      setError('Veuillez remplir tous les critères de sécurité du mot de passe.');
+      setError(t('auth.setPassword.criteriaError'));
       return;
     }
 
@@ -196,7 +198,7 @@ export default function SetPasswordAfterOAuth() {
       localStorage.setItem(`oauth_password_set_${user?.id}`, 'true');
       
       setSuccess(true);
-      toast.success('Mot de passe défini avec succès !');
+      toast.success(t('auth.setPassword.success'));
 
       // Rediriger après un court délai
       setTimeout(() => {
@@ -217,7 +219,7 @@ export default function SetPasswordAfterOAuth() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Vérification en cours...</p>
+          <p className="text-muted-foreground">{t('auth.setPassword.checking')}</p>
         </div>
       </div>
     );
@@ -231,13 +233,13 @@ export default function SetPasswordAfterOAuth() {
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="h-8 w-8 text-green-600" />
             </div>
-            <h2 className="text-xl font-bold text-green-700">Mot de passe défini !</h2>
+            <h2 className="text-xl font-bold text-green-700">{t('auth.setPassword.success')}</h2>
             <p className="text-muted-foreground">
-              Vous pouvez maintenant vous connecter avec votre email et mot de passe.
+              {t('auth.setPassword.successDesc')}
             </p>
             <div className="pt-4">
               <Loader2 className="h-5 w-5 animate-spin mx-auto text-primary" />
-              <p className="text-sm text-muted-foreground mt-2">Redirection en cours...</p>
+              <p className="text-sm text-muted-foreground mt-2">{t('auth.setPassword.redirecting')}</p>
             </div>
           </CardContent>
         </Card>
@@ -254,8 +256,8 @@ export default function SetPasswordAfterOAuth() {
               <Shield className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <CardTitle className="text-xl font-bold">Définir un mot de passe</CardTitle>
-              <CardDescription>Sécurisez votre compte</CardDescription>
+              <CardTitle className="text-xl font-bold">{t('auth.setPassword.title')}</CardTitle>
+              <CardDescription>{t('auth.setPassword.subtitle')}</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -265,11 +267,11 @@ export default function SetPasswordAfterOAuth() {
           <Alert className="bg-amber-50 border-amber-200">
             <Shield className="h-4 w-4 text-amber-600" />
             <AlertDescription className="text-amber-800">
-              <strong>Étape obligatoire de sécurité</strong><br />
-              Pour protéger votre compte, vous devez définir un mot de passe avant de continuer.
+              <strong>{t('auth.setPassword.mandatory')}</strong><br />
+              {t('auth.setPassword.mandatoryDesc')}
               <br /><br />
               <span className="text-sm opacity-90">
-                Ce mot de passe vous permettra de vous connecter même sans Google.
+                {t('auth.setPassword.mandatoryHint')}
               </span>
             </AlertDescription>
           </Alert>
@@ -278,7 +280,7 @@ export default function SetPasswordAfterOAuth() {
           <div className="bg-muted/50 rounded-lg p-3 flex items-center gap-3">
             <Mail className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground">Email du compte</p>
+              <p className="text-xs text-muted-foreground">{t('auth.setPassword.accountEmail')}</p>
               <p className="font-medium">{user?.email}</p>
             </div>
           </div>
@@ -286,7 +288,7 @@ export default function SetPasswordAfterOAuth() {
           <form onSubmit={handleSetPassword} className="space-y-4">
             {/* Nouveau mot de passe */}
             <div className="space-y-2">
-              <Label htmlFor="password">Nouveau mot de passe</Label>
+              <Label htmlFor="password">{t('auth.setPassword.newPassword')}</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -310,7 +312,7 @@ export default function SetPasswordAfterOAuth() {
 
             {/* Confirmer mot de passe */}
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+              <Label htmlFor="confirmPassword">{t('auth.setPassword.confirmPassword')}</Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
@@ -335,28 +337,28 @@ export default function SetPasswordAfterOAuth() {
             {/* Indicateurs de sécurité */}
             <div className="bg-muted/30 rounded-lg p-4 space-y-2">
               <p className="text-sm font-medium text-muted-foreground mb-2">
-                Critères de sécurité :
+                {t('auth.setPassword.securityCriteria')}
               </p>
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <PasswordCheck 
-                  valid={passwordChecks.minLength} 
-                  label="8 caractères minimum" 
+                <PasswordCheck
+                  valid={passwordChecks.minLength}
+                  label={t('auth.setPassword.minChars')}
                 />
-                <PasswordCheck 
-                  valid={passwordChecks.hasUppercase} 
-                  label="Une majuscule" 
+                <PasswordCheck
+                  valid={passwordChecks.hasUppercase}
+                  label={t('auth.setPassword.uppercase')}
                 />
-                <PasswordCheck 
-                  valid={passwordChecks.hasLowercase} 
-                  label="Une minuscule" 
+                <PasswordCheck
+                  valid={passwordChecks.hasLowercase}
+                  label={t('auth.setPassword.lowercase')}
                 />
-                <PasswordCheck 
-                  valid={passwordChecks.hasNumber} 
-                  label="Un chiffre" 
+                <PasswordCheck
+                  valid={passwordChecks.hasNumber}
+                  label={t('auth.setPassword.number')}
                 />
-                <PasswordCheck 
-                  valid={passwordChecks.matches} 
-                  label="Mots de passe identiques" 
+                <PasswordCheck
+                  valid={passwordChecks.matches}
+                  label={t('auth.setPassword.match')}
                   className="col-span-2"
                 />
               </div>
@@ -379,12 +381,12 @@ export default function SetPasswordAfterOAuth() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Définition en cours...
+                    {t('auth.setPassword.saving')}
                   </>
                 ) : (
                   <>
                     <Lock className="mr-2 h-5 w-5" />
-                    Définir le mot de passe et continuer
+                    {t('auth.setPassword.submit')}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}

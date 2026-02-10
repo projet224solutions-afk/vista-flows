@@ -11,16 +11,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield, Mail, Phone, Lock, KeyRound, Loader2 } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface AgentBureauLoginProps {
   onSuccess?: (userType: UserType, userId: string) => void;
   defaultTab?: UserType;
 }
 
-export const AgentBureauLogin = ({ 
-  onSuccess, 
-  defaultTab = 'agent' 
+export const AgentBureauLogin = ({
+  onSuccess,
+  defaultTab = 'agent'
 }: AgentBureauLoginProps) => {
+  const { t } = useTranslation();
   const {
     login,
     verifyOtp,
@@ -41,14 +43,14 @@ export const AgentBureauLogin = ({
     setError('');
 
     if (!identifier.trim() || !password.trim()) {
-      setError('Veuillez remplir tous les champs');
+      setError(t('auth.agentBureau.fillAllFields'));
       return;
     }
 
     const result = await login(identifier.trim(), password, activeTab);
-    
+
     if (!result.success) {
-      setError(result.error || 'Erreur de connexion');
+      setError(result.error || t('auth.agentBureau.connectionError'));
     }
   };
 
@@ -57,16 +59,16 @@ export const AgentBureauLogin = ({
     setError('');
 
     if (otpCode.length !== 6) {
-      setError('Le code OTP doit contenir 6 chiffres');
+      setError(t('auth.agentBureau.otpMustBe6Digits'));
       return;
     }
 
     const result = await verifyOtp(currentIdentifier, otpCode, currentUserType);
-    
+
     if (result.success && result.user) {
       onSuccess?.(result.user.type as UserType, result.user.id);
     } else {
-      setError(result.error || 'Code OTP incorrect');
+      setError(result.error || t('auth.agentBureau.otpIncorrect'));
     }
   };
 
@@ -83,9 +85,9 @@ export const AgentBureauLogin = ({
           <div className="mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
             <KeyRound className="h-8 w-8 text-white" />
           </div>
-          <CardTitle className="text-2xl">Vérification de Sécurité</CardTitle>
+          <CardTitle className="text-2xl">{t('auth.agentBureau.securityVerification')}</CardTitle>
           <CardDescription>
-            Un code de sécurité a été envoyé à <strong>{currentIdentifier}</strong>
+            {t('auth.agentBureau.codeSentTo')} <strong>{currentIdentifier}</strong>
           </CardDescription>
         </CardHeader>
         
@@ -98,7 +100,7 @@ export const AgentBureauLogin = ({
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="otp">Code OTP (6 chiffres)</Label>
+              <Label htmlFor="otp">{t('auth.agentBureau.otpCode')}</Label>
               <Input
                 id="otp"
                 type="text"
@@ -112,7 +114,7 @@ export const AgentBureauLogin = ({
                 disabled={isLoading}
               />
               <p className="text-xs text-muted-foreground text-center">
-                Le code expire dans 5 minutes
+                {t('auth.agentBureau.codeExpiresIn5Min')}
               </p>
             </div>
 
@@ -124,12 +126,12 @@ export const AgentBureauLogin = ({
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Vérification...
+                  {t('auth.agentBureau.verifying')}
                 </>
               ) : (
                 <>
                   <Shield className="mr-2 h-4 w-4" />
-                  Vérifier le Code
+                  {t('auth.agentBureau.verifyCode')}
                 </>
               )}
             </Button>
@@ -140,7 +142,7 @@ export const AgentBureauLogin = ({
               className="w-full"
               onClick={() => window.location.reload()}
             >
-              Annuler
+              {t('auth.cancel')}
             </Button>
           </form>
         </CardContent>
@@ -154,17 +156,17 @@ export const AgentBureauLogin = ({
         <div className="mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
           <Shield className="h-8 w-8 text-white" />
         </div>
-        <CardTitle className="text-2xl">Connexion Sécurisée</CardTitle>
+        <CardTitle className="text-2xl">{t('auth.agentBureau.secureLogin')}</CardTitle>
         <CardDescription>
-          Authentification avec double facteur
+          {t('auth.agentBureau.twoFactorAuth')}
         </CardDescription>
       </CardHeader>
 
       <CardContent>
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as UserType)}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="agent">Agent</TabsTrigger>
-            <TabsTrigger value="bureau">Bureau Syndicat</TabsTrigger>
+            <TabsTrigger value="agent">{t('auth.agentBureau.agent')}</TabsTrigger>
+            <TabsTrigger value="bureau">{t('auth.agentBureau.bureauSyndicate')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="agent" className="space-y-4 mt-4">
@@ -178,18 +180,18 @@ export const AgentBureauLogin = ({
               <Alert>
                 <Mail className="h-4 w-4" />
                 <AlertDescription>
-                  Connectez-vous avec votre <strong>email</strong> ou <strong>numéro de téléphone</strong>
+                  {t('auth.agentBureau.loginWithEmailOrPhone')}
                 </AlertDescription>
               </Alert>
 
               <div className="space-y-2">
-                <Label htmlFor="identifier-agent">Email ou Téléphone</Label>
+                <Label htmlFor="identifier-agent">{t('auth.agent.emailOrPhone')}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="identifier-agent"
                     type="text"
-                    placeholder="agent@example.com ou 628765432"
+                    placeholder={t('auth.agent.emailOrPhonePlaceholder')}
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     className="pl-10"
@@ -200,7 +202,7 @@ export const AgentBureauLogin = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password-agent">Mot de passe</Label>
+                <Label htmlFor="password-agent">{t('auth.password')}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -224,10 +226,10 @@ export const AgentBureauLogin = ({
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Connexion...
+                    {t('auth.agent.connecting')}
                   </>
                 ) : (
-                  'Se Connecter'
+                  t('auth.login')
                 )}
               </Button>
             </form>
@@ -244,18 +246,18 @@ export const AgentBureauLogin = ({
               <Alert>
                 <Phone className="h-4 w-4" />
                 <AlertDescription>
-                  Connectez-vous avec votre <strong>email</strong> ou <strong>numéro de téléphone</strong> de président
+                  {t('auth.agentBureau.loginWithPresidentCredentials')}
                 </AlertDescription>
               </Alert>
 
               <div className="space-y-2">
-                <Label htmlFor="identifier-bureau">Email ou Téléphone</Label>
+                <Label htmlFor="identifier-bureau">{t('auth.bureau.emailOrPhone')}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="identifier-bureau"
                     type="text"
-                    placeholder="president@bureau.com ou 628765432"
+                    placeholder={t('auth.bureau.emailOrPhonePlaceholder')}
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     className="pl-10"
@@ -266,7 +268,7 @@ export const AgentBureauLogin = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password-bureau">Mot de passe</Label>
+                <Label htmlFor="password-bureau">{t('auth.password')}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -290,10 +292,10 @@ export const AgentBureauLogin = ({
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Connexion...
+                    {t('auth.agent.connecting')}
                   </>
                 ) : (
-                  'Se Connecter'
+                  t('auth.login')
                 )}
               </Button>
             </form>
@@ -302,7 +304,7 @@ export const AgentBureauLogin = ({
 
         <div className="mt-6 text-center">
           <p className="text-xs text-muted-foreground">
-            🔒 Connexion sécurisée avec authentification à deux facteurs (MFA)
+            {t('auth.agentBureau.mfaSecureLogin')}
           </p>
         </div>
       </CardContent>

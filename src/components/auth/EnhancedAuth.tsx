@@ -6,7 +6,7 @@
  * - Vérification email existant AVANT OAuth
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { 
+import {
   UserCheck, Store, Truck, Bike, Ship, ArrowLeft,
   Lock, Mail, Loader2, Eye, EyeOff, AlertCircle,
   User, LogIn, UserPlus
@@ -30,6 +30,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useTranslation } from '@/hooks/useTranslation';
 
 // Lazy load framer-motion pour réduire TBT (914ms -> <200ms)
 const motion = {
@@ -44,63 +45,71 @@ type Step = 'type' | 'method' | 'form';
 
 interface AccountTypeOption {
   value: AccountType;
-  label: string;
+  labelKey: string;
+  descKey: string;
   icon: React.ElementType;
   color: string;
   bgColor: string;
-  description: string;
 }
 
-const accountTypes: AccountTypeOption[] = [
+const accountTypeConfigs: AccountTypeOption[] = [
   {
     value: 'client',
-    label: 'Client',
+    labelKey: 'auth.accountType.client',
+    descKey: 'auth.accountType.clientDesc',
     icon: User,
     color: 'text-blue-600',
     bgColor: 'bg-blue-50 hover:bg-blue-100 border-blue-200',
-    description: 'Achetez et commandez'
   },
   {
     value: 'marchand',
-    label: 'Marchand',
+    labelKey: 'auth.accountType.merchant',
+    descKey: 'auth.accountType.merchantDesc',
     icon: Store,
     color: 'text-green-600',
     bgColor: 'bg-green-50 hover:bg-green-100 border-green-200',
-    description: 'Vendez vos produits'
   },
   {
     value: 'livreur',
-    label: 'Livreur',
+    labelKey: 'auth.accountType.delivery',
+    descKey: 'auth.accountType.deliveryDesc',
     icon: Truck,
     color: 'text-orange-600',
     bgColor: 'bg-orange-50 hover:bg-orange-100 border-orange-200',
-    description: 'Livrez des colis'
   },
   {
     value: 'taxi_moto',
-    label: 'Taxi Moto',
+    labelKey: 'auth.accountType.taxi',
+    descKey: 'auth.accountType.taxiDesc',
     icon: Bike,
     color: 'text-amber-600',
     bgColor: 'bg-amber-50 hover:bg-amber-100 border-amber-200',
-    description: 'Transport de personnes'
   },
   {
     value: 'transitaire',
-    label: 'Transitaire',
+    labelKey: 'auth.accountType.transit',
+    descKey: 'auth.accountType.transitDesc',
     icon: Ship,
     color: 'text-purple-600',
     bgColor: 'bg-purple-50 hover:bg-purple-100 border-purple-200',
-    description: 'Import/Export'
   }
 ];
 
 export default function EnhancedAuth() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [step, setStep] = useState<Step>('type');
   const [mode, setMode] = useState<AuthMode>('login');
   const [accountType, setAccountType] = useState<AccountType | null>(null);
   const [authMethod, setAuthMethod] = useState<'email' | 'phone' | null>(null);
-  
+
+  // Memoize account types with translations
+  const accountTypes = useMemo(() => accountTypeConfigs.map(config => ({
+    ...config,
+    label: t(config.labelKey),
+    description: t(config.descKey),
+  })), [t]);
+
   // Form state
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -194,10 +203,10 @@ export default function EnhancedAuth() {
               const isProfileIncomplete = !profile.first_name || !profile.last_name || !profile.phone;
               
               if (isNewSignup && isProfileIncomplete) {
-                toast.info('Bienvenue ! Veuillez compléter votre profil.');
+                toast.info(`${t('auth.welcomeMessage')} ${t('auth.completeProfile')}`);
                 localStorage.setItem('needs_profile_completion', 'true');
               } else {
-                toast.success('Connexion réussie !');
+                toast.success(t('auth.connectionSuccess'));
               }
               
               // Définir la route cible selon le rôle
@@ -349,7 +358,7 @@ export default function EnhancedAuth() {
 
       if (error) throw error;
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erreur de connexion';
+      const message = err instanceof Error ? err.message : t('auth.connectionError');
       setError(message);
       toast.error(message);
     } finally {
@@ -413,7 +422,7 @@ export default function EnhancedAuth() {
           localStorage.setItem(`oauth_password_set_${data.user.id}`, 'true');
         }
         
-        toast.success('Vérifiez votre email pour confirmer votre inscription !');
+        toast.success(t('auth.checkEmail'));
       } else {
         // Connexion
         const { error } = await supabase.auth.signInWithPassword({
@@ -422,11 +431,11 @@ export default function EnhancedAuth() {
         });
         
         if (error) throw error;
-        toast.success('Connexion réussie !');
+        toast.success(t('auth.connectionSuccess'));
         navigate('/');
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erreur d\'authentification';
+      const message = err instanceof Error ? err.message : t('auth.authError');
       setError(message);
       toast.error(message);
     } finally {
@@ -452,10 +461,10 @@ export default function EnhancedAuth() {
       });
       
       if (error) throw error;
-      toast.success('Code OTP envoyé sur votre téléphone !');
+      toast.success(t('auth.otpSent'));
       // TODO: Show OTP input
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erreur d\'envoi OTP';
+      const message = err instanceof Error ? err.message : t('auth.otpError');
       setError(message);
       toast.error(message);
     } finally {
@@ -510,24 +519,24 @@ export default function EnhancedAuth() {
               <button
                 onClick={() => setShowSignupPanel(false)}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-all ${
-                  !showSignupPanel 
-                    ? 'bg-primary text-primary-foreground shadow-sm' 
+                  !showSignupPanel
+                    ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <LogIn className="h-3 w-3" />
-                Connexion
+                {t('auth.connectionTitle')}
               </button>
               <button
                 onClick={() => setShowSignupPanel(true)}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-all ${
-                  showSignupPanel 
-                    ? 'bg-emerald-500 text-white shadow-sm' 
+                  showSignupPanel
+                    ? 'bg-emerald-500 text-white shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <UserPlus className="h-3 w-3" />
-                Inscription
+                {t('auth.register')}
               </button>
             </div>
           </div>
@@ -546,10 +555,10 @@ export default function EnhancedAuth() {
                 </div>
                 <div>
                   <CardTitle className={`text-sm font-semibold ${!showSignupPanel ? 'text-foreground' : 'text-emerald-700 dark:text-emerald-400'}`}>
-                    {!showSignupPanel ? 'Connexion' : 'Créer un compte'}
+                    {!showSignupPanel ? t('auth.connectionTitle') : t('auth.signupTitle')}
                   </CardTitle>
                   <CardDescription className="text-[10px]">
-                    {!showSignupPanel ? 'Accédez à votre espace' : 'Rejoignez la plateforme'}
+                    {!showSignupPanel ? t('auth.accessYourSpace') : t('auth.joinPlatform')}
                   </CardDescription>
                 </div>
               </div>
@@ -563,7 +572,7 @@ export default function EnhancedAuth() {
                   <div className="bg-primary/5 rounded-md p-2 flex items-center gap-2">
                     <UserCheck className="h-3.5 w-3.5 text-primary shrink-0" />
                     <p className="text-[10px] text-muted-foreground">
-                      Connexion intelligente - détection automatique
+                      {t('auth.smartLoginInfo')}
                     </p>
                   </div>
 
@@ -572,12 +581,12 @@ export default function EnhancedAuth() {
                     <div className="space-y-0.5">
                       <Label htmlFor="login-email" className="text-[11px] font-medium flex items-center gap-1">
                         <Mail className="h-3 w-3 text-muted-foreground" />
-                        Email
+                        {t('auth.email')}
                       </Label>
                       <Input
                         id="login-email"
                         type="email"
-                        placeholder="votre@email.com"
+                        placeholder={t('auth.emailPlaceholder')}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         disabled={loading}
@@ -589,7 +598,7 @@ export default function EnhancedAuth() {
                     <div className="space-y-0.5">
                       <Label htmlFor="login-password" className="text-[11px] font-medium flex items-center gap-1">
                         <Lock className="h-3 w-3 text-muted-foreground" />
-                        Mot de passe
+                        {t('auth.password')}
                       </Label>
                       <div className="relative">
                         <Input
@@ -629,12 +638,12 @@ export default function EnhancedAuth() {
                       {loading && mode === 'login' ? (
                         <>
                           <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                          Connexion...
+                          {t('auth.connecting')}
                         </>
                       ) : (
                         <>
                           <LogIn className="mr-1 h-3 w-3" />
-                          Se connecter
+                          {t('auth.login')}
                         </>
                       )}
                     </Button>
@@ -644,7 +653,7 @@ export default function EnhancedAuth() {
                   <div className="relative py-1.5">
                     <Separator className="bg-border/30" />
                     <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-1.5 text-[9px] text-muted-foreground uppercase">
-                      ou
+                      {t('auth.or')}
                     </span>
                   </div>
 
@@ -690,7 +699,7 @@ export default function EnhancedAuth() {
                   <div className="bg-amber-50/50 dark:bg-amber-900/10 rounded-md p-1.5">
                     <p className="text-[9px] text-amber-700 dark:text-amber-400 flex items-center gap-1">
                       <AlertCircle className="h-2.5 w-2.5 shrink-0" />
-                      <span><strong>Nouveau ?</strong> Confirmez votre email avant connexion.</span>
+                      <span>{t('auth.newUserNote')}</span>
                     </p>
                   </div>
                 </div>
@@ -702,7 +711,7 @@ export default function EnhancedAuth() {
                   {/* Types de comptes ultra-compact */}
                   <div className="space-y-1">
                     <p className="text-[9px] font-medium text-center text-muted-foreground uppercase tracking-wide">
-                      Choisissez votre profil
+                      {t('auth.chooseProfile')}
                     </p>
                     <div className="grid grid-cols-5 gap-1">
                       {accountTypes.map((type) => {
@@ -746,12 +755,12 @@ export default function EnhancedAuth() {
                         <div className="space-y-0.5">
                           <Label htmlFor="signup-name" className="text-[11px] font-medium flex items-center gap-1">
                             <User className="h-3 w-3 text-muted-foreground" />
-                            Nom complet
+                            {t('auth.fullName')}
                           </Label>
                           <Input
                             id="signup-name"
                             type="text"
-                            placeholder="Votre nom complet"
+                            placeholder={t('auth.fullNamePlaceholder')}
                             value={fullName}
                             onChange={(e) => setFullName(e.target.value)}
                             disabled={loading}
@@ -763,12 +772,12 @@ export default function EnhancedAuth() {
                         <div className="space-y-0.5">
                           <Label htmlFor="signup-email" className="text-[11px] font-medium flex items-center gap-1">
                             <Mail className="h-3 w-3 text-muted-foreground" />
-                            Email
+                            {t('auth.email')}
                           </Label>
                           <Input
                             id="signup-email"
                             type="email"
-                            placeholder="votre@email.com"
+                            placeholder={t('auth.emailPlaceholder')}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             disabled={loading}
@@ -780,13 +789,13 @@ export default function EnhancedAuth() {
                         <div className="space-y-0.5">
                           <Label htmlFor="signup-password" className="text-[11px] font-medium flex items-center gap-1">
                             <Lock className="h-3 w-3 text-muted-foreground" />
-                            Mot de passe
+                            {t('auth.password')}
                           </Label>
                           <div className="relative">
                             <Input
                               id="signup-password"
                               type={showPassword ? 'text' : 'password'}
-                              placeholder="Minimum 6 caractères"
+                              placeholder={t('auth.passwordMinChars')}
                               value={password}
                               onChange={(e) => setPassword(e.target.value)}
                               disabled={loading}
@@ -819,12 +828,12 @@ export default function EnhancedAuth() {
                           {loading && mode === 'signup' ? (
                             <>
                               <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                              Inscription...
+                              {t('auth.signing')}
                             </>
                           ) : (
                             <>
                               <UserPlus className="mr-1 h-3 w-3" />
-                              S'inscrire - {accountTypes.find(t => t.value === accountType)?.label}
+                              {t('auth.signupAs')} {accountTypes.find(type => type.value === accountType)?.label}
                             </>
                           )}
                         </Button>
@@ -834,7 +843,7 @@ export default function EnhancedAuth() {
                       <div className="relative py-1.5">
                         <Separator className="bg-border/30" />
                         <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-1.5 text-[9px] text-muted-foreground uppercase">
-                          ou
+                          {t('auth.or')}
                         </span>
                       </div>
 
@@ -883,7 +892,7 @@ export default function EnhancedAuth() {
                       <div className="w-8 h-8 mx-auto mb-1.5 rounded-md bg-muted/50 flex items-center justify-center">
                         <UserPlus className="h-4 w-4 opacity-40" />
                       </div>
-                      <p className="text-[10px]">Sélectionnez un type de compte</p>
+                      <p className="text-[10px]">{t('auth.selectAccountTypeMsg')}</p>
                     </div>
                   )}
                 </div>
@@ -895,7 +904,7 @@ export default function EnhancedAuth() {
               <div className="bg-primary/5 rounded-lg p-2 text-center border border-primary/10">
                 <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1.5">
                   <Lock className="h-3 w-3 text-primary" />
-                  <span>Sécurisé SSL 256-bit • <span className="font-medium text-primary">224Solutions</span></span>
+                  <span>{t('auth.securityInfo')} • <span className="font-medium text-primary">224Solutions</span></span>
                 </p>
               </div>
             </div>
@@ -903,7 +912,7 @@ export default function EnhancedAuth() {
 
           {/* Texte légal */}
           <p className="text-center text-[9px] text-muted-foreground mt-2 px-2">
-            En continuant, vous acceptez nos <button className="underline hover:text-foreground">Conditions</button> et <button className="underline hover:text-foreground">Confidentialité</button>
+            {t('auth.termsAccept')} <button className="underline hover:text-foreground">{t('auth.terms')}</button> {t('auth.and')} <button className="underline hover:text-foreground">{t('auth.privacy')}</button>
           </p>
         </div>
       </div>
@@ -914,19 +923,19 @@ export default function EnhancedAuth() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-amber-600">
               <AlertCircle className="h-5 w-5" />
-              Email déjà enregistré
+              {t('auth.emailAlreadyRegistered')}
             </DialogTitle>
             <DialogDescription className="pt-2 space-y-2">
               <p>
-                L'email <strong className="text-foreground">{existingEmailModal.email}</strong> est déjà 
-                associé à un compte <Badge variant="secondary">{existingEmailModal.role}</Badge>.
+                {t('auth.emailAssociatedWith')} <strong className="text-foreground">{existingEmailModal.email}</strong>{' '}
+                <Badge variant="secondary">{t(`auth.role.${existingEmailModal.role}`)}</Badge>.
               </p>
               <p className="text-sm">
-                Souhaitez-vous vous connecter avec ce compte existant ?
+                {t('auth.wantToLogin')}
               </p>
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="bg-muted/50 rounded-lg p-4 space-y-2">
             <div className="flex items-center gap-2 text-sm">
               <Mail className="h-4 w-4 text-muted-foreground" />
@@ -934,7 +943,7 @@ export default function EnhancedAuth() {
             </div>
             <div className="flex items-center gap-2 text-sm">
               <UserCheck className="h-4 w-4 text-muted-foreground" />
-              <span>Compte: {existingEmailModal.role}</span>
+              <span>{t('auth.account')}: {t(`auth.role.${existingEmailModal.role}`)}</span>
             </div>
           </div>
 
@@ -944,7 +953,7 @@ export default function EnhancedAuth() {
               onClick={() => setExistingEmailModal(prev => ({ ...prev, open: false }))}
               className="w-full sm:w-auto"
             >
-              Annuler
+              {t('auth.cancel')}
             </Button>
             <Button
               onClick={() => {
@@ -956,7 +965,7 @@ export default function EnhancedAuth() {
               className="w-full sm:w-auto gap-2"
             >
               <LogIn className="h-4 w-4" />
-              Se connecter
+              {t('auth.login')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -968,38 +977,24 @@ export default function EnhancedAuth() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-amber-600">
               <AlertCircle className="h-5 w-5" />
-              Compte existant détecté
+              {t('auth.existingAccountDetected')}
             </DialogTitle>
             <DialogDescription className="pt-2 space-y-3">
               <p>
-                L'adresse email <strong className="text-foreground">{oauthExistingAccountModal.email}</strong> est 
-                déjà associée à un compte existant.
+                {t('auth.emailAlreadyAssociated')} <strong className="text-foreground">{oauthExistingAccountModal.email}</strong>
               </p>
               <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-amber-800 dark:text-amber-300">
                 <p className="text-sm font-medium">
-                  Vous avez été connecté à votre compte existant :
+                  {t('auth.connectedToExisting')}
                 </p>
                 <div className="flex items-center gap-2 mt-2">
                   <Badge variant="secondary" className="bg-amber-100 dark:bg-amber-900/50">
-                    {(() => {
-                      const roleLabels: Record<string, string> = {
-                        client: 'Client',
-                        vendeur: 'Marchand',
-                        livreur: 'Livreur',
-                        taxi: 'Taxi Moto',
-                        transitaire: 'Transitaire',
-                        admin: 'Administrateur',
-                        ceo: 'PDG',
-                        agent: 'Agent',
-                        syndicat: 'Syndicat',
-                      };
-                      return roleLabels[oauthExistingAccountModal.role] || oauthExistingAccountModal.role;
-                    })()}
+                    {t(`auth.role.${oauthExistingAccountModal.role}`)}
                   </Badge>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground">
-                Si vous souhaitez créer un compte avec un rôle différent, veuillez utiliser une autre adresse email.
+                {t('auth.useAnotherEmail')}
               </p>
             </DialogDescription>
           </DialogHeader>
@@ -1010,7 +1005,7 @@ export default function EnhancedAuth() {
               className="w-full gap-2"
             >
               <LogIn className="h-4 w-4" />
-              Continuer avec ce compte
+              {t('auth.continueWithAccount')}
             </Button>
           </DialogFooter>
         </DialogContent>

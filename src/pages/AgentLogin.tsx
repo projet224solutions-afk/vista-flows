@@ -8,9 +8,11 @@ import { OTPInput } from '@/components/auth/OTPInput';
 import { useAgentAuth } from '@/hooks/useAgentAuth';
 import { UserCheck, Lock, Mail, Phone, ArrowLeft, ShieldCheck } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export const AgentLogin: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { login, verifyOTP, resendOTP, isLoading, requiresOTP, identifier, otpExpiresAt, isAuthenticated } = useAgentAuth();
 
   const [formData, setFormData] = useState({
@@ -61,17 +63,17 @@ export const AgentLogin: React.FC = () => {
               <UserCheck className="h-12 w-12 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Espace Agent</h1>
-          <p className="text-muted-foreground">224Solutions - Connexion sécurisée</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('auth.agent.space')}</h1>
+          <p className="text-muted-foreground">{t('auth.agent.secureLogin')}</p>
         </div>
 
         {!requiresOTP ? (
           /* ====== ÉTAPE 1: LOGIN ====== */
           <Card className="shadow-xl border-t-4 border-t-primary">
             <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl">Connexion Agent</CardTitle>
+              <CardTitle className="text-2xl">{t('auth.agent.loginTitle')}</CardTitle>
               <CardDescription>
-                Entrez vos identifiants pour accéder à votre espace
+                {t('auth.agent.loginDesc')}
               </CardDescription>
             </CardHeader>
 
@@ -79,13 +81,13 @@ export const AgentLogin: React.FC = () => {
               <form onSubmit={handleLoginSubmit} className="space-y-4">
                 {/* Identifiant */}
                 <div className="space-y-2">
-                  <Label htmlFor="identifier">Email ou Téléphone</Label>
+                  <Label htmlFor="identifier">{t('auth.agent.emailOrPhone')}</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="identifier"
                       type="text"
-                      placeholder="agent@example.com ou 628XXXXXX"
+                      placeholder={t('auth.agent.emailOrPhonePlaceholder')}
                       value={formData.identifier}
                       onChange={(e) => setFormData({ ...formData, identifier: e.target.value })}
                       disabled={isLoading}
@@ -95,13 +97,13 @@ export const AgentLogin: React.FC = () => {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Utilisez votre email ou numéro de téléphone
+                    {t('auth.agent.emailOrPhoneHint')}
                   </p>
                 </div>
 
                 {/* Mot de passe */}
                 <div className="space-y-2">
-                  <Label htmlFor="password">Mot de passe</Label>
+                  <Label htmlFor="password">{t('auth.password')}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -121,7 +123,7 @@ export const AgentLogin: React.FC = () => {
                 <Alert className="bg-blue-50 border-blue-200">
                   <ShieldCheck className="h-4 w-4 text-blue-600" />
                   <AlertDescription className="text-sm text-blue-900">
-                    <strong>Authentification sécurisée:</strong> Un code de vérification vous sera envoyé par email après validation de votre mot de passe.
+                    {t('auth.agent.securityInfo')}
                   </AlertDescription>
                 </Alert>
 
@@ -132,7 +134,7 @@ export const AgentLogin: React.FC = () => {
                   className="w-full"
                   size="lg"
                 >
-                  {isLoading ? 'Connexion en cours...' : 'Se connecter'}
+                  {isLoading ? t('auth.agent.connecting') : t('auth.login')}
                 </Button>
 
                 {/* Lien retour */}
@@ -143,7 +145,7 @@ export const AgentLogin: React.FC = () => {
                   className="w-full"
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Retour à l'accueil
+                  {t('auth.agent.backToHome')}
                 </Button>
               </form>
             </CardContent>
@@ -167,7 +169,7 @@ export const AgentLogin: React.FC = () => {
               className="w-full max-w-md mx-auto block"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Retour à la connexion
+              {t('auth.agent.backToLogin')}
             </Button>
           </div>
         )}
@@ -175,10 +177,10 @@ export const AgentLogin: React.FC = () => {
         {/* Footer */}
         <div className="text-center text-sm text-muted-foreground space-y-2">
           <p>
-            Problème de connexion ? Contactez le PDG
+            {t('auth.agent.contactSupport')}
           </p>
           <p className="text-xs">
-            Système sécurisé avec MFA (Multi-Factor Authentication)
+            {t('auth.agent.mfaInfo')}
           </p>
         </div>
       </div>
