@@ -6,7 +6,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { translations, supportedLanguages, defaultLanguage } from './translations';
 import { getLanguageForCountry, isRTLLanguage } from '@/data/countryMappings';
-import { supabase } from '@/integrations/supabase/client';
+
 
 interface LanguageContextType {
   language: string;
@@ -38,44 +38,33 @@ const detectBrowserLanguage = (): string => {
   }
 };
 
-// Détecte le pays (Edge Function) et retourne aussi la langue suggérée
-const detectCountryAndLanguage = async (): Promise<{ country: string | null; language: string | null }> => {
+// Détecte le pays depuis le cache local (peuplé par useGeoDetection, PAS d'appel direct à l'edge function)
+const detectCountryFromCache = (): { country: string | null; language: string | null } => {
   try {
-    // Vérifier le cache d'abord
-    const cachedCountry = localStorage.getItem(COUNTRY_KEY);
-
-    if (cachedCountry) {
-      const language = getLanguageForCountry(cachedCountry);
-      const isSupported = supportedLanguages.some(l => l.code === language);
-      return { country: cachedCountry, language: isSupported ? language : null };
-    }
-
-    // Utiliser l'Edge Function geo-detect (évite les soucis CORS côté navigateur)
-    const { data, error } = await supabase.functions.invoke('geo-detect', {
-      body: { user_id: null, update_profile: false },
-    });
-
-    if (!error && data?.success) {
-      const country = (data.country || null) as string | null;
-
-      if (country) {
-        localStorage.setItem(COUNTRY_KEY, country);
-
-        // Priorité: langue détectée par la fonction (si supportée) > mapping centralisé
-        const langFromFn = String(data.language || '').toLowerCase();
+    // Vérifier le cache de géo-détection
+    const geoCacheRaw = localStorage.getItem(GEO_CACHE_KEY);
+    if (geoCacheRaw) {
+      const geoCache = JSON.parse(geoCacheRaw);
+      if (geoCache?.data?.country) {
+        const country = geoCache.data.country;
+        const langFromCache = String(geoCache.data.language || '').toLowerCase();
         const mappedLang = getLanguageForCountry(country);
-        const candidateLang = supportedLanguages.some(l => l.code === langFromFn) ? langFromFn : mappedLang;
-
+        const candidateLang = supportedLanguages.some(l => l.code === langFromCache) ? langFromCache : mappedLang;
         const language = candidateLang && supportedLanguages.some(l => l.code === candidateLang) ? candidateLang : null;
         return { country, language };
       }
     }
 
-    return { country: null, language: null };
-  } catch (error) {
-    console.warn('Détection du pays échouée:', error);
-    return { country: null, language: null };
-  }
+    // Fallback: user_country dans localStorage
+    const cachedCountry = localStorage.getItem(COUNTRY_KEY);
+    if (cachedCountry) {
+      const language = getLanguageForCountry(cachedCountry);
+      const isSupported = supportedLanguages.some(l => l.code === language);
+      return { country: cachedCountry, language: isSupported ? language : null };
+    }
+  } catch {}
+
+  return { country: null, language: null };
 };
 
 interface LanguageProviderProps {
@@ -129,13 +118,13 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
         } catch {}
       }
 
-      // Fallback: détection classique via IP
-      const { country, language: detectedLang } = await detectCountryAndLanguage();
+      // Fallback: lire depuis le cache local (pas d'appel réseau)
+      const { country, language: detectedLang } = detectCountryFromCache();
       setUserCountry(country);
       
       // Si on a une langue détectée et pas encore auto-détecté
       if (detectedLang && !hasAutoDetected) {
-        console.log(`🌍 Auto-détection IP: pays=${country}, langue=${detectedLang}`);
+        console.log(`🌍 Auto-détection cache: pays=${country}, langue=${detectedLang}`);
         setLanguageState(detectedLang);
         localStorage.setItem(STORAGE_KEY, detectedLang);
         setHasAutoDetected(true);
