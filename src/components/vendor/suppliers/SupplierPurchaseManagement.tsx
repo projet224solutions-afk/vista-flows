@@ -15,12 +15,14 @@ import { DraftPurchasesSheet } from './DraftPurchasesSheet';
 import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface SupplierPurchaseManagementProps {
   vendorId: string;
 }
 
 export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagementProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('purchases');
   const [isValidatedSheetOpen, setIsValidatedSheetOpen] = useState(false);
   const [isDraftSheetOpen, setIsDraftSheetOpen] = useState(false);
@@ -76,7 +78,7 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats?.suppliersCount || 0}</p>
-                <p className="text-xs text-muted-foreground">Fournisseurs</p>
+                <p className="text-xs text-muted-foreground">{t('suppliers.stat.suppliers')}</p>
               </div>
             </div>
           </CardContent>
@@ -94,7 +96,7 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats?.validatedPurchasesCount || 0}</p>
-                <p className="text-xs text-muted-foreground">Achats</p>
+                <p className="text-xs text-muted-foreground">{t('suppliers.stat.purchases')}</p>
               </div>
             </div>
           </CardContent>
@@ -112,7 +114,7 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats?.draftPurchasesCount || 0}</p>
-                <p className="text-xs text-muted-foreground">Brouillons</p>
+                <p className="text-xs text-muted-foreground">{t('suppliers.stat.drafts')}</p>
               </div>
             </div>
           </CardContent>
@@ -126,7 +128,7 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
               </div>
               <div>
                 <p className="text-2xl font-bold">ERP</p>
-                <p className="text-xs text-muted-foreground">Intégré</p>
+                <p className="text-xs text-muted-foreground">{t('suppliers.stat.integrated')}</p>
               </div>
             </div>
           </CardContent>
@@ -138,7 +140,7 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Building2 className="w-5 h-5" />
-            Gestion Fournisseurs & Achats
+            {t('suppliers.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -146,11 +148,11 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
             <TabsList className="grid w-full grid-cols-2 mb-4 h-12 md:h-10">
               <TabsTrigger value="purchases" className="flex items-center gap-2 text-sm md:text-xs">
                 <ShoppingCart className="w-5 h-5 md:w-4 md:h-4" />
-                <span>Achats</span>
+                <span>{t('suppliers.tab.purchases')}</span>
               </TabsTrigger>
               <TabsTrigger value="suppliers" className="flex items-center gap-2 text-sm md:text-xs">
                 <Building2 className="w-5 h-5 md:w-4 md:h-4" />
-                <span>Fournisseurs</span>
+                <span>{t('suppliers.tab.suppliers')}</span>
                 {stats?.suppliersCount ? (
                   <Badge variant="outline" className="ml-1 text-xs">
                     {stats.suppliersCount}
