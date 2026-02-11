@@ -25,9 +25,12 @@ import {
   Pencil,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS } from 'date-fns/locale';
 import { PurchaseEditor } from './PurchaseEditor';
 import { NewPurchaseDialog, PurchaseProduct } from './NewPurchaseDialog';
+import { useTranslation } from '@/hooks/useTranslation';
+import { useCurrency } from '@/context/CurrencyContext';
+import { formatCurrency as formatCurrencyUtil } from '@/lib/formatters';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,21 +65,18 @@ interface Purchase {
   supplier_name?: string | null;
 }
 
-const STATUS_CONFIG = {
+const STATUS_CONFIG_BASE = {
   draft: {
-    label: 'Brouillon',
     icon: Clock,
     variant: 'secondary' as const,
     color: 'text-orange-500',
   },
   document_generated: {
-    label: 'Document généré',
     icon: FileText,
     variant: 'outline' as const,
     color: 'text-blue-500',
   },
   validated: {
-    label: 'Validé',
     icon: CheckCircle,
     variant: 'default' as const,
     color: 'text-green-500',
@@ -84,12 +84,19 @@ const STATUS_CONFIG = {
 };
 
 export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }: PurchasesListProps) {
+  const { t, language } = useTranslation();
+  const { currency } = useCurrency();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [deletePurchase, setDeletePurchase] = useState<Purchase | null>(null);
   const [isNewPurchaseDialogOpen, setIsNewPurchaseDialogOpen] = useState(false);
+
+  const dateLocale = language === 'fr' ? fr : enUS;
+
+  const getStatusLabel = (status: string) => t(`purchases.status.${status}`);
+  const formatAmount = (amount: number) => formatCurrencyUtil(amount, currency);
 
   // Fetch only validated purchases for main list
   const { data: purchases = [], isLoading } = useQuery({
@@ -178,7 +185,7 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
       setSelectedPurchase(data);
       setIsEditorOpen(true);
       setIsNewPurchaseDialogOpen(false);
-      toast.success('Nouvel achat créé avec les produits');
+      toast.success(t('purchases.created'));
     },
     onError: (error: Error) => {
       toast.error(`Erreur: ${error.message}`);
@@ -210,7 +217,7 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stock-purchases-validated', vendorId] });
       queryClient.invalidateQueries({ queryKey: ['supplier-purchase-stats', vendorId] });
-      toast.success('Achat supprimé');
+      toast.success(t('purchases.deleted'));
       setDeletePurchase(null);
     },
     onError: (error: Error) => {
@@ -230,12 +237,7 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
     queryClient.invalidateQueries({ queryKey: ['supplier-purchase-stats', vendorId] });
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount) + ' GNF';
-  };
+  // Removed hardcoded formatCurrency - using formatAmount from top of component
 
   const filteredPurchases = purchases.filter((p) =>
     p.purchase_number.toLowerCase().includes(searchTerm.toLowerCase())
@@ -252,7 +254,7 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
   }
 
   if (isLoading) {
-    return <div className="text-center py-8">Chargement des achats...</div>;
+    return <div className="text-center py-8">{t('purchases.loading')}</div>;
   }
 
   return (
@@ -262,7 +264,7 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 md:h-4 md:w-4 text-muted-foreground" />
           <Input
-            placeholder="Rechercher un achat..."
+            placeholder={t('purchases.search')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 md:pl-9 text-base md:text-sm h-11 md:h-10"
@@ -273,7 +275,7 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
           className="gap-2 h-11 md:h-10"
         >
           <Plus className="h-5 w-5 md:h-4 md:w-4" />
-          <span className="text-base md:text-sm">Nouvel achat</span>
+          <span className="text-base md:text-sm">{t('purchases.new')}</span>
         </Button>
       </div>
 
@@ -283,14 +285,14 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
           <ShoppingCart className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
           <p className="text-muted-foreground">
             {searchTerm
-              ? 'Aucun achat trouvé'
-              : 'Aucun achat. Créez-en un pour commencer.'}
+              ? t('purchases.notFound')
+              : t('purchases.empty')}
           </p>
         </div>
       ) : (
         <div className="space-y-3">
           {filteredPurchases.map((purchase) => {
-            const config = STATUS_CONFIG[purchase.status];
+            const config = STATUS_CONFIG_BASE[purchase.status];
             const StatusIcon = config.icon;
 
             return (
@@ -315,31 +317,31 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
                         <p className="text-xs text-muted-foreground">
                           {formatDistanceToNow(new Date(purchase.created_at), {
                             addSuffix: true,
-                            locale: fr,
+                            locale: dateLocale,
                           })}
                         </p>
                       </div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant={config.variant}>{config.label}</Badge>
+                      <Badge variant={config.variant}>{getStatusLabel(purchase.status)}</Badge>
                       <div className="text-right">
                         <p className="font-semibold text-sm">
-                          {formatCurrency(purchase.total_purchase_amount)}
+                          {formatAmount(purchase.total_purchase_amount)}
                         </p>
                         <p className="text-xs text-primary">
-                          +{formatCurrency(purchase.estimated_total_profit)} profit
+                          +{formatAmount(purchase.estimated_total_profit)} {t('purchases.profit')}
                         </p>
                       </div>
                       <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" title="Voir les détails" className="h-10 w-10 md:h-9 md:w-9">
+                        <Button variant="ghost" size="icon" title={t('purchases.view')} className="h-10 w-10 md:h-9 md:w-9">
                           <Eye className="h-5 w-5 md:h-4 md:w-4" />
                         </Button>
                         {!purchase.is_locked && purchase.status !== 'validated' && (
                           <Button
                             variant="ghost"
                             size="icon"
-                            title="Modifier l'achat"
+                            title={t('purchases.edit')}
                             onClick={() => handleOpenPurchase(purchase)}
                             className="h-10 w-10 md:h-9 md:w-9"
                           >
@@ -349,7 +351,7 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
                         <Button
                           variant="ghost"
                           size="icon"
-                          title="Supprimer l'achat"
+                          title={t('purchases.deleteAction')}
                           onClick={() => setDeletePurchase(purchase)}
                           className="h-10 w-10 md:h-9 md:w-9"
                         >
@@ -372,19 +374,18 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer l'achat ?</AlertDialogTitle>
+            <AlertDialogTitle>{t('purchases.delete.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. L'achat "{deletePurchase?.purchase_number}"
-              sera définitivement supprimé.
+              {deletePurchase?.purchase_number}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{t('purchases.delete.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deletePurchase && deleteMutation.mutate(deletePurchase.id)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Supprimer
+              {t('purchases.delete.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
