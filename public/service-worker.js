@@ -1,9 +1,14 @@
-// Service Worker v11 - PWA + Firebase Cloud Messaging + Mode Offline Desktop & Mobile
-// v11: bump cache version to prevent stale app shell causing white-screen after deployments
-const CACHE_VERSION = "v11";
+// Service Worker v12 - PWA + Firebase Cloud Messaging + Mode Offline Complet + Background Sync
+// v12: Support complet mode hors ligne pour interface vendeur POS
+const CACHE_VERSION = "v12";
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
 const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
+const API_CACHE = `224solutions-api-${CACHE_VERSION}`;
+
+// Configuration du Background Sync
+const SYNC_TAG_SALES = 'sync-offline-sales';
+const SYNC_TAG_DATA = 'sync-offline-data';
 
 // --- Firebase Cloud Messaging (FCM) ---
 let firebaseAvailable = false;
@@ -208,7 +213,7 @@ async function precacheIndexAndBuildAssets() {
 
 // INSTALL - Précacher les assets essentiels (mobile + desktop)
 self.addEventListener("install", (event) => {
-  console.log("[SW] Installation v11 - Mode offline amélioré");
+  console.log("[SW] Installation v12 - Mode offline complet + POS");
 
   event.waitUntil(
     precacheIndexAndBuildAssets().then(() => {
@@ -220,7 +225,7 @@ self.addEventListener("install", (event) => {
 
 // ACTIVATE - Nettoyer anciens caches et mettre en cache les routes vendeur + core
 self.addEventListener("activate", (event) => {
-  console.log("[SW] Activation v11");
+  console.log("[SW] Activation v12");
 
   event.waitUntil(
     Promise.all([
@@ -530,4 +535,196 @@ self.addEventListener("notificationclose", (event) => {
   console.log("[FCM SW] Notification fermée:", event.notification.tag);
 });
 
-console.log("[SW] Service Worker chargé (v9 - Desktop & Mobile Offline Amélioré)");
+// ============================================================
+// BACKGROUND SYNC - Synchronisation automatique des données offline
+// ============================================================
+
+// Enregistrer un sync event quand des données offline sont créées
+self.addEventListener("sync", (event) => {
+  console.log("[SW] Background Sync déclenché:", event.tag);
+
+  if (event.tag === SYNC_TAG_SALES || event.tag === SYNC_TAG_DATA) {
+    event.waitUntil(
+      (async () => {
+        try {
+          // Notifier tous les clients qu'une sync est disponible
+          const allClients = await clients.matchAll({ type: 'window' });
+
+          for (const client of allClients) {
+            client.postMessage({
+              type: 'BACKGROUND_SYNC_READY',
+              tag: event.tag,
+              timestamp: Date.now()
+            });
+          }
+
+          console.log("[SW] Clients notifiés pour sync:", event.tag);
+        } catch (error) {
+          console.error("[SW] Erreur Background Sync:", error);
+          throw error; // Rejeter pour que le navigateur réessaie
+        }
+      })()
+    );
+  }
+});
+
+// Periodic Sync (si supporté) - Pour rafraîchir le cache périodiquement
+self.addEventListener("periodicsync", (event) => {
+  console.log("[SW] Periodic Sync déclenché:", event.tag);
+
+  if (event.tag === 'refresh-vendor-data') {
+    event.waitUntil(
+      (async () => {
+        try {
+          const allClients = await clients.matchAll({ type: 'window' });
+
+          for (const client of allClients) {
+            client.postMessage({
+              type: 'PERIODIC_SYNC_REFRESH',
+              timestamp: Date.now()
+            });
+          }
+        } catch (error) {
+          console.error("[SW] Erreur Periodic Sync:", error);
+        }
+      })()
+    );
+  }
+});
+
+// ============================================================
+// GESTION DU CACHE API POUR MODE OFFLINE
+// ============================================================
+
+// Cache les réponses API importantes pour le mode offline
+async function cacheApiResponse(request, response) {
+  if (!response || !response.ok) return response;
+
+  const url = new URL(request.url);
+
+  // Ne pas cacher les endpoints sensibles ou les mutations
+  if (request.method !== 'GET') return response;
+
+  // Cacher uniquement les endpoints spécifiques
+  const cachableEndpoints = [
+    '/rest/v1/products',
+    '/rest/v1/categories',
+    '/rest/v1/profiles'
+  ];
+
+  const shouldCache = cachableEndpoints.some(endpoint =>
+    url.pathname.includes(endpoint)
+  );
+
+  if (shouldCache) {
+    try {
+      const cache = await caches.open(API_CACHE);
+      // Ajouter un timestamp pour gérer l'expiration
+      const headers = new Headers(response.headers);
+      headers.set('sw-cached-at', Date.now().toString());
+
+      const cachedResponse = new Response(response.clone().body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: headers
+      });
+
+      await cache.put(request, cachedResponse);
+      console.log("[SW] API response cached:", url.pathname);
+    } catch (e) {
+      console.warn("[SW] Erreur cache API:", e);
+    }
+  }
+
+  return response;
+}
+
+// Récupérer une réponse API depuis le cache
+async function getApiFromCache(request) {
+  try {
+    const cache = await caches.open(API_CACHE);
+    const cachedResponse = await cache.match(request);
+
+    if (cachedResponse) {
+      const cachedAt = cachedResponse.headers.get('sw-cached-at');
+      const age = cachedAt ? Date.now() - parseInt(cachedAt) : Infinity;
+
+      // Cache valide pendant 1 heure maximum
+      if (age < 3600000) {
+        console.log("[SW] Serving API from cache:", request.url);
+        return cachedResponse;
+      } else {
+        // Cache expiré, supprimer
+        await cache.delete(request);
+      }
+    }
+  } catch (e) {
+    console.warn("[SW] Erreur lecture cache API:", e);
+  }
+
+  return null;
+}
+
+// ============================================================
+// PUSH NOTIFICATIONS AVEC OFFLINE QUEUE
+// ============================================================
+
+// Stocker les notifications reçues offline pour affichage ultérieur
+self.addEventListener("push", (event) => {
+  // Le handler FCM gère déjà les notifications push
+  // Ce handler est pour les cas où FCM n'est pas initialisé
+  if (fcmInitialized) return;
+
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+
+      event.waitUntil(
+        self.registration.showNotification(
+          payload.notification?.title || "224Solutions",
+          {
+            body: payload.notification?.body || "",
+            icon: "/icon-192.png",
+            badge: "/favicon.png",
+            data: payload.data,
+            vibrate: [200, 100, 200]
+          }
+        )
+      );
+    } catch (e) {
+      console.warn("[SW] Erreur parsing push notification:", e);
+    }
+  }
+});
+
+// ============================================================
+// UTILITAIRES
+// ============================================================
+
+// Nettoyer les caches expirés
+async function cleanExpiredCaches() {
+  try {
+    const apiCache = await caches.open(API_CACHE);
+    const keys = await apiCache.keys();
+    const now = Date.now();
+    const maxAge = 24 * 60 * 60 * 1000; // 24 heures
+
+    for (const request of keys) {
+      const response = await apiCache.match(request);
+      if (response) {
+        const cachedAt = response.headers.get('sw-cached-at');
+        if (cachedAt && (now - parseInt(cachedAt)) > maxAge) {
+          await apiCache.delete(request);
+          console.log("[SW] Cache API expiré nettoyé:", request.url);
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[SW] Erreur nettoyage cache:", e);
+  }
+}
+
+// Programmer le nettoyage périodique
+setInterval(cleanExpiredCaches, 6 * 60 * 60 * 1000); // Toutes les 6 heures
+
+console.log("[SW] Service Worker chargé (v12 - Mode Offline Complet + Background Sync)");

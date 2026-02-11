@@ -30,6 +30,7 @@ const _PWAInstallPrompt = lazyWithRetry(() => import("@/components/pwa/PWAInstal
 const _InstallPromptBanner = lazyWithRetry(() =>
   import("@/components/pwa/InstallPromptBanner").then((m) => ({ default: m.InstallPromptBanner }))
 );
+const AutoInstallPrompt = lazyWithRetry(() => import("@/components/pwa/AutoInstallPrompt"));
 
 // Lazy loading des pages - regroupées par priorité
 const Auth = lazyWithRetry(() => import("./pages/Auth"));
@@ -207,7 +208,10 @@ function App() {
                   {/* Réception globale des notifications (Realtime + toast) */}
                   <NotificationsRealtimeListener />
                 {/* OfflineBanner retiré - uniquement dans VendeurDashboard */}
-                {/* InstallPromptBanner retiré - bouton d'installation masqué mais fonctionnalité PWA conservée */}
+                {/* Prompt d'installation PWA automatique */}
+                <Suspense fallback={null}>
+                  <AutoInstallPrompt delayMs={8000} />
+                </Suspense>
                 <DeepLinkInitializer />
                 <Suspense fallback={null}>
                   <MerchantOnboarding />
