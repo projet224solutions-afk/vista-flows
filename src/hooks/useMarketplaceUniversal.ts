@@ -151,16 +151,18 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         // Exclure les vendeurs physical
         if (vendor.business_type === 'physical') return false;
         
-        // Filtrage par pays
+        // Filtrage par pays (normaliser les espaces comme dans loadLocations)
         if (country && country !== 'all') {
-          const vendorCountry = (vendor.country || '').trim().toLowerCase();
-          if (vendorCountry !== country.trim().toLowerCase()) return false;
+          const vendorCountry = (vendor.country || '').trim().replace(/\s+/g, ' ').toLowerCase();
+          const normalizedCountry = country.trim().replace(/\s+/g, ' ').toLowerCase();
+          if (vendorCountry !== normalizedCountry) return false;
         }
-        
-        // Filtrage par ville
+
+        // Filtrage par ville (normaliser les espaces comme dans loadLocations)
         if (city && city !== 'all') {
-          const vendorCity = (vendor.city || '').trim().toLowerCase();
-          if (vendorCity !== city.trim().toLowerCase()) return false;
+          const vendorCity = (vendor.city || '').trim().replace(/\s+/g, ' ').toLowerCase();
+          const normalizedCity = city.trim().replace(/\s+/g, ' ').toLowerCase();
+          if (vendorCity !== normalizedCity) return false;
         }
         
         return true;
@@ -372,16 +374,18 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         const vendor = product.vendors as any;
         if (!vendor) return true;
 
-        // Filtrage par pays
+        // Filtrage par pays (normaliser les espaces comme dans loadLocations)
         if (country && country !== 'all') {
-          const vendorCountry = (vendor.country || '').trim().toLowerCase();
-          if (vendorCountry !== country.trim().toLowerCase()) return false;
+          const vendorCountry = (vendor.country || '').trim().replace(/\s+/g, ' ').toLowerCase();
+          const normalizedCountry = country.trim().replace(/\s+/g, ' ').toLowerCase();
+          if (vendorCountry !== normalizedCountry) return false;
         }
 
-        // Filtrage par ville
+        // Filtrage par ville (normaliser les espaces comme dans loadLocations)
         if (city && city !== 'all') {
-          const vendorCity = (vendor.city || '').trim().toLowerCase();
-          if (vendorCity !== city.trim().toLowerCase()) return false;
+          const vendorCity = (vendor.city || '').trim().replace(/\s+/g, ' ').toLowerCase();
+          const normalizedCity = city.trim().replace(/\s+/g, ' ').toLowerCase();
+          if (vendorCity !== normalizedCity) return false;
         }
 
         return true;
