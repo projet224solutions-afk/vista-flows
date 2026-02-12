@@ -493,16 +493,6 @@ export default function MessageInput({
           <Button
             size="icon"
             variant="ghost"
-            onClick={() => imageInputRef.current?.click()}
-            disabled={disabled || isSending}
-            title="Ajouter une image"
-            className="h-9 w-9"
-          >
-            <ImageIcon className="w-4 h-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
             onClick={() => videoInputRef.current?.click()}
             disabled={disabled || isSending}
             title={`Ajouter une vidéo (max ${maxVideoDuration}s)`}
