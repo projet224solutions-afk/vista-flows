@@ -23,6 +23,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Escrow224Service } from "@/services/escrow224Service";
 import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 import { SecureButton } from "@/components/ui/SecureButton";
+import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 
 export type ProductPaymentMethod = 'wallet' | 'cash' | 'cash_on_delivery' | 'orange_money' | 'mtn_money' | 'card';
 
@@ -66,6 +67,7 @@ export default function ProductPaymentModal({
     cartItemsCount: cartItems.length,
     totalAmount 
   });
+  const fc = useFormatCurrency();
   
   const [paymentMethod, setPaymentMethod] = useState<ProductPaymentMethod>('wallet');
   const [processing, setProcessing] = useState(false);
@@ -383,7 +385,7 @@ export default function ProductPaymentModal({
           if (walletBalance !== null && walletBalance < grandTotal) {
             console.error('[ProductPayment] Insufficient balance:', { walletBalance, grandTotal });
             toast.error('Solde insuffisant', {
-              description: `Vous avez besoin de ${grandTotal.toLocaleString()} GNF (produits + frais de service)`
+              description: `Vous avez besoin de ${fc(grandTotal)} (produits + frais de service)`
             });
             setProcessing(false);
             return;
@@ -548,11 +550,11 @@ export default function ProductPaymentModal({
       // Succès - afficher le montant total avec commission
       if (paymentMethod === 'wallet') {
         toast.success('Paiement sécurisé effectué !', {
-          description: `${grandTotal.toLocaleString()} GNF bloqués en escrow (dont ${commissionFee.toLocaleString()} GNF de frais)`
+          description: `${fc(grandTotal)} bloqués en escrow (dont ${fc(commissionFee)} de frais)`
         });
       } else {
         toast.success('Commande créée !', {
-          description: `Total à payer à la livraison: ${grandTotal.toLocaleString()} GNF`
+          description: `Total à payer à la livraison: ${fc(grandTotal)}`
         });
       }
 
@@ -586,7 +588,7 @@ export default function ProductPaymentModal({
               <div className="bg-muted/50 rounded-lg p-3 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Sous-total produits:</span>
-                  <span>{totalAmount.toLocaleString()} GNF</span>
+                  <span>{fc(totalAmount)}</span>
                 </div>
                 
                 {commissionFee > 0 && (
@@ -595,7 +597,7 @@ export default function ProductPaymentModal({
                       <Info className="w-3 h-3" />
                       Frais de service ({commissionConfig?.commission_value || 1.5}%):
                     </span>
-                    <span>+{commissionFee.toLocaleString()} GNF</span>
+                    <span>+{fc(commissionFee)}</span>
                   </div>
                 )}
                 
@@ -608,7 +610,7 @@ export default function ProductPaymentModal({
                 
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Total à payer:</span>
-                  <span className="text-primary">{grandTotal.toLocaleString()} GNF</span>
+                  <span className="text-primary">{fc(grandTotal)}</span>
                 </div>
               </div>
 
@@ -622,7 +624,7 @@ export default function ProductPaymentModal({
                   </div>
                   <div className="text-sm">
                     Solde disponible: <span className={`font-semibold ${insufficientBalance ? 'text-destructive' : 'text-green-600'}`}>
-                      {walletBalance?.toLocaleString() || 0} GNF
+                      {fc(walletBalance || 0)}
                     </span>
                   </div>
                   {walletBalance === 0 && (
@@ -657,7 +659,7 @@ export default function ProductPaymentModal({
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Solde insuffisant. Il vous manque {(grandTotal - (walletBalance || 0)).toLocaleString()} GNF.
+              Solde insuffisant. Il vous manque {fc(grandTotal - (walletBalance || 0))}.
             </AlertDescription>
           </Alert>
         )}
@@ -725,7 +727,7 @@ export default function ProductPaymentModal({
                 <AlertDescription className="text-emerald-700">
                   <strong>Paiement à la livraison confirmé</strong><br/>
                   Vous serez contacté par téléphone pour confirmer votre adresse exacte avant la livraison.
-                  Préparez {grandTotal.toLocaleString()} GNF en espèces.
+                  Préparez {fc(grandTotal)} en espèces.
                 </AlertDescription>
               </Alert>
             </div>
@@ -757,7 +759,7 @@ export default function ProductPaymentModal({
             loadingText="Traitement..."
             debounceMs={1000}
           >
-            {paymentMethod === 'wallet' ? 'Payer' : 'Confirmer'} {grandTotal.toLocaleString()} GNF
+            {paymentMethod === 'wallet' ? 'Payer' : 'Confirmer'} {fc(grandTotal)}
           </SecureButton>
         </div>
       </DialogContent>
