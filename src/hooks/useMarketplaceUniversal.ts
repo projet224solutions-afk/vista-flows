@@ -415,12 +415,16 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         const v = product.vendors as any;
         const vendorUserId = v?.user_id || product.merchant_id;
 
+        // Devise: utiliser celle du produit si définie, sinon dériver du pays du vendeur
+        const vendorCountry = v?.country || '';
+        const derivedCurrency = product.currency || (vendorCountry ? getCurrencyForCountry(vendorCountry) : 'GNF');
+
         return {
           id: product.id,
           name: product.title,
           price: product.price || 0,
           originalPrice: product.original_price || undefined,
-          currency: product.currency || 'GNF', // Devise du produit
+          currency: derivedCurrency, // Devise du produit ou dérivée du vendeur
           description: product.short_description || product.description || "",
           images,
           promotional_videos: [],
