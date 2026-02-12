@@ -196,12 +196,20 @@ export default function Marketplace() {
 
   const loadLocations = async (countryFilter?: string) => {
     try {
-      // Charger les pays distincts
-      const { data: countryData } = await supabase
+      // Charger les pays distincts depuis les vendeurs visibles sur le marketplace
+      // (actifs, non-physical, avec un pays défini)
+      const { data: countryData, error: countryError } = await supabase
         .from('vendors')
         .select('country')
-        .not('country', 'is', null);
-      
+        .eq('is_active', true)
+        .not('country', 'is', null)
+        .neq('country', '')
+        .neq('business_type', 'physical');
+
+      if (countryError) {
+        console.error('Erreur chargement pays:', countryError);
+      }
+
       const uniqueCountries = [
         ...new Set(
           (countryData || [])
@@ -209,21 +217,41 @@ export default function Marketplace() {
             .filter(Boolean)
         )
       ];
-      setCountries(uniqueCountries.sort());
+
+      // Si aucun pays trouvé, on peut aussi chercher dans les produits numériques
+      if (uniqueCountries.length === 0) {
+        const { data: digitalVendors } = await supabase
+          .from('digital_products')
+          .select('vendors!digital_products_vendor_id_fkey(country)')
+          .eq('status', 'published')
+          .not('vendor_id', 'is', null);
+
+        const digitalCountries = (digitalVendors || [])
+          .map((d: any) => d.vendors?.country)
+          .filter(Boolean)
+          .map((c: string) => c.trim().replace(/\s+/g, ' '));
+
+        uniqueCountries.push(...new Set(digitalCountries));
+      }
+
+      setCountries([...new Set(uniqueCountries)].sort());
 
       // Charger les villes distinctes (filtrées par pays si sélectionné)
       let cityQuery = supabase
         .from('vendors')
         .select('city, country')
-        .not('city', 'is', null);
-      
+        .eq('is_active', true)
+        .not('city', 'is', null)
+        .neq('city', '')
+        .neq('business_type', 'physical');
+
       // Si un pays est sélectionné, filtrer les villes par ce pays
       if (countryFilter && countryFilter !== 'all') {
         cityQuery = cityQuery.ilike('country', countryFilter);
       }
-      
+
       const { data: cityData } = await cityQuery;
-      
+
       const uniqueCities = [
         ...new Set(
           (cityData || [])
