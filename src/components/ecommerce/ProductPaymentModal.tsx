@@ -24,7 +24,7 @@ import { Escrow224Service } from "@/services/escrow224Service";
 import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 import { SecureButton } from "@/components/ui/SecureButton";
 
-export type ProductPaymentMethod = 'wallet' | 'cash' | 'cash_on_delivery' | 'orange_money' | 'card';
+export type ProductPaymentMethod = 'wallet' | 'cash' | 'cash_on_delivery' | 'orange_money' | 'mtn_money' | 'card';
 
 interface CartItem {
   id: string;
@@ -281,6 +281,13 @@ export default function ProductPaymentModal({
       color: 'text-orange-500'
     },
     {
+      id: 'mtn_money' as ProductPaymentMethod,
+      name: 'MTN Mobile Money',
+      description: 'Paiement via MTN MoMo',
+      icon: Smartphone,
+      color: 'text-yellow-600'
+    },
+    {
       id: 'cash' as ProductPaymentMethod,
       name: 'Paiement à la livraison',
       description: 'Payez en espèces à la réception',
@@ -412,7 +419,7 @@ export default function ProductPaymentModal({
         const isCOD = paymentMethod === 'cash' || paymentMethod === 'cash_on_delivery';
         // Normaliser vers les valeurs de l'enum payment_method de la DB
         const normalizedPaymentMethod = isCOD ? 'cash' 
-          : paymentMethod === 'orange_money' ? 'mobile_money' 
+          : paymentMethod === 'orange_money' || paymentMethod === 'mtn_money' ? 'mobile_money' 
           : paymentMethod === 'card' ? 'card'
           : paymentMethod;
 
