@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -300,12 +301,7 @@ export function UserActivitySearch() {
     return roleColors[roleType || ''] || 'bg-gray-100 text-gray-800';
   };
 
-  const formatAmount = (amount: number, currency = 'GNF') => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0
-    }).format(amount) + ' ' + currency;
-  };
+  const formatAmount = useFormatCurrency();
 
   // Liste des préfixes valides
   const validPrefixes = ['VND', 'CLT', 'DRV', 'TAX', 'LIV', 'AGT', 'PDG', 'TRS', 'WRK', 'BST', 'SAG', 'VAG', 'MBR', 'ADM'];

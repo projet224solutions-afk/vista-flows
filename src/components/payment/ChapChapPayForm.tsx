@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -141,13 +142,7 @@ export function ChapChapPayForm({
     }
   };
 
-  const formatAmount = (value: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'currency',
-      currency: 'GNF',
-      minimumFractionDigits: 0,
-    }).format(value);
-  };
+  const formatAmount = useFormatCurrency();
 
   if (status.status === 'success') {
     return (

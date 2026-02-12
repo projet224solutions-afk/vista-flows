@@ -1,4 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Users, DollarSign, TrendingUp, UserPlus, Wallet, Target, ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -29,13 +30,7 @@ interface StatCard {
 }
 
 export function AgentStatsCards({ stats, commissionRate, walletBalance = 0, currency = 'GNF' }: AgentStatsCardsProps) {
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
+  const formatAmount = useFormatCurrency();
 
   const statCards: StatCard[] = [
     {

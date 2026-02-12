@@ -5,23 +5,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 /**
- * Formate un montant en devise
+ * Formate un montant en devise - utilise le formateur centralisé
  */
-export function formatCurrency(amount: number, currency: string = 'GNF'): string {
-  const formatters: Record<string, Intl.NumberFormat> = {
-    'GNF': new Intl.NumberFormat('fr-GN', { style: 'currency', currency: 'GNF', minimumFractionDigits: 0, maximumFractionDigits: 0 }),
-    'USD': new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
-    'EUR': new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }),
-    'CNY': new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY' }),
-  };
-  
-  const formatter = formatters[currency] || new Intl.NumberFormat('fr-FR', { 
-    style: 'currency', 
-    currency: currency 
-  });
-  
-  return formatter.format(amount);
-}
+export { formatCurrency } from '@/lib/formatters';
 
 /**
  * Formate une date

@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -112,12 +113,7 @@ export function HotelsSection({ mode, isAffiliate, affiliateCode }: HotelsSectio
     toast.info('Redirection vers le site partenaire...');
   };
 
-  const formatPrice = (price: number, currency: string) => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-    }).format(price) + ' ' + currency;
-  };
+  const formatPrice = useFormatCurrency();
 
   const renderStars = (count: number | null) => {
     if (!count) return null;

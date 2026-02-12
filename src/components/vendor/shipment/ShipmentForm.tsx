@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -78,9 +79,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
   };
 
   // Formater le prix
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN').format(amount) + ' GNF';
-  };
+  const formatCurrency = useFormatCurrency();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

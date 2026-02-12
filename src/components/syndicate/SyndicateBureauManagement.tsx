@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface Bureau {
   id: string;
@@ -88,13 +89,7 @@ export default function SyndicateBureauManagement() {
     return <Badge className={config.className}>{config.label}</Badge>;
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'currency',
-      currency: 'GNF',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
+  const formatAmount = useFormatCurrency();
 
   if (loading) {
     return (

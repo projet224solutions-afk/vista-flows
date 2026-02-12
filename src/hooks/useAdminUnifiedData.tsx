@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/formatters';
 
 export function useAdminUnifiedData(enabled: boolean = true) {
   const [data, setData] = useState({
@@ -11,7 +12,7 @@ export function useAdminUnifiedData(enabled: boolean = true) {
     totalUsersCreatedByAgents: 0,
     agentCreatedUsersThisMonth: 0,
     agentCreatedUsersGrowth: 0,
-    totalRevenue: '0 GNF',
+    totalRevenue: '0',
     revenueThisMonth: 0,
     revenueGrowth: 0,
     totalOrders: 0,
@@ -173,7 +174,7 @@ export function useAdminUnifiedData(enabled: boolean = true) {
         totalUsersCreatedByAgents,
         agentCreatedUsersThisMonth,
         agentCreatedUsersGrowth,
-        totalRevenue: `${totalRevenue.toLocaleString('fr-GN')} GNF`,
+        totalRevenue: formatCurrency(totalRevenue),
         revenueThisMonth,
         revenueGrowth,
         totalOrders,

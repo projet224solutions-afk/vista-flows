@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -253,9 +254,7 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
     }
   ]);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('fr-GN', { style: 'decimal' }).format(price) + ' GNF';
-  };
+  const formatPrice = useFormatCurrency();
 
   const getMembershipBadge = (status: Member['membershipStatus']) => {
     const styles = {

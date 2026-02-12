@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { formatCurrency } from '@/lib/formatters';
 import { FileText, Download, Eye, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -155,7 +156,7 @@ export default function ContractsList({ refresh }: ContractsListProps) {
               <div>
                 <p className="text-sm text-muted-foreground">Montant</p>
                 <p className="font-medium">
-                  {contract.amount ? `${new Intl.NumberFormat('fr-GN').format(contract.amount)} GNF` : '-'}
+                  {contract.amount ? formatCurrency(contract.amount) : '-'}
                 </p>
               </div>
               <div>

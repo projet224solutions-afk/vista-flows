@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -66,9 +67,7 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
     o.supplier?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN').format(amount) + ' GNF';
-  };
+  const formatCurrency = useFormatCurrency();
 
   const getStatusConfig = (status: string) => {
     const configs: Record<string, { label: string; icon: any; color: string }> = {

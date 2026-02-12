@@ -25,6 +25,7 @@ import {
   Route,
   Calculator
 } from 'lucide-react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 export interface DeliveryOffer {
   id: string;
@@ -93,9 +94,7 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN').format(amount) + ' GNF';
-  };
+  const formatCurrency = useFormatCurrency();
 
   // Calculer les gains du livreur (98.5% du prix total)
   const driverEarning = Math.round(offer.estimatedEarnings * 0.985);

@@ -5,6 +5,7 @@
  */
 
 import { useState, useRef } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -336,9 +337,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN').format(amount) + ' GNF';
-  };
+  const formatCurrency = useFormatCurrency();
 
   const nextAction = getNextAction();
   const isAtVendor = ['driver_arrived_vendor'].includes(delivery.status);

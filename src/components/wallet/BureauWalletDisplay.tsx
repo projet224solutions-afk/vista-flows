@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Wallet, RefreshCw, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface BureauWalletDisplayProps {
   bureauId: string;
@@ -78,13 +79,7 @@ export function BureauWalletDisplay({
     }
   }, [bureauId]);
 
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+  const formatAmount = useFormatCurrency();
 
   if (loading) {
     return (

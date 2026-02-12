@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -139,12 +140,7 @@ export function PurchaseExpensesSection({ vendorId }: PurchaseExpensesSectionPro
     enabled: !!vendorId,
   });
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount) + ' GNF';
-  };
+  const formatCurrency = useFormatCurrency();
 
   const periodConfig = {
     today: { label: "Aujourd'hui", icon: Clock },

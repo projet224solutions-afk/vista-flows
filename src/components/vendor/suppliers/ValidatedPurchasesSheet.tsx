@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import {
   Sheet,
   SheetContent,
@@ -194,12 +195,7 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount) + ' GNF';
-  };
+  const formatCurrency = useFormatCurrency();
 
   const periodConfig = {
     today: { label: "Aujourd'hui", icon: Clock },

@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,12 +39,7 @@ export function BureauRealtimeDashboard({ bureauId, bureauName }: BureauRealtime
     setLastUpdate(new Date());
   }, [stats]);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN', { 
-      style: 'decimal',
-      minimumFractionDigits: 0 
-    }).format(amount) + ' GNF';
-  };
+  const formatCurrency = useFormatCurrency();
 
   if (loading) {
     return (
