@@ -1,72 +1,126 @@
 /**
  * SERVICE DE SON DE NOTIFICATION GLOBAL
- * Gère le son + vibration pour toutes les notifications et messages
- * Compatible mobile (contourne le blocage autoplay)
+ * Utilise AudioContext (Web Audio API) pour contourner le blocage autoplay mobile.
+ * L'AudioContext est créé + le buffer audio est pré-décodé au premier geste utilisateur.
+ * Ensuite, les lectures depuis des callbacks async (Realtime, WebSocket) fonctionnent.
  */
 
-let notificationAudio: HTMLAudioElement | null = null;
-let audioUnlocked = false;
+let audioContext: AudioContext | null = null;
+let audioBuffer: AudioBuffer | null = null;
+let unlocked = false;
+let unlocking = false;
+let volume = 0.7;
 
 /**
- * Déverrouille l'audio sur mobile (doit être appelé depuis un geste utilisateur).
- * On joue un son silencieux pour "unlockier" le contexte audio du navigateur.
+ * Déverrouille l'audio au premier geste utilisateur.
+ * Crée l'AudioContext + pré-charge et décode le fichier son.
  */
-function unlockAudio(): void {
-  if (audioUnlocked) return;
+async function unlockAudio(): Promise<void> {
+  if (unlocked || unlocking) return;
+  unlocking = true;
 
   try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    // Créer un buffer silencieux de 1 sample
-    const buffer = ctx.createBuffer(1, 1, 22050);
-    const source = ctx.createBufferSource();
-    source.buffer = buffer;
-    source.connect(ctx.destination);
-    source.start(0);
-
-    // Aussi préparer l'élément Audio
-    if (!notificationAudio) {
-      notificationAudio = new Audio('/notification-sound.mp3');
-      notificationAudio.volume = 0.7;
-      notificationAudio.preload = 'auto';
+    // Créer l'AudioContext (doit être dans un geste utilisateur)
+    const AC = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AC) {
+      console.warn('[NotificationSound] AudioContext non supporté');
+      unlocking = false;
+      return;
     }
-    // Charger le fichier (sans jouer)
-    notificationAudio.load();
 
-    audioUnlocked = true;
-    console.log('🔔 [NotificationSound] Audio déverrouillé (mobile OK)');
-  } catch (e) {
-    console.debug('[NotificationSound] unlockAudio échoué:', e);
+    audioContext = new AC();
+
+    // Si le contexte est suspendu (politique navigateur), le reprendre
+    if (audioContext.state === 'suspended') {
+      await audioContext.resume();
+    }
+
+    // Pré-charger et décoder le fichier audio
+    const response = await fetch('/notification-sound.mp3');
+    const arrayBuffer = await response.arrayBuffer();
+    audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+    unlocked = true;
+    console.log('🔔 [NotificationSound] Audio déverrouillé via AudioContext (mobile OK)');
+  } catch (error) {
+    console.warn('[NotificationSound] Erreur unlock AudioContext:', error);
+    // Fallback : essayer quand même avec HTMLAudioElement
+    unlocked = true;
+  } finally {
+    unlocking = false;
   }
 }
 
-// Écouter le PREMIER geste utilisateur pour déverrouiller l'audio
+// Écouter le premier geste utilisateur pour déverrouiller
 if (typeof window !== 'undefined') {
-  const events = ['touchstart', 'touchend', 'click', 'keydown'];
-  const handler = () => {
+  const gestureEvents = ['touchstart', 'touchend', 'click', 'keydown'];
+  const onFirstGesture = () => {
     unlockAudio();
-    events.forEach(e => window.removeEventListener(e, handler, true));
+    gestureEvents.forEach(evt => window.removeEventListener(evt, onFirstGesture, true));
   };
-  events.forEach(e => window.addEventListener(e, handler, { once: false, capture: true }));
+  gestureEvents.forEach(evt => window.addEventListener(evt, onFirstGesture, { capture: true }));
 }
 
 /**
- * Initialiser l'audio (appelé automatiquement, mais peut être invoqué manuellement)
+ * Initialiser le son (peut être appelé manuellement)
  */
 export function initNotificationSound(): void {
   unlockAudio();
 }
 
 /**
- * Faire vibrer le téléphone (si supporté)
+ * Faire vibrer le téléphone
  */
 function vibrateDevice(): void {
   try {
     if (navigator.vibrate) {
-      // Pattern : vibration 200ms, pause 100ms, vibration 200ms
       navigator.vibrate([200, 100, 200]);
     }
   } catch {
-    // Vibration non supportée — silencieux
+    // Vibration non supportée
+  }
+}
+
+/**
+ * Jouer le son via Web Audio API (fonctionne depuis callbacks async)
+ */
+function playViaAudioContext(): boolean {
+  if (!audioContext || !audioBuffer) return false;
+
+  try {
+    // Reprendre le contexte s'il est suspendu
+    if (audioContext.state === 'suspended') {
+      audioContext.resume();
+    }
+
+    const source = audioContext.createBufferSource();
+    source.buffer = audioBuffer;
+
+    // Contrôle du volume via GainNode
+    const gainNode = audioContext.createGain();
+    gainNode.gain.value = volume;
+
+    source.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    source.start(0);
+
+    return true;
+  } catch (error) {
+    console.debug('[NotificationSound] AudioContext playback error:', error);
+    return false;
+  }
+}
+
+/**
+ * Fallback : jouer via HTMLAudioElement
+ */
+function playViaHtmlAudio(): void {
+  try {
+    const audio = new Audio('/notification-sound.mp3');
+    audio.volume = volume;
+    audio.play().catch(() => {});
+  } catch {
+    // Silencieux
   }
 }
 
@@ -74,61 +128,30 @@ function vibrateDevice(): void {
  * Jouer le son de notification + vibration
  */
 export function playNotificationSound(): void {
-  // 1. Vibrer le téléphone immédiatement
+  // 1. Toujours vibrer (fonctionne sans restriction)
   vibrateDevice();
 
-  // 2. Jouer le son audio
-  try {
-    if (!notificationAudio) {
-      notificationAudio = new Audio('/notification-sound.mp3');
-      notificationAudio.volume = 0.7;
-    }
+  // 2. Jouer le son via AudioContext (méthode principale)
+  const played = playViaAudioContext();
 
-    // Reset avant de rejouer
-    notificationAudio.pause();
-    notificationAudio.currentTime = 0;
-
-    const playPromise = notificationAudio.play();
-    if (playPromise !== undefined) {
-      playPromise.catch((error) => {
-        console.debug('[NotificationSound] Autoplay bloqué:', error.message);
-        // Fallback : essayer de recréer l'élément audio
-        try {
-          notificationAudio = new Audio('/notification-sound.mp3');
-          notificationAudio.volume = 0.7;
-          notificationAudio.play().catch(() => {});
-        } catch {
-          // Rien à faire — au moins la vibration a fonctionné
-        }
-      });
-    }
-  } catch (error) {
-    console.debug('[NotificationSound] Erreur lecture:', error);
+  // 3. Fallback HTMLAudioElement si AudioContext échoue
+  if (!played) {
+    playViaHtmlAudio();
   }
 }
 
 /**
  * Définir le volume du son (0 à 1)
  */
-export function setNotificationVolume(volume: number): void {
-  if (notificationAudio) {
-    notificationAudio.volume = Math.max(0, Math.min(1, volume));
-  }
+export function setNotificationVolume(v: number): void {
+  volume = Math.max(0, Math.min(1, v));
 }
 
 /**
- * Vérifier si le son est activé
+ * Vérifier si le son peut être joué
  */
 export async function canPlaySound(): Promise<boolean> {
-  try {
-    const testAudio = new Audio('/notification-sound.mp3');
-    testAudio.volume = 0.01;
-    await testAudio.play();
-    testAudio.pause();
-    return true;
-  } catch {
-    return false;
-  }
+  return unlocked && audioContext !== null && audioBuffer !== null;
 }
 
 export default {
