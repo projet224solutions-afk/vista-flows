@@ -67,7 +67,7 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
     if (typeof navigator === 'undefined') return { connectionType: null, effectiveType: null };
 
     // NetworkInformation API (non-standard, mais supporté par Chrome/Edge)
-    const nav = navigator as Record<string, unknown>;
+    const nav = navigator as unknown as Record<string, unknown>;
     const connection = (nav.connection || nav.mozConnection || nav.webkitConnection) as {
       type?: string;
       effectiveType?: string;
@@ -230,7 +230,7 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
     }
 
     // Écouter les changements de connexion
-    const nav = navigator as Record<string, unknown>;
+    const nav = navigator as unknown as Record<string, unknown>;
     const connection = (nav.connection || nav.mozConnection || nav.webkitConnection) as {
       addEventListener?: (event: string, handler: () => void) => void;
       removeEventListener?: (event: string, handler: () => void) => void;

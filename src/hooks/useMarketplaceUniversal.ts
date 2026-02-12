@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getCurrencyForCountry } from '@/data/countryMappings';
 
 // Mapping des catégories techniques vers des noms lisibles
 const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
@@ -187,11 +188,14 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       return filtered.map(product => {
         const vendor = product.vendors as any;
         const vendorUserId = vendor?.user_id;
+        const vendorCountry = vendor?.country || '';
+        const derivedCurrency = vendorCountry ? getCurrencyForCountry(vendorCountry) : 'GNF';
         
         return {
           id: product.id,
           name: product.name,
           price: product.price,
+          currency: derivedCurrency,
           description: product.description || '',
           images: Array.isArray(product.images) ? (product.images as string[]) : [],
           promotional_videos: Array.isArray(product.promotional_videos) ? (product.promotional_videos as string[]) : [],

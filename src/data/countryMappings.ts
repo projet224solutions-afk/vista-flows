@@ -302,10 +302,63 @@ export const COUNTRY_TO_LANGUAGE: Record<string, string> = {
 };
 
 /**
- * Obtenir la devise d'un pays
+ * Mapping nom de pays (tel que stocké en DB) → code devise
+ * Utilisé pour déterminer la devise d'un vendeur à partir de son champ `country`
+ */
+const COUNTRY_NAME_TO_CURRENCY: Record<string, string> = {
+  'guinée': 'GNF', 'guinea': 'GNF',
+  'sénégal': 'XOF', 'senegal': 'XOF',
+  'mali': 'XOF',
+  'côte d\'ivoire': 'XOF', 'cote d\'ivoire': 'XOF', 'ivory coast': 'XOF',
+  'burkina faso': 'XOF',
+  'niger': 'XOF',
+  'togo': 'XOF',
+  'bénin': 'XOF', 'benin': 'XOF',
+  'guinée-bissau': 'XOF', 'guinea-bissau': 'XOF',
+  'sierra leone': 'SLL',
+  'liberia': 'LRD', 'libéria': 'LRD',
+  'gambie': 'GMD', 'gambia': 'GMD',
+  'nigeria': 'NGN', 'nigéria': 'NGN',
+  'ghana': 'GHS',
+  'cameroun': 'XAF', 'cameroon': 'XAF',
+  'gabon': 'XAF',
+  'tchad': 'XAF', 'chad': 'XAF',
+  'congo': 'XAF',
+  'rd congo': 'CDF', 'rdc': 'CDF', 'congo-kinshasa': 'CDF',
+  'maroc': 'MAD', 'morocco': 'MAD',
+  'tunisie': 'TND', 'tunisia': 'TND',
+  'algérie': 'DZD', 'algeria': 'DZD',
+  'égypte': 'EGP', 'egypt': 'EGP',
+  'kenya': 'KES',
+  'tanzanie': 'TZS', 'tanzania': 'TZS',
+  'ouganda': 'UGX', 'uganda': 'UGX',
+  'rwanda': 'RWF',
+  'éthiopie': 'ETB', 'ethiopia': 'ETB',
+  'afrique du sud': 'ZAR', 'south africa': 'ZAR',
+  'france': 'EUR',
+  'belgique': 'EUR', 'belgium': 'EUR',
+  'suisse': 'CHF', 'switzerland': 'CHF',
+  'canada': 'CAD',
+  'états-unis': 'USD', 'united states': 'USD', 'usa': 'USD',
+  'royaume-uni': 'GBP', 'united kingdom': 'GBP', 'uk': 'GBP',
+  'chine': 'CNY', 'china': 'CNY',
+  'japon': 'JPY', 'japan': 'JPY',
+  'inde': 'INR', 'india': 'INR',
+  'brésil': 'BRL', 'brazil': 'BRL',
+  'turquie': 'TRY', 'turkey': 'TRY',
+};
+
+/**
+ * Obtenir la devise d'un pays (par code ISO ou par nom)
  */
 export function getCurrencyForCountry(countryCode: string): string {
-  return COUNTRY_TO_CURRENCY[countryCode?.toUpperCase()] || 'USD';
+  if (!countryCode) return 'GNF';
+  // Essayer d'abord par code ISO
+  const byCode = COUNTRY_TO_CURRENCY[countryCode.toUpperCase()];
+  if (byCode) return byCode;
+  // Sinon par nom de pays
+  const byName = COUNTRY_NAME_TO_CURRENCY[countryCode.trim().toLowerCase()];
+  return byName || 'GNF';
 }
 
 /**

@@ -6,19 +6,23 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getCurrencyForCountry } from '@/data/countryMappings';
 
 export interface UniversalProduct {
   id: string;
   name: string;
   price: number;
   originalPrice?: number;
+  currency?: string;
   description?: string;
   images: string[];
   vendor_id: string;
   vendor_name: string;
   vendor_user_id: string;
+  vendor_public_id?: string;
   vendor_rating: number;
   vendor_rating_count: number;
+  vendor_country?: string;
   category_id?: string;
   category_name?: string;
   stock_quantity: number;
@@ -122,7 +126,8 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
             user_id,
             country,
             city,
-            business_type
+            business_type,
+            public_id
           ),
           categories(
             name
@@ -216,18 +221,23 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
         const vendor = product.vendors as any;
         const category = product.categories as any;
         const isNew = new Date(product.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const vendorCountry = vendor?.country || '';
+        const derivedCurrency = vendorCountry ? getCurrencyForCountry(vendorCountry) : 'GNF';
 
         return {
           id: product.id,
           name: product.name,
           price: product.price,
+          currency: derivedCurrency,
           description: product.description || '',
           images: Array.isArray(product.images) ? product.images : [],
           vendor_id: product.vendor_id,
           vendor_name: vendor?.business_name || 'Vendeur',
           vendor_user_id: vendor?.user_id || '',
+          vendor_public_id: vendor?.public_id || undefined,
           vendor_rating: product.rating || 0,
           vendor_rating_count: product.reviews_count || 0,
+          vendor_country: vendorCountry,
           category_id: product.category_id || '',
           category_name: category?.name || 'Général',
           stock_quantity: product.stock_quantity || 0,
