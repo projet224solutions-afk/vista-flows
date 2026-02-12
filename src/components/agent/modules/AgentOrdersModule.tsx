@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -129,13 +130,8 @@ export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersMod
     );
   };
 
-  const formatAmount = (amount: number, currency: string = 'GNF') => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount) + ' ' + currency;
-  };
+  const fc = useFormatCurrency();
+  const formatAmount = (amount: number, currency: string = 'GNF') => fc(amount, currency);
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = 

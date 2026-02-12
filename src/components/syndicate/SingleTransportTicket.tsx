@@ -2,6 +2,7 @@
  * Ticket de Transport Professionnel - Design Officiel Guinéen
  * Orientation PAYSAGE - Texte très visible - Drapeau discret
  */
+import { formatCurrency } from '@/lib/formatters';
 
 interface TicketConfig {
   syndicateName: string;
@@ -22,9 +23,7 @@ interface Props {
 export default function SingleTransportTicket({ ticketNumber, config, ticketTypeLabel }: Props) {
   const formattedNumber = String(ticketNumber).padStart(2, '0');
   
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN').format(amount);
-  };
+  const formatAmount = (amount: number) => formatCurrency(amount);
 
   return (
     <div 

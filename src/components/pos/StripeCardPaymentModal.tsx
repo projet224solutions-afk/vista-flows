@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { formatCurrency as formatCurrencyUtil } from '@/lib/formatters';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, Shield, CreditCard, CheckCircle2, XCircle, Info } from 'lucide-react';
@@ -100,14 +101,7 @@ function PaymentForm({
   const [succeeded, setSucceeded] = useState(false);
 
   const formatAmount = (value: number) => {
-    return (
-      new Intl.NumberFormat('fr-GN', {
-        style: 'decimal',
-        minimumFractionDigits: 0,
-      }).format(value) +
-      ' ' +
-      currency
-    );
+    return formatCurrencyUtil(value, currency);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

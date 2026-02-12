@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { formatCurrency } from '@/lib/formatters';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -239,7 +240,7 @@ export default function PDGBureauMonitoring() {
             <div>
               <p className="text-sm text-muted-foreground">Revenus totaux du jour</p>
               <p className="text-3xl font-bold text-emerald-600">
-                {globalStats.todayEarnings.toLocaleString('fr-GN')} GNF
+                {formatCurrency(globalStats.todayEarnings)}
               </p>
             </div>
           </div>

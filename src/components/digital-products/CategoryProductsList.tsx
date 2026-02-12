@@ -3,6 +3,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, ExternalLink, ShoppingCart, Star, Eye, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -91,12 +92,8 @@ export function CategoryProductsList({
   };
 
   // formatPrice conservé pour fallback
-  const formatPriceSimple = (price: number, currency: string = 'GNF') => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-    }).format(price) + ' ' + currency;
-  };
+  const fc = useFormatCurrency();
+  const formatPriceSimple = (price: number, currency: string = 'GNF') => fc(price, currency);
 
   if (showProductForm) {
     return (

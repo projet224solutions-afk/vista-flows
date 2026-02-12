@@ -6,6 +6,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { formatCurrency } from '@/lib/formatters';
 import { Button } from '@/components/ui/button';
 import { 
   Star, 
@@ -200,7 +201,7 @@ export function UniversalMarketplaceCard({
                   <div className="flex flex-col">
                     <span className="text-lg font-bold text-primary">
                       {priceLoading ? (
-                        `${item.price.toLocaleString('fr-GN')} ${item.currency || 'GNF'}`
+                        formatCurrency(item.price, item.currency || 'GNF')
                       ) : (
                         convert(item.price, item.currency || 'GNF').formatted
                       )}
@@ -208,7 +209,7 @@ export function UniversalMarketplaceCard({
                     {item.originalPrice && item.originalPrice > item.price && (
                       <span className="text-xs text-muted-foreground line-through">
                         {priceLoading ? (
-                          `${item.originalPrice.toLocaleString('fr-GN')} ${item.currency || 'GNF'}`
+                          formatCurrency(item.originalPrice, item.currency || 'GNF')
                         ) : (
                           convert(item.originalPrice, item.currency || 'GNF').formatted
                         )}
@@ -221,10 +222,10 @@ export function UniversalMarketplaceCard({
                     <p className="font-semibold">
                       {t('marketplace.card.originalPrice') || 'Prix original'}:
                     </p>
-                    <p>{item.price.toLocaleString('fr-GN')} {item.currency || 'GNF'}</p>
+                    <p>{formatCurrency(item.price, item.currency || 'GNF')}</p>
                     {item.originalPrice && item.originalPrice > item.price && (
                       <p className="text-muted-foreground line-through">
-                        {item.originalPrice.toLocaleString('fr-GN')} {item.currency || 'GNF'}
+                        {formatCurrency(item.originalPrice, item.currency || 'GNF')}
                       </p>
                     )}
                   </div>

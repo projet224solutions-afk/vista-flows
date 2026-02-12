@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, CreditCard, Shield, Crown, Truck, Building2, Wallet } from 'lucide-react';
+import { formatCurrency } from '@/lib/formatters';
 
 type PaymentType = 'ORDER_PAYMENT' | 'SUBSCRIPTION' | 'BOOST' | 'DELIVERY' | 'COMMISSION' | 'WALLET_TOPUP';
 
@@ -220,7 +221,7 @@ export default function PaymentCorePage() {
               disabled={amount <= 0 || !referenceId}
             >
               <CreditCard className="mr-2 h-5 w-5" />
-              Démarrer le paiement de {new Intl.NumberFormat('fr-GN').format(amount)} GNF
+              Démarrer le paiement de {formatCurrency(amount)}
             </Button>
           </CardContent>
         </Card>

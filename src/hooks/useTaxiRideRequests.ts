@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { TaxiMotoService } from '@/services/taxi/TaxiMotoService';
+import { formatCurrency } from '@/lib/formatters';
 
 export interface RideRequest {
   id: string;
@@ -297,10 +298,10 @@ export function useTaxiRideRequests(
           
           console.log('🔊 Affichage notification + son pour course:', ride.id);
           const priceDisplay = typeof ride.price_total === 'number' && !isNaN(ride.price_total) 
-            ? ride.price_total.toLocaleString('fr-GN') 
+            ? formatCurrency(ride.price_total) 
             : '0';
           toast.success('🚗 Nouvelle course disponible!', {
-            description: `De ${ride.pickup_address || 'Adresse inconnue'} - ${priceDisplay} GNF`,
+            description: `De ${ride.pickup_address || 'Adresse inconnue'} - ${priceDisplay}`,
             duration: 10000
           });
           

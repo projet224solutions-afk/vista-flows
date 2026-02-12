@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { FileText, Eye, Loader2, PenTool } from 'lucide-react';
 import { format } from 'date-fns';
+import { formatCurrency } from '@/lib/formatters';
 import { fr } from 'date-fns/locale';
 import {
   Dialog,
@@ -240,7 +241,7 @@ export default function ClientContracts() {
                 <div>
                   <p className="text-sm text-muted-foreground">Montant</p>
                   <p className="font-medium">
-                    {contract.amount ? `${new Intl.NumberFormat('fr-GN').format(contract.amount)} GNF` : '-'}
+                    {contract.amount ? formatCurrency(contract.amount) : '-'}
                   </p>
                 </div>
                 <div>

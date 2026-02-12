@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { formatCurrency } from '@/lib/formatters';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -125,9 +126,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
     });
   };
 
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN').format(amount);
-  };
+  const formatAmount = (amount: number) => formatCurrency(amount);
 
   const ticketTypeLabels: Record<string, string> = {
     stationnement: 'Stationnement',

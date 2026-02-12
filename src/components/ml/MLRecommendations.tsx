@@ -4,6 +4,7 @@
  */
 
 import React, { memo } from 'react';
+import { formatCurrency } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -84,12 +85,7 @@ const RecommendationCard = memo(({
   const reasonConfig = REASON_CONFIG[recommendation.reason];
   const ReasonIcon = reasonConfig.icon;
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0
-    }).format(price) + ' GNF';
-  };
+  const formatPrice = (price: number) => formatCurrency(price);
 
   return (
     <Card 

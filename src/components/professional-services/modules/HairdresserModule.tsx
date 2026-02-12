@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -205,9 +206,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
     { id: '3', name: 'Hadja Sylla', phone: '+224 623 00 00 00', points: 3800, tier: 'platinum', visits: 78, totalSpent: 8900000, lastVisit: '2024-03-10', favoriteService: 'Tresses' }
   ]);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('fr-GN', { style: 'decimal' }).format(price) + ' GNF';
-  };
+  const formatPrice = useFormatCurrency();
 
   const getStatusBadge = (status: Appointment['status']) => {
     const styles = {

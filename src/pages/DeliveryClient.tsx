@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { formatCurrency } from '@/lib/formatters';
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -477,7 +478,7 @@ export default function DeliveryClient() {
                     <div className="flex justify-between items-center">
                       <span className="font-medium">Frais de livraison</span>
                       <span className="text-xl font-bold text-livreur-primary">
-                        {new Intl.NumberFormat('fr-GN').format(currentDelivery.delivery_fee)} GNF
+                        {formatCurrency(currentDelivery.delivery_fee)}
                       </span>
                     </div>
                   </div>
@@ -536,7 +537,7 @@ export default function DeliveryClient() {
                           <p><span className="text-muted-foreground">De:</span> {delivery.pickup_address}</p>
                           <p><span className="text-muted-foreground">À:</span> {delivery.delivery_address}</p>
                           <p className="font-semibold text-livreur-primary">
-                            {new Intl.NumberFormat('fr-GN').format(delivery.delivery_fee)} GNF
+                            {formatCurrency(delivery.delivery_fee)}
                           </p>
                         </div>
                       </div>

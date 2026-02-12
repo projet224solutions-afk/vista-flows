@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { formatCurrency } from '@/lib/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { 
@@ -30,12 +31,7 @@ export interface VendorBusinessDashboardProps {
   professionalService?: any;
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('fr-GN', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount) + ' FG';
-}
+// formatCurrency importé depuis @/lib/formatters
 
 export function VendorBusinessDashboard({
   businessName,

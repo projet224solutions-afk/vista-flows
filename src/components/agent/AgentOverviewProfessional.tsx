@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -54,13 +55,7 @@ export function AgentOverviewProfessional({
     setMounted(true);
   }, []);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
+  const formatCurrency = useFormatCurrency();
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('fr-FR').format(num);

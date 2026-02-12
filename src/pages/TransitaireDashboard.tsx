@@ -14,6 +14,7 @@ import ProfessionalMessaging from "@/components/messaging/ProfessionalMessaging"
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
+import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 
 export default function TransitaireDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -22,20 +23,11 @@ export default function TransitaireDashboard() {
   useRoleRedirect(); // S'assurer que seuls les transitaires/admins accèdent à cette page
   const { error, captureError, clearError } = useTransitaireErrorBoundary();
   const { stats: transitaireStats, loading: statsLoading } = useTransitaireStats();
+  const formatPrice = useFormatCurrency();
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
-  };
-
-  // Formater le prix en FCFA
-  const formatPrice = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'currency',
-      currency: 'GNF',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount).replace('GNF', 'FCFA');
   };
 
   // Stats dynamiques basées sur les données réelles

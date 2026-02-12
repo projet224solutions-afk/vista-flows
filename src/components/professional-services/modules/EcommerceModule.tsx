@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { formatCurrency } from '@/lib/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   ShoppingCart, Package, Users, TrendingUp, 
@@ -47,14 +48,7 @@ const statusLabels: Record<string, string> = {
   cancelled: 'Annulée',
 };
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('fr-GN', {
-    style: 'currency',
-    currency: 'GNF',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
+// formatCurrency importé depuis @/lib/formatters
 
 export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProps) {
   // Utiliser le hook avec serviceId pour charger les données spécifiques au service professionnel

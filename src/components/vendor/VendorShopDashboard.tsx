@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { formatCurrency } from '@/lib/formatters';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
@@ -48,12 +49,7 @@ const statusLabels: Record<string, string> = {
   cancelled: 'Annulée',
 };
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('fr-GN', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount) + ' FG';
-}
+// formatCurrency importé depuis @/lib/formatters
 
 export function VendorShopDashboard({ 
   vendorId, 
