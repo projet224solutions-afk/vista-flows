@@ -254,8 +254,16 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       }
       if (minRating && minRating > 0) query = query.gte('rating', minRating);
 
+      // Filtrage par ville (la table professional_services a un champ city)
+      if (city && city !== 'all') {
+        query = query.ilike('city', city.trim());
+      }
+
       const { data, error } = await query;
       if (error) throw error;
+
+      // Note: professional_services n'a pas de champ country,
+      // donc le filtrage par pays n'est pas applicable pour ce type
 
       return (data || []).map(service => {
         // Construire le tableau d'images à partir de logo_url et cover_image_url
@@ -330,7 +338,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           file_type,
           marketplace_position,
           is_sponsored,
-          vendors:vendors!digital_products_vendor_id_fkey (business_name, user_id, shop_slug)
+          vendors:vendors!digital_products_vendor_id_fkey (business_name, user_id, shop_slug, country, city)
         `
         )
         .eq("status", "published");
@@ -359,8 +367,28 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       const { data, error } = await query;
       if (error) throw error;
 
+      // Filtrage par pays et ville (via le vendeur associé)
+      const filtered = (data || []).filter((product: any) => {
+        const vendor = product.vendors as any;
+        if (!vendor) return true;
+
+        // Filtrage par pays
+        if (country && country !== 'all') {
+          const vendorCountry = (vendor.country || '').trim().toLowerCase();
+          if (vendorCountry !== country.trim().toLowerCase()) return false;
+        }
+
+        // Filtrage par ville
+        if (city && city !== 'all') {
+          const vendorCity = (vendor.city || '').trim().toLowerCase();
+          if (vendorCity !== city.trim().toLowerCase()) return false;
+        }
+
+        return true;
+      });
+
       // Récupérer les public_id des vendeurs depuis profiles
-      const vendorUserIds = (data || [])
+      const vendorUserIds = filtered
         .map((p: any) => (p.vendors as any)?.user_id || p.merchant_id)
         .filter(Boolean);
       
@@ -378,7 +406,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         }
       }
 
-      return (data || []).map((product: any) => {
+      return filtered.map((product: any) => {
         const images = Array.isArray(product.images) ? (product.images as string[]) : [];
         const v = product.vendors as any;
         const vendorUserId = v?.user_id || product.merchant_id;
