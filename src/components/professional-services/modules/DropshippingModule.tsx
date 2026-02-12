@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -77,12 +78,7 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
   };
 
   // Formatage monétaire
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0
-    }).format(amount) + ' GNF';
-  };
+  const formatCurrency = useFormatCurrency();
 
   // Afficher un loader pendant le chargement
   if (loadingVendor) {

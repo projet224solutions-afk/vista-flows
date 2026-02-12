@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -114,12 +115,7 @@ export const VendorPaymentModal = ({
     }
   };
 
-  const formatAmount = (value: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'currency',
-      currency: 'GNF'
-    }).format(value);
-  };
+  const formatAmount = useFormatCurrency();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

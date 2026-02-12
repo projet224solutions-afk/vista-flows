@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -123,13 +124,7 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
     }
   };
 
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount) + ' GNF';
-  };
+  const formatAmount = useFormatCurrency();
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {

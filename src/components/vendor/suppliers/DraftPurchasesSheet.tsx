@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import {
   Sheet,
   SheetContent,
@@ -109,12 +110,7 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
   const documentGeneratedCount = purchases.filter(p => p.status === 'document_generated').length;
   const totalAmount = purchases.reduce((sum, p) => sum + (p.total_purchase_amount || 0), 0);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount) + ' GNF';
-  };
+  const formatCurrency = useFormatCurrency();
 
   const handleEditPurchase = (purchase: Purchase) => {
     setSelectedPurchase(purchase);

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { formatCurrency } from '@/lib/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   UtensilsCrossed, ClipboardList, Users, Calendar,
@@ -30,12 +31,7 @@ interface RestaurantModuleProps {
   businessName?: string;
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('fr-GN', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount) + ' FG';
-}
+// formatCurrency importé depuis @/lib/formatters
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',

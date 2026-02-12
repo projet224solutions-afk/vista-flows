@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -208,9 +209,7 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
     };
   }, [loadAvailableDeliveries]);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN').format(amount) + ' GNF';
-  };
+  const formatCurrency = useFormatCurrency();
 
   const parseAddress = (addr: any): string => {
     if (!addr) return 'Adresse non disponible';

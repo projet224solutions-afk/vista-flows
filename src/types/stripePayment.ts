@@ -3,7 +3,7 @@
  * Types TypeScript pour le système de paiement Stripe
  * 224SOLUTIONS
  */
-
+import { formatCurrency as formatCurrencyLib } from '@/lib/formatters';
 // =====================================================
 // PAYMENT STATUS & TYPES
 // =====================================================
@@ -250,15 +250,8 @@ export interface RequestWithdrawalResponse {
 // =====================================================
 
 export const formatAmount = (amount: number, currency: string = 'GNF'): string => {
-  // Convertir de centimes en unité principale
   const mainAmount = amount / 100;
-  
-  return new Intl.NumberFormat('fr-GN', {
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(mainAmount);
+  return formatCurrencyLib(mainAmount, currency);
 };
 
 export const getPaymentStatusLabel = (status: PaymentStatus): string => {

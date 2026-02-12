@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, lazy, Suspense } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -154,13 +155,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
     }
   };
 
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
+  const formatAmount = useFormatCurrency();
 
   const exportData = async () => {
     try {

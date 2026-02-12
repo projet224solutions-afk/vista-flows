@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -65,9 +66,7 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
   const [status, setStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [resultMessage, setResultMessage] = useState('');
 
-  const formatAmount = (value: number) => {
-    return new Intl.NumberFormat('fr-GN').format(value);
-  };
+  const formatAmount = useFormatCurrency();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

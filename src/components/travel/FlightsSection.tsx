@@ -8,6 +8,7 @@ import {
   Calendar, Users, Clock, Filter
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -111,12 +112,8 @@ export function FlightsSection({ mode, isAffiliate, affiliateCode }: FlightsSect
     toast.info('Redirection vers le site partenaire...');
   };
 
-  const formatPrice = (price: number, currency: string) => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-    }).format(price) + ' ' + currency;
-  };
+  const fc = useFormatCurrency();
+  const formatPrice = (price: number, currency: string) => fc(price, currency);
 
   const filteredOffers = flightOffers.filter(offer => {
     const matchOrigin = !searchOrigin || 

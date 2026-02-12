@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { TrendingUp, TrendingDown, Activity, Calendar } from 'lucide-react';
 
 interface MonthlyStats {
@@ -77,13 +78,7 @@ export default function WalletMonthlyStats() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount) + ' GNF';
-  };
+  const formatCurrency = useFormatCurrency();
 
   const getMonthName = () => {
     return new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });

@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -133,12 +134,8 @@ export function WalletAuditTool() {
   const [showBlockDialog, setShowBlockDialog] = useState(false);
   const [showSubscriptionsDialog, setShowSubscriptionsDialog] = useState(false);
 
-  const formatAmount = (amount: number, currency = 'GNF') => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0
-    }).format(amount) + ' ' + currency;
-  };
+  const fc = useFormatCurrency();
+  const formatAmount = (amount: number, currency = 'GNF') => fc(amount, currency);
 
   // Audit d'un wallet spécifique
   const auditWallet = useCallback(async (customId?: string) => {

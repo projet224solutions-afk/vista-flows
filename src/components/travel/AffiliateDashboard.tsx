@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { 
   Wallet, TrendingUp, Users, Copy, 
   CheckCircle, Clock, AlertCircle, ExternalLink,
@@ -92,12 +93,8 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
     toast.success('Lien copié!');
   };
 
-  const formatPrice = (price: number, currency: string = 'GNF') => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-    }).format(price) + ' ' + currency;
-  };
+  const fc = useFormatCurrency();
+  const formatPrice = (price: number, currency: string = 'GNF') => fc(price, currency);
 
   const getStatusBadge = (status: string) => {
     switch (status) {

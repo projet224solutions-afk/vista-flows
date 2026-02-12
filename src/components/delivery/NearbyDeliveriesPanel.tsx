@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -162,7 +163,7 @@ export function NearbyDeliveriesPanel() {
     }
   };
 
-  const formatCurrency = (amount: number) => new Intl.NumberFormat('fr-GN').format(amount) + ' GNF';
+  const formatCurrency = useFormatCurrency();
 
   if (loading) {
     return (

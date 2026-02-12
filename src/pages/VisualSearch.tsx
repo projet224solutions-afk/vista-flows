@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { formatCurrency } from '@/lib/formatters';
 
 interface SearchResult {
   id: string;
@@ -354,11 +355,7 @@ export default function VisualSearch() {
                     <div className="p-3">
                       <p className="text-sm font-medium truncate">{product.name}</p>
                       <p className="text-primary font-bold">
-                        {new Intl.NumberFormat('fr-GN', { 
-                          style: 'currency', 
-                          currency: 'GNF',
-                          maximumFractionDigits: 0 
-                        }).format(product.price)}
+                        {formatCurrency(product.price)}
                       </p>
                     </div>
                   </CardContent>
