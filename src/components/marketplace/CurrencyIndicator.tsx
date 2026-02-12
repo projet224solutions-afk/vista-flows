@@ -26,6 +26,7 @@ import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { useGeoDetection } from '@/hooks/useGeoDetection';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getCurrencyByCode } from '@/data/currencies';
+import { useCurrency } from '@/context/CurrencyContext';
 import { toast } from 'sonner';
 
 interface CurrencyIndicatorProps {
@@ -52,6 +53,7 @@ export function CurrencyIndicator({
 }: CurrencyIndicatorProps) {
   const { userCurrency, userCountry, loading, lastUpdated, refreshRates } = usePriceConverter();
   const { forceRefresh: forceGeoRefresh, loading: geoLoading } = useGeoDetection();
+  const { setCurrency: setGlobalCurrency } = useCurrency();
   const { t } = useTranslation();
   
   // État local pour la devise d'affichage (peut être différente de la devise détectée)
@@ -78,8 +80,8 @@ export function CurrencyIndicator({
     const newCurrency = displayCurrency === 'GNF' ? userCurrency : 'GNF';
     setDisplayCurrency(newCurrency);
     localStorage.setItem(CURRENCY_STORAGE_KEY, newCurrency);
+    setGlobalCurrency(newCurrency); // Synchroniser avec le contexte global
     
-    // Déclencher un événement personnalisé pour notifier les autres composants
     window.dispatchEvent(new CustomEvent('currencyChanged', { 
       detail: { currency: newCurrency } 
     }));
@@ -88,6 +90,7 @@ export function CurrencyIndicator({
   const handleSelectCurrency = (currency: string) => {
     setDisplayCurrency(currency);
     localStorage.setItem(CURRENCY_STORAGE_KEY, currency);
+    setGlobalCurrency(currency); // Synchroniser avec le contexte global
     window.dispatchEvent(new CustomEvent('currencyChanged', { 
       detail: { currency } 
     }));
@@ -237,6 +240,29 @@ export function CurrencyIndicator({
             <span className="text-primary">✓</span>
           )}
         </DropdownMenuItem>
+
+        {/* Devises populaires */}
+        {[
+          { code: 'XOF', flag: '🇸🇳', name: 'Franc CFA (XOF)' },
+          { code: 'USD', flag: '🇺🇸', name: 'Dollar US (USD)' },
+          { code: 'EUR', flag: '🇪🇺', name: 'Euro (EUR)' },
+        ]
+          .filter(c => c.code !== userCurrency && c.code !== 'GNF')
+          .map(c => (
+            <DropdownMenuItem
+              key={c.code}
+              onClick={() => handleSelectCurrency(c.code)}
+              className="flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <span>{c.flag}</span>
+                <p className="font-medium">{c.name}</p>
+              </div>
+              {displayCurrency === c.code && (
+                <span className="text-primary">✓</span>
+              )}
+            </DropdownMenuItem>
+          ))}
 
         <DropdownMenuSeparator />
 

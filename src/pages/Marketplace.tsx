@@ -361,7 +361,7 @@ export default function Marketplace() {
               )}
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
-              <CurrencyIndicator variant="compact" />
+              <CurrencyIndicator variant="default" />
               {vendorId && (
                 <>
                   <ShareButton
