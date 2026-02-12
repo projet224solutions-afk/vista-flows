@@ -389,7 +389,7 @@ export function useOfflineVendorData(): UseOfflineVendorDataReturn {
 
           const { data: order, error: orderError } = await supabase
             .from('orders')
-            .insert({
+            .insert([{
               vendor_id: sale.vendor_id,
               customer_id: sale.customer_id || null,
               order_number: orderNumber,
@@ -399,11 +399,11 @@ export function useOfflineVendorData(): UseOfflineVendorDataReturn {
               discount_amount: sale.discount,
               payment_status: sale.payment_status === 'paid' ? 'paid' : 'pending',
               status: 'confirmed',
-              payment_method: sale.payment_method,
-              shipping_address: { address: 'Point de vente' },
+              payment_method: sale.payment_method as any,
+              shipping_address: { address: 'Point de vente' } as any,
               notes: `${sale.notes || ''} [Vente offline: ${sale.receipt_number}]`.trim(),
               source: 'pos'
-            })
+            }])
             .select('id')
             .single();
 

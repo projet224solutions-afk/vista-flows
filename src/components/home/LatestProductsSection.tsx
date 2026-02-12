@@ -15,6 +15,7 @@ interface Product {
   id: string;
   name: string;
   price: number;
+  currency?: string;
   images?: string | string[];
   vendor_id?: string;
   vendor_name?: string;
@@ -51,7 +52,7 @@ export function LatestProductsSection({
             {t('home.latestProducts')}
           </h2>
           <p className="text-xs text-muted-foreground hidden md:block">
-            Les dernières nouveautés du marketplace
+            {t('home.latestProductsSubtitle') || 'Les dernières nouveautés du marketplace'}
           </p>
         </div>
         <Button
@@ -106,7 +107,7 @@ export function LatestProductsSection({
                 }
                 title={product.name}
                 price={product.price}
-                currency="GNF"
+                currency={product.currency || 'GNF'}
                 vendor={product.vendor_name}
                 vendorPublicId={product.vendor_public_id}
                 rating={product.rating}
