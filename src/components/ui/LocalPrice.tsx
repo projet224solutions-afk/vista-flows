@@ -39,7 +39,8 @@ export function LocalPrice({
   size = 'md',
   showSkeleton = true,
 }: LocalPriceProps) {
-  const converted = useConvertedPrice(amount, currency);
+  const safeAmount = typeof amount === 'string' ? parseFloat(String(amount).replace(/\s/g, '')) || 0 : (Number(amount) || 0);
+  const converted = useConvertedPrice(safeAmount, currency);
 
   // Afficher un skeleton pendant le chargement
   if (!converted) {

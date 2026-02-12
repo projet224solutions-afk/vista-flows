@@ -23,18 +23,24 @@ export function formatCurrency(amount: number, currencyCode: string = 'GNF'): st
   const roundedAmount = decimals === 0 ? Math.round(amount) : Math.round(amount * 100) / 100;
   
   // Formatage manuel pour garantir la compatibilité (évite les bugs Intl sur mobile)
+  // S'assurer que le montant est un nombre valide
+  const safeAmount = typeof roundedAmount === 'number' && isFinite(roundedAmount) ? roundedAmount : 0;
+  
   let formattedAmount: string;
   try {
-    formattedAmount = roundedAmount.toLocaleString('fr-FR', {
+    formattedAmount = safeAmount.toLocaleString('fr-FR', {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
     });
   } catch {
     // Fallback si toLocaleString échoue
     formattedAmount = decimals === 0 
-      ? roundedAmount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
-      : roundedAmount.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+      ? safeAmount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+      : safeAmount.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   }
+  
+  // Supprimer tout zéro initial parasite (ex: "050 000" -> "50 000")
+  formattedAmount = formattedAmount.replace(/^0+(?=\d)/, '');
 
   // Utiliser le symbole de la devise ou le code
   const symbol = currency?.symbol || code;
