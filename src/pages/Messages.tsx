@@ -73,6 +73,7 @@ interface Conversation {
   vendor_phone?: string;
   vendor_shop_slug?: string;
   vendor_id?: string;
+  user_role?: string;
 }
 
 export default function Messages() {
@@ -391,7 +392,7 @@ export default function Messages() {
         Array.from(conversationMap.values()).map(async (conv) => {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('first_name, last_name, email, avatar_url, public_id')
+            .select('first_name, last_name, email, avatar_url, public_id, role')
             .eq('id', conv.other_user_id)
             .single();
 
@@ -438,7 +439,8 @@ export default function Messages() {
             is_certified: isCertified,
             vendor_phone: vendor?.phone,
             vendor_shop_slug: vendor?.shop_slug,
-            vendor_id: vendor?.id
+            vendor_id: vendor?.id,
+            user_role: (profile as any)?.role || null
           };
         })
       );
@@ -832,6 +834,18 @@ export default function Messages() {
 
   const selectedConvData = conversations.find(c => c.id === selectedConversation);
 
+  // Helper pour le label du rôle utilisateur
+  const getRoleLabel = (conv: { is_vendor?: boolean; user_role?: string }) => {
+    if (conv.is_vendor) return 'Vendeur';
+    const role = conv.user_role?.toLowerCase();
+    if (role === 'taxi' || role === 'taxi_moto') return 'Taxi Moto';
+    if (role === 'livreur' || role === 'delivery') return 'Livreur';
+    if (role === 'transitaire') return 'Transitaire';
+    if (role === 'agent') return 'Agent';
+    if (role === 'admin') return 'Admin';
+    return 'Client';
+  };
+
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
     const now = new Date();
@@ -955,7 +969,7 @@ export default function Messages() {
                                   : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                               )}
                             >
-                              {contact.is_vendor ? 'Vendeur' : 'Client'}
+                              {getRoleLabel(contact)}
                             </Badge>
                             {contact.is_certified && (
                               <Badge variant="outline" className="text-xs gap-1">
@@ -1070,7 +1084,7 @@ export default function Messages() {
                             : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                         )}
                       >
-                        {conv.is_vendor ? 'Vendeur' : 'Client'}
+                        {getRoleLabel(conv)}
                       </Badge>
                       <p className="text-sm text-muted-foreground truncate">
                         {conv.last_message}
@@ -1141,11 +1155,11 @@ export default function Messages() {
                   <div className="flex items-center gap-2">
                     {selectedConvData?.is_vendor ? (
                       <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-                        Vendeur
+                        {getRoleLabel(selectedConvData)}
                       </Badge>
                     ) : (
                       <Badge variant="outline" className="text-xs">
-                        Client
+                        {getRoleLabel(selectedConvData || {})}
                       </Badge>
                     )}
                     {/* Indicateur de présence visuel */}
@@ -1488,7 +1502,7 @@ export default function Messages() {
                                 : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                             )}
                           >
-                            {user.is_vendor ? 'Vendeur' : 'Client'}
+                            {getRoleLabel(user)}
                           </Badge>
                           <p className="text-xs text-muted-foreground truncate max-w-[150px]">
                             {user.email}
