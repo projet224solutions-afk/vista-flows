@@ -15,8 +15,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Wallet, Banknote, Loader2, AlertCircle, Shield, Info } from "lucide-react";
+import { Wallet, Banknote, Loader2, AlertCircle, Shield, Info, Phone, Truck } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Escrow224Service } from "@/services/escrow224Service";
@@ -72,6 +73,8 @@ export default function ProductPaymentModal({
   const [loadingBalance, setLoadingBalance] = useState(false);
   const [vendorCode, setVendorCode] = useState<string | null>(null);
   const [loadingVendorCode, setLoadingVendorCode] = useState(false);
+  const [codPhone, setCodPhone] = useState('');
+  const [codCity, setCodCity] = useState('');
   
   // Commission state
   const [commissionConfig, setCommissionConfig] = useState<CommissionConfig | null>(null);
@@ -290,6 +293,13 @@ export default function ProductPaymentModal({
       throw new Error('Informations manquantes');
     }
 
+    // Validation COD: téléphone et ville requis
+    const isCODMethod = paymentMethod === 'cash' || paymentMethod === 'cash_on_delivery';
+    if (isCODMethod && (!codPhone.trim() || !codCity.trim())) {
+      toast.error('Veuillez remplir le numéro de téléphone et la ville');
+      throw new Error('COD info missing');
+    }
+
     // Créer ou récupérer le customer_id si manquant
     let effectiveCustomerId = customerId;
     if (!effectiveCustomerId) {
@@ -399,12 +409,12 @@ export default function ProductPaymentModal({
           p_total_amount: vendorTotalWithCommission, // ← MONTANT AVEC COMMISSION
           p_payment_method: normalizedPaymentMethod,
           p_shipping_address: {
-            address: 'Adresse de livraison',
-            city: 'Conakry',
+            address: isCOD && codPhone ? codPhone : 'Adresse de livraison',
+            city: isCOD && codCity ? codCity : 'Conakry',
             country: 'Guinée',
             commission_fee: commissionPerVendor,
             product_total: vendorProductTotal,
-            ...(isCOD ? { is_cod: true } : {})
+            ...(isCOD ? { is_cod: true, cod_phone: codPhone, cod_city: codCity } : {})
           }
         });
 
@@ -646,6 +656,55 @@ export default function ProductPaymentModal({
               );
             })}
           </RadioGroup>
+
+          {/* Formulaire téléphone et ville pour COD */}
+          {paymentMethod === 'cash' && (
+            <div className="space-y-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg animate-in slide-in-from-top-2">
+              <h4 className="font-semibold text-emerald-800 flex items-center gap-2 text-sm">
+                <Phone className="h-4 w-4" />
+                Informations de contact
+              </h4>
+
+              <div className="space-y-2">
+                <Label htmlFor="marketplace-cod-phone" className="text-sm">
+                  Numéro à contacter <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="marketplace-cod-phone"
+                  type="tel"
+                  inputMode="tel"
+                  placeholder="Ex: 620 00 00 00"
+                  value={codPhone}
+                  onChange={(e) => setCodPhone(e.target.value)}
+                  className="bg-white"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="marketplace-cod-city" className="text-sm">
+                  Ville <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="marketplace-cod-city"
+                  placeholder="Ex: Conakry, Kindia, Dakar..."
+                  value={codCity}
+                  onChange={(e) => setCodCity(e.target.value)}
+                  className="bg-white"
+                  required
+                />
+              </div>
+
+              <Alert className="bg-emerald-50 border-emerald-200 mt-2">
+                <Truck className="h-4 w-4 text-emerald-600" />
+                <AlertDescription className="text-emerald-700">
+                  <strong>Paiement à la livraison confirmé</strong><br/>
+                  Vous serez contacté par téléphone pour confirmer votre adresse exacte avant la livraison.
+                  Préparez {grandTotal.toLocaleString()} GNF en espèces.
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
         </div>
 
         {!customerId && (
