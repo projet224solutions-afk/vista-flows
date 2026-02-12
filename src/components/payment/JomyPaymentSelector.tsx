@@ -512,21 +512,14 @@ export function JomyPaymentSelector({
                 <Label htmlFor="cod-city" className="text-sm">
                   Ville <span className="text-red-500">*</span>
                 </Label>
-                <select
+                <Input
                   id="cod-city"
+                  placeholder="Ex: Conakry, Kindia, Dakar..."
                   value={deliveryAddress.city}
                   onChange={(e) => setDeliveryAddress({...deliveryAddress, city: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-md bg-white text-sm"
+                  className="bg-white"
                   required
-                >
-                  <option value="Conakry">Conakry</option>
-                  <option value="Kindia">Kindia</option>
-                  <option value="Labé">Labé</option>
-                  <option value="Kankan">Kankan</option>
-                  <option value="N'Zérékoré">N'Zérékoré</option>
-                  <option value="Mamou">Mamou</option>
-                  <option value="Boké">Boké</option>
-                </select>
+                />
               </div>
 
               <Alert className="bg-emerald-50 border-emerald-200 mt-2">
