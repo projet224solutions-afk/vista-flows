@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Wallet, Banknote, Loader2, AlertCircle, Shield, Info, Phone, Truck } from "lucide-react";
+import { Wallet, Banknote, Loader2, AlertCircle, Shield, Info, Phone, Truck, CreditCard, Smartphone } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -24,7 +24,7 @@ import { Escrow224Service } from "@/services/escrow224Service";
 import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 import { SecureButton } from "@/components/ui/SecureButton";
 
-export type ProductPaymentMethod = 'wallet' | 'cash' | 'cash_on_delivery';
+export type ProductPaymentMethod = 'wallet' | 'cash' | 'cash_on_delivery' | 'orange_money' | 'card';
 
 interface CartItem {
   id: string;
@@ -267,6 +267,20 @@ export default function ProductPaymentModal({
       color: 'text-primary'
     },
     {
+      id: 'card' as ProductPaymentMethod,
+      name: 'Carte Bancaire',
+      description: 'Paiement sécurisé VISA / Mastercard',
+      icon: CreditCard,
+      color: 'text-blue-600'
+    },
+    {
+      id: 'orange_money' as ProductPaymentMethod,
+      name: 'Orange Money',
+      description: 'Paiement instantané via Orange Money',
+      icon: Smartphone,
+      color: 'text-orange-500'
+    },
+    {
       id: 'cash' as ProductPaymentMethod,
       name: 'Paiement à la livraison',
       description: 'Payez en espèces à la réception',
@@ -396,7 +410,11 @@ export default function ProductPaymentModal({
         });
 
         const isCOD = paymentMethod === 'cash' || paymentMethod === 'cash_on_delivery';
-        const normalizedPaymentMethod = isCOD ? 'cash' : paymentMethod;
+        // Normaliser vers les valeurs de l'enum payment_method de la DB
+        const normalizedPaymentMethod = isCOD ? 'cash' 
+          : paymentMethod === 'orange_money' ? 'mobile_money' 
+          : paymentMethod === 'card' ? 'card'
+          : paymentMethod;
 
         const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
           p_user_id: userId,
