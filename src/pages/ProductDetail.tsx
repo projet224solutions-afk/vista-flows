@@ -344,7 +344,7 @@ export default function ProductDetail() {
                 <Badge variant="secondary" className="mb-2">{product.categories.name}</Badge>
               )}
 
-              {product.rating && (
+              {product.rating != null && product.rating > 0 && (
                 <div className="flex items-center gap-2 mb-4">
                   <div className="flex">
                     {[1, 2, 3, 4, 5].map((star) => (

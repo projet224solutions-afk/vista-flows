@@ -8,6 +8,7 @@ import { useMemo, useCallback } from 'react';
 import { useGeoDetection } from './useGeoDetection';
 import { useFxRates } from './useFxRates';
 import { formatCurrency } from '@/lib/formatters';
+import { useCurrency } from '@/context/CurrencyContext';
 
 export interface ConvertedPrice {
   /** Prix original */
@@ -62,9 +63,11 @@ const COMMON_CURRENCIES = [
 
 export function usePriceConverter(): UsePriceConverterResult {
   const { geoInfo, loading: geoLoading } = useGeoDetection();
+  const { currency: contextCurrency } = useCurrency();
   
-  // Utiliser la devise du contexte de devise (synchronisé avec géo)
-  const userCurrency = geoInfo?.currency || 'GNF';
+  // Utiliser la devise du CurrencyContext (synchronisé avec la sélection manuelle + géo)
+  // Priorité: contexte (qui reflète le choix manuel) > géo-détection > défaut GNF
+  const userCurrency = contextCurrency || geoInfo?.currency || 'GNF';
   const userCountry = geoInfo?.country || 'GN';
 
   // Charger les taux depuis GNF comme base (devise de tous les produits)
