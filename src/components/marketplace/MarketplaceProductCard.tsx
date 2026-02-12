@@ -18,6 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { formatCurrency as formatCurrencyLib } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { usePriceConverter } from "@/hooks/usePriceConverter";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -89,7 +90,7 @@ export function MarketplaceProductCard({
 
   const formatPrice = (value: number) => {
     if (priceLoading) {
-      return `${value.toLocaleString('fr-GN')} ${currency}`;
+      return formatCurrencyLib(value, currency);
     }
     
     // Convertir depuis la devise du produit vers la devise de l'utilisateur
@@ -97,7 +98,7 @@ export function MarketplaceProductCard({
   };
   
   // Prix original formaté (pour tooltip)
-  const getOriginalPrice = (value: number) => `${value.toLocaleString('fr-GN')} ${currency}`;
+  const getOriginalPrice = (value: number) => formatCurrencyLib(value, currency);
 
   // Render stars pour les avis
   const renderStars = (rating: number, size: 'sm' | 'md' = 'sm') => {

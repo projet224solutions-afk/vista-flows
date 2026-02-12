@@ -1,4 +1,5 @@
 import { ReactNode, useState } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -349,13 +350,7 @@ export function AgentLayoutProfessional({
       .slice(0, 2);
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
+  const formatCurrency = useFormatCurrency();
 
   const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
     <div className="flex flex-col h-full">

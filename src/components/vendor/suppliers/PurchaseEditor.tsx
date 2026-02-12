@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -476,12 +477,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
     addItemMutation.mutate();
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount) + ' GNF';
-  };
+  const formatCurrency = useFormatCurrency();
 
   const totalPurchase = items.reduce((sum, item) => sum + item.total_purchase, 0);
   const totalSelling = items.reduce((sum, item) => sum + item.total_selling, 0);

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent } from '@/components/ui/card';
 import { Wallet, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -118,13 +119,7 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
     }
   }, [userId]);
 
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+  const formatAmount = useFormatCurrency();
 
   if (loading) {
     return (

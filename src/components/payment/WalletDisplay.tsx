@@ -5,6 +5,7 @@
  */
 
 import React from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -45,14 +46,7 @@ export function WalletDisplay({
 
   const [showBalance, setShowBalance] = React.useState(true);
 
-  const formatAmount = (amount: number, curr: string = 'GNF'): string => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'currency',
-      currency: curr,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+  const formatAmount = useFormatCurrency();
 
   const handleRefresh = async () => {
     await refresh();

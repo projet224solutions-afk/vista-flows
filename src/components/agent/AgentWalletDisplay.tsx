@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Wallet, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface AgentWalletDisplayProps {
   agentId: string;
@@ -80,13 +81,7 @@ export function AgentWalletDisplay({
     }
   }, [agentId]);
 
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+  const fc = useFormatCurrency();
 
   if (loading) {
     return (
@@ -123,7 +118,7 @@ export function AgentWalletDisplay({
               <Wallet className="w-4 h-4 text-primary" />
               <div>
                 <p className="text-xs text-muted-foreground">Wallet Agent {agentCode ? `(${agentCode})` : ''}</p>
-                <p className="text-sm font-bold text-primary">{formatAmount(balance)} {currency}</p>
+                <p className="text-sm font-bold text-primary">{fc(balance, currency)}</p>
               </div>
             </div>
             <Button
@@ -152,7 +147,7 @@ export function AgentWalletDisplay({
               <p className="text-xs text-muted-foreground">
                 Wallet Agent {agentCode ? `(${agentCode})` : ''}
               </p>
-              <p className="text-lg font-bold text-primary">{formatAmount(balance)} {currency}</p>
+              <p className="text-lg font-bold text-primary">{fc(balance, currency)}</p>
             </div>
           </div>
           <Button

@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useWallet } from '@/hooks/useWallet';
 import { toast } from 'sonner';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { 
   ArrowDownLeft, 
   AlertTriangle, 
@@ -50,14 +51,7 @@ export function WithdrawalForm({ onSuccess, onCancel }: WithdrawalFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const formatAmount = (amt: number, curr: string = 'GNF'): string => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'currency',
-      currency: curr,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amt);
-  };
+  const formatAmount = useFormatCurrency();
 
   const numAmount = parseFloat(amount) || 0;
   const minWithdrawal = 10000; // GNF

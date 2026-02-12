@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Building2, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertCircle, Eye, EyeOff, Send } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import BureauTransferMoney from "./BureauTransferMoney";
 import {
   AlertDialog,
@@ -31,6 +32,7 @@ export default function BureauWalletManagement({
   bureauCode,
   showTransactions = true 
 }: BureauWalletManagementProps) {
+  const fc = useFormatCurrency();
   const [wallet, setWallet] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -162,7 +164,7 @@ export default function BureauWalletManagement({
     if (loading) return '...';
     if (!wallet) return '0';
     if (hidden) return '••••••';
-    return new Intl.NumberFormat('fr-GN').format(wallet.balance);
+    return fc(wallet.balance);
   }, [wallet, loading, hidden]);
 
   const handleDeposit = useCallback(async () => {

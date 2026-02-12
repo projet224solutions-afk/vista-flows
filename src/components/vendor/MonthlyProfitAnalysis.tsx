@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -89,15 +90,10 @@ const COST_TYPE_LABELS: Record<string, { label: string; icon: React.ReactNode; c
   autre: { label: 'Autre', icon: <HelpCircle className="w-4 h-4" />, color: '#6B7280' }
 };
 
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('fr-GN', {
-    style: 'decimal',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(amount) + ' GNF';
-};
+// formatCurrency is now imported from lib - used inside component with useFormatCurrency
 
 export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysisProps) {
+  const formatCurrency = useFormatCurrency();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);

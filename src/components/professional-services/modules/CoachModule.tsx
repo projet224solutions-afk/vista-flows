@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -202,9 +203,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
     }
   ]);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('fr-GN', { style: 'decimal' }).format(price) + ' GNF';
-  };
+  const formatPrice = useFormatCurrency();
 
   const getLevelBadge = (level: 'débutant' | 'intermédiaire' | 'avancé') => {
     const styles = {

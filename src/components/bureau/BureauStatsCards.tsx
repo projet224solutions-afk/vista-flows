@@ -1,4 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Users, Bike, AlertCircle, Wallet, Building2, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -27,13 +28,7 @@ export function BureauStatsCards({
   walletBalance = 0,
   currency = 'GNF'
 }: BureauStatsCardsProps) {
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
+  const formatAmount = useFormatCurrency();
 
   const statCards: StatCard[] = [
     {

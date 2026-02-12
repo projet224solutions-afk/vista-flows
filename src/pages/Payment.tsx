@@ -10,6 +10,7 @@ import { CreditCard, ArrowLeft, Wallet, Receipt, TrendingUp, TrendingDown, Clock
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
@@ -349,13 +350,7 @@ export default function Payment() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount) + ' GNF';
-  };
+  const formatCurrency = useFormatCurrency();
 
   const getTransactionIcon = (type: string, senderId: string) => {
     if (senderId === user?.id) {

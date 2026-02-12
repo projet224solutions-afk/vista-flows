@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,12 +29,7 @@ interface RestaurantMenuManagerProps {
   serviceId: string;
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('fr-GN', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount) + ' FG';
-}
+// formatCurrency is now handled via useFormatCurrency hook inside the component
 
 const DIETARY_TAGS = [
   { value: 'vegetarien', label: 'Végétarien', icon: '🥬' },
@@ -51,6 +47,7 @@ const ALLERGENS = [
 ];
 
 export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps) {
+  const formatCurrency = useFormatCurrency();
   const { 
     categories, 
     menuItems, 

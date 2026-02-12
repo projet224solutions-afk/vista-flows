@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
+import { formatCurrency } from '@/lib/formatters';
 
 export interface ServicePlan {
   id: string;
@@ -422,12 +423,7 @@ export class ServiceSubscriptionService {
    * Formater un montant en GNF
    */
   static formatAmount(amount: number): string {
-    return new Intl.NumberFormat('fr-GN', {
-      style: 'currency',
-      currency: 'GNF',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
+    return formatCurrency(amount);
   }
 
   /**

@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,12 +25,7 @@ interface BeautyModuleProps {
   businessName?: string;
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('fr-GN', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount) + ' FG';
-}
+// formatCurrency is now handled via useFormatCurrency hook inside the component
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -48,6 +44,7 @@ const statusLabels: Record<string, string> = {
 };
 
 export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
+  const formatCurrency = useFormatCurrency();
   const { stats, recentAppointments, loading, error, refresh } = useServiceBeautyStats(serviceId);
   const [activeTab, setActiveTab] = useState('overview');
   const navigate = useNavigate();

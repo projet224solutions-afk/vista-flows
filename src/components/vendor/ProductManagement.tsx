@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -72,6 +73,7 @@ interface Category {
 }
 
 export default function ProductManagement() {
+  const fc = useFormatCurrency();
   const { vendorId, user, loading: vendorLoading } = useCurrentVendor();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -990,9 +992,7 @@ export default function ProductManagement() {
           </CardHeader>
           <CardContent className="p-2 md:p-6 pt-0">
             <div className="text-sm md:text-2xl font-bold truncate">
-              {new Intl.NumberFormat('fr-GN', {
-                maximumFractionDigits: 0
-              }).format(stats.totalValue)} GNF
+              {fc(stats.totalValue)}
             </div>
             <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-1">
               Valeur inventaire
@@ -1136,15 +1136,11 @@ export default function ProductManagement() {
               {/* Price */}
               <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                 <span className="text-sm md:text-xl font-bold text-primary truncate">
-                  {new Intl.NumberFormat('fr-GN', {
-                    maximumFractionDigits: 0
-                  }).format(product.price)} GNF
+                  {fc(product.price)}
                 </span>
                 {product.compare_price && product.compare_price > product.price && (
                   <span className="text-[10px] md:text-sm line-through text-muted-foreground">
-                    {new Intl.NumberFormat('fr-GN', {
-                      maximumFractionDigits: 0
-                    }).format(product.compare_price)} GNF
+                    {fc(product.compare_price)}
                   </span>
                 )}
               </div>
