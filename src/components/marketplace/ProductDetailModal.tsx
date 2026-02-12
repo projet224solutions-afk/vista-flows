@@ -130,10 +130,15 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
       if (physicalError) throw physicalError;
       if (physicalProduct) {
-        // Dériver la devise du pays du vendeur
-        const vendorCountry = (physicalProduct.vendors as any)?.country || '';
+        // Dériver la devise du pays du vendeur (supporte vendors objet OU tableau)
+        const vendor = Array.isArray((physicalProduct as any).vendors)
+          ? (physicalProduct as any).vendors?.[0]
+          : (physicalProduct as any).vendors;
+
+        const vendorCountry = vendor?.country || '';
         const derivedCurrency = vendorCountry ? getCurrencyForCountry(vendorCountry) : 'GNF';
-        setProduct({ ...physicalProduct, currency: derivedCurrency });
+
+        setProduct({ ...physicalProduct, vendors: vendor, currency: derivedCurrency });
         return;
       }
 
@@ -206,7 +211,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           vendors:vendors!digital_products_vendor_id_fkey (
             business_name,
             user_id,
-            shop_slug
+            shop_slug,
+            country
           )
         `
         )
@@ -220,13 +226,17 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           throw new Error("Produit introuvable");
         }
 
-        const v = (digitalProduct.vendors as any) || null;
+        const vRaw = (digitalProduct.vendors as any) || null;
+        const v = Array.isArray(vRaw) ? vRaw?.[0] : vRaw;
+
+        const vendorCountry = v?.country || '';
+        const derivedCurrency = (digitalProduct.currency || (vendorCountry ? getCurrencyForCountry(vendorCountry) : 'GNF'));
 
         setProduct({
           id: digitalProduct.id,
           name: digitalProduct.title,
           price: digitalProduct.price || 0,
-          currency: digitalProduct.currency || 'GNF', // Devise du produit
+          currency: derivedCurrency, // Devise du produit
           description: digitalProduct.description || undefined,
           images: Array.isArray(digitalProduct.images) ? (digitalProduct.images as string[]) : [],
           promotional_videos: [],
@@ -237,6 +247,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             business_name: v?.business_name || "Vendeur",
             user_id: v?.user_id || digitalProduct.merchant_id,
             shop_slug: v?.shop_slug || undefined,
+            country: v?.country || undefined,
           },
           // ✅ Champs affiliation
           is_affiliate: digitalProduct.product_mode === "affiliate",
@@ -708,21 +719,21 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Contacter
                 </Button>
-                <ShareButton
-                  title={product.name}
-                  text={`Découvrez ${product.name} à ${product.price.toLocaleString()} ${product.currency || 'GNF'} sur 224 Solutions`}
-                  url={`${window.location.origin}/product/${product.id}`}
-                  variant="outline"
-                  size="icon"
-                  resourceType="product"
-                  resourceId={product.id}
-                  useShortUrl={true}
-                  ogType="product"
-                  imageUrl={product.images?.[0]}
-                  description={product.description}
-                  price={product.price}
-                  currency={product.currency || 'GNF'}
-                />
+                  <ShareButton
+                    title={product.name}
+                    text={`Découvrez ${product.name} à ${product.price.toLocaleString()} ${product.currency || 'GNF'} sur 224 Solutions`}
+                    url={`${window.location.origin}/product/${product.id}`}
+                    variant="outline"
+                    size="icon"
+                    resourceType="product"
+                    resourceId={product.id}
+                    useShortUrl={true}
+                    ogType="product"
+                    imageUrl={product.images?.[0]}
+                    description={product.description}
+                    price={product.price}
+                    currency={product.currency || 'GNF'}
+                  />
               </div>
             </div>
 
