@@ -197,14 +197,13 @@ export default function Marketplace() {
   const loadLocations = async (countryFilter?: string) => {
     try {
       // Charger les pays distincts depuis les vendeurs visibles sur le marketplace
-      // (actifs, non-physical, avec un pays défini)
+      // (actifs, avec un pays défini)
       const { data: countryData, error: countryError } = await supabase
         .from('vendors')
         .select('country')
         .eq('is_active', true)
         .not('country', 'is', null)
-        .neq('country', '')
-        .neq('business_type', 'physical');
+        .neq('country', '');
 
       if (countryError) {
         console.error('Erreur chargement pays:', countryError);
@@ -242,8 +241,7 @@ export default function Marketplace() {
         .select('city, country')
         .eq('is_active', true)
         .not('city', 'is', null)
-        .neq('city', '')
-        .neq('business_type', 'physical');
+        .neq('city', '');
 
       // Si un pays est sélectionné, filtrer les villes par ce pays
       if (countryFilter && countryFilter !== 'all') {

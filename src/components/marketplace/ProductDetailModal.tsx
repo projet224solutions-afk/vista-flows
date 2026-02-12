@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus, ExternalLink, Play, Pause } from "lucide-react";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrencyForCountry } from "@/data/countryMappings";
 import { toast } from "sonner";
 import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
@@ -30,6 +31,7 @@ interface Product {
     business_name: string;
     user_id: string;
     shop_slug?: string;
+    country?: string;
   };
   // ✅ Champs pour les produits d'affiliation
   is_affiliate?: boolean;
@@ -118,7 +120,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           vendors (
             business_name,
             user_id,
-            shop_slug
+            shop_slug,
+            country
           )
         `
         )
@@ -127,7 +130,10 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
       if (physicalError) throw physicalError;
       if (physicalProduct) {
-        setProduct(physicalProduct);
+        // Dériver la devise du pays du vendeur
+        const vendorCountry = (physicalProduct.vendors as any)?.country || '';
+        const derivedCurrency = vendorCountry ? getCurrencyForCountry(vendorCountry) : 'GNF';
+        setProduct({ ...physicalProduct, currency: derivedCurrency });
         return;
       }
 
