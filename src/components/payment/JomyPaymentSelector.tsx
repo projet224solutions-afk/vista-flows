@@ -19,7 +19,8 @@ import {
   AlertCircle,
   CheckCircle,
   Wallet,
-  Truck
+  Truck,
+  Phone
 } from 'lucide-react';
 import { useChapChapPay } from '@/hooks/useChapChapPay';
 import { CCPPaymentMethod } from '@/services/payment/ChapChapPayService';
@@ -483,18 +484,60 @@ export function JomyPaymentSelector({
             </div>
           )}
 
-          {/* Supprimé: Formulaire adresse de livraison pour COD */}
-
-          {/* Info pour paiement à la livraison */}
+          {/* Formulaire téléphone et ville pour COD */}
           {selectedMethod === 'CASH_ON_DELIVERY' && (
-            <Alert className="bg-emerald-50 border-emerald-200">
-              <Truck className="h-4 w-4 text-emerald-600" />
-              <AlertDescription className="text-emerald-700">
-                <strong>Paiement à la livraison confirmé</strong><br/>
-                Vous serez contacté par téléphone pour confirmer votre adresse exacte avant la livraison. 
-                Préparez {amount.toLocaleString()} GNF en espèces.
-              </AlertDescription>
-            </Alert>
+            <div className="space-y-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg animate-in slide-in-from-top-2">
+              <h4 className="font-semibold text-emerald-800 flex items-center gap-2 text-sm">
+                <Phone className="h-4 w-4" />
+                Informations de contact
+              </h4>
+
+              <div className="space-y-2">
+                <Label htmlFor="cod-phone" className="text-sm">
+                  Numéro à contacter <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="cod-phone"
+                  type="tel"
+                  inputMode="tel"
+                  placeholder="Ex: 620 00 00 00"
+                  value={deliveryAddress.street}
+                  onChange={(e) => setDeliveryAddress({...deliveryAddress, street: e.target.value})}
+                  className="bg-white"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cod-city" className="text-sm">
+                  Ville <span className="text-red-500">*</span>
+                </Label>
+                <select
+                  id="cod-city"
+                  value={deliveryAddress.city}
+                  onChange={(e) => setDeliveryAddress({...deliveryAddress, city: e.target.value})}
+                  className="w-full px-3 py-2 border rounded-md bg-white text-sm"
+                  required
+                >
+                  <option value="Conakry">Conakry</option>
+                  <option value="Kindia">Kindia</option>
+                  <option value="Labé">Labé</option>
+                  <option value="Kankan">Kankan</option>
+                  <option value="N'Zérékoré">N'Zérékoré</option>
+                  <option value="Mamou">Mamou</option>
+                  <option value="Boké">Boké</option>
+                </select>
+              </div>
+
+              <Alert className="bg-emerald-50 border-emerald-200 mt-2">
+                <Truck className="h-4 w-4 text-emerald-600" />
+                <AlertDescription className="text-emerald-700">
+                  <strong>Paiement à la livraison confirmé</strong><br/>
+                  Vous serez contacté par téléphone pour confirmer votre adresse exacte avant la livraison. 
+                  Préparez {amount.toLocaleString()} GNF en espèces.
+                </AlertDescription>
+              </Alert>
+            </div>
           )}
 
           {/* Info statut */}
