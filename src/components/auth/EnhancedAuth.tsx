@@ -152,7 +152,7 @@ export default function EnhancedAuth() {
             // Récupérer le profil pour déterminer la redirection
             const { data: profile, error } = await supabase
               .from('profiles')
-              .select('first_name, last_name, phone, role, created_at')
+              .select('first_name, last_name, phone, role, created_at, has_password')
               .eq('id', session.user.id)
               .maybeSingle();
 
@@ -187,9 +187,16 @@ export default function EnhancedAuth() {
             }
 
             // Vérifier si l'utilisateur OAuth a déjà défini un mot de passe ou passé l'étape
+            // ✅ Vérifier AUSSI en BDD (has_password) pour éviter les boucles si localStorage est vide
             const hasSetPassword = localStorage.getItem(`oauth_password_set_${session.user.id}`);
             const alreadyHandled = hasSetPassword === 'true' || hasSetPassword === 'skipped';
-            const needsPassword = isOAuthUser && !alreadyHandled;
+            const hasPasswordInDB = profile?.has_password === true;
+            const needsPassword = isOAuthUser && !alreadyHandled && !hasPasswordInDB;
+
+            // Si le mot de passe est défini en BDD mais pas en localStorage, synchroniser
+            if (hasPasswordInDB && !alreadyHandled) {
+              localStorage.setItem(`oauth_password_set_${session.user.id}`, 'true');
+            }
 
             if (needsPassword) {
               console.log('🔐 [EnhancedAuth] Utilisateur OAuth sans mot de passe, redirection vers /auth/set-password');
