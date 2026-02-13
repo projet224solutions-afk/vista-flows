@@ -541,7 +541,8 @@ export default function Payment() {
           neighborhood: addressData.neighborhood || '',
           city: addressData.city,
           landmark: addressData.landmark || '',
-          phone: addressData.street || profileData?.phone || 'Non fourni',
+          phone: profileData?.phone || 'Non fourni',
+          cod_phone: addressData.street || '',
           country: 'Guinée',
           instructions: addressData.instructions || '',
           is_cod: true
