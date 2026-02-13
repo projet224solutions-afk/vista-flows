@@ -484,6 +484,36 @@ async function resolveRecipientId(supabase: any, recipientId: string): Promise<s
     return vendorData.user_id;
   }
 
+  // Priority 4: Search by email
+  if (recipientId.includes('@')) {
+    const { data: emailData } = await supabase
+      .from('profiles')
+      .select('id')
+      .ilike('email', recipientId.trim())
+      .maybeSingle();
+
+    if (emailData) {
+      console.log('✅ Email trouvé:', recipientId);
+      return emailData.id;
+    }
+  }
+
+  // Priority 5: Search by phone number
+  const phonePattern = /^[0-9+\-\s]{6,}$/;
+  if (phonePattern.test(recipientId.trim())) {
+    const cleanPhone = recipientId.replace(/[\s\-]/g, '');
+    const { data: phoneData } = await supabase
+      .from('profiles')
+      .select('id')
+      .or(`phone.eq.${cleanPhone},phone.eq.+${cleanPhone},phone.ilike.%${cleanPhone}%`)
+      .maybeSingle();
+
+    if (phoneData) {
+      console.log('✅ Téléphone trouvé:', recipientId);
+      return phoneData.id;
+    }
+  }
+
   return null;
 }
 

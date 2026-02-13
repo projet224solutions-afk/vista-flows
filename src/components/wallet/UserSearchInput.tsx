@@ -28,7 +28,7 @@ export const UserSearchInput = ({
   onChange,
   onUserSelect,
   label = "ID du destinataire",
-  placeholder = "Ex: USR0001, AEG1234"
+  placeholder = "ID, email ou téléphone"
 }: UserSearchInputProps) => {
   const [searching, setSearching] = useState(false);
   const [userInfo, setUserInfo] = useState<UserSearchResult | null>(null);
@@ -265,7 +265,7 @@ export const UserSearchInput = ({
           id="user-search"
           placeholder={placeholder}
           value={value}
-          onChange={(e) => handleInputChange(e.target.value.toUpperCase())}
+          onChange={(e) => handleInputChange(e.target.value)}
           onFocus={() => setShowSuggestions(true)}
           onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
           className="pl-10"
