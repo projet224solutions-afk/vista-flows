@@ -1273,7 +1273,13 @@ export default function OrderManagement() {
                           <div>
                             <span className="text-muted-foreground text-xs">Adresse de livraison:</span>
                             <p className="font-medium text-sm mt-1">
-                              {[(order.shipping_address as any)?.address, (order.shipping_address as any)?.city, (order.shipping_address as any)?.country].filter(Boolean).join(', ') || 'Non disponible'}
+                              {[
+                                (order.shipping_address as any)?.is_cod !== true ? (order.shipping_address as any)?.address : null,
+                                (order.shipping_address as any)?.neighborhood,
+                                (order.shipping_address as any)?.landmark,
+                                (order.shipping_address as any)?.city,
+                                (order.shipping_address as any)?.country
+                              ].filter(Boolean).join(', ') || 'Non disponible'}
                             </p>
                           </div>
                         </div>
