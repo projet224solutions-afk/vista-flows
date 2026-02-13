@@ -368,14 +368,6 @@ export default function ClientDashboard() {
                 <span className={responsive.isMobile ? '' : 'hidden'}>Cmd</span>
               </TabsTrigger>
               <TabsTrigger 
-                value="communication" 
-                className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
-              >
-                <MessageSquare className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
-                <span className={responsive.isMobile ? 'hidden' : ''}>Messages</span>
-                <span className={responsive.isMobile ? '' : 'hidden'}>Msg</span>
-              </TabsTrigger>
-              <TabsTrigger 
                 value="copilot" 
                 className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
               >
@@ -655,13 +647,6 @@ export default function ClientDashboard() {
             </Card>
           </TabsContent>
 
-          {/* Communication */}
-          <TabsContent value="communication" className="animate-fade-in">
-            <UniversalCommunicationHub 
-              selectedConversationId={selectedConversationId}
-              refreshTrigger={communicationRefresh}
-            />
-          </TabsContent>
 
           {/* Copilote */}
           <TabsContent value="copilot" className="animate-fade-in">
