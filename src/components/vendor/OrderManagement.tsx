@@ -1253,10 +1253,13 @@ export default function OrderManagement() {
                               : 'N/A'}
                           </span>
                         </div>
-                      <div>
-                          <span className="text-muted-foreground">Téléphone:</span>
+                        <div>
+                          <span className="text-muted-foreground">📞 Téléphone:</span>
                           <span className="ml-2 font-semibold">
-                            {order.customers?.profiles?.phone || 'Non renseigné'}
+                            {(order.shipping_address as any)?.phone 
+                              || (order.shipping_address as any)?.cod_phone 
+                              || order.customers?.profiles?.phone 
+                              || 'Non renseigné'}
                           </span>
                         </div>
                         <div>
@@ -1265,24 +1268,6 @@ export default function OrderManagement() {
                             {order.customers?.profiles?.email || 'Non renseigné'}
                           </span>
                         </div>
-                        {/* Numéro de contact COD */}
-                        {(order.shipping_address as any)?.is_cod === true && (
-                          <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
-                            <span className="text-amber-700 font-semibold text-xs flex items-center gap-1">
-                              📞 Numéro à contacter (Paiement à la livraison):
-                            </span>
-                            <span className="ml-2 font-bold text-amber-900">
-                              {(order.shipping_address as any)?.cod_phone 
-                                || (order.shipping_address as any)?.phone 
-                                || 'Non fourni'}
-                            </span>
-                            {(order.shipping_address as any)?.cod_city && (
-                              <span className="ml-2 text-xs text-amber-700">
-                                — Ville: {(order.shipping_address as any).cod_city}
-                              </span>
-                            )}
-                          </div>
-                        )}
                       </div>
                       {/* Adresse de livraison géolocalisée */}
                       <div className="mt-3 pt-3 border-t border-border/50">
