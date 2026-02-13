@@ -158,11 +158,11 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           if (vendorCountry !== normalizedCountry) return false;
         }
 
-        // Filtrage par ville (préfixe pour inclure les sous-zones ex: Coyah + Coyah Centre)
+        // Filtrage par ville (bidirectionnel: Coyah inclut Coyah Centre, et Coyah Centre inclut Coyah)
         if (city && city !== 'all') {
           const vendorCity = (vendor.city || '').trim().replace(/\s+/g, ' ').toLowerCase();
           const normalizedCity = city.trim().replace(/\s+/g, ' ').toLowerCase();
-          if (!vendorCity.startsWith(normalizedCity)) return false;
+          if (!vendorCity.startsWith(normalizedCity) && !normalizedCity.startsWith(vendorCity)) return false;
         }
         
         return true;
@@ -256,9 +256,9 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       }
       if (minRating && minRating > 0) query = query.gte('rating', minRating);
 
-      // Filtrage par ville (préfixe pour inclure les sous-zones)
+      // Filtrage par ville (bidirectionnel pour services pro)
       if (city && city !== 'all') {
-        query = query.ilike('city', `${city.trim()}%`);
+        query = query.or(`city.ilike.${city.trim()}%,city.ilike.${city.trim().split(' ')[0]}%`);
       }
 
       const { data, error } = await query;
@@ -381,11 +381,11 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           if (vendorCountry !== normalizedCountry) return false;
         }
 
-        // Filtrage par ville (préfixe pour inclure les sous-zones ex: Coyah + Coyah Centre)
+        // Filtrage par ville (bidirectionnel: Coyah inclut Coyah Centre, et vice versa)
         if (city && city !== 'all') {
           const vendorCity = (vendor.city || '').trim().replace(/\s+/g, ' ').toLowerCase();
           const normalizedCity = city.trim().replace(/\s+/g, ' ').toLowerCase();
-          if (!vendorCity.startsWith(normalizedCity)) return false;
+          if (!vendorCity.startsWith(normalizedCity) && !normalizedCity.startsWith(vendorCity)) return false;
         }
 
         return true;
