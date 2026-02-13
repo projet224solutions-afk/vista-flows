@@ -62,6 +62,14 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
   const offlineStartRef = useRef<Date | null>(null);
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Stabilize callbacks via refs to avoid infinite re-render loops
+  const onOnlineRef = useRef(onOnline);
+  const onOfflineRef = useRef(onOffline);
+  const showToastsRef = useRef(showToasts);
+  onOnlineRef.current = onOnline;
+  onOfflineRef.current = onOffline;
+  showToastsRef.current = showToasts;
+
   // Obtenir les infos de connexion si disponibles
   const getConnectionInfo = useCallback(() => {
     if (typeof navigator === 'undefined') return { connectionType: null, effectiveType: null };
@@ -117,14 +125,14 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
       if (lastStatusRef.current !== 'offline') {
         offlineStartRef.current = now;
 
-        if (showToasts) {
+        if (showToastsRef.current) {
           toast.warning('Mode hors ligne', {
             description: 'Vos données seront synchronisées au retour de la connexion',
             duration: 5000
           });
         }
 
-        onOffline?.();
+        onOfflineRef.current?.();
       }
 
       lastStatusRef.current = 'offline';
@@ -158,7 +166,7 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
           ? Math.floor((now.getTime() - offlineStartRef.current.getTime()) / 1000)
           : 0;
 
-        if (showToasts) {
+        if (showToastsRef.current) {
           toast.success('Connexion rétablie', {
             description: offlineDuration > 60
               ? `Hors ligne pendant ${Math.floor(offlineDuration / 60)} min. Synchronisation en cours...`
@@ -168,7 +176,7 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
         }
 
         offlineStartRef.current = null;
-        onOnline?.();
+        onOnlineRef.current?.();
       }
 
       lastStatusRef.current = 'online';
@@ -187,7 +195,7 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
       // Navigator dit online mais le ping échoue
       if (lastStatusRef.current !== 'offline') {
         offlineStartRef.current = now;
-        onOffline?.();
+        onOfflineRef.current?.();
       }
 
       lastStatusRef.current = 'offline';
@@ -202,7 +210,7 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
         effectiveType
       }));
     }
-  }, [checkConnection, getConnectionInfo, onOffline, onOnline, showToasts]);
+  }, [checkConnection, getConnectionInfo]);
 
   // Forcer une vérification manuelle
   const checkNow = useCallback(async () => {
