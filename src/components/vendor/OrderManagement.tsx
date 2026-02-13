@@ -1269,8 +1269,16 @@ export default function OrderManagement() {
                           </span>
                         </div>
                       </div>
-                      {/* Adresse de livraison géolocalisée */}
+                      {/* Numéro + Adresse de livraison géolocalisée */}
                       <div className="mt-3 pt-3 border-t border-border/50">
+                        <div className="flex items-start gap-2 mb-1">
+                          <span className="text-xs font-semibold text-primary">
+                            📞 {(order.shipping_address as any)?.phone 
+                              || (order.shipping_address as any)?.cod_phone 
+                              || order.customers?.profiles?.phone 
+                              || ''}
+                          </span>
+                        </div>
                         <GeocodedAddress address={order.shipping_address} />
                       </div>
                     </div>
