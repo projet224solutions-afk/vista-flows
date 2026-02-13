@@ -158,11 +158,11 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           if (vendorCountry !== normalizedCountry) return false;
         }
 
-        // Filtrage par ville (normaliser les espaces comme dans loadLocations)
+        // Filtrage par ville (préfixe pour inclure les sous-zones ex: Coyah + Coyah Centre)
         if (city && city !== 'all') {
           const vendorCity = (vendor.city || '').trim().replace(/\s+/g, ' ').toLowerCase();
           const normalizedCity = city.trim().replace(/\s+/g, ' ').toLowerCase();
-          if (vendorCity !== normalizedCity) return false;
+          if (!vendorCity.startsWith(normalizedCity)) return false;
         }
         
         return true;
@@ -256,9 +256,9 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       }
       if (minRating && minRating > 0) query = query.gte('rating', minRating);
 
-      // Filtrage par ville (la table professional_services a un champ city)
+      // Filtrage par ville (préfixe pour inclure les sous-zones)
       if (city && city !== 'all') {
-        query = query.ilike('city', city.trim());
+        query = query.ilike('city', `${city.trim()}%`);
       }
 
       const { data, error } = await query;
@@ -381,11 +381,11 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           if (vendorCountry !== normalizedCountry) return false;
         }
 
-        // Filtrage par ville (normaliser les espaces comme dans loadLocations)
+        // Filtrage par ville (préfixe pour inclure les sous-zones ex: Coyah + Coyah Centre)
         if (city && city !== 'all') {
           const vendorCity = (vendor.city || '').trim().replace(/\s+/g, ' ').toLowerCase();
           const normalizedCity = city.trim().replace(/\s+/g, ' ').toLowerCase();
-          if (vendorCity !== normalizedCity) return false;
+          if (!vendorCity.startsWith(normalizedCity)) return false;
         }
 
         return true;
