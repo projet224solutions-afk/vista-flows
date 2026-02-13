@@ -30,7 +30,8 @@ import {
   AlertCircle,
   CreditCard,
   Smartphone,
-  Shield
+  Shield,
+  Loader2
 } from 'lucide-react';
 import { StripeCardPaymentModal } from '@/components/pos/StripeCardPaymentModal';
 
@@ -943,7 +944,18 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   };
 
   const handleConfirmTransfer = async () => {
-    if (!user?.id || !transferPreview) return;
+    console.log('🔵 handleConfirmTransfer appelé', { 
+      userId: user?.id, 
+      effectiveUserId,
+      hasPreview: !!transferPreview,
+      preview: transferPreview 
+    });
+    
+    if (!effectiveUserId || !transferPreview) {
+      console.error('❌ Transfert annulé: données manquantes', { effectiveUserId, transferPreview });
+      toast.error('Données de transfert manquantes');
+      return;
+    }
     
     setProcessing(true);
     setShowTransferPreview(false);
@@ -1681,8 +1693,21 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={processing}>Non, annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmTransfer} disabled={processing}>
-                Oui, confirmer
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleConfirmTransfer();
+                }}
+                disabled={processing}
+              >
+                {processing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Transfert en cours...
+                  </>
+                ) : (
+                  'Oui, confirmer'
+                )}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
