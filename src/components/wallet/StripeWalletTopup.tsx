@@ -51,6 +51,8 @@ export default function StripeWalletTopup({ userId, walletId, onSuccess }: Strip
         .from('wallet_transactions')
         .insert([
           {
+            transaction_id: referenceNumber,
+            transaction_type: 'deposit',
             amount: numAmount,
             net_amount: numAmount,
             fee: 0,
@@ -58,7 +60,8 @@ export default function StripeWalletTopup({ userId, walletId, onSuccess }: Strip
             status: 'completed',
             description: 'Recharge wallet par carte bancaire (Stripe)',
             receiver_wallet_id: Number(walletId),
-            metadata: { transaction_type: 'deposit', stripe_payment_intent_id: paymentIntentId, reference: referenceNumber }
+            receiver_user_id: userId,
+            metadata: { stripe_payment_intent_id: paymentIntentId, reference: referenceNumber }
           } as any
         ] as any));
 
