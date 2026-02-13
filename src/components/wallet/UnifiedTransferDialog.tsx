@@ -31,6 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { InternationalTransferConfirmation, type InternationalPreviewData } from './InternationalTransferConfirmation';
 
 interface UnifiedTransferDialogProps {
   senderCode: string; // Le code de l'expéditeur (USR0001, etc.)
@@ -87,6 +88,9 @@ export function UnifiedTransferDialog({
   const [showPreview, setShowPreview] = useState(false);
   const [preview, setPreview] = useState<TransferPreview | null>(null);
   const [walletCurrency, setWalletCurrency] = useState(propCurrency || 'GNF');
+  const [intlPreview, setIntlPreview] = useState<InternationalPreviewData | null>(null);
+  const [showIntlConfirm, setShowIntlConfirm] = useState(false);
+  const [intlExecuting, setIntlExecuting] = useState(false);
 
   // Charger la devise du wallet de l'utilisateur
   useEffect(() => {
@@ -160,6 +164,33 @@ export function UnifiedTransferDialog({
         return;
       }
 
+      // Check if the RPC returned international fields
+      const anyData = data as any;
+      if (anyData.is_international) {
+        setIntlPreview({
+          success: true,
+          amount_sent: anyData.amount || parseFloat(amount),
+          currency_sent: anyData.currency_sent || walletCurrency,
+          fee_percentage: anyData.fee_percent || 0,
+          fee_amount: anyData.fee_amount || 0,
+          amount_after_fee: anyData.amount_after_fee || 0,
+          rate_displayed: anyData.rate_displayed || 1,
+          amount_received: anyData.amount_received || 0,
+          currency_received: anyData.currency_received || walletCurrency,
+          is_international: true,
+          sender_country: anyData.sender_country || '',
+          receiver_country: anyData.receiver_country || '',
+          commission_conversion: anyData.commission_conversion || 0,
+          frais_international: anyData.frais_international || 0,
+          rate_lock_seconds: anyData.rate_lock_seconds || 60,
+          receiver_name: previewData.receiver?.name,
+          receiver_code: previewData.receiver?.custom_id,
+        });
+        setShowIntlConfirm(true);
+        setOpen(false);
+        return;
+      }
+
       setPreview(previewData);
       setShowPreview(true);
       setOpen(false);
@@ -225,6 +256,40 @@ export function UnifiedTransferDialog({
       toast.error(error.message || 'Erreur lors du transfert');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleIntlConfirm = async () => {
+    if (!intlPreview) return;
+    setIntlExecuting(true);
+    try {
+      const { data, error } = await supabase.rpc('process_wallet_transfer_with_fees', {
+        p_sender_code: senderCode.toUpperCase(),
+        p_receiver_code: recipientCode.toUpperCase(),
+        p_amount: intlPreview.amount_sent,
+        p_currency: walletCurrency,
+        p_description: description
+      });
+
+      if (error) throw error;
+      const result = data as any;
+      if (!result.success) {
+        toast.error(result.error || 'Erreur lors du transfert');
+        return;
+      }
+
+      toast.success('🌍 Transfert international réussi !', { duration: 5000 });
+      setAmount('');
+      setRecipientCode('');
+      setDescription('');
+      setIntlPreview(null);
+      setShowIntlConfirm(false);
+      onSuccess?.();
+      window.dispatchEvent(new CustomEvent('wallet-updated'));
+    } catch (error: any) {
+      toast.error(error.message || 'Erreur lors du transfert international');
+    } finally {
+      setIntlExecuting(false);
     }
   };
 
@@ -385,6 +450,18 @@ export function UnifiedTransferDialog({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* International confirmation with rate-lock timer */}
+      <InternationalTransferConfirmation
+        open={showIntlConfirm}
+        onOpenChange={(val) => {
+          setShowIntlConfirm(val);
+          if (!val) setIntlPreview(null);
+        }}
+        preview={intlPreview}
+        onConfirm={handleIntlConfirm}
+        loading={intlExecuting}
+      />
     </>
   );
 }
