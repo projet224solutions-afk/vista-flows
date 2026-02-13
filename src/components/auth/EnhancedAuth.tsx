@@ -432,14 +432,61 @@ export default function EnhancedAuth() {
         toast.success(t('auth.checkEmail'));
       } else {
         // Connexion
-        const { error } = await supabase.auth.signInWithPassword({
+        const { error, data } = await supabase.auth.signInWithPassword({
           email,
           password
         });
         
         if (error) throw error;
         toast.success(t('auth.connectionSuccess'));
-        navigate('/');
+        
+        // ✅ Récupérer le profil pour rediriger vers le bon dashboard
+        if (data.user) {
+          let profileData = null;
+          let attempts = 0;
+          const maxAttempts = 10;
+          
+          while (!profileData && attempts < maxAttempts) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('role')
+              .eq('id', data.user.id)
+              .maybeSingle();
+            
+            if (profile?.role) {
+              profileData = profile;
+              break;
+            }
+            
+            if (attempts < maxAttempts - 1) {
+              await new Promise(resolve => setTimeout(resolve, 200));
+            }
+            attempts++;
+          }
+          
+          if (profileData?.role) {
+            const roleRoutes: Record<string, string> = {
+              admin: '/pdg',
+              ceo: '/pdg',
+              pdg: '/pdg',
+              vendeur: '/vendeur',
+              livreur: '/livreur',
+              taxi: '/taxi-moto/driver',
+              driver: '/taxi-moto/driver',
+              syndicat: '/syndicat',
+              transitaire: '/transitaire',
+              client: '/client',
+              agent: '/agent',
+            };
+            const targetRoute = roleRoutes[profileData.role] || '/home';
+            console.log(`🚀 [EnhancedAuth] Redirection login vers ${targetRoute} (rôle: ${profileData.role})`);
+            navigate(targetRoute, { replace: true });
+          } else {
+            navigate('/home', { replace: true });
+          }
+        } else {
+          navigate('/', { replace: true });
+        }
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : t('auth.authError');
