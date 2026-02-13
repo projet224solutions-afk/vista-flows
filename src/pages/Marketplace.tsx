@@ -203,7 +203,8 @@ export default function Marketplace() {
         .select('country')
         .eq('is_active', true)
         .not('country', 'is', null)
-        .neq('country', '');
+        .neq('country', '')
+        .or('business_type.is.null,business_type.neq.physical');
 
       if (countryError) {
         console.error('Erreur chargement pays:', countryError);
@@ -241,7 +242,8 @@ export default function Marketplace() {
         .select('city, country')
         .eq('is_active', true)
         .not('city', 'is', null)
-        .neq('city', '');
+        .neq('city', '')
+        .or('business_type.is.null,business_type.neq.physical');
 
       // Si un pays est sélectionné, filtrer les villes par ce pays
       if (countryFilter && countryFilter !== 'all') {
