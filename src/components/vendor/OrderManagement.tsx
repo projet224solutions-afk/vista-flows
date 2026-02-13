@@ -1256,10 +1256,7 @@ export default function OrderManagement() {
                         <div>
                           <span className="text-muted-foreground">📞 Téléphone:</span>
                           <span className="ml-2 font-semibold">
-                            {(order.shipping_address as any)?.phone 
-                              || (order.shipping_address as any)?.cod_phone 
-                              || order.customers?.profiles?.phone 
-                              || 'Non renseigné'}
+                            {order.customers?.profiles?.phone || 'Non renseigné'}
                           </span>
                         </div>
                         <div>
@@ -1272,9 +1269,9 @@ export default function OrderManagement() {
                       {/* Adresse de livraison géolocalisée + numéro COD */}
                       <div className="mt-3 pt-3 border-t border-border/50">
                         <GeocodedAddress address={order.shipping_address} />
-                        {(order.shipping_address as any)?.is_cod === true && (order.shipping_address as any)?.phone && (
+                        {(order.shipping_address as any)?.is_cod === true && (order.shipping_address as any)?.cod_phone && (
                           <p className="text-sm font-bold text-primary mt-1 ml-6">
-                            📞 {(order.shipping_address as any).phone}
+                            📞 Numéro à contacter: {(order.shipping_address as any).cod_phone}
                           </p>
                         )}
                       </div>
