@@ -279,7 +279,7 @@ export default function VendeurDashboard() {
   // États de chargement et d'erreur
   // ═══════════════════════════════════════════════════════════════════════════
 
-  const isLoading = !user || typeof profile === 'undefined' || statsLoading;
+  const isLoading = !user || statsLoading;
 
   // État: Stats non chargées (après le loading)
   if (!isLoading && stats === null) {
