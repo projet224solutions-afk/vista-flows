@@ -13,6 +13,7 @@ import { trackProductView } from "@/services/analyticsTrackingService";
 import SEOHead from "@/components/SEOHead";
 import { LocalPrice } from "@/components/ui/LocalPrice";
 import { usePriceConverter } from "@/hooks/usePriceConverter";
+import { getCurrencyForCountry } from "@/data/countryMappings";
 
 interface Product {
   id: string;
@@ -30,6 +31,7 @@ interface Product {
     business_name: string;
     id: string;
     shop_slug?: string;
+    country?: string;
   };
   category_id?: string;
   categories?: {
@@ -134,7 +136,7 @@ export default function ProductDetail() {
         .select(`
           *,
           promotional_videos,
-          vendors:vendor_id(business_name, id, shop_slug),
+          vendors:vendor_id(business_name, id, shop_slug, country),
           categories:category_id(name)
         `)
         .eq('id', id)
@@ -362,13 +364,23 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              <LocalPrice 
-                amount={product.price} 
-                currency={product.currency || 'GNF'} 
-                size="xl"
-                className="text-primary mb-4"
-                showOriginal
-              />
+              {(() => {
+                const vendorCountry = (() => {
+                  const v = product.vendors;
+                  if (Array.isArray(v)) return v[0]?.country;
+                  return v?.country;
+                })();
+                const productCurrency = product.currency || (vendorCountry ? getCurrencyForCountry(vendorCountry) : 'GNF');
+                return (
+                  <LocalPrice 
+                    amount={product.price} 
+                    currency={productCurrency} 
+                    size="xl"
+                    className="text-primary mb-4"
+                    showOriginal
+                  />
+                );
+              })()}
 
               {product.description && (
                 <p className="text-muted-foreground leading-relaxed">{product.description}</p>
