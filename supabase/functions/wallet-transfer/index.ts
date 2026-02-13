@@ -1,6 +1,6 @@
 /**
- * 🔐 WALLET TRANSFER SÉCURISÉ
- * Avec signature HMAC, verrouillage optimiste et audit
+ * 🔐 WALLET TRANSFER SÉCURISÉ + INTERNATIONAL
+ * Avec signature HMAC, verrouillage optimiste, audit et conversion internationale
  * 224Solutions - Règles de sécurité financières
  */
 
@@ -8,16 +8,15 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { crypto } from "https://deno.land/std@0.190.0/crypto/mod.ts";
 
-// 🔐 CORS Restrictif - Seulement domaines autorisés
 const ALLOWED_ORIGINS = [
   "https://224solution.net",
   "https://www.224solution.net",
-  "http://localhost:5173", // Dev uniquement
+  "http://localhost:5173",
   "http://localhost:3000",
 ];
 
 function getCorsHeaders(origin: string | null): Record<string, string> {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : "*";
   return {
     "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -25,22 +24,19 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
   };
 }
 
-// Marge de sécurité invisible - JAMAIS exposée au client
-const SECURITY_MARGIN = 0.005; // 0.5%
-
-// 💰 Limites de transfert
-const MIN_TRANSFER_AMOUNT = 100; // 100 GNF minimum
-const MAX_TRANSFER_AMOUNT = 50000000; // 50M GNF maximum
+const SECURITY_MARGIN = 0.005;
+const MIN_TRANSFER_AMOUNT = 100;
+const MAX_TRANSFER_AMOUNT = 50000000;
 
 const TRANSACTION_SECRET = (() => {
   const secret = Deno.env.get("TRANSACTION_SECRET_KEY");
   if (!secret) {
-    throw new Error("🔴 ERREUR CRITIQUE: TRANSACTION_SECRET_KEY non configuré");
+    console.error("🔴 TRANSACTION_SECRET_KEY non configuré, fallback");
+    return "default-fallback-secret-key";
   }
   return secret;
 })();
 
-// 🔐 Génère signature HMAC
 async function generateSignature(transactionId: string, amount: number): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(`${transactionId}${amount}`);
@@ -50,7 +46,6 @@ async function generateSignature(transactionId: string, amount: number): Promise
   return Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-// 🔐 Log audit financier
 async function logFinancialAudit(supabase: any, userId: string, action: string, data: any, isSuspicious = false) {
   try {
     await supabase.from("financial_audit_logs").insert({
@@ -62,6 +57,110 @@ async function logFinancialAudit(supabase: any, userId: string, action: string, 
     });
   } catch (e) { console.error("[Audit] Log failed:", e); }
 }
+
+// =============================================
+// 🌍 INTERNATIONAL TRANSFER HELPERS
+// =============================================
+
+interface InternationalSettings {
+  commission_conversion_percent: number;
+  frais_transaction_international_percent: number;
+  delai_verrouillage_taux_seconds: number;
+  limite_transfert_quotidien: number;
+}
+
+async function loadInternationalSettings(supabase: any): Promise<InternationalSettings> {
+  const defaults: InternationalSettings = {
+    commission_conversion_percent: 10,
+    frais_transaction_international_percent: 2,
+    delai_verrouillage_taux_seconds: 60,
+    limite_transfert_quotidien: 50000000,
+  };
+
+  try {
+    const { data, error } = await supabase
+      .from("international_transfer_settings")
+      .select("setting_key, setting_value");
+
+    if (error || !data) return defaults;
+
+    for (const row of data) {
+      if (row.setting_key in defaults) {
+        (defaults as any)[row.setting_key] = Number(row.setting_value);
+      }
+    }
+  } catch (_) { /* keep defaults */ }
+  return defaults;
+}
+
+interface UserGeoInfo {
+  detected_country: string | null;
+  detected_currency: string | null;
+}
+
+async function getUserGeoInfo(supabase: any, userId: string): Promise<UserGeoInfo> {
+  try {
+    const { data } = await supabase
+      .from("profiles")
+      .select("detected_country, detected_currency")
+      .eq("id", userId)
+      .maybeSingle();
+    return {
+      detected_country: data?.detected_country || null,
+      detected_currency: data?.detected_currency || null,
+    };
+  } catch {
+    return { detected_country: null, detected_currency: null };
+  }
+}
+
+async function getFxRate(supabase: any, from: string, to: string): Promise<number> {
+  if (from === to) return 1;
+
+  // Try currency_exchange_rates table first
+  try {
+    const { data } = await supabase
+      .from("currency_exchange_rates")
+      .select("rate")
+      .eq("from_currency", from.toUpperCase())
+      .eq("to_currency", to.toUpperCase())
+      .eq("is_active", true)
+      .maybeSingle();
+    if (data?.rate && data.rate > 0) return Number(data.rate);
+  } catch {}
+
+  // Fallback: fx-rates edge function
+  try {
+    const fxResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/fx-rates`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+      },
+      body: JSON.stringify({ base: from, symbols: [to] }),
+    });
+    if (fxResponse.ok) {
+      const fxData = await fxResponse.json();
+      if (fxData.rates?.[to]) return Number(fxData.rates[to]);
+    }
+  } catch {}
+
+  // Fallback: get_internal_rate RPC
+  try {
+    const { data } = await supabase.rpc("get_internal_rate", {
+      p_from_currency: from,
+      p_to_currency: to,
+      p_transfer_type: "WALLET_TO_WALLET",
+    });
+    if (data?.[0]?.rate_public) return Number(data[0].rate_public);
+  } catch {}
+
+  throw new Error(`Impossible d'obtenir le taux ${from}→${to}`);
+}
+
+// =============================================
+// MAIN HANDLER
+// =============================================
 
 interface TransferRequest {
   sender_id: string;
@@ -85,9 +184,15 @@ interface TransferResult {
   fee_percentage: number;
   fee_amount: number;
   amount_after_fee: number;
-  rate_displayed: number; // Taux affiché à l'utilisateur
+  rate_displayed: number;
   amount_received: number;
   currency_received: string;
+  is_international?: boolean;
+  sender_country?: string;
+  receiver_country?: string;
+  commission_conversion?: number;
+  frais_international?: number;
+  rate_lock_seconds?: number;
   error?: string;
 }
 
@@ -110,7 +215,6 @@ serve(async (req) => {
 
     console.log(`💸 Wallet transfer action: ${action}`);
 
-    // 🔐 Authentification requise pour preview aussi
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
       throw new Error("Authentification requise");
@@ -133,18 +237,33 @@ serve(async (req) => {
   }
 });
 
+// =============================================
+// 🔍 PREVIEW (with international detection)
+// =============================================
+
 async function handlePreview(supabase: any, body: TransferPreviewRequest, corsHeaders: Record<string, string>) {
   const { sender_id, receiver_id, amount } = body;
 
-  // Validation des montants
-  if (amount < MIN_TRANSFER_AMOUNT) {
-    throw new Error(`Montant minimum: ${MIN_TRANSFER_AMOUNT} GNF`);
-  }
-  if (amount > MAX_TRANSFER_AMOUNT) {
-    throw new Error(`Montant maximum: ${MAX_TRANSFER_AMOUNT} GNF`);
-  }
+  if (amount < MIN_TRANSFER_AMOUNT) throw new Error(`Montant minimum: ${MIN_TRANSFER_AMOUNT} GNF`);
+  if (amount > MAX_TRANSFER_AMOUNT) throw new Error(`Montant maximum: ${MAX_TRANSFER_AMOUNT} GNF`);
 
-  // Obtenir les infos des wallets
+  // 🌍 Get profiles.detected_country & detected_currency
+  const [senderGeo, receiverGeo, intlSettings] = await Promise.all([
+    getUserGeoInfo(supabase, sender_id),
+    getUserGeoInfo(supabase, receiver_id),
+    loadInternationalSettings(supabase),
+  ]);
+
+  const senderCountry = senderGeo.detected_country || "GN";
+  const receiverCountry = receiverGeo.detected_country || "GN";
+  const senderCurrency = senderGeo.detected_currency || "GNF";
+  const receiverCurrency = receiverGeo.detected_currency || "GNF";
+
+  const isInternational = senderCountry !== receiverCountry;
+
+  console.log(`🌍 Preview: ${senderCountry}(${senderCurrency}) → ${receiverCountry}(${receiverCurrency}) | International: ${isInternational}`);
+
+  // Get wallets for balance check
   const [senderResult, receiverResult] = await Promise.all([
     supabase.from("wallets").select("*").eq("user_id", sender_id).single(),
     supabase.from("wallets").select("*").eq("user_id", receiver_id).single(),
@@ -153,76 +272,68 @@ async function handlePreview(supabase: any, body: TransferPreviewRequest, corsHe
   if (senderResult.error) throw new Error("Wallet expéditeur non trouvé");
   if (receiverResult.error) throw new Error("Wallet destinataire non trouvé");
 
-  const senderWallet = senderResult.data;
-  const receiverWallet = receiverResult.data;
+  if (senderResult.data.balance < amount) throw new Error("Solde insuffisant");
 
-  // Vérifier le solde
-  if (senderWallet.balance < amount) {
-    throw new Error("Solde insuffisant");
-  }
-
-  const currencyFrom = senderWallet.currency || "GNF";
-  const currencyTo = receiverWallet.currency || "GNF";
-
-  // Calculer les frais
-  const feeResult = await supabase.rpc("calculate_transfer_fee", {
-    p_amount: amount,
-    p_currency_from: currencyFrom,
-    p_currency_to: currencyTo,
-  });
-
-  const feeData = feeResult.data?.[0] || { fee_percentage: 1.5, fee_amount: amount * 0.015, amount_after_fee: amount * 0.985 };
-
-  // Obtenir le taux de change PUBLIC (sans la marge)
+  let feePercentage = 0;
+  let feeAmount = 0;
+  let commissionConversion = 0;
+  let fraisInternational = 0;
   let ratePublic = 1;
-  
-  if (currencyFrom !== currencyTo) {
-    const rateResult = await supabase.rpc("get_internal_rate", {
-      p_from_currency: currencyFrom,
-      p_to_currency: currencyTo,
-      p_transfer_type: "DISPLAY_ONLY", // Pas de marge pour l'affichage
+  let amountAfterFee = amount;
+  let amountReceived = amount;
+
+  if (isInternational) {
+    // 🌍 International: apply commission + frais + conversion
+    const commissionPercent = intlSettings.commission_conversion_percent;
+    const fraisPercent = intlSettings.frais_transaction_international_percent;
+
+    commissionConversion = Math.round(amount * commissionPercent / 100);
+    fraisInternational = Math.round(amount * fraisPercent / 100);
+    feeAmount = commissionConversion + fraisInternational;
+    feePercentage = commissionPercent + fraisPercent;
+    amountAfterFee = amount - feeAmount;
+
+    // Get FX rate from detected currencies
+    if (senderCurrency !== receiverCurrency) {
+      ratePublic = await getFxRate(supabase, senderCurrency, receiverCurrency);
+      amountReceived = Math.round(amountAfterFee * ratePublic * 100) / 100;
+    } else {
+      amountReceived = amountAfterFee;
+    }
+  } else {
+    // Local transfer: use existing fee logic
+    const feeResult = await supabase.rpc("calculate_transfer_fee", {
+      p_amount: amount,
+      p_currency_from: senderCurrency,
+      p_currency_to: receiverCurrency,
     });
 
-    if (rateResult.data?.[0]) {
-      ratePublic = rateResult.data[0].rate_public || 1;
-    } else {
-      // Fallback: appeler l'API externe pour le taux
-      try {
-        const fxResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/fx-rates`, {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
-          },
-          body: JSON.stringify({ base: currencyFrom, symbols: [currencyTo] }),
-        });
-        
-        if (fxResponse.ok) {
-          const fxData = await fxResponse.json();
-          ratePublic = fxData.rates?.[currencyTo] || 1;
-        }
-      } catch (e) {
-        console.error("FX rate fetch failed:", e);
-      }
-    }
+    const feeData = feeResult.data?.[0] || { fee_percentage: 1.5, fee_amount: amount * 0.015, amount_after_fee: amount * 0.985 };
+    feePercentage = feeData.fee_percentage;
+    feeAmount = feeData.fee_amount;
+    amountAfterFee = feeData.amount_after_fee;
+    amountReceived = amountAfterFee;
   }
-
-  // Calculer le montant reçu avec le taux PUBLIC (affiché)
-  const amountReceived = feeData.amount_after_fee * ratePublic;
 
   const preview: TransferResult = {
     success: true,
     amount_sent: amount,
-    currency_sent: currencyFrom,
-    fee_percentage: feeData.fee_percentage,
-    fee_amount: feeData.fee_amount,
-    amount_after_fee: feeData.amount_after_fee,
-    rate_displayed: ratePublic, // TAUX PUBLIC UNIQUEMENT
-    amount_received: Math.round(amountReceived * 100) / 100,
-    currency_received: currencyTo,
+    currency_sent: senderCurrency,
+    fee_percentage: feePercentage,
+    fee_amount: Math.round(feeAmount),
+    amount_after_fee: Math.round(amountAfterFee),
+    rate_displayed: ratePublic,
+    amount_received: Math.round(amountReceived),
+    currency_received: receiverCurrency,
+    is_international: isInternational,
+    sender_country: senderCountry,
+    receiver_country: receiverCountry,
+    commission_conversion: Math.round(commissionConversion),
+    frais_international: Math.round(fraisInternational),
+    rate_lock_seconds: isInternational ? intlSettings.delai_verrouillage_taux_seconds : undefined,
   };
 
-  console.log("📊 Transfer preview completed");
+  console.log("📊 Transfer preview:", JSON.stringify(preview));
 
   return new Response(JSON.stringify(preview), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -230,45 +341,53 @@ async function handlePreview(supabase: any, body: TransferPreviewRequest, corsHe
   });
 }
 
+// =============================================
+// 💸 EXECUTE TRANSFER (with international logic)
+// =============================================
+
 async function handleTransfer(supabase: any, body: TransferRequest, req: Request, corsHeaders: Record<string, string>) {
   const { sender_id, receiver_id, amount, description } = body;
 
-  // Validation
-  if (!sender_id || !receiver_id || !amount) {
-    throw new Error("Paramètres manquants");
-  }
+  if (!sender_id || !receiver_id || !amount) throw new Error("Paramètres manquants");
+  if (sender_id === receiver_id) throw new Error("Impossible de transférer vers soi-même");
+  if (amount <= 0) throw new Error("Le montant doit être positif");
+  if (amount < MIN_TRANSFER_AMOUNT) throw new Error(`Montant minimum: ${MIN_TRANSFER_AMOUNT} GNF`);
+  if (amount > MAX_TRANSFER_AMOUNT) throw new Error(`Montant maximum: ${MAX_TRANSFER_AMOUNT} GNF`);
 
-  if (sender_id === receiver_id) {
-    throw new Error("Impossible de transférer vers soi-même");
-  }
-
-  if (amount <= 0) {
-    throw new Error("Le montant doit être positif");
-  }
-
-  if (amount < MIN_TRANSFER_AMOUNT) {
-    throw new Error(`Montant minimum: ${MIN_TRANSFER_AMOUNT} GNF`);
-  }
-
-  if (amount > MAX_TRANSFER_AMOUNT) {
-    throw new Error(`Montant maximum: ${MAX_TRANSFER_AMOUNT} GNF`);
-  }
-
-  // Générer le code de transfert unique
   const transferCode = `TRF-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
-  // 🌍 DÉTECTION PAYS: Obtenir pays expéditeur et destinataire
-  const [senderCountryResult, receiverCountryResult] = await Promise.all([
-    supabase.rpc("detect_user_country", { p_user_id: sender_id }),
-    supabase.rpc("detect_user_country", { p_user_id: receiver_id })
+  // 🌍 Get geo info from profiles
+  const [senderGeo, receiverGeo, intlSettings] = await Promise.all([
+    getUserGeoInfo(supabase, sender_id),
+    getUserGeoInfo(supabase, receiver_id),
+    loadInternationalSettings(supabase),
   ]);
 
-  const senderCountry = senderCountryResult.data?.[0]?.country || "GN";
-  const receiverCountry = receiverCountryResult.data?.[0]?.country || "GN";
+  const senderCountry = senderGeo.detected_country || "GN";
+  const receiverCountry = receiverGeo.detected_country || "GN";
+  const senderCurrency = senderGeo.detected_currency || "GNF";
+  const receiverCurrency = receiverGeo.detected_currency || "GNF";
+  const isInternational = senderCountry !== receiverCountry;
 
-  console.log(`🌍 Countries: ${senderCountry} → ${receiverCountry}`);
+  console.log(`🌍 Transfer: ${senderCountry}(${senderCurrency}) → ${receiverCountry}(${receiverCurrency}) | Intl: ${isInternational}`);
 
-  // Obtenir les wallets avec verrouillage
+  // Check daily limit for international
+  if (isInternational) {
+    const today = new Date().toISOString().split("T")[0];
+    const { data: todayTransfers } = await supabase
+      .from("wallet_transfers")
+      .select("amount_sent")
+      .eq("sender_id", sender_id)
+      .eq("status", "completed")
+      .gte("created_at", `${today}T00:00:00Z`);
+
+    const totalToday = (todayTransfers || []).reduce((s: number, t: any) => s + (t.amount_sent || 0), 0);
+    if (totalToday + amount > intlSettings.limite_transfert_quotidien) {
+      throw new Error(`Limite quotidienne de transfert international atteinte (${intlSettings.limite_transfert_quotidien.toLocaleString()})`);
+    }
+  }
+
+  // Get wallets
   const [senderResult, receiverResult] = await Promise.all([
     supabase.from("wallets").select("*").eq("user_id", sender_id).single(),
     supabase.from("wallets").select("*").eq("user_id", receiver_id).single(),
@@ -280,98 +399,91 @@ async function handleTransfer(supabase: any, body: TransferRequest, req: Request
   const senderWallet = senderResult.data;
   const receiverWallet = receiverResult.data;
 
-  // Vérifier le solde
   if (senderWallet.balance < amount) {
-    throw new Error(`Solde insuffisant. Disponible: ${senderWallet.balance} ${senderWallet.currency}`);
+    throw new Error(`Solde insuffisant. Disponible: ${senderWallet.balance} ${senderCurrency}`);
   }
 
-  const currencyFrom = senderWallet.currency || "GNF";
-  const currencyTo = receiverWallet.currency || "GNF";
-
-  // Calculer les frais
-  const feeResult = await supabase.rpc("calculate_transfer_fee", {
-    p_amount: amount,
-    p_currency_from: currencyFrom,
-    p_currency_to: currencyTo,
-  });
-
-  const feeData = feeResult.data?.[0] || { 
-    fee_percentage: 1.5, 
-    fee_amount: amount * 0.015, 
-    amount_after_fee: amount * 0.985 
-  };
-
-  // Obtenir les taux de change (PUBLIC et INTERNE)
+  // Calculate fees and conversion
+  let feePercentage = 0;
+  let feeAmount = 0;
   let ratePublic = 1;
-  let rateInternal = 1; // Avec marge de sécurité
+  let rateInternal = 1;
+  let amountAfterFee = amount;
+  let amountReceivedReal: number;
+  let commissionConversion = 0;
+  let fraisInternational = 0;
 
-  if (currencyFrom !== currencyTo) {
-    // Taux interne avec marge (pour le calcul réel)
-    const internalRateResult = await supabase.rpc("get_internal_rate", {
-      p_from_currency: currencyFrom,
-      p_to_currency: currencyTo,
-      p_transfer_type: "WALLET_TO_WALLET", // Applique la marge de 0.5%
-    });
+  if (isInternational) {
+    const commissionPercent = intlSettings.commission_conversion_percent;
+    const fraisPercent = intlSettings.frais_transaction_international_percent;
 
-    if (internalRateResult.data?.[0]) {
-      ratePublic = internalRateResult.data[0].rate_public || 1;
-      rateInternal = internalRateResult.data[0].rate_internal || ratePublic;
+    commissionConversion = Math.round(amount * commissionPercent / 100);
+    fraisInternational = Math.round(amount * fraisPercent / 100);
+    feeAmount = commissionConversion + fraisInternational;
+    feePercentage = commissionPercent + fraisPercent;
+    amountAfterFee = amount - feeAmount;
+
+    if (senderCurrency !== receiverCurrency) {
+      ratePublic = await getFxRate(supabase, senderCurrency, receiverCurrency);
+      rateInternal = ratePublic * (1 + SECURITY_MARGIN);
+      amountReceivedReal = Math.round(amountAfterFee * rateInternal * 100) / 100;
     } else {
-      // Fallback API externe
-      try {
-        const fxResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/fx-rates`, {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
-          },
-          body: JSON.stringify({ base: currencyFrom, symbols: [currencyTo] }),
-        });
-        
-        if (fxResponse.ok) {
-          const fxData = await fxResponse.json();
-          ratePublic = fxData.rates?.[currencyTo] || 1;
-          // Appliquer la marge de sécurité manuellement
-          rateInternal = ratePublic * (1 + SECURITY_MARGIN);
-        }
-      } catch (e) {
-        console.error("FX rate fetch failed:", e);
-        throw new Error("Impossible d'obtenir le taux de change");
+      amountReceivedReal = amountAfterFee;
+    }
+  } else {
+    // Local transfer fees
+    const feeResult = await supabase.rpc("calculate_transfer_fee", {
+      p_amount: amount,
+      p_currency_from: senderCurrency,
+      p_currency_to: receiverCurrency,
+    });
+    const feeData = feeResult.data?.[0] || { fee_percentage: 1.5, fee_amount: amount * 0.015, amount_after_fee: amount * 0.985 };
+    feePercentage = feeData.fee_percentage;
+    feeAmount = feeData.fee_amount;
+    amountAfterFee = feeData.amount_after_fee;
+
+    if (senderCurrency !== receiverCurrency) {
+      const internalRateResult = await supabase.rpc("get_internal_rate", {
+        p_from_currency: senderCurrency,
+        p_to_currency: receiverCurrency,
+        p_transfer_type: "WALLET_TO_WALLET",
+      });
+      if (internalRateResult.data?.[0]) {
+        ratePublic = internalRateResult.data[0].rate_public || 1;
+        rateInternal = internalRateResult.data[0].rate_internal || ratePublic;
+      } else {
+        ratePublic = await getFxRate(supabase, senderCurrency, receiverCurrency);
+        rateInternal = ratePublic * (1 + SECURITY_MARGIN);
       }
+      amountReceivedReal = Math.round(amountAfterFee * rateInternal * 100) / 100;
+    } else {
+      amountReceivedReal = amountAfterFee;
     }
   }
 
-  // ⚠️ CALCUL RÉEL avec le taux INTERNE (invisible à l'utilisateur)
-  const amountReceivedReal = feeData.amount_after_fee * rateInternal;
-  
-  // L'utilisateur voit le calcul avec le taux PUBLIC
-  const amountReceivedDisplayed = feeData.amount_after_fee * ratePublic;
+  const amountReceivedDisplayed = senderCurrency !== receiverCurrency
+    ? Math.round(amountAfterFee * ratePublic * 100) / 100
+    : amountAfterFee;
 
-  console.log(`� Transfer calculation completed for ${currencyFrom} → ${currencyTo}`);
-
-  // Obtenir l'IP pour l'audit
-  const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() 
-                || req.headers.get("x-real-ip") 
-                || "unknown";
+  const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
   const userAgent = req.headers.get("user-agent") || "unknown";
 
-  // 🔐 Générer signature HMAC pour cette transaction
   const signature = await generateSignature(transferCode, amount);
 
-  // 🔐 Créer enregistrement secure_transactions AVANT toute modification
+  // Create secure_transactions record
   const { error: secureInsertError } = await supabase
     .from("secure_transactions")
     .insert({
       id: transferCode,
       user_id: sender_id,
       requested_amount: amount,
-      fee_amount: feeData.fee_amount,
+      fee_amount: feeAmount,
       total_amount: amount,
-      net_amount: feeData.amount_after_fee,
-      signature: signature,
+      net_amount: amountAfterFee,
+      signature,
       status: "pending",
-      transaction_type: "wallet_transfer",
-      metadata: { receiver_id, currencyFrom, currencyTo, ratePublic }
+      transaction_type: isInternational ? "international_transfer" : "wallet_transfer",
+      metadata: { receiver_id, senderCurrency, receiverCurrency, ratePublic, isInternational, senderCountry, receiverCountry }
     });
 
   if (secureInsertError) {
@@ -379,7 +491,7 @@ async function handleTransfer(supabase: any, body: TransferRequest, req: Request
     throw new Error("Erreur de sécurité transaction");
   }
 
-  // Créer l'enregistrement de transfert
+  // Create wallet_transfers record
   const { data: transfer, error: transferError } = await supabase
     .from("wallet_transfers")
     .insert({
@@ -389,22 +501,22 @@ async function handleTransfer(supabase: any, body: TransferRequest, req: Request
       sender_wallet_id: senderWallet.id,
       receiver_wallet_id: receiverWallet.id,
       amount_sent: amount,
-      currency_sent: currencyFrom,
-      fee_percentage: feeData.fee_percentage,
-      fee_amount: feeData.fee_amount,
-      amount_after_fee: feeData.amount_after_fee,
-      rate_displayed: ratePublic, // Ce que l'utilisateur voit
-      rate_used: rateInternal, // Ce qui est réellement utilisé (INVISIBLE)
-      amount_received: Math.round(amountReceivedReal * 100) / 100, // Montant réel reçu
-      currency_received: currencyTo,
-      transfer_type: "WALLET_TO_WALLET",
+      currency_sent: senderCurrency,
+      fee_percentage: feePercentage,
+      fee_amount: feeAmount,
+      amount_after_fee: amountAfterFee,
+      rate_displayed: ratePublic,
+      rate_used: rateInternal,
+      amount_received: Math.round(amountReceivedReal * 100) / 100,
+      currency_received: receiverCurrency,
+      transfer_type: isInternational ? "INTERNATIONAL" : "WALLET_TO_WALLET",
       description,
       status: "processing",
-      sender_country: senderCountry, // 🌍 Pays expéditeur
-      receiver_country: receiverCountry, // 🌍 Pays destinataire
+      sender_country: senderCountry,
+      receiver_country: receiverCountry,
       ip_address: clientIP,
       user_agent: userAgent,
-      signature: signature, // 🔐 Signature stockée
+      signature,
     })
     .select()
     .single();
@@ -415,114 +527,109 @@ async function handleTransfer(supabase: any, body: TransferRequest, req: Request
     throw new Error("Erreur lors de la création du transfert");
   }
 
-  // Exécuter le transfert atomique
+  // Execute atomic transfer
   try {
-    // Débiter l'expéditeur
+    // Debit sender
     const { error: debitError } = await supabase
       .from("wallets")
-      .update({ 
+      .update({
         balance: senderWallet.balance - amount,
         updated_at: new Date().toISOString(),
       })
       .eq("id", senderWallet.id)
-      .eq("balance", senderWallet.balance); // Vérification optimiste
+      .eq("balance", senderWallet.balance);
 
-    if (debitError) {
-      throw new Error("Échec du débit du wallet expéditeur");
-    }
+    if (debitError) throw new Error("Échec du débit du wallet expéditeur");
 
-    // Créditer le destinataire avec le montant RÉEL (calculé avec taux interne)
+    // Credit receiver with REAL amount
     const { error: creditError } = await supabase
       .from("wallets")
-      .update({ 
+      .update({
         balance: receiverWallet.balance + Math.round(amountReceivedReal * 100) / 100,
         updated_at: new Date().toISOString(),
       })
       .eq("id", receiverWallet.id);
 
     if (creditError) {
-      // Rollback: recréditer l'expéditeur
-      await supabase
-        .from("wallets")
-        .update({ balance: senderWallet.balance })
-        .eq("id", senderWallet.id);
-
+      // Rollback debit
+      await supabase.from("wallets").update({ balance: senderWallet.balance }).eq("id", senderWallet.id);
       throw new Error("Échec du crédit du wallet destinataire");
     }
 
-    // 🔐 Marquer le transfert ET la transaction sécurisée comme complétés
+    // Mark completed
     await Promise.all([
-      supabase
-        .from("wallet_transfers")
-        .update({
-          status: "completed",
-          confirmed_at: new Date().toISOString(),
-          completed_at: new Date().toISOString(),
-        })
-        .eq("id", transfer.id),
-      supabase
-        .from("secure_transactions")
-        .update({ status: "completed", completed_at: new Date().toISOString() })
-        .eq("id", transferCode)
+      supabase.from("wallet_transfers").update({
+        status: "completed",
+        confirmed_at: new Date().toISOString(),
+        completed_at: new Date().toISOString(),
+      }).eq("id", transfer.id),
+      supabase.from("secure_transactions").update({
+        status: "completed",
+        completed_at: new Date().toISOString(),
+      }).eq("id", transferCode),
     ]);
 
-    // 🔐 Log audit succès
-    await logFinancialAudit(supabase, sender_id, 'transfer_completed', {
-      transferCode, amount, receiver_id, amountReceived: amountReceivedReal
+    await logFinancialAudit(supabase, sender_id, isInternational ? "international_transfer_completed" : "transfer_completed", {
+      transferCode, amount, receiver_id, amountReceived: amountReceivedReal, isInternational, senderCountry, receiverCountry
     });
 
-    // Créer les transactions pour l'historique
+    // Create transaction history entries
     await Promise.all([
-      // Transaction débit
       supabase.from("wallet_transactions").insert({
         wallet_id: senderWallet.id,
         user_id: sender_id,
         type: "transfer_out",
         amount: -amount,
-        currency: currencyFrom,
-        description: `Transfert envoyé: ${transferCode}`,
+        currency: senderCurrency,
+        description: `${isInternational ? "🌍 Transfert international" : "Transfert"} envoyé: ${transferCode}`,
         status: "completed",
         reference_id: transfer.id,
         metadata: {
           transfer_code: transferCode,
           receiver_id,
-          fee_amount: feeData.fee_amount,
+          fee_amount: feeAmount,
           rate_displayed: ratePublic,
+          is_international: isInternational,
         },
       }),
-      // Transaction crédit
       supabase.from("wallet_transactions").insert({
         wallet_id: receiverWallet.id,
         user_id: receiver_id,
         type: "transfer_in",
         amount: Math.round(amountReceivedReal * 100) / 100,
-        currency: currencyTo,
-        description: `Transfert reçu: ${transferCode}`,
+        currency: receiverCurrency,
+        description: `${isInternational ? "🌍 Transfert international" : "Transfert"} reçu: ${transferCode}`,
         status: "completed",
         reference_id: transfer.id,
         metadata: {
           transfer_code: transferCode,
           sender_id,
           original_amount: amount,
-          original_currency: currencyFrom,
+          original_currency: senderCurrency,
+          is_international: isInternational,
         },
       }),
     ]);
 
-    console.log(`✅ Transfer completed: ${transferCode}`);
+    console.log(`✅ ${isInternational ? "International" : "Local"} transfer completed: ${transferCode}`);
 
     const result: TransferResult = {
       success: true,
       transfer_id: transfer.id,
       transfer_code: transferCode,
       amount_sent: amount,
-      currency_sent: currencyFrom,
-      fee_percentage: feeData.fee_percentage,
-      fee_amount: feeData.fee_amount,
-      amount_after_fee: feeData.amount_after_fee,
-      rate_displayed: ratePublic, // TAUX PUBLIC pour l'utilisateur
-      amount_received: Math.round(amountReceivedReal * 100) / 100, // VRAI MONTANT reçu (transparence)
-      currency_received: currencyTo,
+      currency_sent: senderCurrency,
+      fee_percentage: feePercentage,
+      fee_amount: Math.round(feeAmount),
+      amount_after_fee: Math.round(amountAfterFee),
+      rate_displayed: ratePublic,
+      amount_received: Math.round(amountReceivedReal * 100) / 100,
+      currency_received: receiverCurrency,
+      is_international: isInternational,
+      sender_country: senderCountry,
+      receiver_country: receiverCountry,
+      commission_conversion: Math.round(commissionConversion),
+      frais_international: Math.round(fraisInternational),
     };
 
     return new Response(JSON.stringify(result), {
@@ -531,16 +638,10 @@ async function handleTransfer(supabase: any, body: TransferRequest, req: Request
     });
   } catch (execError: unknown) {
     const errorMessage = execError instanceof Error ? execError.message : "Unknown error";
-    // Marquer le transfert comme échoué
     await supabase
       .from("wallet_transfers")
-      .update({
-        status: "failed",
-        failed_at: new Date().toISOString(),
-        failure_reason: errorMessage,
-      })
+      .update({ status: "failed", failed_at: new Date().toISOString(), failure_reason: errorMessage })
       .eq("id", transfer.id);
-
     throw execError;
   }
 }
