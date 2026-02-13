@@ -1,5 +1,5 @@
 /**
- * 🔐 WALLET OPERATIONS SÉCURISÉES
+ * 🔐 WALLET OPERATIONS SÉCURISÉES + INTERNATIONAL
  * Avec signature HMAC, verrouillage optimiste et audit complet
  * 224Solutions - Règles de sécurité financières absolues
  */
@@ -23,7 +23,6 @@ function getTransactionSecret(): string {
   return secret;
 }
 
-// 🔐 Génère signature HMAC
 async function generateSecureSignature(transactionId: string, amount: number): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(`${transactionId}${amount}`);
@@ -33,7 +32,6 @@ async function generateSecureSignature(transactionId: string, amount: number): P
   return Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-// 🔐 Log audit
 async function logSecureAudit(supabase: any, userId: string, action: string, data: any, isSuspicious = false) {
   try {
     await supabase.from("financial_audit_logs").insert({
@@ -46,71 +44,45 @@ async function logSecureAudit(supabase: any, userId: string, action: string, dat
   } catch (e) { console.error("[Audit] Log failed:", e); }
 }
 
-// 🔐 Input validation schemas
 const operationSchema = z.enum(['deposit', 'withdraw', 'transfer']);
 
 const requestSchema = z.object({
   operation: operationSchema,
-  amount: z.number().positive().max(100000000), // Max 100M GNF
+  amount: z.number().positive().max(100000000),
   recipient_id: z.string().optional(),
   description: z.string().max(500).optional(),
   idempotency_key: z.string().uuid().optional()
 });
 
-/**
- * 🔐 Generate idempotency key for deduplication
- */
 function generateIdempotencyKey(userId: string, operation: string, amount: number, recipientId?: string): string {
-  const data = `${userId}:${operation}:${amount}:${recipientId || ''}:${Math.floor(Date.now() / 60000)}`; // 1 minute window
-  return data;
+  return `${userId}:${operation}:${amount}:${recipientId || ''}:${Math.floor(Date.now() / 60000)}`;
 }
 
-/**
- * 🔐 Check for duplicate transaction (idempotency)
- */
-async function checkDuplicateTransaction(
-  supabase: any,
-  idempotencyKey: string
-): Promise<boolean> {
+async function checkDuplicateTransaction(supabase: any, idempotencyKey: string): Promise<boolean> {
   try {
     const { data } = await supabase
       .from('wallet_idempotency_keys')
       .select('id')
       .eq('idempotency_key', idempotencyKey)
       .maybeSingle();
-
     return !!data;
-  } catch (error) {
-    console.warn('⚠️ Idempotency check failed:', error);
+  } catch {
     return false;
   }
 }
 
-/**
- * 🔐 Record idempotency key
- */
-async function recordIdempotencyKey(
-  supabase: any,
-  idempotencyKey: string,
-  userId: string,
-  operation: string
-): Promise<void> {
+async function recordIdempotencyKey(supabase: any, idempotencyKey: string, userId: string, operation: string): Promise<void> {
   try {
     await supabase.from('wallet_idempotency_keys').insert({
       idempotency_key: idempotencyKey,
       user_id: userId,
       operation,
       created_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h expiry
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
     });
-  } catch (error) {
-    console.warn('⚠️ Failed to record idempotency key:', error);
-  }
+  } catch {}
 }
 
-/**
- * 🔐 Calculate transaction fees
- */
 async function calculateFee(supabase: any, transactionType: string, amount: number, currency: string = 'GNF'): Promise<number> {
   try {
     const { data: feeConfig, error } = await supabase
@@ -121,9 +93,7 @@ async function calculateFee(supabase: any, transactionType: string, amount: numb
       .eq('is_active', true)
       .maybeSingle();
 
-    if (error || !feeConfig) {
-      return 0;
-    }
+    if (error || !feeConfig) return 0;
 
     let fee = 0;
     if (feeConfig.fee_type === 'fixed') {
@@ -131,32 +101,21 @@ async function calculateFee(supabase: any, transactionType: string, amount: numb
     } else if (feeConfig.fee_type === 'percentage') {
       fee = (amount * feeConfig.fee_value) / 100;
     }
-
     return Math.max(0, fee);
-  } catch (error) {
-    console.error('⚠️ Erreur calculateFee:', error);
+  } catch {
     return 0;
   }
 }
 
-/**
- * 🔐 Log wallet operation
- */
 async function logWalletOperation(supabase: any, logData: any): Promise<void> {
   try {
     await supabase.from('wallet_logs').insert([logData]);
-  } catch (error) {
-    console.error('⚠️ Erreur logging:', error);
-  }
+  } catch {}
 }
 
-/**
- * 🔐 Detect suspicious activity
- */
 async function detectSuspicious(supabase: any, userId: string, amount: number): Promise<any> {
   try {
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    
     const { data: recentLogs } = await supabase
       .from('wallet_logs')
       .select('amount')
@@ -165,74 +124,135 @@ async function detectSuspicious(supabase: any, userId: string, amount: number): 
 
     const total24h = recentLogs?.reduce((sum: number, log: any) => sum + (log.amount || 0), 0) || 0;
     const count24h = recentLogs?.length || 0;
-
-    const flags = [];
+    const flags: string[] = [];
     let severity = 'low';
 
-    if (amount > 2000000) {
-      flags.push('high_amount');
-      severity = 'high';
-    }
-
-    if (count24h > 10) {
-      flags.push('high_frequency');
-      severity = 'medium';
-    }
-
-    if (total24h > 5000000) {
-      flags.push('high_volume');
-      severity = 'critical';
-    }
+    if (amount > 2000000) { flags.push('high_amount'); severity = 'high'; }
+    if (count24h > 10) { flags.push('high_frequency'); severity = 'medium'; }
+    if (total24h > 5000000) { flags.push('high_volume'); severity = 'critical'; }
 
     if (flags.length > 0) {
-      const { data: wallet } = await supabase
-        .from('wallets')
-        .select('id')
-        .eq('user_id', userId)
-        .single();
-
+      const { data: wallet } = await supabase.from('wallets').select('id').eq('user_id', userId).single();
       if (wallet) {
-        await supabase
-          .from('wallet_suspicious_activities')
-          .insert([{
-            wallet_id: wallet.id,
-            user_id: userId,
-            activity_type: flags.join(', '),
-            severity,
-            description: `Activité détectée: montant ${amount}, total 24h: ${total24h}, nb: ${count24h}`,
-            metadata: { amount, total24h, count24h, flags }
-          }]);
+        await supabase.from('wallet_suspicious_activities').insert([{
+          wallet_id: wallet.id,
+          user_id: userId,
+          activity_type: flags.join(', '),
+          severity,
+          description: `Activité détectée: montant ${amount}, total 24h: ${total24h}, nb: ${count24h}`,
+          metadata: { amount, total24h, count24h, flags }
+        }]);
       }
-
       return { suspicious: true, severity, flags, should_block: severity === 'critical' };
     }
-
     return { suspicious: false };
-  } catch (error) {
-    console.error('⚠️ Erreur detectSuspicious:', error);
+  } catch {
     return { suspicious: false };
   }
 }
 
-/**
- * 🔐 CRITICAL: Atomic wallet transfer using database transaction
- * This ensures debit and credit happen together or not at all
- */
+// =============================================
+// 🌍 INTERNATIONAL HELPERS
+// =============================================
+
+interface InternationalSettings {
+  commission_conversion_percent: number;
+  frais_transaction_international_percent: number;
+  delai_verrouillage_taux_seconds: number;
+  limite_transfert_quotidien: number;
+}
+
+async function loadInternationalSettings(supabase: any): Promise<InternationalSettings> {
+  const defaults: InternationalSettings = {
+    commission_conversion_percent: 10,
+    frais_transaction_international_percent: 2,
+    delai_verrouillage_taux_seconds: 60,
+    limite_transfert_quotidien: 50000000,
+  };
+  try {
+    const { data } = await supabase
+      .from("international_transfer_settings")
+      .select("setting_key, setting_value");
+    if (data) {
+      for (const row of data) {
+        if (row.setting_key in defaults) {
+          (defaults as any)[row.setting_key] = Number(row.setting_value);
+        }
+      }
+    }
+  } catch {}
+  return defaults;
+}
+
+async function getUserGeoInfo(supabase: any, userId: string) {
+  try {
+    const { data } = await supabase
+      .from("profiles")
+      .select("detected_country, detected_currency")
+      .eq("id", userId)
+      .maybeSingle();
+    return {
+      detected_country: data?.detected_country || null,
+      detected_currency: data?.detected_currency || null,
+    };
+  } catch {
+    return { detected_country: null, detected_currency: null };
+  }
+}
+
+async function getFxRate(supabase: any, from: string, to: string): Promise<number> {
+  if (from === to) return 1;
+  try {
+    const { data } = await supabase
+      .from("currency_exchange_rates")
+      .select("rate")
+      .eq("from_currency", from.toUpperCase())
+      .eq("to_currency", to.toUpperCase())
+      .eq("is_active", true)
+      .maybeSingle();
+    if (data?.rate && data.rate > 0) return Number(data.rate);
+  } catch {}
+
+  try {
+    const fxResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/fx-rates`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+      },
+      body: JSON.stringify({ base: from, symbols: [to] }),
+    });
+    if (fxResponse.ok) {
+      const fxData = await fxResponse.json();
+      if (fxData.rates?.[to]) return Number(fxData.rates[to]);
+    }
+  } catch {}
+
+  return 1; // fallback
+}
+
+// =============================================
+// 🔐 ATOMIC TRANSFER
+// =============================================
+
 async function executeAtomicTransfer(
   supabase: any,
   senderId: string,
   receiverId: string,
-  amount: number,
+  amountToDebit: number,
+  amountToCredit: number,
   description: string,
   senderWallet: any,
-  recipientWallet: any
+  recipientWallet: any,
+  isInternational: boolean,
+  metadata: any
 ): Promise<{ success: boolean; error?: string; senderBalance?: number; recipientBalance?: number }> {
-  
-  // 🔐 Use RPC for atomic transaction
+
+  // Try RPC first
   const { data, error } = await supabase.rpc('execute_atomic_wallet_transfer', {
     p_sender_id: senderId,
     p_receiver_id: receiverId,
-    p_amount: amount,
+    p_amount: amountToDebit,
     p_description: description,
     p_sender_wallet_id: senderWallet.id,
     p_recipient_wallet_id: recipientWallet.id,
@@ -240,187 +260,110 @@ async function executeAtomicTransfer(
     p_recipient_balance_before: recipientWallet.balance
   });
 
-  if (error) {
-    console.error('❌ Atomic transfer failed:', error);
-    
-    // Try fallback with manual transaction simulation
-    return await executeManualAtomicTransfer(
-      supabase,
-      senderId,
-      receiverId,
-      amount,
-      description,
-      senderWallet,
-      recipientWallet
-    );
+  if (!error) {
+    return {
+      success: true,
+      senderBalance: senderWallet.balance - amountToDebit,
+      recipientBalance: recipientWallet.balance + amountToCredit
+    };
   }
 
-  return {
-    success: true,
-    senderBalance: senderWallet.balance - amount,
-    recipientBalance: recipientWallet.balance + amount
-  };
-}
-
-/**
- * 🔐 Manual atomic transfer with rollback capability
- */
-async function executeManualAtomicTransfer(
-  supabase: any,
-  senderId: string,
-  receiverId: string,
-  amount: number,
-  description: string,
-  senderWallet: any,
-  recipientWallet: any
-): Promise<{ success: boolean; error?: string; senderBalance?: number; recipientBalance?: number }> {
-  
-  const newSenderBalance = senderWallet.balance - amount;
-  const newRecipientBalance = recipientWallet.balance + amount;
+  // Fallback: manual atomic transfer
+  const newSenderBalance = senderWallet.balance - amountToDebit;
+  const newRecipientBalance = recipientWallet.balance + amountToCredit;
   const transactionId = crypto.randomUUID();
 
-  // Step 1: Create pending transaction record
   const { error: txCreateError } = await supabase
     .from('enhanced_transactions')
     .insert({
       id: transactionId,
       sender_id: senderId,
       receiver_id: receiverId,
-      amount: amount,
+      amount: amountToDebit,
       method: 'wallet',
       status: 'pending',
-      currency: 'GNF',
-      transaction_type: 'transfer',
-      metadata: { 
-        description: description || 'Transfert entre wallets',
+      currency: metadata.senderCurrency || 'GNF',
+      transaction_type: isInternational ? 'international_transfer' : 'transfer',
+      metadata: {
+        description,
         atomic: true,
+        is_international: isInternational,
         sender_balance_before: senderWallet.balance,
-        recipient_balance_before: recipientWallet.balance
+        recipient_balance_before: recipientWallet.balance,
+        amount_credited: amountToCredit,
+        ...metadata
       }
     });
 
   if (txCreateError) {
-    console.error('❌ Failed to create transaction record:', txCreateError);
     return { success: false, error: 'Erreur création transaction' };
   }
 
-  // Step 2: Debit sender (with optimistic locking)
+  // Debit sender
   const { data: debitResult, error: debitError } = await supabase
     .from('wallets')
-    .update({ 
-      balance: newSenderBalance,
-      updated_at: new Date().toISOString()
-    })
+    .update({ balance: newSenderBalance, updated_at: new Date().toISOString() })
     .eq('user_id', senderId)
-    .eq('balance', senderWallet.balance) // Optimistic lock
+    .eq('balance', senderWallet.balance)
     .select('balance')
     .single();
 
   if (debitError || !debitResult) {
-    console.error('❌ Debit failed (concurrent modification?):', debitError);
-    
-    // Mark transaction as failed
-    await supabase
-      .from('enhanced_transactions')
-      .update({ status: 'failed', metadata: { error: 'debit_failed', step: 'sender_debit' } })
+    await supabase.from('enhanced_transactions')
+      .update({ status: 'failed', metadata: { error: 'debit_failed' } })
       .eq('id', transactionId);
-    
     return { success: false, error: 'Solde modifié pendant la transaction. Réessayez.' };
   }
 
-  // Step 3: Credit recipient
+  // Credit receiver
   const { data: creditResult, error: creditError } = await supabase
     .from('wallets')
-    .update({ 
-      balance: newRecipientBalance,
-      updated_at: new Date().toISOString()
-    })
+    .update({ balance: newRecipientBalance, updated_at: new Date().toISOString() })
     .eq('user_id', receiverId)
     .select('balance')
     .single();
 
   if (creditError || !creditResult) {
-    console.error('❌ Credit failed, ROLLING BACK debit:', creditError);
-    
-    // 🔐 CRITICAL: Rollback the debit
-    const { error: rollbackError } = await supabase
-      .from('wallets')
-      .update({ 
-        balance: senderWallet.balance,
-        updated_at: new Date().toISOString()
-      })
+    // Rollback
+    await supabase.from('wallets')
+      .update({ balance: senderWallet.balance, updated_at: new Date().toISOString() })
       .eq('user_id', senderId);
 
-    if (rollbackError) {
-      console.error('❌ CRITICAL: Rollback failed! Manual intervention required:', rollbackError);
-      
-      // Create alert for manual intervention
-      await supabase.from('pdg_financial_alerts').insert({
-        alert_type: 'critical_rollback_failure',
-        severity: 'critical',
-        title: 'ÉCHEC ROLLBACK CRITIQUE',
-        message: `Transfert ${transactionId}: Débit de ${amount} GNF effectué mais crédit échoué. Rollback a aussi échoué!`,
-        metadata: { transactionId, senderId, receiverId, amount, senderWallet, recipientWallet }
-      });
-    }
-    
-    // Mark transaction as failed
-    await supabase
-      .from('enhanced_transactions')
-      .update({ status: 'failed', metadata: { error: 'credit_failed_rollback', step: 'recipient_credit' } })
+    await supabase.from('enhanced_transactions')
+      .update({ status: 'failed', metadata: { error: 'credit_failed_rollback' } })
       .eq('id', transactionId);
-    
+
     return { success: false, error: 'Erreur lors du crédit. Transaction annulée.' };
   }
 
-  // Step 4: Mark transaction as completed
-  await supabase
-    .from('enhanced_transactions')
-    .update({ 
+  // Mark completed
+  await supabase.from('enhanced_transactions')
+    .update({
       status: 'completed',
-      metadata: { 
-        description: description || 'Transfert entre wallets',
+      metadata: {
+        description,
         atomic: true,
+        is_international: isInternational,
         sender_balance_after: newSenderBalance,
-        recipient_balance_after: newRecipientBalance
+        recipient_balance_after: newRecipientBalance,
+        amount_credited: amountToCredit,
+        ...metadata
       }
     })
     .eq('id', transactionId);
 
-  console.log('✅ Atomic transfer completed:', transactionId);
-
-  return {
-    success: true,
-    senderBalance: newSenderBalance,
-    recipientBalance: newRecipientBalance
-  };
+  return { success: true, senderBalance: newSenderBalance, recipientBalance: newRecipientBalance };
 }
 
-/**
- * 🔐 Sync agent wallet if user is agent
- */
-async function syncAgentWallet(
-  supabase: any,
-  userId: string,
-  newBalance: number,
-  context: string,
-  userRole: string
-): Promise<void> {
+async function syncAgentWallet(supabase: any, userId: string, newBalance: number, context: string, userRole: string): Promise<void> {
   if (userRole !== 'agent') return;
-  
   try {
-    const { data: agentWallet } = await supabase
-      .from('agent_wallets')
-      .select('id')
-      .eq('agent_id', userId)
-      .maybeSingle();
-      
+    const { data: agentWallet } = await supabase.from('agent_wallets').select('id').eq('agent_id', userId).maybeSingle();
     if (agentWallet) {
-      await supabase
-        .from('agent_wallets')
+      await supabase.from('agent_wallets')
         .update({ balance: newBalance, updated_at: new Date().toISOString() })
         .eq('id', agentWallet.id);
-        
+
       await logWalletOperation(supabase, {
         user_id: userId,
         wallet_id: agentWallet.id,
@@ -432,74 +375,32 @@ async function syncAgentWallet(
         metadata: { source: 'wallet-operations', syncContext: context }
       });
     }
-  } catch (_e) {
-    console.warn('⚠️ Sync agent_wallet échouée (non bloquant)');
-  }
+  } catch {}
 }
 
-/**
- * 🔐 Resolve recipient ID from various formats
- */
 async function resolveRecipientId(supabase: any, recipientId: string): Promise<string | null> {
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(recipientId);
-  
-  if (isUUID) {
-    return recipientId;
-  }
+  if (isUUID) return recipientId;
 
-  console.log('🔍 Recherche utilisateur par ID:', recipientId);
-  
-  // Priority 1: user_ids.custom_id
-  const { data: userIdData } = await supabase
-    .from('user_ids')
-    .select('user_id, custom_id')
-    .eq('custom_id', recipientId.toUpperCase())
-    .maybeSingle();
+  // user_ids.custom_id
+  const { data: userIdData } = await supabase.from('user_ids').select('user_id, custom_id').eq('custom_id', recipientId.toUpperCase()).maybeSingle();
+  if (userIdData) return userIdData.user_id;
 
-  if (userIdData) {
-    console.log('✅ Custom ID trouvé:', userIdData.custom_id);
-    return userIdData.user_id;
-  }
+  // profiles.public_id
+  const { data: profileData } = await supabase.from('profiles').select('id, public_id').eq('public_id', recipientId.toUpperCase()).maybeSingle();
+  if (profileData) return profileData.id;
 
-  // Priority 2: profiles.public_id
-  const { data: profileData } = await supabase
-    .from('profiles')
-    .select('id, public_id')
-    .eq('public_id', recipientId.toUpperCase())
-    .maybeSingle();
+  // vendors.public_id
+  const { data: vendorData } = await supabase.from('vendors').select('user_id, public_id').eq('public_id', recipientId.toUpperCase()).maybeSingle();
+  if (vendorData) return vendorData.user_id;
 
-  if (profileData) {
-    console.log('✅ Profile public_id trouvé:', profileData.public_id);
-    return profileData.id;
-  }
-
-  // Priority 3: vendors.public_id
-  const { data: vendorData } = await supabase
-    .from('vendors')
-    .select('user_id, public_id')
-    .eq('public_id', recipientId.toUpperCase())
-    .maybeSingle();
-
-  if (vendorData) {
-    console.log('✅ Vendor public_id trouvé:', vendorData.public_id);
-    return vendorData.user_id;
-  }
-
-  // Priority 4: Search by email
+  // Email
   if (recipientId.includes('@')) {
-    const { data: emailData } = await supabase
-      .from('profiles')
-      .select('id')
-      .ilike('email', recipientId.trim())
-      .maybeSingle();
-
-    if (emailData) {
-      console.log('✅ Email trouvé:', recipientId);
-      return emailData.id;
-    }
+    const { data: emailData } = await supabase.from('profiles').select('id').ilike('email', recipientId.trim()).maybeSingle();
+    if (emailData) return emailData.id;
   }
 
-  // Priority 5: Search by phone number
+  // Phone
   const phonePattern = /^[0-9+\-\s]{6,}$/;
   if (phonePattern.test(recipientId.trim())) {
     const cleanPhone = recipientId.replace(/[\s\-]/g, '');
@@ -508,15 +409,15 @@ async function resolveRecipientId(supabase: any, recipientId: string): Promise<s
       .select('id')
       .or(`phone.eq.${cleanPhone},phone.eq.+${cleanPhone},phone.ilike.%${cleanPhone}%`)
       .maybeSingle();
-
-    if (phoneData) {
-      console.log('✅ Téléphone trouvé:', recipientId);
-      return phoneData.id;
-    }
+    if (phoneData) return phoneData.id;
   }
 
   return null;
 }
+
+// =============================================
+// MAIN HANDLER
+// =============================================
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -532,7 +433,7 @@ serve(async (req) => {
 
   try {
     console.log('🚀 Wallet operation started');
-    
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -544,23 +445,17 @@ serve(async (req) => {
     );
 
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    
     if (authError || !user) {
-      console.error('❌ Auth error:', authError);
       return new Response(
         JSON.stringify({ error: 'Non autorisé' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('👤 User authenticated:', user.id);
-
-    // 🔐 Validate input with Zod
     const requestBody = await req.json();
     const parseResult = requestSchema.safeParse(requestBody);
-    
+
     if (!parseResult.success) {
-      console.error('❌ Validation error:', parseResult.error);
       return new Response(
         JSON.stringify({ error: 'Données invalides', details: parseResult.error.errors }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -568,259 +463,225 @@ serve(async (req) => {
     }
 
     const { operation, amount, recipient_id, description, idempotency_key } = parseResult.data;
-    console.log('📝 Request:', { operation, amount, recipient_id: recipient_id?.substring(0, 8) + '...' });
 
-    // 🔐 Check idempotency
+    // Idempotency check
     const effectiveIdempotencyKey = idempotency_key || generateIdempotencyKey(user.id, operation, amount, recipient_id);
     const isDuplicate = await checkDuplicateTransaction(supabaseClient, effectiveIdempotencyKey);
-    
     if (isDuplicate) {
-      console.warn('⚠️ Duplicate transaction detected');
       return new Response(
-        JSON.stringify({ error: 'Transaction en double détectée. Réessayez dans quelques minutes.' }),
+        JSON.stringify({ error: 'Transaction en double détectée.' }),
         { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Get user profile
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('id, role')
-      .eq('id', user.id)
-      .maybeSingle();
-
+    const { data: profile } = await supabaseClient.from('profiles').select('id, role').eq('id', user.id).maybeSingle();
     const userRole = profile?.role || 'user';
 
-    // Get user wallet
-    const { data: wallet, error: walletError } = await supabaseClient
-      .from('wallets')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
-
+    const { data: wallet, error: walletError } = await supabaseClient.from('wallets').select('*').eq('user_id', user.id).single();
     if (walletError || !wallet) {
-      return new Response(
-        JSON.stringify({ error: 'Wallet introuvable' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Wallet introuvable' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // 🔐 Check if wallet is blocked
     if (wallet.is_blocked) {
-      return new Response(
-        JSON.stringify({ error: 'Wallet bloqué. Contactez le support.' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Wallet bloqué.' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // 🔐 Detect suspicious activity
     const suspicious = await detectSuspicious(supabaseClient, user.id, amount);
     if (suspicious.should_block) {
-      await supabaseClient
-        .from('wallets')
-        .update({ 
-          is_blocked: true, 
-          blocked_reason: `Activité suspecte: ${suspicious.flags.join(', ')}`,
-          blocked_at: new Date().toISOString()
-        })
-        .eq('id', wallet.id);
-
-      return new Response(
-        JSON.stringify({ error: 'Transaction bloquée: activité suspecte détectée' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      await supabaseClient.from('wallets').update({
+        is_blocked: true,
+        blocked_reason: `Activité suspecte: ${suspicious.flags.join(', ')}`,
+        blocked_at: new Date().toISOString()
+      }).eq('id', wallet.id);
+      return new Response(JSON.stringify({ error: 'Transaction bloquée: activité suspecte' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     let result;
 
     switch (operation) {
       case 'deposit': {
-        console.log('➕ Processing deposit...');
-        
         const depositFee = await calculateFee(supabaseClient, 'deposit', amount, wallet.currency);
         const netDeposit = amount - depositFee;
         const newBalance = wallet.balance + netDeposit;
-        
+
         const { error: depositError } = await supabaseClient
           .from('wallets')
           .update({ balance: newBalance, updated_at: new Date().toISOString() })
           .eq('user_id', user.id);
-
         if (depositError) throw depositError;
 
         await supabaseClient.from('enhanced_transactions').insert({
-          sender_id: user.id,
-          receiver_id: user.id,
-          amount: amount,
-          method: 'wallet',
-          status: 'completed',
-          currency: 'GNF',
-          transaction_type: 'deposit',
-          metadata: { description: description || 'Dépôt sur le wallet', fee: depositFee }
+          sender_id: user.id, receiver_id: user.id, amount, method: 'wallet', status: 'completed',
+          currency: 'GNF', transaction_type: 'deposit', metadata: { description: description || 'Dépôt', fee: depositFee }
         });
 
         await syncAgentWallet(supabaseClient, user.id, newBalance, 'deposit', userRole);
         await recordIdempotencyKey(supabaseClient, effectiveIdempotencyKey, user.id, 'deposit');
-        
         result = { success: true, new_balance: newBalance, operation: 'deposit' };
         break;
       }
 
       case 'withdraw': {
-        console.log('➖ Processing withdraw...');
-        
         if (wallet.balance < amount) {
-          return new Response(
-            JSON.stringify({ error: 'Solde insuffisant' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          return new Response(JSON.stringify({ error: 'Solde insuffisant' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
-
         const newBalance = wallet.balance - amount;
-        
         const { error: withdrawError } = await supabaseClient
           .from('wallets')
           .update({ balance: newBalance, updated_at: new Date().toISOString() })
           .eq('user_id', user.id);
-
         if (withdrawError) throw withdrawError;
 
         await supabaseClient.from('enhanced_transactions').insert({
-          sender_id: user.id,
-          receiver_id: user.id,
-          amount: amount,
-          method: 'wallet',
-          status: 'completed',
-          currency: 'GNF',
-          transaction_type: 'withdrawal',
-          metadata: { description: description || 'Retrait du wallet' }
+          sender_id: user.id, receiver_id: user.id, amount, method: 'wallet', status: 'completed',
+          currency: 'GNF', transaction_type: 'withdrawal', metadata: { description: description || 'Retrait' }
         });
 
         await syncAgentWallet(supabaseClient, user.id, newBalance, 'withdraw', userRole);
         await recordIdempotencyKey(supabaseClient, effectiveIdempotencyKey, user.id, 'withdraw');
-        
         result = { success: true, new_balance: newBalance, operation: 'withdraw' };
         break;
       }
 
       case 'transfer': {
-        console.log('💸 Processing transfer...');
-        
         if (!recipient_id) {
-          return new Response(
-            JSON.stringify({ error: 'Destinataire requis' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          return new Response(JSON.stringify({ error: 'Destinataire requis' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
-
         if (wallet.balance < amount) {
-          return new Response(
-            JSON.stringify({ error: 'Solde insuffisant' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          return new Response(JSON.stringify({ error: 'Solde insuffisant' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
 
-        // Resolve recipient ID
-        const recipientUserId = await resolveRecipientId(supabaseClient, recipient_id);
-        
+        // Use service role for recipient lookup
+        const serviceClient = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+
+        const recipientUserId = await resolveRecipientId(serviceClient, recipient_id);
         if (!recipientUserId) {
-          return new Response(
-            JSON.stringify({ error: `Utilisateur ${recipient_id} introuvable` }),
-            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          return new Response(JSON.stringify({ error: `Utilisateur ${recipient_id} introuvable` }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
-
-        // Prevent self-transfer
         if (recipientUserId === user.id) {
-          return new Response(
-            JSON.stringify({ error: 'Transfert vers soi-même non autorisé' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          return new Response(JSON.stringify({ error: 'Transfert vers soi-même non autorisé' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
 
         // Get recipient wallet
-        const { data: recipientWallet, error: recipientError } = await supabaseClient
+        const { data: recipientWallet, error: recipientError } = await serviceClient
           .from('wallets')
           .select('*')
           .eq('user_id', recipientUserId)
           .single();
 
         if (recipientError || !recipientWallet) {
-          return new Response(
-            JSON.stringify({ error: 'Wallet du destinataire introuvable' }),
-            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          return new Response(JSON.stringify({ error: 'Wallet du destinataire introuvable' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
 
-        // 🔐 CRITICAL: Execute atomic transfer
+        // 🌍 INTERNATIONAL DETECTION
+        const [senderGeo, receiverGeo, intlSettings] = await Promise.all([
+          getUserGeoInfo(serviceClient, user.id),
+          getUserGeoInfo(serviceClient, recipientUserId),
+          loadInternationalSettings(serviceClient),
+        ]);
+
+        const senderCountry = senderGeo.detected_country || "GN";
+        const receiverCountry = receiverGeo.detected_country || "GN";
+        const senderCurrency = senderGeo.detected_currency || "GNF";
+        const receiverCurrency = receiverGeo.detected_currency || "GNF";
+        const isInternational = senderCountry !== receiverCountry;
+
+        console.log(`🌍 wallet-ops transfer: ${senderCountry}(${senderCurrency}) → ${receiverCountry}(${receiverCurrency}) | Intl: ${isInternational}`);
+
+        let amountToDebit = amount;
+        let amountToCredit = amount;
+        let feeAmount = 0;
+        let rateUsed = 1;
+
+        if (isInternational) {
+          // Check daily limit
+          const today = new Date().toISOString().split("T")[0];
+          const { data: todayTx } = await serviceClient
+            .from("wallet_transfers")
+            .select("amount_sent")
+            .eq("sender_id", user.id)
+            .eq("status", "completed")
+            .gte("created_at", `${today}T00:00:00Z`);
+
+          const totalToday = (todayTx || []).reduce((s: number, t: any) => s + (t.amount_sent || 0), 0);
+          if (totalToday + amount > intlSettings.limite_transfert_quotidien) {
+            return new Response(JSON.stringify({ error: 'Limite quotidienne de transfert international atteinte' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          }
+
+          // Apply international fees
+          const commission = Math.round(amount * intlSettings.commission_conversion_percent / 100);
+          const frais = Math.round(amount * intlSettings.frais_transaction_international_percent / 100);
+          feeAmount = commission + frais;
+          const amountAfterFee = amount - feeAmount;
+
+          // Currency conversion
+          if (senderCurrency !== receiverCurrency) {
+            rateUsed = await getFxRate(serviceClient, senderCurrency, receiverCurrency);
+            amountToCredit = Math.round(amountAfterFee * rateUsed * 100) / 100;
+          } else {
+            amountToCredit = amountAfterFee;
+          }
+
+          console.log(`🌍 Intl fees: commission=${commission}, frais=${frais}, rate=${rateUsed}, credit=${amountToCredit}`);
+        }
+
+        // Execute atomic transfer
         const transferResult = await executeAtomicTransfer(
-          supabaseClient,
+          serviceClient,
           user.id,
           recipientUserId,
-          amount,
+          amountToDebit,
+          amountToCredit,
           description || 'Transfert entre wallets',
           wallet,
-          recipientWallet
+          recipientWallet,
+          isInternational,
+          { senderCurrency, receiverCurrency, rateUsed, feeAmount, senderCountry, receiverCountry }
         );
 
         if (!transferResult.success) {
-          return new Response(
-            JSON.stringify({ error: transferResult.error || 'Échec du transfert' }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          return new Response(JSON.stringify({ error: transferResult.error || 'Échec du transfert' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
 
-        // Sync agent wallets
         await syncAgentWallet(supabaseClient, user.id, transferResult.senderBalance!, 'transfer_sender', userRole);
-        
-        const { data: recipientProfile } = await supabaseClient
-          .from('profiles')
-          .select('role')
-          .eq('id', recipientUserId)
-          .maybeSingle();
-          
+
+        const { data: recipientProfile } = await serviceClient.from('profiles').select('role').eq('id', recipientUserId).maybeSingle();
         if (recipientProfile?.role === 'agent') {
           await syncAgentWallet(supabaseClient, recipientUserId, transferResult.recipientBalance!, 'transfer_recipient', 'agent');
         }
 
         await recordIdempotencyKey(supabaseClient, effectiveIdempotencyKey, user.id, 'transfer');
-        
-        result = { 
-          success: true, 
-          new_balance: transferResult.senderBalance, 
+
+        result = {
+          success: true,
+          new_balance: transferResult.senderBalance,
           operation: 'transfer',
-          recipient_new_balance: transferResult.recipientBalance
+          recipient_new_balance: transferResult.recipientBalance,
+          is_international: isInternational,
+          fee_amount: feeAmount,
+          rate_used: rateUsed,
+          sender_country: senderCountry,
+          receiver_country: receiverCountry,
+          currency_sent: senderCurrency,
+          currency_received: receiverCurrency,
         };
         break;
       }
 
       default:
-        return new Response(
-          JSON.stringify({ error: 'Opération non supportée' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return new Response(JSON.stringify({ error: 'Opération non supportée' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    console.log('✅ Operation completed:', result);
-
-    return new Response(
-      JSON.stringify(result),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify(result), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (error) {
     console.error('❌ Error in wallet operation:', error);
-    
-    // 🔐 Don't expose internal error details
     return new Response(
-      JSON.stringify({ 
-        success: false,
-        error: 'Une erreur est survenue'
-      }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      JSON.stringify({ success: false, error: 'Une erreur est survenue' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
