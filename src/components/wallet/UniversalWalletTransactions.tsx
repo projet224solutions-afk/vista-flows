@@ -283,28 +283,40 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         if (w.user_id) userIdsToResolve.add(w.user_id);
       }
 
-      // 3) Charger en batch: profiles avec public_id et full_name
+      // 3) Charger en batch: profiles avec public_id, full_name, first_name, last_name, email
       const idsArray = Array.from(userIdsToResolve);
-      let profilesRows: Array<{ id: string; public_id: string | null; full_name: string | null }> = [];
+      let profilesRows: Array<{ id: string; public_id: string | null; full_name: string | null; first_name: string | null; last_name: string | null; email: string | null }> = [];
 
       if (idsArray.length > 0) {
         const { data: profilesRes } = await supabase
           .from('profiles')
-          .select('id, public_id, full_name')
+          .select('id, public_id, full_name, first_name, last_name, email')
           .in('id', idsArray);
 
         profilesRows = (profilesRes ?? []) as any;
       }
 
       const userIdToPublicId = new Map(profilesRows.map((r) => [r.id, r.public_id]));
-      const userIdToName = new Map(profilesRows.map((r) => [r.id, r.full_name]));
+      const userIdToProfile = new Map(profilesRows.map((r) => [r.id, r]));
 
       const getUserDisplay = (uid?: string | null) => {
         if (!uid) {
           return { name: 'Système', customId: 'SYS' };
         }
+        const p = userIdToProfile.get(uid);
+        let name = 'Utilisateur';
+        if (p) {
+          // Priorité: full_name (si pas "Utilisateur") > first_name + last_name > email
+          if (p.full_name && p.full_name !== 'Utilisateur') {
+            name = p.full_name;
+          } else if (p.first_name || p.last_name) {
+            name = [p.first_name, p.last_name].filter(Boolean).join(' ');
+          } else if (p.email) {
+            name = p.email.split('@')[0];
+          }
+        }
         return {
-          name: userIdToName.get(uid) || 'Utilisateur',
+          name,
           customId: userIdToPublicId.get(uid) || uid.slice(0, 8),
         };
       };
