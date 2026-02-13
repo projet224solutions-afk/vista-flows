@@ -1268,7 +1268,15 @@ export default function OrderManagement() {
                       </div>
                       {/* Adresse de livraison géolocalisée + numéro COD */}
                       <div className="mt-3 pt-3 border-t border-border/50">
-                        <GeocodedAddress address={order.shipping_address} />
+                        <div className="flex items-start gap-2">
+                          <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                          <div>
+                            <span className="text-muted-foreground text-xs">Adresse de livraison:</span>
+                            <p className="font-medium text-sm mt-1">
+                              {[(order.shipping_address as any)?.address, (order.shipping_address as any)?.city, (order.shipping_address as any)?.country].filter(Boolean).join(', ') || 'Non disponible'}
+                            </p>
+                          </div>
+                        </div>
                         {(order.shipping_address as any)?.is_cod === true && (order.shipping_address as any)?.cod_phone && (
                           <p className="text-sm font-bold text-primary mt-1 ml-6">
                             📞 Numéro à contacter: {(order.shipping_address as any).cod_phone}
