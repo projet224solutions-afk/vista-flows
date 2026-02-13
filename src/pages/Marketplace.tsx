@@ -250,14 +250,18 @@ export default function Marketplace() {
 
       const { data: cityData } = await cityQuery;
 
-      const uniqueCities = [
-        ...new Set(
-          (cityData || [])
-            .map(v => (v.city || '').trim().replace(/\s+/g, ' '))
-            .filter(Boolean)
-        )
-      ];
-      setCities(uniqueCities.sort());
+      const cityMap = new Map<string, string>();
+      (cityData || []).forEach(v => {
+        const raw = (v.city || '').trim().replace(/\s+/g, ' ');
+        if (raw) {
+          const key = raw.toLowerCase();
+          if (!cityMap.has(key)) {
+            // Garder la version avec majuscule
+            cityMap.set(key, raw.charAt(0).toUpperCase() + raw.slice(1));
+          }
+        }
+      });
+      setCities([...cityMap.values()].sort());
     } catch (error) {
       console.error('Erreur chargement localisations:', error);
     }
