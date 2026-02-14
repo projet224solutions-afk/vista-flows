@@ -33,7 +33,7 @@ import {
   Shield,
   Loader2
 } from 'lucide-react';
-import { StripeCardPaymentModal } from '@/components/pos/StripeCardPaymentModal';
+import { Building2 } from 'lucide-react';
 
 interface UniversalWalletTransactionsProps {
   userId?: string;
@@ -81,10 +81,16 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   const [depositAmount, setDepositAmount] = useState('');
   const [depositMethod, setDepositMethod] = useState<'card' | 'mobile_money' | 'paypal'>('card');
   const [mobileMoneyPhone, setMobileMoneyPhone] = useState('');
-  const [showStripeModal, setShowStripeModal] = useState(false);
   const [mobileMoneyProvider, setMobileMoneyProvider] = useState<'orange' | 'mtn'>('orange');
   const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [withdrawMethod, setWithdrawMethod] = useState<'card' | 'mobile_money' | 'paypal'>('mobile_money');
+  const [withdrawMethod, setWithdrawMethod] = useState<'mobile_money' | 'bank' | 'paypal'>('mobile_money');
+  // Bank withdrawal states
+  const [bankName, setBankName] = useState('');
+  const [bankIban, setBankIban] = useState('');
+  const [bankAccountHolder, setBankAccountHolder] = useState('');
+  // PayPal card deposit states
+  const [cardDepositStep, setCardDepositStep] = useState<'input' | 'approve' | 'capturing'>('input');
+  const [cardDepositOrderId, setCardDepositOrderId] = useState<string | null>(null);
   const [withdrawPhone, setWithdrawPhone] = useState('');
   const [withdrawProvider, setWithdrawProvider] = useState<'orange' | 'mtn'>('orange');
   // PayPal states
@@ -676,7 +682,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       return;
     }
 
-    const minAmount = withdrawMethod === 'card' ? 50000 : 5000;
+    const minAmount = withdrawMethod === 'bank' ? 50000 : 5000;
     if (amount < minAmount) {
       toast.error(`INVALID_AMOUNT: Montant minimum ${formatPrice(minAmount)}`);
       return;
@@ -728,22 +734,36 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           });
         }
 
-      } else if (withdrawMethod === 'card') {
-        // Appeler l'edge function Stripe Withdrawal
-        const { data, error } = await supabase.functions.invoke('stripe-withdrawal', {
-          body: {
-            amount,
-            currency: 'gnf',
-          }
-        });
-
-        if (error) throw error;
-        if (!data?.success) throw new Error(data?.error || 'Erreur lors du retrait');
-
-        console.log('✅ Retrait Stripe:', data);
+      } else if (withdrawMethod === 'bank') {
+        // Retrait bancaire - enregistrer la demande (pas d'API pour l'instant)
+        const referenceNumber = `BK-WD-${Date.now()}`;
         
-        toast.success(`Demande de retrait de ${formatPrice(amount)} enregistrée !`, {
-          description: `Montant net: ${formatPrice(data.netAmount)} (frais: ${formatPrice(data.withdrawalFee)}). Virement sous 24-48h.`
+        const { error: txError } = await (supabase
+          .from('wallet_transactions')
+          .insert([{
+            transaction_id: referenceNumber,
+            transaction_type: 'withdrawal',
+            amount: -amount,
+            net_amount: amount * 0.97, // 3% frais
+            fee: amount * 0.03,
+            currency: wallet?.currency || 'GNF',
+            status: 'pending',
+            description: `Retrait bancaire vers ${bankName} - ${bankIban}`,
+            sender_wallet_id: Number(wallet?.id),
+            sender_user_id: effectiveUserId,
+            metadata: {
+              withdrawal_method: 'bank_transfer',
+              bank_name: bankName,
+              iban: bankIban,
+              account_holder: bankAccountHolder,
+              reference: referenceNumber,
+            }
+          } as any] as any));
+
+        if (txError) console.warn('Transaction log failed:', txError);
+
+        toast.success(`Demande de retrait bancaire de ${formatPrice(amount)} enregistrée !`, {
+          description: `Virement vers ${bankName} sous 3-5 jours ouvrés.`
         });
       }
       
@@ -1247,73 +1267,155 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   </TabsTrigger>
                 </TabsList>
                 
-                {/* Onglet Carte Bancaire - Stripe */}
+                {/* Onglet Carte Bancaire - via PayPal Checkout */}
                 <TabsContent value="card" className="space-y-4 mt-4">
-                  <div className="space-y-3">
-                    <Label>Montants rapides</Label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[10000, 25000, 50000, 100000, 250000, 500000].map((amt) => (
-                        <Button
-                          key={amt}
-                          variant={depositAmount === amt.toString() ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setDepositAmount(amt.toString())}
-                          className="text-xs"
-                        >
-                          {amt.toLocaleString()}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="card-deposit-amount">Montant personnalisé (GNF)</Label>
-                    <Input
-                      id="card-deposit-amount"
-                      type="number"
-                      placeholder="Ex: 100000"
-                      min="5000"
-                      value={depositAmount}
-                      onChange={(e) => setDepositAmount(e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">Minimum: 5,000 GNF</p>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
-                    <Shield className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                    <p className="text-xs text-blue-700">Paiement 100% sécurisé via Stripe</p>
-                  </div>
-                  
-                  <Button 
-                    onClick={() => {
-                      const numAmount = parseFloat(depositAmount);
-                      if (!numAmount || numAmount < 5000) {
-                        toast.error('Montant minimum: 5,000 GNF');
-                        return;
-                      }
-                      setShowStripeModal(true);
-                    }}
-                    disabled={processing || !depositAmount || parseFloat(depositAmount) < 5000}
-                    className="w-full"
-                  >
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Payer {depositAmount ? `${parseFloat(depositAmount).toLocaleString()} GNF` : ''}
-                  </Button>
-                  
-                  <div className="flex items-center justify-center gap-3 pt-2">
-                    <span className="text-xs text-muted-foreground">Cartes acceptées:</span>
-                    <div className="flex gap-2">
-                      <div className="w-8 h-5 bg-gradient-to-r from-blue-600 to-blue-400 rounded flex items-center justify-center text-white text-[6px] font-bold">
-                        VISA
-                      </div>
-                      <div className="w-8 h-5 bg-gradient-to-r from-red-600 to-orange-500 rounded flex items-center justify-center">
-                        <div className="flex gap-0.5">
-                          <div className="w-1.5 h-1.5 rounded-full bg-white opacity-80"></div>
-                          <div className="w-1.5 h-1.5 rounded-full bg-white opacity-60"></div>
+                  {cardDepositStep === 'input' && (
+                    <>
+                      <div className="space-y-3">
+                        <Label>Montants rapides</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[10000, 25000, 50000, 100000, 250000, 500000].map((amt) => (
+                            <Button
+                              key={amt}
+                              variant={depositAmount === amt.toString() ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setDepositAmount(amt.toString())}
+                              className="text-xs"
+                            >
+                              {amt.toLocaleString()}
+                            </Button>
+                          ))}
                         </div>
                       </div>
+                      
+                      <div>
+                        <Label htmlFor="card-deposit-amount">Montant personnalisé (GNF)</Label>
+                        <Input
+                          id="card-deposit-amount"
+                          type="number"
+                          placeholder="Ex: 100000"
+                          min="5000"
+                          value={depositAmount}
+                          onChange={(e) => setDepositAmount(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Minimum: 5,000 GNF · Frais: 2%</p>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
+                        <Shield className="w-4 h-4 text-primary flex-shrink-0" />
+                        <p className="text-xs text-muted-foreground">Paiement 100% sécurisé via PayPal - Visa, Mastercard, Amex acceptées</p>
+                      </div>
+                      
+                      <Button 
+                        onClick={async () => {
+                          const numAmount = parseFloat(depositAmount);
+                          if (!numAmount || numAmount < 5000) {
+                            toast.error('Montant minimum: 5,000 GNF');
+                            return;
+                          }
+                          setProcessing(true);
+                          try {
+                            const { data, error } = await supabase.functions.invoke('paypal-deposit', {
+                              body: { amount: numAmount, currency: wallet?.currency || 'GNF', action: 'create' },
+                            });
+                            if (error) throw new Error(error.message);
+                            if (!data?.success) throw new Error(data?.error || 'Erreur PayPal');
+                            setCardDepositOrderId(data.orderId);
+                            setCardDepositStep('approve');
+                            const approveUrl = `https://www.paypal.com/checkoutnow?token=${data.orderId}`;
+                            window.open(approveUrl, '_blank', 'width=500,height=700');
+                            toast.info('Approuvez le paiement dans PayPal', {
+                              description: 'Vous pouvez payer par carte bancaire dans l\'interface PayPal.',
+                              duration: 15000,
+                            });
+                          } catch (err) {
+                            toast.error(err instanceof Error ? err.message : 'Erreur');
+                          } finally {
+                            setProcessing(false);
+                          }
+                        }}
+                        disabled={processing || !depositAmount || parseFloat(depositAmount) < 5000}
+                        className="w-full"
+                      >
+                        {processing ? (
+                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Traitement...</>
+                        ) : (
+                          <><CreditCard className="w-4 h-4 mr-2" /> Payer {depositAmount ? `${parseFloat(depositAmount).toLocaleString()} GNF` : ''}</>
+                        )}
+                      </Button>
+                      
+                      <div className="flex items-center justify-center gap-3 pt-2">
+                        <span className="text-xs text-muted-foreground">Cartes acceptées:</span>
+                        <div className="flex gap-2">
+                          <div className="w-8 h-5 bg-gradient-to-r from-blue-600 to-blue-400 rounded flex items-center justify-center text-white text-[6px] font-bold">VISA</div>
+                          <div className="w-8 h-5 bg-gradient-to-r from-red-600 to-orange-500 rounded flex items-center justify-center">
+                            <div className="flex gap-0.5">
+                              <div className="w-1.5 h-1.5 rounded-full bg-white opacity-80"></div>
+                              <div className="w-1.5 h-1.5 rounded-full bg-white opacity-60"></div>
+                            </div>
+                          </div>
+                          <div className="w-8 h-5 bg-gradient-to-r from-blue-700 to-blue-500 rounded flex items-center justify-center text-white text-[5px] font-bold">AMEX</div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {cardDepositStep === 'approve' && (
+                    <div className="space-y-4 text-center">
+                      <div className="p-4 rounded-lg bg-amber-50 border border-amber-200">
+                        <p className="text-sm text-amber-800 font-medium">
+                          Approuvez le paiement dans la fenêtre PayPal ouverte, puis cliquez ci-dessous.
+                        </p>
+                      </div>
+                      <Button
+                        onClick={async () => {
+                          if (!cardDepositOrderId) return;
+                          setCardDepositStep('capturing');
+                          setProcessing(true);
+                          try {
+                            const { data, error } = await supabase.functions.invoke('paypal-deposit', {
+                              body: { action: 'capture', orderId: cardDepositOrderId },
+                            });
+                            if (error) throw new Error(error.message);
+                            if (!data?.success) throw new Error(data?.error || 'Capture échouée');
+                            toast.success('Dépôt par carte réussi !', {
+                              description: `${data.netAmount?.toFixed(2)} crédités (frais: ${data.depositFee?.toFixed(2)})`,
+                            });
+                            setDepositAmount('');
+                            setCardDepositStep('input');
+                            setCardDepositOrderId(null);
+                            setDepositOpen(false);
+                            window.dispatchEvent(new Event('wallet-updated'));
+                            await Promise.all([loadWalletData(), loadTransactions()]);
+                          } catch (err) {
+                            toast.error(err instanceof Error ? err.message : 'Erreur');
+                            setCardDepositStep('approve');
+                          } finally {
+                            setProcessing(false);
+                          }
+                        }}
+                        disabled={processing}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                        size="lg"
+                      >
+                        {processing ? (
+                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Confirmation...</>
+                        ) : (
+                          <>✅ J'ai approuvé — Confirmer</>
+                        )}
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => { setCardDepositStep('input'); setCardDepositOrderId(null); }}>
+                        Annuler
+                      </Button>
                     </div>
-                  </div>
+                  )}
+
+                  {cardDepositStep === 'capturing' && (
+                    <div className="flex flex-col items-center gap-3 py-6">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                      <p className="text-sm text-muted-foreground">Finalisation du dépôt...</p>
+                    </div>
+                  )}
                 </TabsContent>
                 
                 <TabsContent value="mobile_money" className="space-y-4 mt-4">
@@ -1407,15 +1509,15 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                 </p>
               </div>
               
-              <Tabs value={withdrawMethod} onValueChange={(v) => setWithdrawMethod(v as 'card' | 'mobile_money' | 'paypal')}>
+              <Tabs value={withdrawMethod} onValueChange={(v) => setWithdrawMethod(v as 'mobile_money' | 'bank' | 'paypal')}>
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="mobile_money" className="gap-1 text-xs">
                     <Smartphone className="w-3 h-3" />
                     Mobile
                   </TabsTrigger>
-                  <TabsTrigger value="card" className="gap-1 text-xs">
-                    <CreditCard className="w-3 h-3" />
-                    Carte
+                  <TabsTrigger value="bank" className="gap-1 text-xs">
+                    <Building2 className="w-3 h-3" />
+                    Banque
                   </TabsTrigger>
                   <TabsTrigger value="paypal" className="gap-1 text-xs">
                     <span className="text-[10px] font-bold">PP</span>
@@ -1515,18 +1617,48 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   </div>
                 </TabsContent>
                 
-                {/* Retrait Carte bancaire */}
-                <TabsContent value="card" className="space-y-4 mt-4">
-                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                {/* Retrait Virement bancaire */}
+                <TabsContent value="bank" className="space-y-4 mt-4">
+                  <div className="p-4 rounded-lg border bg-muted/50">
                     <div className="flex items-start gap-3">
-                      <CreditCard className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <Building2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-sm font-medium text-blue-800">Retrait vers carte bancaire</p>
-                        <p className="text-xs text-blue-700 mt-1">
-                          Le montant sera transféré sur votre carte bancaire enregistrée. Délai: 3-5 jours ouvrés.
+                        <p className="text-sm font-medium">Retrait par virement bancaire</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Le montant sera transféré sur votre compte bancaire. Délai: 3-5 jours ouvrés. Frais: 3%.
                         </p>
                       </div>
                     </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="bank-holder">Titulaire du compte</Label>
+                    <Input
+                      id="bank-holder"
+                      placeholder="Nom complet du titulaire"
+                      value={bankAccountHolder}
+                      onChange={(e) => setBankAccountHolder(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="bank-name">Nom de la banque</Label>
+                    <Input
+                      id="bank-name"
+                      placeholder="Ex: BCRG, Ecobank, BICIGUI..."
+                      value={bankName}
+                      onChange={(e) => setBankName(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="bank-iban">IBAN / Numéro de compte</Label>
+                    <Input
+                      id="bank-iban"
+                      placeholder="Ex: GN76 0001 0000 0000 0000"
+                      value={bankIban}
+                      onChange={(e) => setBankIban(e.target.value)}
+                    />
                   </div>
                   
                   <div>
@@ -1549,9 +1681,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   </div>
                   
                   <div>
-                    <Label htmlFor="withdraw-amount-card">Montant à retirer (GNF)</Label>
+                    <Label htmlFor="withdraw-amount-bank">Montant à retirer (GNF)</Label>
                     <Input
-                      id="withdraw-amount-card"
+                      id="withdraw-amount-bank"
                       type="number"
                       placeholder="Ex: 500000"
                       min="50000"
@@ -1559,35 +1691,20 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                       value={withdrawAmount}
                       onChange={(e) => setWithdrawAmount(e.target.value)}
                     />
-                    <p className="text-xs text-muted-foreground mt-1">Minimum: 50,000 GNF pour les retraits par carte</p>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
-                    <Shield className="w-4 h-4 text-green-600 flex-shrink-0" />
-                    <p className="text-xs text-green-700">Transaction sécurisée via Stripe</p>
+                    <p className="text-xs text-muted-foreground mt-1">Minimum: 50,000 GNF · Frais: 3%</p>
                   </div>
                   
                   <Button 
                     onClick={handleWithdraw} 
-                    disabled={processing || !withdrawAmount || parseFloat(withdrawAmount) < 50000}
+                    disabled={processing || !withdrawAmount || parseFloat(withdrawAmount) < 50000 || !bankName || !bankIban || !bankAccountHolder}
                     className="w-full"
                   >
                     {processing ? 'Traitement...' : `Demander le retrait de ${withdrawAmount ? parseFloat(withdrawAmount).toLocaleString() : '0'} GNF`}
                   </Button>
                   
-                  <div className="flex items-center justify-center gap-3 pt-2">
-                    <span className="text-xs text-muted-foreground">Cartes supportées:</span>
-                    <div className="flex gap-2">
-                      <div className="w-8 h-5 bg-gradient-to-r from-blue-600 to-blue-400 rounded flex items-center justify-center text-white text-[6px] font-bold">
-                        VISA
-                      </div>
-                      <div className="w-8 h-5 bg-gradient-to-r from-red-600 to-orange-500 rounded flex items-center justify-center">
-                        <div className="flex gap-0.5">
-                          <div className="w-1.5 h-1.5 rounded-full bg-white opacity-80"></div>
-                          <div className="w-1.5 h-1.5 rounded-full bg-white opacity-60"></div>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
+                    <AlertCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <p className="text-xs text-muted-foreground">Le virement sera traité sous 3-5 jours ouvrés</p>
                   </div>
                 </TabsContent>
 
@@ -1887,76 +2004,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       </CardContent>
     </Card>
     
-    {/* Modal Stripe pour paiement par carte */}
-    <StripeCardPaymentModal
-      isOpen={showStripeModal}
-      onClose={() => setShowStripeModal(false)}
-      amount={parseFloat(depositAmount) || 0}
-      currency="GNF"
-      orderId={`TOPUP-${Date.now()}`}
-      sellerId={effectiveUserId || ''} 
-      description="Recharge wallet par carte bancaire"
-      onSuccess={async (paymentIntentId) => {
-        setProcessing(true);
-        try {
-          const numAmount = parseFloat(depositAmount);
-          const referenceNumber = `TOP${Date.now()}${Math.floor(Math.random() * 1000)}`;
-          
-          // Créer la transaction de dépôt
-          const { error: transactionError } = await (supabase
-            .from('wallet_transactions')
-            .insert([
-              {
-                transaction_id: referenceNumber,
-                transaction_type: 'deposit',
-                amount: numAmount,
-                net_amount: numAmount,
-                fee: 0,
-                currency: 'GNF',
-                status: 'completed',
-                description: 'Recharge wallet par carte bancaire (Stripe)',
-                receiver_wallet_id: Number(wallet?.id),
-                receiver_user_id: effectiveUserId,
-                metadata: { stripe_payment_intent_id: paymentIntentId, reference: referenceNumber }
-              } as any
-            ] as any));
-
-          if (transactionError) throw transactionError;
-
-          // ⚡ Update atomique du balance
-          const { error: balanceError } = await (supabase
-            .rpc('update_wallet_balance_atomic' as any, {
-              p_wallet_id: Number(wallet?.id),
-              p_amount: numAmount,
-              p_tx_id: referenceNumber,
-              p_description: 'Recharge wallet par carte bancaire (Stripe)'
-            }) as any);
-
-          if (balanceError) throw balanceError;
-
-          toast.success('Recharge réussie !', {
-            description: `${numAmount.toLocaleString()} GNF ajoutés à votre wallet`
-          });
-
-          setDepositAmount('');
-          setShowStripeModal(false);
-          setDepositOpen(false);
-          window.dispatchEvent(new Event('wallet-updated'));
-          await loadWalletData(isAgent, agentInfo);
-          await loadTransactions();
-          
-        } catch (error) {
-          console.error('[StripeTopup] Error:', error);
-          toast.error('Erreur lors de la recharge');
-        } finally {
-          setProcessing(false);
-        }
-      }}
-      onError={(error) => {
-        toast.error('Erreur paiement carte', { description: error });
-        setShowStripeModal(false);
-      }}
-    />
+    {/* PayPal deposit tab content is handled inline above */}
   </>
   );
 };
