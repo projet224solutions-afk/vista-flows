@@ -114,6 +114,9 @@ verify_jwt = true
 [functions.agent-delete-user]
 verify_jwt = true
 
+[functions.delete-user]
+verify_jwt = false
+
 [functions.check-all-services]
 verify_jwt = false
 
