@@ -357,9 +357,6 @@ export default function EnhancedAuth() {
         provider,
         options: {
           redirectTo: redirectUrl,
-          queryParams: accountType
-            ? { account_type: accountType }
-            : undefined,
         },
       });
 

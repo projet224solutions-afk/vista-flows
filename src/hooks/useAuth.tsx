@@ -255,11 +255,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log('✅ Profil existant trouvé:', current.email, '| Rôle:', current.role);
 
         // Si l'utilisateur essayait de créer un compte (isNewOAuthSignup=true)
-        // mais le profil existe déjà → AVERTIR CLAIREMENT et garder le rôle existant
+        // et le profil a été créé par le trigger avec le rôle par défaut 'client'
+        // mais l'utilisateur avait choisi un rôle différent → mettre à jour le rôle
+        if (isNewOAuthSignup && intendedRole && intendedRole !== 'client' && current.role === 'client') {
+          console.log('🔄 Mise à jour du rôle OAuth:', current.role, '→', intendedRole);
+          
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ role: intendedRole })
+            .eq('id', user.id);
+
+          if (!updateError) {
+            const updatedProfile = { ...current, role: intendedRole } as Profile;
+            setProfile(updatedProfile);
+            localStorage.setItem(profileCacheKey, JSON.stringify(updatedProfile));
+            
+            const roleLabels: Record<string, string> = {
+              client: 'Client',
+              vendeur: 'Marchand',
+              livreur: 'Livreur',
+              taxi: 'Taxi Moto',
+              transitaire: 'Transitaire',
+            };
+            toast.success(
+              `Compte créé avec succès !`,
+              {
+                duration: 5000,
+                description: `Vous êtes inscrit en tant que ${roleLabels[intendedRole] || intendedRole}.`,
+              }
+            );
+          } else {
+            console.error('❌ Erreur mise à jour rôle OAuth:', updateError);
+            setProfile(current);
+            localStorage.setItem(profileCacheKey, JSON.stringify(current));
+          }
+          
+          localStorage.removeItem('oauth_intent_role');
+          localStorage.removeItem('oauth_is_new_signup');
+          return;
+        }
+
+        // Si l'utilisateur essayait de créer un compte mais le profil existait DÉJÀ avant
         if (isNewOAuthSignup) {
           console.log('⚠️ Tentative d\'inscription mais compte existe déjà');
           
-          // Message clair indiquant que l'email existe déjà
           toast.warning(
             `Cet email est déjà enregistré ! Vous avez été connecté à votre compte ${current.role} existant.`,
             {
@@ -287,7 +326,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         }
 
-        // NE JAMAIS modifier le rôle d'un profil existant
+        // NE JAMAIS modifier le rôle d'un profil existant (sauf cas OAuth ci-dessus)
         setProfile(current);
         
         // ✨ NOUVEAU: Mettre en cache le profil pour mode offline
