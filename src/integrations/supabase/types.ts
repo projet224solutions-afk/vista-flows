@@ -26495,6 +26495,10 @@ export type Database = {
       cleanup_old_system_errors: { Args: never; Returns: Json }
       cleanup_realtime_events: { Args: never; Returns: number }
       cleanup_typing_indicators: { Args: never; Returns: number }
+      cleanup_user_references: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
       compute_daily_analytics: { Args: { p_date?: string }; Returns: number }
       confirm_delivery_and_release_escrow: {
         Args: { p_customer_id: string; p_escrow_id: string; p_notes?: string }
