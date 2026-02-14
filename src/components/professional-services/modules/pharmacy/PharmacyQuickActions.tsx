@@ -20,7 +20,7 @@ const actions = [
   { icon: ShoppingCart, label: 'Commandes', route: '/vendeur/orders', color: 'bg-violet-500' },
   { icon: Users, label: 'Patients', tab: 'clients', color: 'bg-amber-500' },
   { icon: Package, label: 'Inventaire', tab: 'inventory', color: 'bg-rose-500' },
-  { icon: ClipboardList, label: 'Alertes stock', tab: 'alerts', color: 'bg-orange-500' },
+  { icon: ClipboardList, label: 'Alertes stock', tab: 'inventory', color: 'bg-orange-500' },
   { icon: FileText, label: 'Rapports', tab: 'reports', color: 'bg-cyan-500' },
   { icon: BarChart3, label: 'Analytics', tab: 'overview', color: 'bg-indigo-500' },
 ];
