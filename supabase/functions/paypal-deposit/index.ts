@@ -117,12 +117,15 @@ serve(async (req) => {
       }
 
       const order = await orderRes.json();
-      logStep("PayPal order created", { orderId: order.id, status: order.status });
+      const approveLink = order.links?.find((l: any) => l.rel === "approve")?.href 
+        || `https://www.paypal.com/checkoutnow?token=${order.id}`;
+      logStep("PayPal order created", { orderId: order.id, status: order.status, approveLink });
 
       return new Response(JSON.stringify({
         success: true,
         orderId: order.id,
         status: order.status,
+        approveUrl: approveLink,
         amount,
         depositFee,
         netAmount,
@@ -130,9 +133,37 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // --- ACTION: CHECK STATUS ---
+    if (action === "check-status") {
+      if (!orderId) throw new Error("orderId requis");
+      const statusRes = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders/${orderId}`, {
+        headers: { "Authorization": `Bearer ${accessToken}` },
+      });
+      if (!statusRes.ok) throw new Error("Impossible de vérifier le statut");
+      const statusData = await statusRes.json();
+      logStep("Order status check", { orderId, status: statusData.status });
+      return new Response(JSON.stringify({
+        success: true,
+        orderId,
+        status: statusData.status,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // --- ACTION: CAPTURE ORDER ---
     if (action === "capture") {
       if (!orderId) throw new Error("orderId requis pour capture");
+
+      // Check order status first
+      const checkRes = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders/${orderId}`, {
+        headers: { "Authorization": `Bearer ${accessToken}` },
+      });
+      if (checkRes.ok) {
+        const checkData = await checkRes.json();
+        logStep("Pre-capture status check", { orderId, status: checkData.status });
+        if (checkData.status !== "APPROVED") {
+          throw new Error(`L'ordre n'est pas encore approuvé (statut: ${checkData.status}). Veuillez d'abord approuver le paiement dans PayPal.`);
+        }
+      }
 
       logStep("Capturing PayPal order", { orderId });
 
