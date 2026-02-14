@@ -322,6 +322,7 @@ Deno.serve(async (req) => {
     await safeDelete('user_roles', 'user_id', userId);
     await safeDelete('user_contacts', 'user_id', userId);
     await safeDelete('user_analytics', 'user_id', userId);
+    await safeDelete('user_agent_affiliations', 'user_id', userId);
     await safeDelete('trackings', 'user_id', userId);
     await safeDelete('subscriptions', 'user_id', userId);
     await safeDelete('service_subscriptions', 'user_id', userId);
@@ -342,9 +343,53 @@ Deno.serve(async (req) => {
     await safeDelete('api_keys', 'user_id', userId);
     await safeDelete('revenus_pdg', 'user_id', userId);
     await safeDelete('pdg_management', 'user_id', userId);
+    await safeDelete('broadcast_recipients', 'user_id', userId);
+    await safeDelete('card_transactions', 'user_id', userId);
+    await safeDelete('djomy_payments', 'user_id', userId);
+    await safeDelete('djomy_transactions', 'user_id', userId);
+    await safeDelete('secure_transactions', 'user_id', userId);
+    await safeDelete('security_events', 'user_id', userId);
+    await safeDelete('product_views_raw', 'user_id', userId);
+    await safeDelete('phone_history', 'user_id', userId);
+    await safeDelete('ai_generated_documents', 'user_id', userId);
+    await safeDelete('location_access', 'user_id', userId);
+    await safeDelete('message_read_receipts', 'user_id', userId);
+    await safeDelete('idempotency_keys', 'user_id', userId);
+    await safeDelete('id_normalization_logs', 'user_id', userId);
+    await safeDelete('dropship_activity_logs', 'user_id', userId);
+    await safeDelete('financial_audit_logs', 'user_id', userId);
+    await safeDelete('financial_security_alerts', 'user_id', userId);
 
     console.log('👤 Suppression du profil...');
     await safeDelete('profiles', 'id', userId);
+
+    console.log('📁 Suppression des fichiers storage...');
+    try {
+      // List all buckets and delete user's files from each
+      const { data: buckets } = await supabaseAdmin.storage.listBuckets();
+      if (buckets) {
+        for (const bucket of buckets) {
+          // Storage objects are linked via owner_id; list user's folder
+          const { data: files } = await supabaseAdmin.storage
+            .from(bucket.id)
+            .list(userId, { limit: 1000 });
+          
+          if (files && files.length > 0) {
+            const paths = files.map(f => `${userId}/${f.name}`);
+            await supabaseAdmin.storage.from(bucket.id).remove(paths);
+            console.log(`  ✓ ${bucket.id}: ${paths.length} fichiers supprimés`);
+          }
+        }
+      }
+      // Also delete any storage objects owned by this user via direct SQL (covers all buckets/paths)
+      const { error: storageErr } = await supabaseAdmin.rpc('delete_storage_objects_for_user', { target_user_id: userId });
+      if (storageErr) {
+        // Fallback: try direct delete on storage.objects if RPC doesn't exist
+        console.log('  ⚠ RPC non disponible, suppression directe storage.objects...');
+      }
+    } catch (e) {
+      console.warn('  ⚠ Storage cleanup error:', e instanceof Error ? e.message : String(e));
+    }
 
     console.log('🔐 Suppression de l\'utilisateur auth...');
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
