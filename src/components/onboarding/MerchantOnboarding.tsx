@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,51 +22,18 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Loader2, Store, Utensils, ShoppingBag, Scissors, Car, Home, Wrench, Camera, GraduationCap, Stethoscope, Plane, Package, Truck, Zap, HardHat, Tractor, Laptop } from "lucide-react";
-
-// Types de services avec correspondance service_types.code dans la BDD
-const SERVICE_TYPES = [
-  { value: "ecommerce", code: "ecommerce", label: "Boutique / E-commerce", icon: ShoppingBag },
-  { value: "restaurant", code: "restaurant", label: "Restaurant / Alimentation", icon: Utensils },
-  { value: "beaute", code: "beaute", label: "Beauté & Bien-être", icon: Scissors },
-  { value: "reparation", code: "reparation", label: "Réparation / Mécanique", icon: Car },
-  { value: "location", code: "location", label: "Location Immobilière", icon: Home },
-  { value: "menage", code: "menage", label: "Ménage & Entretien", icon: Home },
-  { value: "livraison", code: "livraison", label: "Livraison / Coursier", icon: Truck },
-  { value: "media", code: "media", label: "Photographe / Vidéaste", icon: Camera },
-  { value: "education", code: "education", label: "Éducation / Formation", icon: GraduationCap },
-  { value: "sante", code: "sante", label: "Santé & Bien-être", icon: Stethoscope },
-  { value: "voyage", code: "voyage", label: "Voyage / Tourisme", icon: Plane },
-  { value: "freelance", code: "freelance", label: "Services Professionnels", icon: Wrench },
-  { value: "construction", code: "construction", label: "Construction / BTP", icon: HardHat },
-  { value: "agriculture", code: "agriculture", label: "Agriculture", icon: Tractor },
-  { value: "informatique", code: "informatique", label: "Informatique / Tech", icon: Laptop },
-  { value: "autre", code: "ecommerce", label: "Autre service", icon: Package },
-] as const;
+import { Loader2, Store, MapPin, Navigation } from "lucide-react";
 
 const merchantSetupSchema = z.object({
-  service_type: z.string().min(1, "Veuillez sélectionner un type de service"),
   business_name: z.string().min(3, "Le nom doit contenir au moins 3 caractères"),
   phone: z
     .string()
     .trim()
-    .min(6, "Numéro de téléphone trop court")
-    .optional()
-    .or(z.literal("")),
+    .min(6, "Numéro de téléphone trop court"),
   city: z.string().trim().min(2, "La ville est requise"),
   address: z.string().trim().optional().or(z.literal("")),
-  description: z.string().trim().optional().or(z.literal("")),
-  email: z.string().email("Email invalide").optional().or(z.literal("")),
 });
 
 type MerchantSetupFormData = z.infer<typeof merchantSetupSchema>;
@@ -77,29 +44,36 @@ export default function MerchantOnboarding() {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [vendorId, setVendorId] = useState<string | null>(null);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const checkedForUserRef = useRef<string | null>(null);
-
-  const defaultEmail = useMemo(() => profile?.email || user?.email || "", [profile?.email, user?.email]);
 
   const form = useForm<MerchantSetupFormData>({
     resolver: zodResolver(merchantSetupSchema),
     defaultValues: {
-      service_type: "",
       business_name: "",
       phone: profile?.phone || "",
       city: profile?.city || "",
       address: "",
-      description: "",
-      email: defaultEmail,
     },
   });
 
-  // Sync email default (OAuth peut remplir l'email tard)
-  useEffect(() => {
-    form.setValue("email", defaultEmail);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [defaultEmail]);
+  const handleGetPosition = async () => {
+    setGpsLoading(true);
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        if (!navigator.geolocation) { reject(new Error('GPS non disponible')); return; }
+        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+      });
+      setGpsCoords({ lat: position.coords.latitude, lng: position.coords.longitude });
+      toast.success('Position GPS capturée !');
+    } catch {
+      toast.error('Impossible de capturer la position GPS');
+    } finally {
+      setGpsLoading(false);
+    }
+  };
 
   useEffect(() => {
     const run = async () => {
@@ -120,7 +94,7 @@ export default function MerchantOnboarding() {
 
       const { data, error } = await supabase
         .from("vendors")
-        .select("id,business_name,phone,email,address,description,city,service_type")
+        .select("id,business_name,phone,address,city")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -135,13 +109,10 @@ export default function MerchantOnboarding() {
         // Nouveau marchand : ouvrir automatiquement
         setVendorId(null);
         form.reset({
-          service_type: "",
           business_name: "",
           phone: profile.phone || "",
           city: profile.city || "",
           address: "",
-          description: "",
-          email: defaultEmail,
         });
         setOpen(true);
         return;
@@ -158,7 +129,7 @@ export default function MerchantOnboarding() {
     };
 
     run();
-  }, [user, profile, loading, profileLoading, form, defaultEmail]);
+  }, [user, profile, loading, profileLoading, form]);
 
   const onSubmit = async (values: MerchantSetupFormData) => {
     if (!user) return;
@@ -171,12 +142,9 @@ export default function MerchantOnboarding() {
         const { error } = await supabase
           .from("vendors")
           .update({
-            service_type: values.service_type,
             business_name: values.business_name,
             phone: values.phone || null,
-            email: values.email || null,
             address: values.address || null,
-            description: values.description || null,
             city: values.city || null,
           })
           .eq("id", vendorId);
@@ -187,12 +155,9 @@ export default function MerchantOnboarding() {
           .from("vendors")
           .insert({
             user_id: user.id,
-            service_type: values.service_type,
             business_name: values.business_name,
             phone: values.phone || null,
-            email: values.email || null,
             address: values.address || null,
-            description: values.description || null,
             city: values.city || null,
             is_active: true,
           })
@@ -204,67 +169,12 @@ export default function MerchantOnboarding() {
         setVendorId(data.id);
       }
 
-      // Trouver le service_type_id correspondant au code sélectionné
-      const selectedServiceType = SERVICE_TYPES.find(s => s.value === values.service_type);
-      const serviceCode = selectedServiceType?.code || values.service_type;
-      
-      const { data: serviceTypeData } = await supabase
-        .from("service_types")
-        .select("id, name, code")
-        .eq("code", serviceCode)
-        .eq("is_active", true)
-        .maybeSingle();
-
-      if (serviceTypeData && currentVendorId) {
-        // Vérifier si un professional_service existe déjà
-        const { data: existingService } = await supabase
-          .from("professional_services")
-          .select("id")
-          .eq("user_id", user.id)
-          .eq("service_type_id", serviceTypeData.id)
-          .maybeSingle();
-
-        if (!existingService) {
-          // 🔥 Capturer automatiquement la position GPS
-          let latitude: number | null = null;
-          let longitude: number | null = null;
-
-          try {
-            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-              if (!navigator.geolocation) {
-                reject(new Error('GPS non disponible'));
-                return;
-              }
-              navigator.geolocation.getCurrentPosition(resolve, reject, {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 60000
-              });
-            });
-            latitude = position.coords.latitude;
-            longitude = position.coords.longitude;
-            console.log('📍 Position GPS capturée pour le marchand:', { latitude, longitude });
-          } catch (gpsError) {
-            console.warn('⚠️ GPS non disponible, service créé sans coordonnées:', gpsError);
-          }
-
-          // Créer le professional_service pour activer le module métier
-          await supabase.from("professional_services").insert({
-            user_id: user.id,
-            service_type_id: serviceTypeData.id,
-            business_name: values.business_name,
-            description: values.description || null,
-            address: values.address || null,
-            phone: values.phone || null,
-            email: values.email || null,
-            city: values.city || null,
-            latitude,
-            longitude,
-            status: "active",
-          });
-          
-          console.log(`✅ Module métier "${serviceTypeData.name}" créé pour le marchand`);
-        }
+      // Sauvegarder les coordonnées GPS si disponibles
+      if (gpsCoords && currentVendorId) {
+        await supabase
+          .from("vendors")
+          .update({ latitude: gpsCoords.lat, longitude: gpsCoords.lng })
+          .eq("id", currentVendorId);
       }
 
       toast.success("Profil marchand enregistré avec succès !");
@@ -299,47 +209,15 @@ export default function MerchantOnboarding() {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-            {/* Type de service - Champ principal */}
-            <FormField
-              control={form.control}
-              name="service_type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base font-semibold">Type de service *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={submitting}>
-                    <FormControl>
-                      <SelectTrigger className="h-12">
-                        <SelectValue placeholder="Sélectionnez votre type de service" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {SERVICE_TYPES.map((type) => {
-                        const IconComponent = type.icon;
-                        return (
-                          <SelectItem key={type.value} value={type.value}>
-                            <div className="flex items-center gap-2">
-                              <IconComponent className="h-4 w-4 text-muted-foreground" />
-                              <span>{type.label}</span>
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <FormField
               control={form.control}
               name="business_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nom de la boutique / entreprise *</FormLabel>
+                  <FormLabel>Nom de la boutique *</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="Ex: Boutique Diallo, Restaurant Chez Mamou..." 
+                      placeholder="Ex: Boutique Diallo..." 
                       {...field} 
                       disabled={submitting}
                       className="h-11"
@@ -395,7 +273,7 @@ export default function MerchantOnboarding() {
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Adresse complète</FormLabel>
+                  <FormLabel>Adresse</FormLabel>
                   <FormControl>
                     <Input 
                       placeholder="Quartier, Commune, Repères..." 
@@ -409,44 +287,29 @@ export default function MerchantOnboarding() {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description de votre activité</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      rows={3} 
-                      placeholder="Décrivez vos produits ou services..." 
-                      {...field} 
-                      disabled={submitting} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+            {/* Bouton position GPS */}
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGetPosition}
+                disabled={gpsLoading || submitting}
+                className="gap-2"
+              >
+                {gpsLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Navigation className="h-4 w-4" />
+                )}
+                {gpsCoords ? 'Position capturée ✓' : 'Ajouter ma position'}
+              </Button>
+              {gpsCoords && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {gpsCoords.lat.toFixed(4)}, {gpsCoords.lng.toFixed(4)}
+                </span>
               )}
-            />
-
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email professionnel</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="email" 
-                      placeholder="contact@votreboutique.com" 
-                      {...field} 
-                      disabled={submitting}
-                      className="h-11"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button 
