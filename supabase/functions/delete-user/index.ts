@@ -34,22 +34,23 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { userId } = await req.json();
-
-    if (!userId) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'userId requis' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-
-    const { data: { user: currentUser }, error: userError } = await supabaseClient.auth.getUser();
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user: currentUser }, error: userError } = await supabaseAdmin.auth.getUser(token);
     
     if (userError || !currentUser) {
       console.error('❌ Auth error:', userError?.message);
       return new Response(
         JSON.stringify({ success: false, error: 'Non authentifié: ' + (userError?.message || 'token invalide') }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    const { userId } = await req.json();
+
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'userId requis' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
