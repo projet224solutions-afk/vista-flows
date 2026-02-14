@@ -147,31 +147,14 @@ export default function MerchantOnboarding() {
         return;
       }
 
+      // ✅ Le vendeur a déjà un enregistrement vendors → profil considéré comme complet
+      // Ne JAMAIS réafficher le dialog pour un vendeur qui a déjà un record
       setVendorId(data.id);
-      form.reset({
-        service_type: (data as any).service_type || "",
-        business_name: data.business_name || "",
-        phone: data.phone || profile.phone || "",
-        city: data.city || profile.city || "",
-        address: data.address || "",
-        description: data.description || "",
-        email: data.email || defaultEmail,
-      });
-
-      // Critère "profil complet" : seul business_name est obligatoire
-      // service_type est optionnel pour les vendeurs classiques
-      const hasBusinessName = Boolean(data.business_name && data.business_name.trim().length >= 3);
-      
-      // Si le vendeur a un business_name, le profil est complet — pas besoin de forcer l'activation
-      const isComplete = hasBusinessName;
-      
-      console.log('📋 Vérification profil marchand:', {
-        hasBusinessName,
-        isComplete,
+      console.log('✅ Vendeur existant détecté, dialog NON affiché:', {
+        vendorId: data.id,
         business_name: data.business_name
       });
-      
-      setOpen(!isComplete);
+      setOpen(false);
     };
 
     run();
