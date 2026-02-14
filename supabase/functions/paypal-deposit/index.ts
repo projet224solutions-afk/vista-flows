@@ -20,6 +20,13 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
 const DEPOSIT_FEE_RATE = 2; // 2%
 const PAYPAL_API_BASE = "https://api-m.paypal.com";
 
+// PayPal supported currencies
+const PAYPAL_SUPPORTED_CURRENCIES = [
+  "AUD","BRL","CAD","CNY","CZK","DKK","EUR","HKD","HUF","ILS",
+  "JPY","MYR","MXN","TWD","NZD","NOK","PHP","PLN","GBP","SGD",
+  "SEK","CHF","THB","USD","RUB"
+];
+
 async function getPayPalAccessToken(): Promise<string> {
   const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
   const secret = Deno.env.get("PAYPAL_SECRET_KEY");
@@ -71,10 +78,14 @@ serve(async (req) => {
     if (action === "create") {
       if (!amount || amount <= 0) throw new Error("Montant invalide");
 
+      // Force USD if currency not supported by PayPal
+      const upperCurrency = currency.toUpperCase();
+      const paypalCurrency = PAYPAL_SUPPORTED_CURRENCIES.includes(upperCurrency) ? upperCurrency : "USD";
+      
       const depositFee = Math.round(amount * (DEPOSIT_FEE_RATE / 100) * 100) / 100;
       const netAmount = Math.round((amount - depositFee) * 100) / 100;
 
-      logStep("Creating PayPal order", { amount, depositFee, netAmount, currency });
+      logStep("Creating PayPal order", { amount, depositFee, netAmount, originalCurrency: upperCurrency, paypalCurrency });
 
       const orderRes = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders`, {
         method: "POST",
@@ -86,7 +97,7 @@ serve(async (req) => {
           intent: "CAPTURE",
           purchase_units: [{
             amount: {
-              currency_code: currency.toUpperCase(),
+              currency_code: paypalCurrency,
               value: amount.toFixed(2),
             },
             description: `Dépôt wallet - 224Solutions`,
@@ -115,6 +126,7 @@ serve(async (req) => {
         amount,
         depositFee,
         netAmount,
+        paypalCurrency,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
