@@ -158,19 +158,16 @@ export default function MerchantOnboarding() {
         email: data.email || defaultEmail,
       });
 
-      // Critères "profil complet" : service_type + business_name sont obligatoires
-      // city et phone sont optionnels (peuvent être dans profile)
-      const hasServiceType = Boolean((data as any).service_type);
+      // Critère "profil complet" : seul business_name est obligatoire
+      // service_type est optionnel pour les vendeurs classiques
       const hasBusinessName = Boolean(data.business_name && data.business_name.trim().length >= 3);
       
-      // Si les infos essentielles sont là, le profil est complet
-      const isComplete = hasServiceType && hasBusinessName;
+      // Si le vendeur a un business_name, le profil est complet — pas besoin de forcer l'activation
+      const isComplete = hasBusinessName;
       
       console.log('📋 Vérification profil marchand:', {
-        hasServiceType,
         hasBusinessName,
         isComplete,
-        service_type: (data as any).service_type,
         business_name: data.business_name
       });
       
