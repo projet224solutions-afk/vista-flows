@@ -58,7 +58,8 @@ Deno.serve(async (req) => {
       .eq('id', currentUser.id)
       .single();
 
-    if (profile?.role !== 'admin') {
+    const adminRoles = ['admin', 'pdg', 'ceo'];
+    if (!adminRoles.includes(profile?.role?.toLowerCase())) {
       return new Response(
         JSON.stringify({ success: false, error: 'Permissions insuffisantes' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
