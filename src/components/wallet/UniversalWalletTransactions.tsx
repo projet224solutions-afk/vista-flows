@@ -1322,7 +1322,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                             if (!data?.success) throw new Error(data?.error || 'Erreur PayPal');
                             setCardDepositOrderId(data.orderId);
                             setCardDepositStep('approve');
-                            const approveUrl = `https://www.paypal.com/checkoutnow?token=${data.orderId}`;
+                            const approveUrl = data.approveUrl || `https://www.paypal.com/checkoutnow?token=${data.orderId}`;
                             window.open(approveUrl, '_blank', 'width=500,height=700');
                             toast.info('Approuvez le paiement dans PayPal', {
                               description: 'Vous pouvez payer par carte bancaire dans l\'interface PayPal.',
@@ -1364,22 +1364,41 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                     <div className="space-y-4 text-center">
                       <div className="p-4 rounded-lg bg-amber-50 border border-amber-200">
                         <p className="text-sm text-amber-800 font-medium">
-                          Approuvez le paiement dans la fenêtre PayPal ouverte, puis cliquez ci-dessous.
+                          1. Approuvez le paiement dans la fenêtre PayPal
+                        </p>
+                        <p className="text-xs text-amber-600 mt-1">
+                          2. Revenez ici et cliquez sur "Confirmer" une fois le paiement approuvé
                         </p>
                       </div>
                       <Button
                         onClick={async () => {
                           if (!cardDepositOrderId) return;
-                          setCardDepositStep('capturing');
                           setProcessing(true);
                           try {
+                            // Step 1: Check if order is approved
+                            const { data: statusData, error: statusError } = await supabase.functions.invoke('paypal-deposit', {
+                              body: { action: 'check-status', orderId: cardDepositOrderId },
+                            });
+                            if (statusError) throw new Error(statusError.message);
+                            
+                            if (statusData?.status !== 'APPROVED') {
+                              toast.warning('Paiement pas encore approuvé', {
+                                description: `Statut actuel: ${statusData?.status || 'inconnu'}. Veuillez d'abord approuver dans PayPal.`,
+                                duration: 8000,
+                              });
+                              setProcessing(false);
+                              return;
+                            }
+
+                            // Step 2: Capture
+                            setCardDepositStep('capturing');
                             const { data, error } = await supabase.functions.invoke('paypal-deposit', {
                               body: { action: 'capture', orderId: cardDepositOrderId },
                             });
                             if (error) throw new Error(error.message);
                             if (!data?.success) throw new Error(data?.error || 'Capture échouée');
                             toast.success('Dépôt par carte réussi !', {
-                              description: `${data.netAmount?.toFixed(2)} crédités (frais: ${data.depositFee?.toFixed(2)})`,
+                              description: `${data.netAmount?.toFixed(2)} USD crédités (frais: ${data.depositFee?.toFixed(2)})`,
                             });
                             setDepositAmount('');
                             setCardDepositStep('input');
@@ -1399,14 +1418,22 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                         size="lg"
                       >
                         {processing ? (
-                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Confirmation...</>
+                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Vérification...</>
                         ) : (
-                          <>✅ J'ai approuvé — Confirmer</>
+                          <>✅ J'ai approuvé sur PayPal — Confirmer</>
                         )}
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => { setCardDepositStep('input'); setCardDepositOrderId(null); }}>
-                        Annuler
-                      </Button>
+                      <div className="flex gap-2 justify-center">
+                        <Button variant="outline" size="sm" onClick={() => {
+                          const approveUrl = `https://www.paypal.com/checkoutnow?token=${cardDepositOrderId}`;
+                          window.open(approveUrl, '_blank', 'width=500,height=700');
+                        }}>
+                          🔗 Rouvrir PayPal
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => { setCardDepositStep('input'); setCardDepositOrderId(null); }}>
+                          Annuler
+                        </Button>
+                      </div>
                     </div>
                   )}
 
