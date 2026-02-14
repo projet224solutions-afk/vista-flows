@@ -79,14 +79,20 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   
   // États pour les formulaires
   const [depositAmount, setDepositAmount] = useState('');
-  const [depositMethod, setDepositMethod] = useState<'card' | 'mobile_money'>('card');
+  const [depositMethod, setDepositMethod] = useState<'card' | 'mobile_money' | 'paypal'>('card');
   const [mobileMoneyPhone, setMobileMoneyPhone] = useState('');
   const [showStripeModal, setShowStripeModal] = useState(false);
   const [mobileMoneyProvider, setMobileMoneyProvider] = useState<'orange' | 'mtn'>('orange');
   const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [withdrawMethod, setWithdrawMethod] = useState<'card' | 'mobile_money'>('mobile_money');
+  const [withdrawMethod, setWithdrawMethod] = useState<'card' | 'mobile_money' | 'paypal'>('mobile_money');
   const [withdrawPhone, setWithdrawPhone] = useState('');
   const [withdrawProvider, setWithdrawProvider] = useState<'orange' | 'mtn'>('orange');
+  // PayPal states
+  const [paypalDepositAmount, setPaypalDepositAmount] = useState('');
+  const [paypalDepositStep, setPaypalDepositStep] = useState<'input' | 'approve' | 'capturing'>('input');
+  const [paypalOrderId, setPaypalOrderId] = useState<string | null>(null);
+  const [paypalWithdrawEmail, setPaypalWithdrawEmail] = useState('');
+  const [paypalWithdrawAmount, setPaypalWithdrawAmount] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
   const [recipientId, setRecipientId] = useState('');
   const [transferDescription, setTransferDescription] = useState('');
@@ -1225,8 +1231,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   Ajoutez des fonds à votre wallet
                 </DialogDescription>
               </DialogHeader>
-              <Tabs value={depositMethod} onValueChange={(v) => setDepositMethod(v as 'card' | 'mobile_money')}>
-                <TabsList className="grid w-full grid-cols-2">
+              <Tabs value={depositMethod} onValueChange={(v) => setDepositMethod(v as 'card' | 'mobile_money' | 'paypal')}>
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="card" className="gap-1 text-xs">
                     <CreditCard className="w-3 h-3" />
                     Carte
@@ -1234,6 +1240,10 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   <TabsTrigger value="mobile_money" className="gap-1 text-xs">
                     <Smartphone className="w-3 h-3" />
                     Mobile
+                  </TabsTrigger>
+                  <TabsTrigger value="paypal" className="gap-1 text-xs">
+                    <span className="text-[10px] font-bold">PP</span>
+                    PayPal
                   </TabsTrigger>
                 </TabsList>
                 
@@ -1397,15 +1407,19 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                 </p>
               </div>
               
-              <Tabs value={withdrawMethod} onValueChange={(v) => setWithdrawMethod(v as 'card' | 'mobile_money')}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="mobile_money" className="gap-2">
-                    <Smartphone className="w-4 h-4" />
-                    Mobile Money
+              <Tabs value={withdrawMethod} onValueChange={(v) => setWithdrawMethod(v as 'card' | 'mobile_money' | 'paypal')}>
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="mobile_money" className="gap-1 text-xs">
+                    <Smartphone className="w-3 h-3" />
+                    Mobile
                   </TabsTrigger>
-                  <TabsTrigger value="card" className="gap-2">
-                    <CreditCard className="w-4 h-4" />
+                  <TabsTrigger value="card" className="gap-1 text-xs">
+                    <CreditCard className="w-3 h-3" />
                     Carte
+                  </TabsTrigger>
+                  <TabsTrigger value="paypal" className="gap-1 text-xs">
+                    <span className="text-[10px] font-bold">PP</span>
+                    PayPal
                   </TabsTrigger>
                 </TabsList>
                 
@@ -1574,6 +1588,81 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                         </div>
                       </div>
                     </div>
+                  </div>
+                </TabsContent>
+
+                {/* Retrait PayPal */}
+                <TabsContent value="paypal" className="space-y-4 mt-4">
+                  <div>
+                    <Label htmlFor="pp-wd-email">Email PayPal du destinataire</Label>
+                    <Input
+                      id="pp-wd-email"
+                      type="email"
+                      placeholder="votre@email.com"
+                      value={paypalWithdrawEmail}
+                      onChange={(e) => setPaypalWithdrawEmail(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Montants rapides (USD)</Label>
+                    <div className="grid grid-cols-3 gap-2 mt-1">
+                      {[10, 25, 50, 100, 250, 500].map((amt) => (
+                        <Button
+                          key={amt}
+                          variant={paypalWithdrawAmount === amt.toString() ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setPaypalWithdrawAmount(amt.toString())}
+                          className="text-xs"
+                        >
+                          ${amt}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="pp-wd-amt">Montant (USD)</Label>
+                    <Input
+                      id="pp-wd-amt"
+                      type="number"
+                      placeholder="Ex: 50"
+                      value={paypalWithdrawAmount}
+                      onChange={(e) => setPaypalWithdrawAmount(e.target.value)}
+                      min="5"
+                      step="0.01"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Minimum: $5 USD · Frais: 1.5%</p>
+                  </div>
+                  <Button
+                    onClick={async () => {
+                      const numAmt = parseFloat(paypalWithdrawAmount);
+                      if (!numAmt || numAmt < 5) { toast.error('Minimum $5 USD'); return; }
+                      if (!paypalWithdrawEmail || !paypalWithdrawEmail.includes('@')) { toast.error('Email PayPal invalide'); return; }
+                      setProcessing(true);
+                      try {
+                        const { data, error } = await supabase.functions.invoke('paypal-withdrawal', {
+                          body: { amount: numAmt, currency: 'USD', paypalEmail: paypalWithdrawEmail },
+                        });
+                        if (error) throw new Error(error.message);
+                        if (!data?.success) throw new Error(data?.error || 'Erreur retrait');
+                        toast.success(data.message || 'Retrait PayPal effectué !');
+                        setPaypalWithdrawAmount('');
+                        setPaypalWithdrawEmail('');
+                        setWithdrawOpen(false);
+                        window.dispatchEvent(new Event('wallet-updated'));
+                        await Promise.all([loadWalletData(), loadTransactions()]);
+                      } catch (err: any) {
+                        toast.error(err.message || 'Erreur retrait PayPal');
+                      } finally { setProcessing(false); }
+                    }}
+                    disabled={processing || !paypalWithdrawAmount || parseFloat(paypalWithdrawAmount) < 5 || !paypalWithdrawEmail}
+                    className="w-full bg-[#0070BA] hover:bg-[#003087] text-white"
+                    size="lg"
+                  >
+                    {processing ? 'Traitement...' : `Retirer $${paypalWithdrawAmount || '0'} vers PayPal`}
+                  </Button>
+                  <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+                    <Shield className="w-4 h-4 text-primary flex-shrink-0" />
+                    <p className="text-xs text-muted-foreground">Paiement sécurisé via PayPal Payouts</p>
                   </div>
                 </TabsContent>
               </Tabs>

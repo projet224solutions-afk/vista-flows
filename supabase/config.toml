@@ -329,3 +329,9 @@ verify_jwt = false
 
 [functions.short-link]
 verify_jwt = false
+
+[functions.paypal-deposit]
+verify_jwt = true
+
+[functions.paypal-withdrawal]
+verify_jwt = true
