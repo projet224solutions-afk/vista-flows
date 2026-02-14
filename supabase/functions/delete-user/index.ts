@@ -363,6 +363,19 @@ Deno.serve(async (req) => {
     console.log('👤 Suppression du profil...');
     await safeDelete('profiles', 'id', userId);
 
+    // Nettoyage dynamique de TOUTES les FK restantes vers auth.users
+    console.log('🔗 Nettoyage dynamique des références FK restantes...');
+    try {
+      const { error: cleanupErr } = await supabaseAdmin.rpc('cleanup_user_references', { target_user_id: userId });
+      if (cleanupErr) {
+        console.warn('  ⚠ cleanup_user_references error:', cleanupErr.message);
+      } else {
+        console.log('  ✓ Références FK nettoyées dynamiquement');
+      }
+    } catch (e) {
+      console.warn('  ⚠ cleanup_user_references error:', e instanceof Error ? e.message : String(e));
+    }
+
     console.log('📁 Suppression des fichiers storage (via RPC)...');
     try {
       const { error: storageRpcErr } = await supabaseAdmin.rpc('delete_user_storage_objects', { target_user_id: userId });
