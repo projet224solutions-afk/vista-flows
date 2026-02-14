@@ -19,23 +19,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
-      }
-    );
-
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user: currentUser }, error: userError } = await supabaseClient.auth.getUser(token);
+    const { data: { user: currentUser }, error: userError } = await supabaseAdmin.auth.getUser(token);
     
     if (userError || !currentUser) {
       console.error('❌ Auth error:', userError?.message);
