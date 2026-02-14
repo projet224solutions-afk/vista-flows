@@ -55,11 +55,17 @@ export function CategoryProductsList({
   }, [products, searchQuery]);
 
   const handleAddProduct = () => {
-    console.log('[CategoryProductsList] handleAddProduct called', { user: !!user, isMerchant });
+    console.log('[CategoryProductsList] handleAddProduct called', { user: !!user, isMerchant, role: profile?.role });
     
     if (!user) {
       toast.info('Connexion requise pour ajouter un produit');
       navigate('/auth', { state: { redirectTo: '/digital-products' } });
+      return;
+    }
+
+    // Attendre le chargement du profil
+    if (!profile) {
+      toast.info('Chargement de votre profil en cours...');
       return;
     }
 

@@ -147,6 +147,12 @@ export default function DigitalProducts() {
       return;
     }
 
+    // Si le profil est encore en chargement, attendre
+    if (!profile) {
+      toast.info('Chargement de votre profil en cours...');
+      return;
+    }
+
     // Si connecté mais pas marchand, afficher dialog d'activation
     if (!isMerchant) {
       setShowActivationDialog(true);
