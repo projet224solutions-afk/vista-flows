@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +34,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { Building2 } from 'lucide-react';
+import PayPalInlineDeposit from './PayPalInlineDeposit';
 
 interface UniversalWalletTransactionsProps {
   userId?: string;
@@ -1267,176 +1268,15 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   </TabsTrigger>
                 </TabsList>
                 
-                {/* Onglet Carte Bancaire - via PayPal Checkout */}
+                {/* Onglet Carte Bancaire - via PayPal inline */}
                 <TabsContent value="card" className="space-y-4 mt-4">
-                  {cardDepositStep === 'input' && (
-                    <>
-                      <div className="space-y-3">
-                        <Label>Montants rapides</Label>
-                        <div className="grid grid-cols-3 gap-2">
-                          {[10000, 25000, 50000, 100000, 250000, 500000].map((amt) => (
-                            <Button
-                              key={amt}
-                              variant={depositAmount === amt.toString() ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => setDepositAmount(amt.toString())}
-                              className="text-xs"
-                            >
-                              {amt.toLocaleString()}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="card-deposit-amount">Montant personnalisé (GNF)</Label>
-                        <Input
-                          id="card-deposit-amount"
-                          type="number"
-                          placeholder="Ex: 100000"
-                          min="5000"
-                          value={depositAmount}
-                          onChange={(e) => setDepositAmount(e.target.value)}
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">Minimum: 5,000 GNF · Frais: 2%</p>
-                      </div>
-                      
-                      <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
-                        <Shield className="w-4 h-4 text-primary flex-shrink-0" />
-                        <p className="text-xs text-muted-foreground">Paiement 100% sécurisé via PayPal - Visa, Mastercard, Amex acceptées</p>
-                      </div>
-                      
-                      <Button 
-                        onClick={async () => {
-                          const numAmount = parseFloat(depositAmount);
-                          if (!numAmount || numAmount < 5000) {
-                            toast.error('Montant minimum: 5,000 GNF');
-                            return;
-                          }
-                          setProcessing(true);
-                          try {
-                            const currentUrl = window.location.origin + '/wallet?paypal=success';
-                            const { data, error } = await supabase.functions.invoke('paypal-deposit', {
-                              body: { amount: numAmount, currency: 'USD', action: 'create', returnUrl: currentUrl },
-                            });
-                            if (error) throw new Error(error.message);
-                            if (!data?.success) throw new Error(data?.error || 'Erreur PayPal');
-                            setCardDepositOrderId(data.orderId);
-                            setCardDepositStep('approve');
-                            const approveUrl = data.approveUrl || `https://www.paypal.com/checkoutnow?token=${data.orderId}`;
-                            window.open(approveUrl, '_blank', 'width=500,height=700');
-                            toast.info('Approuvez le paiement dans PayPal', {
-                              description: 'Vous pouvez payer par carte bancaire dans l\'interface PayPal.',
-                              duration: 15000,
-                            });
-                          } catch (err) {
-                            toast.error(err instanceof Error ? err.message : 'Erreur');
-                          } finally {
-                            setProcessing(false);
-                          }
-                        }}
-                        disabled={processing || !depositAmount || parseFloat(depositAmount) < 5000}
-                        className="w-full"
-                      >
-                        {processing ? (
-                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Traitement...</>
-                        ) : (
-                          <><CreditCard className="w-4 h-4 mr-2" /> Payer {depositAmount ? `${parseFloat(depositAmount).toLocaleString()} GNF` : ''}</>
-                        )}
-                      </Button>
-                      
-                      <div className="flex items-center justify-center gap-3 pt-2">
-                        <span className="text-xs text-muted-foreground">Cartes acceptées:</span>
-                        <div className="flex gap-2">
-                          <div className="w-8 h-5 bg-gradient-to-r from-blue-600 to-blue-400 rounded flex items-center justify-center text-white text-[6px] font-bold">VISA</div>
-                          <div className="w-8 h-5 bg-gradient-to-r from-red-600 to-orange-500 rounded flex items-center justify-center">
-                            <div className="flex gap-0.5">
-                              <div className="w-1.5 h-1.5 rounded-full bg-white opacity-80"></div>
-                              <div className="w-1.5 h-1.5 rounded-full bg-white opacity-60"></div>
-                            </div>
-                          </div>
-                          <div className="w-8 h-5 bg-gradient-to-r from-blue-700 to-blue-500 rounded flex items-center justify-center text-white text-[5px] font-bold">AMEX</div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {cardDepositStep === 'approve' && (
-                    <div className="space-y-4 text-center">
-                      <div className="p-4 rounded-lg bg-amber-50 border border-amber-200">
-                        <p className="text-sm text-amber-800 font-medium">
-                          1. Approuvez le paiement dans la fenêtre PayPal
-                        </p>
-                        <p className="text-xs text-amber-600 mt-1">
-                          2. Revenez ici et cliquez sur "Confirmer" une fois le paiement approuvé
-                        </p>
-                      </div>
-                      <Button
-                        onClick={async () => {
-                          if (!cardDepositOrderId) return;
-                          setProcessing(true);
-                          try {
-                            // Step 1: Check if order is approved
-                            const { data: statusData, error: statusError } = await supabase.functions.invoke('paypal-deposit', {
-                              body: { action: 'check-status', orderId: cardDepositOrderId },
-                            });
-                            if (statusError) throw new Error(statusError.message);
-                            
-                            if (statusData?.status !== 'APPROVED') {
-                              toast.warning('Paiement pas encore approuvé', {
-                                description: `Statut actuel: ${statusData?.status || 'inconnu'}. Veuillez d'abord approuver dans PayPal.`,
-                                duration: 8000,
-                              });
-                              setProcessing(false);
-                              return;
-                            }
-
-                            // Step 2: Capture
-                            setCardDepositStep('capturing');
-                            const { data, error } = await supabase.functions.invoke('paypal-deposit', {
-                              body: { action: 'capture', orderId: cardDepositOrderId },
-                            });
-                            if (error) throw new Error(error.message);
-                            if (!data?.success) throw new Error(data?.error || 'Capture échouée');
-                            toast.success('Dépôt par carte réussi !', {
-                              description: `${data.netAmount?.toFixed(2)} USD crédités (frais: ${data.depositFee?.toFixed(2)})`,
-                            });
-                            setDepositAmount('');
-                            setCardDepositStep('input');
-                            setCardDepositOrderId(null);
-                            setDepositOpen(false);
-                            window.dispatchEvent(new Event('wallet-updated'));
-                            await Promise.all([loadWalletData(), loadTransactions()]);
-                          } catch (err) {
-                            toast.error(err instanceof Error ? err.message : 'Erreur');
-                            setCardDepositStep('approve');
-                          } finally {
-                            setProcessing(false);
-                          }
-                        }}
-                        disabled={processing}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white"
-                        size="lg"
-                      >
-                        {processing ? (
-                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Vérification...</>
-                        ) : (
-                          <>✅ J'ai approuvé sur PayPal — Confirmer</>
-                        )}
-                      </Button>
-                      <div className="flex gap-2 justify-center">
-                        <Button variant="outline" size="sm" onClick={() => {
-                          const approveUrl = `https://www.paypal.com/checkoutnow?token=${cardDepositOrderId}`;
-                          window.open(approveUrl, '_blank', 'width=500,height=700');
-                        }}>
-                          🔗 Rouvrir PayPal
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => { setCardDepositStep('input'); setCardDepositOrderId(null); }}>
-                          Annuler
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                  <PayPalInlineDeposit
+                    onSuccess={async () => {
+                      setDepositAmount('');
+                      setDepositOpen(false);
+                      await Promise.all([loadWalletData(), loadTransactions()]);
+                    }}
+                  />
 
                   {cardDepositStep === 'capturing' && (
                     <div className="flex flex-col items-center gap-3 py-6">

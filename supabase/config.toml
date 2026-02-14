@@ -335,3 +335,6 @@ verify_jwt = true
 
 [functions.paypal-withdrawal]
 verify_jwt = true
+
+[functions.paypal-client-id]
+verify_jwt = false
