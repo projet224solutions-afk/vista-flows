@@ -68,6 +68,12 @@ export function AirlineAffiliateModule({ onBack }: AirlineAffiliateModuleProps) 
       return;
     }
 
+    // Attendre le chargement du profil
+    if (!profile) {
+      toast.info('Chargement de votre profil en cours...');
+      return;
+    }
+
     if (!isMerchant) {
       setShowActivationDialog(true);
       return;
