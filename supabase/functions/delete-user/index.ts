@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     );
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user: currentUser }, error: userError } = await supabaseAdmin.auth.getUser(token);
+    const { data: { user: currentUser }, error: userError } = await supabaseClient.auth.getUser(token);
     
     if (userError || !currentUser) {
       console.error('❌ Auth error:', userError?.message);
