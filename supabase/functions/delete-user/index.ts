@@ -363,29 +363,54 @@ Deno.serve(async (req) => {
     console.log('👤 Suppression du profil...');
     await safeDelete('profiles', 'id', userId);
 
-    console.log('📁 Suppression des fichiers storage...');
+    console.log('📁 Suppression des fichiers storage (par owner_id)...');
     try {
-      // List all buckets and delete user's files from each
-      const { data: buckets } = await supabaseAdmin.storage.listBuckets();
-      if (buckets) {
-        for (const bucket of buckets) {
-          // Storage objects are linked via owner_id; list user's folder
-          const { data: files } = await supabaseAdmin.storage
-            .from(bucket.id)
-            .list(userId, { limit: 1000 });
-          
-          if (files && files.length > 0) {
-            const paths = files.map(f => `${userId}/${f.name}`);
-            await supabaseAdmin.storage.from(bucket.id).remove(paths);
-            console.log(`  ✓ ${bucket.id}: ${paths.length} fichiers supprimés`);
+      // Query storage.objects directly to find ALL files owned by this user (regardless of path/bucket)
+      const { data: storageObjects, error: storageQueryErr } = await supabaseAdmin
+        .from('objects' as any)
+        .select('id, bucket_id, name')
+        .eq('owner_id', userId);
+      
+      if (storageQueryErr) {
+        console.log('  ⚠ Impossible de requêter storage.objects via SDK, tentative par bucket...');
+        // Fallback: iterate buckets and try to find files
+        const { data: buckets } = await supabaseAdmin.storage.listBuckets();
+        if (buckets) {
+          for (const bucket of buckets) {
+            const { data: files } = await supabaseAdmin.storage
+              .from(bucket.id)
+              .list(userId, { limit: 1000 });
+            if (files && files.length > 0) {
+              const paths = files.map(f => `${userId}/${f.name}`);
+              await supabaseAdmin.storage.from(bucket.id).remove(paths);
+              console.log(`  ✓ ${bucket.id}: ${paths.length} fichiers supprimés`);
+            }
           }
         }
-      }
-      // Also delete any storage objects owned by this user via direct SQL (covers all buckets/paths)
-      const { error: storageErr } = await supabaseAdmin.rpc('delete_storage_objects_for_user', { target_user_id: userId });
-      if (storageErr) {
-        // Fallback: try direct delete on storage.objects if RPC doesn't exist
-        console.log('  ⚠ RPC non disponible, suppression directe storage.objects...');
+      } else if (storageObjects && storageObjects.length > 0) {
+        console.log(`  📦 ${storageObjects.length} fichiers storage trouvés`);
+        // Group by bucket for batch deletion
+        const byBucket: Record<string, string[]> = {};
+        for (const obj of storageObjects) {
+          const bid = (obj as any).bucket_id;
+          const name = (obj as any).name;
+          if (!byBucket[bid]) byBucket[bid] = [];
+          byBucket[bid].push(name);
+        }
+        for (const [bucketId, paths] of Object.entries(byBucket)) {
+          // Delete in batches of 100
+          for (let i = 0; i < paths.length; i += 100) {
+            const batch = paths.slice(i, i + 100);
+            const { error: removeErr } = await supabaseAdmin.storage.from(bucketId).remove(batch);
+            if (removeErr) {
+              console.warn(`  ⚠ Erreur suppression ${bucketId}:`, removeErr.message);
+            } else {
+              console.log(`  ✓ ${bucketId}: ${batch.length} fichiers supprimés`);
+            }
+          }
+        }
+      } else {
+        console.log('  ✓ Aucun fichier storage trouvé');
       }
     } catch (e) {
       console.warn('  ⚠ Storage cleanup error:', e instanceof Error ? e.message : String(e));
