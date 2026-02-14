@@ -69,7 +69,7 @@ serve(async (req) => {
     if (authError || !user) throw new Error("Non autorisé");
     logStep("User authenticated", { userId: user.id });
 
-    const { amount, currency = "USD", action = "create", orderId } = await req.json();
+    const { amount, currency = "USD", action = "create", orderId, returnUrl } = await req.json();
 
     const accessToken = await getPayPalAccessToken();
     logStep("PayPal access token obtained");
@@ -107,6 +107,8 @@ serve(async (req) => {
             brand_name: "224Solutions",
             shipping_preference: "NO_SHIPPING",
             user_action: "PAY_NOW",
+            return_url: returnUrl || "https://vista-flows.lovable.app/wallet?paypal=success",
+            cancel_url: returnUrl || "https://vista-flows.lovable.app/wallet?paypal=cancel",
           },
         }),
       });

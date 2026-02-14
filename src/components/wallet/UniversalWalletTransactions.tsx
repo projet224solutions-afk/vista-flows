@@ -1315,8 +1315,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                           }
                           setProcessing(true);
                           try {
+                            const currentUrl = window.location.origin + '/wallet?paypal=success';
                             const { data, error } = await supabase.functions.invoke('paypal-deposit', {
-                              body: { amount: numAmount, currency: 'USD', action: 'create' },
+                              body: { amount: numAmount, currency: 'USD', action: 'create', returnUrl: currentUrl },
                             });
                             if (error) throw new Error(error.message);
                             if (!data?.success) throw new Error(data?.error || 'Erreur PayPal');
