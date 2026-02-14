@@ -26758,6 +26758,10 @@ export type Database = {
         Args: { p_bureau_id: string; p_worker_id: string }
         Returns: undefined
       }
+      delete_user_storage_objects: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
       detect_all_anomalies: {
         Args: { p_domain_filter?: string; p_severity_filter?: string }
         Returns: {
