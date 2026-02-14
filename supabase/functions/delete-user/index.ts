@@ -43,18 +43,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user: currentUser }, error: userError } = await supabaseClient.auth.getUser(token);
+    const { data: { user: currentUser }, error: userError } = await supabaseClient.auth.getUser();
     
     if (userError || !currentUser) {
       console.error('❌ Auth error:', userError?.message);
       return new Response(
-        JSON.stringify({ success: false, error: 'Non authentifié' }),
+        JSON.stringify({ success: false, error: 'Non authentifié: ' + (userError?.message || 'token invalide') }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
       );
     }
 
-    const { data: profile } = await supabaseClient
+    const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('role')
       .eq('id', currentUser.id)
