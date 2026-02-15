@@ -79,20 +79,31 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
   };
 
   const createOrder = useCallback(async () => {
+    console.log('[PayPal] createOrder called', { numAmount, paypalCurrency, selectedCurrency });
     const { data, error } = await supabase.functions.invoke('paypal-deposit', {
       body: { amount: numAmount, currency: paypalCurrency, userCurrency: selectedCurrency, action: 'create' },
     });
-    if (error) throw new Error(error.message);
-    if (!data?.success) throw new Error(data?.error || 'Erreur création ordre PayPal');
+    console.log('[PayPal] createOrder response', { data, error });
+    if (error) {
+      console.error('[PayPal] createOrder invoke error:', error);
+      throw new Error(error.message);
+    }
+    if (!data?.success) {
+      console.error('[PayPal] createOrder failed:', data);
+      throw new Error(data?.error || 'Erreur création ordre PayPal');
+    }
+    console.log('[PayPal] Order created successfully:', data.orderId);
     return data.orderId;
   }, [numAmount, selectedCurrency]);
 
   const onApprove = useCallback(async (data: any) => {
+    console.log('[PayPal] onApprove called', { orderID: data.orderID });
     setProcessing(true);
     try {
       const { data: captureData, error } = await supabase.functions.invoke('paypal-deposit', {
         body: { action: 'capture', orderId: data.orderID },
       });
+      console.log('[PayPal] capture response', { captureData, error });
       if (error) throw new Error(error.message);
       if (!captureData?.success) throw new Error(captureData?.error || 'Capture échouée');
       
@@ -102,11 +113,12 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
       window.dispatchEvent(new Event('wallet-updated'));
       onSuccess();
     } catch (err) {
+      console.error('[PayPal] capture error:', err);
       toast.error(err instanceof Error ? err.message : 'Erreur de capture');
     } finally {
       setProcessing(false);
     }
-  }, [onSuccess]);
+  }, [onSuccess, selectedCurrency]);
 
   if (!showPayPal) {
     return (
@@ -255,9 +267,10 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
             onApprove={async (data) => {
               await onApprove(data);
             }}
-            onError={(err) => {
-              console.error('PayPal error:', err);
-              toast.error('Erreur PayPal. Veuillez réessayer.');
+            onError={(err: any) => {
+              const errMsg = err instanceof Error ? err.message : typeof err === 'string' ? err : JSON.stringify(err);
+              console.error('[PayPal] SDK onError detail:', errMsg, err);
+              toast.error(`Erreur PayPal: ${errMsg || 'Veuillez réessayer'}`);
             }}
             onCancel={() => {
               toast.info('Paiement annulé');
