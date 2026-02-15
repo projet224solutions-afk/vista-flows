@@ -1154,7 +1154,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   };
 
   const formatPrice = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR').format(amount) + ' GNF';
+    const walletCurrency = wallet?.currency || 'GNF';
+    return new Intl.NumberFormat('fr-FR').format(amount) + ' ' + walletCurrency;
   };
 
   const getTransactionType = (tx: Transaction) => {
@@ -1398,7 +1399,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
               
               <div className="p-3 bg-orange-50 rounded-lg border border-orange-200 mb-2">
                 <p className="text-sm text-orange-800">
-                  Solde disponible: <span className="font-bold">{wallet ? formatPrice(wallet.balance) : '0 GNF'}</span>
+                  Solde disponible: <span className="font-bold">{wallet ? formatPrice(wallet.balance) : `0 ${wallet?.currency || 'GNF'}`}</span>
                 </p>
               </div>
               
@@ -1717,7 +1718,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                     onChange={(e) => setTransferAmount(e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Solde disponible: {wallet ? formatPrice(wallet.balance) : '0 GNF'}
+                    Solde disponible: {wallet ? formatPrice(wallet.balance) : `0 ${wallet?.currency || 'GNF'}`}
                   </p>
                 </div>
                 <div>
