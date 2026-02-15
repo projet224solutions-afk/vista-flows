@@ -258,11 +258,6 @@ export default function ClientDashboard() {
 
           {/* Actions - Responsive */}
           <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-            {!responsive.isMobile && (
-              <div className="hidden lg:block">
-                <WalletBalanceWidget className="max-w-[250px]" showTransferButton={false} />
-              </div>
-            )}
             <QuickTransferButton 
               variant="ghost" 
               size={responsive.isMobile ? 'icon' : 'icon'} 
