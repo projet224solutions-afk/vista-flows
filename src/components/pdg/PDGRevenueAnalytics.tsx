@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { PdgRevenueService, type RevenueStats, type PdgRevenue, type PdgSetting } from '@/services/pdgRevenueService';
 import { supabase } from '@/lib/supabaseClient';
-import { TrendingUp, DollarSign, Wallet, ShoppingBag, RefreshCw, Settings, Download, Calendar } from 'lucide-react';
+import { TrendingUp, DollarSign, Wallet, ShoppingBag, RefreshCw, Settings, Download, Calendar, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -399,6 +399,16 @@ export default function PDGRevenueAnalytics() {
                     color: 'text-blue-600', 
                     bg: 'bg-blue-100 dark:bg-blue-900/30' 
                   },
+                  deposit_fee_percentage: { 
+                    icon: <ArrowDownToLine className="h-5 w-5" />, 
+                    color: 'text-green-600', 
+                    bg: 'bg-green-100 dark:bg-green-900/30' 
+                  },
+                  withdrawal_fee_percentage: { 
+                    icon: <ArrowUpFromLine className="h-5 w-5" />, 
+                    color: 'text-orange-600', 
+                    bg: 'bg-orange-100 dark:bg-orange-900/30' 
+                  },
                 };
                 const config = iconConfig[setting.setting_key] || { 
                   icon: <Settings className="h-5 w-5" />, 
@@ -463,6 +473,20 @@ export default function PDGRevenueAnalytics() {
                         min: 0,
                         max: 20,
                         example: 200000
+                      },
+                      deposit_fee_percentage: {
+                        title: '⬇️ Frais de Dépôt',
+                        desc: 'Prélevé lors des rechargements (PayPal, carte, etc.)',
+                        min: 0,
+                        max: 10,
+                        example: 100000
+                      },
+                      withdrawal_fee_percentage: {
+                        title: '⬆️ Frais de Retrait',
+                        desc: 'Prélevé lors des demandes de retrait',
+                        min: 0,
+                        max: 10,
+                        example: 100000
                       },
                     };
                     const labelConfig = settingLabels[setting.setting_key] || {
