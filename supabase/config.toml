@@ -331,7 +331,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.paypal-deposit]
-verify_jwt = false
+verify_jwt = true
 
 [functions.paypal-withdrawal]
 verify_jwt = false

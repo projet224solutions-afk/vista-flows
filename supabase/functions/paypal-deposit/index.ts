@@ -58,7 +58,7 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    // Auth - validate JWT token using service role (bypasses session check)
+    // Auth - decode JWT to extract user_id (JWT already validated by Supabase gateway)
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       throw new Error("Non autorisé - header manquant");
@@ -66,19 +66,20 @@ serve(async (req) => {
 
     const token = authHeader.replace("Bearer ", "");
     
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
-
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    if (authError || !user) {
-      logStep("Auth failed", { error: authError?.message });
-      throw new Error("Non autorisé - token invalide");
+    // Decode JWT payload (base64url) - no need to verify signature, gateway already did
+    const payloadPart = token.split(".")[1];
+    if (!payloadPart) {
+      throw new Error("Non autorisé - token malformé");
     }
-
-    const userId = user.id;
-    logStep("User authenticated", { userId });
+    
+    const payload = JSON.parse(atob(payloadPart.replace(/-/g, '+').replace(/_/g, '/')));
+    const userId = payload.sub;
+    
+    if (!userId) {
+      throw new Error("Non autorisé - user_id manquant dans le token");
+    }
+    
+    logStep("User authenticated from JWT", { userId });
 
     const { amount, currency = "USD", action = "create", orderId, returnUrl } = await req.json();
 
@@ -208,7 +209,11 @@ serve(async (req) => {
       const depositFee = Math.round(capturedAmount * (DEPOSIT_FEE_RATE / 100) * 100) / 100;
       const netAmount = Math.round((capturedAmount - depositFee) * 100) / 100;
 
-      // Credit wallet (using supabaseAdmin already created above)
+      // Credit wallet
+      const supabaseAdmin = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
 
       // Get or create wallet
       let { data: wallet } = await supabaseAdmin
