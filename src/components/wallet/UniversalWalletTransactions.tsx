@@ -798,6 +798,11 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       return;
     }
 
+    if (amount < 100) {
+      toast.error('Le montant minimum est de 100 GNF');
+      return;
+    }
+
     if (amount > (wallet?.balance || 0)) {
       toast.error('Solde insuffisant');
       return;
