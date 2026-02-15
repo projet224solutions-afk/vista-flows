@@ -331,10 +331,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.paypal-deposit]
-verify_jwt = true
+verify_jwt = false
 
 [functions.paypal-withdrawal]
-verify_jwt = true
+verify_jwt = false
 
 [functions.paypal-client-id]
 verify_jwt = false
