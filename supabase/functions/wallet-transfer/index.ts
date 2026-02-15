@@ -159,6 +159,48 @@ async function getFxRate(supabase: any, from: string, to: string): Promise<numbe
 }
 
 // =============================================
+// 🔍 RESOLVE RECIPIENT (email, phone, ID, UUID)
+// =============================================
+
+async function resolveRecipientId(supabase: any, recipientId: string): Promise<string | null> {
+  // UUID direct
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(recipientId);
+  if (isUUID) return recipientId;
+
+  // user_ids.custom_id
+  const { data: userIdData } = await supabase.from('user_ids').select('user_id').eq('custom_id', recipientId.toUpperCase()).maybeSingle();
+  if (userIdData) return userIdData.user_id;
+
+  // profiles.public_id
+  const { data: profileData } = await supabase.from('profiles').select('id').eq('public_id', recipientId.toUpperCase()).maybeSingle();
+  if (profileData) return profileData.id;
+
+  // vendors.public_id
+  const { data: vendorData } = await supabase.from('vendors').select('user_id').eq('public_id', recipientId.toUpperCase()).maybeSingle();
+  if (vendorData) return vendorData.user_id;
+
+  // Email
+  if (recipientId.includes('@')) {
+    const { data: emailData } = await supabase.from('profiles').select('id').ilike('email', recipientId.trim()).maybeSingle();
+    if (emailData) return emailData.id;
+  }
+
+  // Phone
+  const phonePattern = /^[0-9+\-\s]{6,}$/;
+  if (phonePattern.test(recipientId.trim())) {
+    const cleanPhone = recipientId.replace(/[\s\-]/g, '');
+    const { data: phoneData } = await supabase
+      .from('profiles')
+      .select('id')
+      .or(`phone.eq.${cleanPhone},phone.eq.+${cleanPhone},phone.ilike.%${cleanPhone}%`)
+      .maybeSingle();
+    if (phoneData) return phoneData.id;
+  }
+
+  return null;
+}
+
+// =============================================
 // MAIN HANDLER
 // =============================================
 
@@ -242,10 +284,18 @@ serve(async (req) => {
 // =============================================
 
 async function handlePreview(supabase: any, body: TransferPreviewRequest, corsHeaders: Record<string, string>) {
-  const { sender_id, receiver_id, amount } = body;
+  const { sender_id, amount } = body;
+  let { receiver_id } = body;
 
-  if (amount < MIN_TRANSFER_AMOUNT) throw new Error(`Montant minimum: ${MIN_TRANSFER_AMOUNT} GNF`);
-  if (amount > MAX_TRANSFER_AMOUNT) throw new Error(`Montant maximum: ${MAX_TRANSFER_AMOUNT} GNF`);
+  if (amount < MIN_TRANSFER_AMOUNT) throw new Error(`Montant minimum: ${MIN_TRANSFER_AMOUNT}`);
+  if (amount > MAX_TRANSFER_AMOUNT) throw new Error(`Montant maximum: ${MAX_TRANSFER_AMOUNT}`);
+
+  // Resolve receiver by email, phone, ID or UUID
+  const resolvedReceiverId = await resolveRecipientId(supabase, receiver_id);
+  if (!resolvedReceiverId) throw new Error(`Destinataire "${receiver_id}" introuvable`);
+  receiver_id = resolvedReceiverId;
+
+  if (sender_id === receiver_id) throw new Error("Vous ne pouvez pas transférer à vous-même");
 
   // 🌍 Get profiles.detected_country & detected_currency
   const [senderGeo, receiverGeo, intlSettings] = await Promise.all([
@@ -346,13 +396,20 @@ async function handlePreview(supabase: any, body: TransferPreviewRequest, corsHe
 // =============================================
 
 async function handleTransfer(supabase: any, body: TransferRequest, req: Request, corsHeaders: Record<string, string>) {
-  const { sender_id, receiver_id, amount, description } = body;
+  const { sender_id, amount, description } = body;
+  let { receiver_id } = body;
 
   if (!sender_id || !receiver_id || !amount) throw new Error("Paramètres manquants");
+  
+  // Resolve receiver by email, phone, ID or UUID
+  const resolvedReceiverId = await resolveRecipientId(supabase, receiver_id);
+  if (!resolvedReceiverId) throw new Error(`Destinataire "${receiver_id}" introuvable`);
+  receiver_id = resolvedReceiverId;
+
   if (sender_id === receiver_id) throw new Error("Impossible de transférer vers soi-même");
   if (amount <= 0) throw new Error("Le montant doit être positif");
-  if (amount < MIN_TRANSFER_AMOUNT) throw new Error(`Montant minimum: ${MIN_TRANSFER_AMOUNT} GNF`);
-  if (amount > MAX_TRANSFER_AMOUNT) throw new Error(`Montant maximum: ${MAX_TRANSFER_AMOUNT} GNF`);
+  if (amount < MIN_TRANSFER_AMOUNT) throw new Error(`Montant minimum: ${MIN_TRANSFER_AMOUNT}`);
+  if (amount > MAX_TRANSFER_AMOUNT) throw new Error(`Montant maximum: ${MAX_TRANSFER_AMOUNT}`);
 
   const transferCode = `TRF-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
