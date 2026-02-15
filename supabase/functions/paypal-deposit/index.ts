@@ -58,7 +58,7 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    // Auth - validate JWT using getClaims (verify_jwt=false on Lovable Cloud)
+    // Auth - validate JWT using getUser (verify_jwt=false)
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       throw new Error("Non autorisé - header manquant");
@@ -72,14 +72,14 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims?.sub) {
-      logStep("Auth failed", { error: claimsError?.message });
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token);
+    if (authError || !user) {
+      logStep("Auth failed", { error: authError?.message });
       throw new Error("Non autorisé - token invalide");
     }
 
-    const userId = claimsData.claims.sub as string;
-    logStep("User authenticated via getClaims", { userId });
+    const userId = user.id;
+    logStep("User authenticated", { userId });
 
     const { amount, currency = "USD", action = "create", orderId, returnUrl } = await req.json();
 
