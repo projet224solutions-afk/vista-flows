@@ -37,6 +37,7 @@ import { Building2 } from 'lucide-react';
 import PayPalInlineDeposit from './PayPalInlineDeposit';
 import StripeWalletTopup from './StripeWalletTopup';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
+import { InternationalTransferConfirmation, type InternationalPreviewData } from './InternationalTransferConfirmation';
 
 interface UniversalWalletTransactionsProps {
   userId?: string;
@@ -113,6 +114,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   const [showTransferPreview, setShowTransferPreview] = useState(false);
   const [transferPreview, setTransferPreview] = useState<any>(null);
   const [showAllTransactions, setShowAllTransactions] = useState(false);
+  const [intlPreview, setIntlPreview] = useState<InternationalPreviewData | null>(null);
+  const [showIntlConfirm, setShowIntlConfirm] = useState(false);
+  const [intlExecuting, setIntlExecuting] = useState(false);
 
   useEffect(() => {
     if (effectiveUserId) {
@@ -946,30 +950,67 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         setTransferOpen(false);
       } else {
         // Appeler la fonction de prévisualisation pour les transferts normaux
-        const { data, error } = await supabase.rpc('preview_wallet_transfer', {
-          p_sender_id: effectiveUserId,
-          p_receiver_id: recipientUuid,
-          p_amount: amount
-        });
+        const { data, error } = await supabase.functions.invoke(
+          'wallet-transfer?action=preview',
+          {
+            body: {
+              sender_id: effectiveUserId,
+              receiver_id: recipientUuid,
+              amount,
+            },
+          }
+        );
 
         if (error) {
-          console.error('❌ Erreur RPC:', error);
+          console.error('❌ Erreur preview:', error);
           toast.error(error.message || 'Erreur lors de la prévisualisation');
           return;
         }
 
         console.log('✅ Réponse prévisualisation:', data);
 
-        const previewData = data as any;
-
-        if (!previewData.success) {
-          console.error('❌ Preview échouée:', previewData.error);
-          toast.error(previewData.error || 'Erreur inconnue');
+        if (!data?.success) {
+          console.error('❌ Preview échouée:', data?.error);
+          toast.error(data?.error || 'Erreur inconnue');
           return;
         }
 
+        // Check if international transfer
+        if (data.is_international) {
+          setIntlPreview({
+            success: true,
+            amount_sent: data.amount_sent || amount,
+            currency_sent: data.currency_sent || 'GNF',
+            fee_percentage: data.fee_percentage || 0,
+            fee_amount: data.fee_amount || 0,
+            amount_after_fee: data.amount_after_fee || 0,
+            rate_displayed: data.rate_displayed || 1,
+            amount_received: data.amount_received || 0,
+            currency_received: data.currency_received || 'GNF',
+            is_international: true,
+            sender_country: data.sender_country || '',
+            receiver_country: data.receiver_country || '',
+            commission_conversion: data.commission_conversion || 0,
+            frais_international: data.frais_international || 0,
+            rate_lock_seconds: data.rate_lock_seconds || 60,
+            receiver_name: recipientName || data.receiver_name,
+            receiver_code: data.receiver_code,
+          });
+          setShowIntlConfirm(true);
+          setTransferOpen(false);
+          return;
+        }
+
+        // Local transfer preview
         setTransferPreview({ 
-          ...previewData, 
+          success: true,
+          amount: data.amount_sent || amount,
+          fee_percent: data.fee_percentage || 0,
+          fee_amount: data.fee_amount || 0,
+          total_debit: data.total_debit || (amount + (data.fee_amount || 0)),
+          amount_received: data.amount_received || amount,
+          current_balance: data.sender_balance || 0,
+          balance_after: data.balance_after || 0,
           recipient_uuid: recipientUuid,
           recipient_name: recipientName,
           is_bureau_transfer: false
@@ -1151,6 +1192,44 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       toast.error(errorMessage);
     } finally {
       setProcessing(false);
+    }
+  };
+
+  const handleIntlConfirmTransfer = async () => {
+    if (!effectiveUserId || !intlPreview) return;
+    setIntlExecuting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        'wallet-transfer?action=transfer',
+        {
+          body: {
+            sender_id: effectiveUserId,
+            receiver_id: recipientId,
+            amount: intlPreview.amount_sent,
+            description: transferDescription,
+          },
+        }
+      );
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Erreur lors du transfert');
+
+      toast.success(
+        `🌍 Transfert international réussi ! Code: ${data.transfer_code || ''}`,
+        { duration: 5000 }
+      );
+
+      setTransferAmount('');
+      setRecipientId('');
+      setTransferDescription('');
+      setIntlPreview(null);
+      setShowIntlConfirm(false);
+      await Promise.all([loadWalletData(), loadTransactions()]);
+      window.dispatchEvent(new CustomEvent('wallet-updated'));
+    } catch (error: any) {
+      toast.error(error.message || 'Erreur lors du transfert international');
+    } finally {
+      setIntlExecuting(false);
     }
   };
 
@@ -1710,7 +1789,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   </p>
                 </div>
                 <div>
-                  <Label htmlFor="transfer-amount">Montant (GNF)</Label>
+                  <Label htmlFor="transfer-amount">Montant</Label>
                   <Input
                     id="transfer-amount"
                     type="number"
@@ -1762,27 +1841,27 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                     )}
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium">💰 Montant à transférer</span>
-                      <span className="text-lg font-bold">{transferPreview?.amount?.toLocaleString()} GNF</span>
+                      <span className="text-lg font-bold">{formatPrice(transferPreview?.amount || 0)}</span>
                     </div>
                     <div className="flex justify-between items-center text-orange-600">
                       <span className="text-sm font-medium">💸 Frais de transfert ({transferPreview?.fee_percent}%)</span>
-                      <span className="text-lg font-bold">{transferPreview?.fee_amount?.toLocaleString()} GNF</span>
+                      <span className="text-lg font-bold">{formatPrice(transferPreview?.fee_amount || 0)}</span>
                     </div>
                     <div className="border-t pt-3 flex justify-between items-center">
                       <span className="text-sm font-medium">📉 Total débité de votre compte</span>
-                      <span className="text-xl font-bold text-red-600">{transferPreview?.total_debit?.toLocaleString()} GNF</span>
+                      <span className="text-xl font-bold text-destructive">{formatPrice(transferPreview?.total_debit || 0)}</span>
                     </div>
                     <div className="flex justify-between items-center text-green-600">
                       <span className="text-sm font-medium">📈 Montant net reçu par le destinataire</span>
-                      <span className="text-lg font-bold">{transferPreview?.amount_received?.toLocaleString()} GNF</span>
+                      <span className="text-lg font-bold">{formatPrice(transferPreview?.amount_received || 0)}</span>
                     </div>
                   </div>
                   
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-sm text-blue-800">
-                      <strong>Solde actuel:</strong> {transferPreview?.current_balance?.toLocaleString()} GNF
+                  <div className="p-3 bg-muted border border-border rounded-lg">
+                    <p className="text-sm">
+                      <strong>Solde actuel:</strong> {formatPrice(transferPreview?.current_balance || 0)}
                       <br />
-                      <strong>Solde après transfert:</strong> {transferPreview?.balance_after?.toLocaleString()} GNF
+                      <strong>Solde après transfert:</strong> {formatPrice(transferPreview?.balance_after || 0)}
                     </p>
                   </div>
 
@@ -1813,6 +1892,18 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* International transfer confirmation with rate-lock timer */}
+        <InternationalTransferConfirmation
+          open={showIntlConfirm}
+          onOpenChange={(val) => {
+            setShowIntlConfirm(val);
+            if (!val) setIntlPreview(null);
+          }}
+          preview={intlPreview}
+          onConfirm={handleIntlConfirmTransfer}
+          loading={intlExecuting}
+        />
 
         {/* Historique des transactions - optimisé mobile */}
         <div>
