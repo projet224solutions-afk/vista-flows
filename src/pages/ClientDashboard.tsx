@@ -346,13 +346,6 @@ export default function ClientDashboard() {
                 <span className={responsive.isMobile ? '' : 'hidden'}>Vue</span>
               </TabsTrigger>
               <TabsTrigger 
-                value="products" 
-                className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
-              >
-                <Grid3X3 className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
-                Produits
-              </TabsTrigger>
-              <TabsTrigger 
                 value="cart" 
                 className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
               >
@@ -507,60 +500,6 @@ export default function ClientDashboard() {
                     />
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Produits */}
-          <TabsContent value="products" className="space-y-6 animate-fade-in">
-            <Card className="shadow-elegant">
-              <CardHeader>
-                <CardTitle>Catalogue de produits</CardTitle>
-                <CardDescription>Parcourez notre sélection complète</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {productsLoading ? (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {[...Array(8)].map((_, i) => (
-                      <Card key={i} className="animate-pulse">
-                        <CardContent className="p-4 space-y-3">
-                          <div className="aspect-square bg-muted rounded-lg" />
-                          <div className="h-4 bg-muted rounded" />
-                          <div className="h-4 bg-muted rounded w-2/3" />
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {universalProducts.map((product) => (
-                      <ProductCard
-                        key={product.id}
-                        id={product.id}
-                        image={product.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop'}
-                        title={product.name}
-                        price={product.price}
-                        vendor={product.vendor_name}
-                        rating={product.rating}
-                        reviewCount={product.reviews_count}
-                        onBuy={() => handleProductClick(product.id)}
-                        onAddToCart={() => {
-                          addToCartContext({
-                            id: product.id,
-                            name: product.name,
-                            price: product.price,
-                            image: product.images?.[0],
-                            vendor_id: product.vendor_id,
-                            vendor_name: product.vendor_name
-                          });
-                          toast.success('Produit ajouté au panier');
-                        }}
-                        onContact={() => handleContactVendor(product)}
-                        isPremium={product.is_hot}
-                      />
-                    ))}
-                  </div>
-                )}
               </CardContent>
             </Card>
           </TabsContent>
