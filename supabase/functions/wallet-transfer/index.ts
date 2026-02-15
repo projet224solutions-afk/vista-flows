@@ -298,24 +298,11 @@ async function handlePreview(supabase: any, body: TransferPreviewRequest, corsHe
 
   if (sender_id === receiver_id) throw new Error("Vous ne pouvez pas transférer à vous-même");
 
-  // 🌍 Get profiles.detected_country & detected_currency
-  const [senderGeo, receiverGeo, intlSettings] = await Promise.all([
+  // 🌍 Get profiles.detected_country & wallets for real currency
+  const [senderGeo, receiverGeo, intlSettings, senderResult, receiverResult] = await Promise.all([
     getUserGeoInfo(supabase, sender_id),
     getUserGeoInfo(supabase, receiver_id),
     loadInternationalSettings(supabase),
-  ]);
-
-  const senderCountry = senderGeo.detected_country || "GN";
-  const receiverCountry = receiverGeo.detected_country || "GN";
-  const senderCurrency = senderGeo.detected_currency || "GNF";
-  const receiverCurrency = receiverGeo.detected_currency || "GNF";
-
-  const isInternational = senderCountry !== receiverCountry;
-
-  console.log(`🌍 Preview: ${senderCountry}(${senderCurrency}) → ${receiverCountry}(${receiverCurrency}) | International: ${isInternational}`);
-
-  // Get wallets for balance check
-  const [senderResult, receiverResult] = await Promise.all([
     supabase.from("wallets").select("*").eq("user_id", sender_id).single(),
     supabase.from("wallets").select("*").eq("user_id", receiver_id).single(),
   ]);
@@ -324,6 +311,16 @@ async function handlePreview(supabase: any, body: TransferPreviewRequest, corsHe
   if (receiverResult.error) throw new Error("Wallet destinataire non trouvé");
 
   if (senderResult.data.balance < amount) throw new Error("Solde insuffisant");
+
+  const senderCountry = senderGeo.detected_country || "GN";
+  const receiverCountry = receiverGeo.detected_country || "GN";
+  // ✅ Use WALLET currency (actual stored currency), not profile detected_currency
+  const senderCurrency = senderResult.data.currency || "GNF";
+  const receiverCurrency = receiverResult.data.currency || "GNF";
+
+  const isInternational = senderCountry !== receiverCountry;
+
+  console.log(`🌍 Preview: ${senderCountry}(${senderCurrency}) → ${receiverCountry}(${receiverCurrency}) | International: ${isInternational}`);
 
   let feePercentage = 0;
   let feeAmount = 0;
@@ -415,16 +412,26 @@ async function handleTransfer(supabase: any, body: TransferRequest, req: Request
   const transferCode = `TRF-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
   // 🌍 Get geo info from profiles
-  const [senderGeo, receiverGeo, intlSettings] = await Promise.all([
+  // 🌍 Get geo info + wallets in parallel
+  const [senderGeo, receiverGeo, intlSettings, senderResult, receiverResult] = await Promise.all([
     getUserGeoInfo(supabase, sender_id),
     getUserGeoInfo(supabase, receiver_id),
     loadInternationalSettings(supabase),
+    supabase.from("wallets").select("*").eq("user_id", sender_id).single(),
+    supabase.from("wallets").select("*").eq("user_id", receiver_id).single(),
   ]);
+
+  if (senderResult.error) throw new Error("Wallet expéditeur non trouvé");
+  if (receiverResult.error) throw new Error("Wallet destinataire non trouvé");
+
+  const senderWallet = senderResult.data;
+  const receiverWallet = receiverResult.data;
 
   const senderCountry = senderGeo.detected_country || "GN";
   const receiverCountry = receiverGeo.detected_country || "GN";
-  const senderCurrency = senderGeo.detected_currency || "GNF";
-  const receiverCurrency = receiverGeo.detected_currency || "GNF";
+  // ✅ Use WALLET currency (actual stored currency), not profile detected_currency
+  const senderCurrency = senderWallet.currency || "GNF";
+  const receiverCurrency = receiverWallet.currency || "GNF";
   const isInternational = senderCountry !== receiverCountry;
 
   console.log(`🌍 Transfer: ${senderCountry}(${senderCurrency}) → ${receiverCountry}(${receiverCurrency}) | Intl: ${isInternational}`);
@@ -444,18 +451,6 @@ async function handleTransfer(supabase: any, body: TransferRequest, req: Request
       throw new Error(`Limite quotidienne de transfert international atteinte (${intlSettings.limite_transfert_quotidien.toLocaleString()})`);
     }
   }
-
-  // Get wallets
-  const [senderResult, receiverResult] = await Promise.all([
-    supabase.from("wallets").select("*").eq("user_id", sender_id).single(),
-    supabase.from("wallets").select("*").eq("user_id", receiver_id).single(),
-  ]);
-
-  if (senderResult.error) throw new Error("Wallet expéditeur non trouvé");
-  if (receiverResult.error) throw new Error("Wallet destinataire non trouvé");
-
-  const senderWallet = senderResult.data;
-  const receiverWallet = receiverResult.data;
 
   if (senderWallet.balance < amount) {
     throw new Error(`Solde insuffisant. Disponible: ${senderWallet.balance} ${senderCurrency}`);
