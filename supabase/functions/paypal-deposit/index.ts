@@ -58,19 +58,20 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    // Auth - validate JWT via getClaims
+    // Auth - validate JWT token using service role (bypasses session check)
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       throw new Error("Non autorisé - header manquant");
     }
 
-    const supabaseClient = createClient(
+    const token = authHeader.replace("Bearer ", "");
+    
+    const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     if (authError || !user) {
       logStep("Auth failed", { error: authError?.message });
       throw new Error("Non autorisé - token invalide");
@@ -207,11 +208,7 @@ serve(async (req) => {
       const depositFee = Math.round(capturedAmount * (DEPOSIT_FEE_RATE / 100) * 100) / 100;
       const netAmount = Math.round((capturedAmount - depositFee) * 100) / 100;
 
-      // Credit wallet
-      const supabaseAdmin = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-      );
+      // Credit wallet (using supabaseAdmin already created above)
 
       // Get or create wallet
       let { data: wallet } = await supabaseAdmin
