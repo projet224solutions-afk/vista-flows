@@ -26,16 +26,30 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
   const [showPayPal, setShowPayPal] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [clientId, setClientId] = useState<string | null>(null);
+  const [feeRate, setFeeRate] = useState(0.02); // default 2%, will be overridden by pdg_settings
 
   useEffect(() => {
+    // Fetch PayPal client ID and deposit fee in parallel
     supabase.functions.invoke('paypal-client-id').then(({ data }) => {
       if (data?.clientId) setClientId(data.clientId);
     });
+
+    supabase
+      .from('pdg_settings')
+      .select('setting_value')
+      .eq('setting_key', 'deposit_fee_percentage')
+      .maybeSingle()
+      .then(({ data }) => {
+        const val = (data?.setting_value as any)?.value;
+        if (val != null) {
+          setFeeRate(Number(val) / 100);
+        }
+      });
   }, []);
 
   const numAmount = parseFloat(amount);
   const isValidAmount = numAmount >= 5;
-  const fee = isValidAmount ? Math.round(numAmount * 0.02 * 100) / 100 : 0;
+  const fee = isValidAmount ? Math.round(numAmount * feeRate * 100) / 100 : 0;
   const netAmount = isValidAmount ? Math.round((numAmount - fee) * 100) / 100 : 0;
 
   const handleAmountConfirm = () => {
@@ -107,7 +121,7 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
-          <p className="text-xs text-muted-foreground mt-1">Minimum: $5 USD · Frais: 2%</p>
+          <p className="text-xs text-muted-foreground mt-1">Minimum: $5 USD · Frais: {(feeRate * 100).toFixed(1)}%</p>
         </div>
 
         {isValidAmount && (
@@ -117,7 +131,7 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
               <span className="font-medium">${numAmount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm text-muted-foreground">
-              <span>Frais (2%)</span>
+              <span>Frais ({(feeRate * 100).toFixed(1)}%)</span>
               <span>-${fee.toFixed(2)}</span>
             </div>
             <div className="border-t pt-1 flex justify-between text-sm font-bold">
