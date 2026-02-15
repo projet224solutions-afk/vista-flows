@@ -1264,7 +1264,6 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                     Mobile
                   </TabsTrigger>
                   <TabsTrigger value="paypal" className="gap-1 text-xs">
-                    <span className="text-[10px] font-bold">PP</span>
                     PayPal
                   </TabsTrigger>
                 </TabsList>
