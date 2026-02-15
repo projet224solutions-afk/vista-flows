@@ -36,6 +36,7 @@ import {
 import { Building2 } from 'lucide-react';
 import PayPalInlineDeposit from './PayPalInlineDeposit';
 import StripeWalletTopup from './StripeWalletTopup';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
 
 interface UniversalWalletTransactionsProps {
   userId?: string;
@@ -67,7 +68,7 @@ interface Transaction {
 export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = true }: UniversalWalletTransactionsProps = {}) => {
   // Utiliser le contexte Auth comme tous les autres composants de l'application
   const { user, profile } = useAuth();
-  
+  const { convert } = usePriceConverter();
   // Utiliser propUserId si fourni, sinon utiliser user?.id
   const effectiveUserId = propUserId || user?.id;
   
@@ -1153,9 +1154,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     }
   };
 
-  const formatPrice = (amount: number) => {
-    const walletCurrency = wallet?.currency || 'GNF';
-    return new Intl.NumberFormat('fr-FR').format(amount) + ' ' + walletCurrency;
+  const formatPrice = (amount: number, fromCurrency?: string) => {
+    const sourceCurrency = fromCurrency || 'GNF';
+    return convert(amount, sourceCurrency).formatted;
   };
 
   const getTransactionType = (tx: Transaction) => {
@@ -1399,7 +1400,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
               
               <div className="p-3 bg-orange-50 rounded-lg border border-orange-200 mb-2">
                 <p className="text-sm text-orange-800">
-                  Solde disponible: <span className="font-bold">{wallet ? formatPrice(wallet.balance) : `0 ${wallet?.currency || 'GNF'}`}</span>
+                  Solde disponible: <span className="font-bold">{formatPrice(wallet?.balance || 0)}</span>
                 </p>
               </div>
               
@@ -1718,7 +1719,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                     onChange={(e) => setTransferAmount(e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Solde disponible: {wallet ? formatPrice(wallet.balance) : `0 ${wallet?.currency || 'GNF'}`}
+                    Solde disponible: {formatPrice(wallet?.balance || 0)}
                   </p>
                 </div>
                 <div>
