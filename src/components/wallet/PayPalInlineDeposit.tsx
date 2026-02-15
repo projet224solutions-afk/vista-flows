@@ -13,27 +13,16 @@ import { Loader2, Shield, CreditCard } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCurrency } from '@/context/CurrencyContext';
+import { getSortedCurrencies, getCurrencyByCode, type Currency } from '@/data/currencies';
 
-// Devises supportées par PayPal
-const PAYPAL_CURRENCIES = [
-  { code: 'USD', label: 'USD - Dollar américain', symbol: '$' },
-  { code: 'EUR', label: 'EUR - Euro', symbol: '€' },
-  { code: 'GBP', label: 'GBP - Livre sterling', symbol: '£' },
-  { code: 'CAD', label: 'CAD - Dollar canadien', symbol: 'CA$' },
-  { code: 'CHF', label: 'CHF - Franc suisse', symbol: 'CHF' },
-  { code: 'AUD', label: 'AUD - Dollar australien', symbol: 'A$' },
-  { code: 'JPY', label: 'JPY - Yen japonais', symbol: '¥' },
-  { code: 'SEK', label: 'SEK - Couronne suédoise', symbol: 'kr' },
-  { code: 'NOK', label: 'NOK - Couronne norvégienne', symbol: 'kr' },
-  { code: 'DKK', label: 'DKK - Couronne danoise', symbol: 'kr' },
-  { code: 'PLN', label: 'PLN - Zloty polonais', symbol: 'zł' },
-  { code: 'BRL', label: 'BRL - Réal brésilien', symbol: 'R$' },
-  { code: 'MXN', label: 'MXN - Peso mexicain', symbol: 'MX$' },
-  { code: 'SGD', label: 'SGD - Dollar singapourien', symbol: 'S$' },
-  { code: 'HKD', label: 'HKD - Dollar hongkongais', symbol: 'HK$' },
-];
+// Devises supportées nativement par PayPal (transaction directe)
+const PAYPAL_NATIVE_CODES = new Set([
+  'USD','EUR','GBP','CAD','AUD','JPY','CHF','SEK','NOK','DKK','PLN',
+  'BRL','MXN','SGD','HKD','NZD','CZK','HUF','ILS','MYR','PHP','THB','TWD','RUB','TRY',
+]);
 
 interface PayPalInlineDepositProps {
   onSuccess: () => void;
@@ -44,12 +33,13 @@ const QUICK_AMOUNTS = [10, 25, 50, 100, 250, 500];
 
 export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInlineDepositProps) {
   const { currency: userCurrency } = useCurrency();
-  const [selectedCurrency, setSelectedCurrency] = useState(() => {
-    // If user's currency is PayPal-supported, use it; otherwise default to USD
-    const supported = PAYPAL_CURRENCIES.find(c => c.code === userCurrency);
-    return supported ? userCurrency : 'USD';
-  });
-  const currencyInfo = PAYPAL_CURRENCIES.find(c => c.code === selectedCurrency) || PAYPAL_CURRENCIES[0];
+  const allCurrencies = getSortedCurrencies();
+  const [selectedCurrency, setSelectedCurrency] = useState(userCurrency || 'USD');
+  const currencyInfo = getCurrencyByCode(selectedCurrency);
+  const symbol = currencyInfo?.symbol || selectedCurrency;
+  // Si la devise n'est pas supportée nativement par PayPal, la transaction sera en USD
+  const paypalCurrency = PAYPAL_NATIVE_CODES.has(selectedCurrency) ? selectedCurrency : 'USD';
+  const needsConversion = paypalCurrency !== selectedCurrency;
   const [amount, setAmount] = useState('');
   const [showPayPal, setShowPayPal] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -90,7 +80,7 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
 
   const createOrder = useCallback(async () => {
     const { data, error } = await supabase.functions.invoke('paypal-deposit', {
-      body: { amount: numAmount, currency: selectedCurrency, action: 'create' },
+      body: { amount: numAmount, currency: paypalCurrency, userCurrency: selectedCurrency, action: 'create' },
     });
     if (error) throw new Error(error.message);
     if (!data?.success) throw new Error(data?.error || 'Erreur création ordre PayPal');
@@ -123,19 +113,37 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
       <div className="space-y-4">
         {/* Sélecteur de devise */}
         <div className="space-y-2">
-          <Label>Devise de dépôt</Label>
+          <Label>Devise de dépôt {currencyInfo?.flag && <span>{currencyInfo.flag}</span>}</Label>
           <Select value={selectedCurrency} onValueChange={setSelectedCurrency}>
             <SelectTrigger>
-              <SelectValue placeholder="Choisir une devise" />
+              <SelectValue placeholder="Choisir une devise">
+                {currencyInfo && (
+                  <span className="flex items-center gap-1.5">
+                    {currencyInfo.flag && <span>{currencyInfo.flag}</span>}
+                    <span>{currencyInfo.code} - {currencyInfo.name}</span>
+                  </span>
+                )}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {PAYPAL_CURRENCIES.map((c) => (
-                <SelectItem key={c.code} value={c.code}>
-                  {c.label}
-                </SelectItem>
-              ))}
+              <ScrollArea className="h-[300px]">
+                {allCurrencies.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    <span className="flex items-center gap-2">
+                      {c.flag && <span>{c.flag}</span>}
+                      <span className="font-medium">{c.code}</span>
+                      <span className="text-muted-foreground text-xs truncate">{c.name}</span>
+                    </span>
+                  </SelectItem>
+                ))}
+              </ScrollArea>
             </SelectContent>
           </Select>
+          {needsConversion && (
+            <p className="text-xs text-destructive">
+              ⚠️ {selectedCurrency} n'est pas supporté par PayPal. La transaction sera effectuée en USD puis convertie.
+            </p>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -149,7 +157,7 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
                 onClick={() => setAmount(amt.toString())}
                 className="text-xs"
               >
-                {currencyInfo.symbol}{amt}
+                {symbol}{amt}
               </Button>
             ))}
           </div>
@@ -166,22 +174,22 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
-          <p className="text-xs text-muted-foreground mt-1">Minimum: {currencyInfo.symbol}5 {selectedCurrency} · Frais: {(feeRate * 100).toFixed(1)}%</p>
+          <p className="text-xs text-muted-foreground mt-1">Minimum: {symbol}5 {selectedCurrency} · Frais: {(feeRate * 100).toFixed(1)}%</p>
         </div>
 
         {isValidAmount && (
           <div className="p-3 rounded-lg bg-muted space-y-1">
             <div className="flex justify-between text-sm">
               <span>Montant</span>
-              <span className="font-medium">{currencyInfo.symbol}{numAmount.toFixed(2)}</span>
+              <span className="font-medium">{symbol}{numAmount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Frais ({(feeRate * 100).toFixed(1)}%)</span>
-              <span>-{currencyInfo.symbol}{fee.toFixed(2)}</span>
+              <span>-{symbol}{fee.toFixed(2)}</span>
             </div>
             <div className="border-t pt-1 flex justify-between text-sm font-bold">
               <span>Crédité</span>
-              <span className="text-primary">{currencyInfo.symbol}{netAmount.toFixed(2)}</span>
+              <span className="text-primary">{symbol}{netAmount.toFixed(2)}</span>
             </div>
           </div>
         )}
@@ -197,7 +205,7 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
           className="w-full"
         >
           <CreditCard className="w-4 h-4 mr-2" />
-          Continuer - {currencyInfo.symbol}{isValidAmount ? numAmount.toFixed(2) : '0.00'}
+          Continuer - {symbol}{isValidAmount ? numAmount.toFixed(2) : '0.00'}
         </Button>
       </div>
     );
@@ -206,8 +214,8 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
   return (
     <div className="space-y-4">
       <div className="p-3 rounded-lg bg-muted text-center">
-        <p className="text-sm font-medium">Montant: <span className="text-primary">{currencyInfo.symbol}{numAmount.toFixed(2)} {selectedCurrency}</span></p>
-        <p className="text-xs text-muted-foreground">Crédité après frais: {currencyInfo.symbol}{netAmount.toFixed(2)}</p>
+        <p className="text-sm font-medium">Montant: <span className="text-primary">{symbol}{numAmount.toFixed(2)} {selectedCurrency}</span></p>
+        <p className="text-xs text-muted-foreground">Crédité après frais: {symbol}{netAmount.toFixed(2)}</p>
       </div>
 
       {processing && (
@@ -225,7 +233,7 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
       ) : (
         <PayPalScriptProvider options={{
           clientId,
-          currency: selectedCurrency,
+          currency: paypalCurrency,
           intent: "capture",
         }}>
           <PayPalButtons
