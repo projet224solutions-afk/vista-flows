@@ -186,8 +186,8 @@ export const ImprovedTransferDialog = ({
               value={recipientCode}
               onChange={setRecipientCode}
               onUserSelect={handleUserSelect}
-              label="Code du destinataire"
-              placeholder="Ex: ABC1234"
+              label="Destinataire"
+              placeholder="ID, email ou téléphone"
             />
 
             <div className="space-y-2">

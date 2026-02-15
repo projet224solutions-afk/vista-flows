@@ -803,12 +803,25 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     try {
       console.log('🔍 Recherche du destinataire:', recipientId);
       
-      // 1. D'abord chercher dans profiles (custom_id ou public_id)
-      const { data: profileData, error: profileError } = await supabase
+      const searchTerm = recipientId.trim();
+      const isEmail = searchTerm.includes('@');
+      const isPhone = /^[+]?\d{6,}$/.test(searchTerm.replace(/[\s\-()]/g, ''));
+      
+      // 1. Chercher dans profiles par email, téléphone ou ID
+      let profileQuery = supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, custom_id, public_id')
-        .or(`custom_id.eq.${recipientId.toUpperCase()},public_id.eq.${recipientId.toUpperCase()}`)
-        .maybeSingle();
+        .select('id, email, first_name, last_name, custom_id, public_id, phone');
+      
+      if (isEmail) {
+        profileQuery = profileQuery.ilike('email', searchTerm);
+      } else if (isPhone) {
+        const cleanPhone = searchTerm.replace(/[\s\-()]/g, '');
+        profileQuery = profileQuery.or(`phone.ilike.%${cleanPhone}%`);
+      } else {
+        profileQuery = profileQuery.or(`custom_id.eq.${searchTerm.toUpperCase()},public_id.eq.${searchTerm.toUpperCase()}`);
+      }
+      
+      const { data: profileData, error: profileError } = await profileQuery.maybeSingle();
 
       if (profileError) {
         console.error('❌ Erreur recherche profil:', profileError);
@@ -827,13 +840,13 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                        profileData.custom_id || 
                        profileData.public_id || 
                        'Utilisateur';
-      } else {
-        // 2. Sinon, chercher dans agents_management (agent_code)
+      } else if (!isEmail && !isPhone) {
+        // 2. Sinon, chercher dans agents_management (agent_code) - seulement pour les IDs
         console.log('🔍 Recherche dans agents_management...');
         const { data: agentData, error: agentError } = await supabase
           .from('agents_management')
           .select('user_id, name, agent_code')
-          .eq('agent_code', recipientId.toUpperCase())
+          .eq('agent_code', searchTerm.toUpperCase())
           .eq('is_active', true)
           .maybeSingle();
 
@@ -853,7 +866,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           const { data: bureauData, error: bureauError } = await supabase
             .from('bureaus')
             .select('id, bureau_code, president_name, commune, prefecture')
-            .eq('bureau_code', recipientId.toUpperCase())
+            .eq('bureau_code', searchTerm.toUpperCase())
             .eq('status', 'active')
             .maybeSingle();
 
@@ -1683,15 +1696,15 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="recipient-id">ID du destinataire</Label>
+                  <Label htmlFor="recipient-id">Destinataire</Label>
                   <Input
                     id="recipient-id"
-                    placeholder="Ex: USR0001"
+                    placeholder="ID, email ou téléphone"
                     value={recipientId}
-                    onChange={(e) => setRecipientId(e.target.value.toUpperCase())}
+                    onChange={(e) => setRecipientId(e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Entrez l'ID standardisé du destinataire (format: AAA0000)
+                    Entrez l'ID (ex: CLT0001), l'email ou le numéro de téléphone
                   </p>
                 </div>
                 <div>

@@ -277,16 +277,14 @@ export function WalletOperationsPanel() {
 
             <div className="space-y-3">
               <div>
-                <Label>ID du destinataire</Label>
-                <PublicIdInput
+                <Label>Destinataire</Label>
+                <Input
                   value={recipientId}
-                  onChange={setRecipientId}
-                  label=""
-                  placeholder="ABC1234"
-                  showValidation={true}
+                  onChange={(e) => setRecipientId(e.target.value)}
+                  placeholder="ID, email ou téléphone"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Entrez l'ID public du destinataire (format: LLLDDDD)
+                  Entrez l'ID (ex: CLT0001), l'email ou le numéro de téléphone
                 </p>
               </div>
 
