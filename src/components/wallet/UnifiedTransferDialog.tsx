@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
+import { UserSearchInput } from './UserSearchInput';
 import {
   Dialog,
   DialogContent,
@@ -84,6 +85,7 @@ export function UnifiedTransferDialog({
   const [loading, setLoading] = useState(false);
   const [amount, setAmount] = useState('');
   const [recipientCode, setRecipientCode] = useState('');
+  const [recipientUserId, setRecipientUserId] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [preview, setPreview] = useState<TransferPreview | null>(null);
@@ -135,63 +137,65 @@ export function UnifiedTransferDialog({
     setLoading(true);
 
     try {
-      console.log('🔍 Prévisualisation transfert:', {
-        sender: senderCode,
-        recipient: recipientCode,
-        amount: transferAmount
-      });
-      
-      console.log('📞 Appel RPC preview_wallet_transfer_by_code...');
+      // Use resolved userId if available, otherwise pass code/email/phone directly
+      const resolvedRecipient = recipientUserId || recipientCode;
 
-      const { data, error } = await supabase.rpc('preview_wallet_transfer_by_code', {
-        p_sender_code: senderCode.toUpperCase(),
-        p_receiver_code: recipientCode.toUpperCase(),
-        p_amount: transferAmount,
-        p_currency: walletCurrency
-      });
+      console.log('🔍 Prévisualisation transfert:', { sender: user?.id, recipient: resolvedRecipient, amount: transferAmount });
 
-      if (error) {
-        console.error('❌ Erreur RPC:', error);
-        throw error;
-      }
+      const { data: previewData, error: previewError } = await supabase.functions.invoke(
+        'wallet-transfer?action=preview',
+        {
+          body: {
+            sender_id: user?.id,
+            receiver_id: resolvedRecipient,
+            amount: transferAmount,
+          },
+        }
+      );
 
-      console.log('📋 Résultat prévisualisation:', data);
+      if (previewError) throw previewError;
+      if (!previewData?.success) throw new Error(previewData?.error || 'Erreur de prévisualisation');
 
-      const previewData = data as unknown as TransferPreview;
+      console.log('📋 Résultat prévisualisation:', previewData);
 
-      if (!previewData.success) {
-        toast.error(previewData.error || 'Erreur lors de la prévisualisation');
-        return;
-      }
-
-      // Check if the RPC returned international fields
-      const anyData = data as any;
-      if (anyData.is_international) {
+      if (previewData.is_international) {
         setIntlPreview({
           success: true,
-          amount_sent: anyData.amount || parseFloat(amount),
-          currency_sent: anyData.currency_sent || walletCurrency,
-          fee_percentage: anyData.fee_percent || 0,
-          fee_amount: anyData.fee_amount || 0,
-          amount_after_fee: anyData.amount_after_fee || 0,
-          rate_displayed: anyData.rate_displayed || 1,
-          amount_received: anyData.amount_received || 0,
-          currency_received: anyData.currency_received || walletCurrency,
+          amount_sent: previewData.amount_sent || transferAmount,
+          currency_sent: previewData.currency_sent || walletCurrency,
+          fee_percentage: previewData.fee_percentage || 0,
+          fee_amount: previewData.fee_amount || 0,
+          amount_after_fee: previewData.amount_after_fee || 0,
+          rate_displayed: previewData.rate_displayed || 1,
+          amount_received: previewData.amount_received || 0,
+          currency_received: previewData.currency_received || walletCurrency,
           is_international: true,
-          sender_country: anyData.sender_country || '',
-          receiver_country: anyData.receiver_country || '',
-          commission_conversion: anyData.commission_conversion || 0,
-          frais_international: anyData.frais_international || 0,
-          rate_lock_seconds: anyData.rate_lock_seconds || 60,
-          receiver_name: previewData.receiver?.name,
-          receiver_code: previewData.receiver?.custom_id,
+          sender_country: previewData.sender_country || '',
+          receiver_country: previewData.receiver_country || '',
+          commission_conversion: previewData.commission_conversion || 0,
+          frais_international: previewData.frais_international || 0,
+          rate_lock_seconds: previewData.rate_lock_seconds || 60,
+          receiver_name: previewData.receiver_name,
+          receiver_code: previewData.receiver_code,
         });
         setShowIntlConfirm(true);
         setOpen(false);
         return;
       }
 
-      setPreview(previewData);
+      // Local transfer preview
+      setPreview({
+        success: true,
+        sender: previewData.sender || { id: user?.id, name: '', email: '', phone: '', custom_id: senderCode },
+        receiver: previewData.receiver || { id: resolvedRecipient, name: previewData.receiver_name || '', email: previewData.receiver_email || '', phone: previewData.receiver_phone || '', custom_id: previewData.receiver_code || recipientCode },
+        amount: previewData.amount_sent || transferAmount,
+        fee_percent: previewData.fee_percentage || 0,
+        fee_amount: previewData.fee_amount || 0,
+        total_debit: previewData.total_debit || (transferAmount + (previewData.fee_amount || 0)),
+        amount_received: previewData.amount_received || transferAmount,
+        current_balance: previewData.sender_balance || 0,
+        balance_after: previewData.balance_after || 0,
+      });
       setShowPreview(true);
       setOpen(false);
     } catch (error: any) {
@@ -209,47 +213,43 @@ export function UnifiedTransferDialog({
     setShowPreview(false);
     
     try {
+      const resolvedRecipient = recipientUserId || recipientCode;
+
       console.log('💸 Exécution du transfert...');
 
-      const { data, error } = await supabase.rpc('process_wallet_transfer_with_fees', {
-        p_sender_code: senderCode.toUpperCase(),
-        p_receiver_code: recipientCode.toUpperCase(),
-        p_amount: preview.amount,
-        p_currency: walletCurrency,
-        p_description: description
-      });
+      const { data, error } = await supabase.functions.invoke(
+        'wallet-transfer?action=transfer',
+        {
+          body: {
+            sender_id: user?.id,
+            receiver_id: resolvedRecipient,
+            amount: preview.amount,
+            description,
+          },
+        }
+      );
 
-      if (error) {
-        console.error('❌ Erreur RPC transfert:', error);
-        throw error;
+      if (error) throw error;
+      if (!data?.success) {
+        toast.error(data?.error || 'Erreur lors du transfert');
+        return;
       }
 
       console.log('✅ Transfert réussi:', data);
 
-      const result = data as { success: boolean; error?: string; transaction_id?: string; fee_amount?: number };
-
-      if (!result.success) {
-        toast.error(result.error || 'Erreur lors du transfert');
-        return;
-      }
-
       toast.success(
-        `✅ Transfert réussi !\n💸 Frais : ${preview.fee_amount.toLocaleString()} ${walletCurrency}\n💰 Montant transféré : ${preview.amount.toLocaleString()} ${walletCurrency}`,
+        `✅ Transfert réussi ! Code: ${data.transfer_code || ''}`,
         { duration: 5000 }
       );
       
       // Reset
       setAmount('');
       setRecipientCode('');
+      setRecipientUserId(null);
       setDescription('');
       setPreview(null);
 
-      // Callback
-      if (onSuccess) {
-        onSuccess();
-      }
-
-      // Événement de mise à jour
+      onSuccess?.();
       window.dispatchEvent(new CustomEvent('wallet-updated'));
     } catch (error: any) {
       console.error('❌ Erreur transfert:', error);
@@ -263,24 +263,30 @@ export function UnifiedTransferDialog({
     if (!intlPreview) return;
     setIntlExecuting(true);
     try {
-      const { data, error } = await supabase.rpc('process_wallet_transfer_with_fees', {
-        p_sender_code: senderCode.toUpperCase(),
-        p_receiver_code: recipientCode.toUpperCase(),
-        p_amount: intlPreview.amount_sent,
-        p_currency: walletCurrency,
-        p_description: description
-      });
+      const resolvedRecipient = recipientUserId || recipientCode;
+
+      const { data, error } = await supabase.functions.invoke(
+        'wallet-transfer?action=transfer',
+        {
+          body: {
+            sender_id: user?.id,
+            receiver_id: resolvedRecipient,
+            amount: intlPreview.amount_sent,
+            description,
+          },
+        }
+      );
 
       if (error) throw error;
-      const result = data as any;
-      if (!result.success) {
-        toast.error(result.error || 'Erreur lors du transfert');
+      if (!data?.success) {
+        toast.error(data?.error || 'Erreur lors du transfert');
         return;
       }
 
-      toast.success('🌍 Transfert international réussi !', { duration: 5000 });
+      toast.success(`🌍 Transfert international réussi ! Code: ${data.transfer_code || ''}`, { duration: 5000 });
       setAmount('');
       setRecipientCode('');
+      setRecipientUserId(null);
       setDescription('');
       setIntlPreview(null);
       setShowIntlConfirm(false);
@@ -323,20 +329,18 @@ export function UnifiedTransferDialog({
               </div>
             </div>
 
-            {/* Code destinataire */}
+            {/* Destinataire - recherche par ID, email ou téléphone */}
             <div className="space-y-2">
-              <Label htmlFor="recipient">Code du destinataire *</Label>
-              <Input
-                id="recipient"
-                placeholder="Ex: USR0001, VND0001, etc."
+              <UserSearchInput
                 value={recipientCode}
-                onChange={(e) => setRecipientCode(e.target.value.toUpperCase())}
-                disabled={loading}
-                className="font-mono"
+                onChange={(val) => {
+                  setRecipientCode(val);
+                  setRecipientUserId(null);
+                }}
+                onUserSelect={(userId) => setRecipientUserId(userId)}
+                label="Destinataire"
+                placeholder="ID, email ou téléphone"
               />
-              <p className="text-xs text-muted-foreground">
-                Entrez le code d'identification du destinataire
-              </p>
             </div>
 
             <div className="space-y-2">
