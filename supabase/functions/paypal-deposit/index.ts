@@ -58,16 +58,27 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    // Auth
+    // Auth - validate JWT via getClaims
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      throw new Error("Non autorisé - header manquant");
+    }
+
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: req.headers.get("Authorization")! } } }
+      { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) throw new Error("Non autorisé");
-    logStep("User authenticated", { userId: user.id });
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      logStep("Auth failed", { error: claimsError?.message });
+      throw new Error("Non autorisé - token invalide");
+    }
+
+    const userId = claimsData.claims.sub as string;
+    logStep("User authenticated", { userId });
 
     const { amount, currency = "USD", action = "create", orderId, returnUrl } = await req.json();
 
@@ -101,7 +112,7 @@ serve(async (req) => {
               value: amount.toFixed(2),
             },
             description: `Dépôt wallet - 224Solutions`,
-            custom_id: user.id,
+            custom_id: userId,
           }],
           application_context: {
             brand_name: "224Solutions",
@@ -207,13 +218,13 @@ serve(async (req) => {
       let { data: wallet } = await supabaseAdmin
         .from("wallets")
         .select("id, balance")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .single();
 
       if (!wallet) {
         const { data: newWallet, error: createErr } = await supabaseAdmin
           .from("wallets")
-          .insert({ user_id: user.id, balance: 0, currency: capturedCurrency, wallet_status: "active" })
+          .insert({ user_id: userId, balance: 0, currency: capturedCurrency, wallet_status: "active" })
           .select("id, balance")
           .single();
         if (createErr) throw new Error("Impossible de créer le wallet");
@@ -240,7 +251,7 @@ serve(async (req) => {
         status: "completed",
         description: `Dépôt PayPal - Order ${orderId}`,
         receiver_wallet_id: wallet!.id,
-        receiver_user_id: user.id,
+        receiver_user_id: userId,
         metadata: {
           paypal_order_id: orderId,
           paypal_capture_id: captureData.purchase_units[0].payments.captures[0].id,
