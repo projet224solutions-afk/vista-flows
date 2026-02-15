@@ -33,13 +33,13 @@ const QUICK_AMOUNTS = [10, 25, 50, 100, 250, 500];
 
 export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInlineDepositProps) {
   const { currency: userCurrency } = useCurrency();
-  const allCurrencies = getSortedCurrencies();
-  const [selectedCurrency, setSelectedCurrency] = useState(userCurrency || 'USD');
+  const allCurrencies = getSortedCurrencies().filter(c => PAYPAL_NATIVE_CODES.has(c.code));
+  const defaultCurrency = PAYPAL_NATIVE_CODES.has(userCurrency) ? userCurrency : 'USD';
+  const [selectedCurrency, setSelectedCurrency] = useState(defaultCurrency);
   const currencyInfo = getCurrencyByCode(selectedCurrency);
   const symbol = currencyInfo?.symbol || selectedCurrency;
-  // Si la devise n'est pas supportée nativement par PayPal, la transaction sera en USD
-  const paypalCurrency = PAYPAL_NATIVE_CODES.has(selectedCurrency) ? selectedCurrency : 'USD';
-  const needsConversion = paypalCurrency !== selectedCurrency;
+  const paypalCurrency = selectedCurrency;
+  const needsConversion = false;
   const [amount, setAmount] = useState('');
   const [showPayPal, setShowPayPal] = useState(false);
   const [processing, setProcessing] = useState(false);
