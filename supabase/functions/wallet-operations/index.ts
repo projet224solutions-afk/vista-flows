@@ -512,7 +512,7 @@ serve(async (req) => {
 
         await supabaseClient.from('enhanced_transactions').insert({
           sender_id: user.id, receiver_id: user.id, amount, method: 'wallet', status: 'completed',
-          currency: 'GNF', transaction_type: 'deposit', metadata: { description: description || 'Dépôt', fee: depositFee }
+          currency: wallet.currency || 'GNF', transaction_type: 'deposit', metadata: { description: description || 'Dépôt', fee: depositFee }
         });
 
         await syncAgentWallet(supabaseClient, user.id, newBalance, 'deposit', userRole);
@@ -534,7 +534,7 @@ serve(async (req) => {
 
         await supabaseClient.from('enhanced_transactions').insert({
           sender_id: user.id, receiver_id: user.id, amount, method: 'wallet', status: 'completed',
-          currency: 'GNF', transaction_type: 'withdrawal', metadata: { description: description || 'Retrait' }
+          currency: wallet.currency || 'GNF', transaction_type: 'withdrawal', metadata: { description: description || 'Retrait' }
         });
 
         await syncAgentWallet(supabaseClient, user.id, newBalance, 'withdraw', userRole);

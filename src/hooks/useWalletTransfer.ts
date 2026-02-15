@@ -53,19 +53,6 @@ export function useWalletTransfer(): UseWalletTransferResult {
       setLoading(true);
       setError(null);
 
-      const { data, error: fnError } = await supabase.functions.invoke('wallet-transfer', {
-        body: {
-          sender_id: user.id,
-          receiver_id: receiverId,
-          amount,
-        },
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        method: 'POST',
-      });
-
-      // Ajouter le query param pour l'action preview via URL reconstruction
       const { data: previewData, error: previewError } = await supabase.functions.invoke(
         'wallet-transfer?action=preview',
         {
