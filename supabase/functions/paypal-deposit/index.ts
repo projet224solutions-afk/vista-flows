@@ -58,28 +58,28 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    // Auth - decode JWT to extract user_id (JWT already validated by Supabase gateway)
+    // Auth - validate JWT using getClaims (verify_jwt=false on Lovable Cloud)
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       throw new Error("Non autorisé - header manquant");
     }
 
     const token = authHeader.replace("Bearer ", "");
-    
-    // Decode JWT payload (base64url) - no need to verify signature, gateway already did
-    const payloadPart = token.split(".")[1];
-    if (!payloadPart) {
-      throw new Error("Non autorisé - token malformé");
+
+    const supabaseAuth = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      logStep("Auth failed", { error: claimsError?.message });
+      throw new Error("Non autorisé - token invalide");
     }
-    
-    const payload = JSON.parse(atob(payloadPart.replace(/-/g, '+').replace(/_/g, '/')));
-    const userId = payload.sub;
-    
-    if (!userId) {
-      throw new Error("Non autorisé - user_id manquant dans le token");
-    }
-    
-    logStep("User authenticated from JWT", { userId });
+
+    const userId = claimsData.claims.sub as string;
+    logStep("User authenticated via getClaims", { userId });
 
     const { amount, currency = "USD", action = "create", orderId, returnUrl } = await req.json();
 
