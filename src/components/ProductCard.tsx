@@ -10,6 +10,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { useState, useEffect } from "react";
+import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 
 interface ProductCardProps {
   id: string;
@@ -45,6 +46,7 @@ export default function ProductCard({
 }: ProductCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const images = Array.isArray(image) ? image : [image];
+  const fc = useFormatCurrency();
 
   // Auto-scroll pour le carrousel (toutes les 3 secondes)
   useEffect(() => {
@@ -137,11 +139,11 @@ export default function ProductCard({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <span className="text-lg font-rubik font-semibold text-vendeur-secondary price-text">
-              {price.toLocaleString()} GNF
+              {fc(price)}
             </span>
             {originalPrice && (
               <span className="text-sm text-muted-foreground line-through font-inter">
-                {originalPrice.toLocaleString()} GNF
+                {fc(originalPrice)}
               </span>
             )}
           </div>
