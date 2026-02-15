@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { Building2 } from 'lucide-react';
 import PayPalInlineDeposit from './PayPalInlineDeposit';
+import StripeWalletTopup from './StripeWalletTopup';
 
 interface UniversalWalletTransactionsProps {
   userId?: string;
@@ -1268,20 +1269,21 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   </TabsTrigger>
                 </TabsList>
                 
-                {/* Onglet Carte Bancaire - via PayPal inline */}
+                {/* Onglet Carte Bancaire - via Stripe */}
                 <TabsContent value="card" className="space-y-4 mt-4">
-                  <PayPalInlineDeposit
-                    onSuccess={async () => {
-                      setDepositAmount('');
-                      setDepositOpen(false);
-                      await Promise.all([loadWalletData(), loadTransactions()]);
-                    }}
-                  />
-
-                  {cardDepositStep === 'capturing' && (
-                    <div className="flex flex-col items-center gap-3 py-6">
-                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                      <p className="text-sm text-muted-foreground">Finalisation du dépôt...</p>
+                  {effectiveUserId && wallet ? (
+                    <StripeWalletTopup
+                      userId={effectiveUserId}
+                      walletId={wallet.id}
+                      onSuccess={async () => {
+                        setDepositAmount('');
+                        setDepositOpen(false);
+                        await Promise.all([loadWalletData(), loadTransactions()]);
+                      }}
+                    />
+                  ) : (
+                    <div className="text-center text-muted-foreground text-sm py-4">
+                      Chargement...
                     </div>
                   )}
                 </TabsContent>
@@ -1350,6 +1352,17 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   >
                     {processing ? 'Traitement...' : `Recharger ${depositAmount ? parseFloat(depositAmount).toLocaleString() : '0'} GNF`}
                   </Button>
+                </TabsContent>
+
+                {/* Onglet PayPal */}
+                <TabsContent value="paypal" className="space-y-4 mt-4">
+                  <PayPalInlineDeposit
+                    onSuccess={async () => {
+                      setDepositAmount('');
+                      setDepositOpen(false);
+                      await Promise.all([loadWalletData(), loadTransactions()]);
+                    }}
+                  />
                 </TabsContent>
               </Tabs>
             </DialogContent>
