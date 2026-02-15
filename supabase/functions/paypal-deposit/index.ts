@@ -71,13 +71,13 @@ serve(async (req) => {
     );
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      logStep("Auth failed", { error: claimsError?.message });
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    if (authError || !user) {
+      logStep("Auth failed", { error: authError?.message });
       throw new Error("Non autorisé - token invalide");
     }
 
-    const userId = claimsData.claims.sub as string;
+    const userId = user.id;
     logStep("User authenticated", { userId });
 
     const { amount, currency = "USD", action = "create", orderId, returnUrl } = await req.json();
