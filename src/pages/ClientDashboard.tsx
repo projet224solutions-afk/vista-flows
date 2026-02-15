@@ -480,6 +480,7 @@ export default function ClientDashboard() {
                       image={product.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop'}
                       title={product.name}
                       price={product.price}
+                      currency={product.currency || 'GNF'}
                       vendor={product.vendor_name}
                       rating={product.rating}
                       reviewCount={product.reviews_count}
