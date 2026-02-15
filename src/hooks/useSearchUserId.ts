@@ -22,15 +22,21 @@ export function useSearchUserId() {
    * Valider le format de l'ID
    */
   const validateIdFormat = useCallback((id: string): boolean => {
-    const trimmedId = id.trim().toUpperCase();
+    const trimmedId = id.trim();
     
     // Format 1: AAA0001 (3 lettres + 4+ chiffres)
-    const format1 = /^[A-Z]{3}\d{4,}$/;
+    const format1 = /^[A-Z]{3}\d{4,}$/i;
     
     // Format 2: 224-XXX-XXX (224 + 3 chiffres + 3 chiffres)
     const format2 = /^224-\d{3}-\d{3}$/;
+
+    // Format 3: Email
+    const formatEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    // Format 4: Phone (starts with 6,7,8 or +224)
+    const formatPhone = /^(\+?224)?[678]\d{7,}$/;
     
-    return format1.test(trimmedId) || format2.test(trimmedId);
+    return format1.test(trimmedId.toUpperCase()) || format2.test(trimmedId) || formatEmail.test(trimmedId) || formatPhone.test(trimmedId.replace(/[\s-]/g, ''));
   }, []);
 
   /**
@@ -43,33 +49,74 @@ export function useSearchUserId() {
     setError(null);
 
     try {
-      const trimmedId = searchId.trim().toUpperCase();
+      const trimmedId = searchId.trim();
 
       // Valider le format
       if (!validateIdFormat(trimmedId)) {
-        throw new Error('Format ID invalide. Formats acceptés: USR0001 ou 224-123-456');
+        throw new Error('Format invalide. Formats acceptés: USR0001, 224-123-456, email ou téléphone');
       }
 
-      // Rechercher dans la base
-      const { data: profile, error: searchError } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, email, avatar_url, public_id, role, phone')
-        .eq('public_id', trimmedId)
-        .single();
+      let profile: any = null;
 
-      if (searchError) {
-        if (searchError.code === 'PGRST116') {
-          throw new Error('Aucun utilisateur trouvé avec cet ID');
+      // Détection du type de recherche
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedId);
+      const isPhone = /^(\+?224)?[678]\d{7,}$/.test(trimmedId.replace(/[\s-]/g, ''));
+
+      if (isEmail) {
+        // Recherche par email
+        const { data, error: searchError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email, avatar_url, public_id, role, phone')
+          .ilike('email', trimmedId)
+          .maybeSingle();
+        if (searchError && searchError.code !== 'PGRST116') throw searchError;
+        profile = data;
+      } else if (isPhone) {
+        // Recherche par téléphone
+        const cleanPhone = trimmedId.replace(/[\s-]/g, '');
+        const { data, error: searchError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email, avatar_url, public_id, role, phone')
+          .or(`phone.ilike.%${cleanPhone}%`)
+          .limit(1)
+          .maybeSingle();
+        if (searchError && searchError.code !== 'PGRST116') throw searchError;
+        profile = data;
+      } else {
+        // Recherche par public_id (format code)
+        const upperId = trimmedId.toUpperCase();
+        const { data, error: searchError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email, avatar_url, public_id, role, phone')
+          .eq('public_id', upperId)
+          .maybeSingle();
+        if (searchError && searchError.code !== 'PGRST116') throw searchError;
+        profile = data;
+
+        // Fallback: chercher dans user_ids.custom_id
+        if (!profile) {
+          const { data: uidData } = await supabase
+            .from('user_ids')
+            .select('user_id')
+            .eq('custom_id', upperId)
+            .maybeSingle();
+          if (uidData?.user_id) {
+            const { data: pData } = await supabase
+              .from('profiles')
+              .select('id, first_name, last_name, email, avatar_url, public_id, role, phone')
+              .eq('id', uidData.user_id)
+              .maybeSingle();
+            profile = pData;
+          }
         }
-        throw searchError;
       }
 
       if (!profile) {
-        throw new Error('Utilisateur non trouvé');
+        throw new Error('Aucun utilisateur trouvé');
       }
 
       toast.success('Utilisateur trouvé!', {
-        description: `${profile.first_name || ''} ${profile.last_name || ''} (${profile.public_id})`
+        description: `${profile.first_name || ''} ${profile.last_name || ''} (${profile.public_id || profile.email || ''})`
       });
 
       return profile as UserProfile;
