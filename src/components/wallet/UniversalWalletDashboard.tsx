@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,7 @@ export default function UniversalWalletDashboard({
   userCode,
   showTransactions = true 
 }: UniversalWalletDashboardProps) {
+  const { convert } = usePriceConverter();
   const [wallet, setWallet] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -176,8 +178,8 @@ export default function UniversalWalletDashboard({
   const balanceDisplay = useMemo(() => {
     if (!wallet) return "—";
     if (hidden) return "••••••";
-    return `${wallet.balance.toLocaleString()} ${wallet.currency}`;
-  }, [wallet, hidden]);
+    return convert(wallet.balance, 'GNF').formatted;
+  }, [wallet, hidden, convert]);
 
   const handleDeposit = useCallback(async () => {
     if (!wallet) return;
@@ -228,7 +230,7 @@ export default function UniversalWalletDashboard({
       if (transactionError) console.warn('Transaction log failed:', transactionError);
 
       setDepositAmount("");
-      toast.success(`Dépôt de ${amount.toLocaleString()} GNF effectué avec succès`);
+      toast.success(`Dépôt de ${convert(amount, 'GNF').formatted} effectué avec succès`);
       window.dispatchEvent(new Event('wallet-updated'));
       await loadWallet();
     } catch (e: any) {
@@ -292,7 +294,7 @@ export default function UniversalWalletDashboard({
       if (transactionError) console.warn('Transaction log failed:', transactionError);
 
       setWithdrawAmount("");
-      toast.success(`Retrait de ${amount.toLocaleString()} GNF effectué avec succès`);
+      toast.success(`Retrait de ${convert(amount, 'GNF').formatted} effectué avec succès`);
       window.dispatchEvent(new Event('wallet-updated'));
       await loadWallet();
     } catch (e: any) {
