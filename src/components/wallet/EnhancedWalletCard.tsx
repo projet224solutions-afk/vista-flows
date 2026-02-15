@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PublicIdBadge } from '@/components/PublicIdBadge';
 import { useWallet } from '@/hooks/useWallet';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
 import {
   Wallet,
   ArrowDownToLine,
@@ -37,12 +38,13 @@ export function EnhancedWalletCard({
   onTransfer
 }: EnhancedWalletCardProps) {
   const { wallet, stats, loading, processing, refresh } = useWallet();
+  const { convert } = usePriceConverter();
   const [hidden, setHidden] = useState(false);
 
   const formatBalance = () => {
     if (!wallet) return '0';
     if (hidden) return '••••••';
-    return wallet.balance.toLocaleString('fr-FR');
+    return convert(wallet.balance, 'GNF').formatted;
   };
 
   const getStatusBadge = () => {
@@ -141,7 +143,6 @@ export function EnhancedWalletCard({
             <p className="text-4xl font-bold">
               {formatBalance()}
             </p>
-            <p className="text-xl opacity-80">{wallet.currency}</p>
           </div>
         </div>
 
@@ -151,13 +152,13 @@ export function EnhancedWalletCard({
             <div className="bg-white/10 backdrop-blur rounded-lg p-3">
               <p className="text-xs opacity-75 mb-1">Reçu au total</p>
               <p className="text-lg font-semibold">
-                {stats.total_received.toLocaleString()}
+                {convert(stats.total_received, 'GNF').formatted}
               </p>
             </div>
             <div className="bg-white/10 backdrop-blur rounded-lg p-3">
               <p className="text-xs opacity-75 mb-1">Envoyé au total</p>
               <p className="text-lg font-semibold">
-                {stats.total_sent.toLocaleString()}
+                {convert(stats.total_sent, 'GNF').formatted}
               </p>
             </div>
           </div>

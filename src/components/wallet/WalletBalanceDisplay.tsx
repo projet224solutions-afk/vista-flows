@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { Card, CardContent } from '@/components/ui/card';
 import { Wallet, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -119,7 +119,8 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
     }
   }, [userId]);
 
-  const formatAmount = useFormatCurrency();
+  const { convert } = usePriceConverter();
+  const formatAmount = (amount: number) => convert(amount, 'GNF').formatted;
 
   if (loading) {
     return (
@@ -147,7 +148,7 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
               <Wallet className="w-4 h-4 text-primary" />
               <div>
                 <p className="text-xs text-muted-foreground">Solde</p>
-                <p className="text-sm font-bold text-primary">{formatAmount(balance)} {currency}</p>
+                <p className="text-sm font-bold text-primary">{formatAmount(balance)}</p>
               </div>
             </div>
             <Button
@@ -174,7 +175,7 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Solde du Wallet</p>
-              <p className="text-lg font-bold text-primary">{formatAmount(balance)} {currency}</p>
+              <p className="text-lg font-bold text-primary">{formatAmount(balance)}</p>
             </div>
           </div>
           <Button

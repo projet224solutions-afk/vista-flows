@@ -5,6 +5,7 @@ import { Wallet, RefreshCw, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { QuickTransferButton } from "./QuickTransferButton";
+import { usePriceConverter } from '@/hooks/usePriceConverter';
 
 interface WalletBalanceWidgetProps {
   className?: string;
@@ -16,8 +17,8 @@ export function WalletBalanceWidget({
   showTransferButton = true 
 }: WalletBalanceWidgetProps) {
   const { user } = useAuth();
+  const { convert } = usePriceConverter();
   const [balance, setBalance] = useState<number>(0);
-  const [currency, setCurrency] = useState<string>('GNF');
   const [loading, setLoading] = useState(true);
   const [hidden, setHidden] = useState(false);
 
@@ -35,7 +36,6 @@ export function WalletBalanceWidget({
 
       if (data) {
         setBalance(data.balance || 0);
-        setCurrency(data.currency || 'GNF');
       }
     } catch (error) {
       console.error('Erreur chargement wallet:', error);
@@ -61,7 +61,7 @@ export function WalletBalanceWidget({
 
   const formatBalance = () => {
     if (hidden) return '••••••';
-    return `${balance.toLocaleString('fr-FR')} ${currency}`;
+    return convert(balance, 'GNF').formatted;
   };
 
   return (
