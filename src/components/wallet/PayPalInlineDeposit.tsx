@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
+import { PayPalScriptProvider, PayPalButtons, FUNDING } from '@paypal/react-paypal-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2, Shield, CreditCard } from 'lucide-react';
@@ -243,7 +243,7 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
               label: "pay",
               height: 45,
             }}
-            fundingSource={undefined}
+            fundingSource={FUNDING.PAYPAL}
             createOrder={async () => {
               try {
                 return await createOrder();
