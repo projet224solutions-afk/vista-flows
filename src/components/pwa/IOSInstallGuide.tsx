@@ -1,18 +1,12 @@
 /**
- * Guide d'installation PWA spécifique pour iOS
- * iOS ne supporte pas beforeinstallprompt - installation manuelle requise
+ * Guide d'installation PWA iOS - Style natif immersif
+ * Overlay plein écran avec flèche animée pointant vers le bouton Share de Safari
  */
 
 import { useState, useEffect } from 'react';
-import { Share, Plus, X, Smartphone } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Share, Plus, X, Check, ArrowDown, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
 
 interface IOSInstallGuideProps {
   open: boolean;
@@ -20,209 +14,264 @@ interface IOSInstallGuideProps {
 }
 
 export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
   const [isSafari, setIsSafari] = useState(true);
-  const [isIOS, setIsIOS] = useState(true);
-  const [isMac, setIsMac] = useState(false);
+  const [isIPad, setIsIPad] = useState(false);
 
   useEffect(() => {
-    // Détecter si on est sur Safari (seul navigateur supportant PWA sur iOS/Mac)
     const ua = navigator.userAgent;
     const safari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome/i.test(ua);
-    const ios = /iPhone|iPad|iPod/i.test(ua);
-    const mac = /Macintosh|MacIntel|MacPPC|Mac68K/i.test(ua) && !ios;
+    const ipad = /iPad/i.test(ua) || (navigator.maxTouchPoints > 1 && /Macintosh/i.test(ua));
     setIsSafari(safari);
-    setIsIOS(ios);
-    setIsMac(mac);
+    setIsIPad(ipad);
   }, []);
 
-  // Instructions différentes pour iOS et Mac
-  const iosSteps = [
-    {
-      title: "Étape 1 : Ouvrir le menu Partager",
-      description: "Appuyez sur l'icône de partage en bas de l'écran",
-      icon: <Share className="w-12 h-12 text-primary" />,
-      note: "L'icône ressemble à un carré avec une flèche vers le haut",
-    },
-    {
-      title: "Étape 2 : Ajouter à l'écran d'accueil",
-      description: "Faites défiler et appuyez sur \"Sur l'écran d'accueil\"",
-      icon: <Plus className="w-12 h-12 text-primary p-2 border-2 border-primary rounded-lg" />,
-      note: "Vous devrez peut-être faire défiler vers le bas pour trouver cette option",
-    },
-    {
-      title: "Étape 3 : Confirmer l'installation",
-      description: "Appuyez sur \"Ajouter\" en haut à droite",
-      icon: <Smartphone className="w-12 h-12 text-green-600" />,
-      note: "224Solutions sera maintenant sur votre écran d'accueil !",
-    },
-  ];
+  useEffect(() => {
+    if (open) setStep(0);
+  }, [open]);
 
-  const macSteps = [
-    {
-      title: "Étape 1 : Ouvrir le menu Fichier",
-      description: "Dans la barre de menu en haut, cliquez sur Fichier",
-      icon: <Share className="w-12 h-12 text-primary" />,
-      note: "Ou utilisez le raccourci ⌘ + Maj + A",
-    },
-    {
-      title: "Étape 2 : Ajouter au Dock",
-      description: "Cliquez sur \"Ajouter au Dock\" dans le menu",
-      icon: <Plus className="w-12 h-12 text-primary p-2 border-2 border-primary rounded-lg" />,
-      note: "L'application sera ajoutée à votre Dock",
-    },
-    {
-      title: "Étape 3 : Lancer l'application",
-      description: "Cliquez sur l'icône dans votre Dock pour ouvrir",
-      icon: <Smartphone className="w-12 h-12 text-green-600" />,
-      note: "224Solutions est maintenant installée sur votre Mac !",
-    },
-  ];
+  if (!open) return null;
 
-  const steps = isMac ? macSteps : iosSteps;
-
-  const currentStep = steps[step - 1];
-
-  if (!isSafari && (isIOS || isMac)) {
+  // Si pas Safari → message "ouvrir dans Safari"
+  if (!isSafari) {
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Smartphone className="w-5 h-5 text-primary" />
-              Ouvrir dans Safari
-            </DialogTitle>
-            <DialogDescription>
-              {isMac 
-                ? "Pour installer l'application sur Mac, vous devez utiliser Safari."
-                : "Pour installer l'application sur iOS, vous devez utiliser Safari."
-              }
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-              <p className="text-sm text-amber-800 dark:text-amber-200">
-                <strong>Chrome, Firefox et autres navigateurs</strong> ne supportent pas l'installation PWA sur {isMac ? 'Mac' : 'iOS'}.
-              </p>
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-6"
+          onClick={() => onOpenChange(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-sm w-full text-center space-y-5 shadow-2xl"
+          >
+            <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center mx-auto">
+              <Smartphone className="w-10 h-10 text-blue-600" />
             </div>
-            
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                1. Copiez l'adresse de cette page
-              </p>
-              <p className="text-sm text-muted-foreground">
-                2. Ouvrez Safari
-              </p>
-              <p className="text-sm text-muted-foreground">
-                3. Collez l'adresse et suivez les instructions
-              </p>
-            </div>
-
-            <Button 
+            <h2 className="text-xl font-bold text-foreground">Ouvrez dans Safari</h2>
+            <p className="text-muted-foreground text-sm">
+              L'installation n'est possible que depuis <strong>Safari</strong>. Copiez le lien et ouvrez-le dans Safari.
+            </p>
+            <Button
               onClick={() => {
                 navigator.clipboard.writeText(window.location.href);
+                const btn = document.getElementById('copy-btn-text');
+                if (btn) btn.textContent = 'Copié ✓';
+                setTimeout(() => { if (btn) btn.textContent = 'Copier le lien'; }, 2000);
               }}
-              className="w-full"
+              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
             >
-              Copier l'adresse
+              <span id="copy-btn-text">Copier le lien</span>
             </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+            <button onClick={() => onOpenChange(false)} className="text-sm text-muted-foreground hover:underline">
+              Fermer
+            </button>
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
     );
   }
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Smartphone className="w-5 h-5 text-primary" />
-            {isMac ? 'Installer sur Mac' : 'Installer sur iPhone/iPad'}
-          </DialogTitle>
-          <DialogDescription>
-            {isMac 
-              ? "Suivez ces étapes pour ajouter 224Solutions à votre Dock"
-              : "Suivez ces étapes pour ajouter 224Solutions à votre écran d'accueil"
-            }
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="py-6">
-          {/* Indicateur de progression */}
-          <div className="flex justify-center gap-2 mb-6">
-            {[1, 2, 3].map((s) => (
-              <div
-                key={s}
-                className={`w-3 h-3 rounded-full transition-colors ${
-                  s === step 
-                    ? 'bg-primary' 
-                    : s < step 
-                      ? 'bg-green-500' 
-                      : 'bg-muted'
-                }`}
-              />
-            ))}
+  const steps = [
+    {
+      // Étape 0 : Flèche vers le bouton Share
+      render: () => (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[9999] flex flex-col"
+          onClick={() => setStep(1)}
+        >
+          {/* Overlay semi-transparent en haut */}
+          <div className="flex-1 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center px-6">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl"
+            >
+              <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
+                <img src="/icon-192.png" alt="224Solutions" className="w-12 h-12 rounded-xl" onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }} />
+              </div>
+              <h2 className="text-xl font-bold text-foreground">Installer 224Solutions</h2>
+              <p className="text-muted-foreground text-sm">
+                Appuyez sur le bouton <strong>Partager</strong> en bas de votre écran
+              </p>
+              
+              {/* Icône Share stylisée */}
+              <div className="flex items-center justify-center gap-2 py-2">
+                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center">
+                  <Share className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+            </motion.div>
           </div>
 
-          {/* Contenu de l'étape */}
-          <div className="text-center space-y-4">
-            <div className="flex justify-center">
-              <div className="p-4 bg-muted rounded-2xl">
-                {currentStep.icon}
+          {/* Flèche animée pointant vers le bas (vers le bouton Share de Safari) */}
+          <div className={`bg-black/70 ${isIPad ? 'pb-4' : 'pb-16'} pt-4 flex flex-col items-center`}>
+            <motion.div
+              animate={{ y: [0, 12, 0] }}
+              transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
+              className="flex flex-col items-center"
+            >
+              <ArrowDown className="w-10 h-10 text-white" />
+              <span className="text-white text-xs font-medium mt-1">Appuyez ici</span>
+            </motion.div>
+          </div>
+
+          {/* Bouton fermer discret */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onOpenChange(false); }}
+            className="absolute top-12 right-4 p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+          >
+            <X className="w-5 h-5 text-white" />
+          </button>
+        </motion.div>
+      ),
+    },
+    {
+      // Étape 1 : "Sur l'écran d'accueil"
+      render: () => (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-6"
+          onClick={() => setStep(2)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-sm w-full text-center space-y-5 shadow-2xl"
+          >
+            {/* Simulation du menu partager iOS */}
+            <div className="bg-gray-100 dark:bg-slate-800 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-700 rounded-xl border-2 border-blue-500 shadow-md">
+                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Plus className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-sm text-foreground">Sur l'écran d'accueil</p>
+                  <p className="text-xs text-muted-foreground">Ajouter à l'écran d'accueil</p>
+                </div>
+                <motion.div
+                  animate={{ x: [-4, 4, -4] }}
+                  transition={{ repeat: Infinity, duration: 0.8 }}
+                  className="ml-auto"
+                >
+                  <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                </motion.div>
+              </div>
+              
+              {/* Faux éléments du menu */}
+              <div className="flex items-center gap-3 p-3 bg-white/60 dark:bg-slate-700/60 rounded-xl opacity-40">
+                <div className="w-10 h-10 bg-gray-300 dark:bg-slate-600 rounded-lg" />
+                <div className="h-3 w-24 bg-gray-200 dark:bg-slate-600 rounded" />
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-white/60 dark:bg-slate-700/60 rounded-xl opacity-30">
+                <div className="w-10 h-10 bg-gray-300 dark:bg-slate-600 rounded-lg" />
+                <div className="h-3 w-20 bg-gray-200 dark:bg-slate-600 rounded" />
               </div>
             </div>
             
-            <div>
-              <h3 className="font-semibold text-lg">{currentStep.title}</h3>
-              <p className="text-muted-foreground mt-1">{currentStep.description}</p>
-            </div>
+            <p className="text-muted-foreground text-sm">
+              Faites défiler et appuyez sur <strong>"Sur l'écran d'accueil"</strong>
+            </p>
 
-            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-700 dark:text-blue-300">
-              💡 {currentStep.note}
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <div className="flex gap-2">
-          {step > 1 && (
-            <Button 
-              variant="outline" 
-              onClick={() => setStep(step - 1)}
-              className="flex-1"
-            >
-              Précédent
-            </Button>
-          )}
-          
-          {step < 3 ? (
-            <Button 
-              onClick={() => setStep(step + 1)}
-              className="flex-1"
+            <Button
+              onClick={() => setStep(2)}
+              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
             >
               Suivant
             </Button>
-          ) : (
-            <Button 
+          </motion.div>
+
+          <button
+            onClick={(e) => { e.stopPropagation(); onOpenChange(false); }}
+            className="absolute top-12 right-4 p-2 bg-white/20 rounded-full hover:bg-white/30"
+          >
+            <X className="w-5 h-5 text-white" />
+          </button>
+        </motion.div>
+      ),
+    },
+    {
+      // Étape 2 : Confirmation "Ajouter"
+      render: () => (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-6"
+        >
+          <motion.div
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            className="bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-sm w-full text-center space-y-5 shadow-2xl"
+          >
+            {/* Simulation de la confirmation iOS */}
+            <div className="bg-gray-100 dark:bg-slate-800 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <button className="text-blue-600 text-sm font-medium">Annuler</button>
+                <p className="font-semibold text-sm text-foreground">Ajouter à l'écran</p>
+                <motion.button
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ repeat: Infinity, duration: 1.5 }}
+                  className="text-blue-600 text-sm font-bold px-3 py-1 bg-blue-100 dark:bg-blue-900/40 rounded-lg"
+                >
+                  Ajouter
+                </motion.button>
+              </div>
+              
+              <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-700 rounded-xl">
+                <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow">
+                  <img src="/icon-192.png" alt="" className="w-10 h-10 rounded-lg" onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }} />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-sm text-foreground">224Solutions</p>
+                  <p className="text-xs text-muted-foreground truncate">224solution.net</p>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-muted-foreground text-sm">
+              Appuyez sur <strong>"Ajouter"</strong> en haut à droite
+            </p>
+
+            <Button
               onClick={() => onOpenChange(false)}
-              className="flex-1 bg-green-600 hover:bg-green-700"
+              className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold"
             >
+              <Check className="w-5 h-5 mr-2" />
               Compris !
             </Button>
-          )}
-        </div>
+          </motion.div>
 
-        {/* Bouton fermer */}
-        <button
-          onClick={() => onOpenChange(false)}
-          className="absolute top-4 right-4 p-1 rounded-full hover:bg-muted"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </DialogContent>
-    </Dialog>
+          <button
+            onClick={() => onOpenChange(false)}
+            className="absolute top-12 right-4 p-2 bg-white/20 rounded-full hover:bg-white/30"
+          >
+            <X className="w-5 h-5 text-white" />
+          </button>
+        </motion.div>
+      ),
+    },
+  ];
+
+  return (
+    <AnimatePresence mode="wait">
+      {steps[step]?.render()}
+    </AnimatePresence>
   );
 }
 

@@ -235,6 +235,8 @@ export function AutoInstallPrompt({
   // Gérer l'installation
   const handleInstall = async () => {
     if (isIOS || (isSafari && /Mac/i.test(navigator.userAgent))) {
+      // Sur iOS, masquer le prompt principal et ouvrir directement le guide immersif
+      setIsVisible(false);
       setShowIOSGuide(true);
       return;
     }
