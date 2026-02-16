@@ -29,6 +29,21 @@ const SECURITY_MARGIN = 0.005;
 const MIN_TRANSFER_AMOUNT = 100;
 const MAX_TRANSFER_AMOUNT = 50000000;
 
+// ✅ Map wallet currency to its origin country for display
+// This ensures a user in Spain with a GNF wallet shows as "GN", not "ES"
+function currencyToCountry(currency: string): string {
+  const map: Record<string, string> = {
+    GNF: "GN", XOF: "SN", XAF: "CM", NGN: "NG", GHS: "GH",
+    EUR: "FR", USD: "US", GBP: "GB", CHF: "CH", CAD: "CA",
+    AUD: "AU", JPY: "JP", CNY: "CN", INR: "IN", AED: "AE",
+    MAD: "MA", EGP: "EG", TND: "TN", DZD: "DZ", ZAR: "ZA",
+    KES: "KE", TZS: "TZ", UGX: "UG", RWF: "RW", ETB: "ET",
+    CDF: "CD", BRL: "BR", MXN: "MX", SAR: "SA", QAR: "QA",
+    KWD: "KW", SLL: "SL", LRD: "LR", GMD: "GM", CVE: "CV", MRU: "MR",
+  };
+  return map[currency?.toUpperCase()] || "GN";
+}
+
 const TRANSACTION_SECRET = (() => {
   const secret = Deno.env.get("TRANSACTION_SECRET_KEY");
   if (!secret) {
@@ -312,13 +327,17 @@ async function handlePreview(supabase: any, body: TransferPreviewRequest, corsHe
 
   if (senderResult.data.balance < amount) throw new Error("Solde insuffisant");
 
-  const senderCountry = senderGeo.detected_country || "GN";
-  const receiverCountry = receiverGeo.detected_country || "GN";
   // ✅ Use WALLET currency (actual stored currency), not profile detected_currency
   const senderCurrency = senderResult.data.currency || "GNF";
   const receiverCurrency = receiverResult.data.currency || "GNF";
 
-  const isInternational = senderCountry !== receiverCountry;
+  // ✅ Derive country from wallet currency, NOT from geolocation
+  // A user traveling in Spain with a GNF wallet is still sending from Guinea
+  const senderCountry = currencyToCountry(senderCurrency);
+  const receiverCountry = currencyToCountry(receiverCurrency);
+
+  // ✅ International = currencies differ, NOT physical location
+  const isInternational = senderCurrency !== receiverCurrency;
 
   console.log(`🌍 Preview: ${senderCountry}(${senderCurrency}) → ${receiverCountry}(${receiverCurrency}) | International: ${isInternational}`);
 
@@ -427,12 +446,16 @@ async function handleTransfer(supabase: any, body: TransferRequest, req: Request
   const senderWallet = senderResult.data;
   const receiverWallet = receiverResult.data;
 
-  const senderCountry = senderGeo.detected_country || "GN";
-  const receiverCountry = receiverGeo.detected_country || "GN";
   // ✅ Use WALLET currency (actual stored currency), not profile detected_currency
   const senderCurrency = senderWallet.currency || "GNF";
   const receiverCurrency = receiverWallet.currency || "GNF";
-  const isInternational = senderCountry !== receiverCountry;
+
+  // ✅ Derive country from wallet currency, NOT from geolocation
+  const senderCountry = currencyToCountry(senderCurrency);
+  const receiverCountry = currencyToCountry(receiverCurrency);
+
+  // ✅ International = currencies differ, NOT physical location
+  const isInternational = senderCurrency !== receiverCurrency;
 
   console.log(`🌍 Transfer: ${senderCountry}(${senderCurrency}) → ${receiverCountry}(${receiverCurrency}) | Intl: ${isInternational}`);
 
