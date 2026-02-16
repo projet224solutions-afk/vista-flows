@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { PdgRevenueService, type RevenueStats, type PdgRevenue, type PdgSetting } from '@/services/pdgRevenueService';
 import { supabase } from '@/lib/supabaseClient';
-import { TrendingUp, DollarSign, Wallet, ShoppingBag, RefreshCw, Settings, Download, Calendar, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
+import { TrendingUp, DollarSign, Wallet, ShoppingBag, RefreshCw, Settings, Download, Calendar, ArrowDownToLine, ArrowUpFromLine, Globe } from 'lucide-react';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -409,6 +409,11 @@ export default function PDGRevenueAnalytics() {
                     color: 'text-orange-600', 
                     bg: 'bg-orange-100 dark:bg-orange-900/30' 
                   },
+                  international_transfer_fee_percentage: { 
+                    icon: <Globe className="h-5 w-5" />, 
+                    color: 'text-indigo-600', 
+                    bg: 'bg-indigo-100 dark:bg-indigo-900/30' 
+                  },
                 };
                 const config = iconConfig[setting.setting_key] || { 
                   icon: <Settings className="h-5 w-5" />, 
@@ -487,6 +492,13 @@ export default function PDGRevenueAnalytics() {
                         min: 0,
                         max: 10,
                         example: 100000
+                      },
+                      international_transfer_fee_percentage: {
+                        title: '🌍 Frais Transfert International',
+                        desc: 'Marge appliquée sur le taux de change pour les transferts internationaux',
+                        min: 0,
+                        max: 10,
+                        example: 500000
                       },
                     };
                     const labelConfig = settingLabels[setting.setting_key] || {

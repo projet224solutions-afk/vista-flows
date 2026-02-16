@@ -350,9 +350,14 @@ async function handlePreview(supabase: any, body: TransferPreviewRequest, corsHe
   let amountReceived = amount;
 
   if (isInternational) {
-    // 🌍 International: taux du jour + 3% de marge sur le taux
-    const MARKUP_PERCENT = 3; // 3% sur le taux de change
-    feePercentage = MARKUP_PERCENT;
+    // 🌍 International: taux du jour + marge configurable via pdg_settings
+    const { data: feeSetting } = await supabase
+      .from('pdg_settings')
+      .select('setting_value')
+      .eq('setting_key', 'international_transfer_fee_percentage')
+      .single();
+    const MARKUP_PERCENT = feeSetting?.setting_value?.value ?? feeSetting?.setting_value ?? 1;
+    feePercentage = Number(MARKUP_PERCENT);
 
     // Get real FX rate of the day
     const realRate = await getFxRate(supabase, senderCurrency, receiverCurrency);
@@ -490,9 +495,14 @@ async function handleTransfer(supabase: any, body: TransferRequest, req: Request
   let fraisInternational = 0;
 
   if (isInternational) {
-    // 🌍 International: taux du jour + 3% de marge sur le taux
-    const MARKUP_PERCENT = 3;
-    feePercentage = MARKUP_PERCENT;
+    // 🌍 International: taux du jour + marge configurable via pdg_settings
+    const { data: feeSetting } = await supabase
+      .from('pdg_settings')
+      .select('setting_value')
+      .eq('setting_key', 'international_transfer_fee_percentage')
+      .single();
+    const MARKUP_PERCENT = feeSetting?.setting_value?.value ?? feeSetting?.setting_value ?? 1;
+    feePercentage = Number(MARKUP_PERCENT);
 
     // Get real FX rate of the day
     const realRate = await getFxRate(supabase, senderCurrency, receiverCurrency);
