@@ -269,6 +269,16 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(event.request.url);
 
+  // Ne jamais intercepter le manifest (critique pour iOS PWA)
+  if (url.pathname === '/manifest.webmanifest' || url.pathname === '/manifest.json') {
+    return;
+  }
+
+  // Ne jamais intercepter les routes OAuth
+  if (url.pathname.startsWith('/~oauth')) {
+    return;
+  }
+
   // Ignorer les APIs externes
   if (
     url.hostname.includes("supabase") ||
