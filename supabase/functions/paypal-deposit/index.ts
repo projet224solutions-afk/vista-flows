@@ -27,6 +27,69 @@ const PAYPAL_SUPPORTED_CURRENCIES = [
   "SEK","CHF","THB","USD","RUB"
 ];
 
+function isCurrencyCode(value: unknown): value is string {
+  return typeof value === "string" && /^[A-Z]{3}$/.test(value.toUpperCase());
+}
+
+function deriveWalletCurrencyFromProfile(country: unknown, detectedCurrency: unknown): string {
+  const c = String(country || "").trim().toLowerCase();
+
+  // Priorité: pays déclaré (origine de l'utilisateur), pas la géolocalisation.
+  if (c.includes("guin") || c === "gn" || c.includes("guinea")) return "GNF";
+  if (c.includes("sénégal") || c.includes("senegal") || c === "sn") return "XOF";
+
+  // Zone euro (liste courte mais utile)
+  const euroCountries = [
+    "france","espagne","spain","italie","italy","allemagne","germany",
+    "belgique","belgium","portugal","pays-bas","netherlands","luxembourg",
+  ];
+  if (euroCountries.some((k) => c.includes(k))) return "EUR";
+
+  // Fallback: detected_currency si valide
+  if (isCurrencyCode(detectedCurrency)) return detectedCurrency.toUpperCase();
+
+  // Défaut système
+  return "GNF";
+}
+
+async function getFxRateForDeposit(supabaseAdmin: any, from: string, to: string): Promise<number> {
+  if (from.toUpperCase() === to.toUpperCase()) return 1;
+
+  // Try currency_exchange_rates table first
+  try {
+    const { data } = await supabaseAdmin
+      .from("currency_exchange_rates")
+      .select("rate")
+      .eq("from_currency", from.toUpperCase())
+      .eq("to_currency", to.toUpperCase())
+      .eq("is_active", true)
+      .maybeSingle();
+    if (data?.rate && Number(data.rate) > 0) return Number(data.rate);
+  } catch {
+    // ignore
+  }
+
+  // Fallback: fx-rates edge function
+  const fxResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/fx-rates`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+    },
+    body: JSON.stringify({ base: from, symbols: [to] }),
+  });
+
+  if (!fxResponse.ok) {
+    throw new Error(`Impossible d'obtenir le taux ${from}→${to}`);
+  }
+
+  const fxData = await fxResponse.json();
+  const rate = fxData?.rates?.[to.toUpperCase()];
+  if (typeof rate === "number" && Number.isFinite(rate) && rate > 0) return rate;
+
+  throw new Error(`Taux manquant pour ${from}→${to}`);
+}
+
 async function getPayPalAccessToken(): Promise<string> {
   const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
   const secret = Deno.env.get("PAYPAL_SECRET_KEY");
@@ -209,30 +272,51 @@ serve(async (req) => {
       const depositFee = Math.round(capturedAmount * (DEPOSIT_FEE_RATE / 100) * 100) / 100;
       const netAmount = Math.round((capturedAmount - depositFee) * 100) / 100;
 
-      // Credit wallet
+      // Get or create wallet (devise native de l'utilisateur)
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
       );
 
-      // Get or create wallet
+      // Profil (pays déclaré) pour déterminer la devise du wallet à la création
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("country, detected_currency")
+        .eq("id", userId)
+        .maybeSingle();
+
+      // Get existing wallet (if any)
       let { data: wallet } = await supabaseAdmin
         .from("wallets")
-        .select("id, balance")
+        .select("id, balance, currency")
         .eq("user_id", userId)
         .single();
+
+      // Devise à utiliser pour la balance du wallet
+      const walletCurrency = wallet?.currency || deriveWalletCurrencyFromProfile(profile?.country, profile?.detected_currency);
 
       if (!wallet) {
         const { data: newWallet, error: createErr } = await supabaseAdmin
           .from("wallets")
-          .insert({ user_id: userId, balance: 0, currency: capturedCurrency, wallet_status: "active" })
-          .select("id, balance")
+          .insert({ user_id: userId, balance: 0, currency: walletCurrency, wallet_status: "active" })
+          .select("id, balance, currency")
           .single();
         if (createErr) throw new Error("Impossible de créer le wallet");
         wallet = newWallet;
       }
 
-      const newBalance = (wallet!.balance || 0) + netAmount;
+      // Convertir le montant capturé dans la devise du wallet (si nécessaire)
+      let rateUsed = 1;
+      let creditedNetAmount = netAmount;
+      let creditedFeeAmount = depositFee;
+
+      if (capturedCurrency.toUpperCase() !== walletCurrency.toUpperCase()) {
+        rateUsed = await getFxRateForDeposit(supabaseAdmin, capturedCurrency, walletCurrency);
+        creditedNetAmount = Math.round(netAmount * rateUsed * 100) / 100;
+        creditedFeeAmount = Math.round(depositFee * rateUsed * 100) / 100;
+      }
+
+      const newBalance = (wallet!.balance || 0) + creditedNetAmount;
       const referenceNumber = `PP-DEP-${Date.now()}`;
 
       // Update balance + insert transaction
@@ -245,10 +329,10 @@ serve(async (req) => {
         transaction_id: referenceNumber,
         transaction_type: "deposit",
         wallet_id: wallet!.id,
-        amount: netAmount,
-        net_amount: netAmount,
-        fee: depositFee,
-        currency: capturedCurrency,
+        amount: creditedNetAmount,
+        net_amount: creditedNetAmount,
+        fee: creditedFeeAmount,
+        currency: walletCurrency,
         status: "completed",
         description: `Dépôt PayPal - Order ${orderId}`,
         receiver_wallet_id: wallet!.id,
@@ -256,12 +340,18 @@ serve(async (req) => {
         metadata: {
           paypal_order_id: orderId,
           paypal_capture_id: captureData.purchase_units[0].payments.captures[0].id,
-          gross_amount: capturedAmount,
+          gross_amount_original: capturedAmount,
+          currency_original: capturedCurrency,
+          fee_original: depositFee,
+          net_amount_original: netAmount,
+          credited_amount: creditedNetAmount,
+          wallet_currency: walletCurrency,
+          fx_rate_used: rateUsed,
           fee_rate: DEPOSIT_FEE_RATE,
         },
       } as any);
 
-      logStep("Wallet credited", { walletId: wallet!.id, newBalance, netAmount });
+      logStep("Wallet credited", { walletId: wallet!.id, walletCurrency, newBalance, creditedNetAmount, fxRate: rateUsed });
 
       return new Response(JSON.stringify({
         success: true,
