@@ -210,15 +210,12 @@ serve(async (req) => {
         console.log(`✅ Profile updated for user ${user_id}`);
       }
 
-      // Mettre à jour aussi le wallet avec la devise détectée
-      const { error: walletError } = await supabase
-        .from("wallets")
-        .update({ currency: config.currency })
-        .eq("user_id", user_id);
+      // ⚠️ NE PAS mettre à jour la devise du wallet ici !
+      // La devise du wallet est définie à la création (basée sur le pays d'origine du profil)
+      // et ne doit JAMAIS changer en fonction de la géolocalisation physique.
+      // Un Guinéen en Espagne doit garder son wallet GNF.
+      console.log(`ℹ️ Wallet currency NOT updated (preserved native currency for user ${user_id})`);
 
-      if (walletError) {
-        console.error("Error updating wallet currency:", walletError);
-      }
     }
 
     console.log(`🎯 Final result:`, result);
