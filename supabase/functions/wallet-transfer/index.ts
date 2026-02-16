@@ -350,23 +350,23 @@ async function handlePreview(supabase: any, body: TransferPreviewRequest, corsHe
   let amountReceived = amount;
 
   if (isInternational) {
-    // 🌍 International: apply commission + frais + conversion
-    const commissionPercent = intlSettings.commission_conversion_percent;
-    const fraisPercent = intlSettings.frais_transaction_international_percent;
+    // 🌍 International: taux du jour + 3% de marge sur le taux
+    const MARKUP_PERCENT = 3; // 3% sur le taux de change
+    feePercentage = MARKUP_PERCENT;
 
-    commissionConversion = Math.round(amount * commissionPercent / 100);
-    fraisInternational = Math.round(amount * fraisPercent / 100);
-    feeAmount = commissionConversion + fraisInternational;
-    feePercentage = commissionPercent + fraisPercent;
-    amountAfterFee = amount - feeAmount;
-
-    // Get FX rate from detected currencies
-    if (senderCurrency !== receiverCurrency) {
-      ratePublic = await getFxRate(supabase, senderCurrency, receiverCurrency);
-      amountReceived = Math.round(amountAfterFee * ratePublic * 100) / 100;
-    } else {
-      amountReceived = amountAfterFee;
-    }
+    // Get real FX rate of the day
+    const realRate = await getFxRate(supabase, senderCurrency, receiverCurrency);
+    
+    // Apply 3% markup: the user gets a slightly less favorable rate
+    // For sender→receiver: we reduce the rate by 3% (service keeps the difference)
+    ratePublic = realRate * (1 - MARKUP_PERCENT / 100);
+    
+    // No upfront fee deducted from amount - the fee is embedded in the rate
+    amountAfterFee = amount;
+    feeAmount = Math.round(amount * realRate * MARKUP_PERCENT / 100); // fee in receiver currency for display
+    commissionConversion = feeAmount;
+    
+    amountReceived = Math.round(amount * ratePublic * 100) / 100;
   } else {
     // Local transfer: use existing fee logic
     const feeResult = await supabase.rpc("calculate_transfer_fee", {
@@ -490,22 +490,24 @@ async function handleTransfer(supabase: any, body: TransferRequest, req: Request
   let fraisInternational = 0;
 
   if (isInternational) {
-    const commissionPercent = intlSettings.commission_conversion_percent;
-    const fraisPercent = intlSettings.frais_transaction_international_percent;
+    // 🌍 International: taux du jour + 3% de marge sur le taux
+    const MARKUP_PERCENT = 3;
+    feePercentage = MARKUP_PERCENT;
 
-    commissionConversion = Math.round(amount * commissionPercent / 100);
-    fraisInternational = Math.round(amount * fraisPercent / 100);
-    feeAmount = commissionConversion + fraisInternational;
-    feePercentage = commissionPercent + fraisPercent;
-    amountAfterFee = amount - feeAmount;
-
-    if (senderCurrency !== receiverCurrency) {
-      ratePublic = await getFxRate(supabase, senderCurrency, receiverCurrency);
-      rateInternal = ratePublic * (1 + SECURITY_MARGIN);
-      amountReceivedReal = Math.round(amountAfterFee * rateInternal * 100) / 100;
-    } else {
-      amountReceivedReal = amountAfterFee;
-    }
+    // Get real FX rate of the day
+    const realRate = await getFxRate(supabase, senderCurrency, receiverCurrency);
+    
+    // Rate shown to user (with 3% markup applied)
+    ratePublic = realRate * (1 - MARKUP_PERCENT / 100);
+    // Internal rate for actual crediting (slightly better for platform security margin)
+    rateInternal = ratePublic;
+    
+    // No upfront deduction - fee is embedded in the rate
+    amountAfterFee = amount;
+    feeAmount = Math.round(amount * realRate * MARKUP_PERCENT / 100);
+    commissionConversion = feeAmount;
+    
+    amountReceivedReal = Math.round(amount * ratePublic * 100) / 100;
   } else {
     // Local transfer fees
     const feeResult = await supabase.rpc("calculate_transfer_fee", {
