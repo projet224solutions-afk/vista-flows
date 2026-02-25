@@ -131,14 +131,45 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
       }
 
       if (statType === 'favorites') {
-        const { data: favs } = await supabase
+        // Fetch product favorites
+        const { data: productFavs } = await supabase
           .from('wishlists')
-          .select('id, product_id, created_at, products:product_id(name, price, images)')
+          .select('id, product_id, vendor_id, created_at, products:product_id(name, price, images)')
           .eq('user_id', user!.id)
           .not('product_id', 'is', null)
           .order('created_at', { ascending: false })
           .limit(50);
-        setData(favs || []);
+
+        // Fetch vendor favorites
+        const { data: vendorFavs } = await supabase
+          .from('wishlists')
+          .select('id, product_id, vendor_id, created_at')
+          .eq('user_id', user!.id)
+          .not('vendor_id', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        // Enrich vendor favorites with vendor info
+        let enrichedVendorFavs: any[] = [];
+        if (vendorFavs && vendorFavs.length > 0) {
+          const vendorIds = vendorFavs.map((f: any) => f.vendor_id);
+          const { data: vendors } = await supabase
+            .from('vendors')
+            .select('id, business_name, logo_url')
+            .in('id', vendorIds);
+          const vendorMap = new Map((vendors || []).map((v: any) => [v.id, v]));
+          enrichedVendorFavs = vendorFavs.map((f: any) => ({
+            ...f,
+            _type: 'vendor',
+            vendor: vendorMap.get(f.vendor_id) || null,
+          }));
+        }
+
+        const productList = (productFavs || []).map((f: any) => ({ ...f, _type: 'product' }));
+        const combined = [...productList, ...enrichedVendorFavs].sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        setData(combined);
       }
 
       if (statType === 'spent') {
@@ -302,6 +333,45 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
                 )}
 
                 {data.map((fav: any) => {
+                  const isVendor = fav._type === 'vendor';
+
+                  if (isVendor) {
+                    return (
+                      <div key={fav.id} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border group hover:border-primary/40 hover:bg-muted/50 transition-all">
+                        <button
+                          onClick={() => {
+                            onClose();
+                            navigate(`/vendor/${fav.vendor_id}`);
+                          }}
+                          className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                        >
+                          {fav.vendor?.logo_url ? (
+                            <img src={fav.vendor.logo_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                          ) : (
+                            <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
+                              <Store className="w-5 h-5 text-primary" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-sm font-medium truncate hover:text-primary transition-colors">{fav.vendor?.business_name || 'Boutique'}</p>
+                              <Badge variant="secondary" className="text-[9px] px-1.5 py-0">Boutique</Badge>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground">Ajouté le {formatDate(fav.created_at)}</p>
+                          </div>
+                        </button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                          onClick={() => removeFromFavorites(fav.id)}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    );
+                  }
+
                   const imgUrl = fav.products?.images
                     ? (Array.isArray(fav.products.images) ? fav.products.images[0] : fav.products.images)
                     : null;
