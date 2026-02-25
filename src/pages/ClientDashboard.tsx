@@ -34,6 +34,7 @@ const QuickTransferButton = lazy(() => import("@/components/wallet/QuickTransfer
 const UserIdDisplay = lazy(() => import("@/components/UserIdDisplay").then(m => ({ default: m.UserIdDisplay })));
 const IdSystemIndicator = lazy(() => import("@/components/IdSystemIndicator").then(m => ({ default: m.IdSystemIndicator })));
 const ProductPaymentModal = lazy(() => import("@/components/ecommerce/ProductPaymentModal"));
+const ClientStatDetailModal = lazy(() => import("@/components/client/ClientStatDetailModal").then(m => ({ default: m.ClientStatDetailModal })));
 const ClientOrdersList = lazy(() => import("@/components/client/ClientOrdersList"));
 const ResponsiveGrid = lazy(() => import("@/components/responsive/ResponsiveContainer").then(m => ({ default: m.ResponsiveGrid })));
 const ResponsiveStack = lazy(() => import("@/components/responsive/ResponsiveContainer").then(m => ({ default: m.ResponsiveStack })));
@@ -82,6 +83,7 @@ export default function ClientDashboard() {
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [showProductModal, setShowProductModal] = useState(false);
   const { addToCart: addToCartContext } = useCart();
+  const [statDetailType, setStatDetailType] = useState<'orders' | 'active' | 'favorites' | 'spent' | null>(null);
 
   const handleSignOut = async () => {
     try {
@@ -405,7 +407,7 @@ export default function ClientDashboard() {
                   ) : (
                     <div className="grid grid-cols-2 gap-2 sm:gap-3">
                       {/* Commandes */}
-                      <button onClick={() => setActiveTab('orders')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-client-accent rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-client-primary/40 transition-all active:scale-95">
+                      <button onClick={() => setStatDetailType('orders')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-client-accent rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-client-primary/40 transition-all active:scale-95">
                         <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-client-primary/10 flex items-center justify-center mb-1`}>
                           <Package className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-client-primary`} />
                         </div>
@@ -416,7 +418,7 @@ export default function ClientDashboard() {
                       </button>
 
                       {/* En cours */}
-                      <button onClick={() => setActiveTab('orders')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-orange-400/40 transition-all active:scale-95">
+                      <button onClick={() => setStatDetailType('active')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-orange-400/40 transition-all active:scale-95">
                         <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mb-1`}>
                           <TrendingUp className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-orange-600`} />
                         </div>
@@ -427,7 +429,7 @@ export default function ClientDashboard() {
                       </button>
 
                       {/* Favoris */}
-                      <button onClick={() => setActiveTab('products')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-purple-400/40 transition-all active:scale-95">
+                      <button onClick={() => setStatDetailType('favorites')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-purple-400/40 transition-all active:scale-95">
                         <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-1`}>
                           <Heart className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-purple-600`} />
                         </div>
@@ -438,7 +440,7 @@ export default function ClientDashboard() {
                       </button>
 
                       {/* Total dépensé */}
-                      <button onClick={() => setActiveTab('orders')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-green-50 dark:bg-green-950/20 rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-green-400/40 transition-all active:scale-95">
+                      <button onClick={() => setStatDetailType('spent')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-green-50 dark:bg-green-950/20 rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-green-400/40 transition-all active:scale-95">
                         <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-1`}>
                           <CreditCard className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-green-600`} />
                         </div>
@@ -627,6 +629,13 @@ export default function ClientDashboard() {
           setShowProductModal(false);
           setSelectedProductId(null);
         }}
+      />
+
+      {/* Modal détail statistiques */}
+      <ClientStatDetailModal
+        open={!!statDetailType}
+        onClose={() => setStatDetailType(null)}
+        statType={statDetailType}
       />
 
       {/* Note: CommunicationWidget et QuickFooter sont rendus globalement dans App.tsx */}
