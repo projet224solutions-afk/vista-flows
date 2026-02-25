@@ -56,6 +56,7 @@ export function InternationalTransferConfirmation({
 }: InternationalTransferConfirmationProps) {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [expired, setExpired] = useState(false);
+  const [timerStarted, setTimerStarted] = useState(false);
 
   const lockDuration = preview?.rate_lock_seconds || 60;
 
@@ -64,14 +65,14 @@ export function InternationalTransferConfirmation({
     if (open && preview?.is_international) {
       setSecondsLeft(lockDuration);
       setExpired(false);
+      setTimerStarted(true);
+    } else {
+      setTimerStarted(false);
     }
   }, [open, preview?.is_international, lockDuration]);
 
   useEffect(() => {
-    if (!open || !preview?.is_international || secondsLeft <= 0) {
-      if (secondsLeft <= 0 && open && preview?.is_international) {
-        setExpired(true);
-      }
+    if (!open || !timerStarted || !preview?.is_international || secondsLeft <= 0) {
       return;
     }
 
@@ -86,7 +87,7 @@ export function InternationalTransferConfirmation({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [open, preview?.is_international, secondsLeft]);
+  }, [open, timerStarted, preview?.is_international, secondsLeft]);
 
   const handleConfirm = useCallback(async () => {
     if (expired) return;
