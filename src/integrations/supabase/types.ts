@@ -24927,8 +24927,9 @@ export type Database = {
           notes: string | null
           notify_on_sale: boolean | null
           priority: number | null
-          product_id: string
+          product_id: string | null
           user_id: string
+          vendor_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -24936,8 +24937,9 @@ export type Database = {
           notes?: string | null
           notify_on_sale?: boolean | null
           priority?: number | null
-          product_id: string
+          product_id?: string | null
           user_id: string
+          vendor_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -24945,8 +24947,9 @@ export type Database = {
           notes?: string | null
           notify_on_sale?: boolean | null
           priority?: number | null
-          product_id?: string
+          product_id?: string | null
           user_id?: string
+          vendor_id?: string | null
         }
         Relationships: [
           {
@@ -24962,6 +24965,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_product_stock_summary"
             referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "wishlists_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "user_search_view"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "wishlists_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "wishlists_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
           },
         ]
       }

@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { ArrowLeft, MapPin, Star, Phone, Mail, MessageCircle, Package, Clock, Store, Truck, AlertTriangle, Laptop, ExternalLink } from "lucide-react";
+import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -464,6 +465,10 @@ export default function VendorShop() {
                 </a>
               </Button>
             )}
+
+            {/* Favori vendeur (petit mais visible) */}
+            <FavoriteButton vendorId={vendor.id} size="md" className="shrink-0" />
+
             <Button onClick={handleContactVendor}>
               <MessageCircle className="w-4 h-4 mr-2" />
               Message

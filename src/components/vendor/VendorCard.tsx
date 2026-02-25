@@ -1,5 +1,6 @@
 import { memo, useCallback } from "react";
 import { MapPin, Star, Store } from "lucide-react";
+import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatDistance } from "@/hooks/useGeoDistance";
@@ -35,17 +36,28 @@ function VendorCardComponent({ vendor, index, onNavigate }: VendorCardProps) {
   }, [vendor.id, vendor.shop_slug, onNavigate]);
 
   return (
-    <button
-      key={vendor.id}
+    <div
       onClick={handleClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleClick();
+        }
+      }}
+      role="button"
+      tabIndex={0}
       className={cn(
         "group relative flex flex-col p-4 rounded-2xl text-left",
         "bg-card border border-border/50",
         "hover:border-primary/30 hover:shadow-lg transition-all duration-300",
-        "hover:-translate-y-1"
+        "hover:-translate-y-1",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       )}
       style={{ animationDelay: `${index * 30}ms` }}
     >
+      {/* Favori vendeur (petit mais visible) */}
+      <FavoriteButton vendorId={vendor.id} className="absolute top-2 left-2 z-10" size="sm" />
+
       {vendor.distance !== null ? (
         <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-md flex items-center gap-1">
           <MapPin className="w-3 h-3" />
@@ -103,7 +115,7 @@ function VendorCardComponent({ vendor, index, onNavigate }: VendorCardProps) {
           )}
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -119,3 +131,4 @@ export const VendorCard = memo(VendorCardComponent, (prevProps, nextProps) => {
 });
 
 export default VendorCard;
+
