@@ -19,8 +19,8 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[${timestamp}] [CCP-PUSH] ${step}${detailsStr}`);
 };
 
-// Frais de retrait (2%)
-const WITHDRAWAL_FEE_RATE = 2;
+import { getPdgFeeRate, FEE_KEYS } from "../_shared/pdg-fees.ts";
+
 const MIN_WITHDRAWAL = 5000; // 5,000 GNF minimum
 
 serve(async (req) => {
@@ -100,6 +100,9 @@ serve(async (req) => {
     if (wallet.balance < amount) {
       throw new Error(`Solde insuffisant. Disponible: ${wallet.balance} GNF`);
     }
+
+    // Lire le taux dynamique depuis pdg_settings
+    const WITHDRAWAL_FEE_RATE = await getPdgFeeRate(supabaseAdmin, FEE_KEYS.WITHDRAWAL);
 
     // Calculate fees
     const withdrawalFee = Math.round(amount * (WITHDRAWAL_FEE_RATE / 100));

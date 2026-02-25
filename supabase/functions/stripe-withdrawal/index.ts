@@ -18,8 +18,8 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[STRIPE-WITHDRAWAL] ${step}${detailsStr}`);
 };
 
-// Frais de retrait (1.5%)
-const WITHDRAWAL_FEE_RATE = 1.5;
+import { getPdgFeeRate, FEE_KEYS } from "../_shared/pdg-fees.ts";
+
 const MIN_WITHDRAWAL = 50000; // 50,000 GNF minimum
 
 serve(async (req) => {
@@ -56,6 +56,9 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // Lire le taux dynamique depuis pdg_settings
+    const WITHDRAWAL_FEE_RATE = await getPdgFeeRate(supabaseAdmin, FEE_KEYS.WITHDRAWAL);
 
     // Récupérer les données
     const { amount, currency = 'gnf', bankAccountId } = await req.json();

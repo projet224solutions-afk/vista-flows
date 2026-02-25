@@ -17,7 +17,8 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[PAYPAL-DEPOSIT] ${step}${detailsStr}`);
 };
 
-const DEPOSIT_FEE_RATE = 2; // 2%
+import { getPdgFeeRate, FEE_KEYS } from "../_shared/pdg-fees.ts";
+
 const PAYPAL_API_BASE = "https://api-m.paypal.com";
 
 // PayPal supported currencies
@@ -153,6 +154,13 @@ serve(async (req) => {
     if (action === "create") {
       if (!amount || amount <= 0) throw new Error("Montant invalide");
 
+      // Lire le taux dynamique depuis pdg_settings
+      const supabaseAdminCreate = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
+      const DEPOSIT_FEE_RATE = await getPdgFeeRate(supabaseAdminCreate, FEE_KEYS.DEPOSIT);
+
       // Force USD if currency not supported by PayPal
       const upperCurrency = currency.toUpperCase();
       const paypalCurrency = PAYPAL_SUPPORTED_CURRENCIES.includes(upperCurrency) ? upperCurrency : "USD";
@@ -269,14 +277,16 @@ serve(async (req) => {
         captureData.purchase_units[0].payments.captures[0].amount.value
       );
       const capturedCurrency = captureData.purchase_units[0].payments.captures[0].amount.currency_code;
-      const depositFee = Math.round(capturedAmount * (DEPOSIT_FEE_RATE / 100) * 100) / 100;
-      const netAmount = Math.round((capturedAmount - depositFee) * 100) / 100;
-
       // Get or create wallet (devise native de l'utilisateur)
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
       );
+
+      // Lire le taux dynamique depuis pdg_settings
+      const DEPOSIT_FEE_RATE = await getPdgFeeRate(supabaseAdmin, FEE_KEYS.DEPOSIT);
+      const depositFee = Math.round(capturedAmount * (DEPOSIT_FEE_RATE / 100) * 100) / 100;
+      const netAmount = Math.round((capturedAmount - depositFee) * 100) / 100;
 
       // Profil (pays déclaré) pour déterminer la devise du wallet à la création
       const { data: profile } = await supabaseAdmin
