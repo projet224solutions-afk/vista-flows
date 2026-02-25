@@ -149,17 +149,16 @@ export function InternationalTransferConfirmation({
                 </div>
 
                 <div className="flex justify-between text-sm text-orange-600 dark:text-orange-400">
-                  <span>📊 Commission de conversion ({preview.commission_conversion > 0 ? `${Math.round(preview.commission_conversion / preview.amount_sent * 100)}%` : '0%'})</span>
-                  <span className="font-medium">-{preview.commission_conversion.toLocaleString()} {preview.currency_sent}</span>
+                  <span>📊 Commission de conversion ({preview.fee_percentage}%)</span>
+                  <span className="font-medium">~{preview.commission_conversion.toLocaleString()} {preview.currency_received}</span>
                 </div>
 
-                <div className="flex justify-between text-sm text-orange-600 dark:text-orange-400">
-                  <span>🏦 Frais international ({preview.frais_international > 0 ? `${Math.round(preview.frais_international / preview.amount_sent * 100)}%` : '0%'})</span>
-                  <span className="font-medium">-{preview.frais_international.toLocaleString()} {preview.currency_sent}</span>
+                <div className="text-xs text-muted-foreground ml-6 -mt-1">
+                  (Marge intégrée au taux de change)
                 </div>
 
                 <div className="border-t pt-2 flex justify-between text-sm">
-                  <span>Montant après frais</span>
+                  <span>Montant débité</span>
                   <span className="font-bold">{preview.amount_after_fee.toLocaleString()} {preview.currency_sent}</span>
                 </div>
 
