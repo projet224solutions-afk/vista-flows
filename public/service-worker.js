@@ -1,6 +1,6 @@
-// Service Worker v12 - PWA + Firebase Cloud Messaging + Mode Offline Complet + Background Sync
-// v12: Support complet mode hors ligne pour interface vendeur POS
-const CACHE_VERSION = "v12";
+// Service Worker v13 - PWA + Firebase Cloud Messaging + Mode Offline Complet + Background Sync
+// v13: Fix app shell caching + offline auth support robuste
+const CACHE_VERSION = "v13";
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
 const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
@@ -213,7 +213,7 @@ async function precacheIndexAndBuildAssets() {
 
 // INSTALL - Précacher les assets essentiels (mobile + desktop)
 self.addEventListener("install", (event) => {
-  console.log("[SW] Installation v12 - Mode offline complet + POS");
+  console.log("[SW] Installation v13 - Mode offline complet + POS + Auth");
 
   event.waitUntil(
     precacheIndexAndBuildAssets().then(() => {
@@ -225,7 +225,7 @@ self.addEventListener("install", (event) => {
 
 // ACTIVATE - Nettoyer anciens caches et mettre en cache les routes vendeur + core
 self.addEventListener("activate", (event) => {
-  console.log("[SW] Activation v12");
+  console.log("[SW] Activation v13");
 
   event.waitUntil(
     Promise.all([

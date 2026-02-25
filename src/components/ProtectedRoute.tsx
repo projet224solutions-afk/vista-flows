@@ -1,7 +1,8 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader2 } from 'lucide-react';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { Loader2, WifiOff } from 'lucide-react';
 import CryptoJS from 'crypto-js';
 
 // Clé de chiffrement dérivée de l'ID utilisateur (unique par session)
@@ -123,6 +124,7 @@ function checkCustomSession(allowedRoles: string[]): { isValid: boolean; role: s
 
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, profile, loading, profileLoading } = useAuth();
+  const { isOnline } = useOnlineStatus();
   const navigate = useNavigate();
   const [customAuth, setCustomAuth] = useState<{ checked: boolean; isValid: boolean; role: string | null }>({
     checked: false,
@@ -130,19 +132,51 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     role: null
   });
 
+  // En mode offline, vérifier le profil en cache localStorage
+  const [offlineProfile, setOfflineProfile] = useState<{ role: string } | null>(null);
+  
+  useEffect(() => {
+    if (!isOnline && !user) {
+      // Chercher un profil en cache dans localStorage
+      try {
+        const keys = Object.keys(localStorage);
+        const profileKey = keys.find(k => k.startsWith('profile_cache_'));
+        if (profileKey) {
+          const cached = JSON.parse(localStorage.getItem(profileKey) || '{}');
+          if (cached?.role) {
+            console.log('📡 [ProtectedRoute] Mode offline - profil cache trouvé:', cached.role);
+            setOfflineProfile(cached);
+          }
+        }
+      } catch (e) {
+        console.warn('⚠️ Erreur lecture profil offline');
+      }
+    }
+  }, [isOnline, user]);
+
   // Vérifier les sessions custom au montage
   useEffect(() => {
     const result = checkCustomSession(allowedRoles);
     setCustomAuth({ checked: true, ...result });
   }, [allowedRoles]);
 
-  // Vérification d'authentification sécurisée
+  // Vérification d'authentification sécurisée - NE PAS rediriger si offline
   useEffect(() => {
     if (!loading && customAuth.checked && !user && !customAuth.isValid) {
+      // En mode offline, ne pas rediriger si on a un profil en cache
+      if (!isOnline && offlineProfile) {
+        console.log("📡 [ProtectedRoute] Mode offline - pas de redirection (profil cache disponible)");
+        return;
+      }
+      // En mode offline sans profil cache, ne pas rediriger non plus (l'app ne pourrait pas charger /auth)
+      if (!isOnline) {
+        console.log("📡 [ProtectedRoute] Mode offline - pas de redirection (offline)");
+        return;
+      }
       console.log("🔒 Utilisateur non authentifié, redirection vers /auth");
       navigate('/auth');
     }
-  }, [user, loading, navigate, customAuth]);
+  }, [user, loading, navigate, customAuth, isOnline, offlineProfile]);
 
   // Attendre que les vérifications soient terminées
   if (loading || profileLoading || !customAuth.checked) {
@@ -156,9 +190,9 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     );
   }
 
-  // Vérifier si l'utilisateur est authentifié via Supabase OU session custom
-  const isAuthenticated = !!user || customAuth.isValid;
-  const rawRole = profile?.role || customAuth.role || 'client';
+  // Vérifier si l'utilisateur est authentifié via Supabase OU session custom OU offline cache
+  const isAuthenticated = !!user || customAuth.isValid || (!isOnline && !!offlineProfile);
+  const rawRole = profile?.role || customAuth.role || offlineProfile?.role || 'client';
   
   // Normaliser les rôles équivalents (pdg/ceo/admin sont tous des rôles PDG)
   const normalizeRole = (role: string): string => {
@@ -170,6 +204,26 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   
   const effectiveRole = normalizeRole(rawRole);
   if (!isAuthenticated || (effectiveRole && !allowedRoles.includes(effectiveRole))) {
+    // En mode offline, afficher un message adapté au lieu de rediriger
+    if (!isOnline) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center p-6 max-w-md">
+            <WifiOff className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h2 className="text-xl font-bold mb-2">Mode hors ligne</h2>
+            <p className="text-muted-foreground mb-4">
+              Connectez-vous une première fois avec Internet pour activer le mode hors ligne.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-primary text-primary-foreground px-4 py-2 rounded"
+            >
+              🔄 Réessayer
+            </button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">

@@ -483,11 +483,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const init = async () => {
       console.log('🔍 Vérification session...');
 
-      // Timeout de sécurité - ne pas bloquer plus de 5s
+      // Timeout de sécurité - plus court si offline
+      const timeoutMs = isOffline() ? 1000 : 5000;
       const timeoutId = setTimeout(() => {
         console.log('⚠️ Timeout session - continuer sans auth');
+        // En mode offline, essayer la session locale avant d'abandonner
+        if (isOffline()) {
+          const localSession = getLocalSession();
+          if (localSession?.access_token) {
+            console.log('✅ Session locale restaurée via timeout (mode offline)');
+            setSession(localSession as unknown as Session);
+            setUser(localSession.user);
+          }
+        }
         setLoading(false);
-      }, 5000);
+      }, timeoutMs);
 
       try {
         // ✨ NOUVEAU: En mode offline, utiliser la session locale stockée
