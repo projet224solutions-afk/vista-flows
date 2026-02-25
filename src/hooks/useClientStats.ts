@@ -1,7 +1,7 @@
 /**
  * HOOK CLIENT STATS - 224SOLUTIONS
  * Statistiques optimisées avec requêtes SQL pour l'interface Client
- * 9 métriques: Orders, Spending, Cart, Favorites, Reviews, Refunds
+ * Résout correctement customer_id via la table customers
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -48,69 +48,94 @@ export function useClientStats() {
     setError(null);
 
     try {
-      // 1. ORDERS STATS - Total, actives, complétées, annulées
-      const { data: ordersData } = await supabase
-        .from('orders')
-        .select('id, status, total_amount, created_at')
-        .eq('customer_id', user.id);
+      // 0. RÉSOUDRE LE CUSTOMER_ID depuis la table customers
+      const { data: customerData } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      const totalOrders = ordersData?.length || 0;
-      const activeOrders = ordersData?.filter(o => 
-        ['pending', 'processing', 'shipped'].includes(o.status)
-      ).length || 0;
-      const completedOrders = ordersData?.filter(o => o.status === 'delivered').length || 0;
-      const cancelledOrders = ordersData?.filter(o => o.status === 'cancelled').length || 0;
+      const customerId = customerData?.id;
 
-      // 2. FINANCIAL STATS - Total dépensé, moyenne commande
-      const totalSpent = ordersData?.reduce((sum, o) => 
+      // 1. ORDERS STATS - Utiliser customer_id (pas user.id)
+      let ordersData: any[] = [];
+      if (customerId) {
+        const { data } = await supabase
+          .from('orders')
+          .select('id, status, total_amount, created_at')
+          .eq('customer_id', customerId);
+        ordersData = data || [];
+      }
+
+      const totalOrders = ordersData.length;
+      const activeOrders = ordersData.filter(o => 
+        ['pending', 'processing', 'shipped', 'confirmed'].includes(o.status)
+      ).length;
+      const completedOrders = ordersData.filter(o => 
+        ['delivered', 'completed'].includes(o.status)
+      ).length;
+      const cancelledOrders = ordersData.filter(o => o.status === 'cancelled').length;
+
+      // 2. FINANCIAL STATS
+      const totalSpent = ordersData.reduce((sum, o) => 
         o.status !== 'cancelled' ? sum + (o.total_amount || 0) : sum, 0
-      ) || 0;
-      const averageOrderValue = completedOrders > 0 ? totalSpent / completedOrders : 0;
+      );
+      const paidOrders = completedOrders || totalOrders - cancelledOrders;
+      const averageOrderValue = paidOrders > 0 ? totalSpent / paidOrders : 0;
 
-      // 3. CART VALUE - Valeur du panier actuel
-      const { data: cartData } = await supabase
-        .from('carts')
-        .select(`
-          quantity,
-          products!inner(price)
-        `)
-        .eq('customer_id', user.id);
+      // 3. CART VALUE - Requête séparée sans join FK (pas de FK carts→products)
+      let cartValue = 0;
+      if (customerId) {
+        const { data: cartItems } = await supabase
+          .from('carts')
+          .select('product_id, quantity')
+          .eq('customer_id', customerId);
 
-      const cartValue = cartData?.reduce((sum, item: any) => 
-        sum + (item.quantity * (item.products?.price || 0)), 0
-      ) || 0;
+        if (cartItems && cartItems.length > 0) {
+          const productIds = cartItems.map(c => c.product_id);
+          const { data: productsData } = await supabase
+            .from('products')
+            .select('id, price')
+            .in('id', productIds);
 
-      // 4. PENDING PAYMENTS - Paiements en attente
-      const { data: pendingPayments } = await supabase
-        .from('orders')
-        .select('total_amount')
-        .eq('customer_id', user.id)
-        .eq('payment_status', 'pending');
+          const priceMap = new Map(
+            (productsData || []).map(p => [p.id, p.price || 0])
+          );
 
-      const pendingPaymentsTotal = pendingPayments?.reduce((sum, o) => 
-        sum + (o.total_amount || 0), 0
-      ) || 0;
+          cartValue = cartItems.reduce((sum, item) => 
+            sum + (item.quantity * (priceMap.get(item.product_id) || 0)), 0
+          );
+        }
+      }
 
-      // 5. FAVORITES COUNT - Nombre de favoris
+      // 4. PENDING PAYMENTS
+      let pendingPaymentsTotal = 0;
+      if (customerId) {
+        const { data: pendingPayments } = await supabase
+          .from('orders')
+          .select('total_amount')
+          .eq('customer_id', customerId)
+          .eq('payment_status', 'pending');
+
+        pendingPaymentsTotal = (pendingPayments || []).reduce((sum, o) => 
+          sum + (o.total_amount || 0), 0
+        );
+      }
+
+      // 5. FAVORITES COUNT - wishlists utilise user_id (auth.uid)
       const { count: favoritesCount } = await supabase
         .from('wishlists')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', user.id);
 
-      // 6. REVIEWS SUBMITTED - Avis soumis
+      // 6. REVIEWS SUBMITTED
       const { count: reviewsCount } = await supabase
         .from('product_reviews')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', user.id);
 
-      // 7. REFUNDS REQUESTED - Remboursements demandés (désactivé pour l'instant)
-      const refundsCount = 0;
-
-      // 8. LOYALTY POINTS - Points de fidélité (désactivé pour l'instant)
-      const loyaltyPoints = 0;
-
-      // 9. LAST ORDER DATE - Date dernière commande
-      const lastOrder = ordersData?.sort((a, b) => 
+      // 7. LAST ORDER DATE
+      const lastOrder = ordersData.sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       )[0];
 
@@ -119,8 +144,7 @@ export function useClientStats() {
         ? Math.floor((Date.now() - new Date(lastOrderDate).getTime()) / (1000 * 60 * 60 * 24))
         : 0;
 
-      // Assembler les stats
-      const clientStats: ClientStats = {
+      setStats({
         total_orders: totalOrders,
         active_orders: activeOrders,
         completed_orders: completedOrders,
@@ -131,16 +155,31 @@ export function useClientStats() {
         pending_payments: pendingPaymentsTotal,
         favorites_count: favoritesCount || 0,
         reviews_submitted: reviewsCount || 0,
-        refunds_requested: refundsCount || 0,
-        loyalty_points: loyaltyPoints,
+        refunds_requested: 0,
+        loyalty_points: 0,
         last_order_date: lastOrderDate,
         days_since_last_order: daysSinceLastOrder
-      };
-
-      setStats(clientStats);
+      });
     } catch (err: any) {
-      console.error('Erreur chargement stats client:', err);
+      console.error('❌ Erreur chargement stats client:', err);
       setError(err.message);
+      // Fallback avec valeurs à 0
+      setStats({
+        total_orders: 0,
+        active_orders: 0,
+        completed_orders: 0,
+        cancelled_orders: 0,
+        total_spent: 0,
+        average_order_value: 0,
+        cart_value: 0,
+        pending_payments: 0,
+        favorites_count: 0,
+        reviews_submitted: 0,
+        refunds_requested: 0,
+        loyalty_points: 0,
+        last_order_date: null,
+        days_since_last_order: 0
+      });
     } finally {
       setLoading(false);
     }
