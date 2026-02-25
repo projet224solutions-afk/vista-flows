@@ -946,15 +946,21 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           success: true,
           amount: amount,
           fee_amount: feeAmount,
+          fee_percent: 1,
           total_debit: totalDebit,
+          amount_received: amount,
+          current_balance: wallet?.balance || 0,
+          balance_after: (wallet?.balance || 0) - totalDebit,
           recipient_uuid: recipientUuid,
           recipient_name: recipientName,
-          is_bureau_transfer: true
+          is_bureau_transfer: true,
+          currency_sent: wallet?.currency || 'GNF',
+          currency_received: wallet?.currency || 'GNF',
         });
         setShowTransferPreview(true);
         setTransferOpen(false);
       } else {
-        // Appeler la fonction de prévisualisation pour les transferts normaux
+        // ✅ Appeler l'edge function pour TOUS les transferts (local ET international)
         const { data, error } = await supabase.functions.invoke(
           'wallet-transfer?action=preview',
           {
@@ -980,7 +986,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           return;
         }
 
-        // Check if international transfer
+        // ✅ International = devises différentes → afficher le dialogue international
         if (data.is_international) {
           setIntlPreview({
             success: true,
@@ -1006,19 +1012,21 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           return;
         }
 
-        // Local transfer preview
+        // ✅ Local = même devise → dialogue simple
         setTransferPreview({ 
           success: true,
           amount: data.amount_sent || amount,
           fee_percent: data.fee_percentage || 0,
           fee_amount: data.fee_amount || 0,
-          total_debit: data.total_debit || (amount + (data.fee_amount || 0)),
+          total_debit: data.total_debit || amount,
           amount_received: data.amount_received || amount,
-          current_balance: data.sender_balance || 0,
-          balance_after: data.balance_after || 0,
+          current_balance: data.sender_balance || (wallet?.balance || 0),
+          balance_after: data.balance_after ?? ((wallet?.balance || 0) - (data.total_debit || amount)),
           recipient_uuid: recipientUuid,
           recipient_name: recipientName,
-          is_bureau_transfer: false
+          is_bureau_transfer: false,
+          currency_sent: data.currency_sent || wallet?.currency || 'GNF',
+          currency_received: data.currency_received || wallet?.currency || 'GNF',
         });
         setShowTransferPreview(true);
         setTransferOpen(false);
@@ -1163,25 +1171,34 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
         console.log('✅ Transfert bureau réussi');
       } else {
-        // Transfert normal vers un utilisateur
-        const { data, error } = await supabase.rpc('process_wallet_transaction', {
-          p_sender_id: effectiveUserId,
-          p_receiver_id: transferPreview.recipient_uuid,
-          p_amount: transferPreview.amount,
-          p_currency: 'GNF',
-          p_description: transferDescription
-        });
+        // ✅ Transfert normal via edge function (local ET international)
+        const { data, error } = await supabase.functions.invoke(
+          'wallet-transfer?action=transfer',
+          {
+            body: {
+              sender_id: effectiveUserId,
+              receiver_id: transferPreview.recipient_uuid,
+              amount: transferPreview.amount,
+              description: transferDescription,
+            },
+          }
+        );
 
         if (error) {
           console.error('❌ Erreur transfert:', error);
           throw error;
         }
 
+        if (!data?.success) {
+          throw new Error(data?.error || 'Erreur lors du transfert');
+        }
+
         console.log('✅ Transfert réussi:', data);
       }
 
+      const cur = transferPreview.currency_sent || wallet?.currency || 'GNF';
       toast.success(
-        `✅ Transfert réussi vers ${transferPreview.recipient_name || 'le destinataire'}\n💸 Frais appliqués : ${transferPreview.fee_amount.toLocaleString()} GNF\n📤 Total débité : ${transferPreview.total_debit.toLocaleString()} GNF\n📥 Montant reçu : ${transferPreview.amount.toLocaleString()} GNF`,
+        `✅ Transfert réussi vers ${transferPreview.recipient_name || 'le destinataire'}\n💸 Frais: ${transferPreview.fee_amount?.toLocaleString()} ${cur}\n📤 Total débité: ${transferPreview.total_debit?.toLocaleString()} ${cur}\n📥 Reçu: ${transferPreview.amount_received?.toLocaleString()} ${transferPreview.currency_received || cur}`,
         { duration: 6000 }
       );
       
