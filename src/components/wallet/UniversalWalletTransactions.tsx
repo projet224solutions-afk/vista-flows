@@ -1852,19 +1852,19 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                     )}
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium">💰 Montant à transférer</span>
-                      <span className="text-lg font-bold">{formatPrice(transferPreview?.amount || 0)}</span>
+                      <span className="text-lg font-bold">{formatWalletBalance(transferPreview?.amount || 0)}</span>
                     </div>
                     <div className="flex justify-between items-center text-orange-600">
                       <span className="text-sm font-medium">💸 Frais de transfert ({transferPreview?.fee_percent}%)</span>
-                      <span className="text-lg font-bold">{formatPrice(transferPreview?.fee_amount || 0)}</span>
+                      <span className="text-lg font-bold">{formatWalletBalance(transferPreview?.fee_amount || 0)}</span>
                     </div>
                     <div className="border-t pt-3 flex justify-between items-center">
                       <span className="text-sm font-medium">📉 Total débité de votre compte</span>
-                      <span className="text-xl font-bold text-destructive">{formatPrice(transferPreview?.total_debit || 0)}</span>
+                      <span className="text-xl font-bold text-destructive">{formatWalletBalance(transferPreview?.total_debit || 0)}</span>
                     </div>
                     <div className="flex justify-between items-center text-green-600">
                       <span className="text-sm font-medium">📈 Montant net reçu par le destinataire</span>
-                      <span className="text-lg font-bold">{formatPrice(transferPreview?.amount_received || 0)}</span>
+                      <span className="text-lg font-bold">{formatWalletBalance(transferPreview?.amount_received || 0)}</span>
                     </div>
                   </div>
                   
