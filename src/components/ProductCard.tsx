@@ -1,4 +1,5 @@
 import { Star, ShoppingCart, MessageCircle } from "lucide-react";
+import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +32,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({
+  id,
   image,
   title,
   price,
@@ -112,6 +114,9 @@ export default function ProductCard({
             Premium
           </Badge>
         )}
+
+        {/* Bouton Favori */}
+        <FavoriteButton productId={id} className="absolute top-3 right-3 z-10" />
       </div>
       
       <CardContent className="p-5 space-y-3 bg-gradient-to-b from-white to-secondary/20">
