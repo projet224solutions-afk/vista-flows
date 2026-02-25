@@ -26389,20 +26389,29 @@ export type Database = {
         Args: { p_amount: number; p_transaction_type: string }
         Returns: number
       }
-      calculate_transfer_fee: {
-        Args: {
-          p_amount: number
-          p_country_from?: string
-          p_country_to?: string
-          p_currency_from: string
-          p_currency_to: string
-        }
-        Returns: {
-          amount_after_fee: number
-          fee_amount: number
-          fee_percentage: number
-        }[]
-      }
+      calculate_transfer_fee:
+        | {
+            Args: {
+              p_amount: number
+              p_country_from?: string
+              p_country_to?: string
+              p_currency_from: string
+              p_currency_to: string
+            }
+            Returns: {
+              amount_after_fee: number
+              fee_amount: number
+              fee_percentage: number
+            }[]
+          }
+        | {
+            Args: { p_amount: number; p_fee_type?: string }
+            Returns: {
+              fee_amount: number
+              fee_rate: number
+              net_amount: number
+            }[]
+          }
       calculate_vendor_trust_score: {
         Args: { p_vendor_id: string }
         Returns: number
@@ -27351,6 +27360,10 @@ export type Database = {
         }[]
       }
       get_pdg_dashboard_stats: { Args: never; Returns: Json }
+      get_pdg_fee_rate: {
+        Args: { p_default_value?: number; p_setting_key: string }
+        Returns: number
+      }
       get_pdg_financial_dashboard: { Args: never; Returns: Json }
       get_pdg_revenue_stats: {
         Args: { p_end_date?: string; p_start_date?: string }
