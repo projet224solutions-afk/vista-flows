@@ -200,7 +200,12 @@ export async function trackShopVisit(
       });
 
     if (error) {
-      console.error('❌ Erreur tracking visite boutique:', error);
+      // Ignorer les doublons (visite déjà enregistrée)
+      if (error.code === '23505') {
+        console.log('ℹ️ Visite boutique déjà enregistrée (doublon ignoré)');
+      } else {
+        console.error('❌ Erreur tracking visite boutique:', error);
+      }
     } else {
       console.log('✅ Visite boutique enregistrée:', { vendorId, country: geoData.country, city: geoData.city });
     }
