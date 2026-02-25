@@ -14,6 +14,7 @@
  */
 
 import { Star, ShoppingCart, MessageCircle, MapPin, Package } from "lucide-react";
+import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -164,6 +165,9 @@ export function MarketplaceProductCard({
             </Badge>
           </div>
         )}
+
+        {/* Bouton Favori */}
+        <FavoriteButton productId={id} className="absolute top-2 right-2 z-10" />
       </div>
       
       {/* Content */}
