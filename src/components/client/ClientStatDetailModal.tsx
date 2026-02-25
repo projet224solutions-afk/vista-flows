@@ -3,11 +3,14 @@
  */
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Package, TrendingUp, Heart, CreditCard, CheckCircle, XCircle, Clock, Truck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Package, TrendingUp, Heart, CreditCard, CheckCircle, XCircle, Clock, Truck, Plus, Search, Trash2, Store, Loader2 } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface ClientStatDetailModalProps {
   open: boolean;
@@ -23,11 +26,67 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState<any>(null);
+  const [showAddFav, setShowAddFav] = useState(false);
+  const [favSearch, setFavSearch] = useState('');
+  const [favResults, setFavResults] = useState<any[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [addingId, setAddingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !statType || !user?.id) return;
     loadData();
+    setShowAddFav(false);
+    setFavSearch('');
+    setFavResults([]);
   }, [open, statType, user?.id]);
+
+  // Recherche de produits pour ajouter aux favoris
+  const searchProducts = useCallback(async (query: string) => {
+    if (query.length < 2) { setFavResults([]); return; }
+    setSearchLoading(true);
+    try {
+      const existingIds = data.map((f: any) => f.product_id);
+      const { data: products } = await supabase
+        .from('products')
+        .select('id, name, price, images')
+        .eq('is_active', true)
+        .ilike('name', `%${query}%`)
+        .limit(10);
+      setFavResults((products || []).filter(p => !existingIds.includes(p.id)));
+    } catch { setFavResults([]); }
+    finally { setSearchLoading(false); }
+  }, [data]);
+
+  useEffect(() => {
+    const t = setTimeout(() => { if (favSearch) searchProducts(favSearch); else setFavResults([]); }, 300);
+    return () => clearTimeout(t);
+  }, [favSearch, searchProducts]);
+
+  const addToFavorites = async (productId: string) => {
+    if (!user?.id) return;
+    setAddingId(productId);
+    try {
+      const { error } = await supabase.from('wishlists').insert({
+        user_id: user.id,
+        product_id: productId,
+      });
+      if (error) throw error;
+      toast.success('Ajouté aux favoris !');
+      loadData();
+      setFavResults(prev => prev.filter(p => p.id !== productId));
+    } catch (err: any) {
+      if (err?.code === '23505') toast.info('Déjà dans vos favoris');
+      else toast.error('Erreur lors de l\'ajout');
+    } finally { setAddingId(null); }
+  };
+
+  const removeFromFavorites = async (wishlistId: string) => {
+    try {
+      await supabase.from('wishlists').delete().eq('id', wishlistId);
+      toast.success('Retiré des favoris');
+      setData(prev => prev.filter(f => f.id !== wishlistId));
+    } catch { toast.error('Erreur lors de la suppression'); }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -72,7 +131,7 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
       if (statType === 'favorites') {
         const { data: favs } = await supabase
           .from('wishlists')
-          .select('id, product_id, created_at, products:product_id(name, price, image_url)')
+          .select('id, product_id, created_at, products:product_id(name, price, images)')
           .eq('user_id', user!.id)
           .order('created_at', { ascending: false })
           .limit(50);
@@ -223,32 +282,125 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
               </div>
             )}
 
-            {/* FAVORITES - Liste des favoris */}
+            {/* FAVORITES - Liste des favoris avec ajout */}
             {statType === 'favorites' && (
-              <div className="space-y-2">
-                {data.length === 0 && (
+              <div className="space-y-3">
+                {/* Bouton Ajouter un favori */}
+                {!showAddFav ? (
+                  <Button
+                    onClick={() => setShowAddFav(true)}
+                    className="w-full"
+                    variant="outline"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Ajouter un produit aux favoris
+                  </Button>
+                ) : (
+                  <div className="space-y-2 p-3 bg-muted/50 rounded-lg border border-border">
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Rechercher un produit..."
+                          value={favSearch}
+                          onChange={(e) => setFavSearch(e.target.value)}
+                          className="pl-9 h-9 text-sm"
+                          autoFocus
+                        />
+                      </div>
+                      <Button size="sm" variant="ghost" onClick={() => { setShowAddFav(false); setFavSearch(''); setFavResults([]); }}>
+                        <XCircle className="w-4 h-4" />
+                      </Button>
+                    </div>
+
+                    {searchLoading && (
+                      <div className="flex items-center justify-center py-3">
+                        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                      </div>
+                    )}
+
+                    {!searchLoading && favSearch.length >= 2 && favResults.length === 0 && (
+                      <p className="text-xs text-muted-foreground text-center py-2">Aucun produit trouvé</p>
+                    )}
+
+                    {favResults.map((product) => {
+                      const imgUrl = Array.isArray(product.images) ? product.images[0] : product.images;
+                      return (
+                        <div key={product.id} className="flex items-center gap-2 p-2 bg-background rounded-lg border border-border">
+                          {imgUrl ? (
+                            <img src={imgUrl} alt="" className="w-10 h-10 rounded object-cover" />
+                          ) : (
+                            <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
+                              <Package className="w-4 h-4 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{product.name}</p>
+                            <p className="text-xs text-muted-foreground">{formatPrice(product.price || 0)}</p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="default"
+                            disabled={addingId === product.id}
+                            onClick={() => addToFavorites(product.id)}
+                            className="h-8 px-3"
+                          >
+                            {addingId === product.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <><Heart className="w-3 h-3 mr-1" /> Ajouter</>
+                            )}
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Liste des favoris existants */}
+                {data.length === 0 && !showAddFav && (
                   <div className="text-center py-8">
                     <Heart className="w-12 h-12 mx-auto text-muted-foreground/30 mb-2" />
                     <p className="text-muted-foreground">Aucun favori</p>
-                    <p className="text-xs text-muted-foreground mt-1">Ajoutez des produits à vos favoris</p>
+                    <p className="text-xs text-muted-foreground mt-1">Utilisez le bouton ci-dessus pour ajouter</p>
                   </div>
                 )}
-                {data.map((fav: any) => (
-                  <div key={fav.id} className="flex items-center gap-3 p-3 bg-purple-50/50 dark:bg-purple-950/10 rounded-lg border border-purple-200/50 dark:border-purple-800/30">
-                    {fav.products?.image_url ? (
-                      <img src={fav.products.image_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
-                    ) : (
-                      <div className="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                        <Heart className="w-5 h-5 text-purple-400" />
+
+                {data.length > 0 && (
+                  <p className="text-xs font-medium text-muted-foreground">{data.length} favori{data.length > 1 ? 's' : ''}</p>
+                )}
+
+                {data.map((fav: any) => {
+                  const imgUrl = fav.products?.images
+                    ? (Array.isArray(fav.products.images) ? fav.products.images[0] : fav.products.images)
+                    : null;
+                  return (
+                    <div key={fav.id} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border group">
+                      {imgUrl ? (
+                        <img src={imgUrl} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
+                          <Heart className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{fav.products?.name || 'Produit'}</p>
+                        <p className="text-[10px] text-muted-foreground">Ajouté le {formatDate(fav.created_at)}</p>
                       </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{fav.products?.name || 'Produit'}</p>
-                      <p className="text-[10px] text-muted-foreground">Ajouté le {formatDate(fav.created_at)}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold">{formatPrice(fav.products?.price || 0)}</p>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                          onClick={() => removeFromFavorites(fav.id)}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
                     </div>
-                    <p className="text-sm font-bold text-purple-600">{formatPrice(fav.products?.price || 0)}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
