@@ -83,8 +83,9 @@ function FavoriteButtonComponent({ productId, vendorId, className, size = "sm" }
 
         setIsFav(true);
         toast.success("Ajouté aux favoris ❤️");
-      } catch {
-        toast.error("Erreur");
+      } catch (err: any) {
+        console.error("❌ Erreur favori:", err);
+        toast.error("Impossible de modifier les favoris");
       } finally {
         setLoading(false);
       }
