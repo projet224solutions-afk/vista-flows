@@ -135,6 +135,7 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
           .from('wishlists')
           .select('id, product_id, created_at, products:product_id(name, price, images)')
           .eq('user_id', user!.id)
+          .not('product_id', 'is', null)
           .order('created_at', { ascending: false })
           .limit(50);
         setData(favs || []);
