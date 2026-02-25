@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { Card, CardContent } from '@/components/ui/card';
 import { Wallet, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -119,8 +118,9 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
     }
   }, [userId]);
 
-  const { convert } = usePriceConverter();
-  const formatAmount = (amount: number) => convert(amount, 'GNF').formatted;
+  const formatAmount = (amount: number) => {
+    return `${amount.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} ${currency}`;
+  };
 
   if (loading) {
     return (

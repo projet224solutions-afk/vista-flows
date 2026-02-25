@@ -1239,8 +1239,14 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   };
 
   const formatPrice = (amount: number, fromCurrency?: string) => {
-    const sourceCurrency = fromCurrency || 'GNF';
+    const sourceCurrency = fromCurrency || wallet?.currency || 'GNF';
     return convert(amount, sourceCurrency).formatted;
+  };
+
+  // Affichage du solde en devise native du wallet (sans conversion)
+  const formatWalletBalance = (amount: number) => {
+    const cur = wallet?.currency || 'GNF';
+    return `${amount.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} ${cur}`;
   };
 
   const getTransactionType = (tx: Transaction) => {
@@ -1331,7 +1337,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
             ) : null}
           </div>
           <p className="text-2xl sm:text-3xl font-bold">
-            {wallet ? formatPrice(wallet.balance) : 'Chargement...'}
+            {wallet ? formatWalletBalance(wallet.balance) : 'Chargement...'}
           </p>
         </div>
 
@@ -1484,7 +1490,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
               
               <div className="p-3 bg-orange-50 rounded-lg border border-orange-200 mb-2">
                 <p className="text-sm text-orange-800">
-                  Solde disponible: <span className="font-bold">{formatPrice(wallet?.balance || 0)}</span>
+                  Solde disponible: <span className="font-bold">{formatWalletBalance(wallet?.balance || 0)}</span>
                 </p>
               </div>
               
@@ -1803,7 +1809,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                     onChange={(e) => setTransferAmount(e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Solde disponible: {formatPrice(wallet?.balance || 0)}
+                    Solde disponible: {formatWalletBalance(wallet?.balance || 0)}
                   </p>
                 </div>
                 <div>
@@ -1864,9 +1870,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   
                   <div className="p-3 bg-muted border border-border rounded-lg">
                     <p className="text-sm">
-                      <strong>Solde actuel:</strong> {formatPrice(transferPreview?.current_balance || 0)}
+                      <strong>Solde actuel:</strong> {formatWalletBalance(transferPreview?.current_balance || 0)}
                       <br />
-                      <strong>Solde après transfert:</strong> {formatPrice(transferPreview?.balance_after || 0)}
+                      <strong>Solde après transfert:</strong> {formatWalletBalance(transferPreview?.balance_after || 0)}
                     </p>
                   </div>
 
