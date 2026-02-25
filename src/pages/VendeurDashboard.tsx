@@ -32,6 +32,7 @@ import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { useVendorErrorBoundary } from '@/hooks/useVendorErrorBoundary';
 import { PageLoader } from '@/components/ui/GlobalLoader';
 import { VendorHeader, VendorRoutes } from '@/components/vendor/dashboard';
+import { useOfflineInitialization } from '@/hooks/useOfflineInitialization';
 import type { RecentOrder, OrderFromSupabase } from '@/types/vendor-dashboard';
 
 // Lazy loaded components pour le layout
@@ -224,6 +225,9 @@ export default function VendeurDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   useRoleRedirect();
+
+  // 🔄 Initialisation automatique du mode offline (cache catalogue, stock, sync)
+  const { isInitialized: offlineReady, isInitializing: offlineLoading, reinitialize: reinitOffline } = useOfflineInitialization();
 
   // Business type pour règles POS
   const { canAccessPOS } = useCurrentVendor();
