@@ -18,8 +18,8 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[MOBILE-MONEY-WITHDRAWAL] ${step}${detailsStr}`);
 };
 
-// Frais de retrait Mobile Money (2%)
-const WITHDRAWAL_FEE_RATE = 2;
+import { getPdgFeeRate, FEE_KEYS } from "../_shared/pdg-fees.ts";
+
 const MIN_WITHDRAWAL = 5000; // 5,000 GNF minimum
 
 // Generate HMAC-SHA256 signature - Djomy format
@@ -122,11 +122,13 @@ serve(async (req) => {
     const userId = userData.user.id;
     logStep("User authenticated", { userId });
 
-    // Client admin pour les opérations de base de données
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
+
+    // Lire le taux dynamique depuis pdg_settings
+    const WITHDRAWAL_FEE_RATE = await getPdgFeeRate(supabaseAdmin, FEE_KEYS.WITHDRAWAL);
 
     // Vérifier le solde du wallet
     const { data: wallet, error: walletError } = await supabaseAdmin

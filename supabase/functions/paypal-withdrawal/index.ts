@@ -17,7 +17,8 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[PAYPAL-WITHDRAWAL] ${step}${detailsStr}`);
 };
 
-const WITHDRAWAL_FEE_RATE = 1.5; // 1.5%
+import { getPdgFeeRate, FEE_KEYS } from "../_shared/pdg-fees.ts";
+
 const MIN_WITHDRAWAL = 5; // $5 minimum
 const PAYPAL_API_BASE = "https://api-m.paypal.com";
 
@@ -74,6 +75,9 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
+
+    // Lire le taux dynamique depuis pdg_settings
+    const WITHDRAWAL_FEE_RATE = await getPdgFeeRate(supabaseAdmin, FEE_KEYS.WITHDRAWAL);
 
     // Check wallet balance
     const { data: wallet, error: walletError } = await supabaseAdmin

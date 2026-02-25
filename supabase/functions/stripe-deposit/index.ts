@@ -18,8 +18,7 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[STRIPE-DEPOSIT] ${step}${detailsStr}`);
 };
 
-// Frais de dépôt (2%)
-const DEPOSIT_FEE_RATE = 2;
+import { getPdgFeeRate, FEE_KEYS } from "../_shared/pdg-fees.ts";
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -58,6 +57,13 @@ serve(async (req) => {
       throw new Error("Montant invalide");
     }
 
+    // Lire le taux dynamique depuis pdg_settings
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    const DEPOSIT_FEE_RATE = await getPdgFeeRate(supabaseAdmin, FEE_KEYS.DEPOSIT);
+
     // Calculer les frais
     const depositFee = Math.round(amount * (DEPOSIT_FEE_RATE / 100));
     const netAmount = amount - depositFee;
@@ -66,7 +72,8 @@ serve(async (req) => {
       amount, 
       depositFee,
       netAmount,
-      currency 
+      currency,
+      feeRate: DEPOSIT_FEE_RATE,
     });
 
     // Initialiser Stripe
@@ -96,11 +103,7 @@ serve(async (req) => {
       status: paymentIntent.status 
     });
 
-    // Enregistrer dans stripe_transactions
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    // Enregistrer dans stripe_transactions (supabaseAdmin déjà créé)
 
     const { data: transaction, error: insertError } = await supabaseAdmin
       .from('stripe_transactions')

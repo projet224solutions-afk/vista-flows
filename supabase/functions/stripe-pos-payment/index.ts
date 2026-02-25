@@ -23,43 +23,11 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[STRIPE-POS] ${step}${detailsStr}`);
 };
 
-// Taux de commission par défaut (10%) - utilisé si system_settings est vide
-const DEFAULT_COMMISSION_RATE = 10;
+import { getPdgFeeRate, FEE_KEYS } from "../_shared/pdg-fees.ts";
 
-// Récupérer le taux de commission actif depuis system_settings (modifiable par le PDG)
+// Récupérer le taux de commission actif depuis pdg_settings (modifiable par le PDG)
 async function getActiveCommissionRate(supabaseAdmin: any): Promise<number> {
-  try {
-    // CORRIGÉ: Utiliser la fonction RPC qui lit depuis system_settings
-    // Les taux sont modifiables par le PDG dans la section Finance
-    const { data, error } = await supabaseAdmin.rpc('get_purchase_commission_percent');
-
-    if (error) {
-      console.log('[STRIPE-POS] RPC error, falling back to system_settings:', error.message);
-      // Fallback: lire directement depuis system_settings
-      const { data: settingsData } = await supabaseAdmin
-        .from('system_settings')
-        .select('setting_value')
-        .eq('setting_key', 'purchase_fee_percent')
-        .single();
-
-      if (settingsData?.setting_value) {
-        const rate = Number(settingsData.setting_value);
-        console.log('[STRIPE-POS] Using commission rate from system_settings:', rate);
-        return rate;
-      }
-      return DEFAULT_COMMISSION_RATE;
-    }
-
-    if (data !== null && data !== undefined) {
-      console.log('[STRIPE-POS] Using commission rate from PDG settings:', data);
-      return Number(data);
-    }
-
-    return DEFAULT_COMMISSION_RATE;
-  } catch (err) {
-    console.error('[STRIPE-POS] Error fetching commission config:', err);
-    return DEFAULT_COMMISSION_RATE;
-  }
+  return getPdgFeeRate(supabaseAdmin, FEE_KEYS.PURCHASE_COMMISSION);
 }
 
 serve(async (req) => {
