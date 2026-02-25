@@ -5,12 +5,14 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { MapPin, ShoppingCart, Bell, Loader2, RefreshCw } from 'lucide-react';
+import { MapPin, ShoppingCart, Bell, Loader2, RefreshCw, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import LanguageSelector from '@/components/LanguageSelector';
 import { useUserLocation } from '@/hooks/useUserLocation';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 interface HomeHeaderProps {
@@ -30,6 +32,16 @@ export function HomeHeader({
 }: HomeHeaderProps) {
   const navigate = useNavigate();
   const { location, loading, refresh } = useUserLocation();
+  const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
+
+  const handleInstall = async () => {
+    const installed = await promptInstall();
+    if (installed) {
+      toast.success('🎉 Application installée!', {
+        description: "Ouvrez 224Solutions depuis votre écran d'accueil"
+      });
+    }
+  };
 
   return (
     <header
@@ -78,6 +90,19 @@ export function HomeHeader({
 
           {/* Actions */}
           <div className="flex items-center gap-1 md:gap-2">
+            {/* PWA Install Button */}
+            {isInstallable && !isInstalled && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleInstall}
+                className="relative h-10 w-10 rounded-full hover:bg-primary/10 transition-colors animate-pulse"
+                title="Installer l'application"
+              >
+                <Download className="w-5 h-5 text-primary" />
+              </Button>
+            )}
+
             <ThemeToggle />
             <LanguageSelector variant="minimal" />
 
