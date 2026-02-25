@@ -7,6 +7,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from './useAuth';
+import type { Profile } from './useAuth';
 import { useOnlineStatus } from './useOnlineStatus';
 import { cacheVendorProducts, cacheCategories, getCacheStats } from '@/lib/offline/catalogCache';
 import { loadInitialStock, getStockStats } from '@/lib/offline/localStockManager';
@@ -28,7 +29,7 @@ interface OfflineInitStatus {
  * Hook pour initialiser le mode offline automatiquement
  */
 export function useOfflineInitialization() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { isOnline } = useOnlineStatus();
 
   const [status, setStatus] = useState<OfflineInitStatus>({
@@ -43,8 +44,8 @@ export function useOfflineInitialization() {
   /**
    * Initialiser le mode offline
    */
-  const initialize = useCallback(async (vendorId: string) => {
-    console.log('[OfflineInit] Démarrage initialisation pour vendeur:', vendorId);
+  const initialize = useCallback(async (userId: string) => {
+    console.log('[OfflineInit] Démarrage initialisation pour utilisateur:', userId);
 
     setStatus(prev => ({ ...prev, isInitializing: true, error: null }));
 
@@ -52,6 +53,15 @@ export function useOfflineInitialization() {
       // 1. Enregistrer le Service Worker
       console.log('[OfflineInit] Enregistrement Service Worker...');
       registerServiceWorker({ force: false });
+
+      // 1b. Récupérer l'ID vendeur
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      const vendorId = vendor?.id || userId; // Fallback sur userId si pas de vendor
 
       // 2. Vérifier si déjà initialisé (cache existe)
       const cacheStats = await getCacheStats(vendorId);
@@ -94,8 +104,6 @@ export function useOfflineInitialization() {
 
       // 4. Charger les données (en ligne uniquement lors de la première fois)
       console.log('[OfflineInit] Chargement des données...');
-
-      // Charger produits et catégories (remplacer par vos vraies fonctions de fetch)
       const products = await fetchVendorProducts(vendorId);
       const categories = await fetchCategories();
 
@@ -106,7 +114,7 @@ export function useOfflineInitialization() {
 
       setStatus(prev => ({ ...prev, catalogCached: true }));
 
-      // 6. Charger le stock initial
+      // 7. Charger le stock initial
       console.log('[OfflineInit] Chargement du stock initial...');
       await loadInitialStock(vendorId, products);
 
@@ -170,15 +178,15 @@ export function useOfflineInitialization() {
    * Auto-initialisation pour les vendeurs
    */
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || !profile?.role) return;
 
     // Vérifier si c'est un vendeur
-    const isVendor = user.role === 'vendor' || user.role === 'vendeur';
+    const isVendor = profile.role === 'vendeur';
 
     if (isVendor && !status.isInitialized && !status.isInitializing) {
       initialize(user.id);
     }
-  }, [user?.id, user?.role, status.isInitialized, status.isInitializing, initialize]);
+  }, [user?.id, profile?.role, status.isInitialized, status.isInitializing, initialize]);
 
   /**
    * Forcer une réinitialisation (utile pour les mises à jour)
