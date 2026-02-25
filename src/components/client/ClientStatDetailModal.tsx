@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Package, TrendingUp, Heart, CreditCard, CheckCircle, XCircle, Clock, Truck, Plus, Search, Trash2, Store, Loader2 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -23,6 +24,7 @@ const formatPrice = (price: number) =>
 
 export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDetailModalProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState<any>(null);
@@ -375,18 +377,26 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
                     ? (Array.isArray(fav.products.images) ? fav.products.images[0] : fav.products.images)
                     : null;
                   return (
-                    <div key={fav.id} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border group">
-                      {imgUrl ? (
-                        <img src={imgUrl} alt="" className="w-12 h-12 rounded-lg object-cover" />
-                      ) : (
-                        <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
-                          <Heart className="w-5 h-5 text-muted-foreground" />
+                    <div key={fav.id} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border group hover:border-primary/40 hover:bg-muted/50 transition-all">
+                      <button
+                        onClick={() => {
+                          onClose();
+                          navigate(`/product/${fav.product_id}`);
+                        }}
+                        className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                      >
+                        {imgUrl ? (
+                          <img src={imgUrl} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
+                            <Heart className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate hover:text-primary transition-colors">{fav.products?.name || 'Produit'}</p>
+                          <p className="text-[10px] text-muted-foreground">Ajouté le {formatDate(fav.created_at)}</p>
                         </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{fav.products?.name || 'Produit'}</p>
-                        <p className="text-[10px] text-muted-foreground">Ajouté le {formatDate(fav.created_at)}</p>
-                      </div>
+                      </button>
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-bold">{formatPrice(fav.products?.price || 0)}</p>
                         <Button
