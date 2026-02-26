@@ -31,6 +31,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAuth } from '@/hooks/useAuth';
 
 // Lazy load framer-motion pour réduire TBT (914ms -> <200ms)
 const motion = {
@@ -98,6 +99,7 @@ const accountTypeConfigs: AccountTypeOption[] = [
 export default function EnhancedAuth() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { user, profile, loading: authLoading, profileLoading } = useAuth();
   const [step, setStep] = useState<Step>('type');
   const [mode, setMode] = useState<AuthMode>('login');
   const [accountType, setAccountType] = useState<AccountType | null>(null);
@@ -135,121 +137,58 @@ export default function EnhancedAuth() {
     role: string;
   }>({ open: false, email: '', role: '' });
 
-  // Handle OAuth callback - avec détection si compte existe déjà
+  // Handle OAuth callback - délègue la logique profil/rôle à useAuth
+  // On écoute seulement pour la redirection une fois le profil prêt
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        console.log('🔐 [EnhancedAuth] OAuth SIGNED_IN détecté');
-        const isNewSignup = localStorage.getItem('oauth_is_new_signup') === 'true';
-        
-        // Vérifier si c'est une connexion OAuth (Google/Facebook)
-        const provider = session.user.app_metadata?.provider;
-        const isOAuthUser = provider === 'google' || provider === 'facebook';
-        
-        // Attendre que le profil soit créé/chargé
-        setTimeout(async () => {
-          try {
-            // Récupérer le profil pour déterminer la redirection
-            const { data: profile, error } = await supabase
-              .from('profiles')
-              .select('first_name, last_name, phone, role, created_at, has_password')
-              .eq('id', session.user.id)
-              .maybeSingle();
+    // Si l'utilisateur est connecté et a un profil avec un rôle, rediriger
+    if (!authLoading && !profileLoading && user && profile?.role) {
+      const isNewSignup = localStorage.getItem('oauth_is_new_signup') === 'true';
+      
+      // Vérifier si c'est un OAuth user sans mot de passe
+      const provider = user.app_metadata?.provider;
+      const isOAuthUser = provider === 'google' || provider === 'facebook';
+      const hasSetPassword = localStorage.getItem(`oauth_password_set_${user.id}`);
+      const alreadyHandled = hasSetPassword === 'true' || hasSetPassword === 'skipped';
+      const hasPasswordInDB = profile?.has_password === true;
+      const needsPassword = isOAuthUser && !alreadyHandled && !hasPasswordInDB;
 
-            if (error) {
-              console.error('❌ Erreur récupération profil:', error);
-              navigate('/');
-              return;
-            }
-
-            // ✅ NOUVEAU: Détecter si l'utilisateur essayait de s'inscrire mais avait déjà un compte
-            if (isNewSignup && profile) {
-              // Vérifier si le profil existait AVANT cette connexion OAuth
-              // (si created_at est plus vieux que quelques secondes, c'est un compte existant)
-              const profileCreatedAt = new Date(profile.created_at || Date.now());
-              const now = new Date();
-              const diffSeconds = (now.getTime() - profileCreatedAt.getTime()) / 1000;
-              
-              // Si le profil a été créé il y a plus de 30 secondes, c'est un compte existant
-              if (diffSeconds > 30) {
-                console.log('⚠️ [EnhancedAuth] Inscription OAuth mais compte existant détecté');
-                
-                // Afficher le modal d'information
-                setOauthExistingAccountModal({
-                  open: true,
-                  email: session.user.email || '',
-                  role: profile.role || 'client',
-                });
-                
-                localStorage.removeItem('oauth_is_new_signup');
-                return; // Ne pas rediriger, laisser l'utilisateur voir le modal
-              }
-            }
-
-            // Vérifier si l'utilisateur OAuth a déjà défini un mot de passe ou passé l'étape
-            // ✅ Vérifier AUSSI en BDD (has_password) pour éviter les boucles si localStorage est vide
-            const hasSetPassword = localStorage.getItem(`oauth_password_set_${session.user.id}`);
-            const alreadyHandled = hasSetPassword === 'true' || hasSetPassword === 'skipped';
-            const hasPasswordInDB = profile?.has_password === true;
-            const needsPassword = isOAuthUser && !alreadyHandled && !hasPasswordInDB;
-
-            // Si le mot de passe est défini en BDD mais pas en localStorage, synchroniser
-            if (hasPasswordInDB && !alreadyHandled) {
-              localStorage.setItem(`oauth_password_set_${session.user.id}`, 'true');
-            }
-
-            if (needsPassword) {
-              console.log('🔐 [EnhancedAuth] Utilisateur OAuth sans mot de passe, redirection vers /auth/set-password');
-              localStorage.setItem('needs_oauth_password', 'true');
-              localStorage.removeItem('oauth_is_new_signup');
-              navigate('/auth/set-password', { replace: true });
-              return;
-            }
-
-            if (profile && profile.role) {
-              const isProfileIncomplete = !profile.first_name || !profile.last_name || !profile.phone;
-              
-              if (isNewSignup && isProfileIncomplete) {
-                toast.info(`${t('auth.welcomeMessage')} ${t('auth.completeProfile')}`);
-                localStorage.setItem('needs_profile_completion', 'true');
-              } else {
-                toast.success(t('auth.connectionSuccess'));
-              }
-              
-              // Définir la route cible selon le rôle
-              const roleRoutes: Record<string, string> = {
-                admin: '/pdg',
-                ceo: '/pdg',
-                vendeur: '/vendeur',
-                livreur: '/livreur',
-                taxi: '/taxi-moto/driver',
-                syndicat: '/syndicat',
-                transitaire: '/transitaire',
-                client: '/client',
-                agent: '/agent',
-              };
-              
-              const targetRoute = roleRoutes[profile.role] || '/';
-              console.log(`🚀 [EnhancedAuth] Redirection vers ${targetRoute} (rôle: ${profile.role})`);
-              
-              localStorage.removeItem('oauth_is_new_signup');
-              navigate(targetRoute, { replace: true });
-            } else {
-              console.log('⚠️ [EnhancedAuth] Pas de profil/rôle, redirection vers /');
-              localStorage.removeItem('oauth_is_new_signup');
-              navigate('/');
-            }
-          } catch (err) {
-            console.error('❌ Erreur OAuth callback:', err);
-            localStorage.removeItem('oauth_is_new_signup');
-            navigate('/');
-          }
-        }, 800); // Délai légèrement plus long pour laisser le temps au profil d'être créé
+      if (hasPasswordInDB && !alreadyHandled) {
+        localStorage.setItem(`oauth_password_set_${user.id}`, 'true');
       }
-    });
 
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+      if (needsPassword) {
+        localStorage.setItem('needs_oauth_password', 'true');
+        localStorage.removeItem('oauth_is_new_signup');
+        navigate('/auth/set-password', { replace: true });
+        return;
+      }
+
+      const roleRoutes: Record<string, string> = {
+        admin: '/pdg',
+        ceo: '/pdg',
+        vendeur: '/vendeur',
+        livreur: '/livreur',
+        taxi: '/taxi-moto/driver',
+        syndicat: '/syndicat',
+        transitaire: '/transitaire',
+        client: '/client',
+        agent: '/agent',
+      };
+
+      const targetRoute = roleRoutes[profile.role] || '/';
+      
+      if (isNewSignup) {
+        const isProfileIncomplete = !profile.first_name || !profile.last_name || !profile.phone;
+        if (isProfileIncomplete) {
+          toast.info(`${t('auth.welcomeMessage')} ${t('auth.completeProfile')}`);
+          localStorage.setItem('needs_profile_completion', 'true');
+        }
+      }
+
+      localStorage.removeItem('oauth_is_new_signup');
+      navigate(targetRoute, { replace: true });
+    }
+  }, [authLoading, profileLoading, user, profile, navigate, t]);
 
   // Fonction pour continuer après le modal "compte existant"
   const handleContinueWithExistingAccount = () => {
