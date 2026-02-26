@@ -101,6 +101,7 @@ export default function Auth() {
   const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
   const [showServiceSelection, setShowServiceSelection] = useState(false);
   const [showRoleSelectionModal, setShowRoleSelectionModal] = useState(false);
+  const [vendorShopType, setVendorShopType] = useState<'physical' | 'digital' | null>(null);
   const [currentClientEmail, setCurrentClientEmail] = useState<string | null>(null);
 
   // === OAUTH HANDLERS AMÉLIORÉS (Google & Facebook) ===
@@ -1875,28 +1876,74 @@ export default function Auth() {
                   <p className="text-xs text-muted-foreground">Sélectionnez le type de compte qui vous correspond</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  {/* Vendeur classique */}
-                  <button
-                    type="button"
-                    onClick={() => handleRoleClick('vendeur')}
-                    className={`group flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
-                      selectedRole === 'vendeur'
-                        ? 'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/25 scale-[1.02]'
-                        : 'bg-background border-border/60 hover:border-blue-300 hover:bg-blue-50/50'
-                    }`}
-                  >
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-                      selectedRole === 'vendeur' ? 'bg-white/20' : 'bg-blue-100 group-hover:bg-blue-200'
-                    }`}>
-                      <Store className={`h-6 w-6 ${selectedRole === 'vendeur' ? 'text-white' : 'text-blue-600'}`} />
-                    </div>
-                    <span className={`text-sm font-semibold ${selectedRole === 'vendeur' ? 'text-white' : 'text-foreground'}`}>
-                      Vendeur classique
-                    </span>
-                    <span className={`text-[10px] ${selectedRole === 'vendeur' ? 'text-white/80' : 'text-muted-foreground'}`}>
-                      Vendre des produits
-                    </span>
-                  </button>
+                  {/* Vendeur classique - avec sous-sélection */}
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVendorShopType(vendorShopType ? null : 'physical');
+                      }}
+                      className={`group flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
+                        selectedRole === 'vendeur' && !selectedServiceType
+                          ? 'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/25 scale-[1.02]'
+                          : 'bg-background border-border/60 hover:border-blue-300 hover:bg-blue-50/50'
+                      }`}
+                    >
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                        selectedRole === 'vendeur' && !selectedServiceType ? 'bg-white/20' : 'bg-blue-100 group-hover:bg-blue-200'
+                      }`}>
+                        <Store className={`h-6 w-6 ${selectedRole === 'vendeur' && !selectedServiceType ? 'text-white' : 'text-blue-600'}`} />
+                      </div>
+                      <span className={`text-sm font-semibold ${selectedRole === 'vendeur' && !selectedServiceType ? 'text-white' : 'text-foreground'}`}>
+                        Vendeur classique
+                      </span>
+                      <span className={`text-[10px] ${selectedRole === 'vendeur' && !selectedServiceType ? 'text-white/80' : 'text-muted-foreground'}`}>
+                        Vendre des produits
+                      </span>
+                    </button>
+
+                    {/* Sous-options : Boutique physique / Produits digitaux */}
+                    {vendorShopType !== null && (
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVendorShopType('physical');
+                            setSelectedServiceType(null);
+                            handleRoleClick('vendeur');
+                          }}
+                          className={`flex flex-col items-center gap-1 p-2.5 rounded-lg border-2 transition-all text-center ${
+                            vendorShopType === 'physical' && selectedRole === 'vendeur'
+                              ? 'border-blue-500 bg-blue-50 shadow-sm'
+                              : 'border-border/40 hover:border-blue-300 hover:bg-blue-50/30'
+                          }`}
+                        >
+                          <ShoppingBag className={`h-5 w-5 ${vendorShopType === 'physical' && selectedRole === 'vendeur' ? 'text-blue-600' : 'text-muted-foreground'}`} />
+                          <span className={`text-[10px] font-medium leading-tight ${vendorShopType === 'physical' && selectedRole === 'vendeur' ? 'text-blue-700' : 'text-muted-foreground'}`}>
+                            Boutique physique
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVendorShopType('digital');
+                            setSelectedServiceType(null);
+                            handleRoleClick('vendeur');
+                          }}
+                          className={`flex flex-col items-center gap-1 p-2.5 rounded-lg border-2 transition-all text-center ${
+                            vendorShopType === 'digital' && selectedRole === 'vendeur'
+                              ? 'border-purple-500 bg-purple-50 shadow-sm'
+                              : 'border-border/40 hover:border-purple-300 hover:bg-purple-50/30'
+                          }`}
+                        >
+                          <Camera className={`h-5 w-5 ${vendorShopType === 'digital' && selectedRole === 'vendeur' ? 'text-purple-600' : 'text-muted-foreground'}`} />
+                          <span className={`text-[10px] font-medium leading-tight ${vendorShopType === 'digital' && selectedRole === 'vendeur' ? 'text-purple-700' : 'text-muted-foreground'}`}>
+                            Produits digitaux
+                          </span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Service */}
                   <button
