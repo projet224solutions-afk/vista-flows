@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship, Crown, Utensils, ShoppingBag, Scissors, Car, GraduationCap, Stethoscope, Wrench, Home, Plane, Camera, ArrowLeft, Eye, EyeOff, Chrome, Search, ChevronDown, Check, RefreshCw, Zap, LogIn, UserPlus, Briefcase } from "lucide-react";
+import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship, Crown, Utensils, ShoppingBag, Scissors, Car, GraduationCap, Stethoscope, Wrench, Home, Plane, Camera, ArrowLeft, Eye, EyeOff, Chrome, Search, ChevronDown, Check, RefreshCw, Zap, LogIn, UserPlus, Briefcase, CheckCircle2, Laptop } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Separator } from "@/components/ui/separator";
@@ -1912,34 +1912,90 @@ export default function Auth() {
                   <p className="text-xs text-muted-foreground">Sélectionnez le type de compte qui vous correspond</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  {/* Vendeur classique */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setVendorShopType('physical');
-                      setSelectedServiceType(null);
-                      setSelectedRole('vendeur');
-                      setShowServiceSelection(false);
-                      setShowSignup(true);
-                    }}
-                    className={`group flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
-                      selectedRole === 'vendeur' && !selectedServiceType
-                        ? 'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/25 scale-[1.02]'
-                        : 'bg-background border-border/60 hover:border-blue-300 hover:bg-blue-50/50'
-                    }`}
-                  >
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-                      selectedRole === 'vendeur' && !selectedServiceType ? 'bg-white/20' : 'bg-blue-100 group-hover:bg-blue-200'
-                    }`}>
-                      <Store className={`h-6 w-6 ${selectedRole === 'vendeur' && !selectedServiceType ? 'text-white' : 'text-blue-600'}`} />
+                  {/* Vendeur classique - avec sous-options */}
+                  <div className="flex flex-col rounded-xl border-2 border-border/60 bg-background overflow-hidden">
+                    {/* Header */}
+                    <div className="flex items-center gap-2.5 px-3.5 pt-3 pb-2">
+                      <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                        <Store className="h-4.5 w-4.5 text-blue-600" />
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-foreground block leading-tight">Vendeur classique</span>
+                        <span className="text-[9px] text-muted-foreground">Choisissez votre type de boutique</span>
+                      </div>
                     </div>
-                    <span className={`text-sm font-semibold ${selectedRole === 'vendeur' && !selectedServiceType ? 'text-white' : 'text-foreground'}`}>
-                      Vendeur classique
-                    </span>
-                    <span className={`text-[10px] ${selectedRole === 'vendeur' && !selectedServiceType ? 'text-white/70' : 'text-muted-foreground'}`}>
-                      E-commerce
-                    </span>
-                  </button>
+
+                    {/* Sub-options */}
+                    <div className="flex flex-col gap-1.5 px-2.5 pb-2.5">
+                      {/* Boutique physique */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVendorShopType('physical');
+                          setSelectedServiceType(null);
+                          setSelectedRole('vendeur');
+                          setShowServiceSelection(false);
+                          setShowSignup(true);
+                        }}
+                        className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-all duration-200 ${
+                          vendorShopType === 'physical' && selectedRole === 'vendeur' && !selectedServiceType
+                            ? 'border-blue-500 bg-blue-50 shadow-sm ring-1 ring-blue-500/20'
+                            : 'border-border/40 hover:border-blue-300 hover:bg-blue-50/40'
+                        }`}
+                      >
+                        <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 transition-colors ${
+                          vendorShopType === 'physical' && selectedRole === 'vendeur' && !selectedServiceType
+                            ? 'bg-blue-500 text-white' : 'bg-blue-50 text-blue-500'
+                        }`}>
+                          <ShoppingBag className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="text-left min-w-0">
+                          <span className={`text-[11px] font-semibold block leading-tight ${
+                            vendorShopType === 'physical' && selectedRole === 'vendeur' && !selectedServiceType
+                              ? 'text-blue-700' : 'text-foreground'
+                          }`}>E-commerce</span>
+                          <span className="text-[9px] text-muted-foreground leading-tight">Produits physiques</span>
+                        </div>
+                        {vendorShopType === 'physical' && selectedRole === 'vendeur' && !selectedServiceType && (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 ml-auto shrink-0" />
+                        )}
+                      </button>
+
+                      {/* Boutique digitale */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVendorShopType('digital');
+                          setSelectedServiceType(null);
+                          setSelectedRole('vendeur');
+                          setShowServiceSelection(false);
+                          setShowSignup(true);
+                        }}
+                        className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-all duration-200 ${
+                          vendorShopType === 'digital' && selectedRole === 'vendeur' && !selectedServiceType
+                            ? 'border-purple-500 bg-purple-50 shadow-sm ring-1 ring-purple-500/20'
+                            : 'border-border/40 hover:border-purple-300 hover:bg-purple-50/40'
+                        }`}
+                      >
+                        <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 transition-colors ${
+                          vendorShopType === 'digital' && selectedRole === 'vendeur' && !selectedServiceType
+                            ? 'bg-purple-500 text-white' : 'bg-purple-50 text-purple-500'
+                        }`}>
+                          <Laptop className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="text-left min-w-0">
+                          <span className={`text-[11px] font-semibold block leading-tight ${
+                            vendorShopType === 'digital' && selectedRole === 'vendeur' && !selectedServiceType
+                              ? 'text-purple-700' : 'text-foreground'
+                          }`}>Produits digitaux</span>
+                          <span className="text-[9px] text-muted-foreground leading-tight">Fichiers, formations, ebooks</span>
+                        </div>
+                        {vendorShopType === 'digital' && selectedRole === 'vendeur' && !selectedServiceType && (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-purple-500 ml-auto shrink-0" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
 
                   {/* Service */}
                   <button
