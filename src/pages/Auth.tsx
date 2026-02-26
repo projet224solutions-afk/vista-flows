@@ -1607,22 +1607,58 @@ export default function Auth() {
                 </Button>
               </div>
               
-              {/* 🛒 Bouton E-commerce classique - Centré et stylé */}
-              <div className="flex justify-center mb-6">
+              {/* 🛒 Sélection type de boutique vendeur */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                {/* Boutique physique e-commerce classique */}
                 <button
-                  onClick={handleSkipServiceSelection}
-                  className="group relative flex items-center gap-3 px-8 py-4 bg-primary text-primary-foreground rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] hover:bg-primary/90 transition-all duration-300 border-2 border-primary"
+                  onClick={() => {
+                    setVendorShopType('physical');
+                    handleSkipServiceSelection();
+                  }}
+                  className={`group relative flex items-center gap-3 px-6 py-4 rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border-2 ${
+                    vendorShopType === 'physical'
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background border-border hover:border-primary/50'
+                  }`}
                 >
-                  <div className="relative flex items-center gap-3">
-                    <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl backdrop-blur-sm">
-                      <Store className="w-6 h-6" />
-                    </div>
-                    <div className="text-center">
-                      <span className="block text-lg font-bold">Mode Vendeur E-commerce classique</span>
-                      <span className="block text-sm text-primary-foreground/80">(vente de produits uniquement)</span>
-                    </div>
-                    <Zap className="w-5 h-5 animate-pulse" />
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-blue-100 group-hover:bg-blue-200 transition-colors shrink-0">
+                    <Store className={`w-6 h-6 ${vendorShopType === 'physical' ? 'text-blue-600' : 'text-blue-600'}`} />
                   </div>
+                  <div className="text-left">
+                    <span className={`block text-base font-bold ${vendorShopType === 'physical' ? 'text-primary-foreground' : 'text-foreground'}`}>
+                      Boutique E-commerce classique
+                    </span>
+                    <span className={`block text-xs ${vendorShopType === 'physical' ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                      Vendre des produits physiques en ligne
+                    </span>
+                  </div>
+                  <ShoppingBag className={`w-5 h-5 ml-auto shrink-0 ${vendorShopType === 'physical' ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
+                </button>
+
+                {/* Boutique produits digitaux */}
+                <button
+                  onClick={() => {
+                    setVendorShopType('digital');
+                    handleSkipServiceSelection();
+                  }}
+                  className={`group relative flex items-center gap-3 px-6 py-4 rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border-2 ${
+                    vendorShopType === 'digital'
+                      ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-purple-500'
+                      : 'bg-background border-border hover:border-purple-400/50'
+                  }`}
+                >
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-purple-100 group-hover:bg-purple-200 transition-colors shrink-0">
+                    <Camera className={`w-6 h-6 text-purple-600`} />
+                  </div>
+                  <div className="text-left">
+                    <span className={`block text-base font-bold ${vendorShopType === 'digital' ? 'text-white' : 'text-foreground'}`}>
+                      Boutique Produits digitaux
+                    </span>
+                    <span className={`block text-xs ${vendorShopType === 'digital' ? 'text-white/80' : 'text-muted-foreground'}`}>
+                      Vendre des fichiers, formations, ebooks...
+                    </span>
+                  </div>
+                  <Zap className={`w-5 h-5 ml-auto shrink-0 ${vendorShopType === 'digital' ? 'text-white' : 'text-muted-foreground'}`} />
                 </button>
               </div>
 
