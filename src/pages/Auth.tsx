@@ -2628,70 +2628,19 @@ export default function Auth() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-xl font-bold text-center mb-2 text-gray-800">
-              Choisissez votre type de compte
+              Créer un compte Client
             </h3>
             <p className="text-sm text-muted-foreground text-center mb-6">
-              Sélectionnez le profil qui correspond à votre activité
+              Inscrivez-vous pour acheter des produits et services
             </p>
             
-            {/* Boutons professionnels en grille 2x2 */}
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <button
-                onClick={() => {
-                  setShowRoleSelectionModal(false);
-                  handleRoleClick('vendeur');
-                }}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-blue-50 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-100 transition-all"
-              >
-                <Store className="h-8 w-8 text-blue-600" />
-                <span className="font-semibold text-blue-700">{t('auth.merchant')}</span>
-                <span className="text-xs text-muted-foreground text-center">Gérer une boutique</span>
-              </button>
-              
-              <button
-                onClick={() => {
-                  setShowRoleSelectionModal(false);
-                  handleRoleClick('livreur');
-                }}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-orange-50 border-2 border-orange-200 hover:border-orange-400 hover:bg-orange-100 transition-all"
-              >
-                <Truck className="h-8 w-8 text-orange-600" />
-                <span className="font-semibold text-orange-700">{t('auth.deliveryDriver')}</span>
-                <span className="text-xs text-muted-foreground text-center">Livrer des colis</span>
-              </button>
-              
-              <button
-                onClick={() => {
-                  setShowRoleSelectionModal(false);
-                  handleRoleClick('taxi');
-                }}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-yellow-50 border-2 border-yellow-200 hover:border-yellow-400 hover:bg-yellow-100 transition-all"
-              >
-                <Bike className="h-8 w-8 text-yellow-600" />
-                <span className="font-semibold text-yellow-700">{t('auth.taxiMoto')}</span>
-                <span className="text-xs text-muted-foreground text-center">Transport de personnes</span>
-              </button>
-              
-              <button
-                onClick={() => {
-                  setShowRoleSelectionModal(false);
-                  handleRoleClick('transitaire');
-                }}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-indigo-50 border-2 border-indigo-200 hover:border-indigo-400 hover:bg-indigo-100 transition-all"
-              >
-                <Ship className="h-8 w-8 text-indigo-600" />
-                <span className="font-semibold text-indigo-700">{t('auth.transitAgent')}</span>
-                <span className="text-xs text-muted-foreground text-center">Import/Export</span>
-              </button>
-            </div>
-            
-            {/* Bouton Client stylé */}
+            {/* Bouton Client unique */}
             <button
               onClick={() => {
                 setShowRoleSelectionModal(false);
                 handleRoleClick('client');
               }}
-              className="w-full flex flex-col items-center gap-1 py-4 rounded-2xl bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 hover:border-blue-400 hover:from-blue-100 hover:to-purple-100 hover:shadow-lg transition-all"
+              className="w-full flex flex-col items-center gap-1 py-4 rounded-2xl bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-400 shadow-md transition-all"
             >
               <div className="flex items-center gap-2">
                 <UserIcon className="h-6 w-6 text-blue-600" />
