@@ -2620,39 +2620,205 @@ export default function Auth() {
         </div>
       )}
 
-      {/* Modal de sélection de type de compte */}
+      {/* Modal de création de compte Client */}
       {showRoleSelectionModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowRoleSelectionModal(false)}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto" onClick={() => setShowRoleSelectionModal(false)}>
           <div 
-            className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 animate-in zoom-in-95 duration-200"
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 animate-in zoom-in-95 duration-200 my-4 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-xl font-bold text-center mb-2 text-gray-800">
+            <h3 className="text-lg font-bold text-center mb-1 text-gray-800">
               Créer un compte Client
             </h3>
-            <p className="text-sm text-muted-foreground text-center mb-6">
-              Inscrivez-vous pour acheter des produits et services
+            <p className="text-xs text-muted-foreground text-center mb-4">
+              Remplissez vos informations pour vous inscrire
             </p>
-            
-            {/* Bouton Client unique */}
-            <button
-              onClick={() => {
+
+            {/* Formulaire d'inscription Client directement dans la modal */}
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              // Ensure role is set before submission
+              setSelectedRole('client');
+              setShowSignup(true);
+              // Small delay to let state update, then trigger submit
+              setLoading(true);
+              setIsAuthenticating(true);
+              setError(null);
+              setSuccess(null);
+              try {
+                if (formData.password !== formData.confirmPassword) {
+                  throw new Error("❌ Les mots de passe ne correspondent pas");
+                }
+                if (!validatePhoneNumber(formData.phone, phoneCode)) {
+                  const hint = getPhoneLengthHint(phoneCode);
+                  throw new Error(`❌ Numéro de téléphone invalide pour ${phoneCode}. Format attendu: ${hint}`);
+                }
+                const validatedData = signupSchema.parse({ ...formData, role: 'client' });
+                const { data: userCustomId, error: generateError } = await supabase
+                  .rpc('generate_custom_id_with_role', { p_role: 'client' });
+                if (generateError) throw new Error('Erreur lors de la génération de votre identifiant');
+                
+                const { data: authData, error: signUpError } = await supabase.auth.signUp({
+                  email: validatedData.email,
+                  password: validatedData.password,
+                  options: {
+                    data: {
+                      first_name: validatedData.firstName,
+                      last_name: validatedData.lastName,
+                      role: 'client',
+                      phone: `${phoneCode} ${formData.phone}`,
+                      country: formData.country,
+                      city: validatedData.city,
+                      custom_id: userCustomId,
+                    },
+                    emailRedirectTo: `${window.location.origin}/`
+                  }
+                });
+                if (signUpError) throw signUpError;
                 setShowRoleSelectionModal(false);
-                handleRoleClick('client');
-              }}
-              className="w-full flex flex-col items-center gap-1 py-4 rounded-2xl bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-400 shadow-md transition-all"
-            >
-              <div className="flex items-center gap-2">
-                <UserIcon className="h-6 w-6 text-blue-600" />
-                <span className="text-lg font-semibold text-blue-700">{t('auth.client')}</span>
+                setSuccess("✅ Compte créé ! Vérifiez votre email pour confirmer votre inscription.");
+              } catch (err: any) {
+                setError(err.message || 'Erreur lors de la création du compte');
+              } finally {
+                setLoading(false);
+                setIsAuthenticating(false);
+              }
+            }} className="space-y-3">
+              {/* Prénom & Nom */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label htmlFor="modal-firstName" className="text-xs">{t('auth.firstName')}</Label>
+                  <Input
+                    id="modal-firstName"
+                    value={formData.firstName}
+                    onChange={(e) => handleInputChange('firstName', e.target.value)}
+                    placeholder="Prénom"
+                    className="h-9 text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="modal-lastName" className="text-xs">{t('auth.lastName')}</Label>
+                  <Input
+                    id="modal-lastName"
+                    value={formData.lastName}
+                    onChange={(e) => handleInputChange('lastName', e.target.value)}
+                    placeholder="Nom"
+                    className="h-9 text-sm"
+                    required
+                  />
+                </div>
               </div>
-              <span className="text-sm text-muted-foreground">
-                Acheter des produits et services
-              </span>
-            </button>
+
+              {/* Email */}
+              <div>
+                <Label htmlFor="modal-email" className="text-xs">{t('auth.email')}</Label>
+                <Input
+                  id="modal-email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  placeholder="email@exemple.com"
+                  className="h-9 text-sm"
+                  required
+                />
+              </div>
+
+              {/* Téléphone */}
+              <div>
+                <Label htmlFor="modal-phone" className="text-xs">{t('auth.phone')}</Label>
+                <div className="flex gap-1">
+                  <span className="inline-flex items-center px-2 bg-muted rounded-md text-xs font-medium border">
+                    {phoneCode}
+                  </span>
+                  <Input
+                    id="modal-phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value.replace(/\D/g, ''))}
+                    placeholder="Numéro"
+                    className="h-9 text-sm flex-1"
+                    required
+                  />
+                </div>
+                {phoneError && <p className="text-[10px] text-red-500 mt-0.5">{phoneError}</p>}
+              </div>
+
+              {/* Pays & Ville */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label htmlFor="modal-country" className="text-xs">{t('auth.country')}</Label>
+                  <Input
+                    id="modal-country"
+                    value={formData.country}
+                    onChange={(e) => handleInputChange('country', e.target.value)}
+                    placeholder="Pays"
+                    className="h-9 text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="modal-city" className="text-xs">{t('auth.city')}</Label>
+                  <Input
+                    id="modal-city"
+                    value={formData.city}
+                    onChange={(e) => handleInputChange('city', e.target.value)}
+                    placeholder="Ville"
+                    className="h-9 text-sm"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Mot de passe */}
+              <div>
+                <Label htmlFor="modal-password" className="text-xs">{t('auth.password')}</Label>
+                <Input
+                  id="modal-password"
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => handleInputChange('password', e.target.value)}
+                  placeholder="••••••••"
+                  className="h-9 text-sm"
+                  required
+                />
+              </div>
+
+              {/* Confirmer mot de passe */}
+              <div>
+                <Label htmlFor="modal-confirmPassword" className="text-xs">{t('auth.confirmPassword')}</Label>
+                <Input
+                  id="modal-confirmPassword"
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                  placeholder="••••••••"
+                  className="h-9 text-sm"
+                  required
+                />
+              </div>
+
+              {error && (
+                <p className="text-xs text-red-600 bg-red-50 p-2 rounded-md">{error}</p>
+              )}
+
+              {/* Bouton Créer */}
+              <Button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <UserPlus className="h-4 w-4 mr-2" />
+                )}
+                {loading ? 'Création...' : 'Créer mon compte'}
+              </Button>
+            </form>
             
             {/* Séparateur OAuth */}
-            <div className="relative my-4">
+            <div className="relative my-3">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-gray-200"></span>
               </div>
@@ -2661,50 +2827,35 @@ export default function Auth() {
               </div>
             </div>
             
-            {/* Bouton Google OAuth centré et agrandi */}
-            <div className="flex justify-center">
-              <div className="relative w-full max-w-xs">
-                {/* Badge "Rapide" sur Google */}
-                <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-10">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-semibold shadow-lg">
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Rapide
-                  </span>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowRoleSelectionModal(false);
-                    handleGoogleLogin(false);
-                  }}
-                  className="w-full flex items-center justify-center gap-3 py-4 px-6 rounded-xl bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 hover:shadow-md transition-all duration-200 relative overflow-hidden group"
-                  disabled={oauthLoading !== null}
-                >
-                  {/* Effet de brillance */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
-                  
-                  {oauthLoading === 'google' ? (
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                  ) : (
-                    <svg className="h-6 w-6 group-hover:scale-110 transition-transform duration-200" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                    </svg>
-                  )}
-                  <span className="font-semibold text-gray-700 text-base">
-                    {oauthLoading === 'google' ? 'Connexion...' : 'Continuer avec Google'}
-                  </span>
-                </button>
-              </div>
-            </div>
+            {/* Bouton Google OAuth */}
+            <button
+              onClick={() => {
+                setSelectedRole('client');
+                setShowRoleSelectionModal(false);
+                handleGoogleLogin(false);
+              }}
+              className="w-full flex items-center justify-center gap-3 py-3 px-6 rounded-xl bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 hover:shadow-md transition-all duration-200"
+              disabled={oauthLoading !== null}
+            >
+              {oauthLoading === 'google' ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <svg className="h-5 w-5" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+              )}
+              <span className="font-semibold text-gray-700 text-sm">
+                {oauthLoading === 'google' ? 'Connexion...' : 'Continuer avec Google'}
+              </span>
+            </button>
             
             {/* Bouton fermer */}
             <button
               onClick={() => setShowRoleSelectionModal(false)}
-              className="w-full mt-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="w-full mt-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Annuler
             </button>
