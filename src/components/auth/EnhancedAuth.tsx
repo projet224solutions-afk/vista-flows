@@ -478,6 +478,14 @@ export default function EnhancedAuth() {
   // État pour basculer entre connexion et inscription sur mobile
   const [showSignupPanel, setShowSignupPanel] = useState(false);
 
+  // Auto-set client type when signup panel is shown
+  useEffect(() => {
+    if (showSignupPanel) {
+      setAccountType('client');
+      setMode('signup');
+    }
+  }, [showSignupPanel]);
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header ultra-compact professionnel */}
@@ -695,46 +703,19 @@ export default function EnhancedAuth() {
                 </div>
               )}
 
-              {/* ===== FORMULAIRE INSCRIPTION ===== */}
+              {/* ===== FORMULAIRE INSCRIPTION (Client uniquement) ===== */}
               {showSignupPanel && (
                 <div className="space-y-2">
-                  {/* Types de comptes ultra-compact */}
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-medium text-center text-muted-foreground uppercase tracking-wide">
-                      {t('auth.chooseProfile')}
+                  {/* Info: compte client */}
+                  <div className="bg-emerald-50/50 dark:bg-emerald-900/10 rounded-md p-2 flex items-center gap-2">
+                    <User className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    <p className="text-[10px] text-emerald-700 dark:text-emerald-400">
+                      {t('auth.createClientAccount') || 'Créez votre compte client pour acheter des produits et services'}
                     </p>
-                    <div className="grid grid-cols-5 gap-1">
-                      {accountTypes.map((type) => {
-                        const Icon = type.icon;
-                        const isSelected = accountType === type.value;
-                        return (
-                          <button
-                            key={type.value}
-                            onClick={() => { setAccountType(type.value); setMode('signup'); }}
-                            className={`flex flex-col items-center gap-0.5 p-1 rounded-md border transition-all ${
-                              isSelected 
-                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' 
-                                : 'border-transparent bg-muted/30 hover:bg-muted/60'
-                            }`}
-                          >
-                            <div className={`w-6 h-6 rounded-md flex items-center justify-center ${
-                              isSelected 
-                                ? 'bg-emerald-500 text-white' 
-                                : `bg-card ${type.color}`
-                            }`}>
-                              <Icon className="h-3 w-3" />
-                            </div>
-                            <span className={`text-[8px] font-medium leading-tight text-center ${isSelected ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}>
-                              {type.label}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
                   </div>
 
                   {/* Formulaire d'inscription compact */}
-                  {accountType && mode === 'signup' && (
+                  {accountType && (
                     <motion.div
                       key="signup-form"
                       initial={{ opacity: 0, y: 3 }}
@@ -823,7 +804,7 @@ export default function EnhancedAuth() {
                           ) : (
                             <>
                               <UserPlus className="mr-1 h-3 w-3" />
-                              {t('auth.signupAs')} {accountTypes.find(type => type.value === accountType)?.label}
+                              {t('auth.createAccount') || 'Créer mon compte'}
                             </>
                           )}
                         </Button>
