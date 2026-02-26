@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship, Crown, Utensils, ShoppingBag, Scissors, Car, GraduationCap, Stethoscope, Wrench, Home, Plane, Camera, ArrowLeft, Eye, EyeOff, Chrome, Search, ChevronDown, Check, RefreshCw, Zap, LogIn, UserPlus } from "lucide-react";
+import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship, Crown, Utensils, ShoppingBag, Scissors, Car, GraduationCap, Stethoscope, Wrench, Home, Plane, Camera, ArrowLeft, Eye, EyeOff, Chrome, Search, ChevronDown, Check, RefreshCw, Zap, LogIn, UserPlus, Briefcase } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Separator } from "@/components/ui/separator";
@@ -1867,114 +1867,59 @@ export default function Auth() {
               </>
             )}
 
-            {/* Types de comptes supportés - Design moderne avec grille */}
+            {/* Types de comptes - Vendeur classique & Service */}
             {showSignupLayout && (
               <div className="mb-6 bg-gradient-to-br from-muted/20 via-background to-muted/10 border border-border/50 rounded-2xl p-5 shadow-sm">
                 <div className="text-center mb-4">
                   <h3 className="text-sm font-bold text-foreground mb-1">Choisissez votre profil</h3>
                   <p className="text-xs text-muted-foreground">Sélectionnez le type de compte qui vous correspond</p>
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  {/* Première ligne - 3 boutons */}
-                  <div className="grid grid-cols-3 gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => handleRoleClick('vendeur')}
-                      className={`group flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-all duration-200 ${
-                        selectedRole === 'vendeur'
-                          ? 'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-500 text-white shadow-md shadow-blue-500/25 scale-[1.02]'
-                          : 'bg-background border-border/60 hover:border-blue-300 hover:bg-blue-50/50'
-                      }`}
-                    >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                        selectedRole === 'vendeur' ? 'bg-white/20' : 'bg-blue-100 group-hover:bg-blue-200'
-                      }`}>
-                        <Store className={`h-4 w-4 ${selectedRole === 'vendeur' ? 'text-white' : 'text-blue-600'}`} />
-                      </div>
-                      <span className={`text-[10px] font-semibold ${selectedRole === 'vendeur' ? 'text-white' : 'text-foreground'}`}>
-                        Marchand
-                      </span>
-                    </button>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Vendeur classique */}
+                  <button
+                    type="button"
+                    onClick={() => handleRoleClick('vendeur')}
+                    className={`group flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
+                      selectedRole === 'vendeur'
+                        ? 'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/25 scale-[1.02]'
+                        : 'bg-background border-border/60 hover:border-blue-300 hover:bg-blue-50/50'
+                    }`}
+                  >
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                      selectedRole === 'vendeur' ? 'bg-white/20' : 'bg-blue-100 group-hover:bg-blue-200'
+                    }`}>
+                      <Store className={`h-6 w-6 ${selectedRole === 'vendeur' ? 'text-white' : 'text-blue-600'}`} />
+                    </div>
+                    <span className={`text-sm font-semibold ${selectedRole === 'vendeur' ? 'text-white' : 'text-foreground'}`}>
+                      Vendeur classique
+                    </span>
+                    <span className={`text-[10px] ${selectedRole === 'vendeur' ? 'text-white/80' : 'text-muted-foreground'}`}>
+                      Vendre des produits
+                    </span>
+                  </button>
 
-                    <button
-                      type="button"
-                      onClick={() => handleRoleClick('livreur')}
-                      className={`group flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-all duration-200 ${
-                        selectedRole === 'livreur'
-                          ? 'bg-gradient-to-br from-orange-500 to-orange-600 border-orange-500 text-white shadow-md shadow-orange-500/25 scale-[1.02]'
-                          : 'bg-background border-border/60 hover:border-orange-300 hover:bg-orange-50/50'
-                      }`}
-                    >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                        selectedRole === 'livreur' ? 'bg-white/20' : 'bg-orange-100 group-hover:bg-orange-200'
-                      }`}>
-                        <Truck className={`h-4 w-4 ${selectedRole === 'livreur' ? 'text-white' : 'text-orange-600'}`} />
-                      </div>
-                      <span className={`text-[10px] font-semibold ${selectedRole === 'livreur' ? 'text-white' : 'text-foreground'}`}>
-                        Livreur
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleRoleClick('taxi')}
-                      className={`group flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-all duration-200 ${
-                        selectedRole === 'taxi'
-                          ? 'bg-gradient-to-br from-yellow-500 to-amber-500 border-yellow-500 text-white shadow-md shadow-yellow-500/25 scale-[1.02]'
-                          : 'bg-background border-border/60 hover:border-yellow-300 hover:bg-yellow-50/50'
-                      }`}
-                    >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                        selectedRole === 'taxi' ? 'bg-white/20' : 'bg-yellow-100 group-hover:bg-yellow-200'
-                      }`}>
-                        <Bike className={`h-4 w-4 ${selectedRole === 'taxi' ? 'text-white' : 'text-yellow-600'}`} />
-                      </div>
-                      <span className={`text-[10px] font-semibold ${selectedRole === 'taxi' ? 'text-white' : 'text-foreground'}`}>
-                        Taxi Moto
-                      </span>
-                    </button>
-                  </div>
-
-                  {/* Deuxième ligne - 2 boutons centrés */}
-                  <div className="flex justify-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => handleRoleClick('transitaire')}
-                      className={`group flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-all duration-200 w-[calc(33.333%-0.25rem)] ${
-                        selectedRole === 'transitaire'
-                          ? 'bg-gradient-to-br from-purple-500 to-purple-600 border-purple-500 text-white shadow-md shadow-purple-500/25 scale-[1.02]'
-                          : 'bg-background border-border/60 hover:border-purple-300 hover:bg-purple-50/50'
-                      }`}
-                    >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                        selectedRole === 'transitaire' ? 'bg-white/20' : 'bg-purple-100 group-hover:bg-purple-200'
-                      }`}>
-                        <Ship className={`h-4 w-4 ${selectedRole === 'transitaire' ? 'text-white' : 'text-purple-600'}`} />
-                      </div>
-                      <span className={`text-[10px] font-semibold ${selectedRole === 'transitaire' ? 'text-white' : 'text-foreground'}`}>
-                        Transitaire
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleRoleClick('client')}
-                      className={`group flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-all duration-200 w-[calc(33.333%-0.25rem)] ${
-                        selectedRole === 'client'
-                          ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 border-emerald-500 text-white shadow-md shadow-emerald-500/25 scale-[1.02]'
-                          : 'bg-background border-border/60 hover:border-emerald-300 hover:bg-emerald-50/50'
-                      }`}
-                    >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                        selectedRole === 'client' ? 'bg-white/20' : 'bg-emerald-100 group-hover:bg-emerald-200'
-                      }`}>
-                        <UserIcon className={`h-4 w-4 ${selectedRole === 'client' ? 'text-white' : 'text-emerald-600'}`} />
-                      </div>
-                      <span className={`text-[10px] font-semibold ${selectedRole === 'client' ? 'text-white' : 'text-foreground'}`}>
-                        Client
-                      </span>
-                    </button>
-                  </div>
+                  {/* Service */}
+                  <button
+                    type="button"
+                    onClick={() => handleRoleClick('vendeur')}
+                    className={`group flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
+                      selectedRole === 'vendeur' && selectedServiceType
+                        ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-500/25 scale-[1.02]'
+                        : 'bg-background border-border/60 hover:border-emerald-300 hover:bg-emerald-50/50'
+                    }`}
+                  >
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                      selectedRole === 'vendeur' && selectedServiceType ? 'bg-white/20' : 'bg-emerald-100 group-hover:bg-emerald-200'
+                    }`}>
+                      <Briefcase className={`h-6 w-6 ${selectedRole === 'vendeur' && selectedServiceType ? 'text-white' : 'text-emerald-600'}`} />
+                    </div>
+                    <span className={`text-sm font-semibold ${selectedRole === 'vendeur' && selectedServiceType ? 'text-white' : 'text-foreground'}`}>
+                      Service
+                    </span>
+                    <span className={`text-[10px] ${selectedRole === 'vendeur' && selectedServiceType ? 'text-white/80' : 'text-muted-foreground'}`}>
+                      Proposer des services
+                    </span>
+                  </button>
                 </div>
               </div>
             )}
