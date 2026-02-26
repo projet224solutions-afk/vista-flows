@@ -15,6 +15,7 @@ import { CurrencyIndicator } from "@/components/marketplace/CurrencyIndicator";
 import QuickFooter from "@/components/QuickFooter";
 import ProductDetailModal from "@/components/marketplace/ProductDetailModal";
 import { FavoriteButton } from "@/components/ui/FavoriteButton";
+import { BrowseModal } from "@/components/marketplace/BrowseModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useUniversalProducts } from "@/hooks/useUniversalProducts";
 import { useMarketplaceUniversal } from "@/hooks/useMarketplaceUniversal";
@@ -76,6 +77,7 @@ export default function Marketplace() {
   const [selectedItemType, setSelectedItemType] = useState<'all' | 'product' | 'professional_service' | 'digital_product'>('all');
   const [selectedDigitalCategory, setSelectedDigitalCategory] = useState<string>("all");
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showBrowseModal, setShowBrowseModal] = useState(false);
   const [sortBy, setSortBy] = useState<'popular' | 'price_asc' | 'price_desc' | 'rating' | 'newest' | 'position'>("position");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({ minPrice: 0, maxPrice: 0, minRating: 0 });
@@ -618,10 +620,11 @@ export default function Marketplace() {
                 <Grid className="w-4 h-4" />
               </Button>
               <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                variant="ghost"
                 size="sm"
-                onClick={() => setViewMode('list')}
+                onClick={() => setShowBrowseModal(true)}
                 className="h-7 w-7 p-0"
+                title="Explorer"
               >
                 <List className="w-4 h-4" />
               </Button>
@@ -726,8 +729,6 @@ export default function Marketplace() {
                 </p>
               </div>
             ) : (
-              <div className={viewMode === 'list' ? 'flex flex-col gap-3' : ''}>
-              {viewMode === 'grid' ? (
               <MarketplaceGrid>
                 {marketplaceItems.filter(item => item.item_type !== 'professional_service').map((item) => (
                   <TranslatedProductCard
@@ -770,46 +771,6 @@ export default function Marketplace() {
                   />
                 ))}
               </MarketplaceGrid>
-              ) : (
-                /* List view */
-                marketplaceItems.filter(item => item.item_type !== 'professional_service').map((item) => {
-                  const imgUrl = Array.isArray(item.images) ? item.images[0] : item.images;
-                  return (
-                    <div
-                      key={item.id}
-                      onClick={() => handleProductClick(item.id)}
-                      className="flex items-center gap-3 p-3 bg-card border border-border/50 rounded-xl hover:border-primary/30 hover:shadow-md transition-all cursor-pointer group"
-                    >
-                      <div className="w-20 h-20 rounded-lg bg-muted overflow-hidden shrink-0">
-                        {imgUrl ? (
-                          <img src={imgUrl} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Package className="w-6 h-6 text-muted-foreground" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <h3 className="text-sm font-semibold text-foreground line-clamp-1 group-hover:text-primary transition-colors">{item.name}</h3>
-                        {item.vendor_name && (
-                          <p className="text-[11px] text-muted-foreground line-clamp-1">{item.vendor_name}</p>
-                        )}
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-primary">{item.price?.toLocaleString()} {item.currency || 'GNF'}</span>
-                          {item.rating > 0 && (
-                            <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                              <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-                              {item.rating.toFixed(1)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <FavoriteButton productId={item.id} size="sm" />
-                    </div>
-                  );
-                })
-              )}
-              </div>
             )}
 
             {marketplaceHasMore && !marketplaceLoading && (
@@ -838,6 +799,16 @@ export default function Marketplace() {
           setShowProductModal(false);
           setSelectedProductId(null);
         }}
+      />
+
+      {/* Modal de navigation */}
+      <BrowseModal
+        open={showBrowseModal}
+        onOpenChange={setShowBrowseModal}
+        categories={categories}
+        onSelectCategory={(catId) => setSelectedCategory(catId)}
+        onSelectProduct={(productId) => handleProductClick(productId)}
+        onSelectVendor={(vendorId) => navigate(`/marketplace?vendor=${vendorId}`)}
       />
     </div>
   );
