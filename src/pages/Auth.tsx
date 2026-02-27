@@ -1931,7 +1931,7 @@ export default function Auth() {
                     <p className="text-xs text-muted-foreground">Quel type de produits souhaitez-vous vendre ?</p>
                   </div>
 
-                  <div className="flex flex-col gap-3">
+                  <div className="flex flex-col landscape:flex-row gap-3">
                     {/* E-commerce - Produits physiques */}
                     <button
                       type="button"
