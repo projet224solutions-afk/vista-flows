@@ -2613,8 +2613,8 @@ export default function Auth() {
               </Button>
               </>)}
 
-              {/* ===== OAUTH BUTTONS - Uniquement sur la page de connexion ===== */}
-              {!showSignup && (
+              {/* ===== OAUTH BUTTONS ===== */}
+              {(
                 <>
                   <div className="relative my-6">
                     <Separator />
