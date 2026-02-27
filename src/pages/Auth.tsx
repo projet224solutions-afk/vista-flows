@@ -1792,10 +1792,10 @@ export default function Auth() {
 
       {/* Formulaire de connexion/inscription/reset */}
       {!showServiceSelection && (
-        <div className="max-w-md mx-auto px-4 mt-1">
+        <div className="max-w-2xl mx-auto px-4 mt-1">
               <div>
                 <Card className="shadow-lg border-2 border-primary/20">
-                  <CardContent className="p-8">
+                  <CardContent className="p-10">
             {/* Écran de chargement pendant la vérification du lien de réinitialisation */}
             {checkingResetLink ? (
               <div className="flex flex-col items-center justify-center py-12 space-y-4">
