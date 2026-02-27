@@ -1922,7 +1922,7 @@ export default function Auth() {
                   Retour
                 </button>
 
-                <div className="bg-gradient-to-br from-muted/20 via-background to-muted/10 border border-border/50 rounded-2xl p-6 shadow-sm">
+                <div className="bg-gradient-to-br from-muted/20 via-background to-muted/10 border border-border/50 rounded-2xl p-6 sm:p-8 shadow-sm w-full max-w-lg mx-auto">
                   <div className="text-center mb-5">
                     <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center mx-auto mb-3">
                       <Store className="h-7 w-7 text-blue-600" />
@@ -1931,7 +1931,7 @@ export default function Auth() {
                     <p className="text-xs text-muted-foreground">Quel type de produits souhaitez-vous vendre ?</p>
                   </div>
 
-                  <div className="flex flex-col gap-3">
+                  <div className="grid grid-cols-1 landscape:grid-cols-2 gap-3">
                     {/* E-commerce - Produits physiques */}
                     <button
                       type="button"
@@ -1943,7 +1943,7 @@ export default function Auth() {
                         setShowVendorTypeSelection(false);
                         setShowSignup(true);
                       }}
-                      className="group flex items-center gap-4 p-4 rounded-xl border-2 border-border/60 bg-background hover:border-blue-400 hover:bg-blue-50/60 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200"
+                      className="group flex items-center gap-4 p-5 rounded-xl border-2 border-border/60 bg-background hover:border-blue-400 hover:bg-blue-50/60 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200"
                     >
                       <div className="w-12 h-12 rounded-xl bg-blue-100 group-hover:bg-blue-500 flex items-center justify-center shrink-0 transition-colors">
                         <ShoppingBag className="h-6 w-6 text-blue-600 group-hover:text-white transition-colors" />
@@ -1966,7 +1966,7 @@ export default function Auth() {
                         setShowVendorTypeSelection(false);
                         setShowSignup(true);
                       }}
-                      className="group flex items-center gap-4 p-4 rounded-xl border-2 border-border/60 bg-background hover:border-purple-400 hover:bg-purple-50/60 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-200"
+                      className="group flex items-center gap-4 p-5 rounded-xl border-2 border-border/60 bg-background hover:border-purple-400 hover:bg-purple-50/60 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-200"
                     >
                       <div className="w-12 h-12 rounded-xl bg-purple-100 group-hover:bg-purple-500 flex items-center justify-center shrink-0 transition-colors">
                         <Laptop className="h-6 w-6 text-purple-600 group-hover:text-white transition-colors" />
