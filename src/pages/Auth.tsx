@@ -1931,7 +1931,7 @@ export default function Auth() {
                     <p className="text-xs text-muted-foreground">Quel type de produits souhaitez-vous vendre ?</p>
                   </div>
 
-                  <div className="flex flex-col landscape:flex-row gap-3">
+                  <div className="grid grid-cols-2 gap-3">
                     {/* E-commerce - Produits physiques */}
                     <button
                       type="button"
@@ -1943,16 +1943,15 @@ export default function Auth() {
                         setShowVendorTypeSelection(false);
                         setShowSignup(true);
                       }}
-                      className="group flex items-center gap-4 p-4 rounded-xl border-2 border-border/60 bg-background hover:border-blue-400 hover:bg-blue-50/60 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200"
+                      className="group flex flex-col items-center text-center gap-3 p-5 rounded-xl border-2 border-border/60 bg-background hover:border-blue-400 hover:bg-blue-50/60 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200"
                     >
-                      <div className="w-12 h-12 rounded-xl bg-blue-100 group-hover:bg-blue-500 flex items-center justify-center shrink-0 transition-colors">
-                        <ShoppingBag className="h-6 w-6 text-blue-600 group-hover:text-white transition-colors" />
+                      <div className="w-14 h-14 rounded-xl bg-blue-100 group-hover:bg-blue-500 flex items-center justify-center shrink-0 transition-colors">
+                        <ShoppingBag className="h-7 w-7 text-blue-600 group-hover:text-white transition-colors" />
                       </div>
-                      <div className="text-left flex-1">
-                        <span className="text-sm font-bold text-foreground block">Boutique E-commerce</span>
-                        <span className="text-xs text-muted-foreground">Vendre des produits physiques : vêtements, accessoires, électronique...</span>
+                      <div>
+                        <span className="text-sm font-bold text-foreground block mb-1">E-commerce</span>
+                        <span className="text-[11px] leading-tight text-muted-foreground">Produits physiques : vêtements, accessoires, électronique…</span>
                       </div>
-                      <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </button>
 
                     {/* Produits digitaux */}
@@ -1966,16 +1965,15 @@ export default function Auth() {
                         setShowVendorTypeSelection(false);
                         setShowSignup(true);
                       }}
-                      className="group flex items-center gap-4 p-4 rounded-xl border-2 border-border/60 bg-background hover:border-purple-400 hover:bg-purple-50/60 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-200"
+                      className="group flex flex-col items-center text-center gap-3 p-5 rounded-xl border-2 border-border/60 bg-background hover:border-indigo-400 hover:bg-indigo-50/60 hover:shadow-lg hover:shadow-indigo-500/10 transition-all duration-200"
                     >
-                      <div className="w-12 h-12 rounded-xl bg-purple-100 group-hover:bg-purple-500 flex items-center justify-center shrink-0 transition-colors">
-                        <Laptop className="h-6 w-6 text-purple-600 group-hover:text-white transition-colors" />
+                      <div className="w-14 h-14 rounded-xl bg-indigo-100 group-hover:bg-indigo-500 flex items-center justify-center shrink-0 transition-colors">
+                        <Laptop className="h-7 w-7 text-indigo-600 group-hover:text-white transition-colors" />
                       </div>
-                      <div className="text-left flex-1">
-                        <span className="text-sm font-bold text-foreground block">Produits digitaux</span>
-                        <span className="text-xs text-muted-foreground">Vendre des fichiers, formations, ebooks, logiciels...</span>
+                      <div>
+                        <span className="text-sm font-bold text-foreground block mb-1">Digitaux</span>
+                        <span className="text-[11px] leading-tight text-muted-foreground">Fichiers, formations, ebooks, logiciels…</span>
                       </div>
-                      <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </button>
                   </div>
                 </div>
