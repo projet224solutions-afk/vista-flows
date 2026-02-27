@@ -1279,8 +1279,12 @@ export default function Auth() {
           }
           
           if (profileData?.role) {
-            const targetRoute = getDashboardRoute(profileData.role);
-            console.log('🚀 [Auth Signup] Redirection vers:', targetRoute, '(rôle:', profileData.role, ')');
+            // Si vendeur digital, rediriger directement vers l'interface produits digitaux
+            let targetRoute = getDashboardRoute(profileData.role);
+            if (profileData.role === 'vendeur' && vendorShopType === 'digital') {
+              targetRoute = '/vendeur/digital-products';
+            }
+            console.log('🚀 [Auth Signup] Redirection vers:', targetRoute, '(rôle:', profileData.role, ', shopType:', vendorShopType, ')');
             navigate(targetRoute, { replace: true });
           } else {
             // Fallback: rediriger vers home qui redirigera vers le bon dashboard via useRoleRedirect
