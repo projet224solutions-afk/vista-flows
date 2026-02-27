@@ -2336,6 +2336,7 @@ export default function Auth() {
                         const data = await res.json();
                         handleInputChange('country', data.country_name || '');
                         handleInputChange('city', data.city || '');
+                        handleInputChange('address', [data.region, data.city, data.country_name].filter(Boolean).join(', '));
                         toast({ title: "📍 Position détectée", description: `${data.city}, ${data.country_name}` });
                       } catch {
                         toast({ title: "Erreur", description: "Impossible de détecter la position", variant: "destructive" });
