@@ -1922,17 +1922,19 @@ export default function Auth() {
                   Retour
                 </button>
 
-                <div className="bg-gradient-to-br from-muted/20 via-background to-muted/10 border border-border/50 rounded-2xl p-6 sm:p-8 shadow-sm w-full max-w-lg mx-auto">
-                  <div className="text-center mb-5">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center mx-auto mb-3">
-                      <Store className="h-7 w-7 text-blue-600" />
+                <div className="bg-gradient-to-br from-muted/5 via-background to-muted/5 border border-border/40 rounded-2xl p-5 shadow-sm w-full">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
+                      <Store className="h-5 w-5 text-blue-600" />
                     </div>
-                    <h3 className="text-base font-bold text-foreground mb-1">Vendeur classique</h3>
-                    <p className="text-xs text-muted-foreground">Quel type de produits souhaitez-vous vendre ?</p>
+                    <div>
+                      <h3 className="text-sm font-bold text-foreground">Vendeur classique</h3>
+                      <p className="text-[11px] text-muted-foreground">Choisissez votre type de boutique</p>
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 landscape:grid-cols-2 gap-3">
-                    {/* E-commerce - Produits physiques */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* E-commerce */}
                     <button
                       type="button"
                       onClick={() => {
@@ -1943,19 +1945,18 @@ export default function Auth() {
                         setShowVendorTypeSelection(false);
                         setShowSignup(true);
                       }}
-                      className="group flex items-center gap-4 p-5 rounded-xl border-2 border-border/60 bg-background hover:border-blue-400 hover:bg-blue-50/60 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200"
+                      className="group flex flex-col items-center text-center gap-3 p-5 rounded-xl border-2 border-border/50 bg-background hover:border-blue-500 hover:shadow-xl hover:shadow-blue-500/15 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                     >
-                      <div className="w-12 h-12 rounded-xl bg-blue-100 group-hover:bg-blue-500 flex items-center justify-center shrink-0 transition-colors">
-                        <ShoppingBag className="h-6 w-6 text-blue-600 group-hover:text-white transition-colors" />
+                      <div className="w-14 h-14 rounded-2xl bg-blue-100 group-hover:bg-blue-500 flex items-center justify-center shrink-0 transition-all duration-200 group-hover:shadow-lg group-hover:shadow-blue-500/30">
+                        <ShoppingBag className="h-7 w-7 text-blue-600 group-hover:text-white transition-colors" />
                       </div>
-                      <div className="text-left flex-1">
-                        <span className="text-sm font-bold text-foreground block">Boutique E-commerce</span>
-                        <span className="text-xs text-muted-foreground">Vendre des produits physiques : vêtements, accessoires, électronique...</span>
+                      <div>
+                        <span className="text-sm font-bold text-foreground block mb-0.5">E-commerce</span>
+                        <span className="text-[11px] text-muted-foreground leading-snug block">Produits physiques, vêtements, accessoires</span>
                       </div>
-                      <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </button>
 
-                    {/* Produits digitaux */}
+                    {/* Digitaux */}
                     <button
                       type="button"
                       onClick={() => {
@@ -1966,16 +1967,15 @@ export default function Auth() {
                         setShowVendorTypeSelection(false);
                         setShowSignup(true);
                       }}
-                      className="group flex items-center gap-4 p-5 rounded-xl border-2 border-border/60 bg-background hover:border-purple-400 hover:bg-purple-50/60 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-200"
+                      className="group flex flex-col items-center text-center gap-3 p-5 rounded-xl border-2 border-border/50 bg-background hover:border-purple-500 hover:shadow-xl hover:shadow-purple-500/15 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                     >
-                      <div className="w-12 h-12 rounded-xl bg-purple-100 group-hover:bg-purple-500 flex items-center justify-center shrink-0 transition-colors">
-                        <Laptop className="h-6 w-6 text-purple-600 group-hover:text-white transition-colors" />
+                      <div className="w-14 h-14 rounded-2xl bg-purple-100 group-hover:bg-purple-500 flex items-center justify-center shrink-0 transition-all duration-200 group-hover:shadow-lg group-hover:shadow-purple-500/30">
+                        <Laptop className="h-7 w-7 text-purple-600 group-hover:text-white transition-colors" />
                       </div>
-                      <div className="text-left flex-1">
-                        <span className="text-sm font-bold text-foreground block">Produits digitaux</span>
-                        <span className="text-xs text-muted-foreground">Vendre des fichiers, formations, ebooks, logiciels...</span>
+                      <div>
+                        <span className="text-sm font-bold text-foreground block mb-0.5">Produits digitaux</span>
+                        <span className="text-[11px] text-muted-foreground leading-snug block">Fichiers, formations, ebooks, logiciels</span>
                       </div>
-                      <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </button>
                   </div>
                 </div>
