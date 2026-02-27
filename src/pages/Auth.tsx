@@ -37,7 +37,7 @@ export default function Auth() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const location = useLocation();
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<'google' | 'facebook' | null>(null);
@@ -97,7 +97,7 @@ export default function Auth() {
 
   // Form data - MUST be declared before trackOAuthEvent uses them
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
-  const [showSignup, setShowSignup] = useState(false);
+  const [showSignup, setShowSignup] = useState(true);
   const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
   const [showServiceSelection, setShowServiceSelection] = useState(false);
   const [showRoleSelectionModal, setShowRoleSelectionModal] = useState(false);
@@ -1289,68 +1289,9 @@ export default function Auth() {
           setSuccess("✅ Inscription réussie ! Vérifiez votre boîte mail pour confirmer votre compte, puis connectez-vous.");
         }
       } else {
-        // Connexion
-        console.log('🔐 [Auth] Tentative de connexion...');
-        const validatedData = loginSchema.parse(formData);
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: validatedData.email,
-          password: validatedData.password,
-        });
-
-        console.log('🔐 [Auth] Résultat connexion:', { hasUser: !!data?.user, hasError: !!error });
-
-        if (error) {
-          // Gérer les erreurs d'authentification de manière conviviale
-          if (error.message.includes('Email not confirmed')) {
-            throw new Error('📧 Email non confirmé. Veuillez vérifier votre boîte mail et cliquer sur le lien de confirmation.');
-          } else if (error.message.includes('Invalid login credentials')) {
-            throw new Error('❌ Email ou mot de passe incorrect. Veuillez réessayer.');
-          } else {
-            throw error;
-          }
-        }
-        
-        if (data.user) {
-          setSuccess("✅ Connexion réussie ! Redirection en cours...");
-          
-          // ⚡ Récupérer le profil avec retry pour s'assurer qu'il est chargé
-          let profileData = null;
-          let attempts = 0;
-          const maxAttempts = 10;
-          const userId = data.user.id;
-          
-          while (!profileData && attempts < maxAttempts) {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('role')
-              .eq('id', userId)
-              .maybeSingle();
-            
-            if (profile?.role) {
-              profileData = profile;
-              break;
-            }
-            
-            // Attendre 200ms entre chaque tentative (max 2s total)
-            if (attempts < maxAttempts - 1) {
-              await new Promise(resolve => setTimeout(resolve, 200));
-            }
-            attempts++;
-            console.log(`⏳ [Auth Login] Chargement profil... (tentative ${attempts}/${maxAttempts})`);
-          }
-          
-          if (profileData?.role) {
-            const targetRoute = getDashboardRoute(profileData.role);
-            console.log('🚀 [Auth Login] Redirection vers:', targetRoute, '(rôle:', profileData.role, ')');
-            // Attendre un peu pour que l'auth state soit bien propagé
-            await new Promise(resolve => setTimeout(resolve, 300));
-            navigate(targetRoute, { replace: true });
-          } else {
-            // Fallback: rediriger vers home, useRoleRedirect prendra le relais
-            console.log('⚠️ [Auth Login] Pas de profil trouvé, redirection vers /home');
-            navigate('/home', { replace: true });
-          }
-        }
+        // Page inscription uniquement - rediriger vers la connexion intelligente
+        navigate('/universal-login', { replace: true });
+        return;
       }
     } catch (err) {
       let errorMessage = 'Une erreur est survenue';
@@ -1830,79 +1771,16 @@ export default function Auth() {
             {/* Onglets Connexion / Inscription - Design professionnel */}
             {!showResetPassword && !showNewPasswordForm && (
               <div className="mb-6">
-                <div className="relative flex p-1 bg-gradient-to-r from-muted/50 to-muted/30 rounded-2xl border border-border/50 shadow-inner">
-                  {/* Indicateur animé */}
-                  <div 
-                    className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-gradient-to-r from-primary to-primary/90 rounded-xl shadow-lg transition-all duration-300 ease-out ${
-                      showSignup ? 'left-[calc(50%+2px)]' : 'left-1'
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowSignup(false);
-                      setSelectedRole(null);
-                      setError(null);
-                      setSuccess(null);
-                    }}
-                    className={`relative z-10 flex-1 py-3 px-4 text-sm font-semibold rounded-xl transition-all duration-300 ${
-                      !showSignup 
-                        ? 'text-primary-foreground' 
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      <LogIn className="h-4 w-4" />
-                      Connexion
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowSignup(true);
-                      setIsLogin(false);
-                      setError(null);
-                      setSuccess(null);
-                    }}
-                    className={`relative z-10 flex-1 py-3 px-4 text-sm font-semibold rounded-xl transition-all duration-300 ${
-                      showSignup 
-                        ? 'text-primary-foreground' 
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      <UserPlus className="h-4 w-4" />
-                      Créer un compte
-                    </span>
-                  </button>
+                <div className="flex items-center justify-center gap-3 py-3 px-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl border border-primary/20">
+                  <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                    <UserPlus className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">Créer un compte</h3>
+                    <p className="text-[11px] text-muted-foreground">Remplissez vos informations pour vous inscrire</p>
+                  </div>
                 </div>
               </div>
-            )}
-
-            {!showSignup && !showResetPassword && (
-              <>
-                <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/60 rounded-xl shadow-sm">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                      <Zap className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-blue-900 font-semibold text-sm mb-1">Connexion intelligente</p>
-                      <p className="text-blue-700 text-xs leading-relaxed">
-                        Utilisez vos identifiants habituels. Le système reconnaîtra automatiquement votre type de compte.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="mb-6 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 rounded-xl">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
-                    <p className="text-amber-700 text-xs">
-                      Nouveau inscrit ? Confirmez votre email avant de vous connecter.
-                    </p>
-                  </div>
-                </div>
-              </>
             )}
 
             {/* Types de comptes - Vendeur classique & Service */}
@@ -2542,21 +2420,6 @@ export default function Auth() {
                 </div>
               )}
               
-              {!showSignup && (
-                <div className="text-right">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowResetPassword(true);
-                      setError(null);
-                      setSuccess(null);
-                    }}
-                    className="text-sm text-purple-600 hover:underline"
-                  >
-                    {t('auth.forgotPassword')}
-                  </button>
-                </div>
-              )}
 
               <Button
                 type="submit"
@@ -2566,10 +2429,10 @@ export default function Auth() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {showSignup ? t('auth.registering') : t('auth.loggingIn')}
+                    {t('auth.registering')}
                   </>
                 ) : (
-                  showSignup ? t('auth.register') : t('auth.login')
+                  t('auth.register')
                 )}
               </Button>
 
@@ -2577,7 +2440,7 @@ export default function Auth() {
               <div className="relative my-6">
                 <Separator />
                 <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-sm text-muted-foreground">
-                  {showSignup ? 'ou s\'inscrire avec' : 'ou continuer avec'}
+                  ou s'inscrire avec
                 </span>
               </div>
 
@@ -2648,36 +2511,17 @@ export default function Auth() {
 
               {/* Section basculer Connexion / Inscription - Design compact */}
               <div className="mt-3 pt-3 border-t border-border/30">
-                {!showSignup ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="text-sm text-muted-foreground">Pas de compte ?</span>
-                    <button
-                      type="button"
-                      onClick={() => setShowRoleSelectionModal(true)}
-                      className="inline-flex items-center gap-1.5 py-2 px-4 text-sm font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-all duration-200"
-                    >
-                      <UserPlus className="h-4 w-4" />
-                      Créer un compte
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="text-sm text-muted-foreground">Déjà inscrit ?</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowSignup(false);
-                        setSelectedRole(null);
-                        setError(null);
-                        setSuccess(null);
-                      }}
-                      className="inline-flex items-center gap-1.5 py-2 px-4 text-sm font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-all duration-200"
-                    >
-                      <LogIn className="h-4 w-4" />
-                      Se connecter
-                    </button>
-                  </div>
-                )}
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-sm text-muted-foreground">Déjà inscrit ?</span>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/universal-login')}
+                    className="inline-flex items-center gap-1.5 py-2 px-4 text-sm font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-all duration-200"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    Se connecter
+                  </button>
+                </div>
               </div>
 
             </form>
