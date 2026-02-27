@@ -30,6 +30,12 @@ function currencyToCountry(currency: string): string {
     KES: "KE", TZS: "TZ", UGX: "UG", RWF: "RW", ETB: "ET",
     CDF: "CD", BRL: "BR", MXN: "MX", SAR: "SA", QAR: "QA",
     KWD: "KW", SLL: "SL", LRD: "LR", GMD: "GM", CVE: "CV", MRU: "MR",
+    SEK: "SE", NOK: "NO", DKK: "DK", PLN: "PL", CZK: "CZ",
+    HUF: "HU", RON: "RO", BGN: "BG", RSD: "RS", UAH: "UA",
+    RUB: "RU", TRY: "TR", COP: "CO", CLP: "CL", PEN: "PE",
+    VES: "VE", HTG: "HT", ILS: "IL", THB: "TH", PHP: "PH",
+    MYR: "MY", SGD: "SG", IDR: "ID", VND: "VN", PKR: "PK",
+    BDT: "BD", LKR: "LK", NZD: "NZ", ARS: "AR",
   };
   return map[currency?.toUpperCase()] || "XX";
 }

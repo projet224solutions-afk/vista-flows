@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 // Mapping pays -> devise et langue
@@ -62,8 +62,31 @@ const COUNTRY_CONFIG: Record<string, { currency: string; language: string }> = {
   NL: { currency: "EUR", language: "nl" },
   AT: { currency: "EUR", language: "de" },
   IE: { currency: "EUR", language: "en" },
+  FI: { currency: "EUR", language: "fi" },
+  GR: { currency: "EUR", language: "el" },
+  LU: { currency: "EUR", language: "fr" },
+  SK: { currency: "EUR", language: "sk" },
+  SI: { currency: "EUR", language: "sl" },
+  EE: { currency: "EUR", language: "et" },
+  LV: { currency: "EUR", language: "lv" },
+  LT: { currency: "EUR", language: "lt" },
+  CY: { currency: "EUR", language: "el" },
+  MT: { currency: "EUR", language: "en" },
+  HR: { currency: "EUR", language: "hr" },
   GB: { currency: "GBP", language: "en" },
   CH: { currency: "CHF", language: "de" },
+  SE: { currency: "SEK", language: "sv" },
+  NO: { currency: "NOK", language: "no" },
+  DK: { currency: "DKK", language: "da" },
+  PL: { currency: "PLN", language: "pl" },
+  CZ: { currency: "CZK", language: "cs" },
+  HU: { currency: "HUF", language: "hu" },
+  RO: { currency: "RON", language: "ro" },
+  BG: { currency: "BGN", language: "bg" },
+  RS: { currency: "RSD", language: "sr" },
+  UA: { currency: "UAH", language: "uk" },
+  RU: { currency: "RUB", language: "ru" },
+  TR: { currency: "TRY", language: "tr" },
   
   // Amérique
   US: { currency: "USD", language: "en" },
@@ -71,6 +94,11 @@ const COUNTRY_CONFIG: Record<string, { currency: string; language: string }> = {
   MX: { currency: "MXN", language: "es" },
   BR: { currency: "BRL", language: "pt" },
   AR: { currency: "ARS", language: "es" },
+  CO: { currency: "COP", language: "es" },
+  CL: { currency: "CLP", language: "es" },
+  PE: { currency: "PEN", language: "es" },
+  VE: { currency: "VES", language: "es" },
+  HT: { currency: "HTG", language: "fr" },
   
   // Asie
   CN: { currency: "CNY", language: "zh" },
@@ -79,6 +107,18 @@ const COUNTRY_CONFIG: Record<string, { currency: string; language: string }> = {
   IN: { currency: "INR", language: "hi" },
   AE: { currency: "AED", language: "ar" },
   SA: { currency: "SAR", language: "ar" },
+  QA: { currency: "QAR", language: "ar" },
+  KW: { currency: "KWD", language: "ar" },
+  IL: { currency: "ILS", language: "he" },
+  TH: { currency: "THB", language: "th" },
+  PH: { currency: "PHP", language: "en" },
+  MY: { currency: "MYR", language: "ms" },
+  SG: { currency: "SGD", language: "en" },
+  ID: { currency: "IDR", language: "id" },
+  VN: { currency: "VND", language: "vi" },
+  PK: { currency: "PKR", language: "ur" },
+  BD: { currency: "BDT", language: "bn" },
+  LK: { currency: "LKR", language: "si" },
   
   // Océanie
   AU: { currency: "AUD", language: "en" },
