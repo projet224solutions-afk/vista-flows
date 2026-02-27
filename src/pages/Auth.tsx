@@ -1771,14 +1771,36 @@ export default function Auth() {
             {/* Onglets Connexion / Inscription - Design professionnel */}
             {!showResetPassword && !showNewPasswordForm && (
               <div className="mb-6">
-                <div className="flex items-center justify-center gap-3 py-3 px-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl border border-primary/20">
-                  <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
-                    <UserPlus className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-foreground">Créer un compte</h3>
-                    <p className="text-[11px] text-muted-foreground">Remplissez vos informations pour vous inscrire</p>
-                  </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Bouton Connexion - à gauche */}
+                  <button
+                    type="button"
+                    onClick={() => navigate('/universal-login')}
+                    className="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 rounded-2xl border-2 border-blue-200 hover:border-blue-400 transition-all duration-200 group"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-blue-100 group-hover:bg-blue-500 flex items-center justify-center transition-colors">
+                      <LogIn className="h-4 w-4 text-blue-600 group-hover:text-white transition-colors" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="text-sm font-bold text-foreground">Se connecter</h3>
+                      <p className="text-[10px] text-muted-foreground">Connexion intelligente</p>
+                    </div>
+                  </button>
+
+                  {/* Bouton Créer un compte Client - à droite */}
+                  <button
+                    type="button"
+                    onClick={() => setShowRoleSelectionModal(true)}
+                    className="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 rounded-2xl border-2 border-emerald-200 hover:border-emerald-400 transition-all duration-200 group"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-emerald-100 group-hover:bg-emerald-500 flex items-center justify-center transition-colors">
+                      <UserPlus className="h-4 w-4 text-emerald-600 group-hover:text-white transition-colors" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="text-sm font-bold text-foreground">Créer un compte</h3>
+                      <p className="text-[10px] text-muted-foreground">Compte client</p>
+                    </div>
+                  </button>
                 </div>
               </div>
             )}
