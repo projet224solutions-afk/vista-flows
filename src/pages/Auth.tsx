@@ -1771,19 +1771,19 @@ export default function Auth() {
             {/* Onglets Connexion / Inscription - Design professionnel */}
             {!showResetPassword && !showNewPasswordForm && (
               <div className="mb-6">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   {/* Bouton Connexion - à gauche */}
                   <button
                     type="button"
                     onClick={() => navigate('/universal-login')}
-                    className="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 rounded-2xl border-2 border-blue-200 hover:border-blue-400 transition-all duration-200 group"
+                    className="flex items-center gap-3 py-4 px-5 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 rounded-2xl border-2 border-blue-200 hover:border-blue-400 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] group shadow-sm hover:shadow-md"
                   >
-                    <div className="w-9 h-9 rounded-xl bg-blue-100 group-hover:bg-blue-500 flex items-center justify-center transition-colors">
-                      <LogIn className="h-4 w-4 text-blue-600 group-hover:text-white transition-colors" />
+                    <div className="w-12 h-12 rounded-xl bg-blue-100 group-hover:bg-blue-500 flex items-center justify-center transition-colors flex-shrink-0">
+                      <LogIn className="h-6 w-6 text-blue-600 group-hover:text-white transition-colors" />
                     </div>
                     <div className="text-left">
-                      <h3 className="text-sm font-bold text-foreground">Se connecter</h3>
-                      <p className="text-[10px] text-muted-foreground">Connexion intelligente</p>
+                      <h3 className="text-base font-bold text-foreground">Se connecter</h3>
+                      <p className="text-xs text-muted-foreground">Connexion intelligente</p>
                     </div>
                   </button>
 
@@ -1791,14 +1791,14 @@ export default function Auth() {
                   <button
                     type="button"
                     onClick={() => setShowRoleSelectionModal(true)}
-                    className="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 rounded-2xl border-2 border-emerald-200 hover:border-emerald-400 transition-all duration-200 group"
+                    className="flex items-center gap-3 py-4 px-5 bg-gradient-to-r from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 rounded-2xl border-2 border-emerald-200 hover:border-emerald-400 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] group shadow-sm hover:shadow-md"
                   >
-                    <div className="w-9 h-9 rounded-xl bg-emerald-100 group-hover:bg-emerald-500 flex items-center justify-center transition-colors">
-                      <UserPlus className="h-4 w-4 text-emerald-600 group-hover:text-white transition-colors" />
+                    <div className="w-12 h-12 rounded-xl bg-emerald-100 group-hover:bg-emerald-500 flex items-center justify-center transition-colors flex-shrink-0">
+                      <UserPlus className="h-6 w-6 text-emerald-600 group-hover:text-white transition-colors" />
                     </div>
                     <div className="text-left">
-                      <h3 className="text-sm font-bold text-foreground">Créer un compte</h3>
-                      <p className="text-[10px] text-muted-foreground">Compte client</p>
+                      <h3 className="text-base font-bold text-foreground">Créer un compte</h3>
+                      <p className="text-xs text-muted-foreground">Compte client</p>
                     </div>
                   </button>
                 </div>
