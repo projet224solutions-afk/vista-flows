@@ -947,7 +947,8 @@ export default function Auth() {
     phone: '',
     country: '',
     city: '',
-    businessName: '' // Nom de l'entreprise pour les marchands
+    businessName: '',
+    address: ''
   });
 
   // Auto-détection de l'indicatif téléphonique basé sur le pays
@@ -2426,6 +2427,18 @@ export default function Auth() {
                         ⚠️ Ville saisie manuellement - synchronisation bureau non garantie
                       </p>
                     )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="address">Adresse</Label>
+                    <Input
+                      id="address"
+                      type="text"
+                      value={formData.address}
+                      onChange={(e) => handleInputChange('address', e.target.value)}
+                      placeholder="Ex: Quartier Madina, Rue KA-020"
+                      className="mt-1"
+                    />
                   </div>
 
                   <div>
