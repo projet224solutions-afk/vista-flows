@@ -1624,39 +1624,54 @@ export default function Auth() {
                 </p>
               </div>
 
-              {/* Section: Services de Proximité Populaires */}
+              {/* Section: Inscription directe par rôle (Taxi Moto, Livreur, Transitaire) */}
+              <div className="mb-6">
+                <h4 className="text-sm font-semibold text-amber-600 mb-3 flex items-center justify-center gap-2">
+                  <span className="w-8 h-0.5 bg-amber-500 rounded"></span>
+                  Inscription Rapide
+                  <span className="w-8 h-0.5 bg-amber-500 rounded"></span>
+                </h4>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { role: 'taxi' as UserRole, name: 'Taxi Moto', icon: '🏍️', desc: 'Conducteur taxi-moto' },
+                    { role: 'livreur' as UserRole, name: 'Livreur', icon: '📦', desc: 'Coursier & livraison' },
+                    { role: 'transitaire' as UserRole, name: 'Transitaire', icon: '🚢', desc: 'Import & export' },
+                  ].map((item) => (
+                    <button
+                      key={item.role}
+                      onClick={() => {
+                        setShowServiceSelection(false);
+                        setSelectedServiceType(null);
+                        setSelectedRole(item.role);
+                        setShowSignup(true);
+                      }}
+                      className="flex flex-col items-center p-3 bg-gradient-to-br from-amber-50 to-white rounded-xl border-2 hover:border-amber-500 hover:shadow-lg hover:scale-[1.02] transition-all border-amber-200"
+                    >
+                      <div className="text-3xl mb-1.5">{item.icon}</div>
+                      <span className="text-sm font-semibold text-foreground">{item.name}</span>
+                      <span className="text-[10px] text-muted-foreground">{item.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Section: Services de Proximité */}
               <div className="mb-6">
                 <h4 className="text-sm font-semibold text-primary mb-3 flex items-center justify-center gap-2">
                   <span className="w-8 h-0.5 bg-primary rounded"></span>
-                  Services de Proximité Populaires
+                  Services de Proximité
                   <span className="w-8 h-0.5 bg-primary rounded"></span>
                 </h4>
-                {/* Première ligne - 4 boutons */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
                     { id: 'restaurant', name: 'Restaurant', icon: '🍽️', desc: 'Cuisine & plats' },
                     { id: 'beaute', name: 'Beauté & Coiffure', icon: '💇', desc: 'Soins & styling' },
                     { id: 'vtc', name: 'Transport VTC', icon: '🚗', desc: 'Véhicules privés' },
                     { id: 'reparation', name: 'Réparation', icon: '🔧', desc: 'Électro & mécanique' },
-                  ].map((service) => (
-                    <button
-                      key={service.id}
-                      onClick={() => handleServiceTypeSelect(service.id)}
-                      className={`flex flex-col items-center p-3 bg-gradient-to-br from-white to-slate-50 rounded-xl border-2 hover:border-primary hover:shadow-lg hover:scale-[1.02] transition-all ${
-                        selectedServiceType === service.id ? 'border-primary ring-2 ring-primary/30 bg-primary/5' : 'border-slate-200'
-                      }`}
-                    >
-                      <div className="text-3xl mb-1.5">{service.icon}</div>
-                      <span className="text-sm font-semibold text-foreground">{service.name}</span>
-                      <span className="text-[10px] text-muted-foreground">{service.desc}</span>
-                    </button>
-                  ))}
-                </div>
-                {/* Deuxième ligne - 2 boutons centrés */}
-                <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 max-w-md mx-auto">
-                  {[
                     { id: 'menage', name: 'Nettoyage', icon: '✨', desc: 'Ménage & pressing' },
                     { id: 'informatique', name: 'Informatique', icon: '💻', desc: 'Tech & dépannage' },
+                    { id: 'livraison', name: 'Livraison', icon: '🚚', desc: 'Coursier & colis' },
+                    { id: 'ecommerce', name: 'Boutique', icon: '🏪', desc: 'E-commerce' },
                   ].map((service) => (
                     <button
                       key={service.id}
@@ -1674,8 +1689,8 @@ export default function Auth() {
               </div>
 
               {/* Section: Services Professionnels */}
-              <div className="mb-6">
-                <h4 className="text-sm font-semibold text-violet-600 mb-3 flex items-center gap-2">
+              <div className="mb-4">
+                <h4 className="text-sm font-semibold text-violet-600 mb-3 flex items-center justify-center gap-2">
                   <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
                   Services Professionnels
                   <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
@@ -1690,42 +1705,15 @@ export default function Auth() {
                     { id: 'freelance', name: 'Administratif', icon: '💼', desc: 'Secrétariat' },
                     { id: 'sante', name: 'Santé & Bien-être', icon: '💊', desc: 'Pharmacie & soins' },
                     { id: 'maison', name: 'Maison & Déco', icon: '🏠', desc: 'Intérieur' },
+                    { id: 'education', name: 'Formation', icon: '🎓', desc: 'Cours & coaching' },
+                    { id: 'voyage', name: 'Voyage', icon: '✈️', desc: 'Tourisme & voyages' },
+                    { id: 'digital', name: 'Produits Numériques', icon: '📱', desc: 'E-books & logiciels' },
                   ].map((service) => (
                     <button
                       key={service.id}
                       onClick={() => handleServiceTypeSelect(service.id)}
                       className={`flex flex-col items-center p-3 bg-gradient-to-br from-violet-50 to-white rounded-xl border-2 hover:border-violet-500 hover:shadow-lg hover:scale-[1.02] transition-all ${
                         selectedServiceType === service.id ? 'border-violet-500 ring-2 ring-violet-500/30' : 'border-violet-200'
-                      }`}
-                    >
-                      <div className="text-3xl mb-1.5">{service.icon}</div>
-                      <span className="text-sm font-semibold text-foreground">{service.name}</span>
-                      <span className="text-[10px] text-muted-foreground">{service.desc}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Section: Autres Services */}
-              <div className="mb-4">
-                <h4 className="text-sm font-semibold text-cyan-600 mb-3 flex items-center gap-2">
-                  <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
-                  Autres Services
-                  <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
-                </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[
-                    { id: 'education', name: 'Formation', icon: '🎓', desc: 'Cours & coaching' },
-                    { id: 'livraison', name: 'Livraison', icon: '🚚', desc: 'Coursier & colis' },
-                    { id: 'voyage', name: 'Voyage', icon: '✈️', desc: 'Tourisme & voyages' },
-                    { id: 'ecommerce', name: 'Boutique', icon: '🏪', desc: 'E-commerce' },
-                    { id: 'digital', name: 'Produits Numériques', icon: '📱', desc: 'E-books, logiciels, formations' },
-                  ].map((service) => (
-                    <button
-                      key={service.id}
-                      onClick={() => handleServiceTypeSelect(service.id)}
-                      className={`flex flex-col items-center p-3 bg-gradient-to-br from-cyan-50 to-white rounded-xl border-2 hover:border-cyan-500 hover:shadow-lg hover:scale-[1.02] transition-all ${
-                        selectedServiceType === service.id ? 'border-cyan-500 ring-2 ring-cyan-500/30' : 'border-cyan-200'
                       }`}
                     >
                       <div className="text-3xl mb-1.5">{service.icon}</div>
