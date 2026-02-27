@@ -2274,7 +2274,7 @@ export default function Auth() {
                 </Alert>
               )}
 
-              {showSignup && (
+              {showSignup && selectedRole && (
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -2481,6 +2481,7 @@ export default function Auth() {
                 </>
               )}
 
+              {(!showSignup || selectedRole) && (<>
               <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -2570,6 +2571,7 @@ export default function Auth() {
                   showSignup ? t('auth.register') : t('auth.login')
                 )}
               </Button>
+              </>)}
 
               {/* ===== OAUTH BUTTONS (Google & Facebook) ===== */}
               <div className="relative my-6">
