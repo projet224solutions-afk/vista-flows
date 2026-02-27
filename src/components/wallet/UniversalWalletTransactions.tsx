@@ -190,13 +190,28 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       if (walletData) {
         setWallet(walletData);
       } else {
-        // Créer le wallet directement dans la table wallets
+        // Détecter la devise native de l'utilisateur depuis le profil
+        let nativeCurrency = 'GNF';
+        try {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('detected_currency')
+            .eq('id', effectiveUserId)
+            .maybeSingle();
+          if (profileData?.detected_currency) {
+            nativeCurrency = profileData.detected_currency;
+          }
+        } catch (e) {
+          console.warn('Could not detect user currency, defaulting to GNF');
+        }
+
+        // Créer le wallet avec la devise détectée
         const { data: newWallet, error: insertError } = await supabase
           .from('wallets')
           .insert({
             user_id: effectiveUserId,
             balance: 0,
-            currency: 'GNF',
+            currency: nativeCurrency,
             wallet_status: 'active'
           })
           .select('id, balance, currency')
@@ -1221,12 +1236,13 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     if (!effectiveUserId || !intlPreview) return;
     setIntlExecuting(true);
     try {
+      // Utiliser recipientId tel quel - l'edge function résout l'identifiant
       const { data, error } = await supabase.functions.invoke(
         'wallet-transfer?action=transfer',
         {
           body: {
             sender_id: effectiveUserId,
-            receiver_id: recipientId,
+            receiver_id: recipientId.trim(),
             amount: intlPreview.amount_sent,
             description: transferDescription,
           },
