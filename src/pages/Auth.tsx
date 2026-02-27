@@ -2322,6 +2322,32 @@ export default function Auth() {
                     </div>
                   )}
 
+                  {/* Bouton détection position */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-2 text-primary border-primary/30 hover:bg-primary/5"
+                    onClick={async () => {
+                      try {
+                        setLoading(true);
+                        const res = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(5000) });
+                        const data = await res.json();
+                        handleInputChange('country', data.country_name || '');
+                        handleInputChange('city', data.city || '');
+                        toast({ title: "📍 Position détectée", description: `${data.city}, ${data.country_name}` });
+                      } catch {
+                        toast({ title: "Erreur", description: "Impossible de détecter la position", variant: "destructive" });
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    disabled={loading}
+                  >
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                    Détecter ma position automatiquement
+                  </Button>
+
                   <div>
                     <Label htmlFor="country">Pays</Label>
                     <Input
