@@ -2042,7 +2042,7 @@ export default function Auth() {
               </div>
             )}
             
-              {showSignup && (
+              {showSignup && selectedRole && (
               <div className={`mb-6 p-4 rounded-lg border ${
                 selectedRole === 'vendeur' ? 'bg-blue-50 border-blue-200' :
                 selectedRole === 'livreur' ? 'bg-orange-50 border-orange-200' :
