@@ -2613,13 +2613,13 @@ export default function Auth() {
               </Button>
               </>)}
 
-              {/* ===== OAUTH BUTTONS - Uniquement sur la page de connexion ===== */}
-              {!showSignup && (
+              {/* ===== OAUTH BUTTONS ===== */}
+              {(
                 <>
                   <div className="relative my-6">
                     <Separator />
                     <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-sm text-muted-foreground">
-                      ou continuer avec
+                      {showSignup ? "ou s'inscrire avec" : 'ou continuer avec'}
                     </span>
                   </div>
 
@@ -2631,7 +2631,7 @@ export default function Auth() {
                         className="w-full h-14 gap-3 font-medium text-base hover:bg-red-50 hover:border-red-300 hover:shadow-lg transition-all duration-200 relative overflow-hidden group"
                         onClick={() => handleGoogleLogin(false)}
                         disabled={loading || oauthLoading !== null}
-                        aria-label="Se connecter avec Google"
+                        aria-label={showSignup ? "S'inscrire avec Google" : "Se connecter avec Google"}
                         aria-busy={oauthLoading === 'google'}
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
