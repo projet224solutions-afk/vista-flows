@@ -2361,6 +2361,8 @@ export default function Auth() {
                 </>
               )}
 
+              {selectedRole && (
+              <>
               <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -2396,30 +2398,27 @@ export default function Auth() {
                 </div>
               </div>
 
-              {showSignup && (
-                <div>
-                  <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
-                  <div className="relative mt-1">
-                    <Input
-                      id="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={formData.confirmPassword}
-                      onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                      placeholder={t('auth.confirmPassword')}
-                      required
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
+              <div>
+                <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
+                <div className="relative mt-1">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={formData.confirmPassword}
+                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                    placeholder={t('auth.confirmPassword')}
+                    required
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
-              )}
-              
+              </div>
 
               <Button
                 type="submit"
@@ -2445,30 +2444,25 @@ export default function Auth() {
               </div>
 
               <div className="flex justify-center">
-                {/* Bouton Google - Agrandi et centré */}
                 <div className="relative w-full max-w-sm">
-                  {showSignup && (
-                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-10">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-semibold shadow-lg">
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        Rapide
-                      </span>
-                    </div>
-                  )}
+                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-10">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-semibold shadow-lg">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      Rapide
+                    </span>
+                  </div>
                   <Button
                     type="button"
                     variant="outline"
                     className="w-full h-14 gap-3 font-medium text-base hover:bg-red-50 hover:border-red-300 hover:shadow-lg transition-all duration-200 relative overflow-hidden group"
                     onClick={() => handleGoogleLogin(false)}
                     disabled={loading || oauthLoading !== null}
-                    aria-label={showSignup ? "S'inscrire avec Google" : "Se connecter avec Google"}
+                    aria-label="S'inscrire avec Google"
                     aria-busy={oauthLoading === 'google'}
                   >
-                    {/* Effet de brillance au survol */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
-                    
                     {oauthLoading === 'google' ? (
                       <>
                         {oauthRetrying ? (
@@ -2486,14 +2480,13 @@ export default function Auth() {
                           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                         </svg>
-                        <span>Continuer avec Google</span>
+                        <span>S'inscrire avec Google</span>
                       </>
                     )}
                   </Button>
                 </div>
               </div>
 
-              {/* Message de sécurité et confidentialité */}
               <div className="mt-4 space-y-2">
                 <p className="text-xs text-center text-muted-foreground">
                   En continuant, vous acceptez nos conditions d'utilisation
@@ -2507,9 +2500,10 @@ export default function Auth() {
                   </div>
                 )}
               </div>
-              {/* ===== FIN OAUTH BUTTONS ===== */}
+              </>
+              )}
 
-              {/* Section basculer Connexion / Inscription - Design compact */}
+              {/* Section basculer vers connexion */}
               <div className="mt-3 pt-3 border-t border-border/30">
                 <div className="flex items-center justify-center gap-2">
                   <span className="text-sm text-muted-foreground">Déjà inscrit ?</span>
