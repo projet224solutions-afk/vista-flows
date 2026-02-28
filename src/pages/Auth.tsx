@@ -1921,7 +1921,7 @@ export default function Auth() {
             )}
 
             {/* Types de comptes - Vendeur classique & Service */}
-            {showSignupLayout && !showVendorTypeSelection && (
+            {showSignupLayout && !showVendorTypeSelection && !selectedRole && (
               <div className="mb-6 bg-gradient-to-br from-muted/20 via-background to-muted/10 border border-border/50 rounded-2xl p-5 shadow-sm">
                 <div className="text-center mb-4">
                   <h3 className="text-sm font-bold text-foreground mb-1">Choisissez votre profil</h3>
