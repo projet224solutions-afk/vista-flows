@@ -401,23 +401,20 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
   const userAgent = req.headers.get("user-agent") || "unknown";
   const signature = await generateSignature(transferCode, amount);
 
-  // Create secure_transactions record (no 'metadata' column in this table)
+  // Create secure_transactions record
   const { error: secureInsertError } = await supabase
     .from("secure_transactions")
     .insert({
       id: transferCode,
       user_id: sender_id,
       requested_amount: amount,
-      fee_percentage: feePercentage,
       fee_amount: feeAmount,
       total_amount: amount,
       net_amount: amountReceived,
-      signature_hash: signature,
+      signature,
       status: "pending",
       transaction_type: isInternational ? "international_transfer" : "wallet_transfer",
-      interface_type: "wallet",
-      ip_address: clientIP,
-      user_agent: userAgent,
+      metadata: { receiver_id, senderCurrency, receiverCurrency, rateDisplayed, isInternational, senderCountry, receiverCountry }
     });
 
   if (secureInsertError) {
@@ -450,6 +447,7 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
       receiver_country: receiverCountry,
       ip_address: clientIP,
       user_agent: userAgent,
+      signature,
     })
     .select()
     .single();
