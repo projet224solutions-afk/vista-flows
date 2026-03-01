@@ -1817,7 +1817,7 @@ export default function Auth() {
                   >
                     <span className="flex items-center justify-center gap-2">
                       <UserPlus className="h-4 w-4" />
-                      Créer un compte
+                      Marchand/Service
                     </span>
                   </button>
                 </div>
