@@ -1801,6 +1801,11 @@ export default function Auth() {
                     onClick={() => {
                       setShowSignup(true);
                       setIsLogin(false);
+                      setSelectedRole('client');
+                      setShowVendorTypeSelection(false);
+                      setShowServiceSelection(false);
+                      setVendorShopType(null);
+                      setSelectedServiceType(null);
                       setError(null);
                       setSuccess(null);
                     }}
