@@ -2621,7 +2621,7 @@ export default function Auth() {
                     <span className="text-sm text-muted-foreground">Pas de compte ?</span>
                     <button
                       type="button"
-                      onClick={() => { setSelectedRole('client' as UserRole); setShowSignup(true); setIsLogin(false); setShowVendorTypeSelection(false); setShowServiceSelection(false); setShowRoleSelectionModal(false); setVendorShopType(null); setSelectedServiceType(null); setError(null); setSuccess(null); }}
+                      onClick={() => { setShowRoleSelectionModal(true); setError(null); setSuccess(null); }}
                       className="inline-flex items-center gap-1.5 py-2 px-4 text-sm font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-all duration-200"
                     >
                       <UserPlus className="h-4 w-4" />
