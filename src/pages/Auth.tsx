@@ -1939,9 +1939,9 @@ export default function Auth() {
                   {/* Vendeur classique - Un seul bouton qui ouvre la page dédiée */}
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
+                    onClick={() => {
                       setShowVendorTypeSelection(true);
+                      setShowSignup(false);
                       setSelectedRole(null);
                       setSelectedServiceType(null);
                     }}
