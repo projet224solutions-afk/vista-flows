@@ -46,8 +46,6 @@ const NearbyLivraison = lazyWithRetry(() => import("./pages/NearbyLivraison"));
 const NearbyBoutiques = lazyWithRetry(() => import("./pages/NearbyBoutiques"));
 const ClientTrackingPage = lazyWithRetry(() => import("./pages/ClientTrackingPage"));
 const Profil = lazyWithRetry(() => import("./pages/Profil"));
-const LoginGoogle = lazyWithRetry(() => import("./pages/LoginGoogle"));
-const AuthGoogleSuccess = lazyWithRetry(() => import("./pages/AuthGoogleSuccess"));
 const AgentLogin = lazyWithRetry(() => import("./pages/AgentLogin"));
 const BureauLogin = lazyWithRetry(() => import("./pages/BureauLogin"));
 const AgentChangePassword = lazyWithRetry(() => import("./pages/AgentChangePassword"));
@@ -233,8 +231,6 @@ function App() {
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/login" element={<Navigate to="/auth" replace />} />
-              <Route path="/auth/google" element={<LoginGoogle />} />
-              <Route path="/auth/google/success" element={<AuthGoogleSuccess />} />
 <Route path="/universal-login" element={<UniversalLoginPage />} />
               <Route path="/auth/set-password" element={<SetPasswordAfterOAuth />} />
               <Route path="/agent/create" element={<AgentCreation />} />
