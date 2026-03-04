@@ -21,13 +21,13 @@ const GRACE_PERIOD_DAYS = 7;
 export function useVendorRestrictions() {
   const { user } = useAuth();
   const [restrictions, setRestrictions] = useState<VendorRestrictions>({
-    isRestricted: true, // Par défaut restreint jusqu'à vérification
-    canCreateProducts: false,
-    canSendMessages: false,
-    canMakeCalls: false,
-    canTransfer: false,
+    isRestricted: false, // Par défaut non restreint (plan gratuit)
+    canCreateProducts: true,
+    canSendMessages: true,
+    canMakeCalls: true,
+    canTransfer: true,
     canUseVirtualCard: false,
-    canReceivePayments: false,
+    canReceivePayments: true,
     subscriptionStatus: null,
     daysUntilExpiry: null,
     isInGracePeriod: false,
@@ -66,16 +66,17 @@ export function useVendorRestrictions() {
         console.error('Error loading subscription:', subError);
       }
 
-      // Pas d'abonnement = RESTREINT
+      // Pas d'abonnement = Plan gratuit (PAS restreint, PAS expiré)
+      // L'utilisateur n'a jamais souscrit, il est sur le plan gratuit
       if (!subscription) {
         setRestrictions({
-          isRestricted: true,
-          canCreateProducts: false,
-          canSendMessages: false,
-          canMakeCalls: false,
-          canTransfer: false,
+          isRestricted: false,
+          canCreateProducts: true,
+          canSendMessages: true,
+          canMakeCalls: true,
+          canTransfer: true,
           canUseVirtualCard: false,
-          canReceivePayments: false,
+          canReceivePayments: true,
           subscriptionStatus: null,
           daysUntilExpiry: null,
           isInGracePeriod: false,

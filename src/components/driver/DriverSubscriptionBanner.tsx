@@ -8,7 +8,8 @@ export function DriverSubscriptionBanner() {
   const { subscription, isExpired, isExpiringSoon, daysRemaining, hasAccess, isDriver, loading } = useDriverSubscription();
   const navigate = useNavigate();
 
-  if (loading || !isDriver || hasAccess) {
+  // Ne rien afficher si: chargement, pas chauffeur, a accès, ou jamais souscrit (pas d'abonnement)
+  if (loading || !isDriver || hasAccess || !subscription) {
     return null;
   }
 

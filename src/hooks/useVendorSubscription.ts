@@ -108,7 +108,8 @@ export function useVendorSubscription() {
   };
 
   const isExpired = () => {
-    if (!subscription || !subscription.current_period_end) return true;
+    // Pas d'abonnement = plan gratuit, PAS expiré (jamais souscrit)
+    if (!subscription || !subscription.current_period_end) return false;
     return subscription.status !== 'active' || new Date(subscription.current_period_end) < new Date();
   };
 
