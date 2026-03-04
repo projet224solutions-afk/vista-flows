@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
 /**
@@ -44,7 +45,30 @@ const Dashboard = () => {
       'transitaire': '/transitaire',
       'agent': '/agent-dashboard',
       'client': '/client',
+      'vendor_agent': '/home',
     };
+
+    // ✅ FIX: Pour les vendor_agents, chercher leur access_token et rediriger vers l'interface agent
+    if (role === 'vendor_agent') {
+      const fetchVendorAgentToken = async () => {
+        const { data: vendorAgent } = await supabase
+          .from('vendor_agents')
+          .select('access_token')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .maybeSingle();
+        
+        if (vendorAgent?.access_token) {
+          console.log('🚀 Dashboard: Redirection agent vendeur vers /vendor-agent/');
+          navigate(`/vendor-agent/${vendorAgent.access_token}`, { replace: true });
+        } else {
+          console.log('⚠️ Dashboard: Agent vendeur sans token, redirection /home');
+          navigate('/home', { replace: true });
+        }
+      };
+      fetchVendorAgentToken();
+      return;
+    }
 
     const redirectPath = roleRedirects[role] || '/home';
     

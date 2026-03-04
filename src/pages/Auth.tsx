@@ -343,9 +343,14 @@ export default function Auth() {
         const provider = session.user.app_metadata?.provider;
         const isOAuthUser = provider === 'google' || provider === 'facebook';
         
+        // ✅ IMPORTANT: Lire le rôle OAuth AVANT de poller le profil
+        // Ce rôle a été défini AVANT la redirection OAuth et persiste dans localStorage
+        const oauthIntentRole = localStorage.getItem('oauth_intent_role');
+        const isNewOAuthSignup = localStorage.getItem('oauth_is_new_signup') === 'true';
+        
         // Délai pour laisser useAuth (source unique) créer/charger le profil
         // useAuth.tsx gère TOUTE la création de profil OAuth - pas de duplication ici
-        const maxWait = 10;
+        const maxWait = 15;
         let profile: any = null;
         
         try {
@@ -356,15 +361,28 @@ export default function Auth() {
               .select('id, role, public_id, has_password')
               .eq('id', session.user.id)
               .maybeSingle();
+            
             if (data?.role) {
+              // ✅ FIX: Si c'est une nouvelle inscription OAuth avec un rôle choisi,
+              // attendre que useAuth.tsx mette à jour le rôle (pas le rôle 'client' du trigger)
+              if (isNewOAuthSignup && oauthIntentRole && oauthIntentRole !== 'client' && data.role === 'client') {
+                console.log(`⏳ [Auth] Attente mise à jour rôle OAuth... (${i + 1}/${maxWait}) - actuel: client, attendu: ${oauthIntentRole}`);
+                // Continuer à attendre que useAuth mette à jour le rôle
+                continue;
+              }
               profile = data;
               break;
             }
             console.log(`⏳ [Auth] Attente profil... (${i + 1}/${maxWait})`);
           }
           
+          // ✅ Si après l'attente le rôle est toujours 'client' mais on attendait un autre rôle,
+          // utiliser le rôle intentionnel directement
+          const effectiveRole = (isNewOAuthSignup && oauthIntentRole && oauthIntentRole !== 'client' && profile?.role === 'client')
+            ? oauthIntentRole
+            : profile?.role;
+          
           // Vérifier si l'utilisateur OAuth a déjà défini un mot de passe ou passé l'étape
-          // ✅ Vérifier AUSSI en BDD (has_password) pour éviter les boucles si localStorage est vide
           const hasSetPassword = localStorage.getItem(`oauth_password_set_${session.user.id}`);
           const alreadyHandled = hasSetPassword === 'true' || hasSetPassword === 'skipped';
           const hasPasswordInDB = (profile as any)?.has_password === true;
@@ -384,13 +402,32 @@ export default function Auth() {
             return;
           }
           
-          if (profile?.role) {
-            const targetRoute = getDashboardRoute(profile.role);
-            console.log(`🚀 [Auth] Redirection OAuth vers ${targetRoute} (rôle: ${profile.role})`);
+          if (effectiveRole) {
+            // ✅ FIX: Pour les vendor_agents, chercher leur access_token et rediriger
+            if (effectiveRole === 'vendor_agent') {
+              const { data: vendorAgent } = await supabase
+                .from('vendor_agents')
+                .select('access_token')
+                .eq('user_id', session.user.id)
+                .eq('is_active', true)
+                .maybeSingle();
+              
+              if (vendorAgent?.access_token) {
+                console.log('🚀 [Auth] Redirection agent vendeur vers /vendor-agent/');
+                localStorage.removeItem('oauth_intent_role');
+                localStorage.removeItem('oauth_is_new_signup');
+                navigate(`/vendor-agent/${vendorAgent.access_token}`, { replace: true });
+                setIsAuthenticating(false);
+                return;
+              }
+            }
+            
+            const targetRoute = getDashboardRoute(effectiveRole);
+            console.log(`🚀 [Auth] Redirection vers ${targetRoute} (rôle effectif: ${effectiveRole}, DB: ${profile?.role})`);
             
             toast({
               title: "✅ Connexion réussie",
-              description: `Bienvenue ! Redirection vers votre espace ${profile.role}...`,
+              description: `Bienvenue ! Redirection vers votre espace ${effectiveRole}...`,
             });
             
             // Nettoyer les flags OAuth
@@ -1287,11 +1324,29 @@ export default function Auth() {
           }
           
           if (profileData?.role) {
-            const targetRoute = getDashboardRoute(profileData.role);
-            console.log('🚀 [Auth Login] Redirection vers:', targetRoute, '(rôle:', profileData.role, ')');
-            // Attendre un peu pour que l'auth state soit bien propagé
-            await new Promise(resolve => setTimeout(resolve, 300));
-            navigate(targetRoute, { replace: true });
+            // ✅ FIX: Pour les vendor_agents, rediriger vers leur interface dédiée
+            if (profileData.role === 'vendor_agent') {
+              const { data: vendorAgent } = await supabase
+                .from('vendor_agents')
+                .select('access_token')
+                .eq('user_id', userId)
+                .eq('is_active', true)
+                .maybeSingle();
+              
+              if (vendorAgent?.access_token) {
+                console.log('🚀 [Auth Login] Redirection agent vendeur vers /vendor-agent/');
+                await new Promise(resolve => setTimeout(resolve, 300));
+                navigate(`/vendor-agent/${vendorAgent.access_token}`, { replace: true });
+              } else {
+                console.log('⚠️ [Auth Login] Agent vendeur sans token actif');
+                navigate('/home', { replace: true });
+              }
+            } else {
+              const targetRoute = getDashboardRoute(profileData.role);
+              console.log('🚀 [Auth Login] Redirection vers:', targetRoute, '(rôle:', profileData.role, ')');
+              await new Promise(resolve => setTimeout(resolve, 300));
+              navigate(targetRoute, { replace: true });
+            }
           } else {
             // Fallback: rediriger vers home, useRoleRedirect prendra le relais
             console.log('⚠️ [Auth Login] Pas de profil trouvé, redirection vers /home');

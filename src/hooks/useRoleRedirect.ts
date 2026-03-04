@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Routes publiques où l'utilisateur peut rester sans redirection automatique
@@ -40,6 +41,7 @@ const PUBLIC_ROUTES = [
   '/service',     // Page de détail d'un service professionnel
   '/restaurant',  // Menu restaurant public
   '/digital-product', // Produit numérique
+  '/vendor-agent', // Interface agent vendeur
 ];
 
 /**
@@ -76,6 +78,7 @@ export const getDashboardRoute = (role: string | null | undefined): string => {
     transitaire: '/transitaire',
     client: '/client',
     agent: '/agent-dashboard',
+    vendor_agent: '/home', // Les vendor_agents sont redirigés via leur access_token
   };
 
   return roleRoutes[normalizedRole] || '/home';
@@ -121,6 +124,33 @@ export const useRoleRedirect = () => {
 
     // Si utilisateur connecté avec profil et rôle
     if (user && profile && profile.role) {
+      // ✅ FIX: Pour les vendor_agents, rediriger vers leur interface dédiée
+      if (profile.role === 'vendor_agent') {
+        const isOnRedirectTriggerRoute = REDIRECT_TRIGGER_ROUTES.some(route => 
+          currentPath === route || currentPath === route + '/'
+        );
+        
+        if (isOnRedirectTriggerRoute) {
+          const redirectVendorAgent = async () => {
+            const { data: vendorAgent } = await supabase
+              .from('vendor_agents')
+              .select('access_token')
+              .eq('user_id', user.id)
+              .eq('is_active', true)
+              .maybeSingle();
+            
+            if (vendorAgent?.access_token) {
+              console.log('🚀 [useRoleRedirect] Redirection vendor_agent vers /vendor-agent/');
+              navigate(`/vendor-agent/${vendorAgent.access_token}`, { replace: true });
+            } else {
+              navigate('/home', { replace: true });
+            }
+          };
+          redirectVendorAgent();
+        }
+        return;
+      }
+      
       const targetRoute = getDashboardRoute(profile.role);
       
       // Vérifier si on est sur une route qui déclenche une redirection
