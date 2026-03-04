@@ -73,6 +73,7 @@ export function useSubscription() {
   };
 
   const isFreePlan = (): boolean => {
+    // Pas d'abonnement = plan gratuit (nouvel inscrit, PAS expiré)
     return subscription?.plan_name === 'free' || !subscription;
   };
 
