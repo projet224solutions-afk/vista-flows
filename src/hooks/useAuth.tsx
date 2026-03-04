@@ -9,7 +9,7 @@ export interface Profile {
   email: string;
   first_name?: string;
   last_name?: string;
-  role: 'admin' | 'ceo' | 'pdg' | 'vendeur' | 'livreur' | 'taxi' | 'syndicat' | 'transitaire' | 'client' | 'agent';
+  role: 'admin' | 'ceo' | 'pdg' | 'vendeur' | 'livreur' | 'taxi' | 'syndicat' | 'transitaire' | 'client' | 'agent' | 'vendor_agent';
   avatar_url?: string;
   phone?: string;
   city?: string;
@@ -190,6 +190,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (v === 'admin') return 'admin';
       if (v === 'ceo' || v === 'pdg') return 'pdg';
       if (v === 'client') return 'client';
+      if (v === 'vendor_agent') return 'vendor_agent';
       return null;
     };
     
@@ -262,7 +263,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           
           const { error: updateError } = await supabase
             .from('profiles')
-            .update({ role: intendedRole })
+            .update({ role: intendedRole as any })
             .eq('id', user.id);
 
           if (!updateError) {
@@ -383,7 +384,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const { error: insertError } = await supabase
         .from('profiles')
-        .insert(profileToCreate);
+        .insert(profileToCreate as any);
 
       if (insertError) {
         console.error('❌ Erreur création profil:', insertError);
