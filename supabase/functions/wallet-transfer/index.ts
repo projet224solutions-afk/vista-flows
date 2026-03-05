@@ -449,7 +449,6 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
       receiver_country: receiverCountry,
       ip_address: clientIP,
       user_agent: userAgent,
-      signature,
     })
     .select()
     .single();
