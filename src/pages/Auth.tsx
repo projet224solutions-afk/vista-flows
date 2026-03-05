@@ -1462,6 +1462,8 @@ export default function Auth() {
 
   const handleServiceTypeSelect = (serviceTypeId: string) => {
     setSelectedServiceType(serviceTypeId);
+    setSelectedRole('vendeur');
+    setVendorShopType(null); // Pas de vendor shop type explicite, sera inféré comme 'service'
     setShowServiceSelection(false);
     setShowSignup(true);
   };
