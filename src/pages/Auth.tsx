@@ -169,6 +169,14 @@ export default function Auth() {
     if (showSignup) {
       localStorage.setItem('oauth_is_new_signup', 'true');
     }
+    // ✅ FIX: Persister le type de boutique et le type de service pour l'OAuth
+    // Ces valeurs sont perdues après la redirection Google, on les sauvegarde ici
+    if (vendorShopType) {
+      localStorage.setItem('oauth_vendor_shop_type', vendorShopType);
+    }
+    if (selectedServiceType) {
+      localStorage.setItem('oauth_service_type', selectedServiceType);
+    }
 
     // 📊 Track click
     trackOAuthEvent('google', 'click', { attempt: oauthAttempts.google + 1, isRetry });
@@ -422,7 +430,14 @@ export default function Auth() {
               }
             }
             
-            const targetRoute = getDashboardRoute(effectiveRole);
+            // ✅ FIX: Si vendeur digital via OAuth, rediriger vers l'interface digitale
+            const oauthShopType = localStorage.getItem('oauth_vendor_shop_type');
+            let targetRoute = getDashboardRoute(effectiveRole);
+            if (effectiveRole === 'vendeur' && oauthShopType === 'digital') {
+              targetRoute = '/vendeur/digital-products';
+            }
+            localStorage.removeItem('oauth_vendor_shop_type');
+            localStorage.removeItem('oauth_service_type');
             console.log(`🚀 [Auth] Redirection vers ${targetRoute} (rôle effectif: ${effectiveRole}, DB: ${profile?.role})`);
             
             toast({
@@ -1730,6 +1745,10 @@ export default function Auth() {
                     setShowServiceSelection(false);
                     localStorage.setItem('oauth_intent_role', 'vendeur');
                     localStorage.setItem('oauth_is_new_signup', 'true');
+                    // ✅ FIX: Persister le service type sélectionné avant OAuth
+                    if (selectedServiceType) {
+                      localStorage.setItem('oauth_service_type', selectedServiceType);
+                    }
                     handleGoogleLogin(false);
                   }}
                   className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 hover:shadow-md transition-all duration-200"
@@ -1959,6 +1978,10 @@ export default function Auth() {
                         setShowVendorTypeSelection(false);
                         localStorage.setItem('oauth_intent_role', 'vendeur');
                         localStorage.setItem('oauth_is_new_signup', 'true');
+                        // ✅ FIX: Persister le type de boutique si déjà choisi
+                        if (vendorShopType) {
+                          localStorage.setItem('oauth_vendor_shop_type', vendorShopType);
+                        }
                         handleGoogleLogin(false);
                       }}
                       className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 hover:shadow-md transition-all duration-200"
