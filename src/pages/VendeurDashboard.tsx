@@ -256,7 +256,7 @@ export default function VendeurDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ⚡ Si le vendeur est de type digital, rediriger vers l'interface dédiée
+  // ⚡ Si le vendeur est de type digital ou service, rediriger vers l'interface dédiée
   useEffect(() => {
     if (!user?.id || !stats) return;
     const checkBusinessType = async () => {
@@ -268,6 +268,16 @@ export default function VendeurDashboard() {
       if (vendor?.business_type === 'digital') {
         const subPath = location.pathname.replace('/vendeur', '');
         navigate(`/vendeur-digital${subPath || '/dashboard'}`, { replace: true });
+      } else if (vendor?.business_type === 'service') {
+        // Rediriger vers le dashboard du service professionnel
+        const { data: proService } = await supabase
+          .from('professional_services')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (proService) {
+          navigate(`/dashboard/service/${proService.id}`, { replace: true });
+        }
       }
     };
     checkBusinessType();

@@ -174,8 +174,12 @@ export default function Auth() {
     if (vendorShopType) {
       localStorage.setItem('oauth_vendor_shop_type', vendorShopType);
     }
+    // ✅ FIX: Si un service type est sélectionné mais pas de shop type, marquer comme 'service'
     if (selectedServiceType) {
       localStorage.setItem('oauth_service_type', selectedServiceType);
+      if (!vendorShopType) {
+        localStorage.setItem('oauth_vendor_shop_type', 'service');
+      }
     }
 
     // 📊 Track click
@@ -1458,6 +1462,8 @@ export default function Auth() {
 
   const handleServiceTypeSelect = (serviceTypeId: string) => {
     setSelectedServiceType(serviceTypeId);
+    setSelectedRole('vendeur');
+    setVendorShopType(null); // Pas de vendor shop type explicite, sera inféré comme 'service'
     setShowServiceSelection(false);
     setShowSignup(true);
   };
