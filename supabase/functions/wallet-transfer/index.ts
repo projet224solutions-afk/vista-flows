@@ -454,7 +454,7 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
 
   if (transferError) {
     console.error("Transfer record creation failed:", transferError);
-    await supabase.from("secure_transactions").update({ status: "failed" }).eq("id", transferCode);
+    await supabase.from("secure_transactions").update({ status: "failed" }).eq("external_transaction_id", transferCode);
     throw new Error("Erreur lors de la création du transfert");
   }
 
