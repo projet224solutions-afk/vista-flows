@@ -430,7 +430,14 @@ export default function Auth() {
               }
             }
             
-            const targetRoute = getDashboardRoute(effectiveRole);
+            // ✅ FIX: Si vendeur digital via OAuth, rediriger vers l'interface digitale
+            const oauthShopType = localStorage.getItem('oauth_vendor_shop_type');
+            let targetRoute = getDashboardRoute(effectiveRole);
+            if (effectiveRole === 'vendeur' && oauthShopType === 'digital') {
+              targetRoute = '/vendeur/digital-products';
+            }
+            localStorage.removeItem('oauth_vendor_shop_type');
+            localStorage.removeItem('oauth_service_type');
             console.log(`🚀 [Auth] Redirection vers ${targetRoute} (rôle effectif: ${effectiveRole}, DB: ${profile?.role})`);
             
             toast({
