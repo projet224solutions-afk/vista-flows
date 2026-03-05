@@ -476,10 +476,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
           } catch (vendorErr) {
             console.error('❌ Exception création vendor OAuth:', vendorErr);
-          } finally {
-            localStorage.removeItem('oauth_vendor_shop_type');
-            localStorage.removeItem('oauth_service_type');
           }
+          // ⚠️ NE PAS supprimer oauth_vendor_shop_type / oauth_service_type ici !
+          // Auth.tsx en a besoin pour la redirection, il les supprime lui-même.
         }
         
         const roleLabels: Record<string, string> = {
