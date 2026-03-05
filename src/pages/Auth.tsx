@@ -1499,9 +1499,10 @@ export default function Auth() {
   const handleServiceTypeSelect = (serviceTypeId: string) => {
     setSelectedServiceType(serviceTypeId);
     setSelectedRole('vendeur');
-    setVendorShopType(null); // Pas de vendor shop type explicite, sera inféré comme 'service'
+    setVendorShopType(null); // Explicitement null pour les services - sera traité comme 'service' dans handleSubmit
     setShowServiceSelection(false);
     setShowSignup(true);
+    console.log('🔧 [Auth] Service sélectionné:', serviceTypeId, '→ rôle: vendeur, business_type sera: service');
   };
 
   const handleInputChange = (field: string, value: string) => {
