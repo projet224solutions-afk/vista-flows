@@ -271,6 +271,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setProfile(updatedProfile);
             localStorage.setItem(profileCacheKey, JSON.stringify(updatedProfile));
             
+            // ✅ FIX: Créer le vendor et professional_service si le rôle est vendeur
+            // Ce code ne s'exécutait PAS avant car on faisait un return prématuré
+            if (intendedRole === 'vendeur') {
+              await createVendorAndServiceForOAuth(user);
+            }
+            
             const roleLabels: Record<string, string> = {
               client: 'Client',
               vendeur: 'Marchand',
