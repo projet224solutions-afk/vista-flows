@@ -437,7 +437,7 @@ export default function Auth() {
             
             if (effectiveRole === 'vendeur') {
               if (oauthShopType === 'digital') {
-                targetRoute = '/vendeur/digital-products';
+                targetRoute = '/vendeur-digital';
               } else if (oauthShopType === 'service' || (oauthServiceType && oauthServiceType !== 'general')) {
                 // Pour les services, attendre et chercher le professional_service créé
                 let proServiceId: string | null = null;
