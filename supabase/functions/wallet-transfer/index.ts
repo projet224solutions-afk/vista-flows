@@ -402,20 +402,19 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
   const userAgent = req.headers.get("user-agent") || "unknown";
   const signature = await generateSignature(transferCode, amount);
 
-  // Create secure_transactions record
+  // Create secure_transactions record (use UUID for id, correct column names)
   const { error: secureInsertError } = await supabase
     .from("secure_transactions")
     .insert({
-      id: transferCode,
       user_id: sender_id,
       requested_amount: amount,
       fee_amount: feeAmount,
       total_amount: amount,
       net_amount: amountReceived,
-      signature,
+      signature_hash: signature,
       status: "pending",
       transaction_type: isInternational ? "international_transfer" : "wallet_transfer",
-      metadata: { receiver_id, senderCurrency, receiverCurrency, rateDisplayed, isInternational, senderCountry, receiverCountry }
+      external_transaction_id: transferCode,
     });
 
   if (secureInsertError) {
