@@ -977,9 +977,10 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       } else {
         // ✅ Appeler l'edge function pour TOUS les transferts (local ET international)
         const { data, error } = await supabase.functions.invoke(
-          'wallet-transfer?action=preview',
+          'wallet-transfer',
           {
             body: {
+              action: 'preview',
               sender_id: effectiveUserId,
               receiver_id: recipientUuid,
               amount,
