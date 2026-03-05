@@ -1327,13 +1327,26 @@ export default function Auth() {
             console.log(`⏳ Attente création profil... (tentative ${attempts}/${maxAttempts})`);
           }
           
-          if (profileData?.role) {
-            // Si vendeur digital, rediriger directement vers l'interface produits digitaux
+           if (profileData?.role) {
+            // Déterminer la route de redirection selon le type de compte
             let targetRoute = getDashboardRoute(profileData.role);
+            
             if (profileData.role === 'vendeur' && vendorShopType === 'digital') {
               targetRoute = '/vendeur-digital';
+            } else if (profileData.role === 'vendeur' && selectedServiceType) {
+              // ✅ FIX: Pour les prestataires de services, rediriger vers le dashboard service
+              const { data: proService } = await supabase
+                .from('professional_services')
+                .select('id')
+                .eq('user_id', authData.user!.id)
+                .maybeSingle();
+              
+              if (proService?.id) {
+                targetRoute = `/dashboard/service/${proService.id}`;
+              }
             }
-            console.log('🚀 [Auth Signup] Redirection vers:', targetRoute, '(rôle:', profileData.role, ', shopType:', vendorShopType, ')');
+            
+            console.log('🚀 [Auth Signup] Redirection vers:', targetRoute, '(rôle:', profileData.role, ', shopType:', vendorShopType, ', serviceType:', selectedServiceType, ')');
             navigate(targetRoute, { replace: true });
           } else {
             // Fallback: rediriger vers home qui redirigera vers le bon dashboard via useRoleRedirect
