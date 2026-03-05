@@ -438,19 +438,30 @@ export default function Auth() {
             if (effectiveRole === 'vendeur') {
               if (oauthShopType === 'digital') {
                 targetRoute = '/vendeur/digital-products';
-              } else if (oauthServiceType && oauthServiceType !== 'general') {
-                // Pour les services, chercher le professional_service créé et rediriger
-                try {
-                  const { data: proService } = await supabase
-                    .from('professional_services')
-                    .select('id')
-                    .eq('user_id', session.user.id)
-                    .maybeSingle();
-                  if (proService) {
-                    targetRoute = `/dashboard/service/${proService.id}`;
+              } else if (oauthShopType === 'service' || (oauthServiceType && oauthServiceType !== 'general')) {
+                // Pour les services, attendre et chercher le professional_service créé
+                let proServiceId: string | null = null;
+                for (let attempt = 0; attempt < 8; attempt++) {
+                  try {
+                    const { data: proService } = await supabase
+                      .from('professional_services')
+                      .select('id')
+                      .eq('user_id', session.user.id)
+                      .maybeSingle();
+                    if (proService) {
+                      proServiceId = proService.id;
+                      break;
+                    }
+                  } catch (e) {
+                    console.warn('⚠️ Erreur récupération service:', e);
                   }
-                } catch (e) {
-                  console.warn('⚠️ Erreur récupération service:', e);
+                  // Attendre que useAuth ait fini de créer le professional_service
+                  await new Promise(resolve => setTimeout(resolve, 800));
+                }
+                if (proServiceId) {
+                  targetRoute = `/dashboard/service/${proServiceId}`;
+                } else {
+                  console.warn('⚠️ Professional service non trouvé après attente, redirection par défaut');
                 }
               }
             }
