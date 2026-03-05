@@ -197,6 +197,87 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Clé de cache pour le profil
     const profileCacheKey = `profile_cache_${user.id}`;
 
+    // ✅ Fonction réutilisable pour créer vendor + professional_service lors de l'OAuth
+    const createVendorAndServiceForOAuth = async (authUser: User) => {
+      try {
+        const oauthShopType = localStorage.getItem('oauth_vendor_shop_type') || 'physical';
+        const oauthServiceType = localStorage.getItem('oauth_service_type') || 'general';
+        const meta: any = (authUser as any).user_metadata || {};
+        const fullName = (meta.full_name || meta.name || '').toString().trim();
+        const businessName = fullName || authUser.email?.split('@')[0] || 'Ma Boutique';
+
+        // Vérifier si un vendor existe déjà
+        const { data: existingVendor } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('user_id', authUser.id)
+          .maybeSingle();
+
+        if (existingVendor) {
+          console.log('ℹ️ Vendor existe déjà, skip création');
+          return;
+        }
+
+        const { error: vendorError } = await supabase
+          .from('vendors')
+          .insert({
+            user_id: authUser.id,
+            business_name: businessName,
+            email: authUser.email || '',
+            is_verified: false,
+            is_active: true,
+            service_type: oauthServiceType,
+            business_type: oauthShopType,
+          });
+
+        if (vendorError) {
+          console.error('❌ Erreur création vendor OAuth:', vendorError);
+          return;
+        }
+        console.log('✅ Vendor créé via OAuth:', { businessName, shopType: oauthShopType, serviceType: oauthServiceType });
+
+        // Créer le professional_service si un type de service spécifique a été choisi
+        if (oauthServiceType && oauthServiceType !== 'general') {
+          const { data: vendorData } = await supabase
+            .from('vendors')
+            .select('id')
+            .eq('user_id', authUser.id)
+            .maybeSingle();
+
+          if (vendorData) {
+            const { data: serviceTypeData } = await supabase
+              .from('service_types')
+              .select('id')
+              .eq('code', oauthServiceType)
+              .maybeSingle();
+
+            if (serviceTypeData) {
+              const { error: psError } = await supabase
+                .from('professional_services')
+                .insert({
+                  user_id: authUser.id,
+                  vendor_id: vendorData.id,
+                  service_type_id: serviceTypeData.id,
+                  business_name: businessName,
+                  status: 'active',
+                  verification_status: 'unverified',
+                  email: authUser.email || '',
+                });
+              if (psError) {
+                console.error('❌ Erreur création professional_service:', psError);
+              } else {
+                console.log('✅ Professional service créé via OAuth:', oauthServiceType);
+              }
+            } else {
+              console.warn('⚠️ Service type non trouvé pour le code:', oauthServiceType);
+            }
+          }
+        }
+      } catch (vendorErr) {
+        console.error('❌ Exception création vendor OAuth:', vendorErr);
+      }
+    };
+
     setProfileLoading(true);
     console.log('🔄 Chargement profil pour:', user.email);
 
