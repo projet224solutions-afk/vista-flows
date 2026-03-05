@@ -497,7 +497,7 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
       supabase.from("secure_transactions").update({
         status: "completed",
         completed_at: new Date().toISOString(),
-      }).eq("id", transferCode),
+      }).eq("external_transaction_id", transferCode),
     ]);
 
     await logFinancialAudit(supabase, sender_id, isInternational ? "international_transfer_completed" : "transfer_completed", {
