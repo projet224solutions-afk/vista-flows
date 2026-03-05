@@ -458,17 +458,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                   .maybeSingle();
 
                 if (serviceTypeData) {
-                  await supabase
+                  const { error: psError } = await supabase
                     .from('professional_services')
                     .insert({
                       user_id: user.id,
+                      vendor_id: vendorData.id,
                       service_type_id: serviceTypeData.id,
                       business_name: businessName,
                       status: 'active',
                       verification_status: 'unverified',
                       email: user.email || '',
                     });
-                  console.log('✅ Professional service créé via OAuth:', oauthServiceType);
+                  if (psError) {
+                    console.error('❌ Erreur création professional_service:', psError);
+                  } else {
+                    console.log('✅ Professional service créé via OAuth:', oauthServiceType);
+                  }
                 } else {
                   console.warn('⚠️ Service type non trouvé pour le code:', oauthServiceType);
                 }
@@ -476,10 +481,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
           } catch (vendorErr) {
             console.error('❌ Exception création vendor OAuth:', vendorErr);
-          } finally {
-            localStorage.removeItem('oauth_vendor_shop_type');
-            localStorage.removeItem('oauth_service_type');
           }
+          // ⚠️ NE PAS supprimer oauth_vendor_shop_type / oauth_service_type ici !
+          // Auth.tsx en a besoin pour la redirection, il les supprime lui-même.
         }
         
         const roleLabels: Record<string, string> = {
