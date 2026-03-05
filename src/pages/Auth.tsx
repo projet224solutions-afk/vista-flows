@@ -169,6 +169,14 @@ export default function Auth() {
     if (showSignup) {
       localStorage.setItem('oauth_is_new_signup', 'true');
     }
+    // ✅ FIX: Persister le type de boutique et le type de service pour l'OAuth
+    // Ces valeurs sont perdues après la redirection Google, on les sauvegarde ici
+    if (vendorShopType) {
+      localStorage.setItem('oauth_vendor_shop_type', vendorShopType);
+    }
+    if (selectedServiceType) {
+      localStorage.setItem('oauth_service_type', selectedServiceType);
+    }
 
     // 📊 Track click
     trackOAuthEvent('google', 'click', { attempt: oauthAttempts.google + 1, isRetry });
