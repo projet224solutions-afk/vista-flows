@@ -1304,7 +1304,7 @@ export default function Auth() {
             // Si vendeur digital, rediriger directement vers l'interface produits digitaux
             let targetRoute = getDashboardRoute(profileData.role);
             if (profileData.role === 'vendeur' && vendorShopType === 'digital') {
-              targetRoute = '/vendeur/digital-products';
+              targetRoute = '/vendeur-digital';
             }
             console.log('🚀 [Auth Signup] Redirection vers:', targetRoute, '(rôle:', profileData.role, ', shopType:', vendorShopType, ')');
             navigate(targetRoute, { replace: true });
