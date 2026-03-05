@@ -3045,6 +3045,55 @@ export default function Auth() {
         </div>
       )}
 
+      {/* ===== MODAL SUCCÈS INSCRIPTION ===== */}
+      <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+        <DialogContent className="sm:max-w-md border-0 shadow-2xl rounded-2xl p-0 overflow-hidden [&>button]:hidden">
+          <div className="flex flex-col items-center text-center p-8">
+            {/* Cercle animé avec checkmark */}
+            <div className="relative mb-6">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30 animate-[scale-in_0.4s_ease-out]">
+                <CheckCircle2 className="h-10 w-10 text-white" />
+              </div>
+              {/* Pulse ring */}
+              <div className="absolute inset-0 w-20 h-20 rounded-full bg-emerald-400/30 animate-ping" style={{ animationDuration: '1.5s' }} />
+            </div>
+            
+            <h3 className="text-xl font-bold text-foreground mb-2">
+              Inscription réussie !
+            </h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Votre compte a été créé avec succès. Vous allez être redirigé vers votre espace.
+            </p>
+            
+            {/* Barre de progression */}
+            <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full"
+                style={{ 
+                  animation: 'progress-fill 2.5s ease-in-out forwards'
+                }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1.5">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Redirection en cours...
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <style>{`
+        @keyframes progress-fill {
+          0% { width: 0%; }
+          100% { width: 100%; }
+        }
+        @keyframes scale-in {
+          0% { transform: scale(0); opacity: 0; }
+          50% { transform: scale(1.15); }
+          100% { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
+
       {/* Footer de navigation */}
       <QuickFooter />
     </div>
