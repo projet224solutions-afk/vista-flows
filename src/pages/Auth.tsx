@@ -2682,8 +2682,8 @@ export default function Auth() {
               </Button>
               </>)}
 
-              {/* ===== OAUTH BUTTONS - Login only ===== */}
-              {!showSignup && (
+              {/* ===== OAUTH BUTTONS ===== */}
+              {(
                 <>
                   <div className="relative my-6">
                     <Separator />
