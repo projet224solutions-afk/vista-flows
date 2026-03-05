@@ -1259,11 +1259,19 @@ export default function Auth() {
         }
 
         if (error) {
-          if (error.message.includes('User already registered')) {
-            throw new Error('❌ Cet email est déjà utilisé. Veuillez vous connecter ou utiliser un autre email.');
+          if (error.message.includes('User already registered') || error.message.includes('already been registered')) {
+            throw new Error('📧 Cette adresse email est déjà inscrite. Veuillez vous connecter ou utiliser une autre adresse.');
+          } else if (error.message.includes('rate limit') || error.message.includes('email rate limit exceeded') || error.status === 429) {
+            throw new Error('⏱️ Trop de tentatives d\'inscription. Veuillez patienter quelques minutes avant de réessayer.');
           } else {
             throw error;
           }
+        }
+        
+        // ✅ FIX: Supabase ne retourne pas toujours une erreur pour les emails existants
+        // Il retourne un user sans identities[] si l'email existe déjà (comportement sécurité)
+        if (authData.user && authData.user.identities && authData.user.identities.length === 0) {
+          throw new Error('📧 Cette adresse email est déjà inscrite. Veuillez vous connecter ou utiliser une autre adresse.');
         }
         
         // === AFFILIATION AGENT: Enregistrer le parrainage si token présent ===
