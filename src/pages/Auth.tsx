@@ -1930,7 +1930,7 @@ export default function Auth() {
               </div>
             )}
 
-            {!showSignup && !showResetPassword && (
+            {!showSignup && !showResetPassword && !showVendorTypeSelection && (
               <>
                 <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/60 rounded-xl shadow-sm">
                   <div className="flex items-start gap-3">
