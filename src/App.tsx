@@ -312,6 +312,15 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              {/* Dashboard Vendeur Digital - Interface dédiée produits numériques */}
+              <Route
+                path="/vendeur-digital/*"
+                element={
+                  <ProtectedRoute allowedRoles={['vendeur', 'admin']}>
+                    <DigitalVendorDashboard />
+                  </ProtectedRoute>
+                }
+              />
               {/* Accès direct pour diagnostic si besoin */}
               <Route
                 path="/vendeur-open"
