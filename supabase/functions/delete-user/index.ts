@@ -244,10 +244,6 @@ Deno.serve(async (req) => {
     console.log('🏪 Suppression des données vendeur...');
     const { data: vendor } = await supabaseAdmin.from('vendors').select('id').eq('user_id', userId).maybeSingle();
     if (vendor) {
-      await safeUpdate('vendors', { is_active: false, updated_at: new Date().toISOString() }, 'id', vendor.id);
-      await safeUpdate('products', { is_active: false }, 'vendor_id', vendor.id);
-      await safeDelete('advanced_carts', 'vendor_id', vendor.id);
-
       // Supprimer les digital_products et leurs achats
       const { data: digitalProducts } = await supabaseAdmin.from('digital_products').select('id').eq('vendor_id', vendor.id);
       if (digitalProducts && digitalProducts.length > 0) {
@@ -256,17 +252,22 @@ Deno.serve(async (req) => {
         await safeDelete('digital_products', 'vendor_id', vendor.id);
       }
 
-      // Supprimer les escrow_transactions liées aux orders
+      // Supprimer les escrow_transactions et order_items liés aux orders
       const { data: vendorOrders } = await supabaseAdmin.from('orders').select('id').eq('vendor_id', vendor.id);
       if (vendorOrders && vendorOrders.length > 0) {
         const orderIds = vendorOrders.map(o => o.id);
         for (const orderId of orderIds) {
           await safeDelete('escrow_transactions', 'order_id', orderId);
           await safeDelete('order_items', 'order_id', orderId);
+          await safeDelete('order_status_history', 'order_id', orderId);
+          await safeDelete('delivery_tracking', 'order_id', orderId);
+          await safeDelete('china_logistics', 'order_id', orderId);
           await safeDelete('payment_schedules', 'order_id', orderId);
         }
       }
-      
+      await safeDelete('dropship_orders', 'vendor_id', vendor.id);
+      await safeDelete('orders', 'vendor_id', vendor.id);
+
       // Supprimer les produits et données liées
       const { data: products } = await supabaseAdmin.from('products').select('id').eq('vendor_id', vendor.id);
       if (products && products.length > 0) {
@@ -276,30 +277,58 @@ Deno.serve(async (req) => {
           await safeDelete('product_images', 'product_id', product.id);
           await safeDelete('product_views', 'product_id', product.id);
           await safeDelete('product_reviews', 'product_id', product.id);
+          await safeDelete('product_recommendations', 'product_id', product.id);
+          await safeDelete('advanced_carts', 'product_id', product.id);
+          await safeDelete('carts', 'product_id', product.id);
         }
       }
-
-      // Supprimer les analytics vendeur
-      await safeDelete('analytics_daily_stats', 'vendor_id', vendor.id);
-      await safeDelete('shop_visits_raw', 'vendor_id', vendor.id);
-      await safeDelete('product_views_raw', 'vendor_id', vendor.id);
-
-      await safeDelete('vendor_subscriptions', 'vendor_id', vendor.id);
       await safeDelete('products', 'vendor_id', vendor.id);
-      await safeDelete('orders', 'vendor_id', vendor.id);
+      await safeDelete('advanced_carts', 'vendor_id', vendor.id);
+
+      // Supprimer les services professionnels liés au vendeur
+      const { data: vendorServices } = await supabaseAdmin.from('professional_services').select('id').eq('vendor_id', vendor.id);
+      if (vendorServices && vendorServices.length > 0) {
+        for (const ps of vendorServices) {
+          await safeDelete('beauty_appointments', 'professional_service_id', ps.id);
+          await safeDelete('beauty_services', 'professional_service_id', ps.id);
+          await safeDelete('beauty_staff', 'professional_service_id', ps.id);
+          await safeDelete('service_bookings', 'service_id', ps.id);
+          await safeDelete('service_reviews', 'professional_service_id', ps.id);
+          await safeDelete('service_subscriptions', 'professional_service_id', ps.id);
+          await safeDelete('restaurant_menu_items', 'professional_service_id', ps.id);
+          await safeDelete('restaurant_orders', 'professional_service_id', ps.id);
+        }
+        await safeDelete('professional_services', 'vendor_id', vendor.id);
+      }
+
+      // Supprimer les paramètres et analytics vendeur
+      await safeDelete('vendor_settings', 'vendor_id', vendor.id);
+      await safeDelete('vendor_analytics', 'vendor_id', vendor.id);
+      await safeDelete('vendor_subscriptions', 'vendor_id', vendor.id);
+      await safeDelete('china_dropship_settings', 'vendor_id', vendor.id);
+      await safeDelete('china_dropship_reports', 'vendor_id', vendor.id);
+      await safeDelete('dropship_settings', 'vendor_id', vendor.id);
+      await safeDelete('service_products', 'vendor_id', vendor.id);
       await safeDelete('quotes', 'vendor_id', vendor.id);
       await safeDelete('invoices', 'vendor_id', vendor.id);
       await safeDelete('contracts', 'vendor_id', vendor.id);
       await safeDelete('deliveries', 'vendor_id', vendor.id);
       await safeDelete('vendor_agents', 'vendor_id', vendor.id);
+      await safeDelete('vendor_employees', 'vendor_id', vendor.id);
       await safeDelete('clients', 'vendor_id', vendor.id);
       await safeDelete('prospects', 'vendor_id', vendor.id);
       await safeDelete('promo_codes', 'vendor_id', vendor.id);
       await safeDelete('support_tickets', 'vendor_id', vendor.id);
-      await safeDelete('debts', 'created_by', userId);
       await safeDelete('short_links', 'vendor_id', vendor.id);
       await safeDelete('ai_generated_documents', 'vendor_id', vendor.id);
+      await safeDelete('analytics_daily_stats', 'vendor_id', vendor.id);
+      await safeDelete('shop_visits_raw', 'vendor_id', vendor.id);
+      await safeDelete('product_views_raw', 'vendor_id', vendor.id);
+      await safeDelete('debts', 'created_by', userId);
+
+      // ✅ Suppression physique du vendeur (pas juste désactivation)
       await safeDelete('vendors', 'id', vendor.id);
+      console.log('  ✅ Vendeur supprimé physiquement');
     }
 
     console.log('💇 Suppression des données services professionnels...');
