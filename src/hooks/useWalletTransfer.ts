@@ -98,9 +98,10 @@ export function useWalletTransfer(): UseWalletTransferResult {
       setError(null);
 
       const { data, error: fnError } = await supabase.functions.invoke(
-        'wallet-transfer?action=transfer',
+        'wallet-transfer',
         {
           body: {
+            action: 'transfer',
             sender_id: user.id,
             receiver_id: receiverId,
             amount,

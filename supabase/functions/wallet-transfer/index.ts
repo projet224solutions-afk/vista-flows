@@ -169,8 +169,9 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const action = url.searchParams.get("action") || "transfer";
     const body = await req.json();
+    // ✅ Support action from query params OR body (supabase.functions.invoke doesn't pass query params)
+    const action = url.searchParams.get("action") || body.action || "transfer";
 
     console.log(`💸 Wallet transfer action: ${action}`);
 
