@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -104,6 +105,8 @@ export default function Auth() {
   const [vendorShopType, setVendorShopType] = useState<'physical' | 'digital' | null>(null);
   const [showVendorTypeSelection, setShowVendorTypeSelection] = useState(false);
   const [currentClientEmail, setCurrentClientEmail] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successRedirectRoute, setSuccessRedirectRoute] = useState<string | null>(null);
 
   // === OAUTH HANDLERS AMÉLIORÉS (Google & Facebook) ===
   
@@ -1300,10 +1303,8 @@ export default function Auth() {
           }
         }
         
-        // ✅ NOUVEAU: Redirection immédiate vers le dashboard après inscription réussie
+        // ✅ Afficher le modal de succès puis rediriger
         if (authData.user) {
-          setSuccess("✅ Inscription réussie ! Redirection vers votre espace...");
-          
           // Attendre que le profil soit créé avec retry (max 5 secondes)
           let profileData = null;
           let attempts = 0;
@@ -1327,14 +1328,14 @@ export default function Auth() {
             console.log(`⏳ Attente création profil... (tentative ${attempts}/${maxAttempts})`);
           }
           
-           if (profileData?.role) {
-            // Déterminer la route de redirection selon le type de compte
-            let targetRoute = getDashboardRoute(profileData.role);
+          // Déterminer la route cible
+          let targetRoute = '/home';
+          if (profileData?.role) {
+            targetRoute = getDashboardRoute(profileData.role);
             
             if (profileData.role === 'vendeur' && vendorShopType === 'digital') {
               targetRoute = '/vendeur-digital';
             } else if (profileData.role === 'vendeur' && selectedServiceType) {
-              // ✅ FIX: Pour les prestataires de services, rediriger vers le dashboard service
               const { data: proService } = await supabase
                 .from('professional_services')
                 .select('id')
@@ -1345,14 +1346,18 @@ export default function Auth() {
                 targetRoute = `/dashboard/service/${proService.id}`;
               }
             }
-            
-            console.log('🚀 [Auth Signup] Redirection vers:', targetRoute, '(rôle:', profileData.role, ', shopType:', vendorShopType, ', serviceType:', selectedServiceType, ')');
-            navigate(targetRoute, { replace: true });
-          } else {
-            // Fallback: rediriger vers home qui redirigera vers le bon dashboard via useRoleRedirect
-            console.log('⚠️ [Auth Signup] Profil non trouvé après 5s, redirection vers /home');
-            navigate('/home', { replace: true });
           }
+
+          // Afficher le modal de succès
+          setSuccessRedirectRoute(targetRoute);
+          setShowSuccessModal(true);
+          
+          // Rediriger après 2.5 secondes
+          setTimeout(() => {
+            setShowSuccessModal(false);
+            console.log('🚀 [Auth Signup] Redirection vers:', targetRoute);
+            navigate(targetRoute, { replace: true });
+          }, 2500);
         } else {
           setSuccess("✅ Inscription réussie ! Vérifiez votre boîte mail pour confirmer votre compte, puis connectez-vous.");
         }
@@ -3039,6 +3044,55 @@ export default function Auth() {
           </div>
         </div>
       )}
+
+      {/* ===== MODAL SUCCÈS INSCRIPTION ===== */}
+      <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+        <DialogContent className="sm:max-w-md border-0 shadow-2xl rounded-2xl p-0 overflow-hidden [&>button]:hidden">
+          <div className="flex flex-col items-center text-center p-8">
+            {/* Cercle animé avec checkmark */}
+            <div className="relative mb-6">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30 animate-[scale-in_0.4s_ease-out]">
+                <CheckCircle2 className="h-10 w-10 text-white" />
+              </div>
+              {/* Pulse ring */}
+              <div className="absolute inset-0 w-20 h-20 rounded-full bg-emerald-400/30 animate-ping" style={{ animationDuration: '1.5s' }} />
+            </div>
+            
+            <h3 className="text-xl font-bold text-foreground mb-2">
+              Inscription réussie !
+            </h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Votre compte a été créé avec succès. Vous allez être redirigé vers votre espace.
+            </p>
+            
+            {/* Barre de progression */}
+            <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full"
+                style={{ 
+                  animation: 'progress-fill 2.5s ease-in-out forwards'
+                }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1.5">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Redirection en cours...
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <style>{`
+        @keyframes progress-fill {
+          0% { width: 0%; }
+          100% { width: 100%; }
+        }
+        @keyframes scale-in {
+          0% { transform: scale(0); opacity: 0; }
+          50% { transform: scale(1.15); }
+          100% { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
 
       {/* Footer de navigation */}
       <QuickFooter />
