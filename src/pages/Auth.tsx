@@ -1763,10 +1763,12 @@ export default function Auth() {
                     setShowServiceSelection(false);
                     localStorage.setItem('oauth_intent_role', 'vendeur');
                     localStorage.setItem('oauth_is_new_signup', 'true');
-                    // ✅ FIX: Persister le service type sélectionné avant OAuth
+                    // ✅ FIX: Persister le service type ET le shop type avant OAuth
                     if (selectedServiceType) {
                       localStorage.setItem('oauth_service_type', selectedServiceType);
                     }
+                    // Marquer explicitement que c'est un compte service (pas vendeur physique)
+                    localStorage.setItem('oauth_vendor_shop_type', 'service');
                     handleGoogleLogin(false);
                   }}
                   className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 hover:shadow-md transition-all duration-200"
