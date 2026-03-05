@@ -1240,9 +1240,10 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     try {
       // Utiliser recipientId tel quel - l'edge function résout l'identifiant
       const { data, error } = await supabase.functions.invoke(
-        'wallet-transfer?action=transfer',
+        'wallet-transfer',
         {
           body: {
+            action: 'transfer',
             sender_id: effectiveUserId,
             receiver_id: recipientId.trim(),
             amount: intlPreview.amount_sent,

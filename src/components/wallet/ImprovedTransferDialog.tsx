@@ -128,9 +128,10 @@ export const ImprovedTransferDialog = ({
       const resolvedRecipient = recipientUserId || recipientCode;
 
       const { data, error } = await supabase.functions.invoke(
-        'wallet-transfer?action=transfer',
+        'wallet-transfer',
         {
           body: {
+            action: 'transfer',
             sender_id: user.id,
             receiver_id: resolvedRecipient,
             amount: intlPreview.amount_sent,
