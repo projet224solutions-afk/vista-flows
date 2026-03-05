@@ -1178,7 +1178,7 @@ export default function Auth() {
                 is_verified: false,
                 is_active: true,
                 service_type: selectedServiceType || 'general',
-                business_type: vendorShopType || 'physical'
+                business_type: selectedServiceType ? 'service' : (vendorShopType || 'physical')
               });
             
             if (vendorError) {
@@ -1327,13 +1327,26 @@ export default function Auth() {
             console.log(`⏳ Attente création profil... (tentative ${attempts}/${maxAttempts})`);
           }
           
-          if (profileData?.role) {
-            // Si vendeur digital, rediriger directement vers l'interface produits digitaux
+           if (profileData?.role) {
+            // Déterminer la route de redirection selon le type de compte
             let targetRoute = getDashboardRoute(profileData.role);
+            
             if (profileData.role === 'vendeur' && vendorShopType === 'digital') {
               targetRoute = '/vendeur-digital';
+            } else if (profileData.role === 'vendeur' && selectedServiceType) {
+              // ✅ FIX: Pour les prestataires de services, rediriger vers le dashboard service
+              const { data: proService } = await supabase
+                .from('professional_services')
+                .select('id')
+                .eq('user_id', authData.user!.id)
+                .maybeSingle();
+              
+              if (proService?.id) {
+                targetRoute = `/dashboard/service/${proService.id}`;
+              }
             }
-            console.log('🚀 [Auth Signup] Redirection vers:', targetRoute, '(rôle:', profileData.role, ', shopType:', vendorShopType, ')');
+            
+            console.log('🚀 [Auth Signup] Redirection vers:', targetRoute, '(rôle:', profileData.role, ', shopType:', vendorShopType, ', serviceType:', selectedServiceType, ')');
             navigate(targetRoute, { replace: true });
           } else {
             // Fallback: rediriger vers home qui redirigera vers le bon dashboard via useRoleRedirect
@@ -1486,9 +1499,10 @@ export default function Auth() {
   const handleServiceTypeSelect = (serviceTypeId: string) => {
     setSelectedServiceType(serviceTypeId);
     setSelectedRole('vendeur');
-    setVendorShopType(null); // Pas de vendor shop type explicite, sera inféré comme 'service'
+    setVendorShopType(null); // Explicitement null pour les services - sera traité comme 'service' dans handleSubmit
     setShowServiceSelection(false);
     setShowSignup(true);
+    console.log('🔧 [Auth] Service sélectionné:', serviceTypeId, '→ rôle: vendeur, business_type sera: service');
   };
 
   const handleInputChange = (field: string, value: string) => {
