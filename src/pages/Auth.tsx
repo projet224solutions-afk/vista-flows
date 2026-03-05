@@ -2278,7 +2278,7 @@ export default function Auth() {
                   )}
                 </Button>
               </form>
-            ) : showVendorTypeSelection ? null : (
+            ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
                 <Alert variant="destructive">
