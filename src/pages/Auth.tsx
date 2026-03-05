@@ -1439,7 +1439,30 @@ export default function Auth() {
                 navigate('/home', { replace: true });
               }
             } else {
-              const targetRoute = getDashboardRoute(profileData.role);
+              let targetRoute = getDashboardRoute(profileData.role);
+              
+              // ✅ FIX: Redirection intelligente pour les vendeurs selon leur business_type
+              if (profileData.role === 'vendeur') {
+                const { data: vendor } = await supabase
+                  .from('vendors')
+                  .select('business_type')
+                  .eq('user_id', userId)
+                  .maybeSingle();
+                
+                if (vendor?.business_type === 'digital') {
+                  targetRoute = '/vendeur-digital';
+                } else if (vendor?.business_type === 'service') {
+                  const { data: proService } = await supabase
+                    .from('professional_services')
+                    .select('id')
+                    .eq('user_id', userId)
+                    .maybeSingle();
+                  if (proService?.id) {
+                    targetRoute = `/dashboard/service/${proService.id}`;
+                  }
+                }
+              }
+              
               console.log('🚀 [Auth Login] Redirection vers:', targetRoute, '(rôle:', profileData.role, ')');
               await new Promise(resolve => setTimeout(resolve, 300));
               navigate(targetRoute, { replace: true });
