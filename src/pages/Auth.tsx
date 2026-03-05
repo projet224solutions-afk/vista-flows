@@ -2698,8 +2698,8 @@ export default function Auth() {
               </Button>
               </>)}
 
-              {/* ===== OAUTH BUTTONS ===== */}
-              {(
+              {/* ===== OAUTH BUTTONS - Only on login tab, not on Marchand/Service signup ===== */}
+              {!showSignup && (
                 <>
                   <div className="relative my-6">
                     <Separator />
