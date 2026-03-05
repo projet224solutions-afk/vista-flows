@@ -159,8 +159,37 @@ export const useRoleRedirect = () => {
         currentPath === route || currentPath === route + '/'
       );
       
-      // ⚡ TOUJOURS rediriger depuis les pages d'entrée (/, /home, /auth) vers le dashboard
+      // ⚡ TOUJOURS rediriger depuis les pages d'entrée (/, /auth) vers le dashboard
       if (isOnRedirectTriggerRoute) {
+        // ✅ FIX: Pour les vendeurs, vérifier le business_type avant de rediriger
+        if (profile.role === 'vendeur') {
+          const redirectVendor = async () => {
+            const { data: vendor } = await supabase
+              .from('vendors')
+              .select('business_type')
+              .eq('user_id', user.id)
+              .maybeSingle();
+            
+            let finalRoute = targetRoute;
+            if (vendor?.business_type === 'digital') {
+              finalRoute = '/vendeur-digital';
+            } else if (vendor?.business_type === 'service') {
+              const { data: proService } = await supabase
+                .from('professional_services')
+                .select('id')
+                .eq('user_id', user.id)
+                .maybeSingle();
+              if (proService) {
+                finalRoute = `/dashboard/service/${proService.id}`;
+              }
+            }
+            console.log(`🚀 [useRoleRedirect] Redirection vendeur depuis ${currentPath} vers ${finalRoute}`);
+            navigate(finalRoute, { replace: true });
+          };
+          redirectVendor();
+          return;
+        }
+        
         console.log(`🚀 [useRoleRedirect] Redirection depuis ${currentPath} vers ${targetRoute} (rôle: ${profile.role})`);
         navigate(targetRoute, { replace: true });
         return;
