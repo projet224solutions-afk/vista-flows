@@ -1178,7 +1178,7 @@ export default function Auth() {
                 is_verified: false,
                 is_active: true,
                 service_type: selectedServiceType || 'general',
-                business_type: vendorShopType || 'physical'
+                business_type: selectedServiceType ? 'service' : (vendorShopType || 'physical')
               });
             
             if (vendorError) {
