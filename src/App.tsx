@@ -52,6 +52,7 @@ const AgentChangePassword = lazyWithRetry(() => import("./pages/AgentChangePassw
 const BureauChangePassword = lazyWithRetry(() => import("./pages/BureauChangePassword"));
 const ClientDashboard = lazyWithRetry(() => import("./pages/ClientDashboard"));
 const VendeurDashboard = lazyWithRetry(() => import("./pages/VendeurDashboard"));
+const DigitalVendorDashboard = lazyWithRetry(() => import("./pages/DigitalVendorDashboard"));
 const LivreurDashboard = lazyWithRetry(() => import("./pages/LivreurDashboard"));
 const DriverProfile = lazyWithRetry(() => import("./pages/driver/DriverProfile"));
 const DriverSettings = lazyWithRetry(() => import("./pages/driver/DriverSettings"));
