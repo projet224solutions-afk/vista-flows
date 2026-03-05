@@ -449,7 +449,6 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
       receiver_country: receiverCountry,
       ip_address: clientIP,
       user_agent: userAgent,
-      signature,
     })
     .select()
     .single();
@@ -510,10 +509,14 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
     const transferLabel = isInternational ? "🌍 Transfert international" : "Transfert";
     await Promise.all([
       supabase.from("wallet_transactions").insert({
-        wallet_id: senderWallet.id,
-        user_id: sender_id,
-        type: "transfer_out",
-        amount: -amount,
+        sender_wallet_id: senderWallet.id,
+        sender_user_id: sender_id,
+        receiver_wallet_id: receiverWallet.id,
+        receiver_user_id: receiver_id,
+        transaction_type: "transfer_out",
+        amount: amount,
+        fee: feeAmount,
+        net_amount: amount - feeAmount,
         currency: senderCurrency,
         description: `${transferLabel} envoyé: ${transferCode}`,
         status: "completed",
@@ -527,10 +530,14 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
         },
       }),
       supabase.from("wallet_transactions").insert({
-        wallet_id: receiverWallet.id,
-        user_id: receiver_id,
-        type: "transfer_in",
+        sender_wallet_id: senderWallet.id,
+        sender_user_id: sender_id,
+        receiver_wallet_id: receiverWallet.id,
+        receiver_user_id: receiver_id,
+        transaction_type: "transfer_in",
         amount: amountReceived,
+        fee: 0,
+        net_amount: amountReceived,
         currency: receiverCurrency,
         description: `${transferLabel} reçu: ${transferCode}`,
         status: "completed",
