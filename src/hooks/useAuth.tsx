@@ -501,76 +501,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (createdProfile) {
         console.log('✅ Nouveau profil créé avec succès:', createdProfile.role);
         
-        // ✅ FIX: Si le rôle est vendeur, créer automatiquement l'entrée vendor
-        // avec le bon business_type et service_type sauvegardés avant OAuth redirect
+        // ✅ Si le rôle est vendeur, créer automatiquement l'entrée vendor via fonction partagée
         if (createdProfile.role === 'vendeur') {
-          try {
-            const oauthShopType = localStorage.getItem('oauth_vendor_shop_type') || 'physical';
-            const oauthServiceType = localStorage.getItem('oauth_service_type') || 'general';
-            
-            const businessName = fullName || user.email?.split('@')[0] || 'Ma Boutique';
-            
-            const { error: vendorError } = await supabase
-              .from('vendors')
-              .insert({
-                user_id: user.id,
-                business_name: businessName,
-                email: user.email || '',
-                is_verified: false,
-                is_active: true,
-                service_type: oauthServiceType,
-                business_type: oauthShopType,
-              });
-            
-            if (vendorError) {
-              console.error('❌ Erreur création vendor OAuth:', vendorError);
-            } else {
-              console.log('✅ Vendor créé via OAuth:', { businessName, shopType: oauthShopType, serviceType: oauthServiceType });
-            }
-
-            // Créer le professional_service si un type de service spécifique a été choisi
-            if (oauthServiceType && oauthServiceType !== 'general') {
-              const { data: vendorData } = await supabase
-                .from('vendors')
-                .select('id')
-                .eq('user_id', user.id)
-                .maybeSingle();
-              
-              if (vendorData) {
-                // Récupérer le service_type_id à partir du code
-                const { data: serviceTypeData } = await supabase
-                  .from('service_types')
-                  .select('id')
-                  .eq('code', oauthServiceType)
-                  .maybeSingle();
-
-                if (serviceTypeData) {
-                  const { error: psError } = await supabase
-                    .from('professional_services')
-                    .insert({
-                      user_id: user.id,
-                      vendor_id: vendorData.id,
-                      service_type_id: serviceTypeData.id,
-                      business_name: businessName,
-                      status: 'active',
-                      verification_status: 'unverified',
-                      email: user.email || '',
-                    });
-                  if (psError) {
-                    console.error('❌ Erreur création professional_service:', psError);
-                  } else {
-                    console.log('✅ Professional service créé via OAuth:', oauthServiceType);
-                  }
-                } else {
-                  console.warn('⚠️ Service type non trouvé pour le code:', oauthServiceType);
-                }
-              }
-            }
-          } catch (vendorErr) {
-            console.error('❌ Exception création vendor OAuth:', vendorErr);
-          }
-          // ⚠️ NE PAS supprimer oauth_vendor_shop_type / oauth_service_type ici !
-          // Auth.tsx en a besoin pour la redirection, il les supprime lui-même.
+          await createVendorAndServiceForOAuth(user);
         }
         
         const roleLabels: Record<string, string> = {
