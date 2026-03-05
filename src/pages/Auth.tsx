@@ -105,6 +105,8 @@ export default function Auth() {
   const [vendorShopType, setVendorShopType] = useState<'physical' | 'digital' | null>(null);
   const [showVendorTypeSelection, setShowVendorTypeSelection] = useState(false);
   const [currentClientEmail, setCurrentClientEmail] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successRedirectRoute, setSuccessRedirectRoute] = useState<string | null>(null);
 
   // === OAUTH HANDLERS AMÉLIORÉS (Google & Facebook) ===
   
