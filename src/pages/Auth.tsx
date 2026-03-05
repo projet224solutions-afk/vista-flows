@@ -1303,10 +1303,8 @@ export default function Auth() {
           }
         }
         
-        // ✅ NOUVEAU: Redirection immédiate vers le dashboard après inscription réussie
+        // ✅ Afficher le modal de succès puis rediriger
         if (authData.user) {
-          setSuccess("✅ Inscription réussie ! Redirection vers votre espace...");
-          
           // Attendre que le profil soit créé avec retry (max 5 secondes)
           let profileData = null;
           let attempts = 0;
@@ -1330,14 +1328,14 @@ export default function Auth() {
             console.log(`⏳ Attente création profil... (tentative ${attempts}/${maxAttempts})`);
           }
           
-           if (profileData?.role) {
-            // Déterminer la route de redirection selon le type de compte
-            let targetRoute = getDashboardRoute(profileData.role);
+          // Déterminer la route cible
+          let targetRoute = '/home';
+          if (profileData?.role) {
+            targetRoute = getDashboardRoute(profileData.role);
             
             if (profileData.role === 'vendeur' && vendorShopType === 'digital') {
               targetRoute = '/vendeur-digital';
             } else if (profileData.role === 'vendeur' && selectedServiceType) {
-              // ✅ FIX: Pour les prestataires de services, rediriger vers le dashboard service
               const { data: proService } = await supabase
                 .from('professional_services')
                 .select('id')
@@ -1348,14 +1346,18 @@ export default function Auth() {
                 targetRoute = `/dashboard/service/${proService.id}`;
               }
             }
-            
-            console.log('🚀 [Auth Signup] Redirection vers:', targetRoute, '(rôle:', profileData.role, ', shopType:', vendorShopType, ', serviceType:', selectedServiceType, ')');
-            navigate(targetRoute, { replace: true });
-          } else {
-            // Fallback: rediriger vers home qui redirigera vers le bon dashboard via useRoleRedirect
-            console.log('⚠️ [Auth Signup] Profil non trouvé après 5s, redirection vers /home');
-            navigate('/home', { replace: true });
           }
+
+          // Afficher le modal de succès
+          setSuccessRedirectRoute(targetRoute);
+          setShowSuccessModal(true);
+          
+          // Rediriger après 2.5 secondes
+          setTimeout(() => {
+            setShowSuccessModal(false);
+            console.log('🚀 [Auth Signup] Redirection vers:', targetRoute);
+            navigate(targetRoute, { replace: true });
+          }, 2500);
         } else {
           setSuccess("✅ Inscription réussie ! Vérifiez votre boîte mail pour confirmer votre compte, puis connectez-vous.");
         }
