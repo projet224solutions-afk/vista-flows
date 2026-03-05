@@ -42,6 +42,7 @@ const PUBLIC_ROUTES = [
   '/restaurant',  // Menu restaurant public
   '/digital-product', // Produit numérique
   '/vendor-agent', // Interface agent vendeur
+  '/vendeur-digital', // Interface vendeur digital (produits numériques)
 ];
 
 /**
