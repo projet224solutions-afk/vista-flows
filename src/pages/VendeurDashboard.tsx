@@ -247,7 +247,7 @@ export default function VendeurDashboard() {
     setShowAllOrders(prev => !prev);
   }, []);
 
-  // Redirection vers dashboard par défaut (une seule fois au montage)
+  // Redirection vers dashboard par défaut ou vers l'interface digitale
   useEffect(() => {
     const path = location.pathname;
     if (path === '/vendeur' || path === '/vendeur/') {
@@ -255,6 +255,23 @@ export default function VendeurDashboard() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ⚡ Si le vendeur est de type digital, rediriger vers l'interface dédiée
+  useEffect(() => {
+    if (!user?.id || !stats) return;
+    const checkBusinessType = async () => {
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('business_type')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (vendor?.business_type === 'digital') {
+        const subPath = location.pathname.replace('/vendeur', '');
+        navigate(`/vendeur-digital${subPath || '/dashboard'}`, { replace: true });
+      }
+    };
+    checkBusinessType();
+  }, [user?.id, stats, navigate, location.pathname]);
 
   // Handler de déconnexion stabilisé
   const handleSignOut = useCallback(async () => {
