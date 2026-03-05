@@ -1189,9 +1189,10 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       } else {
         // ✅ Transfert normal via edge function (local ET international)
         const { data, error } = await supabase.functions.invoke(
-          'wallet-transfer?action=transfer',
+          'wallet-transfer',
           {
             body: {
+              action: 'transfer',
               sender_id: effectiveUserId,
               receiver_id: transferPreview.recipient_uuid,
               amount: transferPreview.amount,
