@@ -1930,7 +1930,7 @@ export default function Auth() {
               </div>
             )}
 
-            {!showSignup && !showResetPassword && (
+            {!showSignup && !showResetPassword && !showVendorTypeSelection && (
               <>
                 <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/60 rounded-xl shadow-sm">
                   <div className="flex items-start gap-3">
@@ -1960,18 +1960,6 @@ export default function Auth() {
             {/* Sélection du type de boutique vendeur - Page dédiée */}
             {showVendorTypeSelection && !showSignup && (
               <div className="mb-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowVendorTypeSelection(false);
-                    setSelectedRole(null);
-                    setVendorShopType(null);
-                  }}
-                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Retour
-                </button>
 
                 <div className="bg-gradient-to-br from-muted/20 via-background to-muted/10 border border-border/50 rounded-2xl p-6 shadow-sm">
                   <div className="text-center mb-5">
@@ -2310,7 +2298,7 @@ export default function Auth() {
                   )}
                 </Button>
               </form>
-            ) : (
+            ) : showVendorTypeSelection ? null : (
               <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
                 <Alert variant="destructive">
