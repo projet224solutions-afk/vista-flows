@@ -2079,7 +2079,6 @@ export default function Auth() {
                     type="button"
                     onClick={() => {
                       setShowVendorTypeSelection(true);
-                      setShowSignup(false);
                       setSelectedRole(null);
                       setSelectedServiceType(null);
                     }}
