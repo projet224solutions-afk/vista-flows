@@ -438,19 +438,30 @@ export default function Auth() {
             if (effectiveRole === 'vendeur') {
               if (oauthShopType === 'digital') {
                 targetRoute = '/vendeur/digital-products';
-              } else if (oauthServiceType && oauthServiceType !== 'general') {
-                // Pour les services, chercher le professional_service créé et rediriger
-                try {
-                  const { data: proService } = await supabase
-                    .from('professional_services')
-                    .select('id')
-                    .eq('user_id', session.user.id)
-                    .maybeSingle();
-                  if (proService) {
-                    targetRoute = `/dashboard/service/${proService.id}`;
+              } else if (oauthShopType === 'service' || (oauthServiceType && oauthServiceType !== 'general')) {
+                // Pour les services, attendre et chercher le professional_service créé
+                let proServiceId: string | null = null;
+                for (let attempt = 0; attempt < 8; attempt++) {
+                  try {
+                    const { data: proService } = await supabase
+                      .from('professional_services')
+                      .select('id')
+                      .eq('user_id', session.user.id)
+                      .maybeSingle();
+                    if (proService) {
+                      proServiceId = proService.id;
+                      break;
+                    }
+                  } catch (e) {
+                    console.warn('⚠️ Erreur récupération service:', e);
                   }
-                } catch (e) {
-                  console.warn('⚠️ Erreur récupération service:', e);
+                  // Attendre que useAuth ait fini de créer le professional_service
+                  await new Promise(resolve => setTimeout(resolve, 800));
+                }
+                if (proServiceId) {
+                  targetRoute = `/dashboard/service/${proServiceId}`;
+                } else {
+                  console.warn('⚠️ Professional service non trouvé après attente, redirection par défaut');
                 }
               }
             }
@@ -1763,10 +1774,12 @@ export default function Auth() {
                     setShowServiceSelection(false);
                     localStorage.setItem('oauth_intent_role', 'vendeur');
                     localStorage.setItem('oauth_is_new_signup', 'true');
-                    // ✅ FIX: Persister le service type sélectionné avant OAuth
+                    // ✅ FIX: Persister le service type ET le shop type avant OAuth
                     if (selectedServiceType) {
                       localStorage.setItem('oauth_service_type', selectedServiceType);
                     }
+                    // Marquer explicitement que c'est un compte service (pas vendeur physique)
+                    localStorage.setItem('oauth_vendor_shop_type', 'service');
                     handleGoogleLogin(false);
                   }}
                   className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 hover:shadow-md transition-all duration-200"
