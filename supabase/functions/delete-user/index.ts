@@ -78,24 +78,21 @@ Deno.serve(async (req) => {
     // ========================================
     console.log('📦 Archivage des données utilisateur...');
     
-    // Récupérer les données du wallet
     const { data: walletData } = await supabaseAdmin
       .from('wallets')
       .select('*')
       .eq('user_id', userId)
       .maybeSingle();
     
-    // Récupérer les données user_ids
     const { data: userIdsData } = await supabaseAdmin
       .from('user_ids')
       .select('*')
       .eq('user_id', userId)
       .maybeSingle();
     
-    // Récupérer les données spécifiques au rôle
     let roleSpecificData = null;
     
-    if (userToDelete?.role === 'vendor') {
+    if (userToDelete?.role === 'vendeur' || userToDelete?.role === 'vendor') {
       const { data } = await supabaseAdmin.from('vendors').select('*').eq('user_id', userId).maybeSingle();
       roleSpecificData = data;
     } else if (userToDelete?.role === 'driver' || userToDelete?.role === 'livreur') {
@@ -106,7 +103,6 @@ Deno.serve(async (req) => {
       roleSpecificData = data;
     }
     
-    // Créer l'archive
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30);
     
@@ -145,23 +141,18 @@ Deno.serve(async (req) => {
     // SUPPRESSION COMPLÈTE DE TOUTES LES DONNÉES
     // ========================================
 
-    // Helper pour supprimer sans erreur si table n'existe pas
     const safeDelete = async (table: string, column: string, value: string) => {
       try {
         const { error } = await supabaseAdmin.from(table).delete().eq(column, value);
-
         if (error) {
           const code = (error as any)?.code as string | undefined;
-          // Tables/colonnes optionnelles selon les déploiements
           if (code === '42P01' || code === '42703') {
             console.log(`  ⚠ ${table}: ignoré (${code})`);
             return;
           }
-
           console.log(`  ❌ ${table}: ${error.message}`);
           throw error;
         }
-
         console.log(`  ✓ ${table}`);
       } catch (e: unknown) {
         const errorMsg = e instanceof Error ? e.message : String(e);
@@ -169,26 +160,39 @@ Deno.serve(async (req) => {
       }
     };
 
-    // Helper pour mettre à jour sans planter si table n'existe pas
     const safeUpdate = async (table: string, updates: Record<string, unknown>, column: string, value: string) => {
       try {
         const { error } = await supabaseAdmin.from(table).update(updates as any).eq(column, value);
-
         if (error) {
           const code = (error as any)?.code as string | undefined;
           if (code === '42P01' || code === '42703') {
             console.log(`  ⚠ ${table}: update ignoré (${code})`);
             return;
           }
-
           console.log(`  ❌ ${table} (update): ${error.message}`);
           throw error;
         }
-
         console.log(`  ✓ ${table} (update)`);
       } catch (e: unknown) {
         const errorMsg = e instanceof Error ? e.message : String(e);
         console.log(`  ⚠ ${table} (update): ${errorMsg}`);
+      }
+    };
+
+    // Helper pour supprimer par liste d'IDs
+    const safeDeleteByIds = async (table: string, column: string, ids: string[]) => {
+      if (!ids.length) return;
+      try {
+        const { error } = await supabaseAdmin.from(table).delete().in(column, ids);
+        if (error) {
+          const code = (error as any)?.code as string | undefined;
+          if (code === '42P01' || code === '42703') return;
+          console.log(`  ❌ ${table}: ${error.message}`);
+        } else {
+          console.log(`  ✓ ${table} (${ids.length} items)`);
+        }
+      } catch (e: unknown) {
+        console.log(`  ⚠ ${table}: ${e instanceof Error ? e.message : String(e)}`);
       }
     };
 
@@ -205,6 +209,7 @@ Deno.serve(async (req) => {
     await safeDelete('delivery_logs', 'user_id', userId);
     await safeDelete('wallet_logs', 'user_id', userId);
     await safeDelete('transaction_audit_log', 'user_id', userId);
+    await safeDelete('auth_attempts_log', 'identifier', userToDelete?.email || '');
 
     console.log('💳 Suppression des données financières...');
     await safeDelete('wallet_transactions', 'user_id', userId);
@@ -234,15 +239,22 @@ Deno.serve(async (req) => {
     await safeDelete('product_reviews', 'user_id', userId);
     await safeDelete('product_recommendations', 'user_id', userId);
     await safeDelete('user_product_interactions', 'user_id', userId);
+    await safeDelete('digital_product_purchases', 'user_id', userId);
 
     console.log('🏪 Suppression des données vendeur...');
     const { data: vendor } = await supabaseAdmin.from('vendors').select('id').eq('user_id', userId).maybeSingle();
     if (vendor) {
-      // ✅ IMPORTANT: désactiver immédiatement la boutique pour qu'elle ne s'affiche plus nulle part
-      // même si une contrainte FK empêche une suppression physique complète.
       await safeUpdate('vendors', { is_active: false, updated_at: new Date().toISOString() }, 'id', vendor.id);
       await safeUpdate('products', { is_active: false }, 'vendor_id', vendor.id);
-      await safeDelete('advanced_carts', 'vendor_id', vendor.id); // paniers d'autres clients pouvant bloquer des contraintes
+      await safeDelete('advanced_carts', 'vendor_id', vendor.id);
+
+      // Supprimer les digital_products et leurs achats
+      const { data: digitalProducts } = await supabaseAdmin.from('digital_products').select('id').eq('vendor_id', vendor.id);
+      if (digitalProducts && digitalProducts.length > 0) {
+        const dpIds = digitalProducts.map(dp => dp.id);
+        await safeDeleteByIds('digital_product_purchases', 'product_id', dpIds);
+        await safeDelete('digital_products', 'vendor_id', vendor.id);
+      }
 
       // Supprimer les escrow_transactions liées aux orders
       const { data: vendorOrders } = await supabaseAdmin.from('orders').select('id').eq('vendor_id', vendor.id);
@@ -262,8 +274,15 @@ Deno.serve(async (req) => {
           await safeDelete('product_variants', 'product_id', product.id);
           await safeDelete('inventory', 'product_id', product.id);
           await safeDelete('product_images', 'product_id', product.id);
+          await safeDelete('product_views', 'product_id', product.id);
+          await safeDelete('product_reviews', 'product_id', product.id);
         }
       }
+
+      // Supprimer les analytics vendeur
+      await safeDelete('analytics_daily_stats', 'vendor_id', vendor.id);
+      await safeDelete('shop_visits_raw', 'vendor_id', vendor.id);
+      await safeDelete('product_views_raw', 'vendor_id', vendor.id);
 
       await safeDelete('vendor_subscriptions', 'vendor_id', vendor.id);
       await safeDelete('products', 'vendor_id', vendor.id);
@@ -278,7 +297,24 @@ Deno.serve(async (req) => {
       await safeDelete('promo_codes', 'vendor_id', vendor.id);
       await safeDelete('support_tickets', 'vendor_id', vendor.id);
       await safeDelete('debts', 'created_by', userId);
+      await safeDelete('short_links', 'vendor_id', vendor.id);
+      await safeDelete('ai_generated_documents', 'vendor_id', vendor.id);
       await safeDelete('vendors', 'id', vendor.id);
+    }
+
+    console.log('💇 Suppression des données services professionnels...');
+    const { data: proServices } = await supabaseAdmin.from('professional_services').select('id').eq('user_id', userId);
+    if (proServices && proServices.length > 0) {
+      for (const ps of proServices) {
+        await safeDelete('beauty_appointments', 'professional_service_id', ps.id);
+        await safeDelete('beauty_services', 'professional_service_id', ps.id);
+        await safeDelete('beauty_staff', 'professional_service_id', ps.id);
+        await safeDelete('restaurant_menu_items', 'professional_service_id', ps.id);
+        await safeDelete('restaurant_orders', 'professional_service_id', ps.id);
+        await safeDelete('service_reviews', 'professional_service_id', ps.id);
+        await safeDelete('service_subscriptions', 'professional_service_id', ps.id);
+      }
+      await safeDelete('professional_services', 'user_id', userId);
     }
 
     console.log('🚚 Suppression des données livreur...');
@@ -316,6 +352,22 @@ Deno.serve(async (req) => {
     await safeDelete('communication_notifications', 'user_id', userId);
     await safeDelete('notifications', 'user_id', userId);
     await safeDelete('push_notifications', 'user_id', userId);
+
+    console.log('👥 Suppression des données agent...');
+    // Agent management et ses dépendances
+    const { data: agentMgmt } = await supabaseAdmin.from('agents_management').select('id').eq('user_id', userId);
+    if (agentMgmt && agentMgmt.length > 0) {
+      const agentIds = agentMgmt.map(a => a.id);
+      for (const agentId of agentIds) {
+        await safeDelete('agent_affiliate_commissions', 'agent_id', agentId);
+        await safeDelete('agent_affiliate_links', 'agent_id', agentId);
+        await safeDelete('agent_commissions_log', 'agent_id', agentId);
+        await safeDelete('agent_created_users', 'agent_id', agentId);
+        await safeDelete('agent_invitations', 'agent_id', agentId);
+        await safeDelete('agent_permissions', 'agent_id', agentId);
+        await safeDelete('agent_wallets', 'agent_id', agentId);
+      }
+    }
 
     console.log('📊 Suppression des données diverses...');
     await safeDelete('user_ids', 'user_id', userId);
@@ -359,6 +411,7 @@ Deno.serve(async (req) => {
     await safeDelete('dropship_activity_logs', 'user_id', userId);
     await safeDelete('financial_audit_logs', 'user_id', userId);
     await safeDelete('financial_security_alerts', 'user_id', userId);
+    await safeDelete('bug_reports', 'reporter_email', userToDelete?.email || '');
 
     console.log('👤 Suppression du profil...');
     await safeDelete('profiles', 'id', userId);
@@ -394,7 +447,6 @@ Deno.serve(async (req) => {
     if (deleteError) {
       console.error('❌ Erreur suppression auth:', deleteError.message);
       
-      // Vérifier si l'utilisateur existe encore dans auth
       const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
       if (authUser?.user) {
         return new Response(

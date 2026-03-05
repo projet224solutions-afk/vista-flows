@@ -430,11 +430,29 @@ export default function Auth() {
               }
             }
             
-            // ✅ FIX: Si vendeur digital via OAuth, rediriger vers l'interface digitale
+            // ✅ FIX: Redirection intelligente selon le type de vendeur
             const oauthShopType = localStorage.getItem('oauth_vendor_shop_type');
+            const oauthServiceType = localStorage.getItem('oauth_service_type');
             let targetRoute = getDashboardRoute(effectiveRole);
-            if (effectiveRole === 'vendeur' && oauthShopType === 'digital') {
-              targetRoute = '/vendeur/digital-products';
+            
+            if (effectiveRole === 'vendeur') {
+              if (oauthShopType === 'digital') {
+                targetRoute = '/vendeur/digital-products';
+              } else if (oauthServiceType && oauthServiceType !== 'general') {
+                // Pour les services, chercher le professional_service créé et rediriger
+                try {
+                  const { data: proService } = await supabase
+                    .from('professional_services')
+                    .select('id')
+                    .eq('user_id', session.user.id)
+                    .maybeSingle();
+                  if (proService) {
+                    targetRoute = `/dashboard/service/${proService.id}`;
+                  }
+                } catch (e) {
+                  console.warn('⚠️ Erreur récupération service:', e);
+                }
+              }
             }
             localStorage.removeItem('oauth_vendor_shop_type');
             localStorage.removeItem('oauth_service_type');
