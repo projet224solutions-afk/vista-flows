@@ -408,14 +408,14 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
     .insert({
       user_id: sender_id,
       requested_amount: amount,
-      fee_percentage: feePercentage,
+      fee_percentage: feePercentage / 100, // stored as decimal (e.g. 0.025 for 2.5%)
       fee_amount: feeAmount,
-      total_amount: amount,
-      net_amount: amountReceived,
+      total_amount: amount + feeAmount, // CHECK: total_amount = requested_amount + fee_amount
+      net_amount: amount, // CHECK: net_amount = requested_amount
       signature_hash: signature,
       status: "pending",
-      transaction_type: isInternational ? "international_transfer" : "wallet_transfer",
-      interface_type: "wallet",
+      transaction_type: "transfer", // CHECK allows: deposit, payment, withdrawal, transfer
+      interface_type: "client", // CHECK allows: client, vendor, driver, delivery
       external_transaction_id: transferCode,
     });
 
