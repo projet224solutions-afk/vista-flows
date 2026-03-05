@@ -143,9 +143,10 @@ export function UnifiedTransferDialog({
       console.log('🔍 Prévisualisation transfert:', { sender: user?.id, recipient: resolvedRecipient, amount: transferAmount });
 
       const { data: previewData, error: previewError } = await supabase.functions.invoke(
-        'wallet-transfer?action=preview',
+        'wallet-transfer',
         {
           body: {
+            action: 'preview',
             sender_id: user?.id,
             receiver_id: resolvedRecipient,
             amount: transferAmount,
@@ -218,9 +219,10 @@ export function UnifiedTransferDialog({
       console.log('💸 Exécution du transfert...');
 
       const { data, error } = await supabase.functions.invoke(
-        'wallet-transfer?action=transfer',
+        'wallet-transfer',
         {
           body: {
+            action: 'transfer',
             sender_id: user?.id,
             receiver_id: resolvedRecipient,
             amount: preview.amount,
@@ -266,9 +268,10 @@ export function UnifiedTransferDialog({
       const resolvedRecipient = recipientUserId || recipientCode;
 
       const { data, error } = await supabase.functions.invoke(
-        'wallet-transfer?action=transfer',
+        'wallet-transfer',
         {
           body: {
+            action: 'transfer',
             sender_id: user?.id,
             receiver_id: resolvedRecipient,
             amount: intlPreview.amount_sent,

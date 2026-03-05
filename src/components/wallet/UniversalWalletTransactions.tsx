@@ -977,9 +977,10 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       } else {
         // ✅ Appeler l'edge function pour TOUS les transferts (local ET international)
         const { data, error } = await supabase.functions.invoke(
-          'wallet-transfer?action=preview',
+          'wallet-transfer',
           {
             body: {
+              action: 'preview',
               sender_id: effectiveUserId,
               receiver_id: recipientUuid,
               amount,
@@ -1188,9 +1189,10 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       } else {
         // ✅ Transfert normal via edge function (local ET international)
         const { data, error } = await supabase.functions.invoke(
-          'wallet-transfer?action=transfer',
+          'wallet-transfer',
           {
             body: {
+              action: 'transfer',
               sender_id: effectiveUserId,
               receiver_id: transferPreview.recipient_uuid,
               amount: transferPreview.amount,
@@ -1238,9 +1240,10 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     try {
       // Utiliser recipientId tel quel - l'edge function résout l'identifiant
       const { data, error } = await supabase.functions.invoke(
-        'wallet-transfer?action=transfer',
+        'wallet-transfer',
         {
           body: {
+            action: 'transfer',
             sender_id: effectiveUserId,
             receiver_id: recipientId.trim(),
             amount: intlPreview.amount_sent,
