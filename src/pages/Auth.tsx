@@ -1978,6 +1978,10 @@ export default function Auth() {
                         setShowVendorTypeSelection(false);
                         localStorage.setItem('oauth_intent_role', 'vendeur');
                         localStorage.setItem('oauth_is_new_signup', 'true');
+                        // ✅ FIX: Persister le type de boutique si déjà choisi
+                        if (vendorShopType) {
+                          localStorage.setItem('oauth_vendor_shop_type', vendorShopType);
+                        }
                         handleGoogleLogin(false);
                       }}
                       className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 hover:shadow-md transition-all duration-200"
