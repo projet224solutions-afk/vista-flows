@@ -60,7 +60,7 @@ export default function SetPasswordAfterOAuth() {
       const oauthServiceType = localStorage.getItem('oauth_service_type');
       
       if (oauthShopType === 'digital') {
-        targetRoute = '/vendeur/digital-products';
+        targetRoute = '/vendeur-digital';
       } else if (oauthShopType === 'service' || (oauthServiceType && oauthServiceType !== 'general')) {
         // Chercher le professional_service créé
         try {
