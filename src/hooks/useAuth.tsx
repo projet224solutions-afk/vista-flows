@@ -450,30 +450,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 .maybeSingle();
               
               if (vendorData) {
-                const serviceTypeLabels: Record<string, string> = {
-                  'coiffure': 'Salon de Coiffure',
-                  'restaurant': 'Restaurant',
-                  'hotel': 'Hôtel',
-                  'education': 'Formation',
-                  'sante': 'Santé & Bien-être',
-                  'voyage': 'Agence de Voyage',
-                  'digital': 'Produits Numériques',
-                  'maison': 'Maison & Décoration',
-                  'agriculture': 'Agriculture',
-                  'freelance': 'Services Administratifs',
-                  'auto': 'Automobile',
-                };
+                // Récupérer le service_type_id à partir du code
+                const { data: serviceTypeData } = await supabase
+                  .from('service_types')
+                  .select('id')
+                  .eq('code', oauthServiceType)
+                  .maybeSingle();
 
-                await supabase
-                  .from('professional_services')
-                  .insert({
-                    vendor_id: vendorData.id,
-                    service_type: oauthServiceType,
-                    business_name: businessName,
-                    description: `${serviceTypeLabels[oauthServiceType] || oauthServiceType} - ${businessName}`,
-                    is_active: true,
-                  });
-                console.log('✅ Professional service créé via OAuth:', oauthServiceType);
+                if (serviceTypeData) {
+                  await supabase
+                    .from('professional_services')
+                    .insert({
+                      user_id: user.id,
+                      service_type_id: serviceTypeData.id,
+                      business_name: businessName,
+                      status: 'active',
+                      verification_status: 'unverified',
+                      email: user.email || '',
+                    });
+                  console.log('✅ Professional service créé via OAuth:', oauthServiceType);
+                } else {
+                  console.warn('⚠️ Service type non trouvé pour le code:', oauthServiceType);
+                }
               }
             }
           } catch (vendorErr) {
