@@ -256,9 +256,9 @@ export default function VendeurDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ⚡ Si le vendeur est de type digital ou service, rediriger vers l'interface dédiée
+  // ⚡ Si le vendeur est de type digital ou service, rediriger IMMÉDIATEMENT vers l'interface dédiée
   useEffect(() => {
-    if (!user?.id || !stats) return;
+    if (!user?.id) return;
     const checkBusinessType = async () => {
       const { data: vendor } = await supabase
         .from('vendors')
@@ -269,7 +269,6 @@ export default function VendeurDashboard() {
         const subPath = location.pathname.replace('/vendeur', '');
         navigate(`/vendeur-digital${subPath || '/dashboard'}`, { replace: true });
       } else if (vendor?.business_type === 'service') {
-        // Rediriger vers le dashboard du service professionnel
         const { data: proService } = await supabase
           .from('professional_services')
           .select('id')
@@ -281,7 +280,7 @@ export default function VendeurDashboard() {
       }
     };
     checkBusinessType();
-  }, [user?.id, stats, navigate, location.pathname]);
+  }, [user?.id, navigate, location.pathname]);
 
   // Handler de déconnexion stabilisé
   const handleSignOut = useCallback(async () => {
