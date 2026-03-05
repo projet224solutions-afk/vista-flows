@@ -402,20 +402,19 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
   const userAgent = req.headers.get("user-agent") || "unknown";
   const signature = await generateSignature(transferCode, amount);
 
-  // Create secure_transactions record
+  // Create secure_transactions record (use UUID for id, correct column names)
   const { error: secureInsertError } = await supabase
     .from("secure_transactions")
     .insert({
-      id: transferCode,
       user_id: sender_id,
       requested_amount: amount,
       fee_amount: feeAmount,
       total_amount: amount,
       net_amount: amountReceived,
-      signature,
+      signature_hash: signature,
       status: "pending",
       transaction_type: isInternational ? "international_transfer" : "wallet_transfer",
-      metadata: { receiver_id, senderCurrency, receiverCurrency, rateDisplayed, isInternational, senderCountry, receiverCountry }
+      external_transaction_id: transferCode,
     });
 
   if (secureInsertError) {
@@ -455,7 +454,7 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
 
   if (transferError) {
     console.error("Transfer record creation failed:", transferError);
-    await supabase.from("secure_transactions").update({ status: "failed" }).eq("id", transferCode);
+    await supabase.from("secure_transactions").update({ status: "failed" }).eq("external_transaction_id", transferCode);
     throw new Error("Erreur lors de la création du transfert");
   }
 
@@ -498,7 +497,7 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
       supabase.from("secure_transactions").update({
         status: "completed",
         completed_at: new Date().toISOString(),
-      }).eq("id", transferCode),
+      }).eq("external_transaction_id", transferCode),
     ]);
 
     await logFinancialAudit(supabase, sender_id, isInternational ? "international_transfer_completed" : "transfer_completed", {
