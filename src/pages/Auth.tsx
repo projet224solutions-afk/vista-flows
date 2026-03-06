@@ -1545,6 +1545,29 @@ export default function Auth() {
   };
 
   const handleServiceTypeSelect = (serviceTypeId: string) => {
+    // ✅ FIX: Traitement spécial pour les types non-service
+    if (serviceTypeId === 'digital') {
+      // Produits numériques → vendeur digital (pas un service professionnel)
+      setSelectedServiceType(null);
+      setSelectedRole('vendeur');
+      setVendorShopType('digital');
+      setShowServiceSelection(false);
+      setShowSignup(true);
+      console.log('🔧 [Auth] Type digital sélectionné → vendeur digital');
+      return;
+    }
+    
+    if (serviceTypeId === 'ecommerce') {
+      // Boutique e-commerce → vendeur classique (pas un service professionnel)
+      setSelectedServiceType(null);
+      setSelectedRole('vendeur');
+      setVendorShopType('physical');
+      setShowServiceSelection(false);
+      setShowSignup(true);
+      console.log('🔧 [Auth] Type ecommerce sélectionné → vendeur physique');
+      return;
+    }
+    
     setSelectedServiceType(serviceTypeId);
     setSelectedRole('vendeur');
     setVendorShopType(null); // Explicitement null pour les services - sera traité comme 'service' dans handleSubmit
