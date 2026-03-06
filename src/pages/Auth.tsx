@@ -56,6 +56,9 @@ export default function Auth() {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const navigate = useNavigate();
   
+  // ✅ FIX: Ref pour bloquer le handler SIGNED_IN pendant que handleSubmit gère la création
+  const isFormSubmittingRef = useRef(false);
+  
   // === AFFILIATION AGENT ===
   // Lire le token d'affiliation depuis localStorage (stocké par AgentAffiliateRedirect)
   const [affiliateData, setAffiliateData] = useState<{
