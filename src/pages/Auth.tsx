@@ -1503,6 +1503,7 @@ export default function Auth() {
     } finally {
       setLoading(false);
       setIsAuthenticating(false);
+      isFormSubmittingRef.current = false; // ✅ FIX: Débloquer le handler SIGNED_IN
     }
   };
 
