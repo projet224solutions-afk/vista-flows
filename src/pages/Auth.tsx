@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -55,6 +55,9 @@ export default function Auth() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const navigate = useNavigate();
+  
+  // ✅ FIX: Ref pour bloquer le handler SIGNED_IN pendant que handleSubmit gère la création
+  const isFormSubmittingRef = useRef(false);
   
   // === AFFILIATION AGENT ===
   // Lire le token d'affiliation depuis localStorage (stocké par AgentAffiliateRedirect)
@@ -338,6 +341,13 @@ export default function Auth() {
       
       // Rediriger après connexion OAuth réussie
       if (event === 'SIGNED_IN' && session?.user) {
+        // ✅ FIX: Ne pas interférer si handleSubmit est en cours d'exécution
+        // handleSubmit gère lui-même la création vendor/service et la redirection
+        if (isFormSubmittingRef.current) {
+          console.log('⏭️ [Auth] SIGNED_IN ignoré - handleSubmit en cours');
+          return;
+        }
+        
         // ✅ Ne pas rediriger si on est en mode réinitialisation de mot de passe
         const params = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -1053,6 +1063,7 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
     setIsAuthenticating(true);
+    isFormSubmittingRef.current = true; // ✅ FIX: Bloquer le handler SIGNED_IN
     setError(null);
     setSuccess(null);
 
@@ -1492,6 +1503,7 @@ export default function Auth() {
     } finally {
       setLoading(false);
       setIsAuthenticating(false);
+      isFormSubmittingRef.current = false; // ✅ FIX: Débloquer le handler SIGNED_IN
     }
   };
 
@@ -1533,6 +1545,29 @@ export default function Auth() {
   };
 
   const handleServiceTypeSelect = (serviceTypeId: string) => {
+    // ✅ FIX: Traitement spécial pour les types non-service
+    if (serviceTypeId === 'digital') {
+      // Produits numériques → vendeur digital (pas un service professionnel)
+      setSelectedServiceType(null);
+      setSelectedRole('vendeur');
+      setVendorShopType('digital');
+      setShowServiceSelection(false);
+      setShowSignup(true);
+      console.log('🔧 [Auth] Type digital sélectionné → vendeur digital');
+      return;
+    }
+    
+    if (serviceTypeId === 'ecommerce') {
+      // Boutique e-commerce → vendeur classique (pas un service professionnel)
+      setSelectedServiceType(null);
+      setSelectedRole('vendeur');
+      setVendorShopType('physical');
+      setShowServiceSelection(false);
+      setShowSignup(true);
+      console.log('🔧 [Auth] Type ecommerce sélectionné → vendeur physique');
+      return;
+    }
+    
     setSelectedServiceType(serviceTypeId);
     setSelectedRole('vendeur');
     setVendorShopType(null); // Explicitement null pour les services - sera traité comme 'service' dans handleSubmit
@@ -1856,9 +1891,9 @@ export default function Auth() {
                     // ✅ FIX: Persister le service type ET le shop type avant OAuth
                     if (selectedServiceType) {
                       localStorage.setItem('oauth_service_type', selectedServiceType);
+                      // Marquer explicitement que c'est un compte service (pas vendeur physique)
+                      localStorage.setItem('oauth_vendor_shop_type', 'service');
                     }
-                    // Marquer explicitement que c'est un compte service (pas vendeur physique)
-                    localStorage.setItem('oauth_vendor_shop_type', 'service');
                     handleGoogleLogin(false);
                   }}
                   className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 hover:shadow-md transition-all duration-200"
