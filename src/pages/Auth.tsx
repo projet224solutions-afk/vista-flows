@@ -1743,7 +1743,7 @@ export default function Auth() {
 
       {/* NB: Les types de comptes sont désormais affichés dans le panneau d'inscription (à droite) */}
 
-      {/* Sélection du type de compte professionnel - Vendeur vs Service */}
+      {/* Sélection du type de service professionnel pour les marchands */}
       {showServiceSelection && (
         <>
           {/* Overlay cliquable pour fermer */}
@@ -1752,9 +1752,9 @@ export default function Auth() {
             onClick={handleCloseServiceSelection}
           />
           <div className="max-w-6xl mx-auto px-4 mt-6 relative z-50">
-            <Card id="service-selection-card" className="shadow-2xl border-2 border-primary bg-card overflow-hidden">
-            <CardContent className="p-4 md:p-8">
-              <div className="flex items-center justify-start mb-4">
+            <Card id="service-selection-card" className="shadow-2xl border-2 border-primary bg-white overflow-hidden">
+            <CardContent className="p-6 md:p-8">
+              <div className="flex items-center justify-start mb-6">
                 <Button
                   variant="ghost"
                   onClick={() => {
@@ -1767,24 +1767,25 @@ export default function Auth() {
                   Retour
                 </Button>
               </div>
+              
 
               <div className="text-center mb-6">
                 <h3 className="text-xl md:text-2xl font-bold mb-2">
-                  Quel type de compte souhaitez-vous créer ?
+                  Choisissez votre Type de Service
                 </h3>
                 <p className="text-muted-foreground text-sm">
-                  Choisissez entre vendre des produits ou proposer un service
+                  Sélectionnez le service que vous souhaitez proposer sur la plateforme
                 </p>
               </div>
 
-              {/* Section: Inscription Rapide (Taxi Moto, Livreur, Transitaire) */}
+              {/* Section: Inscription directe par rôle (Taxi Moto, Livreur, Transitaire) */}
               <div className="mb-6">
                 <h4 className="text-sm font-semibold text-amber-600 mb-3 flex items-center justify-center gap-2">
                   <span className="w-8 h-0.5 bg-amber-500 rounded"></span>
                   Inscription Rapide
                   <span className="w-8 h-0.5 bg-amber-500 rounded"></span>
                 </h4>
-                <div className="grid grid-cols-3 gap-3 max-w-md mx-auto">
+                <div className="grid grid-cols-3 gap-3">
                   {[
                     { role: 'taxi' as UserRole, name: 'Taxi Moto', icon: '🏍️', desc: 'Conducteur taxi-moto' },
                     { role: 'livreur' as UserRole, name: 'Livreur', icon: '📦', desc: 'Coursier & livraison' },
@@ -1798,7 +1799,7 @@ export default function Auth() {
                         setSelectedRole(item.role);
                         setShowSignup(true);
                       }}
-                      className="flex flex-col items-center p-3 bg-gradient-to-br from-amber-50 to-white dark:from-amber-900/20 dark:to-card rounded-xl border-2 hover:border-amber-500 hover:shadow-lg hover:scale-[1.02] transition-all border-amber-200 dark:border-amber-800"
+                      className="flex flex-col items-center p-3 bg-gradient-to-br from-amber-50 to-white rounded-xl border-2 hover:border-amber-500 hover:shadow-lg hover:scale-[1.02] transition-all border-amber-200"
                     >
                       <div className="text-3xl mb-1.5">{item.icon}</div>
                       <span className="text-sm font-semibold text-foreground">{item.name}</span>
@@ -1808,102 +1809,77 @@ export default function Auth() {
                 </div>
               </div>
 
-              {/* ===== DEUX COLONNES: Vendeur vs Service ===== */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                
-                {/* COLONNE GAUCHE: Vendeur Classique */}
-                <div className="rounded-2xl border-2 border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50/50 to-white dark:from-emerald-900/10 dark:to-card p-4 md:p-6">
-                  <div className="text-center mb-4">
-                    <div className="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-3">
-                      <ShoppingBag className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <h4 className="text-lg font-bold text-emerald-700 dark:text-emerald-400">Vendeur</h4>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Vendez des produits physiques ou numériques
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-3">
+              {/* Section: Services de Proximité */}
+              <div className="mb-6">
+                <h4 className="text-sm font-semibold text-primary mb-3 flex items-center justify-center gap-2">
+                  <span className="w-8 h-0.5 bg-primary rounded"></span>
+                  Services de Proximité
+                  <span className="w-8 h-0.5 bg-primary rounded"></span>
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { id: 'restaurant', name: 'Restaurant', icon: '🍽️', desc: 'Cuisine & plats' },
+                    { id: 'beaute', name: 'Beauté & Coiffure', icon: '💇', desc: 'Soins & styling' },
+                    { id: 'vtc', name: 'Transport VTC', icon: '🚗', desc: 'Véhicules privés' },
+                    { id: 'reparation', name: 'Réparation', icon: '🔧', desc: 'Électro & mécanique' },
+                    { id: 'menage', name: 'Nettoyage', icon: '✨', desc: 'Ménage & pressing' },
+                    { id: 'informatique', name: 'Informatique', icon: '💻', desc: 'Tech & dépannage' },
+                    { id: 'livraison', name: 'Livraison', icon: '🚚', desc: 'Coursier & colis' },
+                    { id: 'ecommerce', name: 'Boutique', icon: '🏪', desc: 'E-commerce' },
+                  ].map((service) => (
                     <button
-                      onClick={() => handleServiceTypeSelect('ecommerce')}
-                      className="flex items-center gap-3 p-3 bg-white dark:bg-card rounded-xl border-2 border-emerald-100 dark:border-emerald-800 hover:border-emerald-500 hover:shadow-lg hover:scale-[1.01] transition-all text-left"
+                      key={service.id}
+                      onClick={() => handleServiceTypeSelect(service.id)}
+                      className={`flex flex-col items-center p-3 bg-gradient-to-br from-white to-slate-50 rounded-xl border-2 hover:border-primary hover:shadow-lg hover:scale-[1.02] transition-all ${
+                        selectedServiceType === service.id ? 'border-primary ring-2 ring-primary/30 bg-primary/5' : 'border-slate-200'
+                      }`}
                     >
-                      <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-                        <span className="text-2xl">🏪</span>
-                      </div>
-                      <div>
-                        <span className="text-sm font-semibold text-foreground block">Boutique E-commerce</span>
-                        <span className="text-[11px] text-muted-foreground">Produits physiques, vêtements, électronique...</span>
-                      </div>
+                      <div className="text-3xl mb-1.5">{service.icon}</div>
+                      <span className="text-sm font-semibold text-foreground">{service.name}</span>
+                      <span className="text-[10px] text-muted-foreground">{service.desc}</span>
                     </button>
-                    
-                    <button
-                      onClick={() => handleServiceTypeSelect('digital')}
-                      className="flex items-center gap-3 p-3 bg-white dark:bg-card rounded-xl border-2 border-emerald-100 dark:border-emerald-800 hover:border-emerald-500 hover:shadow-lg hover:scale-[1.01] transition-all text-left"
-                    >
-                      <div className="w-12 h-12 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center shrink-0">
-                        <span className="text-2xl">📱</span>
-                      </div>
-                      <div>
-                        <span className="text-sm font-semibold text-foreground block">Produits Numériques</span>
-                        <span className="text-[11px] text-muted-foreground">E-books, formations, logiciels, fichiers...</span>
-                      </div>
-                    </button>
-                  </div>
+                  ))}
                 </div>
+              </div>
 
-                {/* COLONNE DROITE: Prestataire de Service */}
-                <div className="rounded-2xl border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/50 to-white dark:from-blue-900/10 dark:to-card p-4 md:p-6">
-                  <div className="text-center mb-4">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto mb-3">
-                      <Briefcase className="w-7 h-7 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <h4 className="text-lg font-bold text-blue-700 dark:text-blue-400">Prestataire de Service</h4>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Proposez vos services professionnels
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { id: 'restaurant', name: 'Restaurant', icon: '🍽️', desc: 'Cuisine & plats' },
-                      { id: 'beaute', name: 'Beauté', icon: '💇', desc: 'Coiffure & soins' },
-                      { id: 'vtc', name: 'Transport VTC', icon: '🚗', desc: 'Véhicules privés' },
-                      { id: 'reparation', name: 'Réparation', icon: '🔧', desc: 'Électro & méca' },
-                      { id: 'menage', name: 'Nettoyage', icon: '✨', desc: 'Ménage & pressing' },
-                      { id: 'informatique', name: 'Informatique', icon: '💻', desc: 'Tech & dépannage' },
-                      { id: 'sport', name: 'Sport & Fitness', icon: '🏋️', desc: 'Coaching' },
-                      { id: 'location', name: 'Immobilier', icon: '🏢', desc: 'Location & vente' },
-                      { id: 'media', name: 'Photo & Vidéo', icon: '📸', desc: 'Événements' },
-                      { id: 'construction', name: 'BTP', icon: '🏗️', desc: 'Construction' },
-                      { id: 'agriculture', name: 'Agriculture', icon: '🌾', desc: 'Produits locaux' },
-                      { id: 'sante', name: 'Santé', icon: '💊', desc: 'Pharmacie & soins' },
-                      { id: 'education', name: 'Formation', icon: '🎓', desc: 'Cours & coaching' },
-                      { id: 'voyage', name: 'Voyage', icon: '✈️', desc: 'Tourisme' },
-                      { id: 'freelance', name: 'Administratif', icon: '💼', desc: 'Secrétariat' },
-                      { id: 'maison', name: 'Maison & Déco', icon: '🏠', desc: 'Intérieur' },
-                      { id: 'livraison', name: 'Livraison Pro', icon: '🚚', desc: 'Coursier & colis' },
-                    ].map((service) => (
-                      <button
-                        key={service.id}
-                        onClick={() => handleServiceTypeSelect(service.id)}
-                        className={`flex flex-col items-center p-2.5 rounded-xl border-2 hover:border-blue-500 hover:shadow-md hover:scale-[1.02] transition-all text-center ${
-                          selectedServiceType === service.id 
-                            ? 'border-blue-500 ring-2 ring-blue-500/30 bg-blue-50 dark:bg-blue-900/20' 
-                            : 'border-blue-100 dark:border-blue-800 bg-white dark:bg-card'
-                        }`}
-                      >
-                        <div className="text-2xl mb-1">{service.icon}</div>
-                        <span className="text-xs font-semibold text-foreground leading-tight">{service.name}</span>
-                        <span className="text-[9px] text-muted-foreground">{service.desc}</span>
-                      </button>
-                    ))}
-                  </div>
+              {/* Section: Services Professionnels */}
+              <div className="mb-4">
+                <h4 className="text-sm font-semibold text-violet-600 mb-3 flex items-center justify-center gap-2">
+                  <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
+                  Services Professionnels
+                  <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { id: 'sport', name: 'Sport & Fitness', icon: '🏋️', desc: 'Coaching' },
+                    { id: 'location', name: 'Immobilier', icon: '🏢', desc: 'Location & vente' },
+                    { id: 'media', name: 'Photo & Vidéo', icon: '📸', desc: 'Événements' },
+                    { id: 'construction', name: 'Construction & BTP', icon: '🏗️', desc: 'Bâtiment' },
+                    { id: 'agriculture', name: 'Agriculture', icon: '🌾', desc: 'Produits locaux' },
+                    { id: 'freelance', name: 'Administratif', icon: '💼', desc: 'Secrétariat' },
+                    { id: 'sante', name: 'Santé & Bien-être', icon: '💊', desc: 'Pharmacie & soins' },
+                    { id: 'maison', name: 'Maison & Déco', icon: '🏠', desc: 'Intérieur' },
+                    { id: 'education', name: 'Formation', icon: '🎓', desc: 'Cours & coaching' },
+                    { id: 'voyage', name: 'Voyage', icon: '✈️', desc: 'Tourisme & voyages' },
+                    { id: 'digital', name: 'Produits Numériques', icon: '📱', desc: 'E-books & logiciels' },
+                  ].map((service) => (
+                    <button
+                      key={service.id}
+                      onClick={() => handleServiceTypeSelect(service.id)}
+                      className={`flex flex-col items-center p-3 bg-gradient-to-br from-violet-50 to-white rounded-xl border-2 hover:border-violet-500 hover:shadow-lg hover:scale-[1.02] transition-all ${
+                        selectedServiceType === service.id ? 'border-violet-500 ring-2 ring-violet-500/30' : 'border-violet-200'
+                      }`}
+                    >
+                      <div className="text-3xl mb-1.5">{service.icon}</div>
+                      <span className="text-sm font-semibold text-foreground">{service.name}</span>
+                      <span className="text-[10px] text-muted-foreground">{service.desc}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
               {/* Google OAuth pour inscription service */}
-              <div className="mt-6 pt-4 border-t border-border/50">
+              <div className="mt-4 pt-4 border-t border-border/50">
                 <p className="text-xs text-muted-foreground text-center mb-3">ou créer votre compte professionnel avec</p>
                 <button
                   type="button"
@@ -1912,13 +1888,15 @@ export default function Auth() {
                     setShowServiceSelection(false);
                     localStorage.setItem('oauth_intent_role', 'vendeur');
                     localStorage.setItem('oauth_is_new_signup', 'true');
+                    // ✅ FIX: Persister le service type ET le shop type avant OAuth
                     if (selectedServiceType) {
                       localStorage.setItem('oauth_service_type', selectedServiceType);
+                      // Marquer explicitement que c'est un compte service (pas vendeur physique)
                       localStorage.setItem('oauth_vendor_shop_type', 'service');
                     }
                     handleGoogleLogin(false);
                   }}
-                  className="w-full max-w-sm mx-auto flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-card border-2 border-border hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-900/10 hover:shadow-md transition-all duration-200"
+                  className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 hover:shadow-md transition-all duration-200"
                   disabled={oauthLoading !== null}
                 >
                   {oauthLoading === 'google' ? (
@@ -1931,7 +1909,7 @@ export default function Auth() {
                       <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                     </svg>
                   )}
-                  <span className="font-semibold text-foreground text-sm">
+                  <span className="font-semibold text-gray-700 text-sm">
                     {oauthLoading === 'google' ? 'Connexion...' : "S'inscrire avec Google"}
                   </span>
                 </button>
