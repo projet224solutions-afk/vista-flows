@@ -341,6 +341,13 @@ export default function Auth() {
       
       // Rediriger après connexion OAuth réussie
       if (event === 'SIGNED_IN' && session?.user) {
+        // ✅ FIX: Ne pas interférer si handleSubmit est en cours d'exécution
+        // handleSubmit gère lui-même la création vendor/service et la redirection
+        if (isFormSubmittingRef.current) {
+          console.log('⏭️ [Auth] SIGNED_IN ignoré - handleSubmit en cours');
+          return;
+        }
+        
         // ✅ Ne pas rediriger si on est en mode réinitialisation de mot de passe
         const params = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
