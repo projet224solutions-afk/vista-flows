@@ -1063,6 +1063,7 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
     setIsAuthenticating(true);
+    isFormSubmittingRef.current = true; // ✅ FIX: Bloquer le handler SIGNED_IN
     setError(null);
     setSuccess(null);
 
