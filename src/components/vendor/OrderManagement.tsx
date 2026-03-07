@@ -530,7 +530,7 @@ export default function OrderManagement() {
           key="process" 
           size="sm" 
           disabled={updatingOrderId === order.id}
-          className="bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
+          className="bg-[hsl(15,100%,50%)] hover:bg-[hsl(15,100%,45%)] text-white disabled:opacity-50"
           onClick={(e) => {
             e.stopPropagation();
             console.log('📦 Preparing order:', order.id);
