@@ -11,14 +11,16 @@ import { ServiceModuleManager } from '@/components/professional-services/modules
 import { BookingManagement } from '@/components/professional-services/modules/BookingManagement';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
-// Types de services immobiliers qui ont leur propre module complet
-function isRealEstateService(service: ProfessionalService): boolean {
+// Types de services qui ont leur propre module complet
+function isFullModuleService(service: ProfessionalService): boolean {
   const code = service.service_type?.code?.toLowerCase() || '';
   const name = service.service_type?.name?.toLowerCase() || '';
   return (
     code === 'location' ||
+    code === 'construction' ||
     name.includes('immobili') ||
-    name.includes('location immobili')
+    name.includes('construction') ||
+    name.includes('btp')
   );
 }
 
@@ -63,8 +65,8 @@ export default function ServiceDashboard() {
     );
   }
 
-  // Pour les services immobiliers → afficher directement le module complet
-  if (isRealEstateService(service)) {
+  // Pour les services avec module complet → afficher directement
+  if (isFullModuleService(service)) {
     return (
       <div className="min-h-screen bg-background pb-24">
         <div className="container mx-auto px-4 py-6">
