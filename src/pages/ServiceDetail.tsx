@@ -843,6 +843,73 @@ export default function ServiceDetail() {
           </TabsContent>
         </Tabs>
 
+        {/* Galerie Photos */}
+        {(galleryImages.length > 0 || isOwner) && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Camera className="w-5 h-5 text-primary" />
+                <h2 className="text-xl font-bold">Photos</h2>
+                <Badge variant="secondary">{galleryImages.length}</Badge>
+              </div>
+              {isOwner && (
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                    disabled={uploadingImage}
+                  />
+                  <Button asChild variant="outline" size="sm" disabled={uploadingImage}>
+                    <span>
+                      {uploadingImage ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2" />
+                      ) : (
+                        <ImagePlus className="w-4 h-4 mr-2" />
+                      )}
+                      Ajouter
+                    </span>
+                  </Button>
+                </label>
+              )}
+            </div>
+
+            {galleryImages.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {galleryImages.map((img) => (
+                  <div key={img.id} className="relative group rounded-xl overflow-hidden aspect-square bg-muted">
+                    <img
+                      src={img.image_url}
+                      alt={img.caption || 'Photo du service'}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                    {isOwner && (
+                      <button
+                        onClick={() => handleDeleteGalleryImage(img.id)}
+                        className="absolute top-2 right-2 p-1.5 rounded-full bg-destructive/80 text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : isOwner ? (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <Camera className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                  <p className="text-muted-foreground mb-2">Aucune photo pour le moment</p>
+                  <p className="text-sm text-muted-foreground">
+                    Ajoutez des photos pour attirer plus de clients sur le marketplace
+                  </p>
+                </CardContent>
+              </Card>
+            ) : null}
+          </div>
+        )}
+
         {/* Section Menu Restaurant */}
         {isRestaurant && menuItems.length > 0 && (
           <div className="mb-6">
