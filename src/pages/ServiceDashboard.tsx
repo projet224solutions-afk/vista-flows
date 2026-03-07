@@ -30,6 +30,7 @@ export default function ServiceDashboard() {
   const navigate = useNavigate();
   const { userServices, loading } = useProfessionalServices();
   const [service, setService] = useState<ProfessionalService | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && userServices.length > 0) {
