@@ -189,6 +189,7 @@ export const useRoleRedirect = () => {
               .from('professional_services')
               .select('id')
               .eq('user_id', user.id)
+              .limit(1)
               .maybeSingle();
             
             const finalRoute = proService ? `/dashboard/service/${proService.id}` : '/service-selection';
