@@ -36,8 +36,8 @@ export function NearbyServicesSection({
       title: t('home.shops'),
       subtitle: 'Commerces locaux',
       count: stats.boutiques,
-      gradient: 'from-vendeur-primary/20 to-vendeur-secondary/10',
-      iconBg: 'bg-vendeur-primary/15',
+      gradient: 'from-vendeur-primary/25 to-vendeur-secondary/15',
+      iconBg: 'bg-vendeur-primary/20',
       trending: stats.boutiques > 5,
     },
     {
