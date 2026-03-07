@@ -74,10 +74,10 @@ export function HomeServiceCard({
 
           {/* Content */}
           <div className="space-y-1">
-            <h3 className="font-semibold text-xs text-foreground group-hover:text-primary transition-colors line-clamp-1">
+            <h3 className="font-semibold text-xs text-foreground group-hover:text-white group-active:text-white transition-colors line-clamp-1">
               {title}
             </h3>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium tabular-nums">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary group-hover:bg-white/20 group-hover:text-white group-active:text-white text-[10px] font-medium tabular-nums transition-colors">
               {count}
             </span>
           </div>
