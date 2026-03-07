@@ -62,6 +62,14 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Brand colors — accès direct
+        brand: {
+          blue: "hsl(220 97% 27%)",
+          "blue-deep": "hsl(220 96% 32%)",
+          orange: "hsl(15 100% 50%)",
+          "orange-dark": "hsl(15 85% 44%)",
+          black: "hsl(0 0% 0%)",
+        },
         // Role-based colors
         vendeur: {
           primary: "hsl(var(--vendeur-primary))",
@@ -98,7 +106,6 @@ export default {
           secondary: "hsl(var(--client-secondary))",
           accent: "hsl(var(--client-accent))",
         },
-        // Hover global bleu
         hover: {
           DEFAULT: "hsl(var(--hover-bg))",
         },
