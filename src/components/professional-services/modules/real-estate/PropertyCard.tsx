@@ -18,6 +18,7 @@ interface PropertyCardProps {
   property: Property;
   onStatusChange: (id: string, status: string) => void;
   onDelete: (id: string) => void;
+  onClick?: () => void;
 }
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
