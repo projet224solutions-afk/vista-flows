@@ -90,6 +90,9 @@ export default function ServiceDashboard() {
             </Button>
           </div>
 
+          {/* Barre d'abonnement compacte */}
+          <ServiceSubscriptionCard serviceId={service.id} compact />
+
           <ServiceModuleManager
             serviceId={service.id}
             serviceTypeId={service.service_type_id}
