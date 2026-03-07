@@ -1890,7 +1890,7 @@ export default function Auth() {
                       localStorage.setItem('oauth_service_type', selectedServiceType);
                     }
                     handleGoogleLogin(false);
-                  }
+                  }}
                   className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 hover:shadow-md transition-all duration-200"
                   disabled={oauthLoading !== null}
                 >
