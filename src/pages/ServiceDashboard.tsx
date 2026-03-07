@@ -275,6 +275,12 @@ export default function ServiceDashboard() {
         </Tabs>
       </div>
       
+      <ServiceSettingsPanel
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        service={service}
+        onUpdated={() => window.location.reload()}
+      />
       <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>
   );
