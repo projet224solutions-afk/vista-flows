@@ -198,6 +198,8 @@ export default function ServiceDashboard() {
               <div className="text-2xl font-bold">{service.rating.toFixed(1)}/5.0</div>
             </CardContent>
           </Card>
+          {/* Carte abonnement */}
+          <ServiceSubscriptionCard serviceId={service.id} />
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
