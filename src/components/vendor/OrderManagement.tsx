@@ -902,9 +902,9 @@ export default function OrderManagement() {
 
       {/* Tableau des Ventes POS */}
       {activeView === 'pos' && (
-        <Card className="border-2 border-purple-200 bg-purple-50/30 pos-orders-section">
+        <Card className="border-2 border-[hsl(15,100%,50%)]/30 bg-[hsl(15,100%,50%)]/5 pos-orders-section">
         <CardHeader className="p-3 md:p-6">
-          <CardTitle className="flex items-center gap-2 text-purple-700 text-base md:text-lg">
+          <CardTitle className="flex items-center gap-2 text-[hsl(15,100%,50%)] text-base md:text-lg">
             🛒 Ventes POS ({orders.filter(o => o.source === 'pos').length})
           </CardTitle>
           <p className="text-xs md:text-sm text-muted-foreground">
