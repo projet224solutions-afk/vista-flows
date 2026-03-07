@@ -36,8 +36,59 @@ export function NewPropertyDialog({ open, onClose, onSubmit, saving }: NewProper
     neighborhood: '',
     amenities: [] as string[],
   });
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
+
+  const handlePhotosSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files?.length) return;
+    const newFiles: File[] = [];
+    const newPreviews: string[] = [];
+    for (const file of Array.from(files)) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`${file.name} est trop lourd (max 5MB)`);
+        continue;
+      }
+      newFiles.push(file);
+      newPreviews.push(URL.createObjectURL(file));
+    }
+    setPhotos(prev => [...prev, ...newFiles]);
+    setPhotoPreviews(prev => [...prev, ...newPreviews]);
+    if (photoInputRef.current) photoInputRef.current.value = '';
+  };
+
+  const removePhoto = (index: number) => {
+    URL.revokeObjectURL(photoPreviews[index]);
+    setPhotos(prev => prev.filter((_, i) => i !== index));
+    setPhotoPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadPhotosForProperty = async (propertyId: string) => {
+    for (let i = 0; i < photos.length; i++) {
+      const file = photos[i];
+      const ext = file.name.split('.').pop();
+      const path = `${propertyId}/${Date.now()}_${i}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('property-images')
+        .upload(path, file, { upsert: true });
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        continue;
+      }
+      const { data: { publicUrl } } = supabase.storage
+        .from('property-images')
+        .getPublicUrl(path);
+      await supabase.from('property_images').insert({
+        property_id: propertyId,
+        image_url: publicUrl,
+        is_cover: i === 0,
+        display_order: i,
+      });
+    }
+  };
 
   const updateField = (key: string, value: any) => setForm(prev => ({ ...prev, [key]: value }));
 
