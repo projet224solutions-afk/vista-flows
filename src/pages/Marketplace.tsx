@@ -513,7 +513,7 @@ export default function Marketplace() {
               Numériques
             </span>
             {selectedItemType === 'digital_product' && (
-              <span className="absolute -bottom-0.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-purple-300 animate-pulse" />
+              <span className="absolute -bottom-0.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent/50 animate-pulse" />
             )}
           </button>
         </div>
