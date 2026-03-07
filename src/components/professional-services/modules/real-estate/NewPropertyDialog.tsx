@@ -136,11 +136,19 @@ export function NewPropertyDialog({ open, onClose, onSubmit, saving }: NewProper
       longitude: coords?.lng,
     });
     if (result) {
+      // Upload photos after property creation
+      if (photos.length > 0) {
+        await uploadPhotosForProperty(result.id);
+        toast.success(`${photos.length} photo(s) ajoutée(s)`);
+      }
+      photoPreviews.forEach(url => URL.revokeObjectURL(url));
       setForm({
         title: '', description: '', offer_type: '', property_type: '',
         price: '', surface: '', rooms: '', bathrooms: '',
         address: '', city: '', neighborhood: '', amenities: [],
       });
+      setPhotos([]);
+      setPhotoPreviews([]);
       setCoords(null);
       onClose();
     }
