@@ -14554,6 +14554,272 @@ export type Database = {
           },
         ]
       }
+      properties: {
+        Row: {
+          address: string | null
+          amenities: string[] | null
+          bathrooms: number | null
+          city: string | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          favorites_count: number | null
+          id: string
+          is_featured: boolean | null
+          latitude: number | null
+          longitude: number | null
+          metadata: Json | null
+          neighborhood: string | null
+          offer_type: string
+          owner_id: string
+          price: number
+          professional_service_id: string
+          property_type: string
+          rooms: number | null
+          status: string
+          surface: number | null
+          title: string
+          updated_at: string | null
+          views_count: number | null
+        }
+        Insert: {
+          address?: string | null
+          amenities?: string[] | null
+          bathrooms?: number | null
+          city?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          favorites_count?: number | null
+          id?: string
+          is_featured?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          metadata?: Json | null
+          neighborhood?: string | null
+          offer_type: string
+          owner_id: string
+          price?: number
+          professional_service_id: string
+          property_type: string
+          rooms?: number | null
+          status?: string
+          surface?: number | null
+          title: string
+          updated_at?: string | null
+          views_count?: number | null
+        }
+        Update: {
+          address?: string | null
+          amenities?: string[] | null
+          bathrooms?: number | null
+          city?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          favorites_count?: number | null
+          id?: string
+          is_featured?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          metadata?: Json | null
+          neighborhood?: string | null
+          offer_type?: string
+          owner_id?: string
+          price?: number
+          professional_service_id?: string
+          property_type?: string
+          rooms?: number | null
+          status?: string
+          surface?: number | null
+          title?: string
+          updated_at?: string | null
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properties_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_contacts: {
+        Row: {
+          budget: number | null
+          contact_type: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          interested_in: string[] | null
+          name: string
+          notes: string | null
+          phone: string | null
+          professional_service_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          budget?: number | null
+          contact_type?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          interested_in?: string[] | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          professional_service_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          budget?: number | null
+          contact_type?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          interested_in?: string[] | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          professional_service_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_contacts_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_favorites: {
+        Row: {
+          created_at: string | null
+          id: string
+          property_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          property_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          property_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_favorites_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_images: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          image_url: string
+          is_cover: boolean | null
+          property_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          image_url: string
+          is_cover?: boolean | null
+          property_id: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          image_url?: string
+          is_cover?: boolean | null
+          property_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_images_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_visits: {
+        Row: {
+          client_email: string | null
+          client_name: string
+          client_phone: string | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          professional_service_id: string
+          property_id: string
+          status: string | null
+          updated_at: string | null
+          visit_date: string
+          visit_time: string | null
+        }
+        Insert: {
+          client_email?: string | null
+          client_name: string
+          client_phone?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          professional_service_id: string
+          property_id: string
+          status?: string | null
+          updated_at?: string | null
+          visit_date: string
+          visit_time?: string | null
+        }
+        Update: {
+          client_email?: string | null
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          professional_service_id?: string
+          property_id?: string
+          status?: string | null
+          updated_at?: string | null
+          visit_date?: string
+          visit_time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_visits_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_visits_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prospects: {
         Row: {
           company: string | null
