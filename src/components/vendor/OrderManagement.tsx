@@ -941,22 +941,25 @@ export default function OrderManagement() {
         <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
           {/* Filtres par période */}
           <Tabs defaultValue="all" className="mb-6">
-            <TabsList className="grid grid-cols-4 w-full bg-muted/50">
+            <TabsList className="grid grid-cols-5 w-full bg-muted/50">
               <TabsTrigger value="all" className="text-xs data-[state=active]:bg-[hsl(15,100%,50%)] data-[state=active]:text-white">
                 Tout
               </TabsTrigger>
               <TabsTrigger value="day" className="text-xs data-[state=active]:bg-[hsl(15,100%,50%)] data-[state=active]:text-white">
-                <Calendar className="w-3 h-3 mr-1" /> Jour
+                Jour
+              </TabsTrigger>
+              <TabsTrigger value="week" className="text-xs data-[state=active]:bg-[hsl(15,100%,50%)] data-[state=active]:text-white">
+                Semaine
               </TabsTrigger>
               <TabsTrigger value="month" className="text-xs data-[state=active]:bg-[hsl(15,100%,50%)] data-[state=active]:text-white">
-                <Calendar className="w-3 h-3 mr-1" /> Mois
+                Mois
               </TabsTrigger>
               <TabsTrigger value="year" className="text-xs data-[state=active]:bg-[hsl(15,100%,50%)] data-[state=active]:text-white">
-                <Calendar className="w-3 h-3 mr-1" /> Année
+                Année
               </TabsTrigger>
             </TabsList>
 
-            {['all', 'day', 'month', 'year'].map(period => {
+            {['all', 'day', 'week', 'month', 'year'].map(period => {
               const filtered = filterByPeriod(posOrders, period);
               const ca = calcCA(filtered);
               const avg = calcAvg(filtered);
