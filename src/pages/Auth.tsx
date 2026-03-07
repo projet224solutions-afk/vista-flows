@@ -2170,20 +2170,20 @@ export default function Auth() {
                     type="button"
                     onClick={() => handleRoleClick('vendeur')}
                     className={`group flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
-                      selectedRole === 'vendeur' && selectedServiceType
+                      selectedRole === 'prestataire'
                         ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-500/25 scale-[1.02]'
                         : 'bg-background border-border/60 hover:border-emerald-300 hover:bg-emerald-50/50'
                     }`}
                   >
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-                      selectedRole === 'vendeur' && selectedServiceType ? 'bg-white/20' : 'bg-emerald-100 group-hover:bg-emerald-200'
+                      selectedRole === 'prestataire' ? 'bg-white/20' : 'bg-emerald-100 group-hover:bg-emerald-200'
                     }`}>
-                      <Briefcase className={`h-6 w-6 ${selectedRole === 'vendeur' && selectedServiceType ? 'text-white' : 'text-emerald-600'}`} />
+                      <Briefcase className={`h-6 w-6 ${selectedRole === 'prestataire' ? 'text-white' : 'text-emerald-600'}`} />
                     </div>
-                    <span className={`text-sm font-semibold ${selectedRole === 'vendeur' && selectedServiceType ? 'text-white' : 'text-foreground'}`}>
+                    <span className={`text-sm font-semibold ${selectedRole === 'prestataire' ? 'text-white' : 'text-foreground'}`}>
                       Service
                     </span>
-                    <span className={`text-[10px] ${selectedRole === 'vendeur' && selectedServiceType ? 'text-white/80' : 'text-muted-foreground'}`}>
+                    <span className={`text-[10px] ${selectedRole === 'prestataire' ? 'text-white/80' : 'text-muted-foreground'}`}>
                       Proposer des services
                     </span>
                   </button>
