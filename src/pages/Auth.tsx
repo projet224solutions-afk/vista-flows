@@ -1197,6 +1197,11 @@ export default function Auth() {
             
             if (vendorError) {
               console.error('❌ Erreur création profil vendeur:', vendorError);
+              toast({
+                title: "Erreur création profil vendeur",
+                description: vendorError.message || "Impossible de créer le profil vendeur. Contactez le support.",
+                variant: "destructive"
+              });
             } else {
               console.log('✅ Profil vendeur créé avec nom entreprise:', businessName);
             }
