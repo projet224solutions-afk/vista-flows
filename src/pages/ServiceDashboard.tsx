@@ -97,6 +97,12 @@ export default function ServiceDashboard() {
             businessName={service.business_name}
           />
         </div>
+        <ServiceSettingsPanel
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+          service={service}
+          onUpdated={() => window.location.reload()}
+        />
         <CommunicationWidget position="bottom-right" showNotifications={true} />
       </div>
     );
