@@ -520,7 +520,7 @@ function App() {
               <Route
                 path="/dashboard/service/:serviceId"
                 element={
-                  <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'agent', 'syndicat', 'transitaire', 'admin']}>
+                  <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'agent', 'syndicat', 'transitaire', 'admin', 'prestataire']}>
                     <ServiceDashboard />
                   </ProtectedRoute>
                 }
