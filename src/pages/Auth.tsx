@@ -1974,14 +1974,14 @@ export default function Auth() {
                       setError(null);
                       setSuccess(null);
                     }}
-                    className={`relative z-10 flex-1 py-3 px-4 text-sm font-semibold rounded-xl transition-all duration-300 ${
+                    className={`relative z-10 flex-1 py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-300 whitespace-nowrap ${
                       !showSignup 
                         ? 'text-primary-foreground' 
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    <span className="flex items-center justify-center gap-2">
-                      <LogIn className="h-4 w-4" />
+                    <span className="flex items-center justify-center gap-1.5 sm:gap-2">
+                      <LogIn className="h-4 w-4 flex-shrink-0" />
                       Connexion
                     </span>
                   </button>
@@ -1998,14 +1998,14 @@ export default function Auth() {
                       setError(null);
                       setSuccess(null);
                     }}
-                    className={`relative z-10 flex-1 py-3 px-4 text-sm font-semibold rounded-xl transition-all duration-300 ${
+                    className={`relative z-10 flex-1 py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-300 whitespace-nowrap ${
                       showSignup 
                         ? 'text-primary-foreground' 
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    <span className="flex items-center justify-center gap-2">
-                      <UserPlus className="h-4 w-4" />
+                    <span className="flex items-center justify-center gap-1.5 sm:gap-2">
+                      <UserPlus className="h-4 w-4 flex-shrink-0" />
                       Marchand/Service
                     </span>
                   </button>
