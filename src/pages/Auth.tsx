@@ -175,17 +175,13 @@ export default function Auth() {
     if (showSignup) {
       localStorage.setItem('oauth_is_new_signup', 'true');
     }
-    // ✅ FIX: Persister le type de boutique et le type de service pour l'OAuth
-    // Ces valeurs sont perdues après la redirection Google, on les sauvegarde ici
+    // ✅ FIX: Persister le type de boutique pour les vendeurs
     if (vendorShopType) {
       localStorage.setItem('oauth_vendor_shop_type', vendorShopType);
     }
-    // ✅ FIX: Si un service type est sélectionné mais pas de shop type, marquer comme 'service'
+    // ✅ Persister le service type pour les prestataires
     if (selectedServiceType) {
       localStorage.setItem('oauth_service_type', selectedServiceType);
-      if (!vendorShopType) {
-        localStorage.setItem('oauth_vendor_shop_type', 'service');
-      }
     }
 
     // 📊 Track click
