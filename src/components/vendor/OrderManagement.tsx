@@ -1159,11 +1159,17 @@ export default function OrderManagement() {
                   </div>
                 </div>
               ))
-            )}
-          </div>
+                    )}
+                  </div>
+                </TabsContent>
+              );
+            })}
+          </Tabs>
         </CardContent>
       </Card>
-      )}
+        );
+      })()}
+
 
       {/* Section des Commandes En Ligne */}
       {activeView === 'online' && (
