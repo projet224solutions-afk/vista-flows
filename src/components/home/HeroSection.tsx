@@ -174,7 +174,7 @@ export function HeroSection({ className }: HeroSectionProps) {
               className={cn(
                 'flex flex-col items-center gap-2 p-3 rounded-2xl',
                 'bg-card border border-border/50',
-                'hover:border-blue-600 hover:bg-blue-600 hover:text-white',
+                'hover:border-primary hover:bg-primary hover:text-white',
                 'active:scale-95 transition-all duration-200 group'
               )}
             >
