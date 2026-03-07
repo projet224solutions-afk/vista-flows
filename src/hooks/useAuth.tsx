@@ -523,7 +523,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // ✅ Créer le vendor pour les vendeurs OU le service pour les prestataires
         if (createdProfile.role === 'vendeur') {
           await createVendorForOAuth(user);
-        } else if (createdProfile.role === 'prestataire') {
+        } else if ((createdProfile.role as string) === 'prestataire') {
           await createServiceForOAuthPrestataire(user);
         }
         
