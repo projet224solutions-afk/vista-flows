@@ -31,7 +31,7 @@ const getQuickActions = (t: (key: string) => string): QuickAction[] => [
     id: 'boutique', 
     icon: <Store className="w-5 h-5" />, 
     label: t('home.boutique'),
-    gradient: 'from-blue-500 to-indigo-500'
+    gradient: 'from-[hsl(220,97%,27%)] to-[hsl(220,96%,32%)]'
   },
   { 
     id: 'livraison', 
