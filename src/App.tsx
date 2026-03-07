@@ -132,7 +132,7 @@ const PageLoader = memo(() => (
       <div style={{ 
         fontSize: '24px', 
         fontWeight: '700', 
-        color: '#007BFF', 
+        color: '#023288', 
         marginBottom: '16px',
         fontFamily: 'system-ui, sans-serif'
       }}>224Solutions</div>
