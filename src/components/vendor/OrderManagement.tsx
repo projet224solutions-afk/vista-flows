@@ -963,7 +963,7 @@ export default function OrderManagement() {
               const filtered = filterByPeriod(posOrders, period);
               const ca = calcCA(filtered);
               const avg = calcAvg(filtered);
-              const periodLabel = period === 'all' ? 'Total' : period === 'day' ? "Aujourd'hui" : period === 'month' ? 'Ce mois' : 'Cette année';
+              const periodLabel = period === 'all' ? 'Total' : period === 'day' ? "Aujourd'hui" : period === 'week' ? 'Cette semaine' : period === 'month' ? 'Ce mois' : 'Cette année';
 
               return (
                 <TabsContent key={period} value={period} className="mt-4 space-y-4">
