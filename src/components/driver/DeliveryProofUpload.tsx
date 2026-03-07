@@ -95,7 +95,7 @@ export function DeliveryProofUpload({ deliveryId, onProofUploaded, onCancel }: D
     const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
 
     ctx.lineTo(x, y);
-    ctx.strokeStyle = '#007BFF';
+    ctx.strokeStyle = '#023288';
     ctx.lineWidth = 2;
     ctx.stroke();
 

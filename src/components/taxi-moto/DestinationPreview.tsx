@@ -61,7 +61,7 @@ export default function DestinationPreview({
     const pickupParsed = parseAddress(pickupAddress || 'Position actuelle');
 
     return (
-        <Card className="bg-gradient-to-br from-blue-50 to-green-50 border-0 shadow-lg overflow-hidden">
+        <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-0 shadow-lg overflow-hidden">
             <CardContent className="p-0">
                 {/* En-tête avec trajet */}
                 <div className="bg-white/80 backdrop-blur-sm p-4 border-b border-gray-100">

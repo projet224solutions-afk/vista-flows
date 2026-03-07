@@ -191,7 +191,7 @@ export default function OfflineBanner({
             isOffline
               ? 'bg-gradient-to-r from-orange-500 to-red-500'
               : isSyncing
-                ? 'bg-gradient-to-r from-blue-500 to-indigo-500'
+                ? 'bg-gradient-to-r from-primary to-secondary'
                 : 'bg-gradient-to-r from-yellow-500 to-orange-500'
           )}>
             <div className="max-w-screen-xl mx-auto flex items-center justify-between flex-wrap gap-2">

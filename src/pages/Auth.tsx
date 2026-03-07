@@ -1709,7 +1709,7 @@ export default function Auth() {
         <div className="flex justify-end mb-4 px-4">
           <LanguageSelector variant="compact" />
         </div>
-        <h1 className="text-4xl font-bold text-blue-600 mb-6">224SOLUTIONS</h1>
+        <h1 className="text-4xl font-bold text-primary mb-6">224SOLUTIONS</h1>
 
         {/* Boutons du header */}
         <div className="flex items-center justify-center gap-3 mb-8">
@@ -1722,7 +1722,7 @@ export default function Auth() {
           </Button>
           <Button
             size="sm"
-            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full"
+            className="bg-primary hover:bg-secondary text-white px-6 py-2 rounded-full"
             onClick={() => navigate('/marketplace')}
           >
             {t('auth.market')}
@@ -2015,14 +2015,14 @@ export default function Auth() {
 
             {!showSignup && !showResetPassword && !showVendorTypeSelection && (
               <>
-                <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/60 rounded-xl shadow-sm">
+                <div className="mb-4 p-4 bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-xl shadow-sm">
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                      <Zap className="h-5 w-5 text-blue-600" />
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Zap className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-blue-900 font-semibold text-sm mb-1">Connexion intelligente</p>
-                      <p className="text-blue-700 text-xs leading-relaxed">
+                      <p className="text-foreground font-semibold text-sm mb-1">Connexion intelligente</p>
+                      <p className="text-muted-foreground text-xs leading-relaxed">
                         Utilisez vos identifiants habituels. Le système reconnaîtra automatiquement votre type de compte.
                       </p>
                     </div>
@@ -2046,8 +2046,8 @@ export default function Auth() {
 
                 <div className="bg-gradient-to-br from-muted/20 via-background to-muted/10 border border-border/50 rounded-2xl p-6 shadow-sm">
                   <div className="text-center mb-5">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center mx-auto mb-3">
-                      <Store className="h-7 w-7 text-blue-600" />
+                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                      <Store className="h-7 w-7 text-primary" />
                     </div>
                     <h3 className="text-base font-bold text-foreground mb-1">Vendeur classique</h3>
                     <p className="text-xs text-muted-foreground">Quel type de produits souhaitez-vous vendre ?</p>
@@ -2065,10 +2065,10 @@ export default function Auth() {
                         setShowVendorTypeSelection(false);
                         setShowSignup(true);
                       }}
-                      className="group flex flex-col items-center text-center gap-2 sm:gap-3 p-3 sm:p-5 rounded-xl border-2 border-border/60 bg-background hover:border-blue-400 hover:bg-blue-50/60 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200"
+                      className="group flex flex-col items-center text-center gap-2 sm:gap-3 p-3 sm:p-5 rounded-xl border-2 border-border/60 bg-background hover:border-primary hover:bg-primary/5 hover:shadow-lg hover:shadow-primary/10 transition-all duration-200"
                     >
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-blue-100 group-hover:bg-blue-500 flex items-center justify-center shrink-0 transition-colors">
-                        <ShoppingBag className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600 group-hover:text-white transition-colors" />
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-primary/10 group-hover:bg-primary flex items-center justify-center shrink-0 transition-colors">
+                        <ShoppingBag className="h-6 w-6 sm:h-7 sm:w-7 text-primary group-hover:text-white transition-colors" />
                       </div>
                       <div className="min-w-0">
                         <span className="text-xs sm:text-sm font-bold text-foreground block mb-0.5 sm:mb-1">E-commerce</span>
@@ -2152,14 +2152,14 @@ export default function Auth() {
                     }}
                     className={`group flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
                       selectedRole === 'vendeur' && !selectedServiceType
-                        ? 'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/25 scale-[1.02]'
-                        : 'bg-background border-border/60 hover:border-blue-300 hover:bg-blue-50/50'
+                        ? 'bg-gradient-to-br from-primary to-secondary border-primary text-white shadow-lg shadow-primary/25 scale-[1.02]'
+                        : 'bg-background border-border/60 hover:border-primary/50 hover:bg-primary/5'
                     }`}
                   >
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-                      selectedRole === 'vendeur' && !selectedServiceType ? 'bg-white/20' : 'bg-blue-100 group-hover:bg-blue-200'
+                      selectedRole === 'vendeur' && !selectedServiceType ? 'bg-white/20' : 'bg-primary/10 group-hover:bg-primary/20'
                     }`}>
-                      <Store className={`h-6 w-6 ${selectedRole === 'vendeur' && !selectedServiceType ? 'text-white' : 'text-blue-600'}`} />
+                      <Store className={`h-6 w-6 ${selectedRole === 'vendeur' && !selectedServiceType ? 'text-white' : 'text-primary'}`} />
                     </div>
                     <span className={`text-sm font-semibold ${selectedRole === 'vendeur' && !selectedServiceType ? 'text-white' : 'text-foreground'}`}>
                       Vendeur classique
@@ -2197,7 +2197,7 @@ export default function Auth() {
             
               {showSignup && selectedRole && (
               <div className={`mb-6 p-4 rounded-lg border ${
-                selectedRole === 'vendeur' ? 'bg-blue-50 border-blue-200' :
+                selectedRole === 'vendeur' ? 'bg-primary/5 border-primary/20' :
                 selectedRole === 'prestataire' ? 'bg-emerald-50 border-emerald-200' :
                 selectedRole === 'livreur' ? 'bg-orange-50 border-orange-200' :
                 selectedRole === 'taxi' ? 'bg-yellow-50 border-yellow-200' :
@@ -2206,7 +2206,7 @@ export default function Auth() {
                 'bg-muted/50 border-border'
               }`}>
                 <p className={`text-sm ${
-                  selectedRole === 'vendeur' ? 'text-blue-800' :
+                  selectedRole === 'vendeur' ? 'text-primary' :
                   selectedRole === 'prestataire' ? 'text-emerald-800' :
                   selectedRole === 'livreur' ? 'text-orange-800' :
                   selectedRole === 'taxi' ? 'text-yellow-800' :
@@ -2217,7 +2217,7 @@ export default function Auth() {
                   <strong>🎯 Création de compte :</strong> Remplissez les informations ci-dessous pour créer votre compte {selectedRole ? `en tant que ${selectedRole === 'prestataire' ? 'Prestataire de Service' : selectedRole === 'vendeur' ? 'Vendeur E-commerce' : selectedRole}` : ''}.
                   {selectedServiceType && (
                     <span className={`block mt-2 font-semibold ${
-                      selectedRole === 'vendeur' ? 'text-blue-700' :
+                      selectedRole === 'vendeur' ? 'text-primary' :
                       selectedRole === 'livreur' ? 'text-orange-700' :
                       selectedRole === 'taxi' ? 'text-yellow-700' :
                       selectedRole === 'transitaire' ? 'text-purple-700' :

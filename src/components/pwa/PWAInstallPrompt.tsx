@@ -70,11 +70,11 @@ function PWAInstallPromptInner() {
 
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:max-w-md animate-in slide-in-from-bottom-5 duration-500">
-      <Card className="border-2 border-primary shadow-2xl bg-gradient-to-br from-blue-50 to-purple-50">
+      <Card className="border-2 border-primary shadow-2xl bg-gradient-to-br from-primary/5 to-accent/5">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             {/* Icône */}
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0 shadow-lg">
               <Download className="w-6 h-6 text-white animate-bounce" />
             </div>
 

@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 // Configuration des catégories numériques pour le filtre
 const DIGITAL_CATEGORIES = [
   { id: 'all', name: 'Tous', icon: Package, gradient: 'from-slate-500 to-slate-600' },
-  { id: 'voyage', name: 'Voyage', icon: Plane, gradient: 'from-blue-500 to-cyan-500' },
+  { id: 'voyage', name: 'Voyage', icon: Plane, gradient: 'from-primary to-secondary' },
   { id: 'logiciel', name: 'Logiciels', icon: Monitor, gradient: 'from-purple-500 to-pink-500' },
   { id: 'formation', name: 'Formations', icon: GraduationCap, gradient: 'from-green-500 to-emerald-500' },
   { id: 'livre', name: 'Livres', icon: BookOpen, gradient: 'from-amber-500 to-yellow-500' },
@@ -466,17 +466,17 @@ export default function Marketplace() {
             }}
             className={`group relative flex-1 max-w-[140px] h-14 sm:h-20 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-0.5 sm:gap-1.5 transition-all duration-300 ${
               selectedItemType === 'professional_service' 
-                ? 'bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 scale-[1.02] ring-2 ring-blue-300/50' 
-                : 'bg-card border border-border hover:border-blue-400 hover:shadow-md'
+                ? 'bg-gradient-to-br from-primary via-primary to-secondary text-white shadow-lg shadow-primary/30 scale-[1.02] ring-2 ring-primary/30' 
+                : 'bg-card border border-border hover:border-primary/50 hover:shadow-md'
             }`}
           >
             <div className={`p-1.5 sm:p-2 rounded-lg transition-all ${
               selectedItemType === 'professional_service' 
                 ? 'bg-white/20' 
-                : 'bg-blue-100'
+                : 'bg-primary/10'
             }`}>
               <Briefcase className={`w-4 h-4 sm:w-6 sm:h-6 transition-transform group-hover:scale-110 ${
-                selectedItemType === 'professional_service' ? 'text-white' : 'text-blue-600'
+                selectedItemType === 'professional_service' ? 'text-white' : 'text-primary'
               }`} />
             </div>
             <span className={`text-[9px] sm:text-xs font-medium ${
@@ -485,7 +485,7 @@ export default function Marketplace() {
               Services Pro
             </span>
             {selectedItemType === 'professional_service' && (
-              <span className="absolute -bottom-0.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-300 animate-pulse" />
+              <span className="absolute -bottom-0.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary/50 animate-pulse" />
             )}
           </button>
 
@@ -513,7 +513,7 @@ export default function Marketplace() {
               Numériques
             </span>
             {selectedItemType === 'digital_product' && (
-              <span className="absolute -bottom-0.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-purple-300 animate-pulse" />
+              <span className="absolute -bottom-0.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent/50 animate-pulse" />
             )}
           </button>
         </div>
@@ -521,7 +521,7 @@ export default function Marketplace() {
 
       {/* 🔥 Filtre Catégories Numériques - Visible uniquement pour les produits numériques */}
       {selectedItemType === 'digital_product' && (
-        <section className="px-2 py-2 border-b border-border bg-gradient-to-r from-purple-500/5 via-background to-purple-500/5">
+        <section className="px-2 py-2 border-b border-border bg-gradient-to-r from-accent/5 via-background to-accent/5">
           <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
             {DIGITAL_CATEGORIES.map((cat) => {
               const IconComponent = cat.icon;
@@ -535,7 +535,7 @@ export default function Marketplace() {
                     'border text-xs font-medium',
                     isSelected
                       ? 'bg-gradient-to-r text-white border-transparent shadow-sm scale-[1.02]'
-                      : 'bg-card border-border hover:border-purple-400/50 hover:bg-purple-50/50 dark:hover:bg-purple-950/20',
+                      : 'bg-card border-border hover:border-primary/30 hover:bg-primary/5 dark:hover:bg-primary/10',
                     isSelected && cat.gradient
                   )}
                 >
