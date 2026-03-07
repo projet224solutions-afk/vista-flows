@@ -771,7 +771,7 @@ export default function OrderManagement() {
           }}
         >
           <CardHeader className="p-3 md:p-6 pb-2 md:pb-4">
-            <CardTitle className={`flex items-center gap-2 text-base md:text-lg ${canAccessPOS ? 'text-purple-700' : 'text-gray-500'}`}>
+            <CardTitle className={`flex items-center gap-2 text-base md:text-lg ${canAccessPOS ? 'text-[hsl(15,100%,50%)]' : 'text-gray-500'}`}>
               {canAccessPOS ? '🛒' : <Lock className="w-4 h-4" />} Ventes POS
               {!canAccessPOS && (
                 <Badge variant="secondary" className="ml-2 text-xs">
