@@ -70,6 +70,23 @@ export default function ServiceDashboard() {
     return (
       <div className="min-h-screen bg-background pb-24">
         <div className="container mx-auto px-4 py-6">
+          {/* Header avec bouton paramètres */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <Store className="w-6 h-6 text-primary" />
+              <h1 className="text-xl sm:text-2xl font-bold">{service.business_name}</h1>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => {/* TODO: ouvrir paramètres */}}
+            >
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">Paramètres</span>
+            </Button>
+          </div>
+
           <ServiceModuleManager
             serviceId={service.id}
             serviceTypeId={service.service_type_id}
