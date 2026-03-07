@@ -145,7 +145,7 @@ export default function ServiceDashboard() {
                 </p>
               </div>
             </div>
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => setSettingsOpen(true)}>
               <Settings className="w-4 h-4" />
               Paramètres
             </Button>
