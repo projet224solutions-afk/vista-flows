@@ -310,7 +310,7 @@ export function VendorSidebar() {
                                 {/* Icône de verrouillage si pas accès */}
                                 {!hasAccess && requiredPlan && (
                                   <div className="flex items-center gap-1">
-                                    <Lock className="w-3 h-3 text-muted-foreground" />
+                                    <Lock className="w-3 h-3 text-white/40" />
                                     <Badge 
                                       className={cn(
                                         "text-[8px] px-1 py-0 h-4 text-white flex-shrink-0",
