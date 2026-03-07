@@ -277,9 +277,9 @@ export function VendorSidebar() {
                               <item.icon className={cn(
                                 "w-3.5 h-3.5 transition-colors",
                                 isPOS && hasAccess ? "text-white" : "",
-                                active && !isPOS && hasAccess && "text-white",
-                                !active && !isPOS && hasAccess && "text-white/60 group-hover:text-white",
-                                !hasAccess && "text-white/40"
+                                active && !isPOS && hasAccess && "text-accent",
+                                !active && !isPOS && hasAccess && "text-accent/60 group-hover:text-accent",
+                                !hasAccess && "text-accent/40"
                               )} />
                             </div>
                             
