@@ -45,9 +45,9 @@ export function HomeServiceCard({
           'bg-gradient-to-br',
           gradient,
           'border border-border/50',
-          'hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10',
+          'hover:border-primary hover:bg-primary hover:shadow-lg hover:shadow-primary/20',
           'transition-all duration-300 ease-out',
-          'active:scale-[0.98]',
+          'active:scale-[0.98] active:bg-primary',
           className
         )}
       >
@@ -65,7 +65,8 @@ export function HomeServiceCard({
               'p-3 rounded-xl',
               'transition-all duration-300',
               iconBg,
-              'group-hover:scale-105'
+              'group-hover:scale-105',
+              '[&_svg]:transition-colors [&_svg]:duration-300 group-hover:[&_svg]:text-white group-active:[&_svg]:text-white'
             )}
           >
             {icon}
@@ -73,10 +74,10 @@ export function HomeServiceCard({
 
           {/* Content */}
           <div className="space-y-1">
-            <h3 className="font-semibold text-xs text-foreground group-hover:text-primary transition-colors line-clamp-1">
+            <h3 className="font-semibold text-xs text-foreground group-hover:text-white group-active:text-white transition-colors line-clamp-1">
               {title}
             </h3>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium tabular-nums">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary group-hover:bg-white/20 group-hover:text-white group-active:text-white text-[10px] font-medium tabular-nums transition-colors">
               {count}
             </span>
           </div>

@@ -181,7 +181,8 @@ export function HeroSection({ className }: HeroSectionProps) {
               <div className={cn(
                 'w-10 h-10 rounded-xl flex items-center justify-center',
                 'bg-gradient-to-br text-white shadow-sm',
-                action.gradient
+                action.gradient,
+                '[&_svg]:transition-colors [&_svg]:duration-200 group-hover:[&_svg]:text-white group-active:[&_svg]:text-white'
               )}>
                 {action.icon}
               </div>
