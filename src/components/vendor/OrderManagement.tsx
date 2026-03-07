@@ -1628,7 +1628,7 @@ export default function OrderManagement() {
                     const customerEmail = profile?.email || '';
                     const customerPhone = profile?.phone || '';
                     const codPhone = addr?.cod_phone || '';
-                    const isCOD = selectedOrder.payment_method === 'cash_on_delivery' || selectedOrder.metadata?.payment_method === 'cash_on_delivery';
+                    const isCOD = addr?.is_cod === true || selectedOrder.payment_method === 'cash_on_delivery' || selectedOrder.metadata?.payment_method === 'cash_on_delivery';
 
                     const labelHTML = `
 <!DOCTYPE html>
