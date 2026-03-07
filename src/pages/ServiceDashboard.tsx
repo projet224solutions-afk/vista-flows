@@ -65,8 +65,8 @@ export default function ServiceDashboard() {
     );
   }
 
-  // Pour les services immobiliers → afficher directement le module complet
-  if (isRealEstateService(service)) {
+  // Pour les services avec module complet → afficher directement
+  if (isFullModuleService(service)) {
     return (
       <div className="min-h-screen bg-background pb-24">
         <div className="container mx-auto px-4 py-6">
