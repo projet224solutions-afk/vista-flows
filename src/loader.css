@@ -38,7 +38,7 @@ html, body {
   width: 40px;
   height: 40px;
   border: 3px solid #e5e7eb;
-  border-top-color: #007BFF;
+  border-top-color: #023288;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
