@@ -1722,7 +1722,7 @@ export default function Auth() {
           </Button>
           <Button
             size="sm"
-            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full"
+            className="bg-primary hover:bg-secondary text-white px-6 py-2 rounded-full"
             onClick={() => navigate('/marketplace')}
           >
             {t('auth.market')}
