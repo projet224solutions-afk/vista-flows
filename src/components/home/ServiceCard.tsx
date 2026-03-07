@@ -64,7 +64,6 @@ export function HomeServiceCard({
             className={cn(
               'p-3 rounded-xl',
               'transition-all duration-300',
-              iconBg,
               'group-hover:scale-105',
               '[&_svg]:transition-colors [&_svg]:duration-300 group-hover:[&_svg]:text-white group-active:[&_svg]:text-white'
             )}
