@@ -78,6 +78,7 @@ const Dashboard = () => {
           .from('professional_services')
           .select('id')
           .eq('user_id', user.id)
+          .limit(1)
           .maybeSingle();
         
         if (proService?.id) {
