@@ -1025,7 +1025,7 @@ export default function OrderManagement() {
                       </div>
                     ) : (
                       filtered.map((order) => (
-                <div key={order.id} className="border-2 border-purple-200 rounded-lg p-3 sm:p-6 bg-white hover:shadow-lg transition-all">
+                <div key={order.id} className="border-2 border-[hsl(15,100%,50%)]/20 rounded-lg p-3 sm:p-6 bg-white hover:shadow-lg transition-all">
                   {/* Mobile-first header layout */}
                   <div className="space-y-3 mb-4">
                     {/* Order number and ID */}
