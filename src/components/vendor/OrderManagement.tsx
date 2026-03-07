@@ -1123,7 +1123,7 @@ export default function OrderManagement() {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Montant total</p>
-                      <p className="text-xl font-bold text-purple-700">
+                      <p className="text-xl font-bold text-[hsl(15,100%,50%)]">
                         {order.total_amount.toLocaleString()} GNF
                       </p>
                       {order.discount_amount > 0 && (
