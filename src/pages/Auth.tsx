@@ -2194,6 +2194,7 @@ export default function Auth() {
               {showSignup && selectedRole && (
               <div className={`mb-6 p-4 rounded-lg border ${
                 selectedRole === 'vendeur' ? 'bg-blue-50 border-blue-200' :
+                selectedRole === 'prestataire' ? 'bg-emerald-50 border-emerald-200' :
                 selectedRole === 'livreur' ? 'bg-orange-50 border-orange-200' :
                 selectedRole === 'taxi' ? 'bg-yellow-50 border-yellow-200' :
                 selectedRole === 'transitaire' ? 'bg-purple-50 border-purple-200' :
@@ -2202,6 +2203,7 @@ export default function Auth() {
               }`}>
                 <p className={`text-sm ${
                   selectedRole === 'vendeur' ? 'text-blue-800' :
+                  selectedRole === 'prestataire' ? 'text-emerald-800' :
                   selectedRole === 'livreur' ? 'text-orange-800' :
                   selectedRole === 'taxi' ? 'text-yellow-800' :
                   selectedRole === 'transitaire' ? 'text-purple-800' :
