@@ -1,111 +1,53 @@
 
-# Plan d'intégration - Animation Spline 3D (Globe) en arrière-plan
 
-## Objectif
-Intégrer l'animation 3D du globe terrestre Spline en arrière-plan de la section Hero de la page d'accueil, créant un effet visuel immersif et moderne.
+## Diagnostic
 
-## Approche technique
+**Cause racine identifiee** : Deux contraintes CHECK sur la table `vendors` bloquent silencieusement la creation des comptes de services professionnels.
 
-### Option choisie : Package React officiel `@splinetool/react-spline`
+### Probleme 1 : `business_type` interdit la valeur `'service'`
+La contrainte `vendors_business_type_check` n'autorise que : `physical`, `digital`, `hybrid`.
+Le code Auth.tsx tente d'inserer `business_type: 'service'` quand un service professionnel est selectionne --- cet INSERT echoue a chaque fois sans que l'utilisateur le sache.
 
-Cette approche est recommandée car :
-- Intégration native avec React (meilleure compatibilité)
-- Support du lazy loading pour optimiser les performances
-- API propre avec gestion des événements
+### Probleme 2 : `service_type` manque plusieurs codes
+La contrainte `vendors_service_type_check` n'inclut pas : `sport`, `vtc`, `maison`, `general`.
+Si l'utilisateur choisit Sport/Fitness, VTC, Maison, ou un compte par defaut, l'INSERT echoue aussi.
 
-### URL de la scène Spline
-```
-https://prod.spline.design/h5xspcRA7yF54Tzy/scene.splinecode
-```
+### Consequence
+Le vendor n'est jamais cree → le retry loop qui verifie le vendor echoue → le professional_service n'est jamais cree → l'utilisateur est redirige vers le dashboard par defaut (vendeur classique) sans enregistrements en base.
 
 ---
 
-## Étapes d'implémentation
+## Plan de correction
 
-### 1. Installation du package
+### 1. Migration SQL : Mettre a jour les contraintes CHECK
 
-Ajouter la dépendance `@splinetool/react-spline` au projet.
+Modifier les deux contraintes :
+- `vendors_business_type_check` : ajouter `'service'` aux valeurs autorisees
+- `vendors_service_type_check` : ajouter les codes manquants (`sport`, `vtc`, `maison`, `general`, `digital_livre`, `digital_logiciel`, `dropshipping`)
 
-### 2. Création d'un composant SplineBackground
+```sql
+ALTER TABLE vendors DROP CONSTRAINT vendors_business_type_check;
+ALTER TABLE vendors ADD CONSTRAINT vendors_business_type_check 
+  CHECK (business_type IN ('physical', 'digital', 'hybrid', 'service'));
 
-Créer un nouveau composant dédié `SplineBackground.tsx` dans `src/components/home/` :
-
-- Utiliser `React.lazy()` pour charger Spline de manière asynchrone
-- Envelopper dans `Suspense` avec un fallback élégant (gradient animé)
-- Positionner en `absolute` avec `z-index: 0` pour rester derrière le contenu
-- Ajouter un overlay semi-transparent pour garantir la lisibilité du texte
-
-```text
-┌─────────────────────────────────────┐
-│  SplineBackground (position: abs)   │
-│  ┌─────────────────────────────────┐│
-│  │    Globe 3D Spline              ││
-│  │    (opacity: 0.3-0.5)           ││
-│  └─────────────────────────────────┘│
-│  ┌─────────────────────────────────┐│
-│  │    Overlay gradient             ││
-│  │    (pour lisibilité texte)      ││
-│  └─────────────────────────────────┘│
-└─────────────────────────────────────┘
+ALTER TABLE vendors DROP CONSTRAINT vendors_service_type_check;
+ALTER TABLE vendors ADD CONSTRAINT vendors_service_type_check 
+  CHECK (service_type IN (
+    'wholesale','retail','mixed','ecommerce','restaurant','beaute',
+    'reparation','location','menage','livraison','media','education',
+    'sante','voyage','freelance','construction','agriculture',
+    'informatique','boutique','salon_coiffure','garage_auto',
+    'immobilier','services_pro','photographe','autre',
+    'sport','vtc','maison','general','digital_livre',
+    'digital_logiciel','dropshipping'
+  ));
 ```
 
-### 3. Modification de HeroSection.tsx
+### 2. Auth.tsx : Ajouter un log d'erreur visible
 
-- Importer le nouveau composant `SplineBackground`
-- Ajouter `position: relative` et `overflow: hidden` à la section
-- Placer `SplineBackground` comme premier enfant
-- S'assurer que le contenu existant a un `z-index` supérieur
+Actuellement, les erreurs de creation vendor/professional_service sont loguees en console mais ignorees. Ajouter une gestion d'erreur qui affiche un toast en cas d'echec pour eviter les echecs silencieux a l'avenir.
 
-### 4. Optimisations de performance
+### 3. Aucune modification de logique necessaire
 
-- **Lazy loading** : Charger Spline seulement après le rendu initial
-- **Préchargement différé** : Utiliser `setTimeout` pour déclencher le chargement après 2-3 secondes
-- **Fallback gracieux** : Afficher un gradient animé pendant le chargement
-- **Mobile** : Réduire l'opacité ou désactiver sur les appareils à faibles ressources
+Le code dans `handleSubmit` (business_type, service_type, professional_service creation) est deja correct. Une fois les contraintes DB corrigees, tout fonctionnera.
 
----
-
-## Structure des fichiers modifiés
-
-| Fichier | Action |
-|---------|--------|
-| `package.json` | Ajouter `@splinetool/react-spline` |
-| `src/components/home/SplineBackground.tsx` | **Créer** - Composant wrapper Spline |
-| `src/components/home/HeroSection.tsx` | Modifier - Intégrer SplineBackground |
-| `src/components/home/index.ts` | Modifier - Exporter SplineBackground |
-
----
-
-## Détails techniques
-
-### SplineBackground.tsx
-
-```text
-Composant React avec :
-├── React.lazy() pour import dynamique
-├── Suspense avec fallback gradient
-├── Container en position absolute, inset-0
-├── Spline viewer avec scène URL
-├── Overlay dégradé pour lisibilité
-└── Contrôle d'opacité responsive
-```
-
-### Styles appliqués
-
-- **Container** : `absolute inset-0 z-0 overflow-hidden`
-- **Spline** : `w-full h-full opacity-30 sm:opacity-40`
-- **Overlay** : `absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background`
-
-### Fallback pendant chargement
-
-Un dégradé animé avec effet de pulsation pour indiquer le chargement sans être intrusif.
-
----
-
-## Résultat attendu
-
-La page d'accueil affichera :
-1. Le globe 3D interactif en arrière-plan (légèrement transparent)
-2. Un overlay dégradé garantissant la lisibilité du texte
-3. Tout le contenu existant (badge, titre, boutons, services) reste parfaitement visible et cliquable
-4. Animation fluide sans impact sur les performances grâce au lazy loading
