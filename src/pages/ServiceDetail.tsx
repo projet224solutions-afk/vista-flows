@@ -443,7 +443,7 @@ export default function ServiceDetail() {
     } catch (err) {
       toast.error('Erreur lors de la suppression');
     }
-  
+  };
 
   const handleContact = () => {
     if (!user) {
