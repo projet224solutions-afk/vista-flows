@@ -87,7 +87,7 @@ export function BrowseModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl w-[95vw] max-h-[85vh] p-0 gap-0">
+      <DialogContent className="!max-w-3xl w-[95vw] max-h-[85vh] p-0 gap-0">
         <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle className="text-xl font-bold">Explorer le Marketplace</DialogTitle>
         </DialogHeader>
