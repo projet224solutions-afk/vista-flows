@@ -278,7 +278,7 @@ function App() {
               {/* Alias legacy: /service/:id -> /services-proximite/:id */}
               <Route path="/service/:id" element={<ServiceRedirect />} />
               {/* Service Selection - Protected for logged-in users to create their professional service */}
-              <Route path="/service-selection" element={<ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire']}><ServiceSelection /></ProtectedRoute>} />
+              <Route path="/service-selection" element={<ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire', 'prestataire']}><ServiceSelection /></ProtectedRoute>} />
               <Route path="/devis" element={<Devis />} />
               <Route path="/delivery-request" element={<DeliveryRequest />} />
               <Route path="/delivery" element={<DeliveryClient />} />
@@ -393,7 +393,7 @@ function App() {
               <Route
                 path="/wallet"
                 element={
-                  <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire']}>
+                  <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire', 'prestataire']}>
                     <Wallet />
                   </ProtectedRoute>
                 }
@@ -520,7 +520,7 @@ function App() {
               <Route
                 path="/dashboard/service/:serviceId"
                 element={
-                  <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'agent', 'syndicat', 'transitaire', 'admin']}>
+                  <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'agent', 'syndicat', 'transitaire', 'admin', 'prestataire']}>
                     <ServiceDashboard />
                   </ProtectedRoute>
                 }
