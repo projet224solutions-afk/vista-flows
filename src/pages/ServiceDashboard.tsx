@@ -10,6 +10,7 @@ import type { ProfessionalService } from '@/hooks/useProfessionalServices';
 import { ServiceModuleManager } from '@/components/professional-services/modules/ServiceModuleManager';
 import { BookingManagement } from '@/components/professional-services/modules/BookingManagement';
 import { ServiceSettingsPanel } from '@/components/professional-services/ServiceSettingsPanel';
+import { ServiceSubscriptionCard } from '@/components/professional-services/ServiceSubscriptionCard';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 // Types de services qui ont leur propre module complet
@@ -88,6 +89,9 @@ export default function ServiceDashboard() {
               <span className="hidden sm:inline">Paramètres</span>
             </Button>
           </div>
+
+          {/* Barre d'abonnement compacte */}
+          <ServiceSubscriptionCard serviceId={service.id} compact />
 
           <ServiceModuleManager
             serviceId={service.id}
@@ -194,6 +198,8 @@ export default function ServiceDashboard() {
               <div className="text-2xl font-bold">{service.rating.toFixed(1)}/5.0</div>
             </CardContent>
           </Card>
+          {/* Carte abonnement */}
+          <ServiceSubscriptionCard serviceId={service.id} />
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
