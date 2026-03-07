@@ -214,10 +214,10 @@ export function VendorSidebar() {
     <TooltipProvider>
       <Sidebar className={cn(
         collapsed ? "w-12" : "w-52",
-        "border-r border-border/40 shadow-lg"
+        "border-r border-white/10 shadow-lg bg-[hsl(220,96%,32%)]"
       )} collapsible="icon">
         <ScrollArea className="h-full pr-4 overflow-visible">
-          <SidebarContent className="bg-gradient-to-b from-background via-background to-muted/20 py-2 pr-3 pb-96">
+          <SidebarContent className="bg-transparent py-2 pr-3 pb-96 text-white">
             {menuSections.map((section, sectionIndex) => (
               <SidebarGroup key={section.label} className="py-1">
                 {!collapsed && (
