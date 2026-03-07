@@ -82,7 +82,7 @@ export default function ServiceDashboard() {
               variant="outline"
               size="sm"
               className="gap-2"
-              onClick={() => {/* TODO: ouvrir paramètres */}}
+              onClick={() => setSettingsOpen(true)}
             >
               <Settings className="w-4 h-4" />
               <span className="hidden sm:inline">Paramètres</span>
