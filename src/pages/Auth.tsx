@@ -549,15 +549,18 @@ export default function Auth() {
             
             if (vendor?.business_type === 'digital') {
               targetRoute = '/vendeur-digital';
-            } else if (vendor?.business_type === 'service') {
-              const { data: proService } = await supabase
-                .from('professional_services')
-                .select('id')
-                .eq('user_id', session.user.id)
-                .maybeSingle();
-              if (proService) {
-                targetRoute = `/dashboard/service/${proService.id}`;
-              }
+            }
+          }
+          
+          // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service
+          if (profileData.role === 'prestataire') {
+            const { data: proService } = await supabase
+              .from('professional_services')
+              .select('id')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+            if (proService) {
+              targetRoute = `/dashboard/service/${proService.id}`;
             }
           }
           
