@@ -221,7 +221,7 @@ export function VendorSidebar() {
             {menuSections.map((section, sectionIndex) => (
               <SidebarGroup key={section.label} className="py-1">
                 {!collapsed && (
-                  <SidebarGroupLabel className="flex items-center gap-2 text-[10px] font-semibold text-white/50 uppercase tracking-widest px-4 py-1.5 mb-1">
+                  <SidebarGroupLabel className="flex items-center gap-2 text-[10px] font-semibold text-accent/70 uppercase tracking-widest px-4 py-1.5 mb-1">
                     <section.icon className="w-3 h-3" />
                     {section.label}
                   </SidebarGroupLabel>
