@@ -70,7 +70,7 @@ function PWAInstallPromptInner() {
 
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:max-w-md animate-in slide-in-from-bottom-5 duration-500">
-      <Card className="border-2 border-primary shadow-2xl bg-gradient-to-br from-blue-50 to-purple-50">
+      <Card className="border-2 border-primary shadow-2xl bg-gradient-to-br from-primary/5 to-accent/5">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             {/* Icône */}
