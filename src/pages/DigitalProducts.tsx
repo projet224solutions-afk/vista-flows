@@ -60,7 +60,7 @@ const productModules: ProductModule[] = [
     icon: <Plane className="w-7 h-7" />,
     titleKey: 'digital.modules.flight',
     descriptionKey: 'digital.modules.flightDesc',
-    gradient: 'from-blue-500 to-cyan-500',
+    gradient: 'from-primary to-secondary',
     category: 'voyage'
   },
   {
