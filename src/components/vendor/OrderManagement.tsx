@@ -752,7 +752,7 @@ export default function OrderManagement() {
         <Card 
           className={`border-2 transition-all ${
             canAccessPOS 
-              ? 'border-purple-300 bg-purple-50/50 cursor-pointer hover:shadow-lg active:scale-[0.98]' 
+              ? 'border-[hsl(15,100%,50%)] bg-[hsl(15,100%,50%)]/5 cursor-pointer hover:shadow-lg active:scale-[0.98]' 
               : 'border-gray-300 bg-gray-100/50 cursor-not-allowed opacity-60'
           }`}
           onClick={() => {
@@ -771,7 +771,7 @@ export default function OrderManagement() {
           }}
         >
           <CardHeader className="p-3 md:p-6 pb-2 md:pb-4">
-            <CardTitle className={`flex items-center gap-2 text-base md:text-lg ${canAccessPOS ? 'text-purple-700' : 'text-gray-500'}`}>
+            <CardTitle className={`flex items-center gap-2 text-base md:text-lg ${canAccessPOS ? 'text-[hsl(15,100%,50%)]' : 'text-gray-500'}`}>
               {canAccessPOS ? '🛒' : <Lock className="w-4 h-4" />} Ventes POS
               {!canAccessPOS && (
                 <Badge variant="secondary" className="ml-2 text-xs">
@@ -787,13 +787,13 @@ export default function OrderManagement() {
             <div className="grid grid-cols-2 gap-2 md:gap-4">
               <div className="bg-white/80 rounded-lg p-2 md:p-4">
                 <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Total ventes</p>
-                <p className={`text-xl md:text-3xl font-bold ${canAccessPOS ? 'text-purple-700' : 'text-gray-400'}`}>
+                <p className={`text-xl md:text-3xl font-bold ${canAccessPOS ? 'text-[hsl(15,100%,50%)]' : 'text-gray-400'}`}>
                   {orders.filter(o => o.source === 'pos').length}
                 </p>
               </div>
               <div className="bg-white/80 rounded-lg p-2 md:p-4">
                 <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Chiffre d'affaires</p>
-                <p className={`text-sm md:text-xl font-bold truncate ${canAccessPOS ? 'text-purple-700' : 'text-gray-400'}`}>
+                <p className={`text-sm md:text-xl font-bold truncate ${canAccessPOS ? 'text-[hsl(15,100%,50%)]' : 'text-gray-400'}`}>
                   {orders
                     .filter(o => o.source === 'pos' && o.payment_status === 'paid')
                     .reduce((sum, o) => sum + o.total_amount, 0)
@@ -804,7 +804,7 @@ export default function OrderManagement() {
             <Button 
               className={`w-full mt-3 md:mt-4 h-9 text-xs md:text-sm ${
                 canAccessPOS 
-                  ? 'bg-purple-600 hover:bg-purple-700' 
+                  ? 'bg-[hsl(15,100%,50%)] hover:bg-[hsl(15,100%,45%)]' 
                   : 'bg-gray-400 cursor-not-allowed'
               }`}
               disabled={!canAccessPOS}
