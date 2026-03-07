@@ -378,6 +378,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const roleLabels: Record<string, string> = {
               client: 'Client',
               vendeur: 'Marchand',
+              prestataire: 'Prestataire de Service',
               livreur: 'Livreur',
               taxi: 'Taxi Moto',
               transitaire: 'Transitaire',
