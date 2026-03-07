@@ -82,7 +82,6 @@ export default function SetPasswordAfterOAuth() {
     // Nettoyer les flags après utilisation
     localStorage.removeItem('oauth_vendor_shop_type');
     localStorage.removeItem('oauth_service_type');
-    }
     
     console.log(`🚀 [SetPasswordAfterOAuth] Redirection vers ${targetRoute}`);
     navigate(targetRoute, { replace: true });
