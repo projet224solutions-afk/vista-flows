@@ -908,9 +908,13 @@ export default function OrderManagement() {
         const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
 
         const filterByPeriod = (list: typeof posOrders, period: string) => {
           if (period === 'day') return list.filter(o => new Date(o.created_at) >= startOfDay);
+          if (period === 'week') return list.filter(o => new Date(o.created_at) >= startOfWeek);
           if (period === 'month') return list.filter(o => new Date(o.created_at) >= startOfMonth);
           if (period === 'year') return list.filter(o => new Date(o.created_at) >= startOfYear);
           return list;
