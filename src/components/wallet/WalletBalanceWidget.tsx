@@ -65,7 +65,7 @@ export function WalletBalanceWidget({
   };
 
   return (
-    <Card className={`bg-gradient-to-r from-blue-600 to-indigo-700 text-white border-0 ${className}`}>
+    <Card className={`bg-[hsl(220,96%,32%)] text-white border-0 ${className}`}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 flex-1">
