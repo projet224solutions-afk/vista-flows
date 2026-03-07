@@ -80,8 +80,8 @@ const getIconComponent = (iconName: string | null) => {
 // Get gradient color based on category
 const getCategoryGradient = (category: string | null) => {
   const gradients: Record<string, string> = {
-    'commerce': 'from-blue-500 to-indigo-500',
-    'food': 'from-orange-500 to-red-500',
+    'commerce': 'from-primary to-secondary',
+    'food': 'from-accent to-destructive',
     'services': 'from-emerald-500 to-teal-500',
     'transport': 'from-violet-500 to-purple-500',
     'health': 'from-pink-500 to-rose-500',
