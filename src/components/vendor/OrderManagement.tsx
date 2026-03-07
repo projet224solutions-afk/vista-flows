@@ -1168,7 +1168,7 @@ export default function OrderManagement() {
         </CardContent>
       </Card>
         );
-      })()}
+      })() : null}
 
 
       {/* Section des Commandes En Ligne */}
