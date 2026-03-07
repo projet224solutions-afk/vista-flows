@@ -2125,7 +2125,7 @@ export function POSSystem() {
                                 <span
                                   className={`text-xs font-bold ${
                                     cartonsAvailable > 0
-                                      ? 'text-[hsl(15,100%,50%)] dark:text-[hsl(15,100%,60%)]'
+                                      ? 'text-vendeur-secondary'
                                       : 'text-muted-foreground'
                                   }`}
                                 >
