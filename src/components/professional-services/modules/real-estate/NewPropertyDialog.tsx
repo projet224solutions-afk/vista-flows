@@ -281,6 +281,47 @@ export function NewPropertyDialog({ open, onClose, onSubmit, saving }: NewProper
               ))}
             </div>
           </div>
+
+          {/* Photos */}
+          <div className="space-y-2">
+            <Label>📸 Photos du bien</Label>
+            <div className="flex flex-wrap gap-2">
+              {photoPreviews.map((url, i) => (
+                <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border group">
+                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(i)}
+                    className="absolute top-0.5 right-0.5 p-0.5 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                  {i === 0 && (
+                    <span className="absolute bottom-0 left-0 right-0 bg-primary text-primary-foreground text-[9px] text-center py-0.5">
+                      Couverture
+                    </span>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                className="w-20 h-20 rounded-lg border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary transition-colors"
+              >
+                <ImagePlus className="h-5 w-5" />
+                <span className="text-[9px]">Ajouter</span>
+              </button>
+            </div>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handlePhotosSelected}
+            />
+            <p className="text-xs text-muted-foreground">Max 5MB par photo. La première sera la couverture.</p>
+          </div>
         </div>
 
         <div className="flex justify-end gap-3 pt-2">
