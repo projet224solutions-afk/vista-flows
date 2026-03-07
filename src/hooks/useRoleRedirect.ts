@@ -205,6 +205,26 @@ export const useRoleRedirect = () => {
         return;
       }
       
+      // ✅ Pour les prestataires sur /home ou /service-selection, rediriger vers leur dashboard
+      if ((profile.role as string) === 'prestataire' && (currentPath === '/home' || currentPath === '/service-selection')) {
+        const redirectPrestaFromHome = async () => {
+          const { data: proService } = await supabase
+            .from('professional_services')
+            .select('id')
+            .eq('user_id', user.id)
+            .limit(1)
+            .maybeSingle();
+          
+          if (proService) {
+            const finalRoute = `/dashboard/service/${proService.id}`;
+            console.log(`🚀 [useRoleRedirect] Prestataire sur ${currentPath} → redirection vers ${finalRoute}`);
+            navigate(finalRoute, { replace: true });
+          }
+        };
+        redirectPrestaFromHome();
+        return;
+      }
+      
       // Ne pas rediriger si l'utilisateur est déjà sur la bonne route
       if (currentPath.startsWith(targetRoute)) {
         console.log('✅ [useRoleRedirect] Déjà sur la bonne route:', currentPath);
