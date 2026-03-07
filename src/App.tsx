@@ -393,7 +393,7 @@ function App() {
               <Route
                 path="/wallet"
                 element={
-                  <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire']}>
+                  <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire', 'prestataire']}>
                     <Wallet />
                   </ProtectedRoute>
                 }
