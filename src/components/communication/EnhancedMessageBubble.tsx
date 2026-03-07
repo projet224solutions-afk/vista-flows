@@ -174,7 +174,7 @@ export function EnhancedMessageBubble({
           {/* Bulle du message */}
           <div
             className={cn(
-              'relative px-4 py-2.5 rounded-2xl',
+              'relative px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl overflow-hidden',
               isOwn
                 ? 'bg-primary text-primary-foreground rounded-br-md'
                 : 'bg-muted rounded-bl-md'
