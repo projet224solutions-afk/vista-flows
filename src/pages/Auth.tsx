@@ -2015,14 +2015,14 @@ export default function Auth() {
 
             {!showSignup && !showResetPassword && !showVendorTypeSelection && (
               <>
-                <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/60 rounded-xl shadow-sm">
+                <div className="mb-4 p-4 bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-xl shadow-sm">
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                      <Zap className="h-5 w-5 text-blue-600" />
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Zap className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-blue-900 font-semibold text-sm mb-1">Connexion intelligente</p>
-                      <p className="text-blue-700 text-xs leading-relaxed">
+                      <p className="text-foreground font-semibold text-sm mb-1">Connexion intelligente</p>
+                      <p className="text-muted-foreground text-xs leading-relaxed">
                         Utilisez vos identifiants habituels. Le système reconnaîtra automatiquement votre type de compte.
                       </p>
                     </div>
