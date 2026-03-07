@@ -289,7 +289,7 @@ export function VendorSidebar() {
                                 <span className={cn(
                                   "flex-1 text-left leading-tight",
                                   isPOS && hasAccess && "font-semibold",
-                                  !hasAccess && "text-muted-foreground"
+                                  !hasAccess && "text-white/40"
                                 )}>
                                   {item.title}
                                 </span>
