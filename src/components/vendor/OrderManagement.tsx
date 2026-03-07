@@ -787,7 +787,7 @@ export default function OrderManagement() {
             <div className="grid grid-cols-2 gap-2 md:gap-4">
               <div className="bg-white/80 rounded-lg p-2 md:p-4">
                 <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Total ventes</p>
-                <p className={`text-xl md:text-3xl font-bold ${canAccessPOS ? 'text-purple-700' : 'text-gray-400'}`}>
+                <p className={`text-xl md:text-3xl font-bold ${canAccessPOS ? 'text-[hsl(15,100%,50%)]' : 'text-gray-400'}`}>
                   {orders.filter(o => o.source === 'pos').length}
                 </p>
               </div>
