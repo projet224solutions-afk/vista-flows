@@ -1,6 +1,7 @@
 /**
  * Vue carte des biens immobiliers avec Google Maps
  */
+/// <reference types="google.maps" />
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
