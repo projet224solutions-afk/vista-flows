@@ -148,9 +148,9 @@ export function MarketplaceProductCard({
         {/* Badge Premium */}
         {isPremium && (
           <div className="marketplace-card-badge">
-            <Badge className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-[10px] font-semibold shadow-lg px-2 py-0.5">
-              ★ Premium
-            </Badge>
+             <Badge className="bg-primary text-primary-foreground text-[10px] font-semibold shadow-lg px-2 py-0.5">
+               ★ Premium
+             </Badge>
           </div>
         )}
 
