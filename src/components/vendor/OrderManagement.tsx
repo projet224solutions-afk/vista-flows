@@ -752,7 +752,7 @@ export default function OrderManagement() {
         <Card 
           className={`border-2 transition-all ${
             canAccessPOS 
-              ? 'border-purple-300 bg-purple-50/50 cursor-pointer hover:shadow-lg active:scale-[0.98]' 
+              ? 'border-[hsl(15,100%,50%)] bg-[hsl(15,100%,50%)]/5 cursor-pointer hover:shadow-lg active:scale-[0.98]' 
               : 'border-gray-300 bg-gray-100/50 cursor-not-allowed opacity-60'
           }`}
           onClick={() => {
