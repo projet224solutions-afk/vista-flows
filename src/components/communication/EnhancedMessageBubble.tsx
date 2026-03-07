@@ -141,7 +141,7 @@ export function EnhancedMessageBubble({
         )}
 
         {/* Contenu du message */}
-        <div className={cn('max-w-[75%] space-y-1', isOwn ? 'items-end' : 'items-start')}>
+        <div className={cn('max-w-[80%] sm:max-w-[75%] space-y-1 min-w-0', isOwn ? 'items-end' : 'items-start')}>
           {/* Nom de l'expéditeur */}
           {showSenderName && !isOwn && (
             <span className="text-xs font-medium text-muted-foreground px-1">
@@ -174,7 +174,7 @@ export function EnhancedMessageBubble({
           {/* Bulle du message */}
           <div
             className={cn(
-              'relative px-4 py-2.5 rounded-2xl',
+              'relative px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl overflow-hidden',
               isOwn
                 ? 'bg-primary text-primary-foreground rounded-br-md'
                 : 'bg-muted rounded-bl-md'
