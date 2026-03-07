@@ -195,7 +195,7 @@ export function StripePaymentForm({
           <div className="flex items-center justify-center gap-3 pt-2">
             <span className="text-xs text-muted-foreground">Cartes acceptées:</span>
             <div className="flex gap-2">
-              <div className="w-10 h-6 bg-gradient-to-r from-blue-600 to-blue-400 rounded flex items-center justify-center text-white text-[8px] font-bold">
+              <div className="w-10 h-6 bg-gradient-to-r from-primary to-secondary rounded flex items-center justify-center text-white text-[8px] font-bold">
                 VISA
               </div>
               <div className="w-10 h-6 bg-gradient-to-r from-red-600 to-orange-500 rounded flex items-center justify-center">
