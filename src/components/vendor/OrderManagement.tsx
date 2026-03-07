@@ -804,7 +804,7 @@ export default function OrderManagement() {
             <Button 
               className={`w-full mt-3 md:mt-4 h-9 text-xs md:text-sm ${
                 canAccessPOS 
-                  ? 'bg-purple-600 hover:bg-purple-700' 
+                  ? 'bg-[hsl(15,100%,50%)] hover:bg-[hsl(15,100%,45%)]' 
                   : 'bg-gray-400 cursor-not-allowed'
               }`}
               disabled={!canAccessPOS}
