@@ -917,7 +917,7 @@ export default function OrderManagement() {
             <Card className="bg-white/80">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
-                  <ShoppingCart className="w-4 h-4 text-purple-600" />
+                  <ShoppingCart className="w-4 h-4 text-[hsl(15,100%,50%)]" />
                   <div>
                     <p className="text-xs text-muted-foreground">Total vente</p>
                     <p className="text-xl font-bold">{orders.filter(o => o.source === 'pos').length}</p>
