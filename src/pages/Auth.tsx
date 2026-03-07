@@ -2152,14 +2152,14 @@ export default function Auth() {
                     }}
                     className={`group flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
                       selectedRole === 'vendeur' && !selectedServiceType
-                        ? 'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/25 scale-[1.02]'
-                        : 'bg-background border-border/60 hover:border-blue-300 hover:bg-blue-50/50'
+                        ? 'bg-gradient-to-br from-primary to-secondary border-primary text-white shadow-lg shadow-primary/25 scale-[1.02]'
+                        : 'bg-background border-border/60 hover:border-primary/50 hover:bg-primary/5'
                     }`}
                   >
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-                      selectedRole === 'vendeur' && !selectedServiceType ? 'bg-white/20' : 'bg-blue-100 group-hover:bg-blue-200'
+                      selectedRole === 'vendeur' && !selectedServiceType ? 'bg-white/20' : 'bg-primary/10 group-hover:bg-primary/20'
                     }`}>
-                      <Store className={`h-6 w-6 ${selectedRole === 'vendeur' && !selectedServiceType ? 'text-white' : 'text-blue-600'}`} />
+                      <Store className={`h-6 w-6 ${selectedRole === 'vendeur' && !selectedServiceType ? 'text-white' : 'text-primary'}`} />
                     </div>
                     <span className={`text-sm font-semibold ${selectedRole === 'vendeur' && !selectedServiceType ? 'text-white' : 'text-foreground'}`}>
                       Vendeur classique
