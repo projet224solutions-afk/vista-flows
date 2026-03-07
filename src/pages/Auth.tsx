@@ -2217,7 +2217,7 @@ export default function Auth() {
                   <strong>🎯 Création de compte :</strong> Remplissez les informations ci-dessous pour créer votre compte {selectedRole ? `en tant que ${selectedRole === 'prestataire' ? 'Prestataire de Service' : selectedRole === 'vendeur' ? 'Vendeur E-commerce' : selectedRole}` : ''}.
                   {selectedServiceType && (
                     <span className={`block mt-2 font-semibold ${
-                      selectedRole === 'vendeur' ? 'text-blue-700' :
+                      selectedRole === 'vendeur' ? 'text-primary' :
                       selectedRole === 'livreur' ? 'text-orange-700' :
                       selectedRole === 'taxi' ? 'text-yellow-700' :
                       selectedRole === 'transitaire' ? 'text-purple-700' :
