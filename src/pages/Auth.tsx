@@ -1578,12 +1578,13 @@ export default function Auth() {
       return;
     }
     
+    // ✅ NOUVEAU: Les services professionnels utilisent le rôle 'prestataire' (PAS 'vendeur')
     setSelectedServiceType(serviceTypeId);
-    setSelectedRole('vendeur');
-    setVendorShopType(null); // Explicitement null pour les services - sera traité comme 'service' dans handleSubmit
+    setSelectedRole('prestataire');
+    setVendorShopType(null);
     setShowServiceSelection(false);
     setShowSignup(true);
-    console.log('🔧 [Auth] Service sélectionné:', serviceTypeId, '→ rôle: vendeur, business_type sera: service');
+    console.log('🔧 [Auth] Service sélectionné:', serviceTypeId, '→ rôle: prestataire (indépendant du vendeur)');
   };
 
   const handleInputChange = (field: string, value: string) => {
