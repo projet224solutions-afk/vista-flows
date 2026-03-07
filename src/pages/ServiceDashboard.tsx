@@ -9,6 +9,7 @@ import { useProfessionalServices } from '@/hooks/useProfessionalServices';
 import type { ProfessionalService } from '@/hooks/useProfessionalServices';
 import { ServiceModuleManager } from '@/components/professional-services/modules/ServiceModuleManager';
 import { BookingManagement } from '@/components/professional-services/modules/BookingManagement';
+import { ServiceSettingsPanel } from '@/components/professional-services/ServiceSettingsPanel';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 // Types de services qui ont leur propre module complet
