@@ -2118,7 +2118,7 @@ export function POSSystem() {
                               <div
                                 className={`flex items-baseline gap-1 px-1 py-0.5 rounded ${
                                   cartonsAvailable > 0
-                                    ? 'bg-[hsl(15,100%,50%)]/10 dark:bg-[hsl(15,100%,50%)]/20'
+                                    ? 'bg-vendeur-secondary/10 dark:bg-vendeur-secondary/20'
                                     : 'bg-muted/40'
                                 }`}
                               >
