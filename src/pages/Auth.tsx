@@ -28,11 +28,11 @@ const loginSchema = z.object({
 const signupSchema = loginSchema.extend({
   firstName: z.string().min(1, "Le prénom est requis"),
   lastName: z.string().min(1, "Le nom est requis"),
-  role: z.enum(['client', 'vendeur', 'livreur', 'taxi', 'syndicat', 'transitaire', 'admin']),
+  role: z.enum(['client', 'vendeur', 'livreur', 'taxi', 'syndicat', 'transitaire', 'admin', 'prestataire']),
   city: z.string().min(1, "La ville est requise")
 });
 
-type UserRole = 'client' | 'vendeur' | 'livreur' | 'taxi' | 'syndicat' | 'transitaire' | 'admin';
+type UserRole = 'client' | 'vendeur' | 'livreur' | 'taxi' | 'syndicat' | 'transitaire' | 'admin' | 'prestataire';
 
 export default function Auth() {
   const { t } = useTranslation();
@@ -175,17 +175,13 @@ export default function Auth() {
     if (showSignup) {
       localStorage.setItem('oauth_is_new_signup', 'true');
     }
-    // ✅ FIX: Persister le type de boutique et le type de service pour l'OAuth
-    // Ces valeurs sont perdues après la redirection Google, on les sauvegarde ici
+    // ✅ FIX: Persister le type de boutique pour les vendeurs
     if (vendorShopType) {
       localStorage.setItem('oauth_vendor_shop_type', vendorShopType);
     }
-    // ✅ FIX: Si un service type est sélectionné mais pas de shop type, marquer comme 'service'
+    // ✅ Persister le service type pour les prestataires
     if (selectedServiceType) {
       localStorage.setItem('oauth_service_type', selectedServiceType);
-      if (!vendorShopType) {
-        localStorage.setItem('oauth_vendor_shop_type', 'service');
-      }
     }
 
     // 📊 Track click
@@ -447,7 +443,7 @@ export default function Auth() {
               }
             }
             
-            // ✅ FIX: Redirection intelligente selon le type de vendeur
+            // ✅ Redirection intelligente selon le type de vendeur/prestataire
             const oauthShopType = localStorage.getItem('oauth_vendor_shop_type');
             const oauthServiceType = localStorage.getItem('oauth_service_type');
             let targetRoute = getDashboardRoute(effectiveRole);
@@ -455,31 +451,32 @@ export default function Auth() {
             if (effectiveRole === 'vendeur') {
               if (oauthShopType === 'digital') {
                 targetRoute = '/vendeur-digital';
-              } else if (oauthShopType === 'service' || (oauthServiceType && oauthServiceType !== 'general')) {
-                // Pour les services, attendre et chercher le professional_service créé
-                let proServiceId: string | null = null;
-                for (let attempt = 0; attempt < 8; attempt++) {
-                  try {
-                    const { data: proService } = await supabase
-                      .from('professional_services')
-                      .select('id')
-                      .eq('user_id', session.user.id)
-                      .maybeSingle();
-                    if (proService) {
-                      proServiceId = proService.id;
-                      break;
-                    }
-                  } catch (e) {
-                    console.warn('⚠️ Erreur récupération service:', e);
+              }
+            }
+            
+            // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service
+            if (effectiveRole === 'prestataire') {
+              let proServiceId: string | null = null;
+              for (let attempt = 0; attempt < 8; attempt++) {
+                try {
+                  const { data: proService } = await supabase
+                    .from('professional_services')
+                    .select('id')
+                    .eq('user_id', session.user.id)
+                    .maybeSingle();
+                  if (proService) {
+                    proServiceId = proService.id;
+                    break;
                   }
-                  // Attendre que useAuth ait fini de créer le professional_service
-                  await new Promise(resolve => setTimeout(resolve, 800));
+                } catch (e) {
+                  console.warn('⚠️ Erreur récupération service:', e);
                 }
-                if (proServiceId) {
-                  targetRoute = `/dashboard/service/${proServiceId}`;
-                } else {
-                  console.warn('⚠️ Professional service non trouvé après attente, redirection par défaut');
-                }
+                await new Promise(resolve => setTimeout(resolve, 800));
+              }
+              if (proServiceId) {
+                targetRoute = `/dashboard/service/${proServiceId}`;
+              } else {
+                console.warn('⚠️ Professional service non trouvé après attente, redirection par défaut');
               }
             }
             localStorage.removeItem('oauth_vendor_shop_type');
@@ -548,15 +545,18 @@ export default function Auth() {
             
             if (vendor?.business_type === 'digital') {
               targetRoute = '/vendeur-digital';
-            } else if (vendor?.business_type === 'service') {
-              const { data: proService } = await supabase
-                .from('professional_services')
-                .select('id')
-                .eq('user_id', session.user.id)
-                .maybeSingle();
-              if (proService) {
-                targetRoute = `/dashboard/service/${proService.id}`;
-              }
+            }
+          }
+          
+          // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service
+          if ((profileData.role as string) === 'prestataire') {
+            const { data: proService } = await supabase
+              .from('professional_services')
+              .select('id')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+            if (proService) {
+              targetRoute = `/dashboard/service/${proService.id}`;
             }
           }
           
@@ -1175,11 +1175,12 @@ export default function Auth() {
         }
 
         // Si c'est un vendeur (marchand), créer automatiquement son profil vendor avec le nom d'entreprise
+        // ✅ IMPORTANT: Les services professionnels n'utilisent PLUS le rôle vendeur
         if (!error && authData.user && validatedData.role === 'vendeur') {
           try {
             const businessName = formData.businessName?.trim() || `${validatedData.firstName} ${validatedData.lastName}`;
             
-            // 1. Créer le profil vendor
+            // 1. Créer le profil vendor (PAS de service professionnel ici)
             const { error: vendorError } = await supabase
               .from('vendors')
               .insert({
@@ -1191,8 +1192,8 @@ export default function Auth() {
                 city: validatedData.city,
                 is_verified: false,
                 is_active: true,
-                service_type: selectedServiceType || 'general',
-                business_type: selectedServiceType ? 'service' : (vendorShopType || 'physical')
+                service_type: 'general',
+                business_type: vendorShopType || 'physical'
               });
             
             if (vendorError) {
@@ -1205,77 +1206,55 @@ export default function Auth() {
             } else {
               console.log('✅ Profil vendeur créé avec nom entreprise:', businessName);
             }
-
-            // 2. 🆕 Créer automatiquement le professional_service pour activer le module métier
-            if (selectedServiceType && selectedServiceType !== 'general') {
-              console.log('🔧 Création du professional_service pour le module métier:', selectedServiceType);
-              
-              // ✅ AMÉLIORATION: Attendre que le vendor soit bien créé
-              let vendorCreated = false;
-              let retries = 0;
-              const maxRetries = 5;
-              
-              while (!vendorCreated && retries < maxRetries) {
-                const { data: vendorCheck } = await supabase
-                  .from('vendors')
-                  .select('id')
-                  .eq('user_id', authData.user.id)
-                  .maybeSingle();
-                
-                if (vendorCheck) {
-                  vendorCreated = true;
-                  console.log('✅ Vendor créé, création du professional_service...');
-                } else {
-                  retries++;
-                  console.log(`⏳ Attente vendor (${retries}/${maxRetries})...`);
-                  await new Promise(resolve => setTimeout(resolve, 200));
-                }
-              }
-              
-              if (!vendorCreated) {
-                console.error('❌ Vendor non créé après', maxRetries, 'tentatives');
-                // Continue quand même, le vendeur pourra créer manuellement
-              } else {
-                // Récupérer le service_type_id à partir du code
-                const { data: serviceType, error: serviceTypeError } = await supabase
-                  .from('service_types')
-                  .select('id')
-                  .eq('code', selectedServiceType)
-                  .maybeSingle();
-                
-                if (serviceTypeError) {
-                  console.error('❌ Erreur récupération service_type:', serviceTypeError);
-                } else if (serviceType) {
-                  const { error: professionalServiceError } = await supabase
-                    .from('professional_services')
-                    .insert({
-                      user_id: authData.user.id,
-                      service_type_id: serviceType.id,
-                      business_name: businessName,
-                      address: validatedData.city,
-                      phone: `${phoneCode} ${formData.phone}`,
-                      email: validatedData.email,
-                      status: 'active', // ✅ CHANGÉ: Actif directement
-                      verification_status: 'unverified'
-                    });
-                  
-                  if (professionalServiceError) {
-                    console.error('❌ Erreur création professional_service:', professionalServiceError);
-                    toast({
-                      title: "Erreur création service professionnel",
-                      description: professionalServiceError.message || "Le module métier n'a pas pu être activé.",
-                      variant: "destructive"
-                    });
-                  } else {
-                    console.log('✅ Professional service créé - Module métier activé:', selectedServiceType);
-                  }
-                } else {
-                  console.warn('⚠️ Service type non trouvé pour le code:', selectedServiceType);
-                }
-              }
-            }
           } catch (vendorSyncError) {
             console.error('❌ Erreur synchronisation vendeur:', vendorSyncError);
+          }
+        }
+
+        // ✅ NOUVEAU: Si c'est un prestataire de service, créer le professional_service SANS vendor
+        if (!error && authData.user && validatedData.role === 'prestataire' && selectedServiceType) {
+          try {
+            const businessName = formData.businessName?.trim() || `${validatedData.firstName} ${validatedData.lastName}`;
+            console.log('🔧 Création du professional_service pour prestataire:', selectedServiceType);
+            
+            // Récupérer le service_type_id à partir du code
+            const { data: serviceType, error: serviceTypeError } = await supabase
+              .from('service_types')
+              .select('id')
+              .eq('code', selectedServiceType)
+              .maybeSingle();
+            
+            if (serviceTypeError) {
+              console.error('❌ Erreur récupération service_type:', serviceTypeError);
+            } else if (serviceType) {
+              const { error: professionalServiceError } = await supabase
+                .from('professional_services')
+                .insert({
+                  user_id: authData.user.id,
+                  service_type_id: serviceType.id,
+                  business_name: businessName,
+                  address: validatedData.city,
+                  phone: `${phoneCode} ${formData.phone}`,
+                  email: validatedData.email,
+                  status: 'active',
+                  verification_status: 'unverified'
+                });
+              
+              if (professionalServiceError) {
+                console.error('❌ Erreur création professional_service:', professionalServiceError);
+                toast({
+                  title: "Erreur création service professionnel",
+                  description: professionalServiceError.message || "Le service n'a pas pu être créé.",
+                  variant: "destructive"
+                });
+              } else {
+                console.log('✅ Professional service créé pour prestataire:', selectedServiceType);
+              }
+            } else {
+              console.warn('⚠️ Service type non trouvé pour le code:', selectedServiceType);
+            }
+          } catch (serviceError) {
+            console.error('❌ Erreur création service prestataire:', serviceError);
           }
         }
 
@@ -1364,7 +1343,10 @@ export default function Auth() {
             
             if (profileData.role === 'vendeur' && vendorShopType === 'digital') {
               targetRoute = '/vendeur-digital';
-            } else if (profileData.role === 'vendeur' && selectedServiceType) {
+            }
+            
+            // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service créé
+            if ((profileData.role as string) === 'prestataire') {
               const { data: proService } = await supabase
                 .from('professional_services')
                 .select('id')
@@ -1462,7 +1444,7 @@ export default function Auth() {
             } else {
               let targetRoute = getDashboardRoute(profileData.role);
               
-              // ✅ FIX: Redirection intelligente pour les vendeurs selon leur business_type
+              // ✅ Redirection intelligente pour les vendeurs selon leur business_type
               if (profileData.role === 'vendeur') {
                 const { data: vendor } = await supabase
                   .from('vendors')
@@ -1472,15 +1454,18 @@ export default function Auth() {
                 
                 if (vendor?.business_type === 'digital') {
                   targetRoute = '/vendeur-digital';
-                } else if (vendor?.business_type === 'service') {
-                  const { data: proService } = await supabase
-                    .from('professional_services')
-                    .select('id')
-                    .eq('user_id', userId)
-                    .maybeSingle();
-                  if (proService?.id) {
-                    targetRoute = `/dashboard/service/${proService.id}`;
-                  }
+                }
+              }
+              
+              // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service
+              if ((profileData.role as string) === 'prestataire') {
+                const { data: proService } = await supabase
+                  .from('professional_services')
+                  .select('id')
+                  .eq('user_id', userId)
+                  .maybeSingle();
+                if (proService?.id) {
+                  targetRoute = `/dashboard/service/${proService.id}`;
                 }
               }
               
@@ -1578,12 +1563,13 @@ export default function Auth() {
       return;
     }
     
+    // ✅ NOUVEAU: Les services professionnels utilisent le rôle 'prestataire' (PAS 'vendeur')
     setSelectedServiceType(serviceTypeId);
-    setSelectedRole('vendeur');
-    setVendorShopType(null); // Explicitement null pour les services - sera traité comme 'service' dans handleSubmit
+    setSelectedRole('prestataire');
+    setVendorShopType(null);
     setShowServiceSelection(false);
     setShowSignup(true);
-    console.log('🔧 [Auth] Service sélectionné:', serviceTypeId, '→ rôle: vendeur, business_type sera: service');
+    console.log('🔧 [Auth] Service sélectionné:', serviceTypeId, '→ rôle: prestataire (indépendant du vendeur)');
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -1894,15 +1880,13 @@ export default function Auth() {
                 <button
                   type="button"
                   onClick={() => {
-                    setSelectedRole('vendeur');
+                    // ✅ NOUVEAU: Les services utilisent le rôle 'prestataire' (pas 'vendeur')
+                    setSelectedRole('prestataire');
                     setShowServiceSelection(false);
-                    localStorage.setItem('oauth_intent_role', 'vendeur');
+                    localStorage.setItem('oauth_intent_role', 'prestataire');
                     localStorage.setItem('oauth_is_new_signup', 'true');
-                    // ✅ FIX: Persister le service type ET le shop type avant OAuth
                     if (selectedServiceType) {
                       localStorage.setItem('oauth_service_type', selectedServiceType);
-                      // Marquer explicitement que c'est un compte service (pas vendeur physique)
-                      localStorage.setItem('oauth_vendor_shop_type', 'service');
                     }
                     handleGoogleLogin(false);
                   }}
@@ -2186,20 +2170,20 @@ export default function Auth() {
                     type="button"
                     onClick={() => handleRoleClick('vendeur')}
                     className={`group flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
-                      selectedRole === 'vendeur' && selectedServiceType
+                      selectedRole === 'prestataire'
                         ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-500/25 scale-[1.02]'
                         : 'bg-background border-border/60 hover:border-emerald-300 hover:bg-emerald-50/50'
                     }`}
                   >
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-                      selectedRole === 'vendeur' && selectedServiceType ? 'bg-white/20' : 'bg-emerald-100 group-hover:bg-emerald-200'
+                      selectedRole === 'prestataire' ? 'bg-white/20' : 'bg-emerald-100 group-hover:bg-emerald-200'
                     }`}>
-                      <Briefcase className={`h-6 w-6 ${selectedRole === 'vendeur' && selectedServiceType ? 'text-white' : 'text-emerald-600'}`} />
+                      <Briefcase className={`h-6 w-6 ${selectedRole === 'prestataire' ? 'text-white' : 'text-emerald-600'}`} />
                     </div>
-                    <span className={`text-sm font-semibold ${selectedRole === 'vendeur' && selectedServiceType ? 'text-white' : 'text-foreground'}`}>
+                    <span className={`text-sm font-semibold ${selectedRole === 'prestataire' ? 'text-white' : 'text-foreground'}`}>
                       Service
                     </span>
-                    <span className={`text-[10px] ${selectedRole === 'vendeur' && selectedServiceType ? 'text-white/80' : 'text-muted-foreground'}`}>
+                    <span className={`text-[10px] ${selectedRole === 'prestataire' ? 'text-white/80' : 'text-muted-foreground'}`}>
                       Proposer des services
                     </span>
                   </button>
@@ -2210,6 +2194,7 @@ export default function Auth() {
               {showSignup && selectedRole && (
               <div className={`mb-6 p-4 rounded-lg border ${
                 selectedRole === 'vendeur' ? 'bg-blue-50 border-blue-200' :
+                selectedRole === 'prestataire' ? 'bg-emerald-50 border-emerald-200' :
                 selectedRole === 'livreur' ? 'bg-orange-50 border-orange-200' :
                 selectedRole === 'taxi' ? 'bg-yellow-50 border-yellow-200' :
                 selectedRole === 'transitaire' ? 'bg-purple-50 border-purple-200' :
@@ -2218,13 +2203,14 @@ export default function Auth() {
               }`}>
                 <p className={`text-sm ${
                   selectedRole === 'vendeur' ? 'text-blue-800' :
+                  selectedRole === 'prestataire' ? 'text-emerald-800' :
                   selectedRole === 'livreur' ? 'text-orange-800' :
                   selectedRole === 'taxi' ? 'text-yellow-800' :
                   selectedRole === 'transitaire' ? 'text-purple-800' :
                   selectedRole === 'client' ? 'text-emerald-800' :
                   'text-foreground'
                 }`}>
-                  <strong>🎯 Création de compte :</strong> Remplissez les informations ci-dessous pour créer votre compte {selectedRole ? `en tant que ${selectedRole === 'vendeur' ? (selectedServiceType ? 'Marchand Professionnel' : 'Vendeur E-commerce') : selectedRole}` : ''}.
+                  <strong>🎯 Création de compte :</strong> Remplissez les informations ci-dessous pour créer votre compte {selectedRole ? `en tant que ${selectedRole === 'prestataire' ? 'Prestataire de Service' : selectedRole === 'vendeur' ? 'Vendeur E-commerce' : selectedRole}` : ''}.
                   {selectedServiceType && (
                     <span className={`block mt-2 font-semibold ${
                       selectedRole === 'vendeur' ? 'text-blue-700' :
