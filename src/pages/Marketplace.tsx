@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 // Configuration des catégories numériques pour le filtre
 const DIGITAL_CATEGORIES = [
   { id: 'all', name: 'Tous', icon: Package, gradient: 'from-slate-500 to-slate-600' },
-  { id: 'voyage', name: 'Voyage', icon: Plane, gradient: 'from-blue-500 to-cyan-500' },
+  { id: 'voyage', name: 'Voyage', icon: Plane, gradient: 'from-primary to-secondary' },
   { id: 'logiciel', name: 'Logiciels', icon: Monitor, gradient: 'from-purple-500 to-pink-500' },
   { id: 'formation', name: 'Formations', icon: GraduationCap, gradient: 'from-green-500 to-emerald-500' },
   { id: 'livre', name: 'Livres', icon: BookOpen, gradient: 'from-amber-500 to-yellow-500' },
