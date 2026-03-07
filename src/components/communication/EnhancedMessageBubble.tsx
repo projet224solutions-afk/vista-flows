@@ -141,7 +141,7 @@ export function EnhancedMessageBubble({
         )}
 
         {/* Contenu du message */}
-        <div className={cn('max-w-[75%] space-y-1', isOwn ? 'items-end' : 'items-start')}>
+        <div className={cn('max-w-[80%] sm:max-w-[75%] space-y-1 min-w-0', isOwn ? 'items-end' : 'items-start')}>
           {/* Nom de l'expéditeur */}
           {showSenderName && !isOwn && (
             <span className="text-xs font-medium text-muted-foreground px-1">
