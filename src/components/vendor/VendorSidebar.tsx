@@ -221,7 +221,7 @@ export function VendorSidebar() {
             {menuSections.map((section, sectionIndex) => (
               <SidebarGroup key={section.label} className="py-1">
                 {!collapsed && (
-                  <SidebarGroupLabel className="flex items-center gap-2 text-[10px] font-semibold text-accent/70 uppercase tracking-widest px-4 py-1.5 mb-1">
+                  <SidebarGroupLabel className="flex items-center gap-2 text-[10px] font-semibold text-white/50 uppercase tracking-widest px-4 py-1.5 mb-1">
                     <section.icon className="w-3 h-3" />
                     {section.label}
                   </SidebarGroupLabel>
@@ -257,10 +257,10 @@ export function VendorSidebar() {
                               }
                             }}
                             className={cn(
-                              "group relative flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-all duration-200 cursor-pointer select-none text-accent/80",
-                              hasAccess && "hover:bg-white/10 hover:text-accent",
+                              "group relative flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-all duration-200 cursor-pointer select-none text-white/80",
+                              hasAccess && "hover:bg-white/10 hover:text-white",
                               !hasAccess && "opacity-50 hover:opacity-70",
-                              active && hasAccess && "bg-white/15 text-accent font-medium shadow-sm",
+                              active && hasAccess && "bg-white/15 text-white font-medium shadow-sm",
                               isPOS && hasAccess && "bg-gradient-to-r from-accent/20 to-transparent border border-accent/30",
                               isPOS && active && hasAccess && "from-accent/30 border-accent/50 shadow-md",
                               collapsed && "justify-center px-1"
@@ -277,9 +277,9 @@ export function VendorSidebar() {
                               <item.icon className={cn(
                                 "w-3.5 h-3.5 transition-colors",
                                 isPOS && hasAccess ? "text-white" : "",
-                                active && !isPOS && hasAccess && "text-accent",
-                                !active && !isPOS && hasAccess && "text-accent/60 group-hover:text-accent",
-                                !hasAccess && "text-accent/40"
+                                active && !isPOS && hasAccess && "text-white",
+                                !active && !isPOS && hasAccess && "text-white/60 group-hover:text-white",
+                                !hasAccess && "text-white/40"
                               )} />
                             </div>
                             
@@ -289,7 +289,7 @@ export function VendorSidebar() {
                                 <span className={cn(
                                   "flex-1 text-left leading-tight",
                                   isPOS && hasAccess && "font-semibold",
-                                  !hasAccess && "text-accent/40"
+                                  !hasAccess && "text-white/40"
                                 )}>
                                   {item.title}
                                 </span>
