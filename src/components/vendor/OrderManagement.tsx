@@ -1617,6 +1617,109 @@ export default function OrderManagement() {
                   <p className="text-sm text-muted-foreground">{selectedOrder.notes}</p>
                 </div>
               )}
+
+              {/* Bouton Étiquette Colis */}
+              <div className="border-t pt-4">
+                <Button
+                  onClick={() => {
+                    const addr = selectedOrder.shipping_address as any;
+                    const profile = selectedOrder.customers?.profiles;
+                    const customerName = profile?.full_name || `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || 'Client';
+                    const customerEmail = profile?.email || '';
+                    const customerPhone = profile?.phone || '';
+                    const codPhone = addr?.cod_phone || '';
+                    const isCOD = selectedOrder.payment_method === 'cash_on_delivery' || selectedOrder.metadata?.payment_method === 'cash_on_delivery';
+
+                    const labelHTML = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Étiquette Colis - ${selectedOrder.order_number}</title>
+<style>
+  @page { size: 100mm 150mm; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; width: 100mm; min-height: 150mm; padding: 5mm; background: #fff; }
+  .label { border: 2.5px solid #111; border-radius: 4mm; padding: 5mm; height: 140mm; display: flex; flex-direction: column; }
+  .header { text-align: center; border-bottom: 2px dashed #333; padding-bottom: 4mm; margin-bottom: 4mm; }
+  .header h1 { font-size: 14pt; text-transform: uppercase; letter-spacing: 2px; color: #111; }
+  .header .order-num { font-size: 11pt; color: #555; margin-top: 2mm; font-weight: 600; }
+  .section { margin-bottom: 3mm; }
+  .section-title { font-size: 7pt; text-transform: uppercase; letter-spacing: 1.5px; color: #888; font-weight: 700; margin-bottom: 1.5mm; }
+  .field { font-size: 11pt; font-weight: 600; color: #111; padding: 1.5mm 0; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 2mm; }
+  .field .icon { font-size: 9pt; color: #666; min-width: 12mm; }
+  .field .value { flex: 1; }
+  .cod-badge { background: #dc2626; color: #fff; font-size: 8pt; font-weight: 800; text-transform: uppercase; padding: 2mm 4mm; border-radius: 2mm; text-align: center; margin-top: 3mm; letter-spacing: 1px; }
+  .cod-phone { background: #fef2f2; border: 1.5px solid #dc2626; border-radius: 2mm; padding: 2mm 3mm; margin-top: 2mm; }
+  .cod-phone .value { color: #dc2626; font-weight: 800; font-size: 12pt; }
+  .footer { margin-top: auto; text-align: center; border-top: 2px dashed #333; padding-top: 3mm; }
+  .footer .date { font-size: 8pt; color: #888; }
+  .address-block { background: #f8f8f8; border-radius: 2mm; padding: 2.5mm 3mm; margin-top: 2mm; }
+  .address-line { font-size: 10pt; color: #333; line-height: 1.5; }
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head>
+<body>
+<div class="label">
+  <div class="header">
+    <h1>📦 Étiquette Colis</h1>
+    <div class="order-num">${selectedOrder.order_number}</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Destinataire</div>
+    <div class="field"><span class="icon">👤</span><span class="value">${customerName}</span></div>
+    ${customerEmail ? `<div class="field"><span class="icon">✉️</span><span class="value">${customerEmail}</span></div>` : ''}
+    ${customerPhone ? `<div class="field"><span class="icon">📞</span><span class="value">${customerPhone}</span></div>` : ''}
+  </div>
+
+  ${addr ? `
+  <div class="section">
+    <div class="section-title">Adresse de livraison</div>
+    <div class="address-block">
+      ${addr.street ? `<div class="address-line">${addr.street}</div>` : ''}
+      <div class="address-line">${addr.city || ''}${addr.postal_code ? ', ' + addr.postal_code : ''}</div>
+      ${addr.country ? `<div class="address-line">${addr.country}</div>` : ''}
+    </div>
+  </div>` : ''}
+
+  ${isCOD ? `
+  <div class="section">
+    <div class="cod-badge">⚠️ Paiement à la livraison (COD)</div>
+    ${codPhone ? `
+    <div class="cod-phone field">
+      <span class="icon">📱</span>
+      <span class="value">${codPhone}</span>
+    </div>` : ''}
+    <div class="field" style="font-size:12pt;font-weight:800;color:#dc2626;justify-content:center;border:none;margin-top:2mm;">
+      Montant à collecter: ${selectedOrder.total_amount.toLocaleString()} GNF
+    </div>
+  </div>` : ''}
+
+  <div class="footer">
+    <div class="date">Imprimé le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
+  </div>
+</div>
+</body>
+</html>`;
+
+                    const blob = new Blob([labelHTML], { type: 'text/html' });
+                    const url = URL.createObjectURL(blob);
+                    const printWindow = window.open(url, '_blank');
+                    if (printWindow) {
+                      printWindow.onload = () => {
+                        printWindow.print();
+                      };
+                    }
+                    setTimeout(() => URL.revokeObjectURL(url), 10000);
+                  }}
+                  className="w-full bg-accent text-accent-foreground hover:bg-accent/90 shadow-md"
+                  size="lg"
+                >
+                  <Download className="w-5 h-5 mr-2" />
+                  Générer étiquette colis
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
