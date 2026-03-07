@@ -116,8 +116,18 @@ export default function ServiceDetail() {
       loadServiceDetails();
       loadReviews();
       loadRestaurantMenu();
+      loadGalleryImages();
     }
   }, [id, positionReady]);
+
+  // Check ownership
+  useEffect(() => {
+    if (service?.vendor_user_id && user?.id) {
+      setIsOwner(service.vendor_user_id === user.id);
+    } else {
+      setIsOwner(false);
+    }
+  }, [service?.vendor_user_id, user?.id]);
 
   // Géocoder une adresse pour obtenir les coordonnées
   const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number } | null> => {
