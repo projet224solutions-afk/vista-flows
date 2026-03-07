@@ -494,17 +494,17 @@ export default function Marketplace() {
             onClick={() => setSelectedItemType('digital_product')}
             className={`group relative flex-1 max-w-[140px] h-14 sm:h-20 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-0.5 sm:gap-1.5 transition-all duration-300 ${
               selectedItemType === 'digital_product' 
-                ? 'bg-gradient-to-br from-purple-500 via-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-500/30 scale-[1.02] ring-2 ring-purple-300/50' 
-                : 'bg-card border border-border hover:border-purple-400 hover:shadow-md'
+                ? 'bg-accent text-white shadow-lg shadow-accent/30 scale-[1.02] ring-2 ring-accent/50' 
+                : 'bg-card border border-border hover:border-accent hover:shadow-md'
             }`}
           >
             <div className={`p-1.5 sm:p-2 rounded-lg transition-all ${
               selectedItemType === 'digital_product' 
                 ? 'bg-white/20' 
-                : 'bg-purple-100'
+                : 'bg-accent/10'
             }`}>
               <Laptop className={`w-4 h-4 sm:w-6 sm:h-6 transition-transform group-hover:scale-110 ${
-                selectedItemType === 'digital_product' ? 'text-white' : 'text-purple-600'
+                selectedItemType === 'digital_product' ? 'text-white' : 'text-accent'
               }`} />
             </div>
             <span className={`text-[9px] sm:text-xs font-medium ${
