@@ -463,6 +463,7 @@ export default function Auth() {
                     .from('professional_services')
                     .select('id')
                     .eq('user_id', session.user.id)
+                    .limit(1)
                     .maybeSingle();
                   if (proService) {
                     proServiceId = proService.id;
@@ -554,6 +555,7 @@ export default function Auth() {
               .from('professional_services')
               .select('id')
               .eq('user_id', session.user.id)
+              .limit(1)
               .maybeSingle();
             if (proService) {
               targetRoute = `/dashboard/service/${proService.id}`;
@@ -1351,6 +1353,7 @@ export default function Auth() {
                 .from('professional_services')
                 .select('id')
                 .eq('user_id', authData.user!.id)
+                .limit(1)
                 .maybeSingle();
               
               if (proService?.id) {
@@ -1463,6 +1466,7 @@ export default function Auth() {
                   .from('professional_services')
                   .select('id')
                   .eq('user_id', userId)
+                  .limit(1)
                   .maybeSingle();
                 if (proService?.id) {
                   targetRoute = `/dashboard/service/${proService.id}`;

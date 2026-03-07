@@ -189,6 +189,7 @@ export const useRoleRedirect = () => {
               .from('professional_services')
               .select('id')
               .eq('user_id', user.id)
+              .limit(1)
               .maybeSingle();
             
             const finalRoute = proService ? `/dashboard/service/${proService.id}` : '/service-selection';
@@ -201,6 +202,26 @@ export const useRoleRedirect = () => {
         
         console.log(`🚀 [useRoleRedirect] Redirection depuis ${currentPath} vers ${targetRoute} (rôle: ${profile.role})`);
         navigate(targetRoute, { replace: true });
+        return;
+      }
+      
+      // ✅ Pour les prestataires sur /home ou /service-selection, rediriger vers leur dashboard
+      if ((profile.role as string) === 'prestataire' && (currentPath === '/home' || currentPath === '/service-selection')) {
+        const redirectPrestaFromHome = async () => {
+          const { data: proService } = await supabase
+            .from('professional_services')
+            .select('id')
+            .eq('user_id', user.id)
+            .limit(1)
+            .maybeSingle();
+          
+          if (proService) {
+            const finalRoute = `/dashboard/service/${proService.id}`;
+            console.log(`🚀 [useRoleRedirect] Prestataire sur ${currentPath} → redirection vers ${finalRoute}`);
+            navigate(finalRoute, { replace: true });
+          }
+        };
+        redirectPrestaFromHome();
         return;
       }
       
