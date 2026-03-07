@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Store, TrendingUp, Users, DollarSign, Settings } from 'lucide-react';
+import { Store, Settings, DollarSign, TrendingUp, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,6 +10,17 @@ import type { ProfessionalService } from '@/hooks/useProfessionalServices';
 import { ServiceModuleManager } from '@/components/professional-services/modules/ServiceModuleManager';
 import { BookingManagement } from '@/components/professional-services/modules/BookingManagement';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
+
+// Types de services immobiliers qui ont leur propre module complet
+function isRealEstateService(service: ProfessionalService): boolean {
+  const code = service.service_type?.code?.toLowerCase() || '';
+  const name = service.service_type?.name?.toLowerCase() || '';
+  return (
+    code === 'location' ||
+    name.includes('immobili') ||
+    name.includes('location immobili')
+  );
+}
 
 export default function ServiceDashboard() {
   const { serviceId } = useParams<{ serviceId: string }>();
@@ -52,14 +63,33 @@ export default function ServiceDashboard() {
     );
   }
 
-  const statusColors = {
+  // Pour les services immobiliers → afficher directement le module complet
+  if (isRealEstateService(service)) {
+    return (
+      <div className="min-h-screen bg-background pb-24">
+        <div className="container mx-auto px-4 py-6">
+          <ServiceModuleManager
+            serviceId={service.id}
+            serviceTypeId={service.service_type_id}
+            serviceTypeName={service.service_type?.name || 'Service'}
+            serviceTypeCode={service.service_type?.code}
+            businessName={service.business_name}
+          />
+        </div>
+        <CommunicationWidget position="bottom-right" showNotifications={true} />
+      </div>
+    );
+  }
+
+  // Dashboard générique pour les autres types de services
+  const statusColors: Record<string, string> = {
     pending: 'bg-yellow-500',
     active: 'bg-green-500',
     suspended: 'bg-red-500',
     rejected: 'bg-gray-500',
   };
 
-  const verificationColors = {
+  const verificationColors: Record<string, string> = {
     unverified: 'bg-gray-500',
     pending: 'bg-yellow-500',
     verified: 'bg-green-500',
@@ -68,7 +98,6 @@ export default function ServiceDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <div className="border-b bg-card sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -98,7 +127,6 @@ export default function ServiceDashboard() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -141,7 +169,6 @@ export default function ServiceDashboard() {
           </Card>
         </div>
 
-        {/* Contenu dynamique selon le type de service */}
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList>
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
@@ -221,7 +248,6 @@ export default function ServiceDashboard() {
         </Tabs>
       </div>
       
-      {/* Widget de communication flottant */}
       <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>
   );
