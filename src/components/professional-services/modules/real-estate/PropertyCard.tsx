@@ -39,13 +39,13 @@ const typeIcons: Record<string, string> = {
   commerce: '🏪',
 };
 
-export function PropertyCard({ property, onStatusChange, onDelete }: PropertyCardProps) {
+export function PropertyCard({ property, onStatusChange, onDelete, onClick }: PropertyCardProps) {
   const formatPrice = useFormatCurrency();
   const coverImage = property.images?.find(img => img.is_cover)?.image_url || property.images?.[0]?.image_url;
   const statusInfo = statusConfig[property.status] || statusConfig.disponible;
 
   return (
-    <Card className="overflow-hidden group hover:shadow-md transition-shadow">
+    <Card className="overflow-hidden group hover:shadow-md transition-shadow cursor-pointer" onClick={onClick}>
       <div className="flex flex-col sm:flex-row">
         {/* Image */}
         <div className="relative w-full sm:w-56 h-44 sm:h-auto bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
