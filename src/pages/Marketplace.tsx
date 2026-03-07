@@ -535,7 +535,7 @@ export default function Marketplace() {
                     'border text-xs font-medium',
                     isSelected
                       ? 'bg-gradient-to-r text-white border-transparent shadow-sm scale-[1.02]'
-                      : 'bg-card border-border hover:border-purple-400/50 hover:bg-purple-50/50 dark:hover:bg-purple-950/20',
+                      : 'bg-card border-border hover:border-primary/30 hover:bg-primary/5 dark:hover:bg-primary/10',
                     isSelected && cat.gradient
                   )}
                 >
