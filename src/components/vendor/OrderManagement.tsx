@@ -1038,7 +1038,7 @@ export default function OrderManagement() {
                     
                     {/* Badges - wrap on mobile */}
                     <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                      <Badge className="bg-purple-500 text-white text-[10px] sm:text-xs shrink-0">
+                      <Badge className="bg-[hsl(15,100%,50%)] text-white text-[10px] sm:text-xs shrink-0">
                         🛒 Vente POS
                       </Badge>
                       <Badge className={`${statusColors[order.status]} text-[10px] sm:text-xs shrink-0`}>
