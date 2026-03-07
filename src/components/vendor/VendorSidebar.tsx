@@ -214,21 +214,21 @@ export function VendorSidebar() {
     <TooltipProvider>
       <Sidebar className={cn(
         collapsed ? "w-12" : "w-52",
-        "border-r border-border/40 shadow-lg"
+        "border-r border-white/10 shadow-lg bg-[hsl(220,96%,32%)]"
       )} collapsible="icon">
         <ScrollArea className="h-full pr-4 overflow-visible">
-          <SidebarContent className="bg-gradient-to-b from-background via-background to-muted/20 py-2 pr-3 pb-96">
+          <SidebarContent className="bg-transparent py-2 pr-3 pb-96 text-white">
             {menuSections.map((section, sectionIndex) => (
               <SidebarGroup key={section.label} className="py-1">
                 {!collapsed && (
-                  <SidebarGroupLabel className="flex items-center gap-2 text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest px-4 py-1.5 mb-1">
+                  <SidebarGroupLabel className="flex items-center gap-2 text-[10px] font-semibold text-white/50 uppercase tracking-widest px-4 py-1.5 mb-1">
                     <section.icon className="w-3 h-3" />
                     {section.label}
                   </SidebarGroupLabel>
                 )}
                 
                 {collapsed && sectionIndex > 0 && (
-                  <div className="h-px bg-border/50 mx-2 my-2" />
+                  <div className="h-px bg-white/15 mx-2 my-2" />
                 )}
                 
                 <SidebarGroupContent>
@@ -257,29 +257,29 @@ export function VendorSidebar() {
                               }
                             }}
                             className={cn(
-                              "group relative flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-all duration-200 cursor-pointer select-none",
-                              hasAccess && "hover:bg-primary/10 hover:text-primary",
-                              !hasAccess && "opacity-60 hover:opacity-80",
-                              active && hasAccess && "bg-primary/15 text-primary font-medium shadow-sm",
-                              isPOS && hasAccess && "bg-gradient-to-r from-primary/5 to-transparent border border-primary/20",
-                              isPOS && active && hasAccess && "from-primary/20 border-primary/40 shadow-md",
+                              "group relative flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-all duration-200 cursor-pointer select-none text-white/80",
+                              hasAccess && "hover:bg-white/10 hover:text-white",
+                              !hasAccess && "opacity-50 hover:opacity-70",
+                              active && hasAccess && "bg-white/15 text-white font-medium shadow-sm",
+                              isPOS && hasAccess && "bg-gradient-to-r from-accent/20 to-transparent border border-accent/30",
+                              isPOS && active && hasAccess && "from-accent/30 border-accent/50 shadow-md",
                               collapsed && "justify-center px-1"
                             )}
                           >
                             {/* Icône */}
                             <div className={cn(
                               "flex items-center justify-center rounded-md transition-all flex-shrink-0",
-                              isPOS && hasAccess ? "w-6 h-6 bg-gradient-to-br from-primary to-primary/80 shadow-sm" : "w-5 h-5",
-                              active && !isPOS && hasAccess && "bg-primary/10",
+                              isPOS && hasAccess ? "w-6 h-6 bg-gradient-to-br from-accent to-accent/80 shadow-sm" : "w-5 h-5",
+                              active && !isPOS && hasAccess && "bg-white/10",
                               !hasAccess && "grayscale",
                               collapsed && isPOS && "w-5 h-5"
                             )}>
                               <item.icon className={cn(
                                 "w-3.5 h-3.5 transition-colors",
-                                isPOS && hasAccess ? "text-primary-foreground" : "",
-                                active && !isPOS && hasAccess && "text-primary",
-                                !active && !isPOS && hasAccess && "text-muted-foreground group-hover:text-primary",
-                                !hasAccess && "text-muted-foreground"
+                                isPOS && hasAccess ? "text-white" : "",
+                                active && !isPOS && hasAccess && "text-white",
+                                !active && !isPOS && hasAccess && "text-white/60 group-hover:text-white",
+                                !hasAccess && "text-white/40"
                               )} />
                             </div>
                             
@@ -289,7 +289,7 @@ export function VendorSidebar() {
                                 <span className={cn(
                                   "flex-1 text-left leading-tight",
                                   isPOS && hasAccess && "font-semibold",
-                                  !hasAccess && "text-muted-foreground"
+                                  !hasAccess && "text-white/40"
                                 )}>
                                   {item.title}
                                 </span>
@@ -300,7 +300,7 @@ export function VendorSidebar() {
                                     variant={badgeValue === "HOT" ? "destructive" : "secondary"}
                                     className={cn(
                                       "text-[10px] px-2 py-0.5 h-5 min-w-[24px] flex items-center justify-center flex-shrink-0 mr-3 font-bold",
-                                      isPOS && "bg-gradient-to-r from-orange-500 to-red-500 text-white border-0 animate-pulse shadow-md"
+                                      isPOS && "bg-gradient-to-r from-accent to-destructive text-white border-0 animate-pulse shadow-md"
                                     )}
                                   >
                                     {badgeValue}
@@ -310,7 +310,7 @@ export function VendorSidebar() {
                                 {/* Icône de verrouillage si pas accès */}
                                 {!hasAccess && requiredPlan && (
                                   <div className="flex items-center gap-1">
-                                    <Lock className="w-3 h-3 text-muted-foreground" />
+                                    <Lock className="w-3 h-3 text-white/40" />
                                     <Badge 
                                       className={cn(
                                         "text-[8px] px-1 py-0 h-4 text-white flex-shrink-0",
