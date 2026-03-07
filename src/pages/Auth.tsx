@@ -2046,8 +2046,8 @@ export default function Auth() {
 
                 <div className="bg-gradient-to-br from-muted/20 via-background to-muted/10 border border-border/50 rounded-2xl p-6 shadow-sm">
                   <div className="text-center mb-5">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center mx-auto mb-3">
-                      <Store className="h-7 w-7 text-blue-600" />
+                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                      <Store className="h-7 w-7 text-primary" />
                     </div>
                     <h3 className="text-base font-bold text-foreground mb-1">Vendeur classique</h3>
                     <p className="text-xs text-muted-foreground">Quel type de produits souhaitez-vous vendre ?</p>
