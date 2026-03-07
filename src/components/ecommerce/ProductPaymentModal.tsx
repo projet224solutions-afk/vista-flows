@@ -273,7 +273,7 @@ export default function ProductPaymentModal({
       name: 'Carte Bancaire',
       description: 'Paiement sécurisé VISA / Mastercard',
       icon: CreditCard,
-      color: 'text-blue-600'
+      color: 'text-primary'
     },
     {
       id: 'orange_money' as ProductPaymentMethod,
