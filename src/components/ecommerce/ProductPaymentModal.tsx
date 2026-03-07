@@ -735,9 +735,9 @@ export default function ProductPaymentModal({
         </div>
 
         {!customerId && (
-          <Alert variant="default" className="border-blue-200 bg-blue-50 dark:bg-blue-950">
-            <AlertCircle className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-900 dark:text-blue-200">
+          <Alert variant="default" className="border-primary/20 bg-primary/5 dark:bg-primary/10">
+            <AlertCircle className="h-4 w-4 text-primary" />
+            <AlertDescription className="text-foreground dark:text-foreground/80">
               Votre compte client sera automatiquement créé lors du paiement.
             </AlertDescription>
           </Alert>
