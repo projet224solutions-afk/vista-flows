@@ -36,8 +36,8 @@ export function NearbyServicesSection({
       title: t('home.shops'),
       subtitle: 'Commerces locaux',
       count: stats.boutiques,
-      gradient: 'from-vendeur-primary/20 to-vendeur-secondary/10',
-      iconBg: 'bg-vendeur-primary/15',
+      gradient: 'from-vendeur-primary/25 to-vendeur-secondary/15',
+      iconBg: 'bg-vendeur-primary/20',
       trending: stats.boutiques > 5,
     },
     {
@@ -46,8 +46,8 @@ export function NearbyServicesSection({
       title: 'Restaurants',
       subtitle: 'Commander à manger',
       count: stats.restaurants,
-      gradient: 'from-orange-500/20 to-red-500/10',
-      iconBg: 'bg-orange-500/15',
+      gradient: 'from-orange-500/25 to-red-500/15',
+      iconBg: 'bg-orange-500/20',
       trending: stats.restaurants > 0,
     },
     {
@@ -56,8 +56,8 @@ export function NearbyServicesSection({
       title: t('home.taxiMotos'),
       subtitle: 'Transport rapide',
       count: stats.taxi,
-      gradient: 'from-taxi-primary/20 to-taxi-secondary/10',
-      iconBg: 'bg-taxi-primary/15',
+      gradient: 'from-taxi-primary/25 to-taxi-secondary/15',
+      iconBg: 'bg-taxi-primary/20',
       trending: stats.taxi > 2,
     },
     {
@@ -66,8 +66,8 @@ export function NearbyServicesSection({
       title: t('home.delivery'),
       subtitle: 'Livraison express',
       count: stats.livraison,
-      gradient: 'from-livreur-primary/20 to-livreur-secondary/10',
-      iconBg: 'bg-livreur-primary/15',
+      gradient: 'from-livreur-primary/25 to-livreur-secondary/15',
+      iconBg: 'bg-livreur-primary/20',
       trending: stats.livraison > 1,
     },
   ];
