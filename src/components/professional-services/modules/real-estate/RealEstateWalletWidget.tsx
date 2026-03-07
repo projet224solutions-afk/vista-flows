@@ -1,0 +1,43 @@
+/**
+ * Widget Wallet pour le module immobilier
+ */
+import { WalletBalanceWidget } from '@/components/wallet/WalletBalanceWidget';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Wallet, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+
+interface RealEstateWalletWidgetProps {
+  className?: string;
+}
+
+export function RealEstateWalletWidget({ className }: RealEstateWalletWidgetProps) {
+  return (
+    <Card className={className}>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Wallet className="h-4 w-4 text-primary" />
+          Portefeuille Immobilier
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <WalletBalanceWidget showTransferButton={true} />
+        <div className="grid grid-cols-2 gap-2 pt-2">
+          <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+            <ArrowUpRight className="h-4 w-4 text-emerald-500" />
+            <div>
+              <p className="text-xs text-muted-foreground">Revenus</p>
+              <p className="text-sm font-semibold">Commissions</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+            <ArrowDownRight className="h-4 w-4 text-destructive" />
+            <div>
+              <p className="text-xs text-muted-foreground">Dépenses</p>
+              <p className="text-sm font-semibold">Publicités</p>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
