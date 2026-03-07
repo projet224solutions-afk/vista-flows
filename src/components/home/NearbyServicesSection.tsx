@@ -46,8 +46,8 @@ export function NearbyServicesSection({
       title: 'Restaurants',
       subtitle: 'Commander à manger',
       count: stats.restaurants,
-      gradient: 'from-orange-500/20 to-red-500/10',
-      iconBg: 'bg-orange-500/15',
+      gradient: 'from-orange-500/25 to-red-500/15',
+      iconBg: 'bg-orange-500/20',
       trending: stats.restaurants > 0,
     },
     {
