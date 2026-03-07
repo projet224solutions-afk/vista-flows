@@ -789,22 +789,25 @@ export default function UniversalCommunicationHub({
                         className={cn("flex mb-3", isOwn ? "justify-end" : "justify-start")}
                       >
                         <div className={cn(
-                          "max-w-[80%] sm:max-w-[75%] rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm overflow-hidden min-w-0",
+                          "max-w-[85%] sm:max-w-[75%] rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm min-w-0",
                           isOwn 
                             ? "bg-primary text-primary-foreground rounded-br-md" 
                             : "bg-muted rounded-bl-md"
                         )}>
                           {msg.file_url && msg.type === 'image' && (
-                            <img loading="lazy" src={msg.file_url} alt="Image" className="rounded-lg max-w-full mb-2" />
+                            <img loading="lazy" src={msg.file_url} alt="Image" className="rounded-lg w-full max-w-[250px] mb-2" />
+                          )}
+                          {msg.file_url && (msg.type === 'video' || msg.file_url?.match(/\.(mp4|webm|mov)$/i)) && (
+                            <video controls src={msg.file_url} className="rounded-lg w-full max-w-[250px] mb-2" />
                           )}
                           {msg.file_url && msg.type === 'audio' && (
-                            <audio controls src={msg.file_url} className="max-w-full mb-2" />
+                            <audio controls src={msg.file_url} className="w-full max-w-[220px] mb-2" />
                           )}
                           {msg.file_url && msg.type === 'file' && (
                             <a href={msg.file_url} target="_blank" rel="noopener noreferrer" 
                               className="flex items-center gap-2 text-sm underline mb-2">
-                              <Paperclip className="w-4 h-4" />
-                              {msg.file_name || 'Fichier'}
+                              <Paperclip className="w-4 h-4 flex-shrink-0" />
+                              <span className="truncate">{msg.file_name || 'Fichier'}</span>
                             </a>
                           )}
                           {msg.content && msg.type === 'text' && (
@@ -815,7 +818,7 @@ export default function UniversalCommunicationHub({
                             />
                           )}
                           {msg.content && msg.type !== 'text' && (
-                            <p className="text-sm leading-relaxed break-words">{msg.content}</p>
+                            <p className="text-sm leading-relaxed break-words whitespace-pre-wrap" style={{ wordBreak: 'break-word' }}>{msg.content}</p>
                           )}
                           <div className={cn(
                             "flex items-center justify-end gap-1 mt-1",
