@@ -228,7 +228,7 @@ export function VendorSidebar() {
                 )}
                 
                 {collapsed && sectionIndex > 0 && (
-                  <div className="h-px bg-border/50 mx-2 my-2" />
+                  <div className="h-px bg-white/15 mx-2 my-2" />
                 )}
                 
                 <SidebarGroupContent>
