@@ -269,17 +269,17 @@ export function VendorSidebar() {
                             {/* Icône */}
                             <div className={cn(
                               "flex items-center justify-center rounded-md transition-all flex-shrink-0",
-                              isPOS && hasAccess ? "w-6 h-6 bg-gradient-to-br from-primary to-primary/80 shadow-sm" : "w-5 h-5",
-                              active && !isPOS && hasAccess && "bg-primary/10",
+                              isPOS && hasAccess ? "w-6 h-6 bg-gradient-to-br from-accent to-accent/80 shadow-sm" : "w-5 h-5",
+                              active && !isPOS && hasAccess && "bg-white/10",
                               !hasAccess && "grayscale",
                               collapsed && isPOS && "w-5 h-5"
                             )}>
                               <item.icon className={cn(
                                 "w-3.5 h-3.5 transition-colors",
-                                isPOS && hasAccess ? "text-primary-foreground" : "",
-                                active && !isPOS && hasAccess && "text-primary",
-                                !active && !isPOS && hasAccess && "text-muted-foreground group-hover:text-primary",
-                                !hasAccess && "text-muted-foreground"
+                                isPOS && hasAccess ? "text-white" : "",
+                                active && !isPOS && hasAccess && "text-white",
+                                !active && !isPOS && hasAccess && "text-white/60 group-hover:text-white",
+                                !hasAccess && "text-white/40"
                               )} />
                             </div>
                             
