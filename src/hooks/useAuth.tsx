@@ -179,9 +179,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    const mapAccountTypeToRole = (value: string): Profile['role'] | null => {
+    const mapAccountTypeToRole = (value: string): string | null => {
       const v = value.toLowerCase().trim();
       if (v === 'marchand' || v === 'merchant' || v === 'vendeur') return 'vendeur';
+      if (v === 'prestataire' || v === 'service') return 'prestataire';
       if (v === 'livreur' || v === 'driver') return 'livreur';
       if (v === 'taxi_moto' || v === 'taxi-moto' || v === 'taxi') return 'taxi';
       if (v === 'transitaire') return 'transitaire';
