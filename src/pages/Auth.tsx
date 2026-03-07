@@ -2065,14 +2065,14 @@ export default function Auth() {
                         setShowVendorTypeSelection(false);
                         setShowSignup(true);
                       }}
-                      className="group flex flex-col items-center text-center gap-3 p-5 rounded-xl border-2 border-border/60 bg-background hover:border-blue-400 hover:bg-blue-50/60 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200"
+                      className="group flex flex-col items-center text-center gap-2 sm:gap-3 p-3 sm:p-5 rounded-xl border-2 border-border/60 bg-background hover:border-blue-400 hover:bg-blue-50/60 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200"
                     >
-                      <div className="w-14 h-14 rounded-xl bg-blue-100 group-hover:bg-blue-500 flex items-center justify-center shrink-0 transition-colors">
-                        <ShoppingBag className="h-7 w-7 text-blue-600 group-hover:text-white transition-colors" />
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-blue-100 group-hover:bg-blue-500 flex items-center justify-center shrink-0 transition-colors">
+                        <ShoppingBag className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600 group-hover:text-white transition-colors" />
                       </div>
-                      <div>
-                        <span className="text-sm font-bold text-foreground block mb-1">E-commerce</span>
-                        <span className="text-[11px] leading-tight text-muted-foreground">Produits physiques : vêtements, accessoires, électronique…</span>
+                      <div className="min-w-0">
+                        <span className="text-xs sm:text-sm font-bold text-foreground block mb-0.5 sm:mb-1">E-commerce</span>
+                        <span className="text-[10px] sm:text-[11px] leading-tight text-muted-foreground block">Produits physiques, vêtements, électronique…</span>
                       </div>
                     </button>
 
@@ -2087,14 +2087,14 @@ export default function Auth() {
                         setShowVendorTypeSelection(false);
                         setShowSignup(true);
                       }}
-                      className="group flex flex-col items-center text-center gap-3 p-5 rounded-xl border-2 border-border/60 bg-background hover:border-indigo-400 hover:bg-indigo-50/60 hover:shadow-lg hover:shadow-indigo-500/10 transition-all duration-200"
+                      className="group flex flex-col items-center text-center gap-2 sm:gap-3 p-3 sm:p-5 rounded-xl border-2 border-border/60 bg-background hover:border-indigo-400 hover:bg-indigo-50/60 hover:shadow-lg hover:shadow-indigo-500/10 transition-all duration-200"
                     >
-                      <div className="w-14 h-14 rounded-xl bg-indigo-100 group-hover:bg-indigo-500 flex items-center justify-center shrink-0 transition-colors">
-                        <Laptop className="h-7 w-7 text-indigo-600 group-hover:text-white transition-colors" />
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-indigo-100 group-hover:bg-indigo-500 flex items-center justify-center shrink-0 transition-colors">
+                        <Laptop className="h-6 w-6 sm:h-7 sm:w-7 text-indigo-600 group-hover:text-white transition-colors" />
                       </div>
-                      <div>
-                        <span className="text-sm font-bold text-foreground block mb-1">Digitaux</span>
-                        <span className="text-[11px] leading-tight text-muted-foreground">Fichiers, formations, ebooks, logiciels…</span>
+                      <div className="min-w-0">
+                        <span className="text-xs sm:text-sm font-bold text-foreground block mb-0.5 sm:mb-1">Digitaux</span>
+                        <span className="text-[10px] sm:text-[11px] leading-tight text-muted-foreground block">Fichiers, formations, ebooks, logiciels…</span>
                       </div>
                     </button>
                   </div>
