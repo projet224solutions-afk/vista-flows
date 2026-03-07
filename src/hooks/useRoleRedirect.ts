@@ -71,6 +71,7 @@ export const getDashboardRoute = (role: string | null | undefined): string => {
     admin: '/pdg',
     ceo: '/pdg',
     vendeur: '/vendeur',
+    prestataire: '/home', // Les prestataires sont redirigés vers /dashboard/service/:id dynamiquement
     livreur: '/livreur',
     taxi: '/taxi-moto/driver',
     driver: '/taxi-moto/driver',

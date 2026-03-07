@@ -37,6 +37,7 @@ const Dashboard = () => {
       'admin': '/pdg',
       'ceo': '/pdg',
       'vendeur': '/vendeur',
+      'prestataire': '/home', // Géré dynamiquement ci-dessous
       'livreur': '/livreur',
       'taxi': '/taxi-moto/driver',
       'driver': '/taxi-moto/driver',
