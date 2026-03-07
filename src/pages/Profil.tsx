@@ -47,6 +47,11 @@ const userTypes = {
     description: "Agent commercial",
     color: "bg-purple-500"
   },
+  service: {
+    label: "Service Pro",
+    description: "Prestataire de services professionnels",
+    color: "bg-blue-600"
+  },
   admin: {
     label: "PDG",
     description: "Président Directeur Général",
