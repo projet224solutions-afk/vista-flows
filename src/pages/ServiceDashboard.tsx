@@ -9,6 +9,7 @@ import { useProfessionalServices } from '@/hooks/useProfessionalServices';
 import type { ProfessionalService } from '@/hooks/useProfessionalServices';
 import { ServiceModuleManager } from '@/components/professional-services/modules/ServiceModuleManager';
 import { BookingManagement } from '@/components/professional-services/modules/BookingManagement';
+import { ServiceSettingsPanel } from '@/components/professional-services/ServiceSettingsPanel';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 // Types de services qui ont leur propre module complet
@@ -29,6 +30,7 @@ export default function ServiceDashboard() {
   const navigate = useNavigate();
   const { userServices, loading } = useProfessionalServices();
   const [service, setService] = useState<ProfessionalService | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && userServices.length > 0) {
@@ -80,7 +82,7 @@ export default function ServiceDashboard() {
               variant="outline"
               size="sm"
               className="gap-2"
-              onClick={() => {/* TODO: ouvrir paramètres */}}
+              onClick={() => setSettingsOpen(true)}
             >
               <Settings className="w-4 h-4" />
               <span className="hidden sm:inline">Paramètres</span>
@@ -95,6 +97,12 @@ export default function ServiceDashboard() {
             businessName={service.business_name}
           />
         </div>
+        <ServiceSettingsPanel
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+          service={service}
+          onUpdated={() => window.location.reload()}
+        />
         <CommunicationWidget position="bottom-right" showNotifications={true} />
       </div>
     );
@@ -137,7 +145,7 @@ export default function ServiceDashboard() {
                 </p>
               </div>
             </div>
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => setSettingsOpen(true)}>
               <Settings className="w-4 h-4" />
               Paramètres
             </Button>
@@ -267,6 +275,12 @@ export default function ServiceDashboard() {
         </Tabs>
       </div>
       
+      <ServiceSettingsPanel
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        service={service}
+        onUpdated={() => window.location.reload()}
+      />
       <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>
   );
