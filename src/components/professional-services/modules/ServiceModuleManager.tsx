@@ -141,7 +141,7 @@ export function ServiceModuleManager({
     return <RealEstateModule {...props} />;
   }
   if (nameLower.includes('construction') || nameLower.includes('btp')) {
-    return <RealEstateModule {...props} />;
+    return <ConstructionModule {...props} />;
   }
   if (nameLower.includes('fitness') || nameLower.includes('gym') || nameLower.includes('sport')) {
     return <FitnessModule {...props} />;
