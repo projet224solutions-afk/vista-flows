@@ -466,17 +466,17 @@ export default function Marketplace() {
             }}
             className={`group relative flex-1 max-w-[140px] h-14 sm:h-20 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-0.5 sm:gap-1.5 transition-all duration-300 ${
               selectedItemType === 'professional_service' 
-                ? 'bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 scale-[1.02] ring-2 ring-blue-300/50' 
-                : 'bg-card border border-border hover:border-blue-400 hover:shadow-md'
+                ? 'bg-gradient-to-br from-primary via-primary to-secondary text-white shadow-lg shadow-primary/30 scale-[1.02] ring-2 ring-primary/30' 
+                : 'bg-card border border-border hover:border-primary/50 hover:shadow-md'
             }`}
           >
             <div className={`p-1.5 sm:p-2 rounded-lg transition-all ${
               selectedItemType === 'professional_service' 
                 ? 'bg-white/20' 
-                : 'bg-blue-100'
+                : 'bg-primary/10'
             }`}>
               <Briefcase className={`w-4 h-4 sm:w-6 sm:h-6 transition-transform group-hover:scale-110 ${
-                selectedItemType === 'professional_service' ? 'text-white' : 'text-blue-600'
+                selectedItemType === 'professional_service' ? 'text-white' : 'text-primary'
               }`} />
             </div>
             <span className={`text-[9px] sm:text-xs font-medium ${
@@ -485,7 +485,7 @@ export default function Marketplace() {
               Services Pro
             </span>
             {selectedItemType === 'professional_service' && (
-              <span className="absolute -bottom-0.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-300 animate-pulse" />
+              <span className="absolute -bottom-0.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary/50 animate-pulse" />
             )}
           </button>
 
