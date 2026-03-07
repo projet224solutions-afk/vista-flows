@@ -10,25 +10,25 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: 
-          "bg-primary text-primary-foreground shadow-lg shadow-primary/40 hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-600/50",
+          "bg-primary text-primary-foreground shadow-lg shadow-primary/40 hover:bg-primary/85 hover:shadow-xl hover:shadow-primary/50",
         destructive: 
-          "bg-destructive text-destructive-foreground shadow-lg shadow-destructive/40 hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-600/50",
+          "bg-destructive text-destructive-foreground shadow-lg shadow-destructive/40 hover:bg-destructive/85 hover:shadow-xl hover:shadow-destructive/50",
         outline: 
-          "border-2 border-primary bg-transparent text-primary shadow-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:shadow-lg hover:shadow-blue-600/40",
+          "border-2 border-primary bg-transparent text-primary shadow-sm hover:bg-primary hover:text-primary-foreground hover:border-primary hover:shadow-lg hover:shadow-primary/40",
         secondary: 
-          "bg-secondary text-secondary-foreground shadow-md hover:bg-blue-600 hover:text-white hover:shadow-lg hover:shadow-blue-600/40",
+          "bg-secondary text-secondary-foreground shadow-md hover:bg-primary hover:text-primary-foreground hover:shadow-lg hover:shadow-primary/40",
         ghost: 
-          "text-foreground hover:bg-blue-600 hover:text-white",
+          "text-foreground hover:bg-primary hover:text-primary-foreground",
         link: 
-          "text-primary underline-offset-4 hover:underline hover:text-blue-600 font-semibold",
+          "text-primary underline-offset-4 hover:underline hover:text-primary/80 font-semibold",
         premium:
-          "bg-primary text-primary-foreground shadow-xl shadow-primary/50 hover:bg-blue-600 hover:shadow-2xl hover:shadow-blue-600/60",
+          "bg-primary text-primary-foreground shadow-xl shadow-primary/50 hover:bg-primary/85 hover:shadow-2xl hover:shadow-primary/60",
         success:
-          "bg-emerald-600 text-white shadow-lg shadow-emerald-600/40 hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-600/50",
+          "bg-emerald-600 text-white shadow-lg shadow-emerald-600/40 hover:bg-emerald-700 hover:shadow-xl hover:shadow-emerald-700/50",
         warning:
-          "bg-amber-500 text-white shadow-lg shadow-amber-500/40 hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-600/50",
+          "bg-amber-500 text-white shadow-lg shadow-amber-500/40 hover:bg-amber-600 hover:shadow-xl hover:shadow-amber-600/50",
         dark:
-          "bg-slate-900 text-white shadow-lg shadow-slate-900/50 hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-600/50",
+          "bg-slate-900 text-white shadow-lg shadow-slate-900/50 hover:bg-primary hover:shadow-xl hover:shadow-primary/50",
       },
       size: {
         default: "h-10 px-5 py-2",
