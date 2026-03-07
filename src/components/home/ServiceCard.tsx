@@ -45,9 +45,9 @@ export function HomeServiceCard({
           'bg-gradient-to-br',
           gradient,
           'border border-border/50',
-          'hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10',
+          'hover:border-primary hover:bg-primary hover:shadow-lg hover:shadow-primary/20',
           'transition-all duration-300 ease-out',
-          'active:scale-[0.98]',
+          'active:scale-[0.98] active:bg-primary',
           className
         )}
       >
