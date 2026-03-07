@@ -23,7 +23,7 @@ export function RealEstateWalletWidget({ className }: RealEstateWalletWidgetProp
         <WalletBalanceWidget showTransferButton={true} />
         <div className="grid grid-cols-2 gap-2 pt-2">
           <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
-            <ArrowUpRight className="h-4 w-4 text-emerald-500" />
+            <ArrowUpRight className="h-4 w-4 text-primary" />
             <div>
               <p className="text-xs text-muted-foreground">Revenus</p>
               <p className="text-sm font-semibold">Commissions</p>
