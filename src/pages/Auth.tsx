@@ -1261,6 +1261,11 @@ export default function Auth() {
                   
                   if (professionalServiceError) {
                     console.error('❌ Erreur création professional_service:', professionalServiceError);
+                    toast({
+                      title: "Erreur création service professionnel",
+                      description: professionalServiceError.message || "Le module métier n'a pas pu être activé.",
+                      variant: "destructive"
+                    });
                   } else {
                     console.log('✅ Professional service créé - Module métier activé:', selectedServiceType);
                   }
