@@ -44,13 +44,7 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
     try {
       const { data, error } = await supabase
         .from('service_bookings')
-        .select(`
-          *,
-          client:client_id (
-            full_name,
-            phone
-          )
-        `)
+        .select('*')
         .eq('professional_service_id', serviceId)
         .order('scheduled_date', { ascending: true });
 
