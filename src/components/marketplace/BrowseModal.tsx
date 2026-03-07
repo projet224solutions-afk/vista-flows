@@ -87,25 +87,25 @@ export function BrowseModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-3xl w-[95vw] max-h-[85vh] p-0 gap-0">
-        <DialogHeader className="px-6 pt-6 pb-4">
-          <DialogTitle className="text-xl font-bold">Explorer le Marketplace</DialogTitle>
+      <DialogContent className="w-[95vw] max-h-[85vh] p-0 gap-0" style={{ maxWidth: '768px' }}>
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4">
+          <DialogTitle className="text-lg sm:text-xl font-bold">Explorer le Marketplace</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="categories" className="w-full">
-          <div className="px-6 pb-4">
-            <TabsList className="w-full h-11 grid grid-cols-4 bg-muted/60 rounded-xl p-1">
-              <TabsTrigger value="categories" className="text-xs sm:text-sm gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-medium transition-all">
-                <LayoutGrid className="w-4 h-4" /> Catégories
+          <div className="px-4 sm:px-6 pb-3 sm:pb-4 overflow-x-auto">
+            <TabsList className="inline-flex h-10 sm:h-11 w-full bg-muted/60 rounded-xl p-1 gap-1">
+              <TabsTrigger value="categories" className="flex-1 min-w-0 text-[11px] sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-medium transition-all px-2 sm:px-3 whitespace-nowrap">
+                <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> <span className="truncate">Catégories</span>
               </TabsTrigger>
-              <TabsTrigger value="products" className="text-xs sm:text-sm gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-medium transition-all">
-                <Package className="w-4 h-4" /> Produits
+              <TabsTrigger value="products" className="flex-1 min-w-0 text-[11px] sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-medium transition-all px-2 sm:px-3 whitespace-nowrap">
+                <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> <span className="truncate">Produits</span>
               </TabsTrigger>
-              <TabsTrigger value="vendors" className="text-xs sm:text-sm gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-medium transition-all">
-                <Store className="w-4 h-4" /> Vendeurs
+              <TabsTrigger value="vendors" className="flex-1 min-w-0 text-[11px] sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-medium transition-all px-2 sm:px-3 whitespace-nowrap">
+                <Store className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> <span className="truncate">Vendeurs</span>
               </TabsTrigger>
-              <TabsTrigger value="certified" className="text-xs sm:text-sm gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-medium transition-all">
-                <ShieldCheck className="w-4 h-4" /> Certifiés
+              <TabsTrigger value="certified" className="flex-1 min-w-0 text-[11px] sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-medium transition-all px-2 sm:px-3 whitespace-nowrap">
+                <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> <span className="truncate">Certifiés</span>
               </TabsTrigger>
             </TabsList>
           </div>
