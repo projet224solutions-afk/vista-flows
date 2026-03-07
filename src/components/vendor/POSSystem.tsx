@@ -2118,14 +2118,14 @@ export function POSSystem() {
                               <div
                                 className={`flex items-baseline gap-1 px-1 py-0.5 rounded ${
                                   cartonsAvailable > 0
-                                    ? 'bg-green-50 dark:bg-green-950/30'
+                                    ? 'bg-[hsl(15,100%,50%)]/10 dark:bg-[hsl(15,100%,50%)]/20'
                                     : 'bg-muted/40'
                                 }`}
                               >
                                 <span
                                   className={`text-xs font-bold ${
                                     cartonsAvailable > 0
-                                      ? 'text-green-600 dark:text-green-400'
+                                      ? 'text-[hsl(15,100%,50%)] dark:text-[hsl(15,100%,60%)]'
                                       : 'text-muted-foreground'
                                   }`}
                                 >
@@ -2134,7 +2134,7 @@ export function POSSystem() {
                                 <span
                                   className={`text-[9px] ${
                                     cartonsAvailable > 0
-                                      ? 'text-green-600/70 dark:text-green-400/70'
+                                      ? 'text-[hsl(15,100%,50%)]/70 dark:text-[hsl(15,100%,60%)]/70'
                                       : 'text-muted-foreground'
                                   }`}
                                 >
