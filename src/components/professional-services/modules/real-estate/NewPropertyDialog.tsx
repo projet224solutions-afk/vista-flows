@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, MapPin, CheckCircle2 } from 'lucide-react';
+import { Loader2, MapPin, CheckCircle2, ImagePlus, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface NewPropertyDialogProps {
   open: boolean;
@@ -35,8 +36,59 @@ export function NewPropertyDialog({ open, onClose, onSubmit, saving }: NewProper
     neighborhood: '',
     amenities: [] as string[],
   });
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
+
+  const handlePhotosSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files?.length) return;
+    const newFiles: File[] = [];
+    const newPreviews: string[] = [];
+    for (const file of Array.from(files)) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`${file.name} est trop lourd (max 5MB)`);
+        continue;
+      }
+      newFiles.push(file);
+      newPreviews.push(URL.createObjectURL(file));
+    }
+    setPhotos(prev => [...prev, ...newFiles]);
+    setPhotoPreviews(prev => [...prev, ...newPreviews]);
+    if (photoInputRef.current) photoInputRef.current.value = '';
+  };
+
+  const removePhoto = (index: number) => {
+    URL.revokeObjectURL(photoPreviews[index]);
+    setPhotos(prev => prev.filter((_, i) => i !== index));
+    setPhotoPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadPhotosForProperty = async (propertyId: string) => {
+    for (let i = 0; i < photos.length; i++) {
+      const file = photos[i];
+      const ext = file.name.split('.').pop();
+      const path = `${propertyId}/${Date.now()}_${i}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('property-images')
+        .upload(path, file, { upsert: true });
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        continue;
+      }
+      const { data: { publicUrl } } = supabase.storage
+        .from('property-images')
+        .getPublicUrl(path);
+      await supabase.from('property_images').insert({
+        property_id: propertyId,
+        image_url: publicUrl,
+        is_cover: i === 0,
+        display_order: i,
+      });
+    }
+  };
 
   const updateField = (key: string, value: any) => setForm(prev => ({ ...prev, [key]: value }));
 
@@ -84,11 +136,19 @@ export function NewPropertyDialog({ open, onClose, onSubmit, saving }: NewProper
       longitude: coords?.lng,
     });
     if (result) {
+      // Upload photos after property creation
+      if (photos.length > 0) {
+        await uploadPhotosForProperty(result.id);
+        toast.success(`${photos.length} photo(s) ajoutée(s)`);
+      }
+      photoPreviews.forEach(url => URL.revokeObjectURL(url));
       setForm({
         title: '', description: '', offer_type: '', property_type: '',
         price: '', surface: '', rooms: '', bathrooms: '',
         address: '', city: '', neighborhood: '', amenities: [],
       });
+      setPhotos([]);
+      setPhotoPreviews([]);
       setCoords(null);
       onClose();
     }
@@ -220,6 +280,47 @@ export function NewPropertyDialog({ open, onClose, onSubmit, saving }: NewProper
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Photos */}
+          <div className="space-y-2">
+            <Label>📸 Photos du bien</Label>
+            <div className="flex flex-wrap gap-2">
+              {photoPreviews.map((url, i) => (
+                <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border group">
+                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(i)}
+                    className="absolute top-0.5 right-0.5 p-0.5 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                  {i === 0 && (
+                    <span className="absolute bottom-0 left-0 right-0 bg-primary text-primary-foreground text-[9px] text-center py-0.5">
+                      Couverture
+                    </span>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                className="w-20 h-20 rounded-lg border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary transition-colors"
+              >
+                <ImagePlus className="h-5 w-5" />
+                <span className="text-[9px]">Ajouter</span>
+              </button>
+            </div>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handlePhotosSelected}
+            />
+            <p className="text-xs text-muted-foreground">Max 5MB par photo. La première sera la couverture.</p>
           </div>
         </div>
 
