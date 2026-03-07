@@ -793,7 +793,7 @@ export default function OrderManagement() {
               </div>
               <div className="bg-white/80 rounded-lg p-2 md:p-4">
                 <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Chiffre d'affaires</p>
-                <p className={`text-sm md:text-xl font-bold truncate ${canAccessPOS ? 'text-[hsl(15,100%,50%)]' : 'text-gray-400'}`}>
+                <p className={`text-sm md:text-xl font-bold truncate ${canAccessPOS ? 'text-vendeur-secondary' : 'text-gray-400'}`}>
                   {orders
                     .filter(o => o.source === 'pos' && o.payment_status === 'paid')
                     .reduce((sum, o) => sum + o.total_amount, 0)
