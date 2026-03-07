@@ -11,14 +11,16 @@ import { ServiceModuleManager } from '@/components/professional-services/modules
 import { BookingManagement } from '@/components/professional-services/modules/BookingManagement';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
-// Types de services immobiliers qui ont leur propre module complet
-function isRealEstateService(service: ProfessionalService): boolean {
+// Types de services qui ont leur propre module complet
+function isFullModuleService(service: ProfessionalService): boolean {
   const code = service.service_type?.code?.toLowerCase() || '';
   const name = service.service_type?.name?.toLowerCase() || '';
   return (
     code === 'location' ||
+    code === 'construction' ||
     name.includes('immobili') ||
-    name.includes('location immobili')
+    name.includes('construction') ||
+    name.includes('btp')
   );
 }
 
