@@ -105,6 +105,8 @@ export const useProfessionalServices = () => {
     phone?: string;
     email?: string;
     address?: string;
+    latitude?: number;
+    longitude?: number;
   }) => {
     if (!user) {
       toast.error('Vous devez être connecté pour créer un service');
@@ -123,6 +125,8 @@ export const useProfessionalServices = () => {
             phone: data.phone,
             email: data.email || user.email,
             address: data.address,
+            latitude: data.latitude || null,
+            longitude: data.longitude || null,
             status: 'pending',
             verification_status: 'unverified',
           },
