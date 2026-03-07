@@ -106,6 +106,9 @@ export default function ServiceDetail() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
   const [distance, setDistance] = useState<number | null>(null);
+  const [galleryImages, setGalleryImages] = useState<{ id: string; image_url: string; caption?: string }[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
 
 
   useEffect(() => {
