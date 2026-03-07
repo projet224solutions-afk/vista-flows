@@ -2210,7 +2210,7 @@ export default function Auth() {
                   selectedRole === 'client' ? 'text-emerald-800' :
                   'text-foreground'
                 }`}>
-                  <strong>🎯 Création de compte :</strong> Remplissez les informations ci-dessous pour créer votre compte {selectedRole ? `en tant que ${selectedRole === 'vendeur' ? (selectedServiceType ? 'Marchand Professionnel' : 'Vendeur E-commerce') : selectedRole}` : ''}.
+                  <strong>🎯 Création de compte :</strong> Remplissez les informations ci-dessous pour créer votre compte {selectedRole ? `en tant que ${selectedRole === 'prestataire' ? 'Prestataire de Service' : selectedRole === 'vendeur' ? 'Vendeur E-commerce' : selectedRole}` : ''}.
                   {selectedServiceType && (
                     <span className={`block mt-2 font-semibold ${
                       selectedRole === 'vendeur' ? 'text-blue-700' :
