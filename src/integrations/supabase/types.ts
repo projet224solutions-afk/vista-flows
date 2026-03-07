@@ -14572,6 +14572,7 @@ export type Database = {
           neighborhood: string | null
           offer_type: string
           owner_id: string
+          photos: string[] | null
           price: number
           professional_service_id: string
           property_type: string
@@ -14599,6 +14600,7 @@ export type Database = {
           neighborhood?: string | null
           offer_type: string
           owner_id: string
+          photos?: string[] | null
           price?: number
           professional_service_id: string
           property_type: string
@@ -14626,6 +14628,7 @@ export type Database = {
           neighborhood?: string | null
           offer_type?: string
           owner_id?: string
+          photos?: string[] | null
           price?: number
           professional_service_id?: string
           property_type?: string
@@ -14753,6 +14756,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "property_images_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          property_id: string
+          receiver_id: string
+          sender_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          property_id: string
+          receiver_id: string
+          sender_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          property_id?: string
+          receiver_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_messages_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
