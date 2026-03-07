@@ -87,28 +87,30 @@ export function BrowseModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] p-0 gap-0">
-        <DialogHeader className="px-5 pt-5 pb-3">
-          <DialogTitle className="text-lg font-bold">Explorer le Marketplace</DialogTitle>
+      <DialogContent className="max-w-2xl w-[95vw] max-h-[85vh] p-0 gap-0">
+        <DialogHeader className="px-6 pt-6 pb-4">
+          <DialogTitle className="text-xl font-bold">Explorer le Marketplace</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="categories" className="w-full">
-          <TabsList className="w-full grid grid-cols-4 mx-5 mb-3" style={{ width: "calc(100% - 40px)" }}>
-            <TabsTrigger value="categories" className="text-xs gap-1">
-              <LayoutGrid className="w-3.5 h-3.5" /> Catégories
-            </TabsTrigger>
-            <TabsTrigger value="products" className="text-xs gap-1">
-              <Package className="w-3.5 h-3.5" /> Produits
-            </TabsTrigger>
-            <TabsTrigger value="vendors" className="text-xs gap-1">
-              <Store className="w-3.5 h-3.5" /> Vendeurs
-            </TabsTrigger>
-            <TabsTrigger value="certified" className="text-xs gap-1">
-              <ShieldCheck className="w-3.5 h-3.5" /> Certifiés
-            </TabsTrigger>
-          </TabsList>
+          <div className="px-6 pb-4">
+            <TabsList className="w-full h-11 grid grid-cols-4 bg-muted/60 rounded-xl p-1">
+              <TabsTrigger value="categories" className="text-xs sm:text-sm gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-medium transition-all">
+                <LayoutGrid className="w-4 h-4" /> Catégories
+              </TabsTrigger>
+              <TabsTrigger value="products" className="text-xs sm:text-sm gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-medium transition-all">
+                <Package className="w-4 h-4" /> Produits
+              </TabsTrigger>
+              <TabsTrigger value="vendors" className="text-xs sm:text-sm gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-medium transition-all">
+                <Store className="w-4 h-4" /> Vendeurs
+              </TabsTrigger>
+              <TabsTrigger value="certified" className="text-xs sm:text-sm gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-medium transition-all">
+                <ShieldCheck className="w-4 h-4" /> Certifiés
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-          <ScrollArea className="h-[55vh] px-5 pb-5">
+          <ScrollArea className="h-[55vh] px-6 pb-6">
             {/* CATÉGORIES */}
             <TabsContent value="categories" className="mt-0 space-y-2">
               {categories.filter(c => c.id !== "all").map((cat) => (
