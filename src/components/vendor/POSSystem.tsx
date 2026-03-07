@@ -2207,7 +2207,7 @@ export function POSSystem() {
                                     if (cartonsAvailable > 0) addToCartByCarton(product);
                                   }}
                                   disabled={cartonsAvailable <= 0}
-                                  className="w-full h-4 text-[8px] md:text-xs font-semibold bg-[hsl(15,100%,50%)] hover:bg-[hsl(15,100%,45%)] text-white dark:bg-[hsl(15,100%,50%)] dark:hover:bg-[hsl(15,100%,40%)] dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                  className="w-full h-4 text-[8px] md:text-xs font-semibold bg-vendeur-secondary hover:bg-vendeur-secondary/90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   📦 +1 Carton ({cartonsAvailable > 0 ? product.units_per_carton : 0}u)
                                 </Button>

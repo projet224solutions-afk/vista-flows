@@ -942,19 +942,19 @@ export default function OrderManagement() {
           {/* Filtres par période */}
           <Tabs defaultValue="all" className="mb-6">
             <TabsList className="grid grid-cols-5 w-full bg-muted/50">
-              <TabsTrigger value="all" className="text-xs data-[state=active]:bg-[hsl(15,100%,50%)] data-[state=active]:text-white">
+              <TabsTrigger value="all" className="text-xs data-[state=active]:bg-vendeur-secondary data-[state=active]:text-white">
                 Tout
               </TabsTrigger>
-              <TabsTrigger value="day" className="text-xs data-[state=active]:bg-[hsl(15,100%,50%)] data-[state=active]:text-white">
+              <TabsTrigger value="day" className="text-xs data-[state=active]:bg-vendeur-secondary data-[state=active]:text-white">
                 Jour
               </TabsTrigger>
-              <TabsTrigger value="week" className="text-xs data-[state=active]:bg-[hsl(15,100%,50%)] data-[state=active]:text-white">
+              <TabsTrigger value="week" className="text-xs data-[state=active]:bg-vendeur-secondary data-[state=active]:text-white">
                 Semaine
               </TabsTrigger>
-              <TabsTrigger value="month" className="text-xs data-[state=active]:bg-[hsl(15,100%,50%)] data-[state=active]:text-white">
+              <TabsTrigger value="month" className="text-xs data-[state=active]:bg-vendeur-secondary data-[state=active]:text-white">
                 Mois
               </TabsTrigger>
-              <TabsTrigger value="year" className="text-xs data-[state=active]:bg-[hsl(15,100%,50%)] data-[state=active]:text-white">
+              <TabsTrigger value="year" className="text-xs data-[state=active]:bg-vendeur-secondary data-[state=active]:text-white">
                 Année
               </TabsTrigger>
             </TabsList>
