@@ -71,6 +71,27 @@ const Dashboard = () => {
       return;
     }
 
+    // ✅ Pour les prestataires, chercher leur professional_service et rediriger
+    if (role === 'prestataire') {
+      const fetchPrestaService = async () => {
+        const { data: proService } = await supabase
+          .from('professional_services')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (proService?.id) {
+          console.log('🚀 Dashboard: Redirection prestataire vers /dashboard/service/', proService.id);
+          navigate(`/dashboard/service/${proService.id}`, { replace: true });
+        } else {
+          console.log('⚠️ Dashboard: Prestataire sans service, redirection /service-selection');
+          navigate('/service-selection', { replace: true });
+        }
+      };
+      fetchPrestaService();
+      return;
+    }
+
     const redirectPath = roleRedirects[role] || '/home';
     
     console.log(`🔄 Dashboard: Redirection vers ${redirectPath} (rôle: ${role})`);
