@@ -56,8 +56,8 @@ export function NearbyServicesSection({
       title: t('home.taxiMotos'),
       subtitle: 'Transport rapide',
       count: stats.taxi,
-      gradient: 'from-taxi-primary/20 to-taxi-secondary/10',
-      iconBg: 'bg-taxi-primary/15',
+      gradient: 'from-taxi-primary/25 to-taxi-secondary/15',
+      iconBg: 'bg-taxi-primary/20',
       trending: stats.taxi > 2,
     },
     {
