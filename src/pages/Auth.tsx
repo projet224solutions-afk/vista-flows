@@ -555,6 +555,7 @@ export default function Auth() {
               .from('professional_services')
               .select('id')
               .eq('user_id', session.user.id)
+              .limit(1)
               .maybeSingle();
             if (proService) {
               targetRoute = `/dashboard/service/${proService.id}`;
