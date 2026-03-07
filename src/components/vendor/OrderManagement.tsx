@@ -901,7 +901,7 @@ export default function OrderManagement() {
 
 
       {/* Tableau des Ventes POS */}
-      {activeView === 'pos' && (() => {
+      {activeView === 'pos' ? (() => {
         const posOrders = orders.filter(o => o.source === 'pos');
         
         const now = new Date();
@@ -1168,7 +1168,7 @@ export default function OrderManagement() {
         </CardContent>
       </Card>
         );
-      })()}
+      })() : null}
 
 
       {/* Section des Commandes En Ligne */}
