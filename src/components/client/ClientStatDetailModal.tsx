@@ -341,7 +341,7 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
                         <button
                           onClick={() => {
                             onClose();
-                            navigate(`/vendor/${fav.vendor_id}`);
+                            navigate(`/shop/${fav.vendor_id}`);
                           }}
                           className="flex items-center gap-3 flex-1 min-w-0 text-left"
                         >
