@@ -66,8 +66,8 @@ export function NearbyServicesSection({
       title: t('home.delivery'),
       subtitle: 'Livraison express',
       count: stats.livraison,
-      gradient: 'from-livreur-primary/20 to-livreur-secondary/10',
-      iconBg: 'bg-livreur-primary/15',
+      gradient: 'from-livreur-primary/25 to-livreur-secondary/15',
+      iconBg: 'bg-livreur-primary/20',
       trending: stats.livraison > 1,
     },
   ];
