@@ -519,9 +519,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (createdProfile) {
         console.log('✅ Nouveau profil créé avec succès:', createdProfile.role);
         
-        // ✅ Si le rôle est vendeur, créer automatiquement l'entrée vendor via fonction partagée
+        // ✅ Créer le vendor pour les vendeurs OU le service pour les prestataires
         if (createdProfile.role === 'vendeur') {
-          await createVendorAndServiceForOAuth(user);
+          await createVendorForOAuth(user);
+        } else if (createdProfile.role === 'prestataire') {
+          await createServiceForOAuthPrestataire(user);
         }
         
         const roleLabels: Record<string, string> = {
