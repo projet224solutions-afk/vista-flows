@@ -521,7 +521,7 @@ export default function Marketplace() {
 
       {/* 🔥 Filtre Catégories Numériques - Visible uniquement pour les produits numériques */}
       {selectedItemType === 'digital_product' && (
-        <section className="px-2 py-2 border-b border-border bg-gradient-to-r from-purple-500/5 via-background to-purple-500/5">
+        <section className="px-2 py-2 border-b border-border bg-gradient-to-r from-accent/5 via-background to-accent/5">
           <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
             {DIGITAL_CATEGORIES.map((cat) => {
               const IconComponent = cat.icon;
