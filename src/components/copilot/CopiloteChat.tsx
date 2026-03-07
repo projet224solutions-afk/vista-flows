@@ -637,7 +637,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
 
                   <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
                     <div className={`flex items-start gap-1.5 sm:gap-2 max-w-[90%] sm:max-w-[85%] ${isUser ? 'flex-row-reverse' : ''}`}>
-                      <Avatar className={`h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 ${isUser ? 'bg-primary' : 'bg-gradient-to-br from-blue-500 to-purple-600'}`}>
+                      <Avatar className={`h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 ${isUser ? 'bg-primary' : 'bg-gradient-to-br from-primary to-secondary'}`}>
                         {isUser ? (
                           <AvatarFallback>
                             <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />
