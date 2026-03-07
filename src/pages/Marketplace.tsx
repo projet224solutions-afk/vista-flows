@@ -534,9 +534,8 @@ export default function Marketplace() {
                     'flex items-center gap-1.5 px-2 py-1.5 rounded-lg shrink-0 transition-all duration-200',
                     'border text-xs font-medium',
                     isSelected
-                      ? 'bg-gradient-to-r text-white border-transparent shadow-sm scale-[1.02]'
-                      : 'bg-card border-border hover:border-primary/30 hover:bg-primary/5 dark:hover:bg-primary/10',
-                    isSelected && cat.gradient
+                      ? 'bg-accent text-white border-accent shadow-sm scale-[1.02]'
+                      : 'bg-card border-border hover:border-primary/30 hover:bg-primary/5 dark:hover:bg-primary/10'
                   )}
                 >
                   <div className={cn(
