@@ -183,10 +183,10 @@ export default {
         },
         "glow": {
           "0%, 100%": {
-            boxShadow: "0 0 20px hsl(211 100% 50% / 0.2)"
+            boxShadow: "0 0 20px hsl(220 97% 27% / 0.2)"
           },
           "50%": {
-            boxShadow: "0 0 40px hsl(211 100% 50% / 0.4)"
+            boxShadow: "0 0 40px hsl(220 97% 27% / 0.4)"
           }
         },
         "bounce-in": {
