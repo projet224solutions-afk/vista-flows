@@ -1673,6 +1673,11 @@ export default function OrderManagement() {
     ${customerPhone ? `<div class="field"><span class="icon">📞</span><span class="value">${customerPhone}</span></div>` : ''}
   </div>
 
+  <div class="section">
+    <div class="section-title">Articles</div>
+    ${(selectedOrder.order_items || []).map((item: any) => `<div class="field"><span class="icon">📦</span><span class="value">${item.products?.name || 'Produit'} × ${item.quantity}</span></div>`).join('')}
+  </div>
+
   ${addr ? `
   <div class="section">
     <div class="section-title">Adresse de livraison</div>
