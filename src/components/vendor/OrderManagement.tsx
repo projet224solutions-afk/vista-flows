@@ -1030,7 +1030,7 @@ export default function OrderManagement() {
                   <div className="space-y-3 mb-4">
                     {/* Order number and ID */}
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-bold text-base sm:text-xl text-purple-700 break-all">{order.order_number}</h3>
+                      <h3 className="font-bold text-base sm:text-xl text-[hsl(15,100%,50%)] break-all">{order.order_number}</h3>
                       <Badge variant="outline" className="text-[10px] sm:text-xs shrink-0">
                         ID: {order.id.slice(0, 8)}
                       </Badge>
