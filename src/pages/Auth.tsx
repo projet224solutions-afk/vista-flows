@@ -1462,7 +1462,7 @@ export default function Auth() {
               }
               
               // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service
-              if (profileData.role === 'prestataire') {
+              if ((profileData.role as string) === 'prestataire') {
                 const { data: proService } = await supabase
                   .from('professional_services')
                   .select('id')
