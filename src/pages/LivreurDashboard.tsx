@@ -544,7 +544,7 @@ export default function LivreurDashboard() {
                           disabled={loading}
                           className="w-full text-white"
                           size="lg"
-                          style={{ background: 'linear-gradient(135deg, hsl(211 100% 50%), hsl(211 100% 40%))' }}
+                          style={{ background: 'linear-gradient(135deg, hsl(220 97% 27%), hsl(220 96% 32%))' }}
                         >
                           <Truck className="w-5 h-5 mr-2" /> 
                           🚀 Démarrer la livraison
