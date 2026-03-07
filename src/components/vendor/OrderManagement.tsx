@@ -530,7 +530,7 @@ export default function OrderManagement() {
           key="process" 
           size="sm" 
           disabled={updatingOrderId === order.id}
-          className="bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
+          className="bg-[hsl(15,100%,50%)] hover:bg-[hsl(15,100%,45%)] text-white disabled:opacity-50"
           onClick={(e) => {
             e.stopPropagation();
             console.log('📦 Preparing order:', order.id);
@@ -901,63 +901,136 @@ export default function OrderManagement() {
 
 
       {/* Tableau des Ventes POS */}
-      {activeView === 'pos' && (
+      {activeView === 'pos' && (() => {
+        const posOrders = orders.filter(o => o.source === 'pos');
+        
+        const now = new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+        const filterByPeriod = (list: typeof posOrders, period: string) => {
+          if (period === 'day') return list.filter(o => new Date(o.created_at) >= startOfDay);
+          if (period === 'month') return list.filter(o => new Date(o.created_at) >= startOfMonth);
+          if (period === 'year') return list.filter(o => new Date(o.created_at) >= startOfYear);
+          return list;
+        };
+
+        const calcCA = (list: typeof posOrders) =>
+          list.filter(o => o.payment_status === 'paid').reduce((s, o) => s + o.total_amount, 0);
+
+        const calcAvg = (list: typeof posOrders) => {
+          const paid = list.filter(o => o.payment_status === 'paid');
+          return paid.length > 0 ? Math.round(calcCA(list) / paid.length) : 0;
+        };
+
+        return (
         <Card className="border-2 border-[hsl(15,100%,50%)]/30 bg-[hsl(15,100%,50%)]/5 pos-orders-section">
         <CardHeader className="p-3 md:p-6">
           <CardTitle className="flex items-center gap-2 text-[hsl(15,100%,50%)] text-base md:text-lg">
-            🛒 Ventes POS ({orders.filter(o => o.source === 'pos').length})
+            🛒 Ventes POS ({posOrders.length})
           </CardTitle>
           <p className="text-xs md:text-sm text-muted-foreground">
             Commandes via points de vente
           </p>
         </CardHeader>
         <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
-          {/* Statistiques Ventes POS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-            <Card className="bg-white/80">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <ShoppingCart className="w-4 h-4 text-[hsl(15,100%,50%)]" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Total vente</p>
-                    <p className="text-xl font-bold">{orders.filter(o => o.source === 'pos').length}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-white/80">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-green-600" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">CA POS</p>
-                    <p className="text-lg font-bold">
-                      {orders
-                        .filter(o => o.source === 'pos' && o.payment_status === 'paid')
-                        .reduce((sum, o) => sum + o.total_amount, 0)
-                        .toLocaleString()} GNF
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Filtres par période */}
+          <Tabs defaultValue="all" className="mb-6">
+            <TabsList className="grid grid-cols-4 w-full bg-muted/50">
+              <TabsTrigger value="all" className="text-xs data-[state=active]:bg-[hsl(15,100%,50%)] data-[state=active]:text-white">
+                Tout
+              </TabsTrigger>
+              <TabsTrigger value="day" className="text-xs data-[state=active]:bg-[hsl(15,100%,50%)] data-[state=active]:text-white">
+                <Calendar className="w-3 h-3 mr-1" /> Jour
+              </TabsTrigger>
+              <TabsTrigger value="month" className="text-xs data-[state=active]:bg-[hsl(15,100%,50%)] data-[state=active]:text-white">
+                <Calendar className="w-3 h-3 mr-1" /> Mois
+              </TabsTrigger>
+              <TabsTrigger value="year" className="text-xs data-[state=active]:bg-[hsl(15,100%,50%)] data-[state=active]:text-white">
+                <Calendar className="w-3 h-3 mr-1" /> Année
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Liste des ventes POS */}
-          <div className="space-y-4">
-            {orders.filter(o => o.source === 'pos').length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <ShoppingCart className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>Aucune vente POS pour le moment</p>
-              </div>
-            ) : (
-              orders.filter(o => o.source === 'pos').map((order) => (
-                <div key={order.id} className="border-2 border-purple-200 rounded-lg p-3 sm:p-6 bg-white hover:shadow-lg transition-all">
+            {['all', 'day', 'month', 'year'].map(period => {
+              const filtered = filterByPeriod(posOrders, period);
+              const ca = calcCA(filtered);
+              const avg = calcAvg(filtered);
+              const periodLabel = period === 'all' ? 'Total' : period === 'day' ? "Aujourd'hui" : period === 'month' ? 'Ce mois' : 'Cette année';
+
+              return (
+                <TabsContent key={period} value={period} className="mt-4 space-y-4">
+                  {/* Statistiques par période */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <Card className="bg-white/80 dark:bg-card">
+                      <CardContent className="p-3 md:p-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-[hsl(15,100%,50%)]/10 flex items-center justify-center">
+                            <ShoppingCart className="w-4 h-4 text-[hsl(15,100%,50%)]" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] md:text-xs text-muted-foreground">{periodLabel}</p>
+                            <p className="text-lg md:text-xl font-bold">{filtered.length}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-white/80 dark:bg-card">
+                      <CardContent className="p-3 md:p-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-[hsl(15,100%,50%)]/10 flex items-center justify-center">
+                            <CreditCard className="w-4 h-4 text-[hsl(15,100%,50%)]" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] md:text-xs text-muted-foreground">CA {periodLabel}</p>
+                            <p className="text-sm md:text-lg font-bold truncate">{ca.toLocaleString()} <span className="text-[10px] text-muted-foreground">GNF</span></p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-white/80 dark:bg-card">
+                      <CardContent className="p-3 md:p-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-[hsl(220,96%,32%)]/10 flex items-center justify-center">
+                            <Banknote className="w-4 h-4 text-[hsl(220,96%,32%)]" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] md:text-xs text-muted-foreground">Panier moyen</p>
+                            <p className="text-sm md:text-lg font-bold truncate">{avg.toLocaleString()} <span className="text-[10px] text-muted-foreground">GNF</span></p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-white/80 dark:bg-card">
+                      <CardContent className="p-3 md:p-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                            <CheckCircle className="w-4 h-4 text-emerald-500" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] md:text-xs text-muted-foreground">Payées</p>
+                            <p className="text-lg md:text-xl font-bold">{filtered.filter(o => o.payment_status === 'paid').length}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Liste des ventes */}
+                  <div className="space-y-4">
+                    {filtered.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <ShoppingCart className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                        <p>Aucune vente POS {period !== 'all' ? `pour ${periodLabel.toLowerCase()}` : 'pour le moment'}</p>
+                      </div>
+                    ) : (
+                      filtered.map((order) => (
+                <div key={order.id} className="border-2 border-[hsl(15,100%,50%)]/20 rounded-lg p-3 sm:p-6 bg-white hover:shadow-lg transition-all">
                   {/* Mobile-first header layout */}
                   <div className="space-y-3 mb-4">
                     {/* Order number and ID */}
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-bold text-base sm:text-xl text-purple-700 break-all">{order.order_number}</h3>
+                      <h3 className="font-bold text-base sm:text-xl text-[hsl(15,100%,50%)] break-all">{order.order_number}</h3>
                       <Badge variant="outline" className="text-[10px] sm:text-xs shrink-0">
                         ID: {order.id.slice(0, 8)}
                       </Badge>
@@ -965,7 +1038,7 @@ export default function OrderManagement() {
                     
                     {/* Badges - wrap on mobile */}
                     <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                      <Badge className="bg-purple-500 text-white text-[10px] sm:text-xs shrink-0">
+                      <Badge className="bg-[hsl(15,100%,50%)] text-white text-[10px] sm:text-xs shrink-0">
                         🛒 Vente POS
                       </Badge>
                       <Badge className={`${statusColors[order.status]} text-[10px] sm:text-xs shrink-0`}>
@@ -1050,7 +1123,7 @@ export default function OrderManagement() {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Montant total</p>
-                      <p className="text-xl font-bold text-purple-700">
+                      <p className="text-xl font-bold text-[hsl(15,100%,50%)]">
                         {order.total_amount.toLocaleString()} GNF
                       </p>
                       {order.discount_amount > 0 && (
@@ -1086,11 +1159,17 @@ export default function OrderManagement() {
                   </div>
                 </div>
               ))
-            )}
-          </div>
+                    )}
+                  </div>
+                </TabsContent>
+              );
+            })}
+          </Tabs>
         </CardContent>
       </Card>
-      )}
+        );
+      })()}
+
 
       {/* Section des Commandes En Ligne */}
       {activeView === 'online' && (
