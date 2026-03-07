@@ -257,12 +257,12 @@ export function VendorSidebar() {
                               }
                             }}
                             className={cn(
-                              "group relative flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-all duration-200 cursor-pointer select-none",
-                              hasAccess && "hover:bg-primary/10 hover:text-primary",
-                              !hasAccess && "opacity-60 hover:opacity-80",
-                              active && hasAccess && "bg-primary/15 text-primary font-medium shadow-sm",
-                              isPOS && hasAccess && "bg-gradient-to-r from-primary/5 to-transparent border border-primary/20",
-                              isPOS && active && hasAccess && "from-primary/20 border-primary/40 shadow-md",
+                              "group relative flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-all duration-200 cursor-pointer select-none text-white/80",
+                              hasAccess && "hover:bg-white/10 hover:text-white",
+                              !hasAccess && "opacity-50 hover:opacity-70",
+                              active && hasAccess && "bg-white/15 text-white font-medium shadow-sm",
+                              isPOS && hasAccess && "bg-gradient-to-r from-accent/20 to-transparent border border-accent/30",
+                              isPOS && active && hasAccess && "from-accent/30 border-accent/50 shadow-md",
                               collapsed && "justify-center px-1"
                             )}
                           >
