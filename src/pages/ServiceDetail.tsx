@@ -369,6 +369,82 @@ export default function ServiceDetail() {
     }
   };
 
+  const loadGalleryImages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('service_gallery_images')
+        .select('id, image_url, caption')
+        .eq('professional_service_id', id)
+        .order('display_order');
+      if (!error && data) setGalleryImages(data);
+    } catch (e) {
+      console.warn('Erreur chargement galerie:', e);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !id) return;
+    
+    if (!file.type.startsWith('image/')) {
+      toast.error('Seules les images sont autorisées');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image trop volumineuse (max 5 MB)');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const filePath = `${id}/${Date.now()}.${ext}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('service-gallery')
+        .upload(filePath, file);
+      
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('service-gallery')
+        .getPublicUrl(filePath);
+
+      const { error: dbError } = await supabase
+        .from('service_gallery_images')
+        .insert({
+          professional_service_id: id,
+          image_url: publicUrl,
+          display_order: galleryImages.length,
+        });
+
+      if (dbError) throw dbError;
+
+      toast.success('Image ajoutée à la galerie !');
+      loadGalleryImages();
+    } catch (err: any) {
+      console.error('Erreur upload galerie:', err);
+      toast.error('Erreur lors de l\'upload');
+    } finally {
+      setUploadingImage(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleDeleteGalleryImage = async (imageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('service_gallery_images')
+        .delete()
+        .eq('id', imageId);
+      if (error) throw error;
+      toast.success('Image supprimée');
+      setGalleryImages(prev => prev.filter(img => img.id !== imageId));
+    } catch (err) {
+      toast.error('Erreur lors de la suppression');
+    }
+  
+
   const handleContact = () => {
     if (!user) {
       toast.error('Veuillez vous connecter pour contacter ce service');
