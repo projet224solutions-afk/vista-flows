@@ -54,32 +54,34 @@ export default function SetPasswordAfterOAuth() {
   const redirectToProperDashboard = async () => {
     let targetRoute = getDashboardRoute(profile?.role);
     
-    // ✅ FIX: Vérifier si c'est un vendeur de service ou digital
+    // ✅ FIX: Vérifier si c'est un vendeur digital
     if (profile?.role === 'vendeur') {
       const oauthShopType = localStorage.getItem('oauth_vendor_shop_type');
-      const oauthServiceType = localStorage.getItem('oauth_service_type');
       
       if (oauthShopType === 'digital') {
         targetRoute = '/vendeur-digital';
-      } else if (oauthShopType === 'service' || (oauthServiceType && oauthServiceType !== 'general')) {
-        // Chercher le professional_service créé
-        try {
-          const { data: proService } = await supabase
-            .from('professional_services')
-            .select('id')
-            .eq('user_id', user?.id || '')
-            .maybeSingle();
-          if (proService) {
-            targetRoute = `/dashboard/service/${proService.id}`;
-          }
-        } catch (e) {
-          console.warn('⚠️ Erreur récupération service:', e);
-        }
       }
-      
-      // Nettoyer les flags après utilisation
-      localStorage.removeItem('oauth_vendor_shop_type');
-      localStorage.removeItem('oauth_service_type');
+    }
+    
+    // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service
+    if ((profile?.role as string) === 'prestataire') {
+      try {
+        const { data: proService } = await supabase
+          .from('professional_services')
+          .select('id')
+          .eq('user_id', user?.id || '')
+          .maybeSingle();
+        if (proService) {
+          targetRoute = `/dashboard/service/${proService.id}`;
+        }
+      } catch (e) {
+        console.warn('⚠️ Erreur récupération service:', e);
+      }
+    }
+    
+    // Nettoyer les flags après utilisation
+    localStorage.removeItem('oauth_vendor_shop_type');
+    localStorage.removeItem('oauth_service_type');
     }
     
     console.log(`🚀 [SetPasswordAfterOAuth] Redirection vers ${targetRoute}`);
