@@ -2206,7 +2206,7 @@ export default function Auth() {
                 'bg-muted/50 border-border'
               }`}>
                 <p className={`text-sm ${
-                  selectedRole === 'vendeur' ? 'text-blue-800' :
+                  selectedRole === 'vendeur' ? 'text-primary' :
                   selectedRole === 'prestataire' ? 'text-emerald-800' :
                   selectedRole === 'livreur' ? 'text-orange-800' :
                   selectedRole === 'taxi' ? 'text-yellow-800' :
