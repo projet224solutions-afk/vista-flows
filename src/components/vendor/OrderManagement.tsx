@@ -929,9 +929,9 @@ export default function OrderManagement() {
         };
 
         return (
-        <Card className="border-2 border-[hsl(15,100%,50%)]/30 bg-[hsl(15,100%,50%)]/5 pos-orders-section">
+        <Card className="border-2 border-vendeur-secondary/30 bg-vendeur-secondary/5 pos-orders-section">
         <CardHeader className="p-3 md:p-6">
-          <CardTitle className="flex items-center gap-2 text-[hsl(15,100%,50%)] text-base md:text-lg">
+          <CardTitle className="flex items-center gap-2 text-vendeur-secondary text-base md:text-lg">
             🛒 Ventes POS ({posOrders.length})
           </CardTitle>
           <p className="text-xs md:text-sm text-muted-foreground">
