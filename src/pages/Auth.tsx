@@ -2197,7 +2197,7 @@ export default function Auth() {
             
               {showSignup && selectedRole && (
               <div className={`mb-6 p-4 rounded-lg border ${
-                selectedRole === 'vendeur' ? 'bg-blue-50 border-blue-200' :
+                selectedRole === 'vendeur' ? 'bg-primary/5 border-primary/20' :
                 selectedRole === 'prestataire' ? 'bg-emerald-50 border-emerald-200' :
                 selectedRole === 'livreur' ? 'bg-orange-50 border-orange-200' :
                 selectedRole === 'taxi' ? 'bg-yellow-50 border-yellow-200' :
