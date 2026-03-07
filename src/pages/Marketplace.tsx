@@ -466,8 +466,8 @@ export default function Marketplace() {
             }}
             className={`group relative flex-1 max-w-[140px] h-14 sm:h-20 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-0.5 sm:gap-1.5 transition-all duration-300 ${
               selectedItemType === 'professional_service' 
-                ? 'bg-gradient-to-br from-primary via-primary to-secondary text-white shadow-lg shadow-primary/30 scale-[1.02] ring-2 ring-primary/30' 
-                : 'bg-card border border-border hover:border-primary/50 hover:shadow-md'
+                ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-[1.02] ring-2 ring-primary/30' 
+                : 'bg-card border border-border hover:border-primary hover:shadow-md'
             }`}
           >
             <div className={`p-1.5 sm:p-2 rounded-lg transition-all ${
@@ -534,9 +534,8 @@ export default function Marketplace() {
                     'flex items-center gap-1.5 px-2 py-1.5 rounded-lg shrink-0 transition-all duration-200',
                     'border text-xs font-medium',
                     isSelected
-                      ? 'bg-gradient-to-r text-white border-transparent shadow-sm scale-[1.02]'
-                      : 'bg-card border-border hover:border-primary/30 hover:bg-primary/5 dark:hover:bg-primary/10',
-                    isSelected && cat.gradient
+                      ? 'bg-accent text-white border-accent shadow-sm scale-[1.02]'
+                      : 'bg-card border-border hover:border-primary/30 hover:bg-primary/5 dark:hover:bg-primary/10'
                   )}
                 >
                   <div className={cn(

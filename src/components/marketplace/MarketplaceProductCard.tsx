@@ -148,9 +148,9 @@ export function MarketplaceProductCard({
         {/* Badge Premium */}
         {isPremium && (
           <div className="marketplace-card-badge">
-            <Badge className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-[10px] font-semibold shadow-lg px-2 py-0.5">
-              ★ Premium
-            </Badge>
+             <Badge className="bg-primary text-primary-foreground text-[10px] font-semibold shadow-lg px-2 py-0.5">
+               ★ Premium
+             </Badge>
           </div>
         )}
 
@@ -264,7 +264,7 @@ export function MarketplaceProductCard({
         <div className="marketplace-card-actions" onClick={(e) => e.stopPropagation()}>
           <Button 
             onClick={(e) => { e.stopPropagation(); onBuy?.(); }}
-            className="flex-1 h-7 sm:h-8 text-[10px] sm:text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm px-2 sm:px-3 focus-visible:ring-1 focus-visible:ring-offset-0"
+            className="flex-1 h-7 sm:h-8 text-[10px] sm:text-xs font-semibold bg-primary hover:bg-primary/85 text-primary-foreground shadow-sm px-2 sm:px-3 focus-visible:ring-1 focus-visible:ring-offset-0"
             size="sm"
           >
             {t('common.view') || 'Voir'}
