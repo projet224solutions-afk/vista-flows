@@ -2003,6 +2003,455 @@ export type Database = {
           },
         ]
       }
+      btp_daily_reports: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          issues: string | null
+          photos: string[] | null
+          project_id: string
+          report_date: string
+          summary: string
+          weather: string | null
+          workers_present: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          issues?: string | null
+          photos?: string[] | null
+          project_id: string
+          report_date?: string
+          summary: string
+          weather?: string | null
+          workers_present?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          issues?: string | null
+          photos?: string[] | null
+          project_id?: string
+          report_date?: string
+          summary?: string
+          weather?: string | null
+          workers_present?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "btp_daily_reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "btp_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      btp_materials: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_available: boolean | null
+          name: string
+          professional_service_id: string
+          quantity_available: number | null
+          supplier_name: string | null
+          supplier_phone: string | null
+          unit: string | null
+          unit_price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          name: string
+          professional_service_id: string
+          quantity_available?: number | null
+          supplier_name?: string | null
+          supplier_phone?: string | null
+          unit?: string | null
+          unit_price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          name?: string
+          professional_service_id?: string
+          quantity_available?: number | null
+          supplier_name?: string | null
+          supplier_phone?: string | null
+          unit?: string | null
+          unit_price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "btp_materials_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      btp_professionals: {
+        Row: {
+          city: string | null
+          created_at: string | null
+          description: string | null
+          email: string | null
+          experience_years: number | null
+          hourly_rate: number | null
+          id: string
+          is_available: boolean | null
+          name: string
+          phone: string | null
+          photo_url: string | null
+          portfolio_urls: string[] | null
+          professional_service_id: string
+          rating: number | null
+          reviews_count: number | null
+          specialty: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string | null
+          description?: string | null
+          email?: string | null
+          experience_years?: number | null
+          hourly_rate?: number | null
+          id?: string
+          is_available?: boolean | null
+          name: string
+          phone?: string | null
+          photo_url?: string | null
+          portfolio_urls?: string[] | null
+          professional_service_id: string
+          rating?: number | null
+          reviews_count?: number | null
+          specialty?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string | null
+          description?: string | null
+          email?: string | null
+          experience_years?: number | null
+          hourly_rate?: number | null
+          id?: string
+          is_available?: boolean | null
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          portfolio_urls?: string[] | null
+          professional_service_id?: string
+          rating?: number | null
+          reviews_count?: number | null
+          specialty?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "btp_professionals_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      btp_projects: {
+        Row: {
+          budget_estimated: number | null
+          budget_spent: number | null
+          city: string | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          estimated_duration_days: number | null
+          id: string
+          latitude: number | null
+          location: string | null
+          longitude: number | null
+          metadata: Json | null
+          neighborhood: string | null
+          owner_id: string
+          photos: string[] | null
+          professional_service_id: string
+          progress_percent: number | null
+          project_type: string
+          start_date: string | null
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          budget_estimated?: number | null
+          budget_spent?: number | null
+          city?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          estimated_duration_days?: number | null
+          id?: string
+          latitude?: number | null
+          location?: string | null
+          longitude?: number | null
+          metadata?: Json | null
+          neighborhood?: string | null
+          owner_id: string
+          photos?: string[] | null
+          professional_service_id: string
+          progress_percent?: number | null
+          project_type?: string
+          start_date?: string | null
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          budget_estimated?: number | null
+          budget_spent?: number | null
+          city?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          estimated_duration_days?: number | null
+          id?: string
+          latitude?: number | null
+          location?: string | null
+          longitude?: number | null
+          metadata?: Json | null
+          neighborhood?: string | null
+          owner_id?: string
+          photos?: string[] | null
+          professional_service_id?: string
+          progress_percent?: number | null
+          project_type?: string
+          start_date?: string | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "btp_projects_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      btp_quotes: {
+        Row: {
+          budget_range: string | null
+          client_email: string | null
+          client_name: string
+          client_phone: string | null
+          created_at: string | null
+          description: string
+          estimated_cost: number | null
+          estimated_duration: string | null
+          id: string
+          location: string | null
+          professional_service_id: string
+          project_id: string | null
+          project_type: string
+          responded_at: string | null
+          response_details: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          budget_range?: string | null
+          client_email?: string | null
+          client_name: string
+          client_phone?: string | null
+          created_at?: string | null
+          description: string
+          estimated_cost?: number | null
+          estimated_duration?: string | null
+          id?: string
+          location?: string | null
+          professional_service_id: string
+          project_id?: string | null
+          project_type: string
+          responded_at?: string | null
+          response_details?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          budget_range?: string | null
+          client_email?: string | null
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string | null
+          description?: string
+          estimated_cost?: number | null
+          estimated_duration?: string | null
+          id?: string
+          location?: string | null
+          professional_service_id?: string
+          project_id?: string | null
+          project_type?: string
+          responded_at?: string | null
+          response_details?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "btp_quotes_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "btp_quotes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "btp_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      btp_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          id: string
+          professional_id: string
+          project_id: string | null
+          rating: number
+          reviewer_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          professional_id: string
+          project_id?: string | null
+          rating: number
+          reviewer_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          professional_id?: string
+          project_id?: string | null
+          rating?: number
+          reviewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "btp_reviews_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "btp_professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "btp_reviews_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "btp_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      btp_tasks: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          notes: string | null
+          photos: string[] | null
+          priority: string | null
+          progress_percent: number | null
+          project_id: string
+          start_date: string | null
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          photos?: string[] | null
+          priority?: string | null
+          progress_percent?: number | null
+          project_id: string
+          start_date?: string | null
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          photos?: string[] | null
+          priority?: string | null
+          progress_percent?: number | null
+          project_id?: string
+          start_date?: string | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "btp_tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "btp_professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "btp_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "btp_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bug_bounty_hall_of_fame: {
         Row: {
           created_at: string
