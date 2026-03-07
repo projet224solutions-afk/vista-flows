@@ -1445,7 +1445,7 @@ export default function Auth() {
             } else {
               let targetRoute = getDashboardRoute(profileData.role);
               
-              // ✅ FIX: Redirection intelligente pour les vendeurs selon leur business_type
+              // ✅ Redirection intelligente pour les vendeurs selon leur business_type
               if (profileData.role === 'vendeur') {
                 const { data: vendor } = await supabase
                   .from('vendors')
@@ -1455,15 +1455,18 @@ export default function Auth() {
                 
                 if (vendor?.business_type === 'digital') {
                   targetRoute = '/vendeur-digital';
-                } else if (vendor?.business_type === 'service') {
-                  const { data: proService } = await supabase
-                    .from('professional_services')
-                    .select('id')
-                    .eq('user_id', userId)
-                    .maybeSingle();
-                  if (proService?.id) {
-                    targetRoute = `/dashboard/service/${proService.id}`;
-                  }
+                }
+              }
+              
+              // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service
+              if (profileData.role === 'prestataire') {
+                const { data: proService } = await supabase
+                  .from('professional_services')
+                  .select('id')
+                  .eq('user_id', userId)
+                  .maybeSingle();
+                if (proService?.id) {
+                  targetRoute = `/dashboard/service/${proService.id}`;
                 }
               }
               
