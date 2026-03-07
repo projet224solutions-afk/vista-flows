@@ -8,115 +8,107 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* 224SOLUTIONS E-Commerce Design System - Blanc & Beige Ultra Léger */
-    /* Fond principal: Blanc crème très léger #FAFAF8 (60 20% 98%) */
-    --background: 60 20% 98%;
-    /* Texte: Noir doux #1A1A1A */
-    --foreground: 0 0% 10%;
+    /* 224SOLUTIONS Brand System — Charte officielle */
+    /* #023288 Bleu Royal · #04439e Bleu Profond · #ff4000 Orange Vif · #ce3d11 Orange Foncé · #000000 Noir */
 
-    /* Carte: Blanc pur avec ombre beige #FFFFFF (0 0% 100%) */
+    --background: 0 0% 99%;
+    --foreground: 0 0% 0%;
+
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card-foreground: 0 0% 0%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 0 0% 0%;
 
-    /* Accent: Bleu électrique #007BFF (211 100% 50%) */
-    --primary: 211 100% 50%;
+    /* Primary: Bleu Royal #023288 */
+    --primary: 220 97% 27%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Beige très léger #FAF8F5 (40 30% 97%) */
-    --secondary: 40 30% 97%;
-    --secondary-foreground: 0 0% 10%;
+    /* Secondary: Bleu Profond #04439e */
+    --secondary: 220 96% 32%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 40 20% 95%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 220 20% 95%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 211 100% 50%;
+    /* Accent: Orange Vif #ff4000 */
+    --accent: 15 100% 50%;
     --accent-foreground: 0 0% 100%;
 
-    /* Erreur: Rouge corail #FF4D4D (0 100% 65%) */
-    --destructive: 0 100% 65%;
+    /* Destructive: Orange Foncé #ce3d11 */
+    --destructive: 15 85% 44%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 20% 92%;
-    --input: 40 15% 96%;
-    --ring: 211 100% 50%;
+    --border: 220 15% 90%;
+    --input: 220 10% 96%;
+    --ring: 220 97% 27%;
 
-    /* Role-based color schemes */
-    /* Vendeur - E-Commerce Professional (Bleu électrique + Vert émeraude) */
-    /* Validation / succès: Vert émeraude #00C896 (168 100% 39%) */
-    --vendeur-primary: 211 100% 50%;
-    --vendeur-secondary: 168 100% 39%;
-    --vendeur-accent: 211 100% 95%;
-    --vendeur-gradient: hsl(211 100% 50%);
+    /* Role-based — tous basés sur la charte */
+    --vendeur-primary: 220 97% 27%;
+    --vendeur-secondary: 15 100% 50%;
+    --vendeur-accent: 220 97% 95%;
+    --vendeur-gradient: hsl(220 97% 27%);
 
-    /* Livreur - Style africain vibrant : Orange Guinée + Vert Forêt */
-    --livreur-primary: 25 98% 55%; /* Orange africain vibrant #FF8C1A */
-    --livreur-secondary: 145 65% 35%; /* Vert forêt guinéen */
-    --livreur-accent: 45 100% 92%; /* Jaune soleil léger */
-    --livreur-gold: 45 100% 51%; /* Or africain */
-    --livreur-gradient: hsl(25 98% 55%);
-    --livreur-gradient-warm: hsl(25 98% 55%);
+    --livreur-primary: 15 100% 50%;
+    --livreur-secondary: 220 96% 32%;
+    --livreur-accent: 15 100% 95%;
+    --livreur-gold: 15 85% 44%;
+    --livreur-gradient: hsl(15 100% 50%);
+    --livreur-gradient-warm: hsl(15 85% 44%);
 
-    /* Taxi/Moto - Transport Yellow & Urban Grey */
-    --taxi-primary: 51 100% 50%;
-    --taxi-secondary: 215 16% 47%;
-    --taxi-accent: 51 100% 95%;
-    --taxi-gradient: hsl(51 100% 50%);
+    --taxi-primary: 15 100% 50%;
+    --taxi-secondary: 220 97% 27%;
+    --taxi-accent: 15 100% 95%;
+    --taxi-gradient: hsl(15 100% 50%);
 
-    /* Bureau Syndicat - Authority Red & Official Grey */
-    --syndicat-primary: 0 84% 60%;
-    --syndicat-secondary: 215 16% 47%;
-    --syndicat-accent: 0 84% 95%;
-    --syndicat-gradient: hsl(0 84% 60%);
+    --syndicat-primary: 15 85% 44%;
+    --syndicat-secondary: 220 97% 27%;
+    --syndicat-accent: 15 85% 95%;
+    --syndicat-gradient: hsl(15 85% 44%);
 
-    /* Transitaire - Maritime Dark Blue & White */
-    --transitaire-primary: 217 91% 30%;
+    --transitaire-primary: 220 96% 32%;
     --transitaire-secondary: 0 0% 100%;
-    --transitaire-accent: 217 91% 95%;
-    --transitaire-gradient: hsl(217 91% 30%);
+    --transitaire-accent: 220 96% 95%;
+    --transitaire-gradient: hsl(220 96% 32%);
 
-    /* Admin/PDG - Corporate Black & Dark Blue */
-    --admin-primary: 220 13% 18%;
-    --admin-secondary: 217 91% 30%;
-    --admin-accent: 220 13% 95%;
-    --admin-gradient: hsl(220 13% 18%);
+    --admin-primary: 0 0% 0%;
+    --admin-secondary: 220 97% 27%;
+    --admin-accent: 220 97% 95%;
+    --admin-gradient: hsl(0 0% 0%);
 
-    /* Client - Purchase Green & Trust White */
-    --client-primary: 142 71% 45%;
-    --client-secondary: 0 0% 100%;
-    --client-accent: 142 71% 95%;
-    --client-gradient: hsl(142 71% 45%);
+    --client-primary: 220 97% 27%;
+    --client-secondary: 15 100% 50%;
+    --client-accent: 220 97% 95%;
+    --client-gradient: hsl(220 97% 27%);
 
-    /* Global gradients and effects - 224SOLUTIONS Ultra Premium */
-    --gradient-elegant: linear-gradient(135deg, hsl(211 100% 97%), hsl(40 30% 98%));
-    --gradient-neon: linear-gradient(135deg, hsl(211 100% 50%), hsl(168 100% 45%));
-    --gradient-hero: linear-gradient(180deg, hsl(211 100% 98%) 0%, hsl(0 0% 100%) 50%, hsl(211 100% 97%) 100%);
-    --gradient-hero-accent: linear-gradient(135deg, hsl(211 100% 50% / 0.1) 0%, hsl(168 100% 45% / 0.05) 100%);
-    --gradient-glass: linear-gradient(180deg, hsl(0 0% 100% / 0.9) 0%, hsl(0 0% 100% / 0.7) 100%);
+    /* Gradients & effects — charte officielle */
+    --gradient-elegant: linear-gradient(135deg, hsl(220 97% 96%), hsl(0 0% 99%));
+    --gradient-neon: linear-gradient(135deg, hsl(220 97% 27%), hsl(15 100% 50%));
+    --gradient-hero: linear-gradient(180deg, hsl(220 97% 97%) 0%, hsl(0 0% 100%) 50%, hsl(220 97% 96%) 100%);
+    --gradient-hero-accent: linear-gradient(135deg, hsl(220 97% 27% / 0.08) 0%, hsl(15 100% 50% / 0.05) 100%);
+    --gradient-glass: linear-gradient(180deg, hsl(0 0% 100% / 0.92) 0%, hsl(0 0% 100% / 0.7) 100%);
     --gradient-bottom-nav: linear-gradient(180deg, hsl(0 0% 100% / 0) 0%, hsl(0 0% 100%) 20%);
-    --shadow-elegant: 0 4px 20px hsl(40 20% 70% / 0.12);
-    --shadow-glow: 0 0 30px hsl(211 100% 50% / 0.2);
-    --shadow-card: 0 2px 8px hsl(40 30% 70% / 0.08);
-    --shadow-hero: 0 8px 40px hsl(211 100% 50% / 0.15);
+    --shadow-elegant: 0 4px 20px hsl(220 97% 27% / 0.08);
+    --shadow-glow: 0 0 30px hsl(220 97% 27% / 0.2);
+    --shadow-card: 0 2px 8px hsl(220 20% 50% / 0.06);
+    --shadow-hero: 0 8px 40px hsl(220 97% 27% / 0.12);
     --shadow-bottom-nav: 0 -4px 30px hsl(0 0% 0% / 0.08);
-    --shadow-service-card: 0 4px 24px hsl(211 100% 50% / 0.1);
-    
-    /* HOVER GLOBAL - Bleu professionnel pour tous les éléments interactifs */
-    --hover-bg: 217 91% 45%;
-    --hover-shadow: 0 8px 25px hsl(217 91% 45% / 0.5);
+    --shadow-service-card: 0 4px 24px hsl(220 97% 27% / 0.08);
+
+    /* Hover global */
+    --hover-bg: 220 97% 27%;
+    --hover-shadow: 0 8px 25px hsl(220 97% 27% / 0.4);
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 220 13% 18%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 217 91% 95%;
-    --sidebar-accent-foreground: 220 13% 18%;
-    --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-background: 220 97% 27%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 15 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 96% 32%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 97% 22%;
+    --sidebar-ring: 15 100% 50%;
   }
 
   .dark {
