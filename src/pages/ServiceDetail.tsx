@@ -586,6 +586,16 @@ export default function ServiceDetail() {
             </Button>
             
             <div className="flex gap-2">
+              {isOwner && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white hover:bg-white/20"
+                  onClick={() => navigate(`/dashboard/service/${id}`)}
+                >
+                  <Settings className="w-5 h-5" />
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
