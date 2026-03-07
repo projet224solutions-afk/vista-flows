@@ -1343,7 +1343,10 @@ export default function Auth() {
             
             if (profileData.role === 'vendeur' && vendorShopType === 'digital') {
               targetRoute = '/vendeur-digital';
-            } else if (profileData.role === 'vendeur' && selectedServiceType) {
+            }
+            
+            // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service créé
+            if (profileData.role === 'prestataire') {
               const { data: proService } = await supabase
                 .from('professional_services')
                 .select('id')
