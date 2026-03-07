@@ -174,20 +174,28 @@ export const useRoleRedirect = () => {
             let finalRoute = targetRoute;
             if (vendor?.business_type === 'digital') {
               finalRoute = '/vendeur-digital';
-            } else if (vendor?.business_type === 'service') {
-              const { data: proService } = await supabase
-                .from('professional_services')
-                .select('id')
-                .eq('user_id', user.id)
-                .maybeSingle();
-              if (proService) {
-                finalRoute = `/dashboard/service/${proService.id}`;
-              }
             }
             console.log(`🚀 [useRoleRedirect] Redirection vendeur depuis ${currentPath} vers ${finalRoute}`);
             navigate(finalRoute, { replace: true });
           };
           redirectVendor();
+          return;
+        }
+        
+        // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service
+        if ((profile.role as string) === 'prestataire') {
+          const redirectPrestataire = async () => {
+            const { data: proService } = await supabase
+              .from('professional_services')
+              .select('id')
+              .eq('user_id', user.id)
+              .maybeSingle();
+            
+            const finalRoute = proService ? `/dashboard/service/${proService.id}` : '/service-selection';
+            console.log(`🚀 [useRoleRedirect] Redirection prestataire depuis ${currentPath} vers ${finalRoute}`);
+            navigate(finalRoute, { replace: true });
+          };
+          redirectPrestataire();
           return;
         }
         
