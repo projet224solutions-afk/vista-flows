@@ -300,7 +300,7 @@ export function VendorSidebar() {
                                     variant={badgeValue === "HOT" ? "destructive" : "secondary"}
                                     className={cn(
                                       "text-[10px] px-2 py-0.5 h-5 min-w-[24px] flex items-center justify-center flex-shrink-0 mr-3 font-bold",
-                                      isPOS && "bg-gradient-to-r from-orange-500 to-red-500 text-white border-0 animate-pulse shadow-md"
+                                      isPOS && "bg-gradient-to-r from-accent to-destructive text-white border-0 animate-pulse shadow-md"
                                     )}
                                   >
                                     {badgeValue}
