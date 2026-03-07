@@ -2118,14 +2118,14 @@ export function POSSystem() {
                               <div
                                 className={`flex items-baseline gap-1 px-1 py-0.5 rounded ${
                                   cartonsAvailable > 0
-                                    ? 'bg-[hsl(15,100%,50%)]/10 dark:bg-[hsl(15,100%,50%)]/20'
+                                    ? 'bg-vendeur-secondary/10 dark:bg-vendeur-secondary/20'
                                     : 'bg-muted/40'
                                 }`}
                               >
                                 <span
                                   className={`text-xs font-bold ${
                                     cartonsAvailable > 0
-                                      ? 'text-[hsl(15,100%,50%)] dark:text-[hsl(15,100%,60%)]'
+                                      ? 'text-vendeur-secondary'
                                       : 'text-muted-foreground'
                                   }`}
                                 >
@@ -2134,7 +2134,7 @@ export function POSSystem() {
                                 <span
                                   className={`text-[9px] ${
                                     cartonsAvailable > 0
-                                      ? 'text-[hsl(15,100%,50%)]/70 dark:text-[hsl(15,100%,60%)]/70'
+                                      ? 'text-vendeur-secondary/70'
                                       : 'text-muted-foreground'
                                   }`}
                                 >
@@ -2207,7 +2207,7 @@ export function POSSystem() {
                                     if (cartonsAvailable > 0) addToCartByCarton(product);
                                   }}
                                   disabled={cartonsAvailable <= 0}
-                                  className="w-full h-4 text-[8px] md:text-xs font-semibold bg-[hsl(15,100%,50%)] hover:bg-[hsl(15,100%,45%)] text-white dark:bg-[hsl(15,100%,50%)] dark:hover:bg-[hsl(15,100%,40%)] dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                  className="w-full h-4 text-[8px] md:text-xs font-semibold bg-vendeur-secondary hover:bg-vendeur-secondary/90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   📦 +1 Carton ({cartonsAvailable > 0 ? product.units_per_carton : 0}u)
                                 </Button>

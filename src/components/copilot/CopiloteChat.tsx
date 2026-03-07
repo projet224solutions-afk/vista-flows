@@ -478,7 +478,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
   };
 
   const roleLabel = userRole === 'vendeur' ? 'Vendeur' : 'Client';
-  const roleColor = userRole === 'vendeur' ? 'from-[hsl(220,97%,27%)] to-[hsl(220,96%,32%)]' : 'from-[hsl(15,100%,50%)] to-[hsl(15,85%,44%)]';
+  const roleColor = userRole === 'vendeur' ? 'from-primary to-brand-blue-deep' : 'from-vendeur-secondary to-brand-orange-dark';
 
   return (
     <Card className={`flex flex-col ${className}`} style={{ height }}>

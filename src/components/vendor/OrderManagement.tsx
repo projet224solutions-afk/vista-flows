@@ -530,7 +530,7 @@ export default function OrderManagement() {
           key="process" 
           size="sm" 
           disabled={updatingOrderId === order.id}
-          className="bg-[hsl(15,100%,50%)] hover:bg-[hsl(15,100%,45%)] text-white disabled:opacity-50"
+          className="bg-vendeur-secondary hover:bg-vendeur-secondary/90 text-white disabled:opacity-50"
           onClick={(e) => {
             e.stopPropagation();
             console.log('📦 Preparing order:', order.id);
@@ -752,7 +752,7 @@ export default function OrderManagement() {
         <Card 
           className={`border-2 transition-all ${
             canAccessPOS 
-              ? 'border-[hsl(15,100%,50%)] bg-[hsl(15,100%,50%)]/5 cursor-pointer hover:shadow-lg active:scale-[0.98]' 
+              ? 'border-vendeur-secondary bg-vendeur-secondary/5 cursor-pointer hover:shadow-lg active:scale-[0.98]' 
               : 'border-gray-300 bg-gray-100/50 cursor-not-allowed opacity-60'
           }`}
           onClick={() => {
@@ -771,7 +771,7 @@ export default function OrderManagement() {
           }}
         >
           <CardHeader className="p-3 md:p-6 pb-2 md:pb-4">
-            <CardTitle className={`flex items-center gap-2 text-base md:text-lg ${canAccessPOS ? 'text-[hsl(15,100%,50%)]' : 'text-gray-500'}`}>
+            <CardTitle className={`flex items-center gap-2 text-base md:text-lg ${canAccessPOS ? 'text-vendeur-secondary' : 'text-gray-500'}`}>
               {canAccessPOS ? '🛒' : <Lock className="w-4 h-4" />} Ventes POS
               {!canAccessPOS && (
                 <Badge variant="secondary" className="ml-2 text-xs">
@@ -787,13 +787,13 @@ export default function OrderManagement() {
             <div className="grid grid-cols-2 gap-2 md:gap-4">
               <div className="bg-white/80 rounded-lg p-2 md:p-4">
                 <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Total ventes</p>
-                <p className={`text-xl md:text-3xl font-bold ${canAccessPOS ? 'text-[hsl(15,100%,50%)]' : 'text-gray-400'}`}>
+                <p className={`text-xl md:text-3xl font-bold ${canAccessPOS ? 'text-vendeur-secondary' : 'text-gray-400'}`}>
                   {orders.filter(o => o.source === 'pos').length}
                 </p>
               </div>
               <div className="bg-white/80 rounded-lg p-2 md:p-4">
                 <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Chiffre d'affaires</p>
-                <p className={`text-sm md:text-xl font-bold truncate ${canAccessPOS ? 'text-[hsl(15,100%,50%)]' : 'text-gray-400'}`}>
+                <p className={`text-sm md:text-xl font-bold truncate ${canAccessPOS ? 'text-vendeur-secondary' : 'text-gray-400'}`}>
                   {orders
                     .filter(o => o.source === 'pos' && o.payment_status === 'paid')
                     .reduce((sum, o) => sum + o.total_amount, 0)
@@ -804,7 +804,7 @@ export default function OrderManagement() {
             <Button 
               className={`w-full mt-3 md:mt-4 h-9 text-xs md:text-sm ${
                 canAccessPOS 
-                  ? 'bg-[hsl(15,100%,50%)] hover:bg-[hsl(15,100%,45%)]' 
+                  ? 'bg-vendeur-secondary hover:bg-vendeur-secondary/90' 
                   : 'bg-gray-400 cursor-not-allowed'
               }`}
               disabled={!canAccessPOS}
@@ -929,9 +929,9 @@ export default function OrderManagement() {
         };
 
         return (
-        <Card className="border-2 border-[hsl(15,100%,50%)]/30 bg-[hsl(15,100%,50%)]/5 pos-orders-section">
+        <Card className="border-2 border-vendeur-secondary/30 bg-vendeur-secondary/5 pos-orders-section">
         <CardHeader className="p-3 md:p-6">
-          <CardTitle className="flex items-center gap-2 text-[hsl(15,100%,50%)] text-base md:text-lg">
+          <CardTitle className="flex items-center gap-2 text-vendeur-secondary text-base md:text-lg">
             🛒 Ventes POS ({posOrders.length})
           </CardTitle>
           <p className="text-xs md:text-sm text-muted-foreground">
@@ -942,19 +942,19 @@ export default function OrderManagement() {
           {/* Filtres par période */}
           <Tabs defaultValue="all" className="mb-6">
             <TabsList className="grid grid-cols-5 w-full bg-muted/50">
-              <TabsTrigger value="all" className="text-xs data-[state=active]:bg-[hsl(15,100%,50%)] data-[state=active]:text-white">
+              <TabsTrigger value="all" className="text-xs data-[state=active]:bg-vendeur-secondary data-[state=active]:text-white">
                 Tout
               </TabsTrigger>
-              <TabsTrigger value="day" className="text-xs data-[state=active]:bg-[hsl(15,100%,50%)] data-[state=active]:text-white">
+              <TabsTrigger value="day" className="text-xs data-[state=active]:bg-vendeur-secondary data-[state=active]:text-white">
                 Jour
               </TabsTrigger>
-              <TabsTrigger value="week" className="text-xs data-[state=active]:bg-[hsl(15,100%,50%)] data-[state=active]:text-white">
+              <TabsTrigger value="week" className="text-xs data-[state=active]:bg-vendeur-secondary data-[state=active]:text-white">
                 Semaine
               </TabsTrigger>
-              <TabsTrigger value="month" className="text-xs data-[state=active]:bg-[hsl(15,100%,50%)] data-[state=active]:text-white">
+              <TabsTrigger value="month" className="text-xs data-[state=active]:bg-vendeur-secondary data-[state=active]:text-white">
                 Mois
               </TabsTrigger>
-              <TabsTrigger value="year" className="text-xs data-[state=active]:bg-[hsl(15,100%,50%)] data-[state=active]:text-white">
+              <TabsTrigger value="year" className="text-xs data-[state=active]:bg-vendeur-secondary data-[state=active]:text-white">
                 Année
               </TabsTrigger>
             </TabsList>
