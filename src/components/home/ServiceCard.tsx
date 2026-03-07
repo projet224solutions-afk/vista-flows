@@ -42,9 +42,7 @@ export function HomeServiceCard({
         className={cn(
           'group relative w-full overflow-hidden',
           'p-3 rounded-2xl text-center',
-          'bg-gradient-to-br',
-          gradient,
-          'border border-border/50',
+          'bg-card border border-border/50',
           'hover:border-primary hover:bg-primary hover:shadow-lg hover:shadow-primary/20',
           'transition-all duration-300 ease-out',
           'active:scale-[0.98] active:bg-primary',
