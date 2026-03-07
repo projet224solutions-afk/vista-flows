@@ -74,7 +74,7 @@ function PWAInstallPromptInner() {
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             {/* Icône */}
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0 shadow-lg">
               <Download className="w-6 h-6 text-white animate-bounce" />
             </div>
 
