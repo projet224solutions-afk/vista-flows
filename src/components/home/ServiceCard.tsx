@@ -65,7 +65,8 @@ export function HomeServiceCard({
               'p-3 rounded-xl',
               'transition-all duration-300',
               iconBg,
-              'group-hover:scale-105'
+              'group-hover:scale-105',
+              '[&_svg]:transition-colors [&_svg]:duration-300 group-hover:[&_svg]:text-white group-active:[&_svg]:text-white'
             )}
           >
             {icon}
