@@ -344,7 +344,7 @@ All colors MUST be HSL.
   }
 
   .glow-on-hover:hover {
-    box-shadow: 0 0 24px hsl(211 100% 50% / 0.5), 0 4px 16px hsl(211 100% 40% / 0.3);
+    box-shadow: 0 0 24px hsl(220 97% 27% / 0.5), 0 4px 16px hsl(220 97% 27% / 0.3);
     transform: translateY(-2px);
   }
 
