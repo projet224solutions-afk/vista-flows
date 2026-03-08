@@ -14,7 +14,7 @@ import {
   UtensilsCrossed, ClipboardList, Users, Calendar,
   TrendingUp, RefreshCw, Clock, CheckCircle, XCircle,
   DollarSign, ShoppingBag, Package, Truck, MapPin, Eye,
-  Sparkles, Settings, Plus, LayoutGrid, CalendarCheck
+  Sparkles, Settings, Plus, LayoutGrid, CalendarCheck, ShoppingCart
 } from 'lucide-react';
 import { useServiceRestaurantStats } from '@/hooks/useServiceRestaurantStats';
 import { formatDistanceToNow } from 'date-fns';
@@ -25,6 +25,7 @@ import { RestaurantTableManager } from '@/components/restaurant/RestaurantTableM
 import { RestaurantSettings } from '@/components/restaurant/RestaurantSettings';
 import { RestaurantReservationsManager } from '@/components/restaurant/RestaurantReservationsManager';
 import { RestaurantOrdersPanel } from '@/components/restaurant/RestaurantOrdersPanel';
+import { RestaurantPOS } from '@/components/restaurant/RestaurantPOS';
 
 interface RestaurantModuleProps {
   serviceId: string;
@@ -235,10 +236,14 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid">
           <TabsTrigger value="overview">
             <DollarSign className="w-4 h-4 mr-2 hidden md:block" />
             Aperçu
+          </TabsTrigger>
+          <TabsTrigger value="pos" className="bg-primary/10 font-semibold">
+            <ShoppingCart className="w-4 h-4 mr-2 hidden md:block" />
+            POS
           </TabsTrigger>
           <TabsTrigger value="reservations">
             <CalendarCheck className="w-4 h-4 mr-2 hidden md:block" />
@@ -368,6 +373,10 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="pos" className="mt-4">
+          <RestaurantPOS serviceId={serviceId} />
         </TabsContent>
 
         <TabsContent value="orders" className="mt-4">
