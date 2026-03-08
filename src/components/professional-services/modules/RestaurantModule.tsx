@@ -25,6 +25,7 @@ import { RestaurantTableManager } from '@/components/restaurant/RestaurantTableM
 import { RestaurantSettings } from '@/components/restaurant/RestaurantSettings';
 import { RestaurantReservationsManager } from '@/components/restaurant/RestaurantReservationsManager';
 import { RestaurantOrdersPanel } from '@/components/restaurant/RestaurantOrdersPanel';
+import { RestaurantPOS } from '@/components/restaurant/RestaurantPOS';
 
 interface RestaurantModuleProps {
   serviceId: string;
