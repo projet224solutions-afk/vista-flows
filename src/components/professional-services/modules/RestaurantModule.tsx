@@ -375,6 +375,10 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
           </div>
         </TabsContent>
 
+        <TabsContent value="pos" className="mt-4">
+          <RestaurantPOS serviceId={serviceId} />
+        </TabsContent>
+
         <TabsContent value="orders" className="mt-4">
           <RestaurantOrdersPanel serviceId={serviceId} />
         </TabsContent>
