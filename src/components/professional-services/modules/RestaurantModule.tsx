@@ -236,10 +236,14 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid">
           <TabsTrigger value="overview">
             <DollarSign className="w-4 h-4 mr-2 hidden md:block" />
             Aperçu
+          </TabsTrigger>
+          <TabsTrigger value="pos" className="bg-primary/10 font-semibold">
+            <ShoppingCart className="w-4 h-4 mr-2 hidden md:block" />
+            POS
           </TabsTrigger>
           <TabsTrigger value="reservations">
             <CalendarCheck className="w-4 h-4 mr-2 hidden md:block" />
