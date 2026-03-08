@@ -14,7 +14,7 @@ import {
   UtensilsCrossed, ClipboardList, Users, Calendar,
   TrendingUp, RefreshCw, Clock, CheckCircle, XCircle,
   DollarSign, ShoppingBag, Package, Truck, MapPin, Eye,
-  Sparkles, Settings, Plus, LayoutGrid, CalendarCheck
+  Sparkles, Settings, Plus, LayoutGrid, CalendarCheck, ShoppingCart
 } from 'lucide-react';
 import { useServiceRestaurantStats } from '@/hooks/useServiceRestaurantStats';
 import { formatDistanceToNow } from 'date-fns';
