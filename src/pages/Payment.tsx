@@ -1031,7 +1031,7 @@ export default function Payment() {
                             </p>
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="payment-amount">Montant (GNF) *</Label>
+                            <Label htmlFor="payment-amount">Montant ({productCurrency}) *</Label>
                             <Input
                               id="payment-amount"
                               type="number"
@@ -1041,6 +1041,12 @@ export default function Payment() {
                               readOnly={searchParams.get('productId') !== null || location.state?.productId}
                               className={searchParams.get('productId') || location.state?.productId ? 'bg-muted cursor-not-allowed font-bold text-primary' : ''}
                             />
+                            {/* Afficher la conversion si la devise du produit diffère de celle de l'utilisateur */}
+                            {paymentAmount && productCurrency !== userCurrency && !converterLoading && (
+                              <p className="text-xs text-muted-foreground">
+                                ≈ {convertPrice(parseFloat(paymentAmount) || 0, productCurrency).formatted} dans votre devise
+                              </p>
+                            )}
                           </div>
                           <div className="space-y-2">
                             <Input
