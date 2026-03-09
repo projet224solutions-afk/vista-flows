@@ -177,7 +177,7 @@ export default function Payment() {
         // Charger les infos du vendeur
         const { data: vendorInfo, error: vendorError } = await supabase
           .from('vendors')
-          .select('id, user_id')
+          .select('id, user_id, country')
           .eq('id', firstItem.vendor_id)
           .single();
 
