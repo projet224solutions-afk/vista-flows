@@ -318,7 +318,7 @@ export default function Payment() {
               name,
               price,
               vendor_id,
-              vendors!inner(user_id)
+              vendors!inner(user_id, country)
             `)
             .eq('id', id)
             .single();
@@ -329,6 +329,11 @@ export default function Payment() {
             const totalAmount = product.price * qty;
             
             const vendorUserId = (product.vendors as any)?.user_id as string;
+            const vendorCountry = (product.vendors as any)?.country as string | null;
+            
+            // Dériver la devise du vendeur depuis son pays
+            const vendorCurr = getVendorCurrency(vendorCountry);
+            setProductCurrency(vendorCurr);
 
             // Stocker les infos produit pour créer la commande plus tard
             setProductPaymentInfo({
