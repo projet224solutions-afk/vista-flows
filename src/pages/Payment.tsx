@@ -11,6 +11,8 @@ import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
+import { useCurrency } from '@/context/CurrencyContext';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
@@ -21,16 +23,57 @@ import { PaymentMethodsManager } from "@/components/payment/PaymentMethodsManage
 import { JomyPaymentSelector } from "@/components/payment/JomyPaymentSelector";
 import { useFormPersistence } from "@/hooks/useAppPersistence";
 
+// Mapping pays → devise pour dériver la devise du vendeur
+const COUNTRY_CURRENCY_MAP: Record<string, string> = {
+  FR: 'EUR', DE: 'EUR', IT: 'EUR', ES: 'EUR', PT: 'EUR',
+  BE: 'EUR', NL: 'EUR', AT: 'EUR', IE: 'EUR', GR: 'EUR',
+  US: 'USD', GB: 'GBP', CA: 'CAD', AU: 'AUD',
+  CI: 'XOF', SN: 'XOF', ML: 'XOF', BF: 'XOF', BJ: 'XOF', TG: 'XOF', NE: 'XOF',
+  CM: 'XAF', GA: 'XAF', CG: 'XAF', TD: 'XAF', CF: 'XAF', GQ: 'XAF',
+  SA: 'SAR', AE: 'AED', CN: 'CNY', JP: 'JPY', IN: 'INR',
+  BR: 'BRL', ZA: 'ZAR', EG: 'EGP', NG: 'NGN', KE: 'KES',
+  MA: 'MAD', DZ: 'DZD', TN: 'TND', GH: 'GHS',
+  GN: 'GNF', SL: 'SLL', LR: 'LRD', GM: 'GMD',
+};
+
+function getVendorCurrency(country?: string | null): string {
+  if (!country) return 'GNF';
+  // Try direct ISO code match
+  const upper = country.toUpperCase().trim();
+  if (COUNTRY_CURRENCY_MAP[upper]) return COUNTRY_CURRENCY_MAP[upper];
+  // Try matching country names
+  const nameMap: Record<string, string> = {
+    'GUINÉE': 'GNF', 'GUINEA': 'GNF', 'GUINEE': 'GNF',
+    'SÉNÉGAL': 'XOF', 'SENEGAL': 'XOF',
+    'CÔTE D\'IVOIRE': 'XOF', 'IVORY COAST': 'XOF',
+    'MALI': 'XOF', 'BURKINA FASO': 'XOF', 'BENIN': 'XOF', 'BÉNIN': 'XOF',
+    'TOGO': 'XOF', 'NIGER': 'XOF',
+    'CAMEROUN': 'XAF', 'CAMEROON': 'XAF',
+    'FRANCE': 'EUR', 'GERMANY': 'EUR', 'ALLEMAGNE': 'EUR',
+    'UNITED STATES': 'USD', 'USA': 'USD', 'ÉTATS-UNIS': 'USD',
+    'UNITED KINGDOM': 'GBP', 'ROYAUME-UNI': 'GBP',
+    'NIGERIA': 'NGN', 'GHANA': 'GHS', 'KENYA': 'KES',
+    'SOUTH AFRICA': 'ZAR', 'AFRIQUE DU SUD': 'ZAR',
+    'MOROCCO': 'MAD', 'MAROC': 'MAD',
+  };
+  return nameMap[upper] || 'GNF';
+}
+
 export default function Payment() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { currency: userCurrency } = useCurrency();
+  const { convert: convertPrice, loading: converterLoading } = usePriceConverter();
   
   const [walletBalance, setWalletBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
+  
+  // Devise du produit/vendeur (dérivée du pays du vendeur)
+  const [productCurrency, setProductCurrency] = useState<string>('GNF');
   
   // États pour le paiement
   const [paymentOpen, setPaymentOpen] = useState(false);
@@ -134,7 +177,7 @@ export default function Payment() {
         // Charger les infos du vendeur
         const { data: vendorInfo, error: vendorError } = await supabase
           .from('vendors')
-          .select('id, user_id')
+          .select('id, user_id, country')
           .eq('id', firstItem.vendor_id)
           .single();
 
@@ -158,6 +201,10 @@ export default function Payment() {
         if (profileError) {
           console.error('Erreur chargement profil vendeur:', profileError);
         }
+
+        // Dériver la devise du vendeur depuis son pays
+        const vendorCurr = getVendorCurrency((vendorInfo as any).country);
+        setProductCurrency(vendorCurr);
 
         // Stocker les infos du panier (produits physiques par défaut)
         setCartPaymentInfo({
@@ -271,7 +318,7 @@ export default function Payment() {
               name,
               price,
               vendor_id,
-              vendors!inner(user_id)
+              vendors!inner(user_id, country)
             `)
             .eq('id', id)
             .single();
@@ -282,6 +329,11 @@ export default function Payment() {
             const totalAmount = product.price * qty;
             
             const vendorUserId = (product.vendors as any)?.user_id as string;
+            const vendorCountry = (product.vendors as any)?.country as string | null;
+            
+            // Dériver la devise du vendeur depuis son pays
+            const vendorCurr = getVendorCurrency(vendorCountry);
+            setProductCurrency(vendorCurr);
 
             // Stocker les infos produit pour créer la commande plus tard
             setProductPaymentInfo({
@@ -979,7 +1031,7 @@ export default function Payment() {
                             </p>
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="payment-amount">Montant (GNF) *</Label>
+                            <Label htmlFor="payment-amount">Montant ({productCurrency}) *</Label>
                             <Input
                               id="payment-amount"
                               type="number"
@@ -989,6 +1041,12 @@ export default function Payment() {
                               readOnly={searchParams.get('productId') !== null || location.state?.productId}
                               className={searchParams.get('productId') || location.state?.productId ? 'bg-muted cursor-not-allowed font-bold text-primary' : ''}
                             />
+                            {/* Afficher la conversion si la devise du produit diffère de celle de l'utilisateur */}
+                            {paymentAmount && productCurrency !== userCurrency && !converterLoading && (
+                              <p className="text-xs text-muted-foreground">
+                                ≈ {convertPrice(parseFloat(paymentAmount) || 0, productCurrency).formatted} dans votre devise
+                              </p>
+                            )}
                           </div>
                           <div className="space-y-2">
                             <Input
