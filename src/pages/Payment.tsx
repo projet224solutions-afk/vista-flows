@@ -202,6 +202,10 @@ export default function Payment() {
           console.error('Erreur chargement profil vendeur:', profileError);
         }
 
+        // Dériver la devise du vendeur depuis son pays
+        const vendorCurr = getVendorCurrency((vendorInfo as any).country);
+        setProductCurrency(vendorCurr);
+
         // Stocker les infos du panier (produits physiques par défaut)
         setCartPaymentInfo({
           items: cartItems,
