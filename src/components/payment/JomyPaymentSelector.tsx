@@ -549,7 +549,7 @@ export function JomyPaymentSelector({
                 <AlertDescription className="text-emerald-700">
                   <strong>Paiement à la livraison confirmé</strong><br/>
                   Vous serez contacté par téléphone pour confirmer votre adresse exacte avant la livraison. 
-                  Préparez {amount.toLocaleString()} GNF en espèces.
+                  Préparez {formattedAmount} en espèces.
                 </AlertDescription>
               </Alert>
             </div>
