@@ -138,7 +138,7 @@ export function JomyPaymentSelector({
     ...(recipientId ? [{
       id: 'WALLET' as const,
       name: 'Wallet 224Solutions',
-      description: `Solde: ${walletBalance !== null ? walletBalance.toLocaleString() : '...'} GNF`,
+      description: `Solde: ${walletBalance !== null ? formatCurrency(walletBalance, walletCurrency) : '...'}`,
       icon: <Wallet className="h-5 w-5 text-green-600" />,
       iconBg: 'bg-green-100',
       requiresPhone: false,
