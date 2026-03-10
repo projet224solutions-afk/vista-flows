@@ -397,7 +397,7 @@ export function JomyPaymentSelector({
           <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-green-700 mb-2">Paiement réussi !</h3>
           <p className="text-muted-foreground mb-4">
-            Votre paiement de {amount.toLocaleString()} GNF a été effectué avec succès.
+            Votre paiement de {formattedAmount} a été effectué avec succès.
           </p>
           <Button onClick={() => onPaymentSuccess('', 'SUCCESS')} className="w-full">
             Continuer
