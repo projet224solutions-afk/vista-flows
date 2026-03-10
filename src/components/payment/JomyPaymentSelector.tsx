@@ -118,11 +118,12 @@ export function JomyPaymentSelector({
       try {
         const { data } = await supabase
           .from('wallets')
-          .select('balance')
+          .select('balance, currency')
           .eq('user_id', user.id)
           .single();
         if (data) {
           setWalletBalance(data.balance);
+          setWalletCurrency(data.currency || 'GNF');
         }
       } catch (err) {
         console.error('Error loading wallet balance:', err);
