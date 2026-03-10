@@ -4,7 +4,7 @@
  * Méthodes: Carte Bancaire (Stripe), Orange Money, MTN MoMo, PayCard (ChapChapPay)
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,9 +29,12 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { StripeCardPaymentModal } from '@/components/pos/StripeCardPaymentModal';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
+import { formatCurrency } from '@/lib/formatters';
 
 interface JomyPaymentSelectorProps {
   amount: number;
+  currency?: string; // Devise du produit/vendeur (ex: XOF, EUR). Défaut: GNF
   orderId?: string;
   description?: string;
   transactionType?: 'product' | 'taxi' | 'delivery' | 'service' | 'transfer';
@@ -62,6 +65,7 @@ interface PaymentMethodOption {
 
 export function JomyPaymentSelector({
   amount,
+  currency = 'GNF',
   orderId,
   description,
   transactionType = 'product',
@@ -79,11 +83,23 @@ export function JomyPaymentSelector({
   const { initiatePullPayment, pollStatus, isLoading, error } = useChapChapPay();
   const chapchapLoading = isLoading;
   
+  const { convert, userCurrency, loading: converterLoading } = usePriceConverter();
+  
+  const displayCurrency = currency.toUpperCase();
+  const formattedAmount = formatCurrency(amount, displayCurrency);
+  
+  // Conversion si devise produit ≠ devise utilisateur
+  const converted = useMemo(() => {
+    if (!amount || displayCurrency === userCurrency.toUpperCase()) return null;
+    return convert(amount, displayCurrency);
+  }, [amount, displayCurrency, userCurrency, convert]);
+  
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>(recipientId ? 'WALLET' : 'STRIPE_CARD');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [processing, setProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'polling' | 'success' | 'failed'>('idle');
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [walletCurrency, setWalletCurrency] = useState<string>('GNF');
   const [showStripeModal, setShowStripeModal] = useState(false);
 
   // État pour adresse de livraison (COD)
@@ -102,11 +118,12 @@ export function JomyPaymentSelector({
       try {
         const { data } = await supabase
           .from('wallets')
-          .select('balance')
+          .select('balance, currency')
           .eq('user_id', user.id)
           .single();
         if (data) {
           setWalletBalance(data.balance);
+          setWalletCurrency(data.currency || 'GNF');
         }
       } catch (err) {
         console.error('Error loading wallet balance:', err);
@@ -121,7 +138,7 @@ export function JomyPaymentSelector({
     ...(recipientId ? [{
       id: 'WALLET' as const,
       name: 'Wallet 224Solutions',
-      description: `Solde: ${walletBalance !== null ? walletBalance.toLocaleString() : '...'} GNF`,
+      description: `Solde: ${walletBalance !== null ? formatCurrency(walletBalance, walletCurrency) : '...'}`,
       icon: <Wallet className="h-5 w-5 text-green-600" />,
       iconBg: 'bg-green-100',
       requiresPhone: false,
@@ -223,7 +240,7 @@ export function JomyPaymentSelector({
       const MIN_STRIPE_AMOUNT = 500;
       if (amount < MIN_STRIPE_AMOUNT) {
         toast.error('Montant insuffisant', {
-          description: `Le montant minimum pour le paiement par carte est ${MIN_STRIPE_AMOUNT.toLocaleString()} GNF`
+          description: `Le montant minimum pour le paiement par carte est ${MIN_STRIPE_AMOUNT.toLocaleString()} ${displayCurrency}`
         });
         return;
       }
@@ -380,7 +397,7 @@ export function JomyPaymentSelector({
           <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-green-700 mb-2">Paiement réussi !</h3>
           <p className="text-muted-foreground mb-4">
-            Votre paiement de {amount.toLocaleString()} GNF a été effectué avec succès.
+            Votre paiement de {formattedAmount} a été effectué avec succès.
           </p>
           <Button onClick={() => onPaymentSuccess('', 'SUCCESS')} className="w-full">
             Continuer
@@ -400,9 +417,14 @@ export function JomyPaymentSelector({
           </CardTitle>
           <div className="text-center mt-2">
             <p className="text-3xl font-bold text-primary">
-              {amount.toLocaleString()} GNF
+              {formattedAmount}
             </p>
             <p className="text-sm text-muted-foreground">Montant à payer</p>
+            {converted && (
+              <p className="text-sm text-muted-foreground mt-1">
+                ≈ {converted.formatted} dans votre devise
+              </p>
+            )}
             
             {enableEscrow && transactionType !== 'transfer' && (
               <Alert className="mt-3">
@@ -527,7 +549,7 @@ export function JomyPaymentSelector({
                 <AlertDescription className="text-emerald-700">
                   <strong>Paiement à la livraison confirmé</strong><br/>
                   Vous serez contacté par téléphone pour confirmer votre adresse exacte avant la livraison. 
-                  Préparez {amount.toLocaleString()} GNF en espèces.
+                  Préparez {formattedAmount} en espèces.
                 </AlertDescription>
               </Alert>
             </div>
@@ -576,7 +598,7 @@ export function JomyPaymentSelector({
         isOpen={showStripeModal}
         onClose={() => setShowStripeModal(false)}
         amount={amount}
-        currency="GNF"
+        currency={displayCurrency}
         orderId={orderId || `order-${Date.now()}`}
         sellerId={sellerId || recipientId || ''}
         description={description}
