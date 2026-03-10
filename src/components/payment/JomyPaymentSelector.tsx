@@ -4,7 +4,7 @@
  * Méthodes: Carte Bancaire (Stripe), Orange Money, MTN MoMo, PayCard (ChapChapPay)
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
