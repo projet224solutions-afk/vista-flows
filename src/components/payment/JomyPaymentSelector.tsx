@@ -63,6 +63,7 @@ interface PaymentMethodOption {
 
 export function JomyPaymentSelector({
   amount,
+  currency = 'GNF',
   orderId,
   description,
   transactionType = 'product',
