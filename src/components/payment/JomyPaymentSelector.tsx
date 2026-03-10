@@ -32,6 +32,7 @@ import { StripeCardPaymentModal } from '@/components/pos/StripeCardPaymentModal'
 
 interface JomyPaymentSelectorProps {
   amount: number;
+  currency?: string; // Devise du produit/vendeur (ex: XOF, EUR). Défaut: GNF
   orderId?: string;
   description?: string;
   transactionType?: 'product' | 'taxi' | 'delivery' | 'service' | 'transfer';
