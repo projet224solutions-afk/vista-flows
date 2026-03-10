@@ -417,9 +417,14 @@ export function JomyPaymentSelector({
           </CardTitle>
           <div className="text-center mt-2">
             <p className="text-3xl font-bold text-primary">
-              {amount.toLocaleString()} GNF
+              {formattedAmount}
             </p>
             <p className="text-sm text-muted-foreground">Montant à payer</p>
+            {converted && (
+              <p className="text-sm text-muted-foreground mt-1">
+                ≈ {converted.formatted} dans votre devise
+              </p>
+            )}
             
             {enableEscrow && transactionType !== 'transfer' && (
               <Alert className="mt-3">
