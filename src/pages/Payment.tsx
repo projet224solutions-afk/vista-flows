@@ -1073,7 +1073,7 @@ export default function Payment() {
                     ) : (
                       <JomyPaymentSelector
                         amount={parseFloat(paymentAmount) || 0}
-                        orderId={productPaymentInfo?.productId || `transfer-${Date.now()}`}
+                        currency={productCurrency}
                         description={paymentDescription || 'Transfert'}
                         transactionType={productPaymentInfo || cartPaymentInfo ? 'product' : 'transfer'}
                         productType={productPaymentInfo?.productType || cartPaymentInfo?.productType || 'physical'}
