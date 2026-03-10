@@ -83,11 +83,23 @@ export function JomyPaymentSelector({
   const { initiatePullPayment, pollStatus, isLoading, error } = useChapChapPay();
   const chapchapLoading = isLoading;
   
+  const { convert, userCurrency, loading: converterLoading } = usePriceConverter();
+  
+  const displayCurrency = currency.toUpperCase();
+  const formattedAmount = formatCurrency(amount, displayCurrency);
+  
+  // Conversion si devise produit ≠ devise utilisateur
+  const converted = useMemo(() => {
+    if (!amount || displayCurrency === userCurrency.toUpperCase()) return null;
+    return convert(amount, displayCurrency);
+  }, [amount, displayCurrency, userCurrency, convert]);
+  
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>(recipientId ? 'WALLET' : 'STRIPE_CARD');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [processing, setProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'polling' | 'success' | 'failed'>('idle');
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [walletCurrency, setWalletCurrency] = useState<string>('GNF');
   const [showStripeModal, setShowStripeModal] = useState(false);
 
   // État pour adresse de livraison (COD)
