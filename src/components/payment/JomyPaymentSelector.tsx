@@ -598,7 +598,7 @@ export function JomyPaymentSelector({
         isOpen={showStripeModal}
         onClose={() => setShowStripeModal(false)}
         amount={amount}
-        currency="GNF"
+        currency={displayCurrency}
         orderId={orderId || `order-${Date.now()}`}
         sellerId={sellerId || recipientId || ''}
         description={description}
