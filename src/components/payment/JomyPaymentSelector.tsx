@@ -240,7 +240,7 @@ export function JomyPaymentSelector({
       const MIN_STRIPE_AMOUNT = 500;
       if (amount < MIN_STRIPE_AMOUNT) {
         toast.error('Montant insuffisant', {
-          description: `Le montant minimum pour le paiement par carte est ${MIN_STRIPE_AMOUNT.toLocaleString()} GNF`
+          description: `Le montant minimum pour le paiement par carte est ${MIN_STRIPE_AMOUNT.toLocaleString()} ${displayCurrency}`
         });
         return;
       }
