@@ -297,7 +297,7 @@ export default function TaxiMotoClient() {
       {/* Navigation par onglets - Responsive */}
       <div className={responsive.isMobile ? 'px-3 mt-3' : 'px-4 mt-4'}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={`grid w-full grid-cols-3 bg-card/80 backdrop-blur-sm ${responsive.isMobile ? 'h-12' : ''}`}>
+          <TabsList className={`grid w-full grid-cols-4 bg-card/80 backdrop-blur-sm ${responsive.isMobile ? 'h-12' : ''}`}>
             <TabsTrigger value="booking" className={responsive.isMobile ? 'text-xs' : ''}>
               <Navigation className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${responsive.isMobile ? '' : 'mr-1'}`} />
               {!responsive.isMobile && 'Réserver'}
