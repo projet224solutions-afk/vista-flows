@@ -860,6 +860,7 @@ export const translations: Record<string, Record<string, string>> = {
     "nav.services": "Services",
     "nav.proximite": "Nearby",
     "nav.cart": "Cart",
+    "nav.myPurchases": "My Purchases",
     "nav.profile": "Profile",
     "nav.login": "Login",
     "nav.logout": "Logout",
