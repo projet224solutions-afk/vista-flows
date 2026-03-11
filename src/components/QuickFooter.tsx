@@ -77,7 +77,9 @@ export default function QuickFooter() {
             ? location.pathname === '/home'
             : item.id === 'proximite'
               ? (location.pathname === '/proximite' || location.pathname.startsWith('/proximite/') || location.pathname.startsWith('/services-proximite'))
-              : location.pathname === item.path || (item.id === 'profil' && !profile && location.pathname === '/auth');
+              : item.id === 'my-purchases'
+                ? location.pathname.startsWith('/my-purchases')
+                : location.pathname === item.path || (item.id === 'profil' && !profile && location.pathname === '/auth');
           const Icon = item.icon;
 
           return (
