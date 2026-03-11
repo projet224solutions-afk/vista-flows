@@ -316,6 +316,11 @@ export default function TaxiMotoClient() {
               {!responsive.isMobile && 'Historique'}
               {responsive.isMobile && <span className="ml-1">Histo</span>}
             </TabsTrigger>
+            <TabsTrigger value="my-purchases" className={responsive.isMobile ? 'text-xs' : ''}>
+              <ShoppingBag className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${responsive.isMobile ? '' : 'mr-1'}`} />
+              {!responsive.isMobile && 'Mes Achats'}
+              {responsive.isMobile && <span className="ml-1">Achats</span>}
+            </TabsTrigger>
           </TabsList>
 
           {/* Réservation */}
