@@ -27,6 +27,7 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
   const navItems: NavItem[] = [
     { id: 'home', icon: Home, label: 'Accueil', path: '/home' },
     { id: 'marketplace', icon: ShoppingBag, label: 'Marketplace', path: '/marketplace' },
+    { id: 'my-purchases', icon: ShoppingCart, label: 'Mes Achats', path: '/my-purchases' },
     { id: 'tracking', icon: MapPin, label: 'Tracking', path: '/tracking' },
     { id: 'profil', icon: User, label: 'Profil', path: '/profil' },
   ];
