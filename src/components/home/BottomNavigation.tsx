@@ -5,7 +5,7 @@
  */
 
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, ShoppingBag, MapPin, User, LucideIcon } from 'lucide-react';
+import { Home, ShoppingBag, MapPin, User, ShoppingCart, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
@@ -27,6 +27,7 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
   const navItems: NavItem[] = [
     { id: 'home', icon: Home, label: 'Accueil', path: '/home' },
     { id: 'marketplace', icon: ShoppingBag, label: 'Marketplace', path: '/marketplace' },
+    { id: 'my-purchases', icon: ShoppingCart, label: 'Mes Achats', path: '/my-purchases' },
     { id: 'tracking', icon: MapPin, label: 'Tracking', path: '/tracking' },
     { id: 'profil', icon: User, label: 'Profil', path: '/profil' },
   ];
@@ -56,7 +57,7 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
           'shadow-[0_-2px_20px_hsl(0_0%_0%_/_0.05)]'
         )}
       >
-        <div className="grid grid-cols-4 max-w-lg mx-auto">
+        <div className="grid grid-cols-5 max-w-lg mx-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
             const itemPath = typeof item.path === 'function' ? item.path() : item.path;

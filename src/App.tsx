@@ -46,6 +46,7 @@ const NearbyLivraison = lazyWithRetry(() => import("./pages/NearbyLivraison"));
 const NearbyBoutiques = lazyWithRetry(() => import("./pages/NearbyBoutiques"));
 const ClientTrackingPage = lazyWithRetry(() => import("./pages/ClientTrackingPage"));
 const Profil = lazyWithRetry(() => import("./pages/Profil"));
+const MyPurchases = lazyWithRetry(() => import("./pages/MyPurchases"));
 const AgentLogin = lazyWithRetry(() => import("./pages/AgentLogin"));
 const BureauLogin = lazyWithRetry(() => import("./pages/BureauLogin"));
 const AgentChangePassword = lazyWithRetry(() => import("./pages/AgentChangePassword"));
@@ -294,6 +295,7 @@ function App() {
               <Route path="/tracking" element={<ClientTrackingPage />} />
               <Route path="/client-tracking" element={<ClientTrackingPage />} />
               <Route path="/profil" element={<Profil />} />
+              <Route path="/my-purchases" element={<MyPurchases />} />
               <Route path="/profile/:userId" element={<UserPublicProfile />} />
               
               {/* Affiliate Routes - Vendeur */}

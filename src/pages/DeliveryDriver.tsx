@@ -28,6 +28,9 @@ import { MobileBottomNav } from "@/components/responsive/MobileBottomNav";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 import DeliveryChat from "@/components/delivery/DeliveryChat";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { ShoppingBag } from "lucide-react";
+import { lazy, Suspense } from 'react';
+const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
 import { DeliveryGPSNavigation } from "@/components/delivery/DeliveryGPSNavigation";
 import { AlertTriangle } from "lucide-react";
 import { useLivreurErrorBoundary } from "@/hooks/useLivreurErrorBoundary";
@@ -455,6 +458,10 @@ export default function DeliveryDriver() {
             </TabsTrigger>
             <TabsTrigger value="history">Historique</TabsTrigger>
             <TabsTrigger value="earnings">Revenus</TabsTrigger>
+            <TabsTrigger value="my-purchases" className="gap-1">
+              <ShoppingBag className="w-4 h-4" />
+              Achats
+            </TabsTrigger>
           </TabsList>
 
           {/* Dashboard */}
@@ -651,6 +658,16 @@ export default function DeliveryDriver() {
                 <EarningsDisplay stats={stats} />
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Mes Achats */}
+          <TabsContent value="my-purchases">
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+              <MyPurchasesOrdersList 
+                title="Mes Achats Personnels" 
+                emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace" 
+              />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </div>

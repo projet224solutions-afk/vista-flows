@@ -32,6 +32,9 @@ import { UserIdDisplay } from "@/components/UserIdDisplay";
 import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
 import { useResponsive } from "@/hooks/useResponsive";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
+import { ShoppingBag } from "lucide-react";
+import { lazy, Suspense } from 'react';
+const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
 
 interface Driver {
   id: string;
@@ -294,7 +297,7 @@ export default function TaxiMotoClient() {
       {/* Navigation par onglets - Responsive */}
       <div className={responsive.isMobile ? 'px-3 mt-3' : 'px-4 mt-4'}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={`grid w-full grid-cols-3 bg-card/80 backdrop-blur-sm ${responsive.isMobile ? 'h-12' : ''}`}>
+          <TabsList className={`grid w-full grid-cols-4 bg-card/80 backdrop-blur-sm ${responsive.isMobile ? 'h-12' : ''}`}>
             <TabsTrigger value="booking" className={responsive.isMobile ? 'text-xs' : ''}>
               <Navigation className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${responsive.isMobile ? '' : 'mr-1'}`} />
               {!responsive.isMobile && 'Réserver'}
@@ -312,6 +315,11 @@ export default function TaxiMotoClient() {
               <History className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${responsive.isMobile ? '' : 'mr-1'}`} />
               {!responsive.isMobile && 'Historique'}
               {responsive.isMobile && <span className="ml-1">Histo</span>}
+            </TabsTrigger>
+            <TabsTrigger value="my-purchases" className={responsive.isMobile ? 'text-xs' : ''}>
+              <ShoppingBag className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${responsive.isMobile ? '' : 'mr-1'}`} />
+              {!responsive.isMobile && 'Mes Achats'}
+              {responsive.isMobile && <span className="ml-1">Achats</span>}
             </TabsTrigger>
           </TabsList>
 
@@ -335,6 +343,16 @@ export default function TaxiMotoClient() {
           {/* Historique */}
           <TabsContent value="history" className="mt-4">
             <TaxiMotoHistory userId={user?.id} />
+          </TabsContent>
+
+          {/* Mes Achats */}
+          <TabsContent value="my-purchases" className="mt-4">
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+              <MyPurchasesOrdersList 
+                title="Mes Achats Personnels" 
+                emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace" 
+              />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </div>
