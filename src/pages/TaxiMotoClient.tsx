@@ -32,6 +32,9 @@ import { UserIdDisplay } from "@/components/UserIdDisplay";
 import { InstallPromptBanner } from "@/components/pwa/InstallPromptBanner";
 import { useResponsive } from "@/hooks/useResponsive";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
+import { ShoppingBag } from "lucide-react";
+import { lazy, Suspense } from 'react';
+const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
 
 interface Driver {
   id: string;
