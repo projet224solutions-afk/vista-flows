@@ -12,6 +12,7 @@ export const translations: Record<string, Record<string, string>> = {
     "nav.services": "Services",
     "nav.proximite": "Proximité",
     "nav.cart": "Panier",
+    "nav.myPurchases": "Mes Achats",
     "nav.profile": "Profil",
     "nav.login": "Connexion",
     "nav.logout": "Déconnexion",
