@@ -458,6 +458,10 @@ export default function DeliveryDriver() {
             </TabsTrigger>
             <TabsTrigger value="history">Historique</TabsTrigger>
             <TabsTrigger value="earnings">Revenus</TabsTrigger>
+            <TabsTrigger value="my-purchases" className="gap-1">
+              <ShoppingBag className="w-4 h-4" />
+              Achats
+            </TabsTrigger>
           </TabsList>
 
           {/* Dashboard */}

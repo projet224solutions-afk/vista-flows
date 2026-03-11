@@ -344,6 +344,16 @@ export default function TaxiMotoClient() {
           <TabsContent value="history" className="mt-4">
             <TaxiMotoHistory userId={user?.id} />
           </TabsContent>
+
+          {/* Mes Achats */}
+          <TabsContent value="my-purchases" className="mt-4">
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+              <MyPurchasesOrdersList 
+                title="Mes Achats Personnels" 
+                emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace" 
+              />
+            </Suspense>
+          </TabsContent>
         </Tabs>
       </div>
 

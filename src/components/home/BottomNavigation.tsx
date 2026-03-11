@@ -57,7 +57,7 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
           'shadow-[0_-2px_20px_hsl(0_0%_0%_/_0.05)]'
         )}
       >
-        <div className="grid grid-cols-4 max-w-lg mx-auto">
+        <div className="grid grid-cols-5 max-w-lg mx-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
             const itemPath = typeof item.path === 'function' ? item.path() : item.path;
