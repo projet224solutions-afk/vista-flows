@@ -295,6 +295,7 @@ function App() {
               <Route path="/tracking" element={<ClientTrackingPage />} />
               <Route path="/client-tracking" element={<ClientTrackingPage />} />
               <Route path="/profil" element={<Profil />} />
+              <Route path="/my-purchases" element={<MyPurchases />} />
               <Route path="/profile/:userId" element={<UserPublicProfile />} />
               
               {/* Affiliate Routes - Vendeur */}
