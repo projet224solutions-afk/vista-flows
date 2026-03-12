@@ -38,6 +38,28 @@ export default function SetPasswordAfterOAuth() {
   const [checkingStatus, setCheckingStatus] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [showScrollDown, setShowScrollDown] = useState(true);
+  const submitRef = useRef<HTMLDivElement>(null);
+  const topRef = useRef<HTMLDivElement>(null);
+
+  // Observer pour détecter si le bouton submit est visible
+  useEffect(() => {
+    if (!submitRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowScrollDown(!entry.isIntersecting),
+      { threshold: 0.5 }
+    );
+    observer.observe(submitRef.current);
+    return () => observer.disconnect();
+  }, [checkingStatus, success]);
+
+  const handleScrollToggle = () => {
+    if (showScrollDown) {
+      submitRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+      topRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   // Vérifications de sécurité du mot de passe
   const passwordChecks = {
