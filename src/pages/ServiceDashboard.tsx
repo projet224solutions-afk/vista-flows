@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense, lazy } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Store, Settings, DollarSign, TrendingUp, Users } from 'lucide-react';
+import { Store, Settings, DollarSign, TrendingUp, Users, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,6 +12,8 @@ import { BookingManagement } from '@/components/professional-services/modules/Bo
 import { ServiceSettingsPanel } from '@/components/professional-services/ServiceSettingsPanel';
 import { ServiceSubscriptionCard } from '@/components/professional-services/ServiceSubscriptionCard';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
+
+const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
 
 // Types de services qui ont leur propre module complet
 function isFullModuleService(service: ProfessionalService): boolean {
@@ -100,6 +102,33 @@ export default function ServiceDashboard() {
             serviceTypeCode={service.service_type?.code}
             businessName={service.business_name}
           />
+          {/* Bouton Mes Achats */}
+          <div className="mt-6">
+            <Button
+              variant="outline"
+              className="w-full gap-2 py-3"
+              onClick={() => {
+                const el = document.getElementById('my-purchases-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                else {
+                  const section = document.createElement('div');
+                  section.id = 'my-purchases-section';
+                }
+              }}
+            >
+              <ShoppingBag className="w-5 h-5" />
+              Mes Achats
+            </Button>
+          </div>
+
+          <div id="my-purchases-section" className="mt-4">
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+              <MyPurchasesOrdersList 
+                title="Mes Achats Personnels" 
+                emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace" 
+              />
+            </Suspense>
+          </div>
         </div>
         <ServiceSettingsPanel
           open={settingsOpen}
@@ -203,10 +232,14 @@ export default function ServiceDashboard() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList>
+          <TabsList className="flex flex-wrap">
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
             <TabsTrigger value="products">Produits/Services</TabsTrigger>
             <TabsTrigger value="bookings">Réservations</TabsTrigger>
+            <TabsTrigger value="my-purchases" className="gap-1">
+              <ShoppingBag className="w-4 h-4" />
+              Mes Achats
+            </TabsTrigger>
             <TabsTrigger value="reviews">Avis Clients</TabsTrigger>
             <TabsTrigger value="analytics">Statistiques</TabsTrigger>
           </TabsList>
@@ -255,6 +288,15 @@ export default function ServiceDashboard() {
 
           <TabsContent value="bookings">
             <BookingManagement serviceId={service.id} />
+          </TabsContent>
+
+          <TabsContent value="my-purchases">
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+              <MyPurchasesOrdersList 
+                title="Mes Achats Personnels" 
+                emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace" 
+              />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="reviews">

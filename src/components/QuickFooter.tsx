@@ -1,4 +1,4 @@
-import { Home, ShoppingBag, ShoppingCart, MapPin, MessageSquare, User } from "lucide-react";
+import { Home, ShoppingBag, MapPin, MessageSquare, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,13 +28,6 @@ export default function QuickFooter() {
       labelKey: 'nav.marketplace',
       icon: ShoppingBag,
       path: '/marketplace',
-      badge: 0,
-    },
-    {
-      id: 'my-purchases',
-      labelKey: 'nav.myPurchases',
-      icon: ShoppingCart,
-      path: '/my-purchases',
       badge: 0,
     },
     {
@@ -77,9 +70,7 @@ export default function QuickFooter() {
             ? location.pathname === '/home'
             : item.id === 'proximite'
               ? (location.pathname === '/proximite' || location.pathname.startsWith('/proximite/') || location.pathname.startsWith('/services-proximite'))
-              : item.id === 'my-purchases'
-                ? location.pathname.startsWith('/my-purchases')
-                : location.pathname === item.path || (item.id === 'profil' && !profile && location.pathname === '/auth');
+              : location.pathname === item.path || (item.id === 'profil' && !profile && location.pathname === '/auth');
           const Icon = item.icon;
 
           return (
