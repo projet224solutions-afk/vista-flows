@@ -1,4 +1,4 @@
-import { Home, ShoppingBag, ShoppingCart, MapPin, MessageSquare, User } from "lucide-react";
+import { Home, ShoppingBag, MapPin, MessageSquare, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
