@@ -425,7 +425,7 @@ export default function SetPasswordAfterOAuth() {
             )}
 
             {/* Bouton d'action */}
-            <div className="pt-2">
+            <div className="pt-2" ref={submitRef}>
               <Button
                 type="submit"
                 className="w-full h-12 text-base font-semibold"
@@ -448,6 +448,16 @@ export default function SetPasswordAfterOAuth() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Bouton flottant de défilement */}
+      <button
+        type="button"
+        onClick={handleScrollToggle}
+        className="fixed bottom-20 right-4 z-50 w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/40 flex items-center justify-center hover:bg-primary/90 transition-all active:scale-95"
+        aria-label={showScrollDown ? 'Défiler vers le bas' : 'Défiler vers le haut'}
+      >
+        {showScrollDown ? <ChevronDown className="h-6 w-6" /> : <ChevronUp className="h-6 w-6" />}
+      </button>
     </div>
   );
 }
