@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Lock, Eye, EyeOff, Loader2, CheckCircle2, Shield,
-  AlertCircle, Mail, ArrowRight
+  AlertCircle, Mail, ArrowRight, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
