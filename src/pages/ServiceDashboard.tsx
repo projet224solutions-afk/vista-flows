@@ -101,7 +101,7 @@ export default function ServiceDashboard() {
             serviceTypeName={service.service_type?.name || 'Service'}
             serviceTypeCode={service.service_type?.code}
             businessName={service.business_name}
-
+          />
           {/* Bouton Mes Achats */}
           <div className="mt-6">
             <Button
