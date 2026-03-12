@@ -13,7 +13,7 @@ import { ServiceSettingsPanel } from '@/components/professional-services/Service
 import { ServiceSubscriptionCard } from '@/components/professional-services/ServiceSubscriptionCard';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
-const MyPurchasesOrdersList = lazy(() => import('@/components/purchases/MyPurchasesOrdersList'));
+const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
 
 // Types de services qui ont leur propre module complet
 function isFullModuleService(service: ProfessionalService): boolean {
