@@ -1,111 +1,22 @@
 
-# Plan d'intégration - Animation Spline 3D (Globe) en arrière-plan
 
-## Objectif
-Intégrer l'animation 3D du globe terrestre Spline en arrière-plan de la section Hero de la page d'accueil, créant un effet visuel immersif et moderne.
+## Plan: Add scroll-to-bottom button on SetPasswordAfterOAuth page
 
-## Approche technique
+The screenshot shows the password setup page where the submit button is cut off at the bottom. A floating scroll button will help users quickly reach the validation button.
 
-### Option choisie : Package React officiel `@splinetool/react-spline`
+### Changes
 
-Cette approche est recommandée car :
-- Intégration native avec React (meilleure compatibilité)
-- Support du lazy loading pour optimiser les performances
-- API propre avec gestion des événements
+**`src/pages/SetPasswordAfterOAuth.tsx`**
 
-### URL de la scène Spline
-```
-https://prod.spline.design/h5xspcRA7yF54Tzy/scene.splinecode
-```
+Add a floating scroll-to-bottom/scroll-to-top toggle button:
 
----
+1. Add `useRef` for the form container and `useState` for scroll direction
+2. Add a `useEffect` with an `IntersectionObserver` on the submit button to detect visibility
+3. Render a fixed floating button (bottom-right, above the footer nav) that:
+   - Shows a **down arrow** when the submit button is not visible -- scrolls to the submit button
+   - Shows an **up arrow** when the submit button is visible -- scrolls back to top
+4. Use `scrollIntoView({ behavior: 'smooth' })` for smooth navigation
+5. Style: circular button with `ChevronDown`/`ChevronUp` icon, primary color, shadow, positioned `fixed bottom-20 right-4` (above the bottom nav bar)
 
-## Étapes d'implémentation
+This is a lightweight, self-contained change to a single file.
 
-### 1. Installation du package
-
-Ajouter la dépendance `@splinetool/react-spline` au projet.
-
-### 2. Création d'un composant SplineBackground
-
-Créer un nouveau composant dédié `SplineBackground.tsx` dans `src/components/home/` :
-
-- Utiliser `React.lazy()` pour charger Spline de manière asynchrone
-- Envelopper dans `Suspense` avec un fallback élégant (gradient animé)
-- Positionner en `absolute` avec `z-index: 0` pour rester derrière le contenu
-- Ajouter un overlay semi-transparent pour garantir la lisibilité du texte
-
-```text
-┌─────────────────────────────────────┐
-│  SplineBackground (position: abs)   │
-│  ┌─────────────────────────────────┐│
-│  │    Globe 3D Spline              ││
-│  │    (opacity: 0.3-0.5)           ││
-│  └─────────────────────────────────┘│
-│  ┌─────────────────────────────────┐│
-│  │    Overlay gradient             ││
-│  │    (pour lisibilité texte)      ││
-│  └─────────────────────────────────┘│
-└─────────────────────────────────────┘
-```
-
-### 3. Modification de HeroSection.tsx
-
-- Importer le nouveau composant `SplineBackground`
-- Ajouter `position: relative` et `overflow: hidden` à la section
-- Placer `SplineBackground` comme premier enfant
-- S'assurer que le contenu existant a un `z-index` supérieur
-
-### 4. Optimisations de performance
-
-- **Lazy loading** : Charger Spline seulement après le rendu initial
-- **Préchargement différé** : Utiliser `setTimeout` pour déclencher le chargement après 2-3 secondes
-- **Fallback gracieux** : Afficher un gradient animé pendant le chargement
-- **Mobile** : Réduire l'opacité ou désactiver sur les appareils à faibles ressources
-
----
-
-## Structure des fichiers modifiés
-
-| Fichier | Action |
-|---------|--------|
-| `package.json` | Ajouter `@splinetool/react-spline` |
-| `src/components/home/SplineBackground.tsx` | **Créer** - Composant wrapper Spline |
-| `src/components/home/HeroSection.tsx` | Modifier - Intégrer SplineBackground |
-| `src/components/home/index.ts` | Modifier - Exporter SplineBackground |
-
----
-
-## Détails techniques
-
-### SplineBackground.tsx
-
-```text
-Composant React avec :
-├── React.lazy() pour import dynamique
-├── Suspense avec fallback gradient
-├── Container en position absolute, inset-0
-├── Spline viewer avec scène URL
-├── Overlay dégradé pour lisibilité
-└── Contrôle d'opacité responsive
-```
-
-### Styles appliqués
-
-- **Container** : `absolute inset-0 z-0 overflow-hidden`
-- **Spline** : `w-full h-full opacity-30 sm:opacity-40`
-- **Overlay** : `absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background`
-
-### Fallback pendant chargement
-
-Un dégradé animé avec effet de pulsation pour indiquer le chargement sans être intrusif.
-
----
-
-## Résultat attendu
-
-La page d'accueil affichera :
-1. Le globe 3D interactif en arrière-plan (légèrement transparent)
-2. Un overlay dégradé garantissant la lisibilité du texte
-3. Tout le contenu existant (badge, titre, boutons, services) reste parfaitement visible et cliquable
-4. Animation fluide sans impact sur les performances grâce au lazy loading
