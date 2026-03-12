@@ -31,13 +31,6 @@ export default function QuickFooter() {
       badge: 0,
     },
     {
-      id: 'my-purchases',
-      labelKey: 'nav.myPurchases',
-      icon: ShoppingCart,
-      path: '/my-purchases',
-      badge: 0,
-    },
-    {
       id: 'proximite',
       labelKey: 'nav.proximite',
       icon: MapPin,
