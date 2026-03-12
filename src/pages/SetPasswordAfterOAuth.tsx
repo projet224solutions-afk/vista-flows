@@ -8,7 +8,7 @@
  * - Une fois le mot de passe défini, l'utilisateur ne reverra jamais cette page
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Lock, Eye, EyeOff, Loader2, CheckCircle2, Shield,
-  AlertCircle, Mail, ArrowRight
+  AlertCircle, Mail, ArrowRight, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -38,6 +38,28 @@ export default function SetPasswordAfterOAuth() {
   const [checkingStatus, setCheckingStatus] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [showScrollDown, setShowScrollDown] = useState(true);
+  const submitRef = useRef<HTMLDivElement>(null);
+  const topRef = useRef<HTMLDivElement>(null);
+
+  // Observer pour détecter si le bouton submit est visible
+  useEffect(() => {
+    if (!submitRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowScrollDown(!entry.isIntersecting),
+      { threshold: 0.5 }
+    );
+    observer.observe(submitRef.current);
+    return () => observer.disconnect();
+  }, [checkingStatus, success]);
+
+  const handleScrollToggle = () => {
+    if (showScrollDown) {
+      submitRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+      topRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   // Vérifications de sécurité du mot de passe
   const passwordChecks = {
@@ -279,6 +301,7 @@ export default function SetPasswordAfterOAuth() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center p-4">
+      <div ref={topRef} className="absolute top-0" />
       <Card className="w-full max-w-md shadow-2xl border-0 overflow-hidden">
         <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 pb-4">
           <div className="flex items-center gap-3">
@@ -402,7 +425,7 @@ export default function SetPasswordAfterOAuth() {
             )}
 
             {/* Bouton d'action */}
-            <div className="pt-2">
+            <div className="pt-2" ref={submitRef}>
               <Button
                 type="submit"
                 className="w-full h-12 text-base font-semibold"
@@ -425,6 +448,16 @@ export default function SetPasswordAfterOAuth() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Bouton flottant de défilement */}
+      <button
+        type="button"
+        onClick={handleScrollToggle}
+        className="fixed bottom-20 right-4 z-50 w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/40 flex items-center justify-center hover:bg-primary/90 transition-all active:scale-95"
+        aria-label={showScrollDown ? 'Défiler vers le bas' : 'Défiler vers le haut'}
+      >
+        {showScrollDown ? <ChevronDown className="h-6 w-6" /> : <ChevronUp className="h-6 w-6" />}
+      </button>
     </div>
   );
 }
