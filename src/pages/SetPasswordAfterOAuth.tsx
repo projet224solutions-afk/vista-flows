@@ -301,6 +301,7 @@ export default function SetPasswordAfterOAuth() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center p-4">
+      <div ref={topRef} className="absolute top-0" />
       <Card className="w-full max-w-md shadow-2xl border-0 overflow-hidden">
         <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 pb-4">
           <div className="flex items-center gap-3">
