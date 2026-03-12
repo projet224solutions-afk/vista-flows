@@ -290,6 +290,15 @@ export default function ServiceDashboard() {
             <BookingManagement serviceId={service.id} />
           </TabsContent>
 
+          <TabsContent value="my-purchases">
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+              <MyPurchasesOrdersList 
+                title="Mes Achats Personnels" 
+                emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace" 
+              />
+            </Suspense>
+          </TabsContent>
+
           <TabsContent value="reviews">
             <Card>
               <CardHeader>
