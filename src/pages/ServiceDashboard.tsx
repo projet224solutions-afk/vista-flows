@@ -101,7 +101,34 @@ export default function ServiceDashboard() {
             serviceTypeName={service.service_type?.name || 'Service'}
             serviceTypeCode={service.service_type?.code}
             businessName={service.business_name}
-          />
+
+          {/* Bouton Mes Achats */}
+          <div className="mt-6">
+            <Button
+              variant="outline"
+              className="w-full gap-2 py-3"
+              onClick={() => {
+                const el = document.getElementById('my-purchases-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                else {
+                  const section = document.createElement('div');
+                  section.id = 'my-purchases-section';
+                }
+              }}
+            >
+              <ShoppingBag className="w-5 h-5" />
+              Mes Achats
+            </Button>
+          </div>
+
+          <div id="my-purchases-section" className="mt-4">
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+              <MyPurchasesOrdersList 
+                title="Mes Achats Personnels" 
+                emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace" 
+              />
+            </Suspense>
+          </div>
         </div>
         <ServiceSettingsPanel
           open={settingsOpen}
