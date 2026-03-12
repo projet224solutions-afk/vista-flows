@@ -232,10 +232,14 @@ export default function ServiceDashboard() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList>
+          <TabsList className="flex flex-wrap">
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
             <TabsTrigger value="products">Produits/Services</TabsTrigger>
             <TabsTrigger value="bookings">Réservations</TabsTrigger>
+            <TabsTrigger value="my-purchases" className="gap-1">
+              <ShoppingBag className="w-4 h-4" />
+              Mes Achats
+            </TabsTrigger>
             <TabsTrigger value="reviews">Avis Clients</TabsTrigger>
             <TabsTrigger value="analytics">Statistiques</TabsTrigger>
           </TabsList>
