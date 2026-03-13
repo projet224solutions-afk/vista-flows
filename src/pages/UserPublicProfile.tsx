@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Mail, Phone, MessageCircle, Loader2, User } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MessageCircle, Loader2, User, MapPin } from "lucide-react";
 import QuickFooter from "@/components/QuickFooter";
 
 interface UserProfile {
@@ -24,10 +24,17 @@ interface UserProfile {
   created_at: string | null;
 }
 
+interface UserAddress {
+  street: string;
+  city: string;
+  country: string;
+}
+
 export default function UserPublicProfile() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [address, setAddress] = useState<UserAddress | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,6 +62,28 @@ export default function UserPublicProfile() {
       }
 
       setProfile(data);
+
+      // Charger l'adresse par défaut
+      const { data: addrData } = await supabase
+        .from('user_addresses')
+        .select('street, city, country')
+        .eq('user_id', userId)
+        .eq('is_default', true)
+        .maybeSingle();
+
+      if (addrData) {
+        setAddress(addrData);
+      } else {
+        // Fallback: première adresse disponible
+        const { data: anyAddr } = await supabase
+          .from('user_addresses')
+          .select('street, city, country')
+          .eq('user_id', userId!)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        setAddress(anyAddr || null);
+      }
     } catch (err) {
       console.error('Erreur:', err);
       setError('Une erreur est survenue');
@@ -165,6 +194,18 @@ export default function UserPublicProfile() {
                 <div>
                   <p className="text-xs text-muted-foreground">Téléphone</p>
                   <p className="text-sm">{profile.phone}</p>
+                </div>
+              </div>
+            )}
+
+            {address && (
+              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                <MapPin className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Adresse</p>
+                  <p className="text-sm">
+                    {[address.street, address.city, address.country].filter(Boolean).join(', ')}
+                  </p>
                 </div>
               </div>
             )}
