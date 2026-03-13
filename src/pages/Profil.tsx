@@ -483,6 +483,15 @@ export default function Profil() {
                   <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">{profile.phone}</p>
                 )}
 
+                {userAddress && (
+                  <div className="flex items-center gap-1.5 mb-1 sm:mb-2">
+                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground shrink-0" />
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                      {[userAddress.street, userAddress.city, userAddress.country].filter(Boolean).join(', ')}
+                    </p>
+                  </div>
+                )}
+
                 <p className="text-xs sm:text-sm text-muted-foreground">
                   {userTypeInfo.description}
                 </p>
