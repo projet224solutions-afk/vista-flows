@@ -107,6 +107,40 @@ export default function Profil() {
   const [editPhone, setEditPhone] = useState('');
   const [saving, setSaving] = useState(false);
   const [agentTypeInfo, setAgentTypeInfo] = useState<{ label: string; description: string } | null>(null);
+  const [userAddress, setUserAddress] = useState<{ street: string; city: string; country: string } | null>(null);
+
+  // Charger l'adresse de l'utilisateur
+  useEffect(() => {
+    const fetchAddress = async () => {
+      if (!user?.id) return;
+      try {
+        // D'abord l'adresse par défaut
+        const { data } = await supabase
+          .from('user_addresses')
+          .select('street, city, country')
+          .eq('user_id', user.id)
+          .eq('is_default', true)
+          .maybeSingle();
+        
+        if (data) {
+          setUserAddress(data);
+        } else {
+          // Fallback: première adresse
+          const { data: anyAddr } = await supabase
+            .from('user_addresses')
+            .select('street, city, country')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          setUserAddress(anyAddr || null);
+        }
+      } catch (err) {
+        console.error('Erreur chargement adresse:', err);
+      }
+    };
+    fetchAddress();
+  }, [user?.id]);
 
   // Récupérer le type d'agent dynamiquement si l'utilisateur est un agent
   useEffect(() => {
