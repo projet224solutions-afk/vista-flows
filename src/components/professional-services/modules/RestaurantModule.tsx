@@ -236,36 +236,38 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid">
-          <TabsTrigger value="overview">
-            <DollarSign className="w-4 h-4 mr-2 hidden md:block" />
-            Aperçu
-          </TabsTrigger>
-          <TabsTrigger value="pos" className="bg-primary/10 font-semibold">
-            <ShoppingCart className="w-4 h-4 mr-2 hidden md:block" />
-            POS
-          </TabsTrigger>
-          <TabsTrigger value="reservations">
-            <CalendarCheck className="w-4 h-4 mr-2 hidden md:block" />
-            Réservations
-          </TabsTrigger>
-          <TabsTrigger value="orders">
-            <ShoppingBag className="w-4 h-4 mr-2 hidden md:block" />
-            Commandes
-          </TabsTrigger>
-          <TabsTrigger value="menu">
-            <UtensilsCrossed className="w-4 h-4 mr-2 hidden md:block" />
-            Menu
-          </TabsTrigger>
-          <TabsTrigger value="tables">
-            <LayoutGrid className="w-4 h-4 mr-2 hidden md:block" />
-            Tables
-          </TabsTrigger>
-          <TabsTrigger value="settings">
-            <Settings className="w-4 h-4 mr-2 hidden md:block" />
-            Config
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-1">
+          <TabsList className="inline-flex w-max sm:w-auto sm:grid sm:grid-cols-7 gap-0.5">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
+              <DollarSign className="w-3.5 h-3.5 hidden sm:block" />
+              Aperçu
+            </TabsTrigger>
+            <TabsTrigger value="pos" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1 bg-primary/10 font-semibold">
+              <ShoppingCart className="w-3.5 h-3.5 hidden sm:block" />
+              POS
+            </TabsTrigger>
+            <TabsTrigger value="reservations" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
+              <CalendarCheck className="w-3.5 h-3.5 hidden sm:block" />
+              Réserv.
+            </TabsTrigger>
+            <TabsTrigger value="orders" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
+              <ShoppingBag className="w-3.5 h-3.5 hidden sm:block" />
+              Commandes
+            </TabsTrigger>
+            <TabsTrigger value="menu" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
+              <UtensilsCrossed className="w-3.5 h-3.5 hidden sm:block" />
+              Menu
+            </TabsTrigger>
+            <TabsTrigger value="tables" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
+              <LayoutGrid className="w-3.5 h-3.5 hidden sm:block" />
+              Tables
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
+              <Settings className="w-3.5 h-3.5 hidden sm:block" />
+              Config
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="overview" className="mt-4">
           {/* Onboarding card if no data */}
