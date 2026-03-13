@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Mail, Phone, MessageCircle, Loader2, User } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MessageCircle, Loader2, User, MapPin } from "lucide-react";
 import QuickFooter from "@/components/QuickFooter";
 
 interface UserProfile {
