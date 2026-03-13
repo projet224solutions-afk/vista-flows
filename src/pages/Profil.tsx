@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useState, useEffect, useCallback } from "react";
-import { User, Settings, ShoppingBag, History, LogOut, Edit, Camera, ArrowLeft, Save } from "lucide-react";
+import { User, Settings, ShoppingBag, History, LogOut, Edit, Camera, ArrowLeft, Save, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
