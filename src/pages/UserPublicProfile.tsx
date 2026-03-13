@@ -198,6 +198,18 @@ export default function UserPublicProfile() {
               </div>
             )}
 
+            {address && (
+              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                <MapPin className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Adresse</p>
+                  <p className="text-sm">
+                    {[address.street, address.city, address.country].filter(Boolean).join(', ')}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {profile.created_at && (
               <p className="text-xs text-center text-muted-foreground pt-4">
                 Membre depuis {new Date(profile.created_at).toLocaleDateString('fr-FR', {
