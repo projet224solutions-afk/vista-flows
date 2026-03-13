@@ -157,92 +157,99 @@ export default function ServiceDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24">
+      {/* Header mobile-optimized */}
       <div className="border-b bg-card sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div>
-                <div className="flex items-center gap-3">
-                  <Store className="w-6 h-6 text-primary" />
-                  <h1 className="text-2xl font-bold">{service.business_name}</h1>
-                  <Badge className={statusColors[service.status]}>
-                    {service.status}
-                  </Badge>
-                  <Badge className={verificationColors[service.verification_status]}>
-                    {service.verification_status}
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {service.service_type?.name} • Commission: {service.service_type?.commission_rate}%
-                </p>
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Store className="w-5 h-5 sm:w-6 sm:h-6 text-primary shrink-0" />
+                <h1 className="text-lg sm:text-2xl font-bold truncate">{service.business_name}</h1>
               </div>
+              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                <Badge className={`${statusColors[service.status]} text-xs`}>
+                  {service.status}
+                </Badge>
+                <Badge className={`${verificationColors[service.verification_status]} text-xs`}>
+                  {service.verification_status}
+                </Badge>
+              </div>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1 truncate">
+                {service.service_type?.name} • Commission: {service.service_type?.commission_rate}%
+              </p>
             </div>
-            <Button variant="outline" className="gap-2" onClick={() => setSettingsOpen(true)}>
+            <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setSettingsOpen(true)}>
               <Settings className="w-4 h-4" />
-              Paramètres
+              <span className="hidden sm:inline">Paramètres</span>
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        {/* Stats grid - 2 cols mobile, 4 cols desktop */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Revenus Totaux</CardTitle>
-              <DollarSign className="w-4 h-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Revenus</CardTitle>
+              <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{service.total_revenue.toLocaleString()} GNF</div>
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <div className="text-lg sm:text-2xl font-bold truncate">{service.total_revenue.toLocaleString()} GNF</div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Commandes</CardTitle>
-              <TrendingUp className="w-4 h-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Commandes</CardTitle>
+              <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{service.total_orders}</div>
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <div className="text-lg sm:text-2xl font-bold">{service.total_orders}</div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Avis</CardTitle>
-              <Users className="w-4 h-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Avis</CardTitle>
+              <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{service.total_reviews}</div>
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <div className="text-lg sm:text-2xl font-bold">{service.total_reviews}</div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Note Moyenne</CardTitle>
-              <span className="text-xl">⭐</span>
+            <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Note</CardTitle>
+              <span className="text-sm sm:text-xl">⭐</span>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{service.rating.toFixed(1)}/5.0</div>
+            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+              <div className="text-lg sm:text-2xl font-bold">{service.rating.toFixed(1)}/5</div>
             </CardContent>
           </Card>
-          {/* Carte abonnement */}
+        </div>
+
+        {/* Carte abonnement */}
+        <div className="mb-6">
           <ServiceSubscriptionCard serviceId={service.id} />
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="flex flex-wrap">
-            <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-            <TabsTrigger value="products">Produits/Services</TabsTrigger>
-            <TabsTrigger value="bookings">Réservations</TabsTrigger>
-            <TabsTrigger value="my-purchases" className="gap-1">
-              <ShoppingBag className="w-4 h-4" />
-              Mes Achats
-            </TabsTrigger>
-            <TabsTrigger value="reviews">Avis Clients</TabsTrigger>
-            <TabsTrigger value="analytics">Statistiques</TabsTrigger>
-          </TabsList>
+        <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
+          <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
+            <TabsList className="inline-flex w-max sm:w-auto sm:flex sm:flex-wrap gap-0.5">
+              <TabsTrigger value="overview" className="text-xs sm:text-sm px-2.5 sm:px-3">Vue d'ensemble</TabsTrigger>
+              <TabsTrigger value="products" className="text-xs sm:text-sm px-2.5 sm:px-3">Produits</TabsTrigger>
+              <TabsTrigger value="bookings" className="text-xs sm:text-sm px-2.5 sm:px-3">Réservations</TabsTrigger>
+              <TabsTrigger value="my-purchases" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
+                <ShoppingBag className="w-3.5 h-3.5" />
+                Achats
+              </TabsTrigger>
+              <TabsTrigger value="reviews" className="text-xs sm:text-sm px-2.5 sm:px-3">Avis</TabsTrigger>
+              <TabsTrigger value="analytics" className="text-xs sm:text-sm px-2.5 sm:px-3">Stats</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="overview" className="space-y-6">
             <Card>
