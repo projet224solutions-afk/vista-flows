@@ -24,6 +24,12 @@ interface UserProfile {
   created_at: string | null;
 }
 
+interface UserAddress {
+  street: string;
+  city: string;
+  country: string;
+}
+
 export default function UserPublicProfile() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
