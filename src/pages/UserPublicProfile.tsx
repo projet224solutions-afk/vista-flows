@@ -62,6 +62,28 @@ export default function UserPublicProfile() {
       }
 
       setProfile(data);
+
+      // Charger l'adresse par défaut
+      const { data: addrData } = await supabase
+        .from('user_addresses')
+        .select('street, city, country')
+        .eq('user_id', userId)
+        .eq('is_default', true)
+        .maybeSingle();
+
+      if (addrData) {
+        setAddress(addrData);
+      } else {
+        // Fallback: première adresse disponible
+        const { data: anyAddr } = await supabase
+          .from('user_addresses')
+          .select('street, city, country')
+          .eq('user_id', userId!)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        setAddress(anyAddr || null);
+      }
     } catch (err) {
       console.error('Erreur:', err);
       setError('Une erreur est survenue');
