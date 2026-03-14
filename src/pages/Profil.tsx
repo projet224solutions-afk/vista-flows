@@ -254,7 +254,8 @@ export default function Profil() {
 
   const handleMenuClick = async (itemId: string) => {
     if (itemId === 'orders') {
-      await loadOrders();
+      navigate('/mes-commandes');
+      return;
     } else if (itemId === 'history') {
       await loadTransactions();
     } else if (itemId === 'settings') {
